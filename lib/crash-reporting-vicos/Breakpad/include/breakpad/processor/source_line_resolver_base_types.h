@@ -58,8 +58,7 @@ class SourceLineResolverBase::AutoFileCloser {
  public:
   explicit AutoFileCloser(FILE *file) : file_(file) {}
   ~AutoFileCloser() {
-    if (file_)
-      fclose(file_);
+    if (file_) fclose(file_);
   }
 
  private:
@@ -67,12 +66,12 @@ class SourceLineResolverBase::AutoFileCloser {
 };
 
 struct SourceLineResolverBase::Line {
-  Line() { }
+  Line() {}
   Line(MemAddr addr, MemAddr code_size, int file_id, int source_line)
-      : address(addr)
-      , size(code_size)
-      , source_file_id(file_id)
-      , line(source_line) { }
+      : address(addr),
+        size(code_size),
+        source_file_id(file_id),
+        line(source_line) {}
 
   MemAddr address;
   MemAddr size;
@@ -81,13 +80,13 @@ struct SourceLineResolverBase::Line {
 };
 
 struct SourceLineResolverBase::Function {
-  Function() { }
-  Function(const string &function_name,
-           MemAddr function_address,
-           MemAddr code_size,
-           int set_parameter_size)
-      : name(function_name), address(function_address), size(code_size),
-        parameter_size(set_parameter_size) { }
+  Function() {}
+  Function(const string &function_name, MemAddr function_address,
+           MemAddr code_size, int set_parameter_size)
+      : name(function_name),
+        address(function_address),
+        size(code_size),
+        parameter_size(set_parameter_size) {}
 
   string name;
   MemAddr address;
@@ -98,9 +97,8 @@ struct SourceLineResolverBase::Function {
 };
 
 struct SourceLineResolverBase::PublicSymbol {
-  PublicSymbol() { }
-  PublicSymbol(const string& set_name,
-               MemAddr set_address,
+  PublicSymbol() {}
+  PublicSymbol(const string &set_name, MemAddr set_address,
                int set_parameter_size)
       : name(set_name),
         address(set_address),
@@ -117,7 +115,7 @@ struct SourceLineResolverBase::PublicSymbol {
 
 class SourceLineResolverBase::Module {
  public:
-  virtual ~Module() { };
+  virtual ~Module(){};
   // Loads a map from the given buffer in char* type.
   // Does NOT take ownership of memory_buffer (the caller, source line resolver,
   // is the owner of memory_buffer).
@@ -140,14 +138,15 @@ class SourceLineResolverBase::Module {
   // is not available, returns NULL. A NULL return value does not indicate
   // an error. The caller takes ownership of any returned WindowsFrameInfo
   // object.
-  virtual WindowsFrameInfo *
-  FindWindowsFrameInfo(const StackFrame *frame) const = 0;
+  virtual WindowsFrameInfo *FindWindowsFrameInfo(
+      const StackFrame *frame) const = 0;
 
   // If CFI stack walking information is available covering ADDRESS,
   // return a CFIFrameInfo structure describing it. If the information
   // is not available, return NULL. The caller takes ownership of any
   // returned CFIFrameInfo object.
   virtual CFIFrameInfo *FindCFIFrameInfo(const StackFrame *frame) const = 0;
+
  protected:
   virtual bool ParseCFIRuleSet(const string &rule_set,
                                CFIFrameInfo *frame_info) const;

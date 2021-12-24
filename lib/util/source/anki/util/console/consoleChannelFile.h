@@ -16,7 +16,7 @@ namespace Anki {
 namespace Util {
 
 class ConsoleChannelFile : public IConsoleChannel {
-public:
+ public:
   // Default constructor
   ConsoleChannelFile();
 
@@ -35,15 +35,13 @@ public:
   int WriteLog(const char* format, ...);
 
   // Flush buffered data
-  bool Flush() {
-    return false;
-  }
+  bool Flush() { return false; }
 
-private:
+ private:
   void HexDump(FILE* f, int width, uint8_t* buf, int len);
 };
 
-}
-}
+}  // namespace Util
+}  // namespace Anki
 
 #endif /* defined(__BaseStation__consoleChannelStdout__) */

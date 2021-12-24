@@ -20,6 +20,7 @@ limitations under the License.
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
+
 #include "tensorflow/contrib/lite/context.h"
 #include "tensorflow/contrib/lite/error_reporter.h"
 #include "tensorflow/contrib/lite/simple_memory_arena.h"

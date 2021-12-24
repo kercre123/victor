@@ -44,15 +44,11 @@ namespace google_breakpad {
 
 class Module;
 
-bool ELFSymbolsToModule(const uint8_t *symtab_section,
-                        size_t symtab_size,
-                        const uint8_t *string_section,
-                        size_t string_size,
-                        const bool big_endian,
-                        size_t value_size,
+bool ELFSymbolsToModule(const uint8_t *symtab_section, size_t symtab_size,
+                        const uint8_t *string_section, size_t string_size,
+                        const bool big_endian, size_t value_size,
                         Module *module);
 
 }  // namespace google_breakpad
-
 
 #endif  // BREAKPAD_COMMON_LINUX_ELF_SYMBOLS_TO_MODULE_H_

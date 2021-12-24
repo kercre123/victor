@@ -27,28 +27,31 @@ namespace utils {
  * A class used to validate a MAC address string before construction.
  */
 class MacAddressString {
-public:
-    /// Default copy-constructor so objects can be passed by value.
-    MacAddressString(const MacAddressString&) = default;
+ public:
+  /// Default copy-constructor so objects can be passed by value.
+  MacAddressString(const MacAddressString&) = default;
 
-    /**
-     * Factory that validates the MAC address before constructing the actual object.
-     *
-     * @params macAddress user supplied MacAddress
-     * @return nullptr if the input MAC address is illegal, otherwise a unique_ptr to a MacAddressString object that can
-     * be used to get the desired string.
-     */
-    static std::unique_ptr<MacAddressString> create(const std::string& macAddress);
+  /**
+   * Factory that validates the MAC address before constructing the actual
+   * object.
+   *
+   * @params macAddress user supplied MacAddress
+   * @return nullptr if the input MAC address is illegal, otherwise a unique_ptr
+   * to a MacAddressString object that can be used to get the desired string.
+   */
+  static std::unique_ptr<MacAddressString> create(
+      const std::string& macAddress);
 
-    std::string getString() const;
+  std::string getString() const;
 
-private:
-    /// The constructor will only be called with a legal macAddress input.  We don't check here because this function is
-    /// private and is only called from the public create(...) factory method.
-    MacAddressString(const std::string& macAddress);
+ private:
+  /// The constructor will only be called with a legal macAddress input.  We
+  /// don't check here because this function is private and is only called from
+  /// the public create(...) factory method.
+  MacAddressString(const std::string& macAddress);
 
-    /// a well formed MAC address string
-    const std::string m_macAddress;
+  /// a well formed MAC address string
+  const std::string m_macAddress;
 };
 
 }  // namespace utils

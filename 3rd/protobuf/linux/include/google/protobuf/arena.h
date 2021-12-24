@@ -50,6 +50,7 @@ using type_info = ::type_info;
 
 #include <google/protobuf/arena_impl.h>
 #include <google/protobuf/stubs/port.h>
+
 #include <type_traits>
 
 namespace google {
@@ -67,8 +68,8 @@ void TempPrivateWorkAround(::google::protobuf::ArenaOptions* arena_options);
 
 namespace protobuf {
 
-class Arena;          // defined below
-class Message;        // defined in message.h
+class Arena;    // defined below
+class Message;  // defined in message.h
 class MessageLite;
 
 namespace arena_metrics {
@@ -79,8 +80,8 @@ void EnableArenaMetrics(::google::protobuf::ArenaOptions* options);
 
 namespace internal {
 
-struct ArenaStringPtr;     // defined in arenastring.h
-class LazyField;           // defined in lazy_field.h
+struct ArenaStringPtr;  // defined in arenastring.h
+class LazyField;        // defined in lazy_field.h
 
 template <typename Type>
 class GenericTypeHandler;  // defined in repeated_field.h
@@ -177,7 +178,8 @@ struct ArenaOptions {
   static const size_t kDefaultStartBlockSize = 256;
   static const size_t kDefaultMaxBlockSize = 8192;
 
-  friend void ::google::protobuf::arena_metrics::EnableArenaMetrics(ArenaOptions*);
+  friend void ::google::protobuf::arena_metrics::EnableArenaMetrics(
+      ArenaOptions*);
   friend void quality_webanswers::TempPrivateWorkAround(ArenaOptions*);
   friend class Arena;
   friend class ArenaOptionsTestFriend;
@@ -216,9 +218,9 @@ struct ArenaOptions {
 //
 // - The type T must have (at least) two constructors: a constructor with no
 //   arguments, called when a T is allocated on the heap; and a constructor with
-//   a google::protobuf::Arena* argument, called when a T is allocated on an arena. If the
-//   second constructor is called with a NULL arena pointer, it must be
-//   equivalent to invoking the first (no-argument) constructor.
+//   a google::protobuf::Arena* argument, called when a T is allocated on an
+//   arena. If the second constructor is called with a NULL arena pointer, it
+//   must be equivalent to invoking the first (no-argument) constructor.
 //
 // - The type T must have a particular type trait: a nested type
 //   |InternalArenaConstructable_|. This is usually a typedef to |void|. If no
@@ -337,7 +339,8 @@ class LIBPROTOBUF_EXPORT Arena {
                   "CreateArray requires a trivially constructible type");
     static_assert(std::is_trivially_destructible<T>::value,
                   "CreateArray requires a trivially destructible type");
-    GOOGLE_CHECK_LE(num_elements, std::numeric_limits<size_t>::max() / sizeof(T))
+    GOOGLE_CHECK_LE(num_elements,
+                    std::numeric_limits<size_t>::max() / sizeof(T))
         << "Requested size is too large to fit into size_t.";
     if (arena == NULL) {
       return static_cast<T*>(::operator new[](num_elements * sizeof(T)));
@@ -580,7 +583,8 @@ class LIBPROTOBUF_EXPORT Arena {
   template <typename T>
   GOOGLE_PROTOBUF_ATTRIBUTE_ALWAYS_INLINE T* CreateInternalRawArray(
       size_t num_elements) {
-    GOOGLE_CHECK_LE(num_elements, std::numeric_limits<size_t>::max() / sizeof(T))
+    GOOGLE_CHECK_LE(num_elements,
+                    std::numeric_limits<size_t>::max() / sizeof(T))
         << "Requested size is too large to fit into size_t.";
     const size_t n = internal::AlignUpTo8(sizeof(T) * num_elements);
     // Monitor allocation if needed.
@@ -602,8 +606,9 @@ class LIBPROTOBUF_EXPORT Arena {
   }
 
   // CreateInArenaStorage is used to implement map field. Without it,
-  // google::protobuf::Map need to call generated message's protected arena constructor,
-  // which needs to declare google::protobuf::Map as friend of generated message.
+  // google::protobuf::Map need to call generated message's protected arena
+  // constructor, which needs to declare google::protobuf::Map as friend of
+  // generated message.
   template <typename T>
   static void CreateInArenaStorage(T* ptr, Arena* arena) {
     CreateInArenaStorageInternal(ptr, arena,
@@ -635,9 +640,9 @@ class LIBPROTOBUF_EXPORT Arena {
 
   // These implement Own(), which registers an object for deletion (destructor
   // call and operator delete()). The second parameter has type 'true_type' if T
-  // is a subtype of ::google::protobuf::Message and 'false_type' otherwise. Collapsing
-  // all template instantiations to one for generic Message reduces code size,
-  // using the virtual destructor instead.
+  // is a subtype of ::google::protobuf::Message and 'false_type' otherwise.
+  // Collapsing all template instantiations to one for generic Message reduces
+  // code size, using the virtual destructor instead.
   template <typename T>
   GOOGLE_PROTOBUF_ATTRIBUTE_ALWAYS_INLINE void OwnInternal(T* object,
                                                            std::true_type) {

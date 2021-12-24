@@ -5,4 +5,4 @@
 // This code was translated into a form compatible with 6a from the public
 // domain sources in SUPERCOP: https://bench.cr.yp.to/supercop.html
 
-#define REDMASK51     0x0007FFFFFFFFFFFF
+#define REDMASK51 0x0007FFFFFFFFFFFF

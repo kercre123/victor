@@ -14,8 +14,9 @@
  */
 
 /*
- * Portions of this file adapted from a code sample by Herb Sutter at https://herbsutter.com/gotw/_102/,
- * retrieved Dec. 21, 2016, as indicated below.
+ * Portions of this file adapted from a code sample by Herb Sutter at
+ * https://herbsutter.com/gotw/_102/, retrieved Dec. 21, 2016, as indicated
+ * below.
  */
 
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_MEMORY_MEMORY_H_
@@ -32,7 +33,7 @@ namespace memory {
 // START Herb Sutter code sample adaptation
 template <typename T, typename... Args>
 std::unique_ptr<T> make_unique(Args&&... args) {
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 // END Herb Sutter code sample adaptation
 

@@ -4,7 +4,8 @@
  * Author: baustin
  * Created: 1/22/15
  *
- * Description: Describes an endpoint on any of multiple possible transport networks (IP, BLE)
+ * Description: Describes an endpoint on any of multiple possible transport
+ *networks (IP, BLE)
  *
  * Copyright: Anki, Inc. 2015
  *
@@ -13,17 +14,17 @@
 #ifndef __NetworkService_TransportAddress_H__
 #define __NetworkService_TransportAddress_H__
 
-#include <cstdint>
-#include <string>
-#include <ostream>
 #include <netinet/in.h>
+
+#include <cstdint>
+#include <ostream>
+#include <string>
 
 namespace Anki {
 namespace Util {
 
 class TransportAddress {
-
-public:
+ public:
   TransportAddress();
   // Specify port in host order
   TransportAddress(const struct sockaddr_storage& sockaddr);
@@ -55,26 +56,26 @@ public:
   constexpr static unsigned int GetSerializedSize();
 
   std::string ToString() const;
-  
+
   // simple comparison operator
   bool operator==(const TransportAddress& rhs) const;
   bool operator!=(const TransportAddress& rhs) const;
-  
+
   // so this can be used as a key in a map
   bool operator<(const TransportAddress& rhs) const;
   bool operator>(const TransportAddress& rhs) const;
   bool operator<=(const TransportAddress& rhs) const;
   bool operator>=(const TransportAddress& rhs) const;
-  
+
   std::size_t GetHash() const;
-  
-private:
+
+ private:
   enum class Type : char {
-      None = 'n'
-    , IP = 'i'
-    , IPv6 = '6'
-    , Virtual = 'v'
-    , BLE = 'b'
+    None = 'n',
+    IP = 'i',
+    IPv6 = '6',
+    Virtual = 'v',
+    BLE = 'b'
   };
 
   Type _type;
@@ -97,24 +98,23 @@ private:
 };
 
 // for easier debugging
-inline std::ostream& operator<<(std::ostream& os, const Anki::Util::TransportAddress& base)
-{
+inline std::ostream& operator<<(std::ostream& os,
+                                const Anki::Util::TransportAddress& base) {
   return os << base.ToString();
 }
-  
-} // end namespace util
-} // end namespace Anki
+
+}  // namespace Util
+}  // end namespace Anki
 
 // so this can be used as a key in an unordered_map
 namespace std {
-  template<>
-  struct hash<Anki::Util::TransportAddress>
-  {
-    inline std::size_t operator()(const Anki::Util::TransportAddress& address) const
-    {
-      return address.GetHash();
-    }
-  };
-}
+template <>
+struct hash<Anki::Util::TransportAddress> {
+  inline std::size_t operator()(
+      const Anki::Util::TransportAddress& address) const {
+    return address.GetHash();
+  }
+};
+}  // namespace std
 
-#endif // __NetworkService_TransportAddress_H__
+#endif  // __NetworkService_TransportAddress_H__

@@ -2,8 +2,8 @@
 #define __COMMS_H
 
 namespace Comms {
-  void run(void);
-  void tick(void);
-}
+void run(void);
+void tick(void);
+}  // namespace Comms
 
 #endif

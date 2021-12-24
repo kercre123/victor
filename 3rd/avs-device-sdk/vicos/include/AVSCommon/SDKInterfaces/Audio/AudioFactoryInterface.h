@@ -28,26 +28,32 @@ namespace sdkInterfaces {
 namespace audio {
 
 /**
- * This is the interface that distributes interfaces for various audio stream providers.
+ * This is the interface that distributes interfaces for various audio stream
+ * providers.
  */
 class AudioFactoryInterface {
-public:
-    virtual ~AudioFactoryInterface() = default;
+ public:
+  virtual ~AudioFactoryInterface() = default;
 
-    /**
-     * This shares a factory that produces audio streams for the alerts components.
-     */
-    virtual std::shared_ptr<AlertsAudioFactoryInterface> alerts() const = 0;
+  /**
+   * This shares a factory that produces audio streams for the alerts
+   * components.
+   */
+  virtual std::shared_ptr<AlertsAudioFactoryInterface> alerts() const = 0;
 
-    /**
-     * This shares a factory that produces audio streams for the notifications components.
-     */
-    virtual std::shared_ptr<NotificationsAudioFactoryInterface> notifications() const = 0;
+  /**
+   * This shares a factory that produces audio streams for the notifications
+   * components.
+   */
+  virtual std::shared_ptr<NotificationsAudioFactoryInterface> notifications()
+      const = 0;
 
-    /**
-     * This shares a factory that produces audio streams for the communications components.
-     */
-    virtual std::shared_ptr<CommunicationsAudioFactoryInterface> communications() const = 0;
+  /**
+   * This shares a factory that produces audio streams for the communications
+   * components.
+   */
+  virtual std::shared_ptr<CommunicationsAudioFactoryInterface> communications()
+      const = 0;
 };
 
 }  // namespace audio

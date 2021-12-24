@@ -37,7 +37,7 @@
 // all combinations of host system and minidump processor
 // architecture, we need to be able to easily generate complex test
 // data like debugging information and minidump files.
-// 
+//
 // For example, if we want our unit tests to provide full code
 // coverage for stack walking, it may be difficult to persuade the
 // compiler to generate every possible sort of stack walking
@@ -57,8 +57,8 @@
 #define PROCESSOR_TEST_ASSEMBLER_H_
 
 #include <list>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "common/using_std_string.h"
 #include "google_breakpad/common/breakpad_types.h"
@@ -79,7 +79,7 @@ namespace test_assembler {
 // - undefined,
 // - defined as the sum of some other label and a constant, or
 // - a constant.
-// 
+//
 // A label's value never changes, but it can accumulate constraints.
 // Adding labels and integers is permitted, and yields a label.
 // Subtracting a constant from a label is permitted, and also yields a
@@ -109,9 +109,9 @@ namespace test_assembler {
 // Sections that refer to it.
 class Label {
  public:
-  Label();                      // An undefined label.
-  Label(uint64_t value);       // A label with a fixed value
-  Label(const Label &value);    // A label equal to another.
+  Label();                    // An undefined label.
+  Label(uint64_t value);      // A label with a fixed value
+  Label(const Label &value);  // A label equal to another.
   ~Label();
 
   // Return this label's value; it must be known.
@@ -145,12 +145,12 @@ class Label {
   // subtraction is possible given what we currently know of l and m.
   // It can be possible even if we don't know l and m's values. For
   // example:
-  // 
+  //
   //   Label l, m;
   //   m = l + 10;
   //   l.IsKnownConstant();             // false
   //   m.IsKnownConstant();             // false
-  //   uint64_t d;                     
+  //   uint64_t d;
   //   l.IsKnownOffsetFrom(m, &d);      // true, and sets d to -10.
   //   l-m                              // -10
   //   m-l                              // 10
@@ -239,11 +239,11 @@ inline Label operator+(uint64_t a, const Label &l) { return l + a; }
 
 // Conventions for representing larger numbers as sequences of bytes.
 enum Endianness {
-  kBigEndian,        // Big-endian: the most significant byte comes first.
-  kLittleEndian,     // Little-endian: the least significant byte comes first.
-  kUnsetEndian,      // used internally
+  kBigEndian,     // Big-endian: the most significant byte comes first.
+  kLittleEndian,  // Little-endian: the least significant byte comes first.
+  kUnsetEndian,   // used internally
 };
- 
+
 // A section is a sequence of bytes, constructed by appending bytes
 // to the end. Sections have a convenient and flexible set of member
 // functions for appending data in various formats: big-endian and
@@ -265,23 +265,20 @@ enum Endianness {
 // because there are typically several different meanings for "the
 // start of a section": the offset of the section within an object
 // file, the address in memory at which the section's content appear,
-// and so on. It's up to the code that uses the Section class to 
+// and so on. It's up to the code that uses the Section class to
 // keep track of these explicitly, as they depend on the application.
 class Section {
  public:
-  Section(Endianness endianness = kUnsetEndian)
-      : endianness_(endianness) { };
+  Section(Endianness endianness = kUnsetEndian) : endianness_(endianness){};
 
   // A base class destructor should be either public and virtual,
   // or protected and nonvirtual.
-  virtual ~Section() { };
+  virtual ~Section(){};
 
   // Set the default endianness of this section to ENDIANNESS. This
   // sets the behavior of the D<N> appending functions. If the
-  // assembler's default endianness was set, this is the 
-  void set_endianness(Endianness endianness) {
-    endianness_ = endianness;
-  }
+  // assembler's default endianness was set, this is the
+  void set_endianness(Endianness endianness) { endianness_ = endianness; }
 
   // Return the default endianness of this section.
   Endianness endianness() const { return endianness_; }
@@ -300,10 +297,10 @@ class Section {
   // Append SIZE copies of BYTE to the end of this section. Return a
   // reference to this section.
   Section &Append(size_t size, uint8_t byte) {
-    contents_.append(size, (char) byte);
+    contents_.append(size, (char)byte);
     return *this;
   }
-      
+
   // Append NUMBER to this section. ENDIANNESS is the endianness to
   // use to write the number. SIZE is the length of the number in
   // bytes. Return a reference to this section.
@@ -331,8 +328,7 @@ class Section {
   // long, pad with '\0' characters.
   Section &AppendCString(const string &data, size_t size) {
     contents_.append(data, 0, size);
-    if (data.size() < size)
-      Append(size - data.size(), 0);
+    if (data.size() < size) Append(size - data.size(), 0);
     return *this;
   }
 
@@ -352,27 +348,36 @@ class Section {
   // the compiler will properly sign-extend a signed value before
   // passing it to the function, at which point the function's
   // behavior is the same either way.
-  Section &L8(uint8_t value) { contents_ += value; return *this; }
-  Section &B8(uint8_t value) { contents_ += value; return *this; }
-  Section &D8(uint8_t value) { contents_ += value; return *this; }
-  Section &L16(uint16_t), &L32(uint32_t), &L64(uint64_t),
-          &B16(uint16_t), &B32(uint32_t), &B64(uint64_t),
-          &D16(uint16_t), &D32(uint32_t), &D64(uint64_t);
-  Section &L8(const Label &label),  &L16(const Label &label),
-          &L32(const Label &label), &L64(const Label &label),
-          &B8(const Label &label),  &B16(const Label &label),
-          &B32(const Label &label), &B64(const Label &label),
-          &D8(const Label &label),  &D16(const Label &label),
-          &D32(const Label &label), &D64(const Label &label);
+  Section &L8(uint8_t value) {
+    contents_ += value;
+    return *this;
+  }
+  Section &B8(uint8_t value) {
+    contents_ += value;
+    return *this;
+  }
+  Section &D8(uint8_t value) {
+    contents_ += value;
+    return *this;
+  }
+  Section &L16(uint16_t), &L32(uint32_t), &L64(uint64_t), &B16(uint16_t),
+      &B32(uint32_t), &B64(uint64_t), &D16(uint16_t), &D32(uint32_t),
+      &D64(uint64_t);
+  Section &L8(const Label &label), &L16(const Label &label),
+      &L32(const Label &label), &L64(const Label &label),
+      &B8(const Label &label), &B16(const Label &label),
+      &B32(const Label &label), &B64(const Label &label),
+      &D8(const Label &label), &D16(const Label &label),
+      &D32(const Label &label), &D64(const Label &label);
 
   // Append VALUE in a signed LEB128 (Little-Endian Base 128) form.
-  // 
+  //
   // The signed LEB128 representation of an integer N is a variable
   // number of bytes:
   //
   // - If N is between -0x40 and 0x3f, then its signed LEB128
   //   representation is a single byte whose value is N.
-  // 
+  //
   // - Otherwise, its signed LEB128 representation is (N & 0x7f) |
   //   0x80, followed by the signed LEB128 representation of N / 128,
   //   rounded towards negative infinity.
@@ -386,13 +391,13 @@ class Section {
   Section &LEB128(long long value);
 
   // Append VALUE in unsigned LEB128 (Little-Endian Base 128) form.
-  // 
+  //
   // The unsigned LEB128 representation of an integer N is a variable
   // number of bytes:
   //
   // - If N is between 0 and 0x7f, then its unsigned LEB128
   //   representation is a single byte whose value is N.
-  // 
+  //
   // - Otherwise, its unsigned LEB128 representation is (N & 0x7f) |
   //   0x80, followed by the unsigned LEB128 representation of N /
   //   128, rounded towards negative infinity.
@@ -414,7 +419,7 @@ class Section {
   size_t Size() const { return contents_.size(); }
 
   // Return a label representing the start of the section.
-  // 
+  //
   // It is up to the user whether this label represents the section's
   // position in an object file, the section's address in memory, or
   // what have you; some applications may need both, in which case
@@ -436,7 +441,10 @@ class Section {
   Label Here() const { return start_ + Size(); }
 
   // Set *LABEL to Here, and return a reference to this section.
-  Section &Mark(Label *label) { *label = Here(); return *this; }
+  Section &Mark(Label *label) {
+    *label = Here();
+    return *this;
+  }
 
   // If there are no undefined label references left in this
   // section, set CONTENTS to the contents of this section, as a
@@ -447,11 +455,13 @@ class Section {
  private:
   // Used internally. A reference to a label's value.
   struct Reference {
-    Reference(size_t set_offset, Endianness set_endianness,  size_t set_size,
+    Reference(size_t set_offset, Endianness set_endianness, size_t set_size,
               const Label &set_label)
-        : offset(set_offset), endianness(set_endianness), size(set_size),
-          label(set_label) { }
-      
+        : offset(set_offset),
+          endianness(set_endianness),
+          size(set_size),
+          label(set_label) {}
+
     // The offset of the reference within the section.
     size_t offset;
 
@@ -470,7 +480,7 @@ class Section {
 
   // The contents of the section.
   string contents_;
-  
+
   // References to labels within those contents.
   vector<Reference> references_;
 

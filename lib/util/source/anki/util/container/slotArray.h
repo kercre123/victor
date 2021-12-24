@@ -12,6 +12,7 @@
 #define __Util_SlotArray_H__
 
 #include <assert.h>
+
 #include <iterator>
 #include <limits>
 #include <memory>
@@ -21,19 +22,14 @@ namespace Anki {
 namespace Util {
 
 template <class T>
-class SlotArray
-{
-public:
+class SlotArray {
+ public:
   class iterator;
   class const_iterator;
 
   // constructor
   explicit SlotArray(size_t size)
-  : _capacity(size)
-  , _num(0)
-  , _array(new T*[size]())
-  {
-  }
+      : _capacity(size), _num(0), _array(new T*[size]()) {}
 
   // destructor
   ~SlotArray() {
@@ -44,10 +40,9 @@ public:
 
   // copy construct
   SlotArray(const SlotArray& other)
-  : _capacity(other._capacity)
-  , _num(other._num)
-  , _array(new T*[other._capacity])
-  {
+      : _capacity(other._capacity),
+        _num(other._num),
+        _array(new T*[other._capacity]) {
     for (auto i = 0; i < _capacity; i++) {
       _array[i] = other._array[i];
       if (_array[i] != nullptr) {
@@ -59,10 +54,7 @@ public:
 
   // move construct
   SlotArray(SlotArray&& other)
-  : _capacity(other._capacity)
-  , _num(other._num)
-  , _array(other._array)
-  {
+      : _capacity(other._capacity), _num(other._num), _array(other._array) {
     other._array = nullptr;
     other._num = 0;
     other._capacity = 0;
@@ -84,24 +76,12 @@ public:
   }
 
   // iterators
-  iterator begin() {
-    return iterator(*this);
-  }
-  const_iterator begin() const {
-    return const_iterator(*this);
-  }
-  const_iterator cbegin() const {
-    return begin();
-  }
-  iterator end() {
-    return iterator(*this, _capacity);
-  }
-  const_iterator end() const {
-    return const_iterator(*this, _capacity);
-  }
-  const_iterator cend() const {
-    return end();
-  }
+  iterator begin() { return iterator(*this); }
+  const_iterator begin() const { return const_iterator(*this); }
+  const_iterator cbegin() const { return begin(); }
+  iterator end() { return iterator(*this, _capacity); }
+  const_iterator end() const { return const_iterator(*this, _capacity); }
+  const_iterator cend() const { return end(); }
 
   // element access
   T* operator[](size_t index) {
@@ -114,14 +94,14 @@ public:
   }
 
   // element insertion
-  template<class ...Args>
+  template <class... Args>
   T& emplace_at(size_t index, Args&&... args) {
     assert(index >= 0 && index < _capacity);
     erase(index);
     create_object(index, std::forward<Args>(args)...);
     return *(_array[index]);
   }
-  template<class ...Args>
+  template <class... Args>
   T* emplace_first(Args&&... args) {
     size_t index = get_first_empty();
     if (index >= _capacity) {
@@ -168,15 +148,9 @@ public:
   }
 
   // container information
-  size_t size() const {
-    return _num;
-  }
-  size_t capacity() const {
-    return _capacity;
-  }
-  bool empty() const {
-    return _num == 0;
-  }
+  size_t size() const { return _num; }
+  size_t capacity() const { return _capacity; }
+  bool empty() const { return _num == 0; }
 
   // element information
   size_t get_index(const T& object) const {
@@ -191,12 +165,12 @@ public:
     return std::numeric_limits<size_t>::max();
   }
 
-  // iterator definitions: long, clusterfucky, involves templates, you've been warned
-private:
+  // iterator definitions: long, clusterfucky, involves templates, you've been
+  // warned
+ private:
   template <typename Base, typename Container>
-  class iterator_base
-  {
-  public:
+  class iterator_base {
+   public:
     typedef std::forward_iterator_tag iterator_category;
 
     bool operator==(const iterator_base& other) const {
@@ -209,28 +183,20 @@ private:
     iterator_base& operator++() {
       if (_index < _container->capacity()) {
         _index++;
-        while (_index < _container->capacity() && (*_container)[_index] == nullptr) {
+        while (_index < _container->capacity() &&
+               (*_container)[_index] == nullptr) {
           _index++;
         }
       }
       return *this;
     }
-    inline iterator_base& operator++(int) {
-      return ++(*this);
-    }
+    inline iterator_base& operator++(int) { return ++(*this); }
 
-    Base& operator*() const {
-      return *(*_container)[_index];
-    }
-    Base* operator->() const {
-      return (*_container)[_index];
-    }
+    Base& operator*() const { return *(*_container)[_index]; }
+    Base* operator->() const { return (*_container)[_index]; }
 
-  protected:
-    iterator_base(Container& container)
-    : _container(&container)
-    , _index(0)
-    {
+   protected:
+    iterator_base(Container& container) : _container(&container), _index(0) {
       if (_container->capacity() > 0 && (*_container)[_index] == nullptr) {
         (*this)++;
       }
@@ -238,46 +204,40 @@ private:
 
     friend class SlotArray;
 
-  private:
+   private:
     Container* _container;
-  protected:
+
+   protected:
     size_t _index;
   };
 
-public:
-  class iterator : public iterator_base<T, SlotArray>
-  {
-  protected:
-    iterator(SlotArray& container)
-    : iterator_base<T, SlotArray>(container)
-    {}
+ public:
+  class iterator : public iterator_base<T, SlotArray> {
+   protected:
+    iterator(SlotArray& container) : iterator_base<T, SlotArray>(container) {}
 
     iterator(SlotArray& container, size_t startIndex)
-    : iterator_base<T, SlotArray>(container)
-    {
+        : iterator_base<T, SlotArray>(container) {
       this->_index = startIndex;
     }
 
     friend class SlotArray;
   };
 
-  class const_iterator : public iterator_base<const T, const SlotArray>
-  {
-  protected:
+  class const_iterator : public iterator_base<const T, const SlotArray> {
+   protected:
     const_iterator(const SlotArray& container)
-    : iterator_base<const T, const SlotArray>(container)
-    {}
+        : iterator_base<const T, const SlotArray>(container) {}
 
     const_iterator(const SlotArray& container, size_t startIndex)
-    : iterator_base<const T, const SlotArray>(container)
-    {
+        : iterator_base<const T, const SlotArray>(container) {
       this->_index = startIndex;
     }
 
     friend class SlotArray;
   };
 
-private:
+ private:
   size_t get_first_empty() const {
     size_t i;
     for (i = 0; i < _capacity; i++) {
@@ -288,18 +248,21 @@ private:
     return i;
   }
 
-  // private functions to create/destroy, even if simple, to make sure we don't screw up _num counting
-  template <class ...Args>
+  // private functions to create/destroy, even if simple, to make sure we don't
+  // screw up _num counting
+  template <class... Args>
   void create_object(size_t index, Args&&... args) {
     T*& ptr = _array[index];
-    assert(ptr == nullptr); // this slot had better be cleared out before this is called
+    assert(
+        ptr ==
+        nullptr);  // this slot had better be cleared out before this is called
     ptr = new T(std::forward<Args>(args)...);
     _num++;
   }
 
   void destroy_object(size_t index) {
     T*& ptr = _array[index];
-    assert(ptr != nullptr); // this should never be called for null pointers
+    assert(ptr != nullptr);  // this should never be called for null pointers
     delete ptr;
     ptr = nullptr;
     _num--;
@@ -310,7 +273,7 @@ private:
   T** _array;
 };
 
-} // namespace Util
-} // namespace Anki
+}  // namespace Util
+}  // namespace Anki
 
-#endif // __Util_SlotArray_H__
+#endif  // __Util_SlotArray_H__

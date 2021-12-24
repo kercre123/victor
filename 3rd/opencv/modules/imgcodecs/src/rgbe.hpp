@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -14,23 +15,29 @@
 // Copyright (C) 2009, Willow Garage Inc., all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
-// This software is provided by the copyright holders and contributors "as is" and
+// This software is provided by the copyright holders and contributors "as is"
+and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -56,14 +63,14 @@ typedef struct {
   float gamma;          /* image has already been gamma corrected with
                          * given gamma.  defaults to 1.0 (no correction) */
   float exposure;       /* a value of 1.0 in an image corresponds to
-       * <exposure> watts/steradian/m^2.
-       * defaults to 1.0 */
+                         * <exposure> watts/steradian/m^2.
+                         * defaults to 1.0 */
 } rgbe_header_info;
 
 /* flags indicating which fields in an rgbe_header_info are valid */
 #define RGBE_VALID_PROGRAMTYPE 0x01
-#define RGBE_VALID_GAMMA       0x02
-#define RGBE_VALID_EXPOSURE    0x04
+#define RGBE_VALID_GAMMA 0x02
+#define RGBE_VALID_EXPOSURE 0x04
 
 /* return codes for rgbe routines */
 #define RGBE_RETURN_SUCCESS 0
@@ -82,8 +89,8 @@ int RGBE_ReadPixels(FILE *fp, float *data, int numpixels);
 /* read or write run length encoded files */
 /* must be called to read or write whole scanlines */
 int RGBE_WritePixels_RLE(FILE *fp, float *data, int scanline_width,
-       int num_scanlines);
+                         int num_scanlines);
 int RGBE_ReadPixels_RLE(FILE *fp, float *data, int scanline_width,
-      int num_scanlines);
+                        int num_scanlines);
 
-#endif/*_RGBE_HDR_H_*/
+#endif /*_RGBE_HDR_H_*/

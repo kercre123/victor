@@ -14,19 +14,18 @@
 #ifndef __DasLocalAppenderFactory_H__
 #define __DasLocalAppenderFactory_H__
 
+#include <map>
+#include <string>
+
 #include "DAS.h"
 #include "DASPrivate.h"
-#include <string>
-#include <map>
 
-namespace Anki
-{
-namespace Das
-{
+namespace Anki {
+namespace Das {
 class DasLocalAppender;
 
 class DasLocalAppenderFactory {
-public:
+ public:
   // Returns an appender based on the desired mode
   // DASLogMode_System - returns appender that goes to system log
   // DASLogMode_Normal - returns appender that goes to console
@@ -34,7 +33,7 @@ public:
   static DasLocalAppender* CreateAppender(DASLocalLoggerMode logMode);
 };
 
-} // namespace Das
-} // namespace Anki
+}  // namespace Das
+}  // namespace Anki
 
-#endif // __DasLocalAppenderFactory_H__
+#endif  // __DasLocalAppenderFactory_H__

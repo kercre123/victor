@@ -20,81 +20,85 @@
 #include <string>
 #include <utility>
 
-#include "AVSCommon/Utils/Threading/Executor.h"
-#include "AVSCommon/Utils/RequiresShutdown.h"
-#include "AVSCommon/AVS/MessageRequest.h"
-#include "AVSCommon/SDKInterfaces/MessageSenderInterface.h"
-
 #include "ACL/Transport/MessageRouterObserverInterface.h"
 #include "ACL/Transport/TransportInterface.h"
 #include "ACL/Transport/TransportObserverInterface.h"
+#include "AVSCommon/AVS/MessageRequest.h"
+#include "AVSCommon/SDKInterfaces/MessageSenderInterface.h"
+#include "AVSCommon/Utils/RequiresShutdown.h"
+#include "AVSCommon/Utils/Threading/Executor.h"
 
 namespace alexaClientSDK {
 namespace acl {
 
 /**
- * This specifies the interface to manage an actual connection over some medium to AVS.
+ * This specifies the interface to manage an actual connection over some medium
+ * to AVS.
  *
  * Implementations of this class are required to be thread-safe.
  */
 class MessageRouterInterface
-        : public avsCommon::sdkInterfaces::MessageSenderInterface
-        , public avsCommon::utils::RequiresShutdown {
-public:
-    /// Alias to a connection status and changed reason pair.
-    using ConnectionStatus = std::pair<
-        avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status,
-        avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::ChangedReason>;
+    : public avsCommon::sdkInterfaces::MessageSenderInterface,
+      public avsCommon::utils::RequiresShutdown {
+ public:
+  /// Alias to a connection status and changed reason pair.
+  using ConnectionStatus = std::pair<
+      avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status,
+      avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::
+          ChangedReason>;
 
-    /**
-     * Constructor.
-     */
-    MessageRouterInterface(const std::string& name);
+  /**
+   * Constructor.
+   */
+  MessageRouterInterface(const std::string& name);
 
-    /**
-     * Begin the process of establishing an AVS connection.
-     * If the underlying implementation is already connected, or is in the process of changing its connection state,
-     * this function should do nothing.
-     */
-    virtual void enable() = 0;
+  /**
+   * Begin the process of establishing an AVS connection.
+   * If the underlying implementation is already connected, or is in the process
+   * of changing its connection state, this function should do nothing.
+   */
+  virtual void enable() = 0;
 
-    /**
-     * Close the AVS connection.
-     * If the underlying implementation is not connected, or is in the process of changing its connection state,
-     * this function should do nothing.
-     *
-     */
-    virtual void disable() = 0;
+  /**
+   * Close the AVS connection.
+   * If the underlying implementation is not connected, or is in the process of
+   * changing its connection state, this function should do nothing.
+   *
+   */
+  virtual void disable() = 0;
 
-    /**
-     * Queries the status of the connection.
-     *
-     * @return Returns the connection status and changed reason pair of the underlying implementation.
-     */
-    virtual ConnectionStatus getConnectionStatus() = 0;
+  /**
+   * Queries the status of the connection.
+   *
+   * @return Returns the connection status and changed reason pair of the
+   * underlying implementation.
+   */
+  virtual ConnectionStatus getConnectionStatus() = 0;
 
-    /**
-     * Set the URL endpoint for the AVS connection.  Calling this function with a new value will cause the
-     * current active connection to be closed, and a new one opened to the new endpoint.
-     * @param avsEndpoint The URL for the new AVS endpoint.
-     */
-    virtual void setAVSEndpoint(const std::string& avsEndpoint) = 0;
+  /**
+   * Set the URL endpoint for the AVS connection.  Calling this function with a
+   * new value will cause the current active connection to be closed, and a new
+   * one opened to the new endpoint.
+   * @param avsEndpoint The URL for the new AVS endpoint.
+   */
+  virtual void setAVSEndpoint(const std::string& avsEndpoint) = 0;
 
-    /**
-     * Set the observer to this object.
-     * @param observer An observer to this class, which will be notified when the connection status changes,
-     * and when messages arrive from AVS.
-     */
-    virtual void setObserver(std::shared_ptr<MessageRouterObserverInterface> observer) = 0;
+  /**
+   * Set the observer to this object.
+   * @param observer An observer to this class, which will be notified when the
+   * connection status changes, and when messages arrive from AVS.
+   */
+  virtual void setObserver(
+      std::shared_ptr<MessageRouterObserverInterface> observer) = 0;
 
-    /**
-     * Destructor.
-     */
-    virtual ~MessageRouterInterface() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~MessageRouterInterface() = default;
 };
 
-inline MessageRouterInterface::MessageRouterInterface(const std::string& name) : RequiresShutdown(name) {
-}
+inline MessageRouterInterface::MessageRouterInterface(const std::string& name)
+    : RequiresShutdown(name) {}
 
 }  // namespace acl
 }  // namespace alexaClientSDK

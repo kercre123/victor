@@ -15,8 +15,9 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include "../webp/types.h"
+
 #include "../webp/format_constants.h"
+#include "../webp/types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,12 +29,7 @@ extern "C" {
 // -----------------------------------------------------------------------------
 // PixOrCopy
 
-enum Mode {
-  kLiteral,
-  kCacheIdx,
-  kCopy,
-  kNone
-};
+enum Mode { kLiteral, kCacheIdx, kCopy, kNone };
 
 typedef struct {
   // mode as uint8_t to make the memory layout to be exactly 8 bytes.
@@ -140,7 +136,7 @@ void VP8LHashChainClear(VP8LHashChain* const p);  // release memory
 // maximum number of reference blocks the image will be segmented into
 #define MAX_REFS_BLOCK_PER_IMAGE 16
 
-typedef struct PixOrCopyBlock PixOrCopyBlock;   // forward declaration
+typedef struct PixOrCopyBlock PixOrCopyBlock;  // forward declaration
 typedef struct VP8LBackwardRefs VP8LBackwardRefs;
 
 // Container for blocks chain
@@ -165,10 +161,10 @@ int VP8LBackwardRefsCopy(const VP8LBackwardRefs* const src,
 // Cursor for iterating on references content
 typedef struct {
   // public:
-  PixOrCopy* cur_pos;           // current position
+  PixOrCopy* cur_pos;  // current position
   // private:
-  PixOrCopyBlock* cur_block_;   // current block in the refs list
-  const PixOrCopy* last_pos_;   // sentinel for switching to next block
+  PixOrCopyBlock* cur_block_;  // current block in the refs list
+  const PixOrCopy* last_pos_;  // sentinel for switching to next block
 } VP8LRefsCursor;
 
 // Returns a cursor positioned at the beginning of the references list.

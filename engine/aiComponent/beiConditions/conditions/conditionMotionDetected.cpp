@@ -1,103 +1,114 @@
 /**
-* File: conditionMotionDetected.h
-*
-* Author: Kevin M. Karol
-* Created: 1/23/18
-*
-* Description: Condition which is true when motion is detected
-*
-* Copyright: Anki, Inc. 2018
-*
-**/
-
+ * File: conditionMotionDetected.h
+ *
+ * Author: Kevin M. Karol
+ * Created: 1/23/18
+ *
+ * Description: Condition which is true when motion is detected
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 #include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
+
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "engine/aiComponent/beiConditions/beiConditionMessageHelper.h"
 #include "engine/aiComponent/beiConditions/beiConditionDebugFactors.h"
-
+#include "engine/aiComponent/beiConditions/beiConditionMessageHelper.h"
 
 namespace Anki {
 namespace Vector {
 
-namespace{
+namespace {
 const char* kMotionAreaKey = "motionArea";
 const char* kMotionLevelKey = "motionLevel";
-}
+}  // namespace
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
 ConditionMotionDetected::ConditionMotionDetected(const Json::Value& config)
-: IBEICondition(config)
-{
-  const auto& areaStr = JsonTools::ParseString(config,
-                                               kMotionAreaKey,
-                                               "ConditionMotionDetected.ConfigError.MotionArea");
+    : IBEICondition(config) {
+  const auto& areaStr = JsonTools::ParseString(
+      config, kMotionAreaKey, "ConditionMotionDetected.ConfigError.MotionArea");
   _instanceParams.motionArea = AreaStringToEnum(areaStr);
-  const auto& levelStr = JsonTools::ParseString(config,
-                                                kMotionLevelKey,
-                                                "ConditionMotionDetected.ConfigError.MotionLevel");
+  const auto& levelStr =
+      JsonTools::ParseString(config, kMotionLevelKey,
+                             "ConditionMotionDetected.ConfigError.MotionLevel");
   _instanceParams.motionLevel = LevelStringToEnum(levelStr);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+ConditionMotionDetected::~ConditionMotionDetected() {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionMotionDetected::~ConditionMotionDetected()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void ConditionMotionDetected::InitInternal(
+    BehaviorExternalInterface& behaviorExternalInterface) {
+  _instanceParams._messageHelper.reset(
+      new BEIConditionMessageHelper(this, behaviorExternalInterface));
 
+  _instanceParams._messageHelper->SubscribeToTags(
+      {EngineToGameTag::RobotObservedMotion});
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionMotionDetected::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  _instanceParams._messageHelper.reset(new BEIConditionMessageHelper(this, behaviorExternalInterface));
-  
-  _instanceParams._messageHelper->SubscribeToTags({
-    EngineToGameTag::RobotObservedMotion
-  });
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionMotionDetected::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool ConditionMotionDetected::AreConditionsMetInternal(
+    BehaviorExternalInterface& behaviorExternalInterface) const {
   // within last tick
-  return _lifetimeParams.tickCountMotionObserved + 1 >= BaseStationTimer::getInstance()->GetTickCount();
+  return _lifetimeParams.tickCountMotionObserved + 1 >=
+         BaseStationTimer::getInstance()->GetTickCount();
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionMotionDetected::BuildDebugFactorsInternal( BEIConditionDebugFactors& factors ) const
-{
-  factors.AddFactor( "detectedMotionLevel", _lifetimeParams.detectedMotionLevel );
-  factors.AddFactor( "tickCountMotionObserved", (int)_lifetimeParams.tickCountMotionObserved );
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void ConditionMotionDetected::BuildDebugFactorsInternal(
+    BEIConditionDebugFactors& factors) const {
+  factors.AddFactor("detectedMotionLevel", _lifetimeParams.detectedMotionLevel);
+  factors.AddFactor("tickCountMotionObserved",
+                    (int)_lifetimeParams.tickCountMotionObserved);
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionMotionDetected::HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void ConditionMotionDetected::HandleEvent(
+    const EngineToGameEvent& event,
+    BehaviorExternalInterface& behaviorExternalInterface) {
   using namespace ExternalInterface;
-  switch (event.GetData().GetTag())
-  {
+  switch (event.GetData().GetTag()) {
     case MessageEngineToGameTag::RobotObservedMotion: {
       // don't update the pounce location while we are active but go back.
-      const auto & motionObserved = event.GetData().Get_RobotObservedMotion();
+      const auto& motionObserved = event.GetData().Get_RobotObservedMotion();
       bool observedMotion = false;
-      switch(_instanceParams.motionArea){
-        case MotionArea::Left:  { observedMotion = EvaluateLeft(motionObserved);   break;}
-        case MotionArea::Right: { observedMotion = EvaluateRight(motionObserved);  break;}
-        case MotionArea::Top:   { observedMotion = EvaluateTop(motionObserved);    break;}
-        case MotionArea::Ground:{ observedMotion = EvaluateGround(motionObserved); break;}
-        case MotionArea::Any:   {
-          observedMotion = EvaluateLeft(motionObserved)
-                           || EvaluateRight(motionObserved)
-                           || EvaluateTop(motionObserved)
-                           || EvaluateGround(motionObserved);
-        }
+      switch (_instanceParams.motionArea) {
+        case MotionArea::Left: {
+          observedMotion = EvaluateLeft(motionObserved);
           break;
+        }
+        case MotionArea::Right: {
+          observedMotion = EvaluateRight(motionObserved);
+          break;
+        }
+        case MotionArea::Top: {
+          observedMotion = EvaluateTop(motionObserved);
+          break;
+        }
+        case MotionArea::Ground: {
+          observedMotion = EvaluateGround(motionObserved);
+          break;
+        }
+        case MotionArea::Any: {
+          observedMotion =
+              EvaluateLeft(motionObserved) || EvaluateRight(motionObserved) ||
+              EvaluateTop(motionObserved) || EvaluateGround(motionObserved);
+        } break;
       }
-      if(observedMotion){
-        _lifetimeParams.tickCountMotionObserved = BaseStationTimer::getInstance()->GetTickCount();
+      if (observedMotion) {
+        _lifetimeParams.tickCountMotionObserved =
+            BaseStationTimer::getInstance()->GetTickCount();
       }
 
       break;
@@ -109,91 +120,115 @@ void ConditionMotionDetected::HandleEvent(const EngineToGameEvent& event, Behavi
   }
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionMotionDetected::EvaluateLeft(const RobotObservedMotion& motionObserved)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool ConditionMotionDetected::EvaluateLeft(
+    const RobotObservedMotion& motionObserved) {
   _lifetimeParams.detectedMotionLevel = motionObserved.left_img_area;
-  switch(_instanceParams.motionLevel){
-    case MotionLevel::High:{ return motionObserved.left_img_area > 0.4f;}
-    case MotionLevel::Low: { return motionObserved.left_img_area > 0.2f;}
-    case MotionLevel::Any: { return motionObserved.left_img_area > 0.0f;}
+  switch (_instanceParams.motionLevel) {
+    case MotionLevel::High: {
+      return motionObserved.left_img_area > 0.4f;
+    }
+    case MotionLevel::Low: {
+      return motionObserved.left_img_area > 0.2f;
+    }
+    case MotionLevel::Any: {
+      return motionObserved.left_img_area > 0.0f;
+    }
   }
-  
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionMotionDetected::EvaluateRight(const RobotObservedMotion& motionObserved)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool ConditionMotionDetected::EvaluateRight(
+    const RobotObservedMotion& motionObserved) {
   _lifetimeParams.detectedMotionLevel = motionObserved.right_img_area;
-  switch(_instanceParams.motionLevel){
-    case MotionLevel::High: { return motionObserved.right_img_area > 0.4f;}
-    case MotionLevel::Low:  { return motionObserved.right_img_area > 0.2f;}
-    case MotionLevel::Any:  { return motionObserved.right_img_area > 0.0f;}
+  switch (_instanceParams.motionLevel) {
+    case MotionLevel::High: {
+      return motionObserved.right_img_area > 0.4f;
+    }
+    case MotionLevel::Low: {
+      return motionObserved.right_img_area > 0.2f;
+    }
+    case MotionLevel::Any: {
+      return motionObserved.right_img_area > 0.0f;
+    }
   }
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionMotionDetected::EvaluateTop(const RobotObservedMotion& motionObserved)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool ConditionMotionDetected::EvaluateTop(
+    const RobotObservedMotion& motionObserved) {
   _lifetimeParams.detectedMotionLevel = motionObserved.top_img_area;
-  switch(_instanceParams.motionLevel){
-    case MotionLevel::High: { return motionObserved.top_img_area > 0.4f;}
-    case MotionLevel::Low:  { return motionObserved.top_img_area > 0.2f;}
-    case MotionLevel::Any:  { return motionObserved.top_img_area > 0.0f;}
+  switch (_instanceParams.motionLevel) {
+    case MotionLevel::High: {
+      return motionObserved.top_img_area > 0.4f;
+    }
+    case MotionLevel::Low: {
+      return motionObserved.top_img_area > 0.2f;
+    }
+    case MotionLevel::Any: {
+      return motionObserved.top_img_area > 0.0f;
+    }
   }
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionMotionDetected::EvaluateGround(const RobotObservedMotion& motionObserved)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool ConditionMotionDetected::EvaluateGround(
+    const RobotObservedMotion& motionObserved) {
   _lifetimeParams.detectedMotionLevel = motionObserved.ground_area;
-  switch(_instanceParams.motionLevel){
-    case MotionLevel::High: { return motionObserved.ground_area > 0.4f;}
-    case MotionLevel::Low:  { return motionObserved.ground_area > 0.2f;}
-    case MotionLevel::Any:  { return motionObserved.ground_area > 0.0f;}
+  switch (_instanceParams.motionLevel) {
+    case MotionLevel::High: {
+      return motionObserved.ground_area > 0.4f;
+    }
+    case MotionLevel::Low: {
+      return motionObserved.ground_area > 0.2f;
+    }
+    case MotionLevel::Any: {
+      return motionObserved.ground_area > 0.0f;
+    }
   }
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionMotionDetected::MotionArea ConditionMotionDetected::AreaStringToEnum(const std::string& areaStr)
-{
-  if(areaStr == "Left"){
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+ConditionMotionDetected::MotionArea ConditionMotionDetected::AreaStringToEnum(
+    const std::string& areaStr) {
+  if (areaStr == "Left") {
     return MotionArea::Left;
-  }else if(areaStr == "Right"){
+  } else if (areaStr == "Right") {
     return MotionArea::Right;
-  }else if(areaStr == "Top"){
+  } else if (areaStr == "Top") {
     return MotionArea::Top;
-  }else if(areaStr == "Ground"){
+  } else if (areaStr == "Ground") {
     return MotionArea::Ground;
-  }else if(areaStr == "Any"){
+  } else if (areaStr == "Any") {
     return MotionArea::Any;
-  }else{
-    DEV_ASSERT(false, "ConditionMotionDetected.AreaStringToEnum.InvalidAreaStr");
+  } else {
+    DEV_ASSERT(false,
+               "ConditionMotionDetected.AreaStringToEnum.InvalidAreaStr");
     return MotionArea::Ground;
   }
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionMotionDetected::MotionLevel ConditionMotionDetected::LevelStringToEnum(const std::string& levelStr)
-{
-  if(levelStr == "High"){
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+ConditionMotionDetected::MotionLevel ConditionMotionDetected::LevelStringToEnum(
+    const std::string& levelStr) {
+  if (levelStr == "High") {
     return MotionLevel::High;
-  }else if(levelStr == "Low"){
+  } else if (levelStr == "Low") {
     return MotionLevel::Low;
-  }else if(levelStr == "Any"){
+  } else if (levelStr == "Any") {
     return MotionLevel::Any;
-  }else{
-    DEV_ASSERT(false, "ConditionMotionDetected.LevelStringToEnum.InvalidAreaStr");
+  } else {
+    DEV_ASSERT(false,
+               "ConditionMotionDetected.LevelStringToEnum.InvalidAreaStr");
     return MotionLevel::Low;
   }
 }
 
-
-} // namespace
-} // namespace
+}  // namespace Vector
+}  // namespace Anki

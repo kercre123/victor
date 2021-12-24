@@ -40,14 +40,14 @@
 
 #include <string>
 
-#include "common/module.h"
 #include "common/dwarf/dwarf2reader.h"
+#include "common/module.h"
 #include "common/using_std_string.h"
 
 namespace google_breakpad {
 
 // A class for producing a vector of google_breakpad::Module::Line
-// instances from parsed DWARF line number data.  
+// instances from parsed DWARF line number data.
 //
 // An instance of this class can be provided as a handler to a
 // dwarf2reader::LineInfo DWARF line number information parser. The
@@ -76,7 +76,7 @@ namespace google_breakpad {
 //    Special opcode 119: advance Address by 8 to 0xb and Line by 2 to 18
 //    Advance PC by 2 to 0xd
 //    Extended opcode 1: End of Sequence
-// 
+//
 //    Extended opcode 2: set Address to 0x0
 //    Advance Line by 14 to 15
 //    Copy
@@ -84,7 +84,7 @@ namespace google_breakpad {
 //    Special opcode 119: advance Address by 8 to 0xb and Line by 2 to 18
 //    Advance PC by 2 to 0xd
 //    Extended opcode 1: End of Sequence
-// 
+//
 //    Extended opcode 2: set Address to 0x0
 //    Advance Line by 19 to 20
 //    Copy
@@ -92,7 +92,7 @@ namespace google_breakpad {
 //    Special opcode 76: advance Address by 5 to 0x8 and Line by 1 to 22
 //    Advance PC by 2 to 0xa
 //    Extended opcode 1: End of Sequence
-// 
+//
 //    Extended opcode 2: set Address to 0x80483a4
 //    Advance Line by 23 to 24
 //    Copy
@@ -111,7 +111,7 @@ namespace google_breakpad {
 //   at address zero.)
 //
 // - If a line starts immediately after an omitted line, omit it too.
-class DwarfLineToModule: public dwarf2reader::LineInfoHandler {
+class DwarfLineToModule : public dwarf2reader::LineInfoHandler {
  public:
   // As the DWARF line info parser passes us line records, add source
   // files to MODULE, and add all lines to the end of LINES. LINES
@@ -120,7 +120,7 @@ class DwarfLineToModule: public dwarf2reader::LineInfoHandler {
   // end of the address space, we clip it. It's up to our client to
   // sort out which lines belong to which functions; we don't add them
   // to any particular function in MODULE ourselves.
-  DwarfLineToModule(Module *module, const string& compilation_dir,
+  DwarfLineToModule(Module *module, const string &compilation_dir,
                     vector<Module::Line> *lines)
       : module_(module),
         compilation_dir_(compilation_dir),
@@ -128,19 +128,17 @@ class DwarfLineToModule: public dwarf2reader::LineInfoHandler {
         highest_file_number_(-1),
         omitted_line_end_(0),
         warned_bad_file_number_(false),
-        warned_bad_directory_number_(false) { }
-  
-  ~DwarfLineToModule() { }
+        warned_bad_directory_number_(false) {}
+
+  ~DwarfLineToModule() {}
 
   void DefineDir(const string &name, uint32 dir_num);
-  void DefineFile(const string &name, int32 file_num,
-                  uint32 dir_num, uint64 mod_time,
-                  uint64 length);
-  void AddLine(uint64 address, uint64 length,
-               uint32 file_num, uint32 line_num, uint32 column_num);
+  void DefineFile(const string &name, int32 file_num, uint32 dir_num,
+                  uint64 mod_time, uint64 length);
+  void AddLine(uint64 address, uint64 length, uint32 file_num, uint32 line_num,
+               uint32 column_num);
 
  private:
-
   typedef std::map<uint32, string> DirectoryTable;
   typedef std::map<uint32, Module::File *> FileTable;
 
@@ -172,17 +170,17 @@ class DwarfLineToModule: public dwarf2reader::LineInfoHandler {
   // The highest file number we've seen so far, or -1 if we've seen
   // none.  Used for dynamically defined file numbers.
   int32 highest_file_number_;
-  
+
   // This is the ending address of the last line we omitted, or zero if we
   // didn't omit the previous line. It is zero before we have received any
   // AddLine calls.
   uint64 omitted_line_end_;
 
   // True if we've warned about:
-  bool warned_bad_file_number_; // bad file numbers
-  bool warned_bad_directory_number_; // bad directory numbers
+  bool warned_bad_file_number_;       // bad file numbers
+  bool warned_bad_directory_number_;  // bad directory numbers
 };
 
-} // namespace google_breakpad
+}  // namespace google_breakpad
 
-#endif // COMMON_LINUX_DWARF_LINE_TO_MODULE_H
+#endif  // COMMON_LINUX_DWARF_LINE_TO_MODULE_H

@@ -66,14 +66,14 @@ class MemoryRegion;
 class CFIFrameInfo {
  public:
   // A map from register names onto values.
-  template<typename ValueType> class RegisterValueMap: 
-    public map<string, ValueType> { };
+  template <typename ValueType>
+  class RegisterValueMap : public map<string, ValueType> {};
 
   // Set the expression for computing a call frame address, return
   // address, or register's value. At least the CFA rule and the RA
   // rule must be set before calling FindCallerRegs.
   void SetCFARule(const string &expression) { cfa_rule_ = expression; }
-  void SetRARule(const string &expression)  { ra_rule_ = expression; }
+  void SetRARule(const string &expression) { ra_rule_ = expression; }
   void SetRegisterRule(const string &register_name, const string &expression) {
     register_rules_[register_name] = expression;
   }
@@ -95,7 +95,7 @@ class CFIFrameInfo {
   // and CALLER_REGISTERS[".cfa"] will be the call frame address.
   // These may be helpful in computing the caller's PC and stack
   // pointer, if their values are not explicitly specified.
-  template<typename ValueType>
+  template <typename ValueType>
   bool FindCallerRegs(const RegisterValueMap<ValueType> &registers,
                       const MemoryRegion &memory,
                       RegisterValueMap<ValueType> *caller_registers) const;
@@ -105,8 +105,7 @@ class CFIFrameInfo {
   string Serialize() const;
 
  private:
-
-  // A map from register names onto evaluation rules. 
+  // A map from register names onto evaluation rules.
   typedef map<string, string> RuleMap;
 
   // In this type, a "postfix expression" is an expression of the sort
@@ -125,7 +124,7 @@ class CFIFrameInfo {
   // cfa_rule expression, above.
 
   // A postfix expression for computing the current frame's return
-  // address. 
+  // address.
   string ra_rule_;
 
   // For a register named REG, rules[REG] is a postfix expression
@@ -141,11 +140,10 @@ class CFIFrameInfo {
 // possible.
 class CFIRuleParser {
  public:
-
   class Handler {
    public:
-    Handler() { }
-    virtual ~Handler() { }
+    Handler() {}
+    virtual ~Handler() {}
 
     // The input specifies EXPRESSION as the CFA/RA computation rule.
     virtual void CFARule(const string &expression) = 0;
@@ -154,9 +152,9 @@ class CFIRuleParser {
     // The input specifies EXPRESSION as the recovery rule for register NAME.
     virtual void RegisterRule(const string &name, const string &expression) = 0;
   };
-    
+
   // Construct a parser which feeds its results to HANDLER.
-  CFIRuleParser(Handler *handler) : handler_(handler) { }
+  CFIRuleParser(Handler *handler) : handler_(handler) {}
 
   // Parse RULE_SET as a set of CFA computation and RA/register
   // recovery rules, as appearing in STACK CFI records. Report the
@@ -177,11 +175,11 @@ class CFIRuleParser {
 
 // A handler for rule set parsing that populates a CFIFrameInfo with
 // the results.
-class CFIFrameInfoParseHandler: public CFIRuleParser::Handler {
+class CFIFrameInfoParseHandler : public CFIRuleParser::Handler {
  public:
   // Populate FRAME_INFO with the results of parsing.
   CFIFrameInfoParseHandler(CFIFrameInfo *frame_info)
-      : frame_info_(frame_info) { }
+      : frame_info_(frame_info) {}
 
   void CFARule(const string &expression);
   void RARule(const string &expression);
@@ -241,7 +239,7 @@ class SimpleCFIWalker {
   // RegisterSet structures; MAP_SIZE is the number of elements in the
   // array.
   SimpleCFIWalker(const RegisterSet *register_map, size_t map_size)
-      : register_map_(register_map), map_size_(map_size) { }
+      : register_map_(register_map), map_size_(map_size) {}
 
   // Compute the calling frame's raw context given the callee's raw
   // context.
@@ -259,8 +257,7 @@ class SimpleCFIWalker {
   bool FindCallerRegisters(const MemoryRegion &memory,
                            const CFIFrameInfo &cfi_frame_info,
                            const RawContextType &callee_context,
-                           int callee_validity,
-                           RawContextType *caller_context,
+                           int callee_validity, RawContextType *caller_context,
                            int *caller_validity) const;
 
  private:

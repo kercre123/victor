@@ -17,6 +17,7 @@
 #define ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_LOGGER_LOGENTRYSTREAM_H_
 
 #include <ostream>
+
 #include "AVSCommon/Utils/Logger/LogEntryBuffer.h"
 
 namespace alexaClientSDK {
@@ -25,22 +26,22 @@ namespace utils {
 namespace logger {
 
 /**
- * A simple override of @c std::ostream specialized to minimizing copying and memory allocations while constructing
- * the text of a LogEntry.
+ * A simple override of @c std::ostream specialized to minimizing copying and
+ * memory allocations while constructing the text of a LogEntry.
  */
-class LogEntryStream
-        : private LogEntryBuffer
-        , public std::ostream {
-public:
-    /// Create a new LogEntryStream.
-    LogEntryStream();
+class LogEntryStream : private LogEntryBuffer, public std::ostream {
+ public:
+  /// Create a new LogEntryStream.
+  LogEntryStream();
 
-    /**
-     * Access the contents of the accumulated stream as string.
-     * @return The contents of the accumulated stream as string. The pointer returned is only guaranteed to be valid
-     * for the lifetime of this LogEntryStream, and only as long as no further modifications are made to it.
-     */
-    const char* c_str() const;
+  /**
+   * Access the contents of the accumulated stream as string.
+   * @return The contents of the accumulated stream as string. The pointer
+   * returned is only guaranteed to be valid for the lifetime of this
+   * LogEntryStream, and only as long as no further modifications are made to
+   * it.
+   */
+  const char* c_str() const;
 };
 
 }  // namespace logger

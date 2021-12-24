@@ -14,107 +14,117 @@
 #ifndef COZMO_LIFT_CONTROLLER_H_
 #define COZMO_LIFT_CONTROLLER_H_
 
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/motorTypes.h"
 #include "coretech/common/shared/types.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
 
 namespace Anki {
-  namespace Vector {
-    namespace LiftController {
-      
-      Result Init();
+namespace Vector {
+namespace LiftController {
 
-      // Enable/Disable motor.
-      // When disabled, lift goes limp. If autoReEnable, lift will re-enable
-      // if it doesn't move for a certain period of time
-      void Enable();
-      void Disable(bool autoReEnable = false);
-      
-      // Moves lift all the way down and sets that position to 0
-      // Automatically enables motor if it was disabled
-      // Note: if a non-empty calibration reason is provided,
-      // this will also send up a DAS event for the calibration
-      void StartCalibrationRoutine(const bool autoStarted, const MotorCalibrationReason& reason);
-      
-      // Returns true if calibration has completed
-      bool IsCalibrated();      
-      
-      bool IsCalibrating();
-      
-      // Puts motor in uncalibrated state
-      void ClearCalibration();
-      
-      f32 GetAngularVelocity();
-      
-      // TODO: Get rid of SetAngularVelocty?
-      void SetAngularVelocity(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2 = MAX_LIFT_ACCEL_RAD_PER_S2);
-      
-      // Command the desired angle of the lift
-      // If useVPG, the commanded position profile considers current velocity and honors max velocity/acceleration.
-      // If not useVPG, desired height_mm is commanded instantaneously.
-      void SetDesiredAngle(f32 angle_rad,
-                           f32 speed_rad_per_sec = MAX_LIFT_SPEED_RAD_PER_S,
-                           f32 accel_rad_per_sec2 = MAX_LIFT_ACCEL_RAD_PER_S2,
-                           bool useVPG = true);
-      
-      // Command the desired angle of the lift
-      // duration_seconds:  The time it should take for it to reach the desired height
-      // acc_start_frac:    The fraction of duration that it should be accelerating at the start
-      // acc_end_frac:      The fraction of duration that it should be slowing down to a stop at the end
-      void SetDesiredAngleByDuration(f32 angle_rad, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds);
+Result Init();
 
-      // Command the desired height of the lift
-      // If useVPG, the commanded position profile considers current velocity and honors max velocity/acceleration.
-      // If not useVPG, desired height_mm is commanded instantaneously.
-      void SetDesiredHeight(f32 height_mm,
-                            f32 speed_rad_per_sec = MAX_LIFT_SPEED_RAD_PER_S,
-                            f32 accel_rad_per_sec2 = MAX_LIFT_ACCEL_RAD_PER_S2,
-                            bool useVPG = true);
-      
-      // Command the desired height of the lift
-      // duration_seconds:  The time it should take for it to reach the desired height
-      // acc_start_frac:    The fraction of duration that it should be accelerating at the start
-      // acc_end_frac:      The fraction of duration that it should be slowing down to a stop at the end
-      void SetDesiredHeightByDuration(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds);
-      
-      f32 GetDesiredHeight();
-      bool IsInPosition();
-      
-      // Whether or not the lift is moving.
-      // False if speed is 0 for more than LIFT_STOP_TIME.
-      bool IsMoving();
-      
-      // Get current height of the lift
-      f32 GetHeightMM();
-      
-      // Get current angle of the lift
-      f32 GetAngleRad();
-      
-      Result Update();
+// Enable/Disable motor.
+// When disabled, lift goes limp. If autoReEnable, lift will re-enable
+// if it doesn't move for a certain period of time
+void Enable();
+void Disable(bool autoReEnable = false);
 
-      void SetGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError);
+// Moves lift all the way down and sets that position to 0
+// Automatically enables motor if it was disabled
+// Note: if a non-empty calibration reason is provided,
+// this will also send up a DAS event for the calibration
+void StartCalibrationRoutine(const bool autoStarted,
+                             const MotorCalibrationReason& reason);
 
-      // Momentarily enables motor even if it was disabled
-      void Brace();
-      void Unbrace();
-      bool IsBracing();
-      
-      // Stops any nodding or movement at all.
-      void Stop();
-      
-      void SendLiftLoadMessage(bool hasLoad);
-      
-      // Cuts power to lift briefly and checks for motion.
-      // If there's motion it's assumed that the lift is carrying something.
-      // Calls callback upon completion of check
-      void CheckForLoad(void (*callback)(bool) = SendLiftLoadMessage);
-      
-      // Returns true if motor hasn't been calibrated since the last time
-      // sycon reported that the encoder is invalid
-      bool IsEncoderInvalid();
+// Returns true if calibration has completed
+bool IsCalibrated();
 
-    } // namespace LiftController
-  } // namespace Vector
-} // namespace Anki
+bool IsCalibrating();
 
-#endif // COZMO_LIFT_CONTROLLER_H_
+// Puts motor in uncalibrated state
+void ClearCalibration();
+
+f32 GetAngularVelocity();
+
+// TODO: Get rid of SetAngularVelocty?
+void SetAngularVelocity(
+    const f32 speed_rad_per_sec,
+    const f32 accel_rad_per_sec2 = MAX_LIFT_ACCEL_RAD_PER_S2);
+
+// Command the desired angle of the lift
+// If useVPG, the commanded position profile considers current velocity and
+// honors max velocity/acceleration. If not useVPG, desired height_mm is
+// commanded instantaneously.
+void SetDesiredAngle(f32 angle_rad,
+                     f32 speed_rad_per_sec = MAX_LIFT_SPEED_RAD_PER_S,
+                     f32 accel_rad_per_sec2 = MAX_LIFT_ACCEL_RAD_PER_S2,
+                     bool useVPG = true);
+
+// Command the desired angle of the lift
+// duration_seconds:  The time it should take for it to reach the desired height
+// acc_start_frac:    The fraction of duration that it should be accelerating at
+// the start acc_end_frac:      The fraction of duration that it should be
+// slowing down to a stop at the end
+void SetDesiredAngleByDuration(f32 angle_rad, f32 acc_start_frac,
+                               f32 acc_end_frac, f32 duration_seconds);
+
+// Command the desired height of the lift
+// If useVPG, the commanded position profile considers current velocity and
+// honors max velocity/acceleration. If not useVPG, desired height_mm is
+// commanded instantaneously.
+void SetDesiredHeight(f32 height_mm,
+                      f32 speed_rad_per_sec = MAX_LIFT_SPEED_RAD_PER_S,
+                      f32 accel_rad_per_sec2 = MAX_LIFT_ACCEL_RAD_PER_S2,
+                      bool useVPG = true);
+
+// Command the desired height of the lift
+// duration_seconds:  The time it should take for it to reach the desired height
+// acc_start_frac:    The fraction of duration that it should be accelerating at
+// the start acc_end_frac:      The fraction of duration that it should be
+// slowing down to a stop at the end
+void SetDesiredHeightByDuration(f32 height_mm, f32 acc_start_frac,
+                                f32 acc_end_frac, f32 duration_seconds);
+
+f32 GetDesiredHeight();
+bool IsInPosition();
+
+// Whether or not the lift is moving.
+// False if speed is 0 for more than LIFT_STOP_TIME.
+bool IsMoving();
+
+// Get current height of the lift
+f32 GetHeightMM();
+
+// Get current angle of the lift
+f32 GetAngleRad();
+
+Result Update();
+
+void SetGains(const f32 kp, const f32 ki, const f32 kd,
+              const f32 maxIntegralError);
+
+// Momentarily enables motor even if it was disabled
+void Brace();
+void Unbrace();
+bool IsBracing();
+
+// Stops any nodding or movement at all.
+void Stop();
+
+void SendLiftLoadMessage(bool hasLoad);
+
+// Cuts power to lift briefly and checks for motion.
+// If there's motion it's assumed that the lift is carrying something.
+// Calls callback upon completion of check
+void CheckForLoad(void (*callback)(bool) = SendLiftLoadMessage);
+
+// Returns true if motor hasn't been calibrated since the last time
+// sycon reported that the encoder is invalid
+bool IsEncoderInvalid();
+
+}  // namespace LiftController
+}  // namespace Vector
+}  // namespace Anki
+
+#endif  // COZMO_LIFT_CONTROLLER_H_

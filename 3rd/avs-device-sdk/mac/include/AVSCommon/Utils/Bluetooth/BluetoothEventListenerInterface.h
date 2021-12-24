@@ -27,18 +27,18 @@ namespace bluetooth {
  * Base interface for the objects listening to events.
  */
 class BluetoothEventListenerInterface {
-public:
-    /**
-     * Destructor
-     */
-    virtual ~BluetoothEventListenerInterface() = default;
+ public:
+  /**
+   * Destructor
+   */
+  virtual ~BluetoothEventListenerInterface() = default;
 
-    /**
-     * Method called to process an event of the specific type.
-     *
-     * @param event Event to be processed
-     */
-    virtual void onEventFired(const BluetoothEvent& event) = 0;
+  /**
+   * Method called to process an event of the specific type.
+   *
+   * @param event Event to be processed
+   */
+  virtual void onEventFired(const BluetoothEvent& event) = 0;
 };
 
 }  // namespace bluetooth

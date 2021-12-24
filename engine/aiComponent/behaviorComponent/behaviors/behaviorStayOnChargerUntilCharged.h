@@ -4,7 +4,8 @@
  * Author: Andrew Stout
  * Created: 2019-01-31
  *
- * Description: WantsToBeActivated if on the charger and battery is not full; delegates to a parameterized behavior in the meantime.
+ * Description: WantsToBeActivated if on the charger and battery is not full;
+ *delegates to a parameterized behavior in the meantime.
  *
  * Copyright: Anki, Inc. 2019
  *
@@ -19,28 +20,27 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorStayOnChargerUntilCharged : public ICozmoBehavior
-{
-public: 
+class BehaviorStayOnChargerUntilCharged : public ICozmoBehavior {
+ public:
   virtual ~BehaviorStayOnChargerUntilCharged();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   explicit BehaviorStayOnChargerUntilCharged(const Json::Value& config);
 
   virtual void InitBehavior() override;
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-
+ private:
   struct InstanceConfig {
     InstanceConfig();
     std::string delegateName;
@@ -54,10 +54,9 @@ private:
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorStayOnChargerUntilCharged__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorStayOnChargerUntilCharged__

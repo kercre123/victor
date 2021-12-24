@@ -35,26 +35,25 @@
 #ifndef PROCESSOR_STATIC_MAP_ITERATOR_INL_H__
 #define PROCESSOR_STATIC_MAP_ITERATOR_INL_H__
 
-#include "processor/static_map_iterator.h"
-
 #include "processor/logging.h"
+#include "processor/static_map_iterator.h"
 
 namespace google_breakpad {
 
-template<typename Key, typename Value, typename Compare>
+template <typename Key, typename Value, typename Compare>
 StaticMapIterator<Key, Value, Compare>::StaticMapIterator(const char* base,
-                                                            const int &index):
-      index_(index), base_(base) {
+                                                          const int& index)
+    : index_(index), base_(base) {
   // See static_map.h for documentation on
   // bytes format of serialized StaticMap data.
   num_nodes_ = *(reinterpret_cast<const int32_t*>(base_));
   offsets_ = reinterpret_cast<const uint32_t*>(base_ + sizeof(num_nodes_));
-  keys_ = reinterpret_cast<const Key*>(
-      base_ + (1 + num_nodes_) * sizeof(num_nodes_));
+  keys_ = reinterpret_cast<const Key*>(base_ +
+                                       (1 + num_nodes_) * sizeof(num_nodes_));
 }
 
 // Increment & Decrement operators:
-template<typename Key, typename Value, typename Compare>
+template <typename Key, typename Value, typename Compare>
 StaticMapIterator<Key, Value, Compare>&
 StaticMapIterator<Key, Value, Compare>::operator++() {
   if (!IsValid()) {
@@ -65,7 +64,7 @@ StaticMapIterator<Key, Value, Compare>::operator++() {
   return *this;
 }
 
-template<typename Key, typename Value, typename Compare>
+template <typename Key, typename Value, typename Compare>
 StaticMapIterator<Key, Value, Compare>
 StaticMapIterator<Key, Value, Compare>::operator++(int postfix_operator) {
   if (!IsValid()) {
@@ -77,7 +76,7 @@ StaticMapIterator<Key, Value, Compare>::operator++(int postfix_operator) {
   return tmp;
 }
 
-template<typename Key, typename Value, typename Compare>
+template <typename Key, typename Value, typename Compare>
 StaticMapIterator<Key, Value, Compare>&
 StaticMapIterator<Key, Value, Compare>::operator--() {
   if (!IsValid()) {
@@ -89,7 +88,7 @@ StaticMapIterator<Key, Value, Compare>::operator--() {
   return *this;
 }
 
-template<typename Key, typename Value, typename Compare>
+template <typename Key, typename Value, typename Compare>
 StaticMapIterator<Key, Value, Compare>
 StaticMapIterator<Key, Value, Compare>::operator--(int postfix_operator) {
   if (!IsValid()) {
@@ -102,7 +101,7 @@ StaticMapIterator<Key, Value, Compare>::operator--(int postfix_operator) {
   return tmp;
 }
 
-template<typename Key, typename Value, typename Compare>
+template <typename Key, typename Value, typename Compare>
 const Key* StaticMapIterator<Key, Value, Compare>::GetKeyPtr() const {
   if (!IsValid()) {
     BPLOG(ERROR) << "call GetKeyPtr() on invalid iterator";
@@ -111,7 +110,7 @@ const Key* StaticMapIterator<Key, Value, Compare>::GetKeyPtr() const {
   return &(keys_[index_]);
 }
 
-template<typename Key, typename Value, typename Compare>
+template <typename Key, typename Value, typename Compare>
 const char* StaticMapIterator<Key, Value, Compare>::GetValueRawPtr() const {
   if (!IsValid()) {
     BPLOG(ERROR) << "call GetValuePtr() on invalid iterator";
@@ -120,13 +119,13 @@ const char* StaticMapIterator<Key, Value, Compare>::GetValueRawPtr() const {
   return base_ + offsets_[index_];
 }
 
-template<typename Key, typename Value, typename Compare>
+template <typename Key, typename Value, typename Compare>
 bool StaticMapIterator<Key, Value, Compare>::operator==(
     const StaticMapIterator<Key, Value, Compare>& x) const {
   return base_ == x.base_ && index_ == x.index_;
 }
 
-template<typename Key, typename Value, typename Compare>
+template <typename Key, typename Value, typename Compare>
 bool StaticMapIterator<Key, Value, Compare>::operator!=(
     const StaticMapIterator<Key, Value, Compare>& x) const {
   // Only need to compare base_ and index_.
@@ -134,10 +133,9 @@ bool StaticMapIterator<Key, Value, Compare>::operator!=(
   return base_ != x.base_ || index_ != x.index_;
 }
 
-template<typename Key, typename Value, typename Compare>
+template <typename Key, typename Value, typename Compare>
 bool StaticMapIterator<Key, Value, Compare>::IsValid() const {
-  if (!base_ || index_ < 0 || index_ > num_nodes_)
-    return false;
+  if (!base_ || index_ < 0 || index_ > num_nodes_) return false;
 
   return true;
 }

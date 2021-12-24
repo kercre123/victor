@@ -11,10 +11,13 @@
  **/
 
 #include "log.h"
-#include "strlcpy.h"
-#include <iostream>
+
 #include <stdio.h>
 #include <string.h>
+
+#include <iostream>
+
+#include "strlcpy.h"
 
 #define LOG_BUF_SIZE 1024
 
@@ -26,7 +29,7 @@ static int sMinLogLevel = kLogLevelVerbose;
 static bool sUsingAndroidLogging = true;
 #else
 static bool sUsingAndroidLogging = false;
-int __android_log_write(int prio, const char *tag, const char *msg) {
+int __android_log_write(int prio, const char* tag, const char* msg) {
   if (prio >= sMinLogLevel) {
     std::cout << msg << std::endl;
   }
@@ -34,27 +37,19 @@ int __android_log_write(int prio, const char *tag, const char *msg) {
 }
 #endif
 
-bool isUsingAndroidLogging() {
-  return sUsingAndroidLogging;
-}
+bool isUsingAndroidLogging() { return sUsingAndroidLogging; }
 
-void enableAndroidLogging(const bool enable) {
-  sUsingAndroidLogging = enable;
-}
+void enableAndroidLogging(const bool enable) { sUsingAndroidLogging = enable; }
 
 void setAndroidLoggingTag(const char* tag) {
-  (void) strlcpy(sAndroidLoggingTag, tag, sizeof(sAndroidLoggingTag));
+  (void)strlcpy(sAndroidLoggingTag, tag, sizeof(sAndroidLoggingTag));
 }
 
-int getMinLogLevel() {
-  return sMinLogLevel;
-}
+int getMinLogLevel() { return sMinLogLevel; }
 
-void setMinLogLevel(const int level) {
-  sMinLogLevel = level;
-}
+void setMinLogLevel(const int level) { sMinLogLevel = level; }
 
-void __log_write(int prio, const char *msg) {
+void __log_write(int prio, const char* msg) {
   if (prio >= sMinLogLevel) {
     if (!sAndroidLoggingTag[0]) {
       setAndroidLoggingTag("app");
@@ -63,7 +58,7 @@ void __log_write(int prio, const char *msg) {
   }
 }
 
-void __log_vprint(int prio, const char *fmt, va_list ap) {
+void __log_vprint(int prio, const char* fmt, va_list ap) {
   if (prio >= sMinLogLevel) {
     char buf[LOG_BUF_SIZE];
 
@@ -103,7 +98,6 @@ void logw(const char* fmt, ...) {
   va_start(ap, fmt);
   __log_vprint(kLogLevelWarn, fmt, ap);
   va_end(ap);
-
 }
 
 void loge(const char* fmt, ...) {
@@ -113,6 +107,3 @@ void loge(const char* fmt, ...) {
   __log_vprint(kLogLevelError, fmt, ap);
   va_end(ap);
 }
-
-
-

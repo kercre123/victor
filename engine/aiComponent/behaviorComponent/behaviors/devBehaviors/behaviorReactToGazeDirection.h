@@ -19,18 +19,17 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorReactToGazeDirection : public ICozmoBehavior
-{
-public: 
+class BehaviorReactToGazeDirection : public ICozmoBehavior {
+ public:
   virtual ~BehaviorReactToGazeDirection() = default;
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   explicit BehaviorReactToGazeDirection(const Json::Value& config);
 
-  void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   bool WantsToBeActivatedBehavior() const override;
   void OnBehaviorActivated() override;
@@ -38,8 +37,7 @@ protected:
 
   void InitBehavior() override;
 
-private:
-
+ private:
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
 
@@ -49,8 +47,8 @@ private:
   struct DynamicVariables {
     DynamicVariables();
 
-    Pose3d                gazeDirectionPose;
-    SmartFaceID           faceIDToTurnBackTo;
+    Pose3d gazeDirectionPose;
+    SmartFaceID faceIDToTurnBackTo;
   };
 
   InstanceConfig _iConfig;
@@ -58,7 +56,8 @@ private:
 
   void TransitionToCheckGazeDirection();
   void TransitionToCheckForFace(const Radians& turnAngle);
-  void TransitionToLookAtFace(const SmartFaceID& faceToTurnTowards, const Radians& turnAngle);
+  void TransitionToLookAtFace(const SmartFaceID& faceToTurnTowards,
+                              const Radians& turnAngle);
   void TransitionToCheckForPointOnSurface(const Pose3d& gazePose);
 
   Radians ComputeTurnAngleFromGazePose(const Pose3d& gazePose);
@@ -69,7 +68,7 @@ private:
   u32 GetMaxTimeSinceTrackedFaceUpdated_ms() const;
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToGazeDirection__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToGazeDirection__

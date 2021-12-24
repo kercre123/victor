@@ -57,8 +57,8 @@ class PerThreadSem {
   // implementations.  GetThreadBlockedCounter() should be used by modules that
   // block threads; if the pointer returned is non-zero, the location should be
   // incremented before the thread blocks, and decremented after it wakes.
-  static void SetThreadBlockedCounter(std::atomic<int> *counter);
-  static std::atomic<int> *GetThreadBlockedCounter();
+  static void SetThreadBlockedCounter(std::atomic<int>* counter);
+  static std::atomic<int>* GetThreadBlockedCounter();
 
  private:
   // Create the PerThreadSem associated with "identity".  Initializes count=0.

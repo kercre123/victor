@@ -45,7 +45,8 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <string.h>   // for memcpy and memset
+#include <string.h>  // for memcpy and memset
+
 #include <utility>
 
 #ifndef NAMESPACE_FOR_HASH_FUNCTIONS
@@ -75,7 +76,6 @@ inline uint64_t Uint128Low64(const uint128_t x) { return x.first; }
 inline uint64_t Uint128High64(const uint128_t x) { return x.second; }
 inline uint128_t Uint128(uint64_t lo, uint64_t hi) { return uint128_t(lo, hi); }
 #endif
-
 
 // BASIC STRING HASHING
 
@@ -111,8 +111,8 @@ uint64_t Hash64WithSeed(const char* s, size_t len, uint64_t seed);
 // hashed into the result.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
-uint64_t Hash64WithSeeds(const char* s, size_t len,
-                       uint64_t seed0, uint64_t seed1);
+uint64_t Hash64WithSeeds(const char* s, size_t len, uint64_t seed0,
+                         uint64_t seed1);
 
 // Hash function for a byte array.
 // May change from time to time, may differ on different platforms, may differ

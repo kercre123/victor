@@ -18,7 +18,6 @@
 
 #include "AVSCommon/Utils/SDS/InProcessSDS.h"
 #include "AVSCommon/Utils/SDS/Writer.h"
-
 #include "AttachmentWriter.h"
 
 namespace alexaClientSDK {
@@ -29,51 +28,52 @@ namespace attachment {
 /**
  * A class that provides functionality to write data to an @c Attachment.
  *
- * @note This class is not thread-safe beyond the thread-safety provided by the underlying SharedDataStream object.
+ * @note This class is not thread-safe beyond the thread-safety provided by the
+ * underlying SharedDataStream object.
  */
 class InProcessAttachmentWriter : public AttachmentWriter {
-public:
-    /// Type aliases for convenience.
-    using SDSType = avsCommon::utils::sds::InProcessSDS;
-    using SDSTypeWriter = SDSType::Writer;
+ public:
+  /// Type aliases for convenience.
+  using SDSType = avsCommon::utils::sds::InProcessSDS;
+  using SDSTypeWriter = SDSType::Writer;
 
-    /**
-     * Create an InProcessAttachmentWriter.
-     *
-     * @param sds The underlying @c SharedDataStream which this object will use.
-     * @param policy The policy of the new Writer.
-     * @return Returns a new InProcessAttachmentWriter, or nullptr if the operation failed.
-     */
-    static std::unique_ptr<InProcessAttachmentWriter> create(
-        std::shared_ptr<SDSType> sds,
-        SDSTypeWriter::Policy policy = SDSTypeWriter::Policy::ALL_OR_NOTHING);
+  /**
+   * Create an InProcessAttachmentWriter.
+   *
+   * @param sds The underlying @c SharedDataStream which this object will use.
+   * @param policy The policy of the new Writer.
+   * @return Returns a new InProcessAttachmentWriter, or nullptr if the
+   * operation failed.
+   */
+  static std::unique_ptr<InProcessAttachmentWriter> create(
+      std::shared_ptr<SDSType> sds,
+      SDSTypeWriter::Policy policy = SDSTypeWriter::Policy::ALL_OR_NOTHING);
 
-    /**
-     * Destructor.
-     */
-    ~InProcessAttachmentWriter();
+  /**
+   * Destructor.
+   */
+  ~InProcessAttachmentWriter();
 
-    std::size_t write(
-        const void* buf,
-        std::size_t numBytes,
-        WriteStatus* writeStatus,
-        std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) override;
+  std::size_t write(const void* buf, std::size_t numBytes,
+                    WriteStatus* writeStatus,
+                    std::chrono::milliseconds timeout =
+                        std::chrono::milliseconds(0)) override;
 
-    void close() override;
+  void close() override;
 
-protected:
-    /**
-     * Constructor.
-     *
-     * @param sds The underlying @c SharedDataStream which this object will use.
-     * @param policy The policy of the new Writer.
-     */
-    InProcessAttachmentWriter(
-        std::shared_ptr<SDSType> sds,
-        SDSTypeWriter::Policy policy = SDSTypeWriter::Policy::ALL_OR_NOTHING);
+ protected:
+  /**
+   * Constructor.
+   *
+   * @param sds The underlying @c SharedDataStream which this object will use.
+   * @param policy The policy of the new Writer.
+   */
+  InProcessAttachmentWriter(
+      std::shared_ptr<SDSType> sds,
+      SDSTypeWriter::Policy policy = SDSTypeWriter::Policy::ALL_OR_NOTHING);
 
-    /// The underlying @c SharedDataStream reader.
-    std::shared_ptr<SDSTypeWriter> m_writer;
+  /// The underlying @c SharedDataStream reader.
+  std::shared_ptr<SDSTypeWriter> m_writer;
 };
 
 }  // namespace attachment

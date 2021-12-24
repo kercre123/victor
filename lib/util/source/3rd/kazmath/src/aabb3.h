@@ -26,8 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef KAZMATH_AABB3D_H_INCLUDED
 #define KAZMATH_AABB3D_H_INCLUDED
 
-#include "vec3.h"
 #include "utility.h"
+#include "vec3.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,23 +38,26 @@ extern "C" {
  * bounding box.
  */
 typedef struct kmAABB3 {
-    kmVec3 min; /** The max corner of the box */
-    kmVec3 max; /** The min corner of the box */
+  kmVec3 min; /** The max corner of the box */
+  kmVec3 max; /** The min corner of the box */
 } kmAABB3;
 
-
-kmAABB3* kmAABB3Initialize(kmAABB3* pBox, const kmVec3* centre, const kmScalar width, const kmScalar height, const kmScalar depth);
+kmAABB3* kmAABB3Initialize(kmAABB3* pBox, const kmVec3* centre,
+                           const kmScalar width, const kmScalar height,
+                           const kmScalar depth);
 int kmAABB3ContainsPoint(const kmAABB3* pBox, const kmVec3* pPoint);
 kmAABB3* kmAABB3Assign(kmAABB3* pOut, const kmAABB3* pIn);
 kmAABB3* kmAABB3Scale(kmAABB3* pOut, const kmAABB3* pIn, kmScalar s);
-kmBool kmAABB3IntersectsTriangle(kmAABB3* box, const kmVec3* p1, const kmVec3* p2, const kmVec3* p3);
+kmBool kmAABB3IntersectsTriangle(kmAABB3* box, const kmVec3* p1,
+                                 const kmVec3* p2, const kmVec3* p3);
 kmBool kmAABB3IntersectsAABB(const kmAABB3* box, const kmAABB3* other);
 kmEnum kmAABB3ContainsAABB(const kmAABB3* container, const kmAABB3* to_check);
 kmScalar kmAABB3DiameterX(const kmAABB3* aabb);
 kmScalar kmAABB3DiameterY(const kmAABB3* aabb);
 kmScalar kmAABB3DiameterZ(const kmAABB3* aabb);
 kmVec3* kmAABB3Centre(const kmAABB3* aabb, kmVec3* pOut);
-kmAABB3* kmAABB3ExpandToContain(kmAABB3* pOut, const kmAABB3* pIn, const kmAABB3* other);
+kmAABB3* kmAABB3ExpandToContain(kmAABB3* pOut, const kmAABB3* pIn,
+                                const kmAABB3* other);
 
 #ifdef __cplusplus
 }

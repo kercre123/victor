@@ -28,187 +28,199 @@ namespace capabilityAgents {
 namespace audioPlayer {
 
 /**
- * Provides callbacks when ProgressReportDelayElapsed and ProgressReportIntervalElapsed events
- * should be sent to AVS.
+ * Provides callbacks when ProgressReportDelayElapsed and
+ * ProgressReportIntervalElapsed events should be sent to AVS.
  */
 class ProgressTimer {
-public:
+ public:
+  /**
+   * Interface to the context within which ProgressTimer operates.  This
+   * interface provides a way to get the current offset of playback, and methods
+   * to trigger sending progress callbacks.
+   */
+  class ContextInterface {
+   public:
     /**
-     * Interface to the context within which ProgressTimer operates.  This interface
-     * provides a way to get the current offset of playback, and methods to trigger sending
-     * progress callbacks.
+     * Request a (potentially asynchronous) callback to onProgress() with the
+     * current progress.
      */
-    class ContextInterface {
-    public:
-        /**
-         * Request a (potentially asynchronous) callback to onProgress() with the current progress.
-         */
-        virtual void requestProgress() = 0;
-
-        /**
-         * Notification that it is time to send a ProgressReportDelayElapsed event.
-         */
-        virtual void onProgressReportDelayElapsed() = 0;
-
-        /**
-         * Notification that it is time to send a ProgressReportIntervalElapsed event.
-         */
-        virtual void onProgressReportIntervalElapsed() = 0;
-    };
-
-    /// Delay value for no ProgressReportDelayElapsed notifications.
-    static const std::chrono::milliseconds NO_DELAY;
-
-    /// Interval value for no ProgressReportIntervalElapsed notifications.
-    static const std::chrono::milliseconds NO_INTERVAL;
+    virtual void requestProgress() = 0;
 
     /**
-     * Constructor.
+     * Notification that it is time to send a ProgressReportDelayElapsed event.
      */
-    ProgressTimer();
+    virtual void onProgressReportDelayElapsed() = 0;
 
     /**
-     * Destructor.
+     * Notification that it is time to send a ProgressReportIntervalElapsed
+     * event.
      */
-    ~ProgressTimer();
+    virtual void onProgressReportIntervalElapsed() = 0;
+  };
 
-    /**
-     * Initialize for sending notifications that it is time to send a progress report.
-     * @c init() must be called before @c start() (without an intervening @c stop()) for @c start()
-     * to deliver progress report callbacks.
-     *
-     * @param context The context within which to operate.
-     * @param delay The offset (in milliseconds from the start of the track) at which to send the
-     * @c ProgressReportDelayElapsed event. If delay is @c NO_DELAY, no @c ProgressReportDelayElapsed
-     * notifications will be sent.
-     * @param interval The interval (in milliseconds from the start of the track) at which to send
-     * @c ProgressReportIntervalElapsed events. If interval is @c NO_INTERVAL, no
-     * @c ProgressReportIntervalElapsed notifications will be sent.
-     * @param offset The offset (in milliseconds from the start of the track) at which playback of
-     * the track will start.
-     */
-    void init(
-        const std::shared_ptr<ContextInterface>& context,
-        std::chrono::milliseconds delay,
-        std::chrono::milliseconds interval,
-        std::chrono::milliseconds offset = std::chrono::milliseconds::zero());
+  /// Delay value for no ProgressReportDelayElapsed notifications.
+  static const std::chrono::milliseconds NO_DELAY;
 
-    /**
-     * Start sending notifications when it is time to send progress reports.
-     * @c init() must be called before @c start() (without an intervening @c stop()) for @c start()
-     * to deliver progress report callbacks.
-     */
-    void start();
+  /// Interval value for no ProgressReportIntervalElapsed notifications.
+  static const std::chrono::milliseconds NO_INTERVAL;
 
-    /**
-     * Pause sending notifications when it is time to send progress reports.
-     * @c pause() should be called after @c start() or @c resume() (without an intervening @c stop())
-     * or it will do nothing.
-     */
-    void pause();
+  /**
+   * Constructor.
+   */
+  ProgressTimer();
 
-    /**
-     * Resume sending notifications when it is time to send progress reports.
-     * @c resume() should be called after @c pause() (without an intervening @c stop()) otherwise
-     * it will do nothing.
-     */
-    void resume();
+  /**
+   * Destructor.
+   */
+  ~ProgressTimer();
 
-    /**
-     * Stop sending notifications when it is time to send progress reports.
-     * @c stop() can be called after @c init(), @c start(), @c pause(), and @c resume() to reset
-     * a @c ProgressTimer to it's pre @c init() state.
-     */
-    void stop();
+  /**
+   * Initialize for sending notifications that it is time to send a progress
+   * report.
+   * @c init() must be called before @c start() (without an intervening @c
+   * stop()) for @c start() to deliver progress report callbacks.
+   *
+   * @param context The context within which to operate.
+   * @param delay The offset (in milliseconds from the start of the track) at
+   * which to send the
+   * @c ProgressReportDelayElapsed event. If delay is @c NO_DELAY, no @c
+   * ProgressReportDelayElapsed notifications will be sent.
+   * @param interval The interval (in milliseconds from the start of the track)
+   * at which to send
+   * @c ProgressReportIntervalElapsed events. If interval is @c NO_INTERVAL, no
+   * @c ProgressReportIntervalElapsed notifications will be sent.
+   * @param offset The offset (in milliseconds from the start of the track) at
+   * which playback of the track will start.
+   */
+  void init(
+      const std::shared_ptr<ContextInterface>& context,
+      std::chrono::milliseconds delay, std::chrono::milliseconds interval,
+      std::chrono::milliseconds offset = std::chrono::milliseconds::zero());
 
-    /**
-     * Notification of the current progress.
-     *
-     * @param progress The offset (in milliseconds from the start of the track) of playback.
-     */
-    void onProgress(std::chrono::milliseconds progress);
+  /**
+   * Start sending notifications when it is time to send progress reports.
+   * @c init() must be called before @c start() (without an intervening @c
+   * stop()) for @c start() to deliver progress report callbacks.
+   */
+  void start();
 
-private:
-    /**
-     * Enum representing the state of a ProgressTimer instance.
-     */
-    enum class State {
-        /// Fully stopped and de-initialized.
-        IDLE,
-        /// Initialized (ready to start when audio playback starts).
-        INITIALIZED,
-        /// Periodically sending notifications.
-        RUNNING,
-        /// Sending notifications has been paused, but the ProgressTimer is ready to resume sending them.
-        PAUSED,
-        /// The ProgressTimer is in the process of stopping.
-        STOPPING,
-    };
+  /**
+   * Pause sending notifications when it is time to send progress reports.
+   * @c pause() should be called after @c start() or @c resume() (without an
+   * intervening @c stop()) or it will do nothing.
+   */
+  void pause();
 
-    /// Friend declaration to allow streaming @c State values.
-    friend std::ostream& operator<<(std::ostream& stream, ProgressTimer::State state);
+  /**
+   * Resume sending notifications when it is time to send progress reports.
+   * @c resume() should be called after @c pause() (without an intervening @c
+   * stop()) otherwise it will do nothing.
+   */
+  void resume();
 
-    /**
-     * Set the current state.  Also notifies @c m_wake when the state changes.
-     *
-     * @param newState The state to transition to.
-     * @return Whether or not the transition was allowed.
-     */
-    bool setState(State newState);
+  /**
+   * Stop sending notifications when it is time to send progress reports.
+   * @c stop() can be called after @c init(), @c start(), @c pause(), and @c
+   * resume() to reset a @c ProgressTimer to it's pre @c init() state.
+   */
+  void stop();
 
-    /**
-     * Start the thread that runs @c main_loop().
-     */
-    void startThread();
+  /**
+   * Notification of the current progress.
+   *
+   * @param progress The offset (in milliseconds from the start of the track) of
+   * playback.
+   */
+  void onProgress(std::chrono::milliseconds progress);
 
-    /**
-     * Thread function that sends notifications when it is time to send progress reports.
-     */
-    void mainLoop();
+ private:
+  /**
+   * Enum representing the state of a ProgressTimer instance.
+   */
+  enum class State {
+    /// Fully stopped and de-initialized.
+    IDLE,
+    /// Initialized (ready to start when audio playback starts).
+    INITIALIZED,
+    /// Periodically sending notifications.
+    RUNNING,
+    /// Sending notifications has been paused, but the ProgressTimer is ready to
+    /// resume sending them.
+    PAUSED,
+    /// The ProgressTimer is in the process of stopping.
+    STOPPING,
+  };
 
-    /**
-     * Step the target offset at which the next notification should be sent.
-     * @c m_stateMutex must be held when this method is called.
-     *
-     * @return Whether or not there is a target offset to wait for.
-     */
-    bool updateTargetLocked();
+  /// Friend declaration to allow streaming @c State values.
+  friend std::ostream& operator<<(std::ostream& stream,
+                                  ProgressTimer::State state);
 
-    /// Mutex serializing calls to public methods.
-    std::mutex m_callMutex;
+  /**
+   * Set the current state.  Also notifies @c m_wake when the state changes.
+   *
+   * @param newState The state to transition to.
+   * @return Whether or not the transition was allowed.
+   */
+  bool setState(State newState);
 
-    /// Mutex serializing access to @c m_state, @c m_progress and @c m_gotProgress.
-    std::mutex m_stateMutex;
+  /**
+   * Start the thread that runs @c main_loop().
+   */
+  void startThread();
 
-    /// The current state of the ProgressTimer.
-    State m_state;
+  /**
+   * Thread function that sends notifications when it is time to send progress
+   * reports.
+   */
+  void mainLoop();
 
-    /// The context in which the progress timer operates.
-    std::shared_ptr<ContextInterface> m_context;
+  /**
+   * Step the target offset at which the next notification should be sent.
+   * @c m_stateMutex must be held when this method is called.
+   *
+   * @return Whether or not there is a target offset to wait for.
+   */
+  bool updateTargetLocked();
 
-    /// The offset in to the audio stream at which to send the ProgressReportDelayElapsed event.
-    std::chrono::milliseconds m_delay;
+  /// Mutex serializing calls to public methods.
+  std::mutex m_callMutex;
 
-    /// The interval between offsets at which to send ProgressReportIntervalElapsed events.
-    std::chrono::milliseconds m_interval;
+  /// Mutex serializing access to @c m_state, @c m_progress and @c
+  /// m_gotProgress.
+  std::mutex m_stateMutex;
 
-    /// The offset in to the audio stream at which playback will begins
-    std::chrono::milliseconds m_offset;
+  /// The current state of the ProgressTimer.
+  State m_state;
 
-    /// The next offset at which to send a notification.
-    std::chrono::milliseconds m_target;
+  /// The context in which the progress timer operates.
+  std::shared_ptr<ContextInterface> m_context;
 
-    /// Has progress been reported since last requested.
-    bool m_gotProgress;
+  /// The offset in to the audio stream at which to send the
+  /// ProgressReportDelayElapsed event.
+  std::chrono::milliseconds m_delay;
 
-    /// The last reported progress value.
-    std::chrono::milliseconds m_progress;
+  /// The interval between offsets at which to send
+  /// ProgressReportIntervalElapsed events.
+  std::chrono::milliseconds m_interval;
 
-    /// Condition variable used to wake @c mainLoop() when there is a state change.
-    std::condition_variable m_wake;
+  /// The offset in to the audio stream at which playback will begins
+  std::chrono::milliseconds m_offset;
 
-    /// The thread upon which @c mainLoop() runs.
-    std::thread m_thread;
+  /// The next offset at which to send a notification.
+  std::chrono::milliseconds m_target;
+
+  /// Has progress been reported since last requested.
+  bool m_gotProgress;
+
+  /// The last reported progress value.
+  std::chrono::milliseconds m_progress;
+
+  /// Condition variable used to wake @c mainLoop() when there is a state
+  /// change.
+  std::condition_variable m_wake;
+
+  /// The thread upon which @c mainLoop() runs.
+  std::thread m_thread;
 };
 
 }  // namespace audioPlayer

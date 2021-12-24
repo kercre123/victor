@@ -35,11 +35,11 @@
 #ifndef GOOGLE_PROTOBUF_COMPILER_PYTHON_GENERATOR_H__
 #define GOOGLE_PROTOBUF_COMPILER_PYTHON_GENERATOR_H__
 
-#include <string>
-
 #include <google/protobuf/compiler/code_generator.h>
-#include <google/protobuf/stubs/mutex.h>
 #include <google/protobuf/stubs/common.h>
+#include <google/protobuf/stubs/mutex.h>
+
+#include <string>
 
 namespace google {
 namespace protobuf {
@@ -51,7 +51,9 @@ class FieldDescriptor;
 class OneofDescriptor;
 class ServiceDescriptor;
 
-namespace io { class Printer; }
+namespace io {
+class Printer;
+}
 
 namespace compiler {
 namespace python {
@@ -66,8 +68,7 @@ class LIBPROTOC_EXPORT Generator : public CodeGenerator {
   virtual ~Generator();
 
   // CodeGenerator methods.
-  virtual bool Generate(const FileDescriptor* file,
-                        const string& parameter,
+  virtual bool Generate(const FileDescriptor* file, const string& parameter,
                         GeneratorContext* generator_context,
                         string* error) const;
 
@@ -81,13 +82,11 @@ class LIBPROTOC_EXPORT Generator : public CodeGenerator {
 
   void PrintTopLevelExtensions() const;
 
-  void PrintFieldDescriptor(
-      const FieldDescriptor& field, bool is_extension) const;
+  void PrintFieldDescriptor(const FieldDescriptor& field,
+                            bool is_extension) const;
   void PrintFieldDescriptorsInDescriptor(
-      const Descriptor& message_descriptor,
-      bool is_extension,
-      const string& list_variable_name,
-      int (Descriptor::*CountFn)() const,
+      const Descriptor& message_descriptor, bool is_extension,
+      const string& list_variable_name, int (Descriptor::*CountFn)() const,
       const FieldDescriptor* (Descriptor::*GetterFn)(int) const) const;
   void PrintFieldsInDescriptor(const Descriptor& message_descriptor) const;
   void PrintExtensionsInDescriptor(const Descriptor& message_descriptor) const;
@@ -145,8 +144,8 @@ class LIBPROTOC_EXPORT Generator : public CodeGenerator {
       const ServiceDescriptor& descriptor) const;
 
   template <typename DescriptorT, typename DescriptorProtoT>
-  void PrintSerializedPbInterval(
-      const DescriptorT& descriptor, DescriptorProtoT& proto) const;
+  void PrintSerializedPbInterval(const DescriptorT& descriptor,
+                                 DescriptorProtoT& proto) const;
 
   void FixAllDescriptorOptions() const;
   void FixOptionsForField(const FieldDescriptor& field) const;
@@ -154,8 +153,8 @@ class LIBPROTOC_EXPORT Generator : public CodeGenerator {
   void FixOptionsForEnum(const EnumDescriptor& descriptor) const;
   void FixOptionsForMessage(const Descriptor& descriptor) const;
 
-  void CopyPublicDependenciesAliases(
-      const string& copy_from, const FileDescriptor* file) const;
+  void CopyPublicDependenciesAliases(const string& copy_from,
+                                     const FileDescriptor* file) const;
 
   // Very coarse-grained lock to ensure that Generate() is reentrant.
   // Guards file_, printer_ and file_descriptor_serialized_.

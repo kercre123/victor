@@ -26,48 +26,50 @@ namespace utils {
 namespace http2 {
 
 /**
- * Value returned from various methods that send data, combining a status and a size.
+ * Value returned from various methods that send data, combining a status and a
+ * size.
  */
 struct HTTP2SendDataResult {
-    /// The status of the send data operation.  @see HTTP2SendStatus.
-    HTTP2SendStatus status;
+  /// The status of the send data operation.  @see HTTP2SendStatus.
+  HTTP2SendStatus status;
 
-    /// The number of bytes copied.  This value should only be non-zero if @c status == @c CONTINUE.
-    size_t size;
+  /// The number of bytes copied.  This value should only be non-zero if @c
+  /// status == @c CONTINUE.
+  size_t size;
 
-    /**
-     * Construct a HTTP2SendDataResult with a status of CONTINUE and the specified size
-     *
-     * @param size The count of bytes sent.
-     */
-    explicit HTTP2SendDataResult(size_t size);
+  /**
+   * Construct a HTTP2SendDataResult with a status of CONTINUE and the specified
+   * size
+   *
+   * @param size The count of bytes sent.
+   */
+  explicit HTTP2SendDataResult(size_t size);
 
-    /// Const PAUSE result.
-    static const HTTP2SendDataResult PAUSE;
+  /// Const PAUSE result.
+  static const HTTP2SendDataResult PAUSE;
 
-    /// Const COMPLETE result.
-    static const HTTP2SendDataResult COMPLETE;
+  /// Const COMPLETE result.
+  static const HTTP2SendDataResult COMPLETE;
 
-    /// Const ABORT result.
-    static const HTTP2SendDataResult ABORT;
+  /// Const ABORT result.
+  static const HTTP2SendDataResult ABORT;
 
-private:
-    /**
-     * Construct a HTTP2SendDataResult.
-     *
-     * @param status The status of the send operation.
-     * @param size The count of bytes sent.
-     */
-    HTTP2SendDataResult(HTTP2SendStatus status, size_t size);
+ private:
+  /**
+   * Construct a HTTP2SendDataResult.
+   *
+   * @param status The status of the send operation.
+   * @param size The count of bytes sent.
+   */
+  HTTP2SendDataResult(HTTP2SendStatus status, size_t size);
 };
 
-inline HTTP2SendDataResult::HTTP2SendDataResult(size_t sizeIn) : status{HTTP2SendStatus::CONTINUE}, size{sizeIn} {
-}
+inline HTTP2SendDataResult::HTTP2SendDataResult(size_t sizeIn)
+    : status{HTTP2SendStatus::CONTINUE}, size{sizeIn} {}
 
-inline HTTP2SendDataResult::HTTP2SendDataResult(HTTP2SendStatus statusIn, size_t sizeIn) :
-        status{statusIn},
-        size{sizeIn} {
-}
+inline HTTP2SendDataResult::HTTP2SendDataResult(HTTP2SendStatus statusIn,
+                                                size_t sizeIn)
+    : status{statusIn}, size{sizeIn} {}
 
 }  // namespace http2
 }  // namespace utils

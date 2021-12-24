@@ -2,6 +2,7 @@
 #define __HARDWARE_H
 
 #include <stdint.h>
+
 #include "common.h"
 //#include "stm32f0xx.h"
 
@@ -9,8 +10,9 @@ static const uint32_t SYSTEM_CLOCK = 48000000;
 static const uint32_t CONTACT_BAUDRATE = 57600;
 static const uint32_t COMMS_BAUDRATE = 3000000;
 
-static const uint32_t WATCHDOG_CLOCK  = 10000;
-static const uint32_t WATCHDOG_LIMIT  = WATCHDOG_CLOCK / 200 * 10; // 10 main execution frames
+static const uint32_t WATCHDOG_CLOCK = 10000;
+static const uint32_t WATCHDOG_LIMIT =
+    WATCHDOG_CLOCK / 200 * 10;  // 10 main execution frames
 
 enum IRQ_Priority {
   PRIORITY_ADC = 0,
@@ -41,45 +43,50 @@ namespace LTN1 GPIO_DEFINE(A, 9);
 namespace LTN2 GPIO_DEFINE(B, 0);
 
 // Encoders (A is always lowest pin)
-namespace HENCA GPIO_DEFINE(A, 0); //HENCA-B are swapped. But it matches how the driver is written so...
-namespace HENCB GPIO_DEFINE(A, 1); //^
-namespace LENCA GPIO_DEFINE(B, 2); //LENCA-B are swapped. But it matches how the driver is written so...
-namespace LENCB GPIO_DEFINE(B, 3); //^
+namespace HENCA GPIO_DEFINE(
+    A,
+    0);  // HENCA-B are swapped. But it matches how the driver is written so...
+namespace HENCB GPIO_DEFINE(A, 1);  //^
+namespace LENCA GPIO_DEFINE(
+    B,
+    2);  // LENCA-B are swapped. But it matches how the driver is written so...
+namespace LENCB GPIO_DEFINE(B, 3);  //^
 namespace RTENC GPIO_DEFINE(C, 14);
 namespace LTENC GPIO_DEFINE(C, 15);
 
 // Power
-namespace POWER_EN    GPIO_DEFINE(A, 6);
-namespace POWER_B     GPIO_DEFINE(A, 6);
-namespace CHG_PWR     GPIO_DEFINE(B, 9);
-namespace nVDDs_EN    GPIO_DEFINE(C, 13); //a.k.a. #VENC_EN
-namespace VEXT_SENSE  GPIO_DEFINE(A, 2);
-namespace VIN_SENSE   GPIO_DEFINE(A, 4);
-namespace MAIN_EN     GPIO_DEFINE(A, 3);
-//namespace CHG_EN      GPIO_DEFINE(A, 15); //removed in DVT3 (logic'd from another signal)
+namespace POWER_EN GPIO_DEFINE(A, 6);
+namespace POWER_B GPIO_DEFINE(A, 6);
+namespace CHG_PWR GPIO_DEFINE(B, 9);
+namespace nVDDs_EN GPIO_DEFINE(C, 13);  // a.k.a. #VENC_EN
+namespace VEXT_SENSE GPIO_DEFINE(A, 2);
+namespace VIN_SENSE GPIO_DEFINE(A, 4);
+namespace MAIN_EN GPIO_DEFINE(A, 3);
+// namespace CHG_EN      GPIO_DEFINE(A, 15); //removed in DVT3 (logic'd from
+// another signal)
 
-//namespace CHRG1 GPIO_DEFINE(F, 1);
-//namespace CHRG2 GPIO_DEFINE(F, 0);
+// namespace CHRG1 GPIO_DEFINE(F, 1);
+// namespace CHRG2 GPIO_DEFINE(F, 0);
 
 // Microphones
-namespace MIC_LR      GPIO_DEFINE(B, 15);
-namespace MIC2_MISO   GPIO_DEFINE(B, 4);
-namespace MIC1_MISO   GPIO_DEFINE(B, 14);
-namespace MIC2_SCK    GPIO_DEFINE(A, 5);
-namespace MIC1_SCK    GPIO_DEFINE(B, 13);
+namespace MIC_LR GPIO_DEFINE(B, 15);
+namespace MIC2_MISO GPIO_DEFINE(B, 4);
+namespace MIC1_MISO GPIO_DEFINE(B, 14);
+namespace MIC2_SCK GPIO_DEFINE(A, 5);
+namespace MIC1_SCK GPIO_DEFINE(B, 13);
 
 // Cap Sense
 namespace CAP1I GPIO_DEFINE(B, 8);
-namespace CAPO  GPIO_DEFINE(A, 14);
+namespace CAPO GPIO_DEFINE(A, 14);
 
 // Communication
 namespace VEXT_TX GPIO_DEFINE(A, 2);
 namespace BODY_TX GPIO_DEFINE(B, 6);
 namespace BODY_RX GPIO_DEFINE(B, 7);
-namespace SCL1    GPIO_DEFINE(B, 10);
-namespace SDA1    GPIO_DEFINE(B, 11);
-namespace SCL2    GPIO_DEFINE(F, 6);
-namespace SDA2    GPIO_DEFINE(F, 7);
+namespace SCL1 GPIO_DEFINE(B, 10);
+namespace SDA1 GPIO_DEFINE(B, 11);
+namespace SCL2 GPIO_DEFINE(F, 6);
+namespace SDA2 GPIO_DEFINE(F, 7);
 
 // Lights
 namespace LED_DAT GPIO_DEFINE(A, 13);

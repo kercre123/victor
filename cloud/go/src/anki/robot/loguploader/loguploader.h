@@ -24,4 +24,4 @@ int UploadDebugLogs(char** outstr);
 }
 #endif
 
-#endif // __anki_robot_loguploader_loguploader_h
+#endif  // __anki_robot_loguploader_loguploader_h

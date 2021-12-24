@@ -21,46 +21,46 @@ namespace Util {
 static int a = 0;
 
 class Base {
-public:
-
+ public:
   virtual ~Base() = default;
 
-  virtual void Func() {
-    a++;
-  }
+  virtual void Func() { a++; }
 };
 
 class Derived : public Base {
-public:
-  virtual void Func() override {
-    a--;
-  }
+ public:
+  virtual void Func() override { a--; }
 };
 
 class Unrelated {
-public:
+ public:
   virtual void Func() {}
 };
 
 using BaseHandle = ExternalPointerHandle<Base>;
 using DerivedHandle = BaseHandle::SubHandle<Derived>;
 using SuperDerivedHandle = ExternalPointerHandle<Derived>;
-using UnrelatedHandle = BaseHandle::SubHandle<Unrelated>; // we should not be able to use this meaningfully
+using UnrelatedHandle =
+    BaseHandle::SubHandle<Unrelated>;  // we should not be able to use this
+                                       // meaningfully
 
-TEST(TestPointerHandle, TestPointerHandle)
-{
+TEST(TestPointerHandle, TestPointerHandle) {
   {
     DerivedHandle derived;
-    BaseHandle base(derived); // can construct base from derived
-    //DerivedHandle derived2(base); // not allowed to construct derived from base
-    DerivedHandle derived3 = base.cast<Derived>(); // allowed with explicit cast
+    BaseHandle base(derived);  // can construct base from derived
+    // DerivedHandle derived2(base); // not allowed to construct derived from
+    // base
+    DerivedHandle derived3 =
+        base.cast<Derived>();  // allowed with explicit cast
 
-    // unfortunate that we can instantiate this - it's a tradeoff, we could forbid it in the definition
-    // of ExternalPointerHandle, but then any headers that refer to Handles will need to know complete
-    // type information of the contained types and include their headers
+    // unfortunate that we can instantiate this - it's a tradeoff, we could
+    // forbid it in the definition of ExternalPointerHandle, but then any
+    // headers that refer to Handles will need to know complete type information
+    // of the contained types and include their headers
     UnrelatedHandle unrelated;
-    // fortunately this next line won't compile, as you can't cast to Unrelated from Base
-    //Unrelated* unrelatedPtr = unrelated.get();
+    // fortunately this next line won't compile, as you can't cast to Unrelated
+    // from Base
+    // Unrelated* unrelatedPtr = unrelated.get();
 
     EXPECT_EQ(nullptr, derived.get());
     EXPECT_EQ(nullptr, base.get());
@@ -147,5 +147,5 @@ TEST(TestPointerHandle, TestPointerHandle)
   }
 }
 
-}
-}
+}  // namespace Util
+}  // namespace Anki

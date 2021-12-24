@@ -6,9 +6,9 @@
  * @brief Sleep mode project header file.
  *
  * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer
- * program includes Confidential, Proprietary Information and is a Trade Secret of
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited
- * unless authorized in writing. All Rights Reserved.
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -33,28 +33,27 @@
  * INCLUDE FILES
  ****************************************************************************************
  */
- 
+
+#include <stdint.h>
+
 #include "custs1_task.h"
 #include "ke_msg.h"
-#include <stdint.h>
 
 /*
  * DEFINES
  ****************************************************************************************
  */
 
-enum
-{
-    CUSTS1_BTN_STATE_RELEASED = 0,
-    CUSTS1_BTN_STATE_PRESSED,
+enum {
+  CUSTS1_BTN_STATE_RELEASED = 0,
+  CUSTS1_BTN_STATE_PRESSED,
 };
 
-enum
-{
-    CUSTS1_CP_CMD_PWM_DISABLE = 0,
-    CUSTS1_CP_CMD_PWM_ENABLE,
-    CUSTS1_CP_CMD_ADC_VAL_2_DISABLE,
-    CUSTS1_CP_CMD_ADC_VAL_2_ENABLE,
+enum {
+  CUSTS1_CP_CMD_PWM_DISABLE = 0,
+  CUSTS1_CP_CMD_PWM_ENABLE,
+  CUSTS1_CP_CMD_ADC_VAL_2_DISABLE,
+  CUSTS1_CP_CMD_ADC_VAL_2_ENABLE,
 };
 
 /*
@@ -62,11 +61,10 @@ enum
  ****************************************************************************************
  */
 
-struct app_proj_env_tag
-{
-    uint8_t custs1_pwm_enabled;
-    uint8_t custs1_adcval2_enabled;
-    uint8_t custs1_btn_state;
+struct app_proj_env_tag {
+  uint8_t custs1_pwm_enabled;
+  uint8_t custs1_adcval2_enabled;
+  uint8_t custs1_btn_state;
 };
 
 /*
@@ -97,7 +95,6 @@ void user_custs1_ctrl_wr_ind_handler(ke_msg_id_t const msgid,
  */
 void user_app_enable_periphs(void);
 
-
 /**
  ****************************************************************************************
  * @brief Disable peripherals used by application.
@@ -108,5 +105,4 @@ void user_app_disable_periphs(void);
 
 /// @} APP
 
-#endif // _USER_SLEEPMODE_TASK_H_
-
+#endif  // _USER_SLEEPMODE_TASK_H_

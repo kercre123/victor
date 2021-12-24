@@ -10,19 +10,16 @@
  *
  **/
 
-#include "gtest/gtest.h"
-
-#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorWallTimeCoordinator.h"
-
 #include <iomanip>
 #include <sstream>
+
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorWallTimeCoordinator.h"
+#include "gtest/gtest.h"
 
 using namespace Anki;
 using namespace Anki::Vector;
 
-
-TEST(BehaviorWallTime, FormatTTSSpecific)
-{
+TEST(BehaviorWallTime, FormatTTSSpecific) {
   auto GetTTS = [](int hours, int mins, bool is24Hour) {
     struct tm time;
     time.tm_hour = hours;
@@ -57,20 +54,19 @@ TEST(BehaviorWallTime, FormatTTSSpecific)
 
   EXPECT_EQ("14:01", GetTTS24(14, 01));
   EXPECT_EQ("02:01", GetTTS12(14, 01));
-
 }
 
-TEST(BehaviorWallTime, FormatTTSAllRoundTrip)
-{
-  for( int h=0; h<24; h++ ) {
-    for( int m=0; m<60; m++ ) {
+TEST(BehaviorWallTime, FormatTTSAllRoundTrip) {
+  for (int h = 0; h < 24; h++) {
+    for (int m = 0; m < 60; m++) {
       struct tm timeIn;
       timeIn.tm_hour = h;
       timeIn.tm_min = m;
 
       auto tts = BehaviorWallTimeCoordinator::GetTTSStringForTime(timeIn, true);
 
-      // now convert back into a time (note that this doesn't ignores leading zeros on minutes)
+      // now convert back into a time (note that this doesn't ignores leading
+      // zeros on minutes)
       struct tm timeOut;
       std::istringstream ss(tts);
       ss >> std::get_time(&timeOut, "%H:%M");

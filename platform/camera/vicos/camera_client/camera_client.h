@@ -64,11 +64,11 @@ typedef struct {
   uint32_t width;
   uint32_t height;
   uint32_t bytes_per_row;
-  uint8_t  bits_per_pixel;
-  uint8_t  format;
-  uint8_t  _reserved[2];
+  uint8_t bits_per_pixel;
+  uint8_t format;
+  uint8_t _reserved[2];
   uint32_t _pad_to_64[8];
-  uint8_t  data[0];
+  uint8_t data[0];
 } anki_camera_frame_t;
 
 typedef struct {
@@ -91,7 +91,8 @@ typedef enum {
 
 typedef struct {
   anki_camera_params_id_t id;
-  uint8_t data[sizeof(((struct anki_camera_msg*)0)->payload) - sizeof(anki_camera_params_id_t)];
+  uint8_t data[sizeof(((struct anki_camera_msg*)0)->payload) -
+               sizeof(anki_camera_params_id_t)];
 } anki_camera_msg_params_payload_t;
 
 typedef enum {
@@ -100,9 +101,8 @@ typedef enum {
   ANKI_CAM_FORMAT_RGB888,
   ANKI_CAM_FORMAT_YUV,
 } anki_camera_pixel_format_t;
-  
-// END: shared types
 
+// END: shared types
 
 struct anki_camera_handle {
   int client_handle;
@@ -128,9 +128,10 @@ int camera_stop(struct anki_camera_handle* camera);
 // Note: The first image captured after unpausing will be invalid
 // This is because we don't know where in the image capture cycle the
 // camera is so we are likely stopping it half way through capturing an image.
-// When it unpauses it will finish capturing that image but the data will be invalid
+// When it unpauses it will finish capturing that image but the data will be
+// invalid
 void camera_pause(struct anki_camera_handle* camera, int pause);
-  
+
 // De-initializes camera, makes it available to rest of system
 // This is asynchronous, check return value of camera_destroy
 // to know when the camera has actually been released
@@ -139,7 +140,7 @@ int camera_release(struct anki_camera_handle* camera);
 // Attempts to destroy a previously released camera
 // Returns 1 if camera has been successfully destroyed, 0 otherwise
 int camera_destroy(struct anki_camera_handle* camera);
-  
+
 // Acquire (lock) the most recent available frame for reading
 int camera_frame_acquire(struct anki_camera_handle* camera,
                          uint64_t frame_timestamp,
@@ -148,16 +149,18 @@ int camera_frame_acquire(struct anki_camera_handle* camera,
 // Release (unlock) frame to camera system
 int camera_frame_release(struct anki_camera_handle* camera, uint32_t frame_id);
 
-int camera_set_exposure(struct anki_camera_handle* camera, uint16_t exposure_ms, float gain);
+int camera_set_exposure(struct anki_camera_handle* camera, uint16_t exposure_ms,
+                        float gain);
 
-int camera_set_awb(struct anki_camera_handle* camera, float r_gain, float g_gain, float b_gain);
+int camera_set_awb(struct anki_camera_handle* camera, float r_gain,
+                   float g_gain, float b_gain);
 
-int camera_set_capture_format(struct anki_camera_handle* camera, anki_camera_pixel_format_t format);
-
+int camera_set_capture_format(struct anki_camera_handle* camera,
+                              anki_camera_pixel_format_t format);
 
 int camera_set_capture_snapshot(struct anki_camera_handle* camera,
                                 uint8_t start);
- 
+
 // Get current status of camera system
 anki_camera_status_t camera_status(struct anki_camera_handle* camera);
 
@@ -165,4 +168,4 @@ anki_camera_status_t camera_status(struct anki_camera_handle* camera);
 }
 #endif
 
-#endif // __platform_hal_camera_client_h__
+#endif  // __platform_hal_camera_client_h__

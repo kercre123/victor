@@ -10,13 +10,13 @@
  *
  **/
 
-
 #pragma once
 
 #include <string>
 #include <vector>
 
-bool AreCaseInsensitiveStringsEqual(const std::string& s1, const std::string& s2);
+bool AreCaseInsensitiveStringsEqual(const std::string& s1,
+                                    const std::string& s2);
 std::string byteVectorToHexString(const std::vector<uint8_t>& byteVector,
                                   const int numSpaces = 0,
                                   const bool lowercase = false);

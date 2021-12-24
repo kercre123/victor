@@ -23,7 +23,8 @@ namespace utils {
 namespace error {
 
 /**
- * Define a class that can be used to run a function when the object goes out of scope.
+ * Define a class that can be used to run a function when the object goes out of
+ * scope.
  *
  * This simulates try-finally statements. The following structure:
  *
@@ -43,31 +44,32 @@ namespace error {
  * @endcode
  */
 class FinallyGuard {
-public:
-    /**
-     * Constructor.
-     *
-     * @param finallyFunction The function to be executed when the object goes out of scope.
-     */
-    FinallyGuard(const std::function<void()>& finallyFunction);
+ public:
+  /**
+   * Constructor.
+   *
+   * @param finallyFunction The function to be executed when the object goes out
+   * of scope.
+   */
+  FinallyGuard(const std::function<void()>& finallyFunction);
 
-    /**
-     * Destructor. Runs @c m_function during destruction.
-     */
-    ~FinallyGuard();
+  /**
+   * Destructor. Runs @c m_function during destruction.
+   */
+  ~FinallyGuard();
 
-private:
-    /// The function to be run when this object goes out of scope.
-    std::function<void()> m_function;
+ private:
+  /// The function to be run when this object goes out of scope.
+  std::function<void()> m_function;
 };
 
-FinallyGuard::FinallyGuard(const std::function<void()>& finallyFunction) : m_function{finallyFunction} {
-}
+FinallyGuard::FinallyGuard(const std::function<void()>& finallyFunction)
+    : m_function{finallyFunction} {}
 
 FinallyGuard::~FinallyGuard() {
-    if (m_function) {
-        m_function();
-    }
+  if (m_function) {
+    m_function();
+  }
 }
 
 }  // namespace error

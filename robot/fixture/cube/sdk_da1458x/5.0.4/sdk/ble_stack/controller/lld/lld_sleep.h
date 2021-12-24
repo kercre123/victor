@@ -26,15 +26,15 @@
  ****************************************************************************************
  */
 
-
 /*
  * INCLUDE FILES
  ****************************************************************************************
  */
 
-#include "rwip_config.h"
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+
+#include "rwip_config.h"
 
 /*
  * FUNCTION DECLARATIONS
@@ -55,7 +55,8 @@ void lld_sleep_init(void);
  * @brief The Sleep function. Enter BLE Core in deep sleep
  *
  * @param[in]    sleep_duration  Duration of deep sleep (low power clock cycles)
- * @param[in]    ext_wakeup      False: external wake-up disabled / True: enabled
+ * @param[in]    ext_wakeup      False: external wake-up disabled / True:
+ *enabled
  ****************************************************************************************
  */
 void lld_sleep_enter(uint32_t sleep_duration, bool ext_wakeup);
@@ -74,19 +75,19 @@ void lld_sleep_wakeup(void);
  */
 void lld_sleep_wakeup_end(void);
 
-#endif // RW_BLE_SUPPORT
+#endif  // RW_BLE_SUPPORT
 
 /**
  ****************************************************************************************
  * @brief Check if sleep mode is possible
  *
- * The function takes as argument the allowed sleep duration that must not be increased.
- * If BLE needs an earlier wake-up than initial duration, the allowed sleep duration
- * is updated.
- * If BLE needs a shorter duration than the wake-up delay, sleep is not possible and
- * the function returns a bad status.
+ * The function takes as argument the allowed sleep duration that must not be
+ *increased. If BLE needs an earlier wake-up than initial duration, the allowed
+ *sleep duration is updated. If BLE needs a shorter duration than the wake-up
+ *delay, sleep is not possible and the function returns a bad status.
  *
- * @param[in/out] sleep_duration   Initial allowed sleep duration (in slot of 625us)
+ * @param[in/out] sleep_duration   Initial allowed sleep duration (in slot of
+ *625us)
  * @param[in]     wakeup_delay     Delay for system wake-up (in slot of 625us)
  *
  * @return true if sleep is allowed, false otherwise
@@ -96,4 +97,4 @@ bool lld_sleep_check(uint32_t *sleep_duration, uint32_t wakeup_delay);
 
 /// @} LLDSLEEP
 
-#endif // LLD_SLEEP_H_
+#endif  // LLD_SLEEP_H_

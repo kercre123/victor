@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -14,7 +15,8 @@
 // Copyright (C) 2017, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 // * Redistributions of source code must retain the above copyright notice,
@@ -24,13 +26,16 @@
 // this list of conditions and the following disclaimer in the documentation
 // and/or other materials provided with the distribution.
 //
-// * Neither the names of the copyright holders nor the names of the contributors
+// * Neither the names of the copyright holders nor the names of the
+contributors
 // may be used to endorse or promote products derived from this software
 // without specific prior written permission.
 //
-// This software is provided by the copyright holders and contributors "as is" and
+// This software is provided by the copyright holders and contributors "as is"
+and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
 // In no event shall copyright holders or contributors be liable for any direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
@@ -72,47 +77,50 @@
 #include <opencv2/dnn/dnn.hpp>
 
 namespace cv {
-    namespace dnn {
-        namespace darknet {
+namespace dnn {
+namespace darknet {
 
-            class LayerParameter {
-                std::string layer_name, layer_type;
-                std::vector<std::string> bottom_indexes;
-                cv::dnn::LayerParams layerParams;
-            public:
-                friend class setLayersParams;
-                cv::dnn::LayerParams getLayerParams() const { return layerParams; }
-                std::string name() const { return layer_name; }
-                std::string type() const { return layer_type; }
-                int bottom_size() const { return bottom_indexes.size(); }
-                std::string bottom(const int index) const { return bottom_indexes.at(index); }
-                int top_size() const { return 1; }
-                std::string top(const int index) const { return layer_name; }
-            };
+class LayerParameter {
+  std::string layer_name, layer_type;
+  std::vector<std::string> bottom_indexes;
+  cv::dnn::LayerParams layerParams;
 
-            class NetParameter {
-            public:
-                int width, height, channels;
-                std::vector<LayerParameter> layers;
-                std::vector<int> out_channels_vec;
+ public:
+  friend class setLayersParams;
+  cv::dnn::LayerParams getLayerParams() const { return layerParams; }
+  std::string name() const { return layer_name; }
+  std::string type() const { return layer_type; }
+  int bottom_size() const { return bottom_indexes.size(); }
+  std::string bottom(const int index) const { return bottom_indexes.at(index); }
+  int top_size() const { return 1; }
+  std::string top(const int index) const { return layer_name; }
+};
 
-                std::map<int, std::map<std::string, std::string> > layers_cfg;
-                std::map<std::string, std::string> net_cfg;
+class NetParameter {
+ public:
+  int width, height, channels;
+  std::vector<LayerParameter> layers;
+  std::vector<int> out_channels_vec;
 
-                NetParameter() : width(0), height(0), channels(0) {}
+  std::map<int, std::map<std::string, std::string> > layers_cfg;
+  std::map<std::string, std::string> net_cfg;
 
-                int layer_size() const { return layers.size(); }
+  NetParameter() : width(0), height(0), channels(0) {}
 
-                int input_size() const { return 1; }
-                std::string input(const int index) const { return "data"; }
-                LayerParameter layer(const int index) const { return layers.at(index); }
-            };
-        }
+  int layer_size() const { return layers.size(); }
 
-        // Read parameters from a file into a NetParameter message.
-        void ReadNetParamsFromCfgFileOrDie(const char *cfgFile, darknet::NetParameter *net);
-        void ReadNetParamsFromBinaryFileOrDie(const char *darknetModel, darknet::NetParameter *net);
+  int input_size() const { return 1; }
+  std::string input(const int index) const { return "data"; }
+  LayerParameter layer(const int index) const { return layers.at(index); }
+};
+}  // namespace darknet
 
-    }
-}
+// Read parameters from a file into a NetParameter message.
+void ReadNetParamsFromCfgFileOrDie(const char *cfgFile,
+                                   darknet::NetParameter *net);
+void ReadNetParamsFromBinaryFileOrDie(const char *darknetModel,
+                                      darknet::NetParameter *net);
+
+}  // namespace dnn
+}  // namespace cv
 #endif

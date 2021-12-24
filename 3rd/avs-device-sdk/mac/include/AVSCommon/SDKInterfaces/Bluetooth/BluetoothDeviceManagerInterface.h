@@ -28,32 +28,36 @@ namespace sdkInterfaces {
 namespace bluetooth {
 
 /**
- * This component is a starting point of any platform specific implementation of bluetooth functionality. It is
- * responsible for ownership of @c BluetoothDeviceInterface objects and @c BluetootHostController objects.
+ * This component is a starting point of any platform specific implementation of
+ * bluetooth functionality. It is responsible for ownership of @c
+ * BluetoothDeviceInterface objects and @c BluetootHostController objects.
  *
  */
 class BluetoothDeviceManagerInterface {
-public:
-    /**
-     * Destructor
-     */
-    virtual ~BluetoothDeviceManagerInterface() = default;
+ public:
+  /**
+   * Destructor
+   */
+  virtual ~BluetoothDeviceManagerInterface() = default;
 
-    /**
-     * Get @c BluetoothHostControllerInterface instance
-     * @return Pointer to a @c BluetoothHostControllerInterface instance
-     */
-    virtual std::shared_ptr<avsCommon::sdkInterfaces::bluetooth::BluetoothHostControllerInterface>
-    getHostController() = 0;
+  /**
+   * Get @c BluetoothHostControllerInterface instance
+   * @return Pointer to a @c BluetoothHostControllerInterface instance
+   */
+  virtual std::shared_ptr<
+      avsCommon::sdkInterfaces::bluetooth::BluetoothHostControllerInterface>
+  getHostController() = 0;
 
-    /**
-     * Get a list of devices the Host Controller is aware of. This list must contain:
-     *
-     * i) Paired devices.
-     * ii) Devices found during the scanning process.
-     */
-    virtual std::list<std::shared_ptr<avsCommon::sdkInterfaces::bluetooth::BluetoothDeviceInterface>>
-    getDiscoveredDevices() = 0;
+  /**
+   * Get a list of devices the Host Controller is aware of. This list must
+   * contain:
+   *
+   * i) Paired devices.
+   * ii) Devices found during the scanning process.
+   */
+  virtual std::list<std::shared_ptr<
+      avsCommon::sdkInterfaces::bluetooth::BluetoothDeviceInterface>>
+  getDiscoveredDevices() = 0;
 };
 
 }  // namespace bluetooth

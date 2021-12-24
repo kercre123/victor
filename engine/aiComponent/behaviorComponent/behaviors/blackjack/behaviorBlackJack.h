@@ -13,9 +13,9 @@
 #ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorBlackJack__
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorBlackJack__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/blackjack/blackJackSimulation.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/blackjack/blackJackVisualizer.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Vector {
@@ -25,20 +25,20 @@ class BehaviorPromptUserForVoiceCommand;
 class BehaviorTextToSpeechLoop;
 class BehaviorLookAtFaceInFront;
 
-class BehaviorBlackJack : public ICozmoBehavior
-{
-public:
+class BehaviorBlackJack : public ICozmoBehavior {
+ public:
   virtual ~BehaviorBlackJack();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   explicit BehaviorBlackJack(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override {}
 
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void InitBehavior() override;
@@ -46,8 +46,7 @@ protected:
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-
+ private:
   enum class EState {
     TurnToFace,
     GetIn,
@@ -72,7 +71,7 @@ private:
     Finished
   };
 
-  enum class EOutcome{
+  enum class EOutcome {
     Tie,
     VictorWins,
     VictorWinsBlackJack,
@@ -99,17 +98,17 @@ private:
     InstanceConfig();
     std::shared_ptr<BehaviorPromptUserForVoiceCommand> hitOrStandPromptBehavior;
     std::shared_ptr<BehaviorPromptUserForVoiceCommand> playAgainPromptBehavior;
-    std::shared_ptr<BehaviorTextToSpeechLoop>          ttsBehavior;
-    std::shared_ptr<BehaviorTextToSpeechLoop>          goodLuckTTSBehavior;
-    std::shared_ptr<BehaviorLookAtFaceInFront>         lookAtFaceInFrontBehavior;
+    std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
+    std::shared_ptr<BehaviorTextToSpeechLoop> goodLuckTTSBehavior;
+    std::shared_ptr<BehaviorLookAtFaceInFront> lookAtFaceInFrontBehavior;
   };
 
   struct DynamicVariables {
     DynamicVariables();
-    EState              state;
-    EDealingState       dealingState;
-    EOutcome            outcome;
-    float               gameStartTime_s;
+    EState state;
+    EDealingState dealingState;
+    EOutcome outcome;
+    float gameStartTime_s;
   };
 
   InstanceConfig _iConfig;
@@ -130,12 +129,11 @@ private:
   void SetState_internal(EState state, const std::string& stateName);
 
   // Get localized value for given string key
-  std::string GetLocalizedString(const std::string & key);
-  std::string GetLocalizedString(const std::string & key, const int score);
-
+  std::string GetLocalizedString(const std::string& key);
+  std::string GetLocalizedString(const std::string& key, const int score);
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorBlackJack__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorBlackJack__

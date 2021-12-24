@@ -19,48 +19,43 @@
 namespace Anki {
 namespace Util {
 
-void AudienceTags::RegisterTag(std::string tag, TagHandler handler)
-{
+void AudienceTags::RegisterTag(std::string tag, TagHandler handler) {
   if (IsTagRegistered(tag)) {
-    PRINT_NAMED_ERROR("AudienceTags.RegisterTag", "tag already registered: %s", tag.c_str());
+    PRINT_NAMED_ERROR("AudienceTags.RegisterTag", "tag already registered: %s",
+                      tag.c_str());
   }
   _tagHandlers.emplace(std::move(tag), std::move(handler));
 }
 
-bool AudienceTags::IsTagRegistered(const std::string& tag) const
-{
+bool AudienceTags::IsTagRegistered(const std::string& tag) const {
   return _tagHandlers.find(tag) != _tagHandlers.end();
 }
 
-void AudienceTags::RegisterDynamicTag(DynamicTagHandler handler)
-{
+void AudienceTags::RegisterDynamicTag(DynamicTagHandler handler) {
   _dynamicTagHandlers.emplace_back(std::move(handler));
 }
 
-bool AudienceTags::VerifyTags(const std::vector<std::string>& tags) const
-{
+bool AudienceTags::VerifyTags(const std::vector<std::string>& tags) const {
   bool allKnown = true;
   for (const auto& tag : tags) {
     if (_tagHandlers.find(tag) == _tagHandlers.end()) {
       allKnown = false;
-      PRINT_NAMED_ERROR("AudienceTags.VerifyTags", "got unknown tag: %s", tag.c_str());
+      PRINT_NAMED_ERROR("AudienceTags.VerifyTags", "got unknown tag: %s",
+                        tag.c_str());
     }
   }
   return allKnown;
 }
 
-const std::vector<std::string>& AudienceTags::GetQualifiedTags() const
-{
+const std::vector<std::string>& AudienceTags::GetQualifiedTags() const {
   if (!_qualifiedTags.empty()) {
     return _qualifiedTags;
-  }
-  else {
+  } else {
     return CalculateQualifiedTags();
   }
 }
 
-const std::vector<std::string>& AudienceTags::CalculateQualifiedTags() const
-{
+const std::vector<std::string>& AudienceTags::CalculateQualifiedTags() const {
   _qualifiedTags.clear();
   for (const auto& tagHandlerPair : _tagHandlers) {
     const TagHandler& handler = tagHandlerPair.second;
@@ -80,5 +75,5 @@ const std::vector<std::string>& AudienceTags::CalculateQualifiedTags() const
   return _qualifiedTags;
 }
 
-}
-}
+}  // namespace Util
+}  // namespace Anki

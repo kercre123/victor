@@ -5,10 +5,10 @@
  *
  * @brief DA14580 RF control Header File.
  *
- * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer 
- * program includes Confidential, Proprietary Information and is a Trade Secret of 
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
- * unless authorized in writing. All Rights Reserved.
+ * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -18,14 +18,14 @@
 #define _RF_580_H_
 
 #include "global_io.h"
-#include "rwip.h"               // for RF API structure definition
-#include "reg_blecore.h"        // ble core registers
-#include "reg_ble_em_cs.h"      // control structure definitions
+#include "reg_ble_em_cs.h"  // control structure definitions
+#include "reg_blecore.h"    // ble core registers
+#include "rwip.h"           // for RF API structure definition
 
 #define RC16_CAL_REF_CYCLES 0x400
 
-#define RF_DIAG_IRQ_MODE_TXONLY       0
-#define RF_DIAG_IRQ_MODE_RXTX         1
+#define RF_DIAG_IRQ_MODE_TXONLY 0
+#define RF_DIAG_IRQ_MODE_RXTX 1
 
 void rf_init(struct rwip_rf_api *api);
 
@@ -49,5 +49,4 @@ void rf_nfm_enable(void);
 
 void rf_nfm_disable(void);
 
-#endif // _RF_580_H_
-
+#endif  // _RF_580_H_

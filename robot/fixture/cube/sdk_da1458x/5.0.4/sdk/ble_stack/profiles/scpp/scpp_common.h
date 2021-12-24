@@ -12,7 +12,6 @@
  ****************************************************************************************
  */
 
-
 #ifndef _SCPP_COMMON_H_
 #define _SCPP_COMMON_H_
 
@@ -43,9 +42,8 @@
  ****************************************************************************************
  */
 
-enum
-{
-    SCPP_SERVER_REQUIRES_REFRESH    = 0x00,
+enum {
+  SCPP_SERVER_REQUIRES_REFRESH = 0x00,
 };
 
 /*
@@ -54,14 +52,12 @@ enum
  */
 
 /// Scan Interval Window Characteristic Value Structure
-struct scan_intv_wd
-{
-    uint16_t le_scan_intv;
-    uint16_t le_scan_window;
+struct scan_intv_wd {
+  uint16_t le_scan_intv;
+  uint16_t le_scan_window;
 };
 
-
-#endif // (BLE_SP_SERVER || BLE_SP_CLIENT)
+#endif  // (BLE_SP_SERVER || BLE_SP_CLIENT)
 
 /// @} scpp_common
 

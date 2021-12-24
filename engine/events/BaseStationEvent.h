@@ -19,76 +19,72 @@
 #include <vector>
 
 namespace Anki {
-  namespace Vector {
+namespace Vector {
 
 //==============================================================================================================================
-typedef enum
-{
+typedef enum {
   BSED_IMMEDIATE,
 } BaseStationEventDelivery;
 
-
 //==============================================================================================================================
-// Each class that wants to listen for events needs to implement this simple interface.
-class IBaseStationEventListener
-{
-public:
-
+// Each class that wants to listen for events needs to implement this simple
+// interface.
+class IBaseStationEventListener {
+ public:
   // called by event dispatcher when event is raised
-  virtual void OnEventRaised( const IBaseStationEventInterface* event ) = 0;
-  
-  void RegisterForAllEvents( void );
-  void UnregisterForAllEvents( void );
-};
+  virtual void OnEventRaised(const IBaseStationEventInterface* event) = 0;
 
+  void RegisterForAllEvents(void);
+  void UnregisterForAllEvents(void);
+};
 
 //==============================================================================================================================
 // This class handles the collecting and dispatcing of events.
 // It also handles the registration of event listeners.
-class BaseStationEventDispatcher
-{
+class BaseStationEventDispatcher {
   //----------------------------------------------------------------------------------------------------------------------------
   // Construct/Destruct
-public:
-  BaseStationEventDispatcher( void );
-  ~BaseStationEventDispatcher( void );
-  void Init( void );
-  
+ public:
+  BaseStationEventDispatcher(void);
+  ~BaseStationEventDispatcher(void);
+  void Init(void);
+
   //----------------------------------------------------------------------------------------------------------------------------
   // Event Handling
-public:
-  void RegisterEventListener( BaseStationEventType type, IBaseStationEventListener* observer );
-  void UnregisterEventListener( BaseStationEventType type, IBaseStationEventListener* observer );
-  void EventRaised( IBaseStationEventInterface* event, BaseStationEventDelivery delivery );
-  
-protected:
-  void NotifyEventListeners( IBaseStationEventInterface* event );
-  
+ public:
+  void RegisterEventListener(BaseStationEventType type,
+                             IBaseStationEventListener* observer);
+  void UnregisterEventListener(BaseStationEventType type,
+                               IBaseStationEventListener* observer);
+  void EventRaised(IBaseStationEventInterface* event,
+                   BaseStationEventDelivery delivery);
+
+ protected:
+  void NotifyEventListeners(IBaseStationEventInterface* event);
+
   //----------------------------------------------------------------------------------------------------------------------------
   // Singleton Access
-public:
-  static void RemoveInstance( void );
-  static BaseStationEventDispatcher& Instance()
-  {
-    if ( instance_ == NULL )
-    {
+ public:
+  static void RemoveInstance(void);
+  static BaseStationEventDispatcher& Instance() {
+    if (instance_ == NULL) {
       instance_ = new BaseStationEventDispatcher();
     }
-    
+
     return *instance_;
   }
-  
+
   //----------------------------------------------------------------------------------------------------------------------------
   // Data Members
-private:
+ private:
   typedef std::vector<IBaseStationEventListener*> ObserverList;
   ObserverList observers_[BSETYPE_ALL];
-  
+
   std::vector<IBaseStationEventInterface*> queuedEvents_;
-  
+
   static BaseStationEventDispatcher* instance_;
 };
-  
-  } // namespace Vector
-} // namespace Anki
-#endif // BASESTATION_BASESTATIONEVENTS
+
+}  // namespace Vector
+}  // namespace Anki
+#endif  // BASESTATION_BASESTATIONEVENTS

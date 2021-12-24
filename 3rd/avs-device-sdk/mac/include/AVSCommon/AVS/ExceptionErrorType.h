@@ -26,30 +26,32 @@ namespace avsCommon {
 namespace avs {
 
 enum class ExceptionErrorType {
-    /// The directive sent to your client was malformed or the payload does not conform to the directive specification.
-    UNEXPECTED_INFORMATION_RECEIVED,
-    /// The operation specified by the namespace/name in the directive's header are not supported by the client.
-    UNSUPPORTED_OPERATION,
-    /**
-     * An error occurred while the device was handling the directive and the error does not fall into the
-     * specified categories.
-     */
-    INTERNAL_ERROR
+  /// The directive sent to your client was malformed or the payload does not
+  /// conform to the directive specification.
+  UNEXPECTED_INFORMATION_RECEIVED,
+  /// The operation specified by the namespace/name in the directive's header
+  /// are not supported by the client.
+  UNSUPPORTED_OPERATION,
+  /**
+   * An error occurred while the device was handling the directive and the error
+   * does not fall into the specified categories.
+   */
+  INTERNAL_ERROR
 };
 
 inline std::ostream& operator<<(std::ostream& stream, ExceptionErrorType type) {
-    switch (type) {
-        case ExceptionErrorType::UNEXPECTED_INFORMATION_RECEIVED:
-            stream << "UNEXPECTED_INFORMATION_RECEIVED";
-            break;
-        case ExceptionErrorType::UNSUPPORTED_OPERATION:
-            stream << "UNSUPPORTED_OPERATION";
-            break;
-        case ExceptionErrorType::INTERNAL_ERROR:
-            stream << "INTERNAL_ERROR";
-            break;
-    }
-    return stream;
+  switch (type) {
+    case ExceptionErrorType::UNEXPECTED_INFORMATION_RECEIVED:
+      stream << "UNEXPECTED_INFORMATION_RECEIVED";
+      break;
+    case ExceptionErrorType::UNSUPPORTED_OPERATION:
+      stream << "UNSUPPORTED_OPERATION";
+      break;
+    case ExceptionErrorType::INTERNAL_ERROR:
+      stream << "INTERNAL_ERROR";
+      break;
+  }
+  return stream;
 }
 
 }  // namespace avs

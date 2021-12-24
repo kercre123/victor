@@ -1,88 +1,122 @@
 /**
-* File: dataAccessorComponent.h
-*
-* Author: Kevin Karol
-* Created: 4/12/18
-*
-* Description: Component which provides access to the data stored in robotDataLoader
-* directly instead of having to pass context around
-*
-* Copyright: Anki, Inc. 2018
-*
-**/
+ * File: dataAccessorComponent.h
+ *
+ * Author: Kevin Karol
+ * Created: 4/12/18
+ *
+ * Description: Component which provides access to the data stored in
+ *robotDataLoader directly instead of having to pass context around
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 #ifndef __Cozmo_Basestation_Components_DataAccessorComponent_H__
 #define __Cozmo_Basestation_Components_DataAccessorComponent_H__
 
+#include <assert.h>
+
+#include "clad/types/behaviorComponent/beiConditionTypes.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/robotDataLoader.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
-#include "clad/types/behaviorComponent/beiConditionTypes.h"
-
-#include <assert.h>
-
 namespace Anki {
 
 // forward declaration
-namespace Vision{
+namespace Vision {
 class SpriteCache;
 class SpriteSequenceContainer;
-}
+}  // namespace Vision
 
 namespace Vector {
 
-class DataAccessorComponent : public IDependencyManagedComponent<RobotComponentID>, 
-                             private Anki::Util::noncopyable
-{
-public:
+class DataAccessorComponent
+    : public IDependencyManagedComponent<RobotComponentID>,
+      private Anki::Util::noncopyable {
+ public:
   DataAccessorComponent();
   virtual ~DataAccessorComponent();
 
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
-  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+  virtual void InitDependent(Vector::Robot* robot,
+                             const RobotCompMap& dependentComps) override;
+  virtual void GetInitDependencies(
+      RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
   //////
   // end IDependencyManagedComponent functions
   //////
 
-  const Vision::SpritePathMap* GetSpritePaths() const { assert(_spritePaths != nullptr); return _spritePaths; }
+  const Vision::SpritePathMap* GetSpritePaths() const {
+    assert(_spritePaths != nullptr);
+    return _spritePaths;
+  }
 
-  Vision::SpriteCache* GetSpriteCache() const { assert(_spriteCache != nullptr); return _spriteCache;  }
-  Vision::SpriteSequenceContainer* GetSpriteSequenceContainer() const { assert(_spriteSequenceContainer != nullptr); return _spriteSequenceContainer;}
+  Vision::SpriteCache* GetSpriteCache() const {
+    assert(_spriteCache != nullptr);
+    return _spriteCache;
+  }
+  Vision::SpriteSequenceContainer* GetSpriteSequenceContainer() const {
+    assert(_spriteSequenceContainer != nullptr);
+    return _spriteSequenceContainer;
+  }
 
-  const CannedAnimationContainer* GetCannedAnimationContainer() const { assert(_cannedAnimationContainer); return _cannedAnimationContainer; }
-  const RobotDataLoader::WeatherResponseMap* GetWeatherResponseMap() const { assert(_weatherResponseMap); return _weatherResponseMap; }
-  const RobotDataLoader::WeatherConditionTTSMap* GetWeatherConditionTTSMap() const { assert(_weatherConditionTTSMap); return _weatherConditionTTSMap;}
-  const Json::Value& GetWeatherRemaps() const { assert(_weatherRemaps); return *_weatherRemaps;}
-  RobotDataLoader::VariableSnapshotJsonMap* GetVariableSnapshotJsonMap() const { assert(nullptr != _variableSnapshotJsonMap); return _variableSnapshotJsonMap; }
+  const CannedAnimationContainer* GetCannedAnimationContainer() const {
+    assert(_cannedAnimationContainer);
+    return _cannedAnimationContainer;
+  }
+  const RobotDataLoader::WeatherResponseMap* GetWeatherResponseMap() const {
+    assert(_weatherResponseMap);
+    return _weatherResponseMap;
+  }
+  const RobotDataLoader::WeatherConditionTTSMap* GetWeatherConditionTTSMap()
+      const {
+    assert(_weatherConditionTTSMap);
+    return _weatherConditionTTSMap;
+  }
+  const Json::Value& GetWeatherRemaps() const {
+    assert(_weatherRemaps);
+    return *_weatherRemaps;
+  }
+  RobotDataLoader::VariableSnapshotJsonMap* GetVariableSnapshotJsonMap() const {
+    assert(nullptr != _variableSnapshotJsonMap);
+    return _variableSnapshotJsonMap;
+  }
 
   const Json::Value& GetCubeSpinnerConfig() const { return _cupeSpinnerConfig; }
 
-  RobotDataLoader::ConditionToBehaviorsMap* GetUserDefinedConditionToBehaviorsMap() const { assert(nullptr != _userDefinedConditionToBehaviorsMap); return _userDefinedConditionToBehaviorsMap; }
-  const BEIConditionType GetUserDefinedEditCondition() const { return _userDefinedEditCondition; };
-private:
+  RobotDataLoader::ConditionToBehaviorsMap*
+  GetUserDefinedConditionToBehaviorsMap() const {
+    assert(nullptr != _userDefinedConditionToBehaviorsMap);
+    return _userDefinedConditionToBehaviorsMap;
+  }
+  const BEIConditionType GetUserDefinedEditCondition() const {
+    return _userDefinedEditCondition;
+  };
+
+ private:
   const Vision::SpritePathMap* _spritePaths = nullptr;
   Vision::SpriteCache* _spriteCache = nullptr;
   Vision::SpriteSequenceContainer* _spriteSequenceContainer = nullptr;
   const CannedAnimationContainer* _cannedAnimationContainer = nullptr;
   const RobotDataLoader::WeatherResponseMap* _weatherResponseMap = nullptr;
-  const RobotDataLoader::WeatherConditionTTSMap* _weatherConditionTTSMap = nullptr;
+  const RobotDataLoader::WeatherConditionTTSMap* _weatherConditionTTSMap =
+      nullptr;
   const Json::Value* _weatherRemaps = nullptr;
   RobotDataLoader::VariableSnapshotJsonMap* _variableSnapshotJsonMap = nullptr;
   Json::Value _cupeSpinnerConfig;
-  RobotDataLoader::ConditionToBehaviorsMap* _userDefinedConditionToBehaviorsMap = nullptr;
+  RobotDataLoader::ConditionToBehaviorsMap*
+      _userDefinedConditionToBehaviorsMap = nullptr;
   BEIConditionType _userDefinedEditCondition;
 
-}; // __Cozmo_Basestation_Components_DataAccessorComponent_H__
+};  // __Cozmo_Basestation_Components_DataAccessorComponent_H__
 
-
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

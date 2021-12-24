@@ -16,9 +16,9 @@
 
 #include <string.h>
 
-#include "./backward_references_enc.h"
 #include "../webp/format_constants.h"
 #include "../webp/types.h"
+#include "./backward_references_enc.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,7 +31,7 @@ extern "C" {
 typedef struct {
   // literal_ contains green literal, palette-code and
   // copy-length-prefix histogram
-  uint32_t* literal_;         // Pointer to the allocated buffer for literal.
+  uint32_t* literal_;  // Pointer to the allocated buffer for literal.
   uint32_t red_[NUM_LITERAL_CODES];
   uint32_t blue_[NUM_LITERAL_CODES];
   uint32_t alpha_[NUM_LITERAL_CODES];
@@ -49,8 +49,8 @@ typedef struct {
 // Collection of histograms with fixed capacity, allocated as one
 // big memory chunk. Can be destroyed by calling WebPSafeFree().
 typedef struct {
-  int size;         // number of slots currently in use
-  int max_size;     // maximum capacity
+  int size;      // number of slots currently in use
+  int max_size;  // maximum capacity
   VP8LHistogram** histograms;
 } VP8LHistogramSet;
 
@@ -94,14 +94,13 @@ void VP8LHistogramAddSinglePixOrCopy(VP8LHistogram* const histo,
 
 static WEBP_INLINE int VP8LHistogramNumCodes(int palette_code_bits) {
   return NUM_LITERAL_CODES + NUM_LENGTH_CODES +
-      ((palette_code_bits > 0) ? (1 << palette_code_bits) : 0);
+         ((palette_code_bits > 0) ? (1 << palette_code_bits) : 0);
 }
 
 // Builds the histogram image.
 int VP8LGetHistoImageSymbols(int xsize, int ysize,
-                             const VP8LBackwardRefs* const refs,
-                             int quality, int low_effort,
-                             int histogram_bits, int cache_bits,
+                             const VP8LBackwardRefs* const refs, int quality,
+                             int low_effort, int histogram_bits, int cache_bits,
                              VP8LHistogramSet* const image_in,
                              VP8LHistogramSet* const tmp_histos,
                              uint16_t* const histogram_symbols);

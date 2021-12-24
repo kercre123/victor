@@ -49,9 +49,7 @@ class MemoryRange {
  public:
   MemoryRange() : data_(NULL), length_(0) {}
 
-  MemoryRange(const void* data, size_t length) {
-    Set(data, length);
-  }
+  MemoryRange(const void* data, size_t length) { Set(data, length); }
 
   // Returns true if this memory range contains no data.
   bool IsEmpty() const {
@@ -79,8 +77,7 @@ class MemoryRange {
     // 1. sub_offset is within [ 0 .. length_ - 1 ]
     // 2. sub_offset + sub_length is within
     //    [ sub_offset .. length_ ]
-    return sub_offset < length_ &&
-           sub_offset + sub_length >= sub_offset &&
+    return sub_offset < length_ && sub_offset + sub_length >= sub_offset &&
            sub_offset + sub_length <= length_;
   }
 
@@ -102,8 +99,7 @@ class MemoryRange {
   // Returns a raw pointer to the |element_index|-th element of an array
   // of elements of length |element_size| starting at |sub_offset| bytes
   // of this memory range, or NULL if the element is out of bounds.
-  const void* GetArrayElement(size_t element_offset,
-                              size_t element_size,
+  const void* GetArrayElement(size_t element_offset, size_t element_size,
                               unsigned element_index) const {
     size_t sub_offset = element_offset + element_index * element_size;
     return GetData(sub_offset, element_size);
@@ -122,8 +118,9 @@ class MemoryRange {
   // Returns a subrange of |sub_length| bytes at |sub_offset| bytes of
   // this memory range, or an empty range if the subrange is out of bounds.
   MemoryRange Subrange(size_t sub_offset, size_t sub_length) const {
-    return Covers(sub_offset, sub_length) ?
-        MemoryRange(data_ + sub_offset, sub_length) : MemoryRange();
+    return Covers(sub_offset, sub_length)
+               ? MemoryRange(data_ + sub_offset, sub_length)
+               : MemoryRange();
   }
 
   // Returns a pointer to the beginning of this memory range.

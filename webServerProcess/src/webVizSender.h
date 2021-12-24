@@ -13,9 +13,9 @@
 #ifndef __WebServerProcess_Src_WebVizSender_H__
 #define __WebServerProcess_Src_WebVizSender_H__
 
-#include "json/json.h"
-
 #include <memory>
+
+#include "json/json.h"
 
 namespace Anki {
 namespace Vector {
@@ -23,26 +23,26 @@ namespace WebService {
 
 class WebService;
 
-class WebVizSender
-{
-public:
-
-  // Construct a webviz sender that will automatically send the contents of `data` to moduleName automatically
-  // when it goes out of scope
+class WebVizSender {
+ public:
+  // Construct a webviz sender that will automatically send the contents of
+  // `data` to moduleName automatically when it goes out of scope
   WebVizSender(const std::string& moduleName, WebService* webService);
   ~WebVizSender();
 
   Json::Value& Data() { return _data; }
 
-  // helper that will return a shared ptr to an appropriate web viz sender if the specified module has a
-  // client, otherwise (including if webService is null) it will return an empty (null) ptr.
+  // helper that will return a shared ptr to an appropriate web viz sender if
+  // the specified module has a client, otherwise (including if webService is
+  // null) it will return an empty (null) ptr.
   //
-  // Warning: don't store this value long term. It stores a raw pointer to the web service, so if it's stored
-  // (e.g. as a member variable) during engine tear down, undefined behavior might result)
-  static std::shared_ptr<WebVizSender> CreateWebVizSender(const std::string& moduleName, WebService* webService);
+  // Warning: don't store this value long term. It stores a raw pointer to the
+  // web service, so if it's stored (e.g. as a member variable) during engine
+  // tear down, undefined behavior might result)
+  static std::shared_ptr<WebVizSender> CreateWebVizSender(
+      const std::string& moduleName, WebService* webService);
 
-private:
-
+ private:
   void Send();
 
   Json::Value _data;
@@ -50,9 +50,8 @@ private:
   WebService* _webService;
 };
 
-}
-}
-}
-
+}  // namespace WebService
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

@@ -32,8 +32,9 @@
 #include "user_profiles_config.h"
 
 #if (BLE_DIS_SERVER)
-#include <stdint.h>          // Standard Integer Definition
 #include <co_bt.h>
+#include <stdint.h>  // Standard Integer Definition
+
 #include "ble_580_sw_version.h"
 #include "user_config_sw_ver.h"
 
@@ -75,8 +76,8 @@ void app_diss_create_db(void);
  */
 void app_diss_enable(uint16_t conhdl);
 
-#endif // (BLE_DIS_SERVER)
+#endif  // (BLE_DIS_SERVER)
 
 /// @} APP
 
-#endif // _APP_DISS_H_
+#endif  // _APP_DISS_H_

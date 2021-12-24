@@ -11,11 +11,12 @@
  **/
 
 #include <sodium.h>
-#include <stdio.h>
 #include <stdint.h>
-#include <string>
+#include <stdio.h>
 #include <stdlib.h>
+
 #include <fstream>
+#include <string>
 #include <vector>
 
 #pragma once
@@ -23,20 +24,20 @@
 namespace Anki {
 namespace Switchboard {
 
-struct __attribute__ ((packed)) RtsIdData {
+struct __attribute__((packed)) RtsIdData {
   bool hasName;
   char name[12];
   uint8_t publicKey[crypto_kx_PUBLICKEYBYTES];
   uint8_t privateKey[crypto_kx_SECRETKEYBYTES];
 };
 
-struct __attribute__ ((packed)) RtsClientData {
+struct __attribute__((packed)) RtsClientData {
   uint8_t publicKey[crypto_kx_PUBLICKEYBYTES];
   uint8_t sessionRx[crypto_kx_SESSIONKEYBYTES];
   uint8_t sessionTx[crypto_kx_SESSIONKEYBYTES];
 };
 
-struct __attribute__ ((packed)) RtsKeysData {
+struct __attribute__((packed)) RtsKeysData {
   uint8_t magic[8];
   uint32_t version;
   RtsIdData id;
@@ -49,17 +50,17 @@ struct RtsKeys {
 };
 
 class SavedSessionManager {
-public:
+ public:
   static int MigrateKeys();
   static RtsKeys LoadRtsKeys();
   static int SaveRtsKeys(RtsKeys& keys);
   static std::string GetRobotName();
 
-private:
+ private:
   static bool IsValidRtsKeysData(const std::vector<uint8_t>& data);
-  static RtsKeys LoadRtsKeysFromFile(const std::string& fileName, size_t length = 0);
-  static int SaveRtsKeysToFile(RtsKeys& keys,
-                               const std::string& fileName,
+  static RtsKeys LoadRtsKeysFromFile(const std::string& fileName,
+                                     size_t length = 0);
+  static int SaveRtsKeysToFile(RtsKeys& keys, const std::string& fileName,
                                size_t fileLength = 0);
   static RtsKeys LoadRtsKeysFactory();
   static int ClearRtsKeysFactory(const std::string& name);
@@ -73,5 +74,5 @@ private:
   static const uint32_t kInvalidVersionNumber;
 };
 
-} // Switchboard
-} // Anki
+}  // namespace Switchboard
+}  // namespace Anki

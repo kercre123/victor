@@ -5,6 +5,4 @@
 
 #define REG_BLE_EM_WPV_BASE_ADDR 0x80000
 
-
-#endif // __REG_BLE_EM_WPV_H_
-
+#endif  // __REG_BLE_EM_WPV_H_

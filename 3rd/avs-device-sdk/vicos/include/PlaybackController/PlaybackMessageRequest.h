@@ -19,44 +19,50 @@
 #include <AVSCommon/AVS/MessageRequest.h>
 #include <AVSCommon/SDKInterfaces/MessageRequestObserverInterface.h>
 
-#include "PlaybackController.h"
 #include "PlaybackCommand.h"
+#include "PlaybackController.h"
 
 namespace alexaClientSDK {
 namespace capabilityAgents {
 namespace playbackController {
 
 /**
- * This class implements @c MessageRequests to alert observers upon completion of the message.
+ * This class implements @c MessageRequests to alert observers upon completion
+ * of the message.
  */
 class PlaybackMessageRequest : public avsCommon::avs::MessageRequest {
-public:
-    /**
-     * @copyDoc avsCommon::avs::MessageRequest()
-     *
-     * Construct a @c MessageRequest while binding it to a @c PlaybackController and a @c Button.
-     *
-     * @param button The @c Button pressed.
-     * @param jsonContent The JSON content to be sent to AVS.
-     * @param playbackController A reference to a @c PlaybackController so that it can be notified when
-     * @c onSendCompleted is invoked.
-     */
-    PlaybackMessageRequest(
-        const PlaybackCommand& command,
-        const std::string& jsonContent,
-        std::shared_ptr<PlaybackController> playbackController);
+ public:
+  /**
+   * @copyDoc avsCommon::avs::MessageRequest()
+   *
+   * Construct a @c MessageRequest while binding it to a @c PlaybackController
+   * and a @c Button.
+   *
+   * @param button The @c Button pressed.
+   * @param jsonContent The JSON content to be sent to AVS.
+   * @param playbackController A reference to a @c PlaybackController so that it
+   * can be notified when
+   * @c onSendCompleted is invoked.
+   */
+  PlaybackMessageRequest(
+      const PlaybackCommand& command, const std::string& jsonContent,
+      std::shared_ptr<PlaybackController> playbackController);
 
-    /// @name MessageRequest functions.
-    /// @{
-    void sendCompleted(avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status status) override;
-    /// @}
+  /// @name MessageRequest functions.
+  /// @{
+  void sendCompleted(
+      avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status status)
+      override;
+  /// @}
 
-private:
-    /// The @c PlaybackController to be notified when @c onSendCompleted is called.
-    std::shared_ptr<PlaybackController> m_playbackController;
+ private:
+  /// The @c PlaybackController to be notified when @c onSendCompleted is
+  /// called.
+  std::shared_ptr<PlaybackController> m_playbackController;
 
-    /// The command associated with the @c Button pressed for this message request.
-    const PlaybackCommand& m_command;
+  /// The command associated with the @c Button pressed for this message
+  /// request.
+  const PlaybackCommand& m_command;
 };
 
 }  // namespace playbackController

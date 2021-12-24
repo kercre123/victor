@@ -1,22 +1,23 @@
 /**
-* File: behaviorTreeStateHelpers.h
-*
-* Author: Kevin M. Karol
-* Created: 6/25/18
-*
-* Description: Functions that provide insight into the state of the behavior tree
-*
-* Copyright: Anki, Inc. 2018
-*
-**/
+ * File: behaviorTreeStateHelpers.h
+ *
+ * Author: Kevin M. Karol
+ * Created: 6/25/18
+ *
+ * Description: Functions that provide insight into the state of the behavior
+ *tree
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 #ifndef __Engine_AiComponent_BehaviorComponent_BehaviorTreeStateHelpers_H__
 #define __Engine_AiComponent_BehaviorComponent_BehaviorTreeStateHelpers_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
-
 #include <set>
 #include <unordered_set>
+
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 
 namespace Anki {
 namespace Vector {
@@ -24,29 +25,30 @@ namespace Vector {
 // forward declaration
 class BehaviorContainer;
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class AreBehaviorsActivatedHelper
-{
-public:
-  AreBehaviorsActivatedHelper() = default; // you must add something using AddBehavior()
-  
-  AreBehaviorsActivatedHelper(const BehaviorContainer& bc, const std::set<BehaviorID>& behaviorIDs);
-  
-  AreBehaviorsActivatedHelper(const BehaviorContainer& bc, const std::set<BehaviorClass>& classes);
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - -
+class AreBehaviorsActivatedHelper {
+ public:
+  AreBehaviorsActivatedHelper() =
+      default;  // you must add something using AddBehavior()
+
+  AreBehaviorsActivatedHelper(const BehaviorContainer& bc,
+                              const std::set<BehaviorID>& behaviorIDs);
+
+  AreBehaviorsActivatedHelper(const BehaviorContainer& bc,
+                              const std::set<BehaviorClass>& classes);
+
   void AddBehavior(const BehaviorContainer& bc, BehaviorID behavior);
   void AddBehavior(const BehaviorContainer& bc, BehaviorClass behavior);
   void AddBehavior(ICozmoBehaviorPtr behavior);
 
   bool AreBehaviorsActivated() const;
 
-protected:
+ protected:
   std::unordered_set<ICozmoBehaviorPtr> _behaviorSet;
-
-
 };
 
-} // end namespace Vector
-} // end namespace Anki
+}  // end namespace Vector
+}  // end namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_BehaviorTreeStateHelpers_H__
+#endif  // __Engine_AiComponent_BehaviorComponent_BehaviorTreeStateHelpers_H__

@@ -24,16 +24,18 @@ namespace sdkInterfaces {
 
 /// An interface that clients can extend to register to observe focus changes.
 class FocusManagerObserverInterface {
-public:
-    virtual ~FocusManagerObserverInterface() = default;
+ public:
+  virtual ~FocusManagerObserverInterface() = default;
 
-    /**
-     * Used to notify the observer of focus changes.  This function should return quickly.
-     *
-     * @param channelName The name of the channel which changed @c FocusState.
-     * @param newFocus The new @c FocusState of @c channelName.
-     */
-    virtual void onFocusChanged(const std::string& channelName, avsCommon::avs::FocusState newFocus) = 0;
+  /**
+   * Used to notify the observer of focus changes.  This function should return
+   * quickly.
+   *
+   * @param channelName The name of the channel which changed @c FocusState.
+   * @param newFocus The new @c FocusState of @c channelName.
+   */
+  virtual void onFocusChanged(const std::string& channelName,
+                              avsCommon::avs::FocusState newFocus) = 0;
 };
 
 }  // namespace sdkInterfaces

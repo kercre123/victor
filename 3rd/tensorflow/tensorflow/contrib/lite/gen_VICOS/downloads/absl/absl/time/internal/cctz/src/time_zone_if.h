@@ -38,8 +38,7 @@ class TimeZoneIf {
 
   virtual time_zone::absolute_lookup BreakTime(
       const time_point<sys_seconds>& tp) const = 0;
-  virtual time_zone::civil_lookup MakeTime(
-      const civil_second& cs) const = 0;
+  virtual time_zone::civil_lookup MakeTime(const civil_second& cs) const = 0;
 
   virtual std::string Description() const = 0;
   virtual bool NextTransition(time_point<sys_seconds>* tp) const = 0;

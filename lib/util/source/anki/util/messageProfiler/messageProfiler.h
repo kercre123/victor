@@ -8,56 +8,58 @@
 #include "util/global/globalDefinitions.h"
 
 #ifndef ANKI_MESSAGE_PROFILER_ENABLED
-// enabled in all builds by default, disabled for shipping builds in victor_build_shipping.sh
+// enabled in all builds by default, disabled for shipping builds in
+// victor_build_shipping.sh
 #define ANKI_MESSAGE_PROFILER_ENABLED 1
 #endif
 
 #ifndef __Util_MessageProfiler_MessageProfiler_H__
 #define __Util_MessageProfiler_MessageProfiler_H__
 
-#include <string>
 #include <time.h>
+
+#include <string>
 
 namespace Anki {
 namespace Util {
 
 #if defined(ANKI_MESSAGE_PROFILER_ENABLED)
 
-  // ================================================================================
-  // MessageProfiler
-  
-  class MessageProfiler {
-  public:
-    MessageProfiler(const std::string& prefix);
-    void Update(int msg, size_t size);
-    void ReportOnFailure();
-    void Report();
+// ================================================================================
+// MessageProfiler
 
-  private:
-    static const constexpr int kMaxMessages = 256;
+class MessageProfiler {
+ public:
+  MessageProfiler(const std::string& prefix);
+  void Update(int msg, size_t size);
+  void ReportOnFailure();
+  void Report();
 
-    std::string m_prefix;
-    clock_t m_start;
-    bool m_started;
-    bool m_failed;
+ private:
+  static const constexpr int kMaxMessages = 256;
 
-    int m_count[kMaxMessages];
-    size_t m_size[kMaxMessages];
-  };
+  std::string m_prefix;
+  clock_t m_start;
+  bool m_started;
+  bool m_failed;
 
-#else // ANKI_MESSAGE_PROFILER_ENABLED
+  int m_count[kMaxMessages];
+  size_t m_size[kMaxMessages];
+};
 
-  class MessageProfiler {
-  public:
-    MessageProfiler(const std::string& prefix);
-    void Update(int msg, size_t size);
-    void ReportOnFailure();
-    void Report();
-  };
+#else  // ANKI_MESSAGE_PROFILER_ENABLED
 
-#endif // ANKI_MESSAGE_PROFILER_ENABLED
+class MessageProfiler {
+ public:
+  MessageProfiler(const std::string& prefix);
+  void Update(int msg, size_t size);
+  void ReportOnFailure();
+  void Report();
+};
 
-} // end namespace Util
-} // end namespace Anki
+#endif  // ANKI_MESSAGE_PROFILER_ENABLED
 
-#endif // __Util_MessageProfiler_MessageProfiler_H__
+}  // end namespace Util
+}  // end namespace Anki
+
+#endif  // __Util_MessageProfiler_MessageProfiler_H__

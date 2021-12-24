@@ -1,5 +1,7 @@
-#include <iostream>
 #include <unistd.h>
+
+#include <iostream>
+
 #include "UdpServer.h"
 
 using namespace std;
@@ -7,8 +9,7 @@ using namespace std;
 #define LISTEN_PORT 5557
 
 // Echo server example
-int main (int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   char buf[2048];
 
   UdpServer server;
@@ -17,9 +18,8 @@ int main (int argc, char *argv[])
     return -1;
   }
   std::cout << "Waiting for client...\n";
-  
-  while (1) {
 
+  while (1) {
     usleep(10000);
     int bytes_received = server.Recv(buf, sizeof(buf));
     if (bytes_received > 0) {
@@ -30,7 +30,6 @@ int main (int argc, char *argv[])
 
   std::cout << "Shutting down\n";
   server.StopListening();
- 
-  return(0);
-}
 
+  return (0);
+}

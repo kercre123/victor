@@ -26,25 +26,25 @@ namespace audio {
 
 /// This acts as an interface to record audio input from a microphone.
 class MicrophoneInterface {
-public:
-    /**
-     * Stops streaming from the microphone.
-     *
-     * @return Whether the stop was successful.
-     */
-    virtual bool stopStreamingMicrophoneData() = 0;
+ public:
+  /**
+   * Stops streaming from the microphone.
+   *
+   * @return Whether the stop was successful.
+   */
+  virtual bool stopStreamingMicrophoneData() = 0;
 
-    /**
-     * Starts streaming from the microphone.
-     *
-     * @return Whether the start was successful.
-     */
-    virtual bool startStreamingMicrophoneData() = 0;
+  /**
+   * Starts streaming from the microphone.
+   *
+   * @return Whether the start was successful.
+   */
+  virtual bool startStreamingMicrophoneData() = 0;
 
-    /**
-     * Destructor.
-     */
-    virtual ~MicrophoneInterface() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~MicrophoneInterface() = default;
 };
 
 }  // namespace audio

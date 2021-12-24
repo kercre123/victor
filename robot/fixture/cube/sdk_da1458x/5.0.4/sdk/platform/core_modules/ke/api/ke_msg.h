@@ -46,22 +46,23 @@
  ****************************************************************************************
  */
 
-#include <stddef.h>          // standard definition
-#include <stdint.h>          // standard integer
-#include <stdbool.h>         // standard boolean
-#include "arch.h"            // architectural definition
-#include "compiler.h"        // compiler definition
-#include "ke_config.h"       // kernel configuration
-#include "co_list.h"         // list definition
+#include <stdbool.h>  // standard boolean
+#include <stddef.h>   // standard definition
+#include <stdint.h>   // standard integer
+
+#include "arch.h"       // architectural definition
+#include "co_list.h"    // list definition
+#include "compiler.h"   // compiler definition
+#include "ke_config.h"  // kernel configuration
 
 /// Task Identifier. Composed by the task type and the task index.
 typedef uint16_t ke_task_id_t;
 
 /// Builds the task identifier from the type and the index of that task.
-#define KE_BUILD_ID(type, index) ( (ke_task_id_t)(((index) << 8)|(type)) )
+#define KE_BUILD_ID(type, index) ((ke_task_id_t)(((index) << 8) | (type)))
 
 /// Retrieves task type from task id.
-#define KE_TYPE_GET(ke_task_id) ((ke_task_id) & 0xFF)
+#define KE_TYPE_GET(ke_task_id) ((ke_task_id)&0xFF)
 
 /// Retrieves task index number from task id.
 #define KE_IDX_GET(ke_task_id) (((ke_task_id) >> 8) & 0xFF)
@@ -76,29 +77,27 @@ typedef uint8_t ke_state_t;
 typedef uint16_t ke_msg_id_t;
 
 /// Message structure.
-struct ke_msg
-{
-    struct co_list_hdr hdr;     ///< List header for chaining
-    #if (HCIC_ITF || HCIH_ITF || GTL_ITF)
-    uint8_t         hci_type;   ///< Type of HCI data (used by the HCI only)
-    int8_t          hci_off;    ///< Offset of the HCI data in the message (used by the HCI only)
-    uint16_t        hci_len;    ///< Length of the HCI traffic (used by the HCI only)
-    #endif //HCIC_ITF || HCIH_ITF || GTL_ITF
+struct ke_msg {
+  struct co_list_hdr hdr;  ///< List header for chaining
+#if (HCIC_ITF || HCIH_ITF || GTL_ITF)
+  uint8_t hci_type;  ///< Type of HCI data (used by the HCI only)
+  int8_t hci_off;    ///< Offset of the HCI data in the message (used by the HCI
+                     ///< only)
+  uint16_t hci_len;  ///< Length of the HCI traffic (used by the HCI only)
+#endif               // HCIC_ITF || HCIH_ITF || GTL_ITF
 
-    ke_msg_id_t     id;         ///< Message id.
-    ke_task_id_t    dest_id;    ///< Destination kernel identifier.
-    ke_task_id_t    src_id;     ///< Source kernel identifier.
-    uint16_t        param_len;  ///< Parameter embedded struct length.
-    uint32_t        param[1];   ///< Parameter embedded struct. Must be word-aligned.
+  ke_msg_id_t id;        ///< Message id.
+  ke_task_id_t dest_id;  ///< Destination kernel identifier.
+  ke_task_id_t src_id;   ///< Source kernel identifier.
+  uint16_t param_len;    ///< Parameter embedded struct length.
+  uint32_t param[1];     ///< Parameter embedded struct. Must be word-aligned.
 };
 
-
 /// Status returned by a task when handling a message
-enum ke_msg_status_tag
-{
-    KE_MSG_CONSUMED = 0, ///< consumed, msg and ext are freed by the kernel
-    KE_MSG_NO_FREE,      ///< consumed, nothing is freed by the kernel
-    KE_MSG_SAVED,        ///< not consumed, will be pushed in the saved queue
+enum ke_msg_status_tag {
+  KE_MSG_CONSUMED = 0,  ///< consumed, msg and ext are freed by the kernel
+  KE_MSG_NO_FREE,       ///< consumed, nothing is freed by the kernel
+  KE_MSG_SAVED,         ///< not consumed, will be pushed in the saved queue
 };
 
 /**
@@ -111,9 +110,9 @@ enum ke_msg_status_tag
  * @return The pointer to the ke_msg
  ****************************************************************************************
  */
-__INLINE struct ke_msg * ke_param2msg(void const *param_ptr)
-{
-    return (struct ke_msg*) (((uint8_t*)param_ptr) - offsetof(struct ke_msg, param));
+__INLINE struct ke_msg *ke_param2msg(void const *param_ptr) {
+  return (struct ke_msg *)(((uint8_t *)param_ptr) -
+                           offsetof(struct ke_msg, param));
 }
 
 /**
@@ -125,9 +124,8 @@ __INLINE struct ke_msg * ke_param2msg(void const *param_ptr)
  * @return The pointer to the param member
  ****************************************************************************************
  */
-__INLINE void * ke_msg2param(struct ke_msg const *msg)
-{
-    return (void*) (((uint8_t*) msg) + offsetof(struct ke_msg, param));
+__INLINE void *ke_msg2param(struct ke_msg const *msg) {
+  return (void *)(((uint8_t *)msg) + offsetof(struct ke_msg, param));
 }
 
 /**
@@ -147,14 +145,14 @@ __INLINE void * ke_msg2param(struct ke_msg const *msg)
  ****************************************************************************************
  */
 #define KE_MSG_ALLOC(id, dest, src, param_str) \
-    (struct param_str*) ke_msg_alloc(id, dest, src, sizeof(struct param_str))
+  (struct param_str *)ke_msg_alloc(id, dest, src, sizeof(struct param_str))
 
 /**
  ****************************************************************************************
  * @brief Convenient wrapper to ke_msg_free()
  *
- * This macro calls ke_msg_free() with the appropriate msg pointer as parameter, according
- * to the message parameter pointer passed.
+ * This macro calls ke_msg_free() with the appropriate msg pointer as parameter,
+ *according to the message parameter pointer passed.
  *
  * @param[in] param_ptr parameter structure pointer
  ****************************************************************************************
@@ -166,9 +164,9 @@ __INLINE void * ke_msg2param(struct ke_msg const *msg)
  * @brief Convenient wrapper to ke_msg_alloc()
  *
  * This macro calls ke_msg_alloc() and cast the returned pointer to the
- * appropriate structure with a variable length. Can only be used if a parameter structure exists
- * for this message (otherwise, use ke_msg_send_basic()).Can only be used if the data array is
- * located at the end of the structure.
+ * appropriate structure with a variable length. Can only be used if a parameter
+ *structure exists for this message (otherwise, use ke_msg_send_basic()).Can
+ *only be used if the data array is located at the end of the structure.
  *
  * @param[in] id        Message identifier
  * @param[in] dest      Destination Identifier
@@ -179,8 +177,9 @@ __INLINE void * ke_msg2param(struct ke_msg const *msg)
  * @return Pointer to the parameter member of the ke_msg.
  ****************************************************************************************
  */
-#define KE_MSG_ALLOC_DYN(id, dest, src, param_str,length)  (struct param_str*)ke_msg_alloc(id, dest, src, \
-    (sizeof(struct param_str) + length));
+#define KE_MSG_ALLOC_DYN(id, dest, src, param_str, length) \
+  (struct param_str *)ke_msg_alloc(id, dest, src,          \
+                                   (sizeof(struct param_str) + length));
 
 /**
  ****************************************************************************************
@@ -190,8 +189,9 @@ __INLINE void * ke_msg2param(struct ke_msg const *msg)
  * is allocated dynamically on the heap and the length of the variable parameter
  * structure has to be provided in order to allocate the correct size.
  *
- * Several additional parameters are provided which will be preset in the message
- * and which may be used internally to choose the kind of memory to allocate.
+ * Several additional parameters are provided which will be preset in the
+ *message and which may be used internally to choose the kind of memory to
+ *allocate.
  *
  * The memory allocated will be automatically freed by the kernel, after the
  * pointer has been sent to ke_msg_send(). If the message is not sent, it must
@@ -244,13 +244,15 @@ void ke_msg_send(void const *param_ptr);
  * @param[in] src_id    Source Identifier
  ****************************************************************************************
  */
-void ke_msg_send_basic(ke_msg_id_t const id, ke_task_id_t const dest_id, ke_task_id_t const src_id);
+void ke_msg_send_basic(ke_msg_id_t const id, ke_task_id_t const dest_id,
+                       ke_task_id_t const src_id);
 
 /**
  ****************************************************************************************
  * @brief Message forwarding.
  *
- * Forward a message to another task by changing its destination and source tasks IDs.
+ * Forward a message to another task by changing its destination and source
+ *tasks IDs.
  *
  * @param[in] param_ptr  Pointer to the parameter member of the message that
  *                       should be sent.
@@ -258,13 +260,15 @@ void ke_msg_send_basic(ke_msg_id_t const id, ke_task_id_t const dest_id, ke_task
  * @param[in] src_id New source task of the message.
  ****************************************************************************************
  */
-void ke_msg_forward(void const *param_ptr, ke_task_id_t const dest_id, ke_task_id_t const src_id);
+void ke_msg_forward(void const *param_ptr, ke_task_id_t const dest_id,
+                    ke_task_id_t const src_id);
 
 /**
  ****************************************************************************************
  * @brief Message forwarding.
  *
- * Forward a message to another task by changing its message ID and its destination and source tasks IDs.
+ * Forward a message to another task by changing its message ID and its
+ *destination and source tasks IDs.
  *
  * @param[in] param_ptr  Pointer to the parameter member of the message that
  *                       should be sent.
@@ -273,18 +277,19 @@ void ke_msg_forward(void const *param_ptr, ke_task_id_t const dest_id, ke_task_i
  * @param[in] src_id  New source task of the message.
  ****************************************************************************************
  */
-void ke_msg_forward_new_id(void const *param_ptr,
-                           ke_msg_id_t const msg_id, ke_task_id_t const dest_id, ke_task_id_t const src_id);
+void ke_msg_forward_new_id(void const *param_ptr, ke_msg_id_t const msg_id,
+                           ke_task_id_t const dest_id,
+                           ke_task_id_t const src_id);
 
 /**
  ****************************************************************************************
  * @brief Free allocated message
  *
- * @param[in] msg   Pointer to the message to be freed (not the parameter member!)
+ * @param[in] msg   Pointer to the message to be freed (not the parameter
+ *member!)
  ****************************************************************************************
  */
 void ke_msg_free(struct ke_msg const *param);
-
 
 #ifdef __DA14581__
 /**
@@ -297,8 +302,6 @@ void ke_msg_free(struct ke_msg const *param);
  ****************************************************************************************
  */
 ke_msg_id_t ke_msg_dest_id_get(void const *param_ptr);
-
-
 
 /**
  ****************************************************************************************
@@ -314,4 +317,4 @@ ke_msg_id_t ke_msg_src_id_get(void const *param_ptr);
 
 /// @} MSG
 
-#endif // _KE_MSG_H_
+#endif  // _KE_MSG_H_

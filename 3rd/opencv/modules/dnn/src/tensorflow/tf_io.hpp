@@ -1,6 +1,6 @@
 // This file is part of OpenCV project.
-// It is subject to the license terms in the LICENSE file found in the top-level directory
-// of this distribution and at http://opencv.org/license.html.
+// It is subject to the license terms in the LICENSE file found in the top-level
+// directory of this distribution and at http://opencv.org/license.html.
 
 // Copyright (C) 2016, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
@@ -20,7 +20,7 @@ namespace dnn {
 
 // Read parameters from a file into a GraphDef proto message.
 void ReadTFNetParamsFromBinaryFileOrDie(const char* param_file,
-                                      tensorflow::GraphDef* param);
+                                        tensorflow::GraphDef* param);
 
 void ReadTFNetParamsFromTextFileOrDie(const char* param_file,
                                       tensorflow::GraphDef* param);
@@ -32,8 +32,8 @@ void ReadTFNetParamsFromBinaryBufferOrDie(const char* data, size_t len,
 void ReadTFNetParamsFromTextBufferOrDie(const char* data, size_t len,
                                         tensorflow::GraphDef* param);
 
-}
-}
+}  // namespace dnn
+}  // namespace cv
 
 #endif
 #endif

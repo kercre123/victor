@@ -15,8 +15,8 @@
 
 static std::unique_ptr<const DAS::IDASPlatform> sPlatform;
 
-void DASNativeInit(std::unique_ptr<const DAS::IDASPlatform> platform, const char* product)
-{
+void DASNativeInit(std::unique_ptr<const DAS::IDASPlatform> platform,
+                   const char* product) {
   if (sPlatform != nullptr) {
     DASError("DASNativeInit", "static platform is already set!");
   }
@@ -49,7 +49,4 @@ void DASNativeInit(std::unique_ptr<const DAS::IDASPlatform> platform, const char
   sPlatform = std::move(platform);
 }
 
-const DAS::IDASPlatform* DASGetPlatform()
-{
-  return sPlatform.get();
-}
+const DAS::IDASPlatform* DASGetPlatform() { return sPlatform.get(); }

@@ -26,39 +26,41 @@ namespace alexaClientSDK {
 namespace registrationManager {
 
 /**
- * The @c CustomerDataManager is an object responsible for managing customer data and to ensure that one
- * customer will not have access to another customer's data.
+ * The @c CustomerDataManager is an object responsible for managing customer
+ * data and to ensure that one customer will not have access to another
+ * customer's data.
  */
 class CustomerDataManager {
-public:
-    /**
-     * CustomerDataManager destructor.
-     */
-    virtual ~CustomerDataManager();
+ public:
+  /**
+   * CustomerDataManager destructor.
+   */
+  virtual ~CustomerDataManager();
 
-    /**
-     * Add object that tracks any sort of customer data.
-     */
-    void addDataHandler(CustomerDataHandler* handler);
+  /**
+   * Add object that tracks any sort of customer data.
+   */
+  void addDataHandler(CustomerDataHandler* handler);
 
-    /**
-     * Remove object that tracks customer data.
-     */
-    void removeDataHandler(CustomerDataHandler* handler);
+  /**
+   * Remove object that tracks customer data.
+   */
+  void removeDataHandler(CustomerDataHandler* handler);
 
-    /**
-     * Clear every customer data kept in the device.
-     *
-     * @note We do not guarantee the order that the CustomerDataHandlers are called.
-     */
-    void clearData();
+  /**
+   * Clear every customer data kept in the device.
+   *
+   * @note We do not guarantee the order that the CustomerDataHandlers are
+   * called.
+   */
+  void clearData();
 
-private:
-    /// List of all data handlers.
-    std::unordered_set<CustomerDataHandler*> m_dataHandlers;
+ private:
+  /// List of all data handlers.
+  std::unordered_set<CustomerDataHandler*> m_dataHandlers;
 
-    /// Mutex used to synchronize m_dataHandlers variable access.
-    std::mutex m_mutex;
+  /// Mutex used to synchronize m_dataHandlers variable access.
+  std::mutex m_mutex;
 };
 
 }  // namespace registrationManager

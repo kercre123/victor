@@ -178,19 +178,19 @@ static_assert(std::is_pod<AuxillaryParseTableField>::value, "");
 bool MergePartialFromCodedStream(MessageLite* msg, const ParseTable& table,
                                  io::CodedInputStream* input);
 bool MergePartialFromCodedStreamLite(MessageLite* msg, const ParseTable& table,
-                                 io::CodedInputStream* input);
+                                     io::CodedInputStream* input);
 
 template <typename Entry>
 bool ParseMap(io::CodedInputStream* input, void* map_field) {
   typedef typename MapEntryToMapField<Entry>::MapFieldType MapFieldType;
   typedef google::protobuf::Map<typename Entry::EntryKeyType,
-                      typename Entry::EntryValueType>
+                                typename Entry::EntryValueType>
       MapType;
   typedef typename Entry::template Parser<MapFieldType, MapType> ParserType;
 
   ParserType parser(static_cast<MapFieldType*>(map_field));
-  return ::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(input,
-                                                                  &parser);
+  return ::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+      input, &parser);
 }
 
 }  // namespace internal

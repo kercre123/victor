@@ -15,32 +15,25 @@
 
 #include "util/math/math.h"
 
-
 namespace Anki {
 namespace Util {
 namespace Stats {
-  
-  
-class BivariateStatsAccumulator
-{
-public:
-  BivariateStatsAccumulator() {
-    Clear();
-  }
-  
+
+class BivariateStatsAccumulator {
+ public:
+  BivariateStatsAccumulator() { Clear(); }
+
   BivariateStatsAccumulator& Accumulate(float x, float y) {
-    
-    _minx = Anki::Util::Min(x,_minx);
-    _miny = Anki::Util::Min(y,_miny);
-    _maxx = Anki::Util::Max(x,_maxx);
-    _maxy = Anki::Util::Max(y,_maxy);
-    
-    
+    _minx = Anki::Util::Min(x, _minx);
+    _miny = Anki::Util::Min(y, _miny);
+    _maxx = Anki::Util::Max(x, _maxx);
+    _maxy = Anki::Util::Max(y, _maxy);
+
     // welford's method
     _n += 1.0f;
     float xdiff = x - _meanx;
     float ydiff = y - _meany;
-    float recip = 1.0f/_n;
+    float recip = 1.0f / _n;
     _meanx += xdiff * recip;
     _meany += ydiff * recip;
     float newxdiff = x - _meanx;
@@ -48,25 +41,32 @@ public:
     _varx += xdiff * newxdiff;
     _vary += ydiff * newydiff;
     _cov += xdiff * newydiff;
-    
+
     return *this;
   }
-  
+
   float GetMeanX() const { return _meanx; }
   float GetMeanY() const { return _meany; }
   float GetMinX() const { return _minx; }
   float GetMinY() const { return _miny; }
   float GetMaxX() const { return _maxx; }
   float GetMaxY() const { return _maxy; }
-  float GetMinXSafe() const { return (_n > 0.0f) ? _minx : 0.0; }; // otherwise it'll be +FLT_MAX
-  float GetMinYSafe() const { return (_n > 0.0f) ? _miny : 0.0; }; // otherwise it'll be +FLT_MAX
-  float GetMaxXSafe() const { return (_n > 0.0f) ? _maxx : 0.0; }; // otherwise it'll be -FLT_MAX
-  float GetMaxYSafe() const { return (_n > 0.0f) ? _maxy : 0.0; }; // otherwise it'll be -FLT_MAX
+  float GetMinXSafe() const {
+    return (_n > 0.0f) ? _minx : 0.0;
+  };  // otherwise it'll be +FLT_MAX
+  float GetMinYSafe() const {
+    return (_n > 0.0f) ? _miny : 0.0;
+  };  // otherwise it'll be +FLT_MAX
+  float GetMaxXSafe() const {
+    return (_n > 0.0f) ? _maxx : 0.0;
+  };  // otherwise it'll be -FLT_MAX
+  float GetMaxYSafe() const {
+    return (_n > 0.0f) ? _maxy : 0.0;
+  };  // otherwise it'll be -FLT_MAX
   float GetVarianceX() const { return (_n < 2) ? 0.0f : _varx / (_n - 1); }
   float GetVarianceY() const { return (_n < 2) ? 0.0f : _vary / (_n - 1); }
-  float GetCovariance() const { return (_n < 2) ? 0.0f : _cov/(_n-1); }
-  
-  
+  float GetCovariance() const { return (_n < 2) ? 0.0f : _cov / (_n - 1); }
+
   int GetNum() const { return (int)round(_n); };
 
   void Clear() {
@@ -82,7 +82,7 @@ public:
     _cov = 0.0f;
   }
 
-protected:
+ protected:
   float _n;
   float _minx;
   float _miny;
@@ -94,10 +94,9 @@ protected:
   float _vary;
   float _cov;
 };
-  
 
-} // end namespace Stats
-} // end namespace Util
-} // end namespace Anki
+}  // end namespace Stats
+}  // end namespace Util
+}  // end namespace Anki
 
 #endif

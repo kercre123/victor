@@ -5,18 +5,20 @@
  * Created: 02/28/18
  *
  * Description:
- *   Structs to define Audio key frame types. These structs are used to load Animation data into Audio Key Frames.
+ *   Structs to define Audio key frame types. These structs are used to load
+ *Animation data into Audio Key Frames.
  *
  * Copyright: Anki, Inc. 2018
  *
  **/
 
-
 #include "cannedAnimLib/baseTypes/audioKeyFrameTypes.h"
+
+#include <limits>
+
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include "util/random/randomGenerator.h"
-#include <limits>
 
 #define ENABLE_AUDIO_PROBABILITY_LOG 0
 #define INVALID_EVENT_IDX std::numeric_limits<size_t>::max()
@@ -25,8 +27,8 @@ namespace Anki {
 namespace Vector {
 namespace AudioKeyFrameType {
 
-AudioEventGroupRef& AudioEventGroupRef::operator=( const AudioEventGroupRef& other )
-{
+AudioEventGroupRef& AudioEventGroupRef::operator=(
+    const AudioEventGroupRef& other) {
   if (&other == this) {
     return *this;
   }
@@ -35,47 +37,43 @@ AudioEventGroupRef& AudioEventGroupRef::operator=( const AudioEventGroupRef& oth
   return *this;
 }
 
-bool AudioEventGroupRef::operator==( const AudioEventGroupRef& other ) const 
-{
+bool AudioEventGroupRef::operator==(const AudioEventGroupRef& other) const {
   bool eventsEqual = Events.size() == other.Events.size();
-  if(eventsEqual){
-    for(int i = 0; i < Events.size(); i++){
+  if (eventsEqual) {
+    for (int i = 0; i < Events.size(); i++) {
       eventsEqual &= (Events[i] == other.Events[i]);
     }
   }
-  return eventsEqual &&
-         (GameObject == other.GameObject);
+  return eventsEqual && (GameObject == other.GameObject);
 }
 
-bool AudioEventGroupRef::EventDef::operator==( const EventDef& other ) const
-{
-  return (AudioEvent == other.AudioEvent) &&
-         (Volume == other.Volume) &&
+bool AudioEventGroupRef::EventDef::operator==(const EventDef& other) const {
+  return (AudioEvent == other.AudioEvent) && (Volume == other.Volume) &&
          (Probability == other.Probability);
 }
 
-  
-void AudioEventGroupRef::AddEvent( AudioMetaData::GameEvent::GenericEvent audioEvent, float volume, float probability )
-{
-  Events.emplace_back( audioEvent, volume, probability );
+void AudioEventGroupRef::AddEvent(
+    AudioMetaData::GameEvent::GenericEvent audioEvent, float volume,
+    float probability) {
+  Events.emplace_back(audioEvent, volume, probability);
 }
 
-const AudioEventGroupRef::EventDef* AudioEventGroupRef::RetrieveEvent( bool useProbability,
-                                                                       Util::RandomGenerator* randGen ) const
-{
-  if ( Events.empty() ) {
+const AudioEventGroupRef::EventDef* AudioEventGroupRef::RetrieveEvent(
+    bool useProbability, Util::RandomGenerator* randGen) const {
+  if (Events.empty()) {
     PRINT_NAMED_ERROR("AudioEventGroupRef.EventDef.RetrieveEvent.NoEvents", "");
     return nullptr;
   }
-  
-  if ( !useProbability || (nullptr == randGen) ) {
+
+  if (!useProbability || (nullptr == randGen)) {
     // No probability, return first event
     return &Events.front();
   }
-  
+
   // Taking probabilities into account, select which audio event should be used.
-  // TODO: See https://github.com/anki/cozmo-one/pull/5688#discussion_r139861577 for a
-  // suggested improvement to this probability-driven selection (tracked in VIC-432)
+  // TODO: See https://github.com/anki/cozmo-one/pull/5688#discussion_r139861577
+  // for a suggested improvement to this probability-driven selection (tracked
+  // in VIC-432)
   size_t selectedIdx = INVALID_EVENT_IDX;
   const float randDbl = randGen->RandDbl(1.0);
   float randRangeMin = 0.0f;
@@ -86,39 +84,42 @@ const AudioEventGroupRef::EventDef* AudioEventGroupRef::RetrieveEvent( bool useP
     }
     randRangeMax = randRangeMin + Events[idx].Probability;
     if (ENABLE_AUDIO_PROBABILITY_LOG) {
-      PRINT_CH_DEBUG("Audio", "AudioEventGroupRef.EventDef.RetrieveEvent.ShowInfo",
+      PRINT_CH_DEBUG("Audio",
+                     "AudioEventGroupRef.EventDef.RetrieveEvent.ShowInfo",
                      "random value = %f, idx = %i and range = %f to %f",
                      randDbl, (uint32_t)idx, randRangeMin, randRangeMax);
     }
-    
-    if ( Util::InRange( randDbl, randRangeMin, randRangeMax ) ) {
-      // ^ that if statement is equivalent to: if ((randRangeMin <= randDbl) && (randDbl <= randRangeMax))
+
+    if (Util::InRange(randDbl, randRangeMin, randRangeMax)) {
+      // ^ that if statement is equivalent to: if ((randRangeMin <= randDbl) &&
+      // (randDbl <= randRangeMax))
       selectedIdx = idx;
       break;
     }
     randRangeMin = randRangeMax;
   }
-  
-  if ( INVALID_EVENT_IDX == selectedIdx ) {
+
+  if (INVALID_EVENT_IDX == selectedIdx) {
     // Probability has chosen not to play an event
     if (ENABLE_AUDIO_PROBABILITY_LOG) {
-      PRINT_CH_DEBUG("Audio", "AudioEventGroupRef.EventDef.RetrieveEvent.InvalidEventIdx",
-                     "Event Count: %zi Probability: %f", Events.size(), randDbl);
+      PRINT_CH_DEBUG(
+          "Audio", "AudioEventGroupRef.EventDef.RetrieveEvent.InvalidEventIdx",
+          "Event Count: %zi Probability: %f", Events.size(), randDbl);
     }
     return nullptr;
   }
 
   if (ENABLE_AUDIO_PROBABILITY_LOG) {
-    PRINT_CH_DEBUG("Audio", "AudioEventGroupRef.EventDef.RetrieveEvent.RandomAudioSelection",
-                   "Probability selected audio index = %ul", (uint32_t)selectedIdx);
+    PRINT_CH_DEBUG(
+        "Audio",
+        "AudioEventGroupRef.EventDef.RetrieveEvent.RandomAudioSelection",
+        "Probability selected audio index = %ul", (uint32_t)selectedIdx);
   }
 
   return &Events[selectedIdx];
 }
 
-
-AudioRef::AudioRef( const AudioRef& other )
-{
+AudioRef::AudioRef(const AudioRef& other) {
   Tag = other.Tag;
   switch (Tag) {
     case AudioRefTag::EventGroup:
@@ -136,8 +137,7 @@ AudioRef::AudioRef( const AudioRef& other )
   }
 }
 
-AudioRef::~AudioRef()
-{
+AudioRef::~AudioRef() {
   switch (Tag) {
     case AudioRefTag::EventGroup:
       EventGroup.~AudioEventGroupRef();
@@ -154,9 +154,7 @@ AudioRef::~AudioRef()
   }
 }
 
-
-AudioRef& AudioRef::operator=( const AudioRef& other )
-{
+AudioRef& AudioRef::operator=(const AudioRef& other) {
   if (&other == this) {
     return *this;
   }
@@ -178,11 +176,10 @@ AudioRef& AudioRef::operator=( const AudioRef& other )
   return *this;
 }
 
-bool AudioRef::operator==( const AudioRef& other ) const
-{
+bool AudioRef::operator==(const AudioRef& other) const {
   bool equal = true;
   equal &= (Tag == other.Tag);
-  if(equal){
+  if (equal) {
     switch (Tag) {
       case AudioRefTag::EventGroup:
         equal &= (EventGroup == other.EventGroup);
@@ -202,9 +199,6 @@ bool AudioRef::operator==( const AudioRef& other ) const
   return equal;
 }
 
-
-
-} // namespace AudioKeyFrameType
-} // namespace Vector
-} // namespace Anki
-
+}  // namespace AudioKeyFrameType
+}  // namespace Vector
+}  // namespace Anki

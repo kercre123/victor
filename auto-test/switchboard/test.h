@@ -10,4 +10,10 @@ enum MessageState : uint8_t {
 
 static bool sTestPassed = true;
 
-#define ASSERT(c, m)  {if(!(c)) {sTestPassed=false;printf("%s\n", m);}}
+#define ASSERT(c, m)       \
+  {                        \
+    if (!(c)) {            \
+      sTestPassed = false; \
+      printf("%s\n", m);   \
+    }                      \
+  }

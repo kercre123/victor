@@ -50,9 +50,9 @@
 
 namespace google_breakpad {
 
+using std::map;
 using std::set;
 using std::vector;
-using std::map;
 
 // A Module represents the contents of a module, and supports methods
 // for adding information produced by parsing STABS or DWARF data
@@ -87,8 +87,11 @@ class Module {
 
   // A function.
   struct Function {
-    Function(const string &name_input, const Address &address_input) :
-        name(name_input), address(address_input), size(0), parameter_size(0) {}
+    Function(const string &name_input, const Address &address_input)
+        : name(name_input),
+          address(address_input),
+          size(0),
+          parameter_size(0) {}
 
     // For sorting by address.  (Not style-guide compliant, but it's
     // stupid not to put this in the struct.)
@@ -119,9 +122,9 @@ class Module {
       return x.address < y.address;
     }
 
-    Address address, size;    // The address and size of the line's code.
-    File *file;                // The source file.
-    int number;                // The source line number.
+    Address address, size;  // The address and size of the line's code.
+    File *file;             // The source file.
+    int number;             // The source line number.
   };
 
   // An exported symbol.
@@ -161,17 +164,14 @@ class Module {
   };
 
   struct FunctionCompare {
-    bool operator() (const Function *lhs,
-                     const Function *rhs) const {
-      if (lhs->address == rhs->address)
-        return lhs->name < rhs->name;
+    bool operator()(const Function *lhs, const Function *rhs) const {
+      if (lhs->address == rhs->address) return lhs->name < rhs->name;
       return lhs->address < rhs->address;
     }
   };
 
   struct ExternCompare {
-    bool operator() (const Extern *lhs,
-                     const Extern *rhs) const {
+    bool operator()(const Extern *lhs, const Extern *rhs) const {
       return lhs->address < rhs->address;
     }
   };

@@ -33,8 +33,9 @@
 #ifndef GOOGLE_PROTOBUF_COMPILER_OBJECTIVEC_GENERATOR_H__
 #define GOOGLE_PROTOBUF_COMPILER_OBJECTIVEC_GENERATOR_H__
 
-#include <string>
 #include <google/protobuf/compiler/code_generator.h>
+
+#include <string>
 
 namespace google {
 namespace protobuf {
@@ -52,13 +53,10 @@ class LIBPROTOC_EXPORT ObjectiveCGenerator : public CodeGenerator {
 
   // implements CodeGenerator ----------------------------------------
   bool HasGenerateAll() const;
-  bool Generate(const FileDescriptor* file,
-                const string& parameter,
-                GeneratorContext* context,
-                string* error) const;
+  bool Generate(const FileDescriptor* file, const string& parameter,
+                GeneratorContext* context, string* error) const;
   bool GenerateAll(const std::vector<const FileDescriptor*>& files,
-                   const string& parameter,
-                   GeneratorContext* context,
+                   const string& parameter, GeneratorContext* context,
                    string* error) const;
 
  private:

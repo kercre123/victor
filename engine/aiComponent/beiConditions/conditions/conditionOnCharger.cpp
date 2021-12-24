@@ -19,15 +19,13 @@ namespace Anki {
 namespace Vector {
 
 ConditionOnCharger::ConditionOnCharger(const Json::Value& config)
-  : IBEICondition(config)
-{
-}
+    : IBEICondition(config) {}
 
-bool ConditionOnCharger::AreConditionsMetInternal(BehaviorExternalInterface& bei) const
-{
+bool ConditionOnCharger::AreConditionsMetInternal(
+    BehaviorExternalInterface& bei) const {
   const bool onCharger = bei.GetRobotInfo().IsOnChargerContacts();
   return onCharger;
 }
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki

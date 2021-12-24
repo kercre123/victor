@@ -6,9 +6,9 @@
  * @brief The easy timer api definitions.
  *
  * Copyright (C) 2015. Dialog Semiconductor Ltd, unpublished work. This computer
- * program includes Confidential, Proprietary Information and is a Trade Secret of
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited
- * unless authorized in writing. All Rights Reserved.
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -41,19 +41,19 @@
  ****************************************************************************************
  */
 
-//Timer handler type
+// Timer handler type
 typedef uint8_t timer_hnd;
 
 // Timer callback function type definition
-typedef void (* timer_callback)(void);
+typedef void (*timer_callback)(void);
 
 /*
  * DEFINES
  ****************************************************************************************
  */
 
-//Value indicating an invalide timer operation
-#define EASY_TIMER_INVALID_TIMER    (0x0)
+// Value indicating an invalide timer operation
+#define EASY_TIMER_INVALID_TIMER (0x0)
 
 /*
  * FUNCTION DECLARATIONS
@@ -71,19 +71,18 @@ typedef void (* timer_callback)(void);
  * @return Returns if the message is handled by the process handler
  ****************************************************************************************
  */
-enum process_event_response app_timer_api_process_handler(ke_msg_id_t const msgid,
-                                                          void const *param,
-                                                          ke_task_id_t const dest_id,
-                                                          ke_task_id_t const src_id,
-                                                          enum ke_msg_status_tag *msg_ret);
+enum process_event_response app_timer_api_process_handler(
+    ke_msg_id_t const msgid, void const *param, ke_task_id_t const dest_id,
+    ke_task_id_t const src_id, enum ke_msg_status_tag *msg_ret);
 
 /**
  ****************************************************************************************
  * @brief Create a new timer. Activate the ble if required.
- * @param[in] delay The amount of timer slots (10 ms) to wait (time resolution is 10ms)
+ * @param[in] delay The amount of timer slots (10 ms) to wait (time resolution
+ *is 10ms)
  * @param[in] fn    The callback to be called when the timer expires
- * @return The handler of the timer for future reference. If there are not timers available
- *         EASY_TIMER_INVALID_TIMER will be returned
+ * @return The handler of the timer for future reference. If there are not
+ *timers available EASY_TIMER_INVALID_TIMER will be returned
  ****************************************************************************************
  */
 timer_hnd app_easy_timer(const uint16_t delay, timer_callback fn);
@@ -117,4 +116,4 @@ void app_easy_timer_cancel_all(void);
 
 /// @} APP_TIMER
 
-#endif // _APP_EASY_TIMER_H_
+#endif  // _APP_EASY_TIMER_H_

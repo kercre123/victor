@@ -26,12 +26,12 @@ namespace http2 {
  * @c HTTP2MimeResponseSinkInterface::onReceiveMimePartData().
  */
 enum class HTTP2ReceiveDataStatus {
-    /// Successful receipt of all data passed in this call.
-    SUCCESS,
-    /// Not ready to receive data.  Retry receiving this data later.
-    PAUSE,
-    /// Data not received.  Abort receiving further data for this response.
-    ABORT
+  /// Successful receipt of all data passed in this call.
+  SUCCESS,
+  /// Not ready to receive data.  Retry receiving this data later.
+  PAUSE,
+  /// Data not received.  Abort receiving further data for this response.
+  ABORT
 };
 
 }  // namespace http2

@@ -4,7 +4,8 @@
  * Author: Sam Russell
  * Created: 2018-04-03
  *
- * Description: This behavior serves as a stage for implementing interactive, cube driven behavior transitions.
+ * Description: This behavior serves as a stage for implementing interactive,
+ *cube driven behavior transitions.
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -22,28 +23,28 @@ namespace Vector {
 class BlockWorldFilter;
 struct TargetStatus;
 
-class BehaviorInspectCube : public ICozmoBehavior
-{
-public: 
+class BehaviorInspectCube : public ICozmoBehavior {
+ public:
   virtual ~BehaviorInspectCube();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorInspectCube(const Json::Value& config);  
+  explicit BehaviorInspectCube(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual void InitBehavior() override;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-  enum class InspectCubeState{
+ private:
+  enum class InspectCubeState {
     Init,
     GetIn,
     DriveOffCharger,
@@ -53,11 +54,11 @@ private:
     PlayingWithCube,
     GetOutBored,
     GetOutTargetLost
-  }; 
+  };
 
   void UpdateBoredomTimeouts(const TargetStatus& targetStatus);
-  
-  // Behavior State Machine 
+
+  // Behavior State Machine
   void TransitionToGetIn();
   void TransitionToDriveOffCharger();
   void TransitionToSearching();
@@ -83,19 +84,18 @@ private:
 
   struct DynamicVariables {
     DynamicVariables(float startTime_s);
-    InspectCubeState state; 
-    float            behaviorStartTime_s;
-    float            searchEndTime_s;
+    InspectCubeState state;
+    float behaviorStartTime_s;
+    float searchEndTime_s;
   };
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
 
   float _currentTimeThisTick_s;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorInspectCube__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorInspectCube__

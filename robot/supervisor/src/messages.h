@@ -16,9 +16,8 @@
  *              of specific message definitions -- those are defined in
  *              MessageDefinitions.h.
  *
- * Major overhaul to use CLAD generated messages and function definitions and to split between the Espressif and K02
- * Author: Daniel Casner
- * 10/22/2015
+ * Major overhaul to use CLAD generated messages and function definitions and to
+ *split between the Espressif and K02 Author: Daniel Casner 10/22/2015
  *
  * Copyright: Anki, Inc. 2015
  **/
@@ -26,52 +25,53 @@
 #ifndef COZMO_MESSAGE_ROBOT_H
 #define COZMO_MESSAGE_ROBOT_H
 
-#include "coretech/common/shared/types.h"
-#include "clad/types/motorTypes.h"
 #include <stdarg.h>
 #include <stddef.h>
+
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/types/motorTypes.h"
+#include "coretech/common/shared/types.h"
 
 namespace Anki {
-  namespace Vector {
-    namespace Messages {
+namespace Vector {
+namespace Messages {
 
-      // Return a const reference to the current robot state message
-      RobotState const& GetRobotStateMsg();
+// Return a const reference to the current robot state message
+RobotState const& GetRobotStateMsg();
 
-      // Create all the dispatch function prototypes (all implemented
-      // manually in messages.cpp).
-      #include "clad/robotInterface/messageEngineToRobot_declarations.def"
+// Create all the dispatch function prototypes (all implemented
+// manually in messages.cpp).
+#include "clad/robotInterface/messageEngineToRobot_declarations.def"
 
-      void ProcessBadTag_EngineToRobot(const RobotInterface::EngineToRobot::Tag tag);
+void ProcessBadTag_EngineToRobot(const RobotInterface::EngineToRobot::Tag tag);
 
-      Result Init();
-      extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
+Result Init();
+extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
 
-      void Update();
+void Update();
 
-      void ProcessMessage(RobotInterface::EngineToRobot& msg);
+void ProcessMessage(RobotInterface::EngineToRobot& msg);
 
-      void UpdateRobotStateMsg();
+void UpdateRobotStateMsg();
 
-      Result SendRobotStateMsg();
+Result SendRobotStateMsg();
 
-      Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted, bool autoStarted = false);
-      
-      Result SendMotorAutoEnabledMsg(MotorID motor, bool calibStarted);
+Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted,
+                               bool autoStarted = false);
 
-      Result SendMicDataMsgs();
+Result SendMotorAutoEnabledMsg(MotorID motor, bool calibStarted);
 
-      // Returns whether or not init message was received from basestation
-      bool ReceivedInit();
+Result SendMicDataMsgs();
 
-      // Resets the receipt of init message
-      void ResetInit();
+// Returns whether or not init message was received from basestation
+bool ReceivedInit();
 
-    } // namespace Messages
-  } // namespace Vector
-} // namespace Anki
+// Resets the receipt of init message
+void ResetInit();
 
+}  // namespace Messages
+}  // namespace Vector
+}  // namespace Anki
 
 #endif  // #ifndef COZMO_MESSAGE_ROBOT_H

@@ -17,13 +17,13 @@
 #include <stdbool.h>
 
 enum anki_camera_log_level {
-    AnkiCameraLogLevelVerbose = 2,
-    AnkiCameraLogLevelDebug   = 3,
-    AnkiCameraLogLevelInfo    = 4,
-    AnkiCameraLogLevelWarn    = 5,
-    AnkiCameraLogLevelError   = 6,
-    AnkiCameraLogLevelSilent  = 7,
-    AnkiCameraLogLevelMax     = AnkiCameraLogLevelSilent,
+  AnkiCameraLogLevelVerbose = 2,
+  AnkiCameraLogLevelDebug = 3,
+  AnkiCameraLogLevelInfo = 4,
+  AnkiCameraLogLevelWarn = 5,
+  AnkiCameraLogLevelError = 6,
+  AnkiCameraLogLevelSilent = 7,
+  AnkiCameraLogLevelMax = AnkiCameraLogLevelSilent,
 };
 
 bool isUsingAndroidLogging();
@@ -32,12 +32,10 @@ void setAndroidLoggingTag(const char* tag);
 int getMinLogLevel();
 void setMinLogLevel(const int level);
 
-void logv(const char* fmt, ...) __attribute__((format(printf,1,2)));
-void logd(const char* fmt, ...) __attribute__((format(printf,1,2)));
-void logi(const char* fmt, ...) __attribute__((format(printf,1,2)));
-void logw(const char* fmt, ...) __attribute__((format(printf,1,2)));
-void loge(const char* fmt, ...) __attribute__((format(printf,1,2)));
+void logv(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
+void logd(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
+void logi(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
+void logw(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
+void loge(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
 
-#endif //__mm_anki_camera_log_h__
-
-
+#endif  //__mm_anki_camera_log_h__

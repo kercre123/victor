@@ -48,7 +48,7 @@
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
-#endif  /* __STDC_FORMAT_MACROS */
+#endif /* __STDC_FORMAT_MACROS */
 #include <inttypes.h>
 
 typedef struct {
@@ -63,6 +63,6 @@ typedef uint64_t breakpad_time_t;
  * integral type on many systems. */
 #ifndef PRIx64
 #define PRIx64 "llx"
-#endif  /* !PRIx64 */
+#endif /* !PRIx64 */
 
-#endif  /* GOOGLE_BREAKPAD_COMMON_BREAKPAD_TYPES_H__ */
+#endif /* GOOGLE_BREAKPAD_COMMON_BREAKPAD_TYPES_H__ */

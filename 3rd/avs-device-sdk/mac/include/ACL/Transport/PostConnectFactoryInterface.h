@@ -24,22 +24,22 @@ namespace alexaClientSDK {
 namespace acl {
 
 /**
- * Interface for creating post-connect objects which should be used to perform activities after a
- * connection is established.
+ * Interface for creating post-connect objects which should be used to perform
+ * activities after a connection is established.
  */
 class PostConnectFactoryInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~PostConnectFactoryInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~PostConnectFactoryInterface() = default;
 
-    /**
-     * Create an instance of @c PostConnectInterface.
-     *
-     * @return An instance of @c PostConnectInterface.
-     */
-    virtual std::shared_ptr<PostConnectInterface> createPostConnect() = 0;
+  /**
+   * Create an instance of @c PostConnectInterface.
+   *
+   * @return An instance of @c PostConnectInterface.
+   */
+  virtual std::shared_ptr<PostConnectInterface> createPostConnect() = 0;
 };
 
 }  // namespace acl

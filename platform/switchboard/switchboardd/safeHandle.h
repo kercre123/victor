@@ -9,17 +9,17 @@
  * Copyright: Anki, Inc. 2018
  *
  **/
-#pragma once 
+#pragma once
 
 namespace Anki {
 namespace Switchboard {
 
 class SafeHandle {
-public:
+ public:
   static std::shared_ptr<SafeHandle> Create() {
     return std::make_shared<SafeHandle>();
   }
 };
 
-}   // Switchboard
-}   // Anki
+}  // namespace Switchboard
+}  // namespace Anki

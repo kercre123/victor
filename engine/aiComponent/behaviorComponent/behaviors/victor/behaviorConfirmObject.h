@@ -4,10 +4,11 @@
  * Author: ross
  * Created: 2018-04-18
  *
- * Description: Runs only if an object position is known for a given object type(s), drives to where
- *              it should be, and ends when it (or any other object of the given type[s]) is seen. If it
- *              is not seen and there are multiple objects of the given type(s) in blockworld, it will
- *              sequentially try them all starting with the closest
+ * Description: Runs only if an object position is known for a given object
+ *type(s), drives to where it should be, and ends when it (or any other object
+ *of the given type[s]) is seen. If it is not seen and there are multiple
+ *objects of the given type(s) in blockworld, it will sequentially try them all
+ *starting with the closest
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -20,22 +21,22 @@
 
 namespace Anki {
 namespace Vector {
-  
+
 class ConditionObjectKnown;
 
-class BehaviorConfirmObject : public ICozmoBehavior
-{
-public:
+class BehaviorConfirmObject : public ICozmoBehavior {
+ public:
   virtual ~BehaviorConfirmObject();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   explicit BehaviorConfirmObject(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
   virtual void InitBehavior() override;
   virtual void OnBehaviorEnteredActivatableScope() override;
   virtual void OnBehaviorLeftActivatableScope() override;
@@ -43,8 +44,7 @@ protected:
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-  
+ private:
   // drives to the closest object in _dVars.sortedObjects
   void DriveToClosestKnownObject();
 
@@ -63,14 +63,12 @@ private:
     std::vector<const ObservableObject*> sortedObjects;
     int numAttempts;
   };
-  
+
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorConfirmObject__
-
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorConfirmObject__

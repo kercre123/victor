@@ -15,21 +15,17 @@
 namespace Anki {
 namespace Switchboard {
 
-void ConnectionIdManager::Clear() {
-  _connectionId = "";
-}
+void ConnectionIdManager::Clear() { _connectionId = ""; }
 
 void ConnectionIdManager::SetConnectionId(std::string id) {
   _connectionId = id;
 }
 
-std::string ConnectionIdManager::GetConnectionId() {
-  return _connectionId;
-}
+std::string ConnectionIdManager::GetConnectionId() { return _connectionId; }
 
 bool ConnectionIdManager::IsValidId(std::string id) {
   return (id == _connectionId) || (_connectionId == "");
 }
 
-} // Switchboard
-} // Anki
+}  // namespace Switchboard
+}  // namespace Anki

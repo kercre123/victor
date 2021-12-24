@@ -19,22 +19,23 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorSDKLock : public ICozmoBehavior
-{
-protected:
+class BehaviorSDKLock : public ICozmoBehavior {
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorSDKLock(const Json::Value& config);  
+  explicit BehaviorSDKLock(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;  
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
-  virtual void OnBehaviorDeactivated() override; 
+  virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorSDKLock__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorSDKLock__

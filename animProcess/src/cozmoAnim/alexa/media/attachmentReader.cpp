@@ -12,27 +12,26 @@
 
 #include "attachmentReader.h"
 
-#include <AVSCommon/Utils/AudioFormat.h>
 #include <AVSCommon/AVS/Attachment/AttachmentReader.h>
+#include <AVSCommon/Utils/AudioFormat.h>
 
 namespace Anki {
 namespace Vector {
 
-using AVSReadStatus = alexaClientSDK::avsCommon::avs::attachment::AttachmentReader::ReadStatus;
+using AVSReadStatus =
+    alexaClientSDK::avsCommon::avs::attachment::AttachmentReader::ReadStatus;
 
 AttachmentReader::AttachmentReader(
-  std::shared_ptr<alexaClientSDK::avsCommon::avs::attachment::AttachmentReader> reader)
-: _reader(std::move(reader))
-{
-}
+    std::shared_ptr<
+        alexaClientSDK::avsCommon::avs::attachment::AttachmentReader>
+        reader)
+    : _reader(std::move(reader)) {}
 
-size_t AttachmentReader::GetNumUnreadBytes()
-{
+size_t AttachmentReader::GetNumUnreadBytes() {
   return (size_t)_reader->getNumUnreadBytes();
 }
 
-size_t AttachmentReader::Read(uint8_t* buf, size_t toRead, Status& status)
-{
+size_t AttachmentReader::Read(uint8_t* buf, size_t toRead, Status& status) {
   AVSReadStatus avsStatus;
   auto ret = _reader->read(buf, toRead, &avsStatus);
   switch (avsStatus) {
@@ -53,10 +52,7 @@ size_t AttachmentReader::Read(uint8_t* buf, size_t toRead, Status& status)
   return ret;
 }
 
-void AttachmentReader::Close()
-{
-  _reader->close();
-}
+void AttachmentReader::Close() { _reader->close(); }
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki

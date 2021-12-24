@@ -39,7 +39,7 @@
 #include "google_breakpad/common/breakpad_types.h"
 
 namespace google_breakpad {
-  
+
 using std::vector;
 
 // Convert |in| to UTF-16 into |out|.  Use platform byte ordering.  If the

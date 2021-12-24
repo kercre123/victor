@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -18,23 +19,28 @@
 //    Fangfang Bai, fangfang@multicorewareinc.com
 //    Jin Ma,       jin@multicorewareinc.com
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors as is and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -57,58 +63,59 @@ namespace ocl {
 ///////////// FarnebackOpticalFlow ////////////////////////
 CV_ENUM(farneFlagType, 0, OPTFLOW_FARNEBACK_GAUSSIAN)
 
-typedef tuple< tuple<int, double>, farneFlagType, bool > FarnebackOpticalFlowParams;
-typedef TestBaseWithParam<FarnebackOpticalFlowParams> FarnebackOpticalFlowFixture;
+typedef tuple<tuple<int, double>, farneFlagType, bool>
+    FarnebackOpticalFlowParams;
+typedef TestBaseWithParam<FarnebackOpticalFlowParams>
+    FarnebackOpticalFlowFixture;
 
-OCL_PERF_TEST_P(FarnebackOpticalFlowFixture, FarnebackOpticalFlow,
-                ::testing::Combine(
-                    ::testing::Values(
-                                      make_tuple<int, double>(5, 1.1),
-                                      make_tuple<int, double>(7, 1.5)
-                                     ),
-                    farneFlagType::all(),
-                    ::testing::Bool()
-                    )
-                )
-{
-    Mat frame0 = imread(getDataPath("gpu/opticalflow/rubberwhale1.png"), cv::IMREAD_GRAYSCALE);
-    ASSERT_FALSE(frame0.empty()) << "can't load rubberwhale1.png";
+OCL_PERF_TEST_P(
+    FarnebackOpticalFlowFixture, FarnebackOpticalFlow,
+    ::testing::Combine(::testing::Values(make_tuple<int, double>(5, 1.1),
+                                         make_tuple<int, double>(7, 1.5)),
+                       farneFlagType::all(), ::testing::Bool())) {
+  Mat frame0 = imread(getDataPath("gpu/opticalflow/rubberwhale1.png"),
+                      cv::IMREAD_GRAYSCALE);
+  ASSERT_FALSE(frame0.empty()) << "can't load rubberwhale1.png";
 
-    Mat frame1 = imread(getDataPath("gpu/opticalflow/rubberwhale2.png"), cv::IMREAD_GRAYSCALE);
-    ASSERT_FALSE(frame1.empty()) << "can't load rubberwhale2.png";
+  Mat frame1 = imread(getDataPath("gpu/opticalflow/rubberwhale2.png"),
+                      cv::IMREAD_GRAYSCALE);
+  ASSERT_FALSE(frame1.empty()) << "can't load rubberwhale2.png";
 
-    const Size srcSize = frame0.size();
+  const Size srcSize = frame0.size();
 
-    const int numLevels = 5;
-    const int winSize = 13;
-    const int numIters = 10;
+  const int numLevels = 5;
+  const int winSize = 13;
+  const int numIters = 10;
 
-    const FarnebackOpticalFlowParams params = GetParam();
-    const tuple<int, double> polyParams = get<0>(params);
-    const int polyN = get<0>(polyParams);
-    const double polySigma = get<1>(polyParams);
-    const double pyrScale = 0.5;
-    int flags = get<1>(params);
-    const bool useInitFlow = get<2>(params);
-    const double eps = 0.1;
+  const FarnebackOpticalFlowParams params = GetParam();
+  const tuple<int, double> polyParams = get<0>(params);
+  const int polyN = get<0>(polyParams);
+  const double polySigma = get<1>(polyParams);
+  const double pyrScale = 0.5;
+  int flags = get<1>(params);
+  const bool useInitFlow = get<2>(params);
+  const double eps = 0.1;
 
-    UMat uFrame0; frame0.copyTo(uFrame0);
-    UMat uFrame1; frame1.copyTo(uFrame1);
-    UMat uFlow(srcSize, CV_32FC2);
-    declare.in(uFrame0, uFrame1, WARMUP_READ).out(uFlow, WARMUP_READ);
-    if (useInitFlow)
-    {
-        cv::calcOpticalFlowFarneback(uFrame0, uFrame1, uFlow, pyrScale, numLevels, winSize, numIters, polyN, polySigma, flags);
-        flags |= OPTFLOW_USE_INITIAL_FLOW;
-    }
+  UMat uFrame0;
+  frame0.copyTo(uFrame0);
+  UMat uFrame1;
+  frame1.copyTo(uFrame1);
+  UMat uFlow(srcSize, CV_32FC2);
+  declare.in(uFrame0, uFrame1, WARMUP_READ).out(uFlow, WARMUP_READ);
+  if (useInitFlow) {
+    cv::calcOpticalFlowFarneback(uFrame0, uFrame1, uFlow, pyrScale, numLevels,
+                                 winSize, numIters, polyN, polySigma, flags);
+    flags |= OPTFLOW_USE_INITIAL_FLOW;
+  }
 
-    OCL_TEST_CYCLE()
-            cv::calcOpticalFlowFarneback(uFrame0, uFrame1, uFlow, pyrScale, numLevels, winSize, numIters, polyN, polySigma, flags);
+  OCL_TEST_CYCLE()
+  cv::calcOpticalFlowFarneback(uFrame0, uFrame1, uFlow, pyrScale, numLevels,
+                               winSize, numIters, polyN, polySigma, flags);
 
-
-    SANITY_CHECK(uFlow, eps, ERROR_RELATIVE);
+  SANITY_CHECK(uFlow, eps, ERROR_RELATIVE);
 }
 
-} } // namespace cvtest::ocl
+}  // namespace ocl
+}  // namespace cvtest
 
-#endif // HAVE_OPENCL
+#endif  // HAVE_OPENCL

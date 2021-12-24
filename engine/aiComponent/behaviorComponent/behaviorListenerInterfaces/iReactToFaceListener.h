@@ -14,21 +14,18 @@
 
 #include "coretech/vision/engine/faceIdTypes.h"
 
-
 namespace Anki {
 namespace Vector {
-  
+
 class SmartFaceID;
 
-class IReactToFaceListener{
-public:
+class IReactToFaceListener {
+ public:
   virtual void FinishedReactingToFace(SmartFaceID faceID) = 0;
   virtual void ClearDesiredTargets() = 0;
 };
 
+}  // namespace Vector
+}  // namespace Anki
 
-} // namespace Vector
-} // namespace Anki
-
-#endif // __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IReactToFaceListener_H__
-
+#endif  // __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IReactToFaceListener_H__

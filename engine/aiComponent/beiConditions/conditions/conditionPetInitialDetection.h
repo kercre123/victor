@@ -1,45 +1,44 @@
 /**
-* File: ConditionPetInitialDetection.h
-*
-* Author: Kevin M. Karol
-* Created: 11/1/17
-*
-* Description: Strategy for responding to a pet being detected
-*
-* Copyright: Anki, Inc. 2017
-*
-**/
+ * File: ConditionPetInitialDetection.h
+ *
+ * Author: Kevin M. Karol
+ * Created: 11/1/17
+ *
+ * Description: Strategy for responding to a pet being detected
+ *
+ * Copyright: Anki, Inc. 2017
+ *
+ **/
 
 #ifndef __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionPetInitialDetection_H__
 #define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionPetInitialDetection_H__
 
-#include "engine/aiComponent/beiConditions/iBEICondition.h"
+#include <set>
 
 #include "coretech/vision/engine/faceIdTypes.h"
-
-#include <set>
+#include "engine/aiComponent/beiConditions/iBEICondition.h"
 
 namespace Anki {
 namespace Vector {
 
-class ConditionPetInitialDetection : public IBEICondition
-{
-public:
+class ConditionPetInitialDetection : public IBEICondition {
+ public:
   explicit ConditionPetInitialDetection(const Json::Value& config);
 
-protected:
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requiredVisionModes) const override {
-    requiredVisionModes.insert({ VisionMode::Pets, EVisionUpdateFrequency::Low });
+ protected:
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual void GetRequiredVisionModes(
+      std::set<VisionModeRequest>& requiredVisionModes) const override {
+    requiredVisionModes.insert({VisionMode::Pets, EVisionUpdateFrequency::Low});
   }
-private:  
+
+ private:
   // Everything we have already reacted to
   mutable std::set<Vision::FaceID_t> _reactedTo;
-
 };
 
+}  // namespace Vector
+}  // namespace Anki
 
-} // namespace Vector
-} // namespace Anki
-
-#endif // __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionPetInitialDetection_H__
+#endif  // __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionPetInitialDetection_H__

@@ -20,17 +20,15 @@ extern "C" {
 #ifndef META_FDA_PUB_H_
 #define META_FDA_PUB_H_
 
-typedef enum
-{
-    META_FDA_FIRST_DONT_USE,
-    META_FDA_IS127,
-    META_FDA_WOLA,
-    META_FDA_LAST
+typedef enum {
+  META_FDA_FIRST_DONT_USE,
+  META_FDA_IS127,
+  META_FDA_WOLA,
+  META_FDA_LAST
 } MetaFdaImplementation_t;
 
-#endif // META_FDA_PUB_H
+#endif  // META_FDA_PUB_H
 
 #ifdef __cplusplus
 }
 #endif
-

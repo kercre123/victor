@@ -27,10 +27,12 @@ void* GetProgramCounter(void* vuc);
 
 // Uses `writerfn` to dump the program counter, stack trace, and stack
 // frame sizes.
-void DumpPCAndFrameSizesAndStackTrace(
-    void* pc, void* const stack[], int frame_sizes[], int depth,
-    int min_dropped_frames, bool symbolize_stacktrace,
-    void (*writerfn)(const char*, void*), void* writerfn_arg);
+void DumpPCAndFrameSizesAndStackTrace(void* pc, void* const stack[],
+                                      int frame_sizes[], int depth,
+                                      int min_dropped_frames,
+                                      bool symbolize_stacktrace,
+                                      void (*writerfn)(const char*, void*),
+                                      void* writerfn_arg);
 
 }  // namespace debugging_internal
 }  // namespace absl

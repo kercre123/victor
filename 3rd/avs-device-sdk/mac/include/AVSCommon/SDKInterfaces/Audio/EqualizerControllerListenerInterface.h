@@ -27,18 +27,19 @@ namespace audio {
  * An interface to listen for @c EqualizerController state changes.
  */
 class EqualizerControllerListenerInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~EqualizerControllerListenerInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~EqualizerControllerListenerInterface() = default;
 
-    /**
-     * Receives the new state of the @c EqualizerController. This callback is called after all changes has been applied.
-     *
-     * @param newState New state of the @c EqualizerController.
-     */
-    virtual void onEqualizerStateChanged(const EqualizerState& newState) = 0;
+  /**
+   * Receives the new state of the @c EqualizerController. This callback is
+   * called after all changes has been applied.
+   *
+   * @param newState New state of the @c EqualizerController.
+   */
+  virtual void onEqualizerStateChanged(const EqualizerState& newState) = 0;
 };
 
 }  // namespace audio

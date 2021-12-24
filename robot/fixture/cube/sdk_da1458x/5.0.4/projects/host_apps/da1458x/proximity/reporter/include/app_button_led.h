@@ -5,10 +5,10 @@
  *
  * @brief Push Button and LED handling header file.
  *
- * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer 
- * program includes Confidential, Proprietary Information and is a Trade Secret of 
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
- * unless authorized in writing. All Rights Reserved.
+ * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -31,4 +31,4 @@ void button_isr(void);
 
 /// @} APP
 
-#endif // APP_BUTTON_LED_H_
+#endif  // APP_BUTTON_LED_H_

@@ -52,8 +52,7 @@ using testing::internal::ShouldUseColor;
 // created before main() is entered, and thus that ShouldUseColor()
 // works the same way as in a real Google-Test-based test.  We don't actual
 // run the TEST itself.
-TEST(GTestColorTest, Dummy) {
-}
+TEST(GTestColorTest, Dummy) {}
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);

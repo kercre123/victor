@@ -24,17 +24,14 @@ namespace Vision {
 // is close to zero, the extremes of the range were chosen for
 // initialization values.
 
-struct GazeData
-{
+struct GazeData {
   constexpr static const float kleftRightMin_deg = -30.f;
-  constexpr static const float kupDownMin_deg    = -20.f;
+  constexpr static const float kupDownMin_deg = -20.f;
   Point2f point;
   bool inlier;
   GazeData()
-    : point(Point2f(kleftRightMin_deg, kupDownMin_deg)),
-      inlier(false) {}
-  void Update(const Point2f& newPoint)
-  {
+      : point(Point2f(kleftRightMin_deg, kupDownMin_deg)), inlier(false) {}
+  void Update(const Point2f& newPoint) {
     point = newPoint;
     inlier = false;
   }
@@ -82,20 +79,18 @@ struct GazeData
   if IsMakingEyeContact returns true.
 */
 
-class EyeContact
-{
-public:
+class EyeContact {
+ public:
   EyeContact();
 
-  void Update(const TrackedFace& face,
-              const TimeStamp_t timeStamp);
+  void Update(const TrackedFace& face, const TimeStamp_t timeStamp);
 
-  bool IsMakingEyeContact() const {return _isMakingEyeContact;}
-  Point2f GetGazeAverage() const {return _gazeAverage;}
+  bool IsMakingEyeContact() const { return _isMakingEyeContact; }
+  Point2f GetGazeAverage() const { return _gazeAverage; }
   bool GetExpired(const TimeStamp_t currentTime) const;
-  std::vector<GazeData> const& GetGazeHistory() {return _gazeHistory;}
+  std::vector<GazeData> const& GetGazeHistory() { return _gazeHistory; }
 
-private:
+ private:
   int FindInliers(const Point2f& gazeAverage);
 
   bool DetermineMakingEyeContact();
@@ -120,7 +115,7 @@ private:
   Point2f _gazeAverage;
 };
 
-} // namespace Vision
-} // namespace Anki
+}  // namespace Vision
+}  // namespace Anki
 
-#endif // __Anki_Vision_EyeContact_H__
+#endif  // __Anki_Vision_EyeContact_H__

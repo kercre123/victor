@@ -18,18 +18,16 @@
 namespace Anki {
 namespace Vector {
 
-class DubbinsPlanner : public IPathPlanner
-{
-public:
+class DubbinsPlanner : public IPathPlanner {
+ public:
   DubbinsPlanner();
 
-protected:
+ protected:
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
                                          const Pose3d& targetPose) override;
-      
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

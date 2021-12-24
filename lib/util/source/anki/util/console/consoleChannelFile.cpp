@@ -13,17 +13,11 @@
 namespace Anki {
 namespace Util {
 
-ConsoleChannelFile::ConsoleChannelFile() {
+ConsoleChannelFile::ConsoleChannelFile() {}
 
-}
+ConsoleChannelFile::~ConsoleChannelFile() {}
 
-ConsoleChannelFile::~ConsoleChannelFile() {
-
-}
-
-bool ConsoleChannelFile::IsOpen() {
-  return true;
-}
+bool ConsoleChannelFile::IsOpen() { return true; }
 
 void ConsoleChannelFile::HexDump(FILE* f, int width, uint8_t* buf, int len) {
   int i, n;
@@ -35,8 +29,7 @@ void ConsoleChannelFile::HexDump(FILE* f, int width, uint8_t* buf, int len) {
       n = 0;
     }
   }
-  if (i && n != 1)
-    fprintf(f, "\n");
+  if (i && n != 1) fprintf(f, "\n");
 }
 
 int ConsoleChannelFile::WriteData(uint8_t* buffer, int len) {
@@ -57,5 +50,5 @@ int ConsoleChannelFile::WriteLog(const char* format, ...) {
   return result;
 }
 
-}
-}
+}  // namespace Util
+}  // namespace Anki

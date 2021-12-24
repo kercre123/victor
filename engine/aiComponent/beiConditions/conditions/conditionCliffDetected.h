@@ -21,29 +21,25 @@ namespace Vector {
 
 class BEIConditionMessageHelper;
 
-class ConditionCliffDetected : public IBEICondition
-{
-public:
+class ConditionCliffDetected : public IBEICondition {
+ public:
   explicit ConditionCliffDetected(const Json::Value& config);
 
-  virtual ~ConditionCliffDetected() {};
+  virtual ~ConditionCliffDetected(){};
 
-protected:
+ protected:
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) const override;
 
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  
-private:
-  
+ private:
   uint8_t _numCliffDetectionsToTrigger;
   bool _shouldDetectNoCliffs;
-  
+
   int _minDuration_ms;
   int _maxDuration_ms;
-
 };
 
+}  // namespace Vector
+}  // namespace Anki
 
-} // namespace Vector
-} // namespace Anki
-
-#endif // __AiComponent_BeiConditions_ConditionCliffDetected__
+#endif  // __AiComponent_BeiConditions_ConditionCliffDetected__

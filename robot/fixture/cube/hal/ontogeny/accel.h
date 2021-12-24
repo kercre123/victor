@@ -7,7 +7,7 @@
 //-----------------------------------------------------------
 //        Defines
 //-----------------------------------------------------------
-//empty
+// empty
 
 //-----------------------------------------------------------
 //        Interface
@@ -17,8 +17,7 @@ void accel_power_on(void);
 void accel_power_off(void);
 bool accel_power_is_on(void);
 
-bool accel_chipinit(void); //true=successful
-int  accel_read(void);
+bool accel_chipinit(void);  // true=successful
+int accel_read(void);
 
-#endif //ACCEL_H_
-
+#endif  // ACCEL_H_

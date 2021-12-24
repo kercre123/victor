@@ -128,7 +128,7 @@ static WEBP_INLINE int BitsLog2Floor(uint32_t n) {
   return 31 ^ __builtin_clz(n);
 }
 #elif defined(_MSC_VER) && _MSC_VER > 1310 && \
-      (defined(_M_X64) || defined(_M_IX86))
+    (defined(_M_X64) || defined(_M_IX86))
 #include <intrin.h>
 #pragma intrinsic(_BitScanReverse)
 
@@ -137,7 +137,7 @@ static WEBP_INLINE int BitsLog2Floor(uint32_t n) {
   _BitScanReverse(&first_set_bit, n);
   return first_set_bit;
 }
-#else   // default: use the C-version.
+#else  // default: use the C-version.
 static WEBP_INLINE int BitsLog2Floor(uint32_t n) { return WebPLog2FloorC(n); }
 #endif
 
@@ -147,14 +147,15 @@ static WEBP_INLINE int BitsLog2Floor(uint32_t n) { return WebPLog2FloorC(n); }
 struct WebPPicture;
 
 // Copy width x height pixels from 'src' to 'dst' honoring the strides.
-WEBP_EXTERN(void) WebPCopyPlane(const uint8_t* src, int src_stride,
-                                uint8_t* dst, int dst_stride,
-                                int width, int height);
+WEBP_EXTERN(void)
+WebPCopyPlane(const uint8_t* src, int src_stride, uint8_t* dst, int dst_stride,
+              int width, int height);
 
 // Copy ARGB pixels from 'src' to 'dst' honoring strides. 'src' and 'dst' are
 // assumed to be already allocated and using ARGB data.
-WEBP_EXTERN(void) WebPCopyPixels(const struct WebPPicture* const src,
-                                 struct WebPPicture* const dst);
+WEBP_EXTERN(void)
+WebPCopyPixels(const struct WebPPicture* const src,
+               struct WebPPicture* const dst);
 
 //------------------------------------------------------------------------------
 // Unique colors.
@@ -166,13 +167,14 @@ WEBP_EXTERN(void) WebPCopyPixels(const struct WebPPicture* const src,
 // MAX_PALETTE_SIZE, also outputs the actual unique colors into 'palette'.
 // Note: 'palette' is assumed to be an array already allocated with at least
 // MAX_PALETTE_SIZE elements.
-WEBP_EXTERN(int) WebPGetColorPalette(const struct WebPPicture* const pic,
-                                     uint32_t* const palette);
+WEBP_EXTERN(int)
+WebPGetColorPalette(const struct WebPPicture* const pic,
+                    uint32_t* const palette);
 
 //------------------------------------------------------------------------------
 
 #ifdef __cplusplus
-}    // extern "C"
+}  // extern "C"
 #endif
 
-#endif  /* WEBP_UTILS_UTILS_H_ */
+#endif /* WEBP_UTILS_UTILS_H_ */

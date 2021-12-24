@@ -16,6 +16,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+
 #include "./vp8i_enc.h"
 
 #ifdef __cplusplus
@@ -31,13 +32,13 @@ struct VP8Residual {
   const int16_t* coeffs;
 
   int coeff_type;
-  ProbaArray*   prob;
-  StatsArray*   stats;
-  CostArrayPtr  costs;
+  ProbaArray* prob;
+  StatsArray* stats;
+  CostArrayPtr costs;
 };
 
-void VP8InitResidual(int first, int coeff_type,
-                     VP8Encoder* const enc, VP8Residual* const res);
+void VP8InitResidual(int first, int coeff_type, VP8Encoder* const enc,
+                     VP8Residual* const res);
 
 int VP8RecordCoeffs(int ctx, const VP8Residual* const res);
 
@@ -64,8 +65,8 @@ static WEBP_INLINE int VP8BitCost(int bit, uint8_t proba) {
 extern const uint16_t VP8LevelCodes[MAX_VARIABLE_LEVEL][2];
 void VP8CalculateLevelCosts(VP8EncProba* const proba);
 static WEBP_INLINE int VP8LevelCost(const uint16_t* const table, int level) {
-  return VP8LevelFixedCosts[level]
-       + table[(level > MAX_VARIABLE_LEVEL) ? MAX_VARIABLE_LEVEL : level];
+  return VP8LevelFixedCosts[level] +
+         table[(level > MAX_VARIABLE_LEVEL) ? MAX_VARIABLE_LEVEL : level];
 }
 
 // Mode costs
@@ -76,7 +77,7 @@ extern const uint16_t VP8FixedCostsI4[NUM_BMODES][NUM_BMODES][NUM_BMODES];
 //------------------------------------------------------------------------------
 
 #ifdef __cplusplus
-}    // extern "C"
+}  // extern "C"
 #endif
 
-#endif  /* WEBP_ENC_COST_H_ */
+#endif /* WEBP_ENC_COST_H_ */

@@ -30,12 +30,12 @@
  * @{
  ****************************************************************************************
  */
- 
+
 /// Device Information Service Client Role
-#define BLE_DIS_CLIENT          1
-#if !defined (BLE_CLIENT_PRF)
-    #define BLE_CLIENT_PRF      1
-#endif 
+#define BLE_DIS_CLIENT 1
+#if !defined(BLE_CLIENT_PRF)
+#define BLE_CLIENT_PRF 1
+#endif
 
 /*
  * INCLUDE FILES
@@ -43,8 +43,9 @@
  */
 
 #if (BLE_DIS_CLIENT)
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+
 #include "ke_task.h"
 #include "prf_types.h"
 
@@ -53,57 +54,54 @@
  ****************************************************************************************
  */
 
-enum
-{
-    DISC_MANUFACTURER_NAME_CHAR,
-    DISC_MODEL_NB_STR_CHAR,
-    DISC_SERIAL_NB_STR_CHAR,
-    DISC_HARD_REV_STR_CHAR,
-    DISC_FIRM_REV_STR_CHAR,
-    DISC_SW_REV_STR_CHAR,
-    DISC_SYSTEM_ID_CHAR,
-    DISC_IEEE_CHAR,
-    DISC_PNP_ID_CHAR,
+enum {
+  DISC_MANUFACTURER_NAME_CHAR,
+  DISC_MODEL_NB_STR_CHAR,
+  DISC_SERIAL_NB_STR_CHAR,
+  DISC_HARD_REV_STR_CHAR,
+  DISC_FIRM_REV_STR_CHAR,
+  DISC_SW_REV_STR_CHAR,
+  DISC_SYSTEM_ID_CHAR,
+  DISC_IEEE_CHAR,
+  DISC_PNP_ID_CHAR,
 
-    DISC_CHAR_MAX,
+  DISC_CHAR_MAX,
 };
 
 /// Pointer to the connection clean-up function
-#define DISC_CLEANUP_FNCT        (NULL)
+#define DISC_CLEANUP_FNCT (NULL)
 /*
  * TYPE DEFINITIONS
  ****************************************************************************************
  */
 
 /**
- * Structure containing the characteristics handles, value handles and descriptors for
- * the Device Information Service
+ * Structure containing the characteristics handles, value handles and
+ * descriptors for the Device Information Service
  */
-struct disc_dis_content
-{
-    /// service info
-    struct prf_svc svc;
+struct disc_dis_content {
+  /// service info
+  struct prf_svc svc;
 
-    /// Characteristic info:
-    struct prf_char_inf chars[DISC_CHAR_MAX];
+  /// Characteristic info:
+  struct prf_char_inf chars[DISC_CHAR_MAX];
 };
 
 /// Device Information Service Client environment variable
-struct disc_env_tag
-{
-    /// Profile Connection Info
-    struct prf_con_info con_info;
+struct disc_env_tag {
+  /// Profile Connection Info
+  struct prf_con_info con_info;
 
-    ///Last requested UUID(to keep track of the two services and char)
-    uint16_t last_uuid_req;
-    /// Last char. code requested to read.
-    uint8_t last_char_code;
+  /// Last requested UUID(to keep track of the two services and char)
+  uint16_t last_uuid_req;
+  /// Last char. code requested to read.
+  uint8_t last_char_code;
 
-    /// counter used to check service uniqueness
-    uint8_t nb_svc;
+  /// counter used to check service uniqueness
+  uint8_t nb_svc;
 
-    ///Current Time Service Characteristics
-    struct disc_dis_content dis;
+  /// Current Time Service Characteristics
+  struct disc_dis_content dis;
 };
 
 /*
@@ -126,16 +124,16 @@ extern struct disc_env_tag **disc_envs;
  */
 void disc_init(void);
 
-
 /**
  ****************************************************************************************
  * @brief Send Thermometer ATT DB discovery results to HTPC host.
  ****************************************************************************************
  */
-void disc_enable_cfm_send(struct disc_env_tag *disc_env, struct prf_con_info *con_info, uint8_t status);
+void disc_enable_cfm_send(struct disc_env_tag *disc_env,
+                          struct prf_con_info *con_info, uint8_t status);
 
-#endif //BLE_DIS_CLIENT
+#endif  // BLE_DIS_CLIENT
 
 /// @} DISC
 
-#endif // DISC_H_
+#endif  // DISC_H_

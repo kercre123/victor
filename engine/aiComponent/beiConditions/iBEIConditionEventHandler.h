@@ -4,7 +4,8 @@
  * Author: Brad Neuman
  * Created: 2017-11-30
  *
- * Description: Interface for state concept strategies which need to handle events
+ * Description: Interface for state concept strategies which need to handle
+ *events
  * // TODO:(bn) this could be combined with behaviors in a single interface
  *
  * Copyright: Anki, Inc. 2017
@@ -25,22 +26,23 @@ class MessageGameToEngine;
 class MessageEngineToGame;
 enum class MessageEngineToGameTag : uint8_t;
 enum class MessageGameToEngineTag : uint8_t;
-}
+}  // namespace ExternalInterface
 
 class BehaviorExternalInterface;
 class IExternalInterface;
 
-class IBEIConditionEventHandler
-{
-public:
+class IBEIConditionEventHandler {
+ public:
   using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
   using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
 
-  virtual void HandleEvent(const GameToEngineEvent& event, BehaviorExternalInterface& bei) {}
-  virtual void HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& bei) {}
+  virtual void HandleEvent(const GameToEngineEvent& event,
+                           BehaviorExternalInterface& bei) {}
+  virtual void HandleEvent(const EngineToGameEvent& event,
+                           BehaviorExternalInterface& bei) {}
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

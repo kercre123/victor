@@ -118,9 +118,8 @@ struct OutputStageEvalImpl<OutputStageQuantizeDownInt32ToUint8ScalePC<Shape>,
 };
 
 template <int Size>
-struct OutputStageEvalBufferImpl<
-    OutputStageQuantizeDownInt32ByFixedPoint,
-    RegisterBuffer<std::int32_t, Size>> {
+struct OutputStageEvalBufferImpl<OutputStageQuantizeDownInt32ByFixedPoint,
+                                 RegisterBuffer<std::int32_t, Size>> {
   typedef RegisterBuffer<std::int32_t, Size> InputType;
   typedef RegisterBuffer<std::int32_t, Size> OutputType;
 

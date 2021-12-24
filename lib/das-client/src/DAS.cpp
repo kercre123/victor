@@ -7,28 +7,31 @@
 //
 
 #include "DAS.h"
+
+#include <pthread.h>
+#include <stdarg.h>
+#include <sys/stat.h>
+
+#include <atomic>
+#include <cassert>
+#include <chrono>
+#include <cstring>
+#include <mutex>
+#include <sstream>
+#include <unordered_set>
+
 #include "DASPrivate.h"
-#include "dasLogMacros.h"
+#include "dasAppender.h"
+#include "dasFilter.h"
 #include "dasGameLogAppender.h"
 #include "dasGlobals.h"
 #include "dasLocalAppender.h"
 #include "dasLocalAppenderFactory.h"
 #include "dasLogFileAppender.h"
-#include "dasAppender.h"
-#include "dasFilter.h"
+#include "dasLogMacros.h"
 #include "dasPostToServer.h"
-#include "stringUtils.h"
 #include "json/json.h"
-#include <cassert>
-#include <mutex>
-#include <atomic>
-#include <chrono>
-#include <unordered_set>
-#include <sstream>
-#include <pthread.h>
-#include <stdarg.h>
-#include <sys/stat.h>
-#include <cstring>
+#include "stringUtils.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -37,10 +40,10 @@ extern "C" {
 #endif
 
 #if defined(NDEBUG)
-int DASNetworkingDisabled = 0; // default to networking enabled
+int DASNetworkingDisabled = 0;  // default to networking enabled
 static bool sPrintGlobalsAndData = false;
 #else
-int DASNetworkingDisabled = 0xffff; // disable it for debug
+int DASNetworkingDisabled = 0xffff;  // disable it for debug
 static bool sPrintGlobalsAndData = true;
 #endif
 
@@ -59,11 +62,12 @@ static DASLogLevel sLocalMinLogLevel = DASLogLevel_Info;
 static DASLogLevel sRemoteMinLogLevel = DASLogLevel_Event;
 static DASLogLevel sGameMinLogLevel = DASLogLevel_Info;
 static Anki::Das::DasLocalAppender* sLocalAppender =
-  Anki::Das::DasLocalAppenderFactory::CreateAppender(DASLogMode_Both);
+    Anki::Das::DasLocalAppenderFactory::CreateAppender(DASLogMode_Both);
 
 static std::unique_ptr<Anki::Das::DasAppender> sRemoteAppender = nullptr;
 static std::mutex sRemoteAppenderMutex;
-static std::unique_ptr<Anki::Das::DasGameLogAppender> sGameLogAppender = nullptr;
+static std::unique_ptr<Anki::Das::DasGameLogAppender> sGameLogAppender =
+    nullptr;
 static std::mutex sGameLogAppenderMutex;
 
 using DASGlobals = std::map<std::string, std::string>;
@@ -79,7 +83,7 @@ static Anki::DAS::DASFilter sDASLevelOverride;
 static std::mutex sDASLevelOverrideMutex;
 
 // Thread tagging
-static std::atomic<Anki::Das::ThreadId_t> sDASThreadMax {0};
+static std::atomic<Anki::Das::ThreadId_t> sDASThreadMax{0};
 static pthread_key_t sDASThreadIdKey;
 
 // Save the DAS globals for crash reporting
@@ -93,44 +97,43 @@ static DASUnarchiveFunction sLogFileUnarchiveFunc = DASUnarchiveFunction{};
 static std::string sLogFileArchiveExtension = "";
 
 void _setThreadLocalUInt32(pthread_key_t key, uint32_t value) {
-  uint32_t* p = (uint32_t *) pthread_getspecific(key);
+  uint32_t* p = (uint32_t*)pthread_getspecific(key);
   if (nullptr == p) {
-    p = (uint32_t *) malloc(sizeof(*p));
+    p = (uint32_t*)malloc(sizeof(*p));
   }
   *p = value;
-  (void) pthread_setspecific(key, p);
+  (void)pthread_setspecific(key, p);
 }
 
 uint32_t _getThreadLocalUInt32(pthread_key_t key, uint32_t defaultValue) {
-  uint32_t* p = (uint32_t *) pthread_getspecific(key);
+  uint32_t* p = (uint32_t*)pthread_getspecific(key);
   if (nullptr == p) {
     _setThreadLocalUInt32(key, defaultValue);
-    p = (uint32_t *) pthread_getspecific(key);
+    p = (uint32_t*)pthread_getspecific(key);
   }
   return *p;
 }
 
-
-void _freeRevisionNumberKey(void* arg) {
-  free(arg);
-}
+void _freeRevisionNumberKey(void* arg) { free(arg); }
 
 void _setThreadLocalCopyOfDASGlobals(DASGlobals* value) {
-  DASGlobals* p = (DASGlobals *) pthread_getspecific(sDASGlobalsThreadCopyKey);
+  DASGlobals* p = (DASGlobals*)pthread_getspecific(sDASGlobalsThreadCopyKey);
   if (nullptr != p) {
-    delete p; p = nullptr;
+    delete p;
+    p = nullptr;
   }
   p = value;
-  (void) pthread_setspecific(sDASGlobalsThreadCopyKey, p);
+  (void)pthread_setspecific(sDASGlobalsThreadCopyKey, p);
 }
 
 DASGlobals* _getThreadLocalCopyOfDASGlobals() {
-  DASGlobals* p = (DASGlobals *) pthread_getspecific(sDASGlobalsThreadCopyKey);
+  DASGlobals* p = (DASGlobals*)pthread_getspecific(sDASGlobalsThreadCopyKey);
   if (nullptr == p) {
     p = new DASGlobals;
     _setThreadLocalCopyOfDASGlobals(p);
   }
-  if (_getThreadLocalUInt32(sDASGlobalsRevisionNumberKey, 0) < sDASGlobalsRevisionNumber) {
+  if (_getThreadLocalUInt32(sDASGlobalsRevisionNumberKey, 0) <
+      sDASGlobalsRevisionNumber) {
     std::lock_guard<std::mutex> lock(sDASGlobalsMutex);
 
     p->clear();
@@ -138,20 +141,22 @@ DASGlobals* _getThreadLocalCopyOfDASGlobals() {
     for (const auto& kv : sDASGlobals) {
       p->emplace(kv.first, kv.second);
     }
-    _setThreadLocalUInt32(sDASGlobalsRevisionNumberKey, sDASGlobalsRevisionNumber);
+    _setThreadLocalUInt32(sDASGlobalsRevisionNumberKey,
+                          sDASGlobalsRevisionNumber);
   }
   return p;
 }
 
 void _freeDASGlobals(void* arg) {
-  DASGlobals* p = (DASGlobals *) arg;
+  DASGlobals* p = (DASGlobals*)arg;
   delete p;
 }
 
 static Anki::Das::ThreadId_t _DASThreadId() {
-  Anki::Das::ThreadId_t* p = (Anki::Das::ThreadId_t*)pthread_getspecific(sDASThreadIdKey);
-  if(nullptr == p) {
-    p = new Anki::Das::ThreadId_t {++sDASThreadMax};
+  Anki::Das::ThreadId_t* p =
+      (Anki::Das::ThreadId_t*)pthread_getspecific(sDASThreadIdKey);
+  if (nullptr == p) {
+    p = new Anki::Das::ThreadId_t{++sDASThreadMax};
     pthread_setspecific(sDASThreadIdKey, (void*)p);
   }
   assert(nullptr != p);
@@ -159,7 +164,7 @@ static Anki::Das::ThreadId_t _DASThreadId() {
 }
 
 static void _freeDASThreadId(void* arg) {
-  Anki::Das::ThreadId_t* p = (Anki::Das::ThreadId_t*) arg;
+  Anki::Das::ThreadId_t* p = (Anki::Das::ThreadId_t*)arg;
   delete p;
 }
 
@@ -182,47 +187,47 @@ DASLogLevel DASLogLevelNameToEnum(const std::string& logLevelName) {
 }
 
 void getDASLogLevelName(DASLogLevel logLevel, std::string& outLogLevelName) {
-  switch(logLevel) {
-  case DASLogLevel_Debug:
-    outLogLevelName = "debug";
-    break;
-  case DASLogLevel_Info:
-    outLogLevelName = "info";
-    break;
-  case DASLogLevel_Event:
-    outLogLevelName = "event";
-    break;
-  case DASLogLevel_Warn:
-    outLogLevelName = "warn";
-    break;
-  case DASLogLevel_Error:
-    outLogLevelName = "error";
-    break;
-  default:
-    outLogLevelName = "";
-    break;
+  switch (logLevel) {
+    case DASLogLevel_Debug:
+      outLogLevelName = "debug";
+      break;
+    case DASLogLevel_Info:
+      outLogLevelName = "info";
+      break;
+    case DASLogLevel_Event:
+      outLogLevelName = "event";
+      break;
+    case DASLogLevel_Warn:
+      outLogLevelName = "warn";
+      break;
+    case DASLogLevel_Error:
+      outLogLevelName = "error";
+      break;
+    default:
+      outLogLevelName = "";
+      break;
   }
 }
 
 void getDASTimeString(std::string& outTimeString) {
-  std::chrono::system_clock::time_point now {std::chrono::system_clock::now()};
+  std::chrono::system_clock::time_point now{std::chrono::system_clock::now()};
   std::time_t nowTime{std::chrono::system_clock::to_time_t(now)};
   char timeStr[16];
   std::chrono::milliseconds ms =
-    std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
-  size_t timeStrLen = std::strftime(timeStr, sizeof(timeStr),
-                                    "%H:%M:%S", std::localtime(&nowTime));
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          now.time_since_epoch());
+  size_t timeStrLen = std::strftime(timeStr, sizeof(timeStr), "%H:%M:%S",
+                                    std::localtime(&nowTime));
   assert(timeStrLen > 0);
   size_t remainingLen = sizeof(timeStr) - timeStrLen;
   uint64_t msCount = ms.count();
-  int printfResult __attribute((unused)) = snprintf(timeStr + timeStrLen, remainingLen,
-                                                    "%" PRIu64 "", msCount % 1000);
+  int printfResult __attribute((unused)) = snprintf(
+      timeStr + timeStrLen, remainingLen, "%" PRIu64 "", msCount % 1000);
   assert(printfResult <= remainingLen);
   outTimeString = timeStr;
 }
 
-void DASConfigure(const char* configurationJsonFilePath,
-                  const char* logDirPath,
+void DASConfigure(const char* configurationJsonFilePath, const char* logDirPath,
                   const char* gameLogDirPath) {
   if (nullptr != gameLogDirPath && '\0' != *gameLogDirPath) {
     sGameLogDir = gameLogDirPath;
@@ -230,12 +235,13 @@ void DASConfigure(const char* configurationJsonFilePath,
 
   if (nullptr != logDirPath && '\0' != *logDirPath) {
     sDasLogDir = logDirPath;
-    (void) mkdir(logDirPath, S_IRWXU);
+    (void)mkdir(logDirPath, S_IRWXU);
     pathToLastRunDasGlobalsFile = sDasLogDir + "/" + kLastRunDasGlobalsFileName;
     pathToThisRunDasGlobalsFile = sDasLogDir + "/" + kThisRunDasGlobalsFileName;
     if (sNeedToRotateGlobalsLogs) {
       // Rotate the saved DAS globals for crash reporting
-      (void) rename(pathToThisRunDasGlobalsFile.c_str(), pathToLastRunDasGlobalsFile.c_str());
+      (void)rename(pathToThisRunDasGlobalsFile.c_str(),
+                   pathToLastRunDasGlobalsFile.c_str());
       sNeedToRotateGlobalsLogs = false;
     }
   }
@@ -246,71 +252,70 @@ void DASConfigure(const char* configurationJsonFilePath,
 
   if (nullptr != configurationJsonFilePath) {
     // load configuration
-    std::string config = AnkiUtil::StringFromContentsOfFile(configurationJsonFilePath);
+    std::string config =
+        AnkiUtil::StringFromContentsOfFile(configurationJsonFilePath);
     Json::Value root;
     Json::Reader reader;
     bool parsingSuccessful = reader.parse(config, root);
     if (parsingSuccessful) {
-      DASLogLevel localMinLogLevel = DASLogLevelNameToEnum(root["dasConfig"]
-                                                           .get("localMinLogLevel", "info")
-                                                           .asString());
+      DASLogLevel localMinLogLevel = DASLogLevelNameToEnum(
+          root["dasConfig"].get("localMinLogLevel", "info").asString());
       sDASLevelOverride.SetRootLogLevel(localMinLogLevel);
-      const Json::Value& localOverrides = root["dasConfig"].get("localMinLogLevelOverrides",
-                                                                Json::objectValue);
+      const Json::Value& localOverrides =
+          root["dasConfig"].get("localMinLogLevelOverrides", Json::objectValue);
       for (const std::string& key : localOverrides.getMemberNames()) {
-        DASLogLevel levelForKey = DASLogLevelNameToEnum(localOverrides
-                                                        .get(key, Json::stringValue).asString());
+        DASLogLevel levelForKey = DASLogLevelNameToEnum(
+            localOverrides.get(key, Json::stringValue).asString());
         sDASLevelOverride.SetMinLogLevel(key, levelForKey);
       }
 
-      sRemoteMinLogLevel = DASLogLevelNameToEnum(root["dasConfig"]
-                                                 .get("remoteMinLogLevel", "event").asString());
-      sGameMinLogLevel = DASLogLevelNameToEnum(root["dasConfig"]
-                                               .get("gameMinLogLevel", "info").asString());
+      sRemoteMinLogLevel = DASLogLevelNameToEnum(
+          root["dasConfig"].get("remoteMinLogLevel", "event").asString());
+      sGameMinLogLevel = DASLogLevelNameToEnum(
+          root["dasConfig"].get("gameMinLogLevel", "info").asString());
       std::string url = root["dasConfig"].get("url", "").asString();
       {
         std::lock_guard<std::mutex> lock(sRemoteAppenderMutex);
-        uint flush_interval = Anki::Das::DasAppender::kDefaultFlushIntervalSeconds;
-        if( root["dasConfig"].isMember("flushInterval") )
-        {
-          flush_interval = root["dasConfig"].get("flushInterval", Json::uintValue).asUInt();
+        uint flush_interval =
+            Anki::Das::DasAppender::kDefaultFlushIntervalSeconds;
+        if (root["dasConfig"].isMember("flushInterval")) {
+          flush_interval =
+              root["dasConfig"].get("flushInterval", Json::uintValue).asUInt();
         }
 
         size_t maxLogLength = Anki::Das::kDefaultMaxLogLength;
-        if( root["dasConfig"].isMember("maxLogLength") )
-        {
-          maxLogLength = root["dasConfig"].get("maxLogLength", Json::uintValue).asUInt();
+        if (root["dasConfig"].isMember("maxLogLength")) {
+          maxLogLength =
+              root["dasConfig"].get("maxLogLength", Json::uintValue).asUInt();
         }
 
         size_t maxLogFiles = Anki::Das::kDasDefaultMaxLogFiles;
-        if( root["dasConfig"].isMember("maxLogFiles") )
-        {
-          maxLogFiles = root["dasConfig"].get("maxLogFiles", Json::uintValue).asUInt();
+        if (root["dasConfig"].isMember("maxLogFiles")) {
+          maxLogFiles =
+              root["dasConfig"].get("maxLogFiles", Json::uintValue).asUInt();
         }
 
-        sRemoteAppender.reset(new Anki::Das::DasAppender(sDasLogDir, url,flush_interval,
-                                                         maxLogLength, maxLogFiles,
-                                                         sLogFileArchiveFunc,
-                                                         sLogFileUnarchiveFunc,
-                                                         sLogFileArchiveExtension));
+        sRemoteAppender.reset(new Anki::Das::DasAppender(
+            sDasLogDir, url, flush_interval, maxLogLength, maxLogFiles,
+            sLogFileArchiveFunc, sLogFileUnarchiveFunc,
+            sLogFileArchiveExtension));
       }
     } else {
-      LOGD("Failed to parse configuration: %s", reader.getFormattedErrorMessages().c_str());
+      LOGD("Failed to parse configuration: %s",
+           reader.getFormattedErrorMessages().c_str());
     }
   }
 
   if (DASNeedsInit) {
-    (void) pthread_key_create(&sDASGlobalsRevisionNumberKey, _freeRevisionNumberKey);
-    (void) pthread_key_create(&sDASGlobalsThreadCopyKey, _freeDASGlobals);
-    (void) pthread_key_create(&sDASThreadIdKey, _freeDASThreadId);
+    (void)pthread_key_create(&sDASGlobalsRevisionNumberKey,
+                             _freeRevisionNumberKey);
+    (void)pthread_key_create(&sDASGlobalsThreadCopyKey, _freeDASGlobals);
+    (void)pthread_key_create(&sDASThreadIdKey, _freeDASThreadId);
   }
   DASNeedsInit = false;
 }
 
-const char* DASGetLogDir()
-{
-  return sDasLogDir.c_str();
-}
+const char* DASGetLogDir() { return sDasLogDir.c_str(); }
 
 static void _DAS_DestroyRemoteAppender() {
   std::lock_guard<std::mutex> lock(sRemoteAppenderMutex);
@@ -325,8 +330,7 @@ static void _DAS_DestroyGameLogAppender() {
   sGameLogAppender.reset();
 }
 
-void SetDASLocalLoggerMode(DASLocalLoggerMode logMode)
-{
+void SetDASLocalLoggerMode(DASLocalLoggerMode logMode) {
   Anki::Das::DasLocalAppender* appender;
   appender = Anki::Das::DasLocalAppenderFactory::CreateAppender(logMode);
 
@@ -356,8 +360,7 @@ void DASForceFlushNow() {
 void DASForceFlushWithCallback(const DASFlushCallback& callback) {
   if (nullptr != sRemoteAppender) {
     sRemoteAppender->ForceFlushWithCallback(callback);
-  }
-  else if (callback) {
+  } else if (callback) {
     callback(false, "");
   }
 }
@@ -368,8 +371,9 @@ void DASPauseUploadingToServer(const bool isPaused) {
   }
 }
 
-void DASSetArchiveLogConfig(const DASArchiveFunction& archiveFunction, const DASUnarchiveFunction& unarchiveFunction, const std::string& archiveExtension)
-{
+void DASSetArchiveLogConfig(const DASArchiveFunction& archiveFunction,
+                            const DASUnarchiveFunction& unarchiveFunction,
+                            const std::string& archiveExtension) {
   sLogFileArchiveFunc = archiveFunction;
   sLogFileUnarchiveFunc = unarchiveFunction;
   sLogFileArchiveExtension = archiveExtension;
@@ -379,38 +383,40 @@ int _DAS_IsEventEnabledForLevel(const char* eventName, DASLogLevel level) {
   if (DASNeedsInit) {
     DASConfigure(nullptr, nullptr, nullptr);
   }
-  if (level >= sRemoteMinLogLevel || level >= sGameMinLogLevel
-      || level >= _DAS_GetLevel(eventName, sLocalMinLogLevel)) {
+  if (level >= sRemoteMinLogLevel || level >= sGameMinLogLevel ||
+      level >= _DAS_GetLevel(eventName, sLocalMinLogLevel)) {
     return 1;
   }
 
   return 0;
 }
 
-void _DAS_LogInternal(DASLogLevel level, const char* eventName, const char* eventValue,
-  const char* file, const char* funct, int line,
-  std::map< std::string, std::string > & data)
-{
-  // Scream if the client passes a null or empty event name and replace it with "noname"
-  // If a "noname" event is seen on the server, open a bug
+void _DAS_LogInternal(DASLogLevel level, const char* eventName,
+                      const char* eventValue, const char* file,
+                      const char* funct, int line,
+                      std::map<std::string, std::string>& data) {
+  // Scream if the client passes a null or empty event name and replace it with
+  // "noname" If a "noname" event is seen on the server, open a bug
   if (nullptr == eventName || '\0' == *eventName) {
-    LOGD("DAS ERROR: EVENT WITH A NULL OR BLANK NAME PASSED (value=%s file=%s funct=%s line=%d)",
-      (eventValue ? eventValue : ""),
-      (file ? file : ""),
-      (funct ? funct : ""),
-      line);
+    LOGD(
+        "DAS ERROR: EVENT WITH A NULL OR BLANK NAME PASSED (value=%s file=%s "
+        "funct=%s line=%d)",
+        (eventValue ? eventValue : ""), (file ? file : ""),
+        (funct ? funct : ""), line);
     eventName = "noname";
   }
 
   std::string logLevel;
   getDASLogLevelName(level, logLevel);
   data[Anki::Das::kMessageLevelGlobalKey] = logLevel;
-  Anki::Das::ThreadId_t threadId {_DASThreadId()};
+  Anki::Das::ThreadId_t threadId{_DASThreadId()};
 
   DASGlobals* globals = _getThreadLocalCopyOfDASGlobals();
-  if (globals->end() == globals->find(Anki::Das::kTimeStampGlobalKey)
-    && data.end() == data.find(Anki::Das::kTimeStampGlobalKey)) {
-    std::chrono::milliseconds milliSecondsSince1970 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+  if (globals->end() == globals->find(Anki::Das::kTimeStampGlobalKey) &&
+      data.end() == data.find(Anki::Das::kTimeStampGlobalKey)) {
+    std::chrono::milliseconds milliSecondsSince1970 =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch());
     std::string ts = std::to_string(milliSecondsSince1970.count());
     data[Anki::Das::kTimeStampGlobalKey] = ts;
   }
@@ -424,52 +430,53 @@ void _DAS_LogInternal(DASLogLevel level, const char* eventName, const char* even
         getDASGlobalsAndDataString(globals, data, globalsAndData);
       }
       sLocalAppender->append(level, eventName, trimmedEventValue.c_str(),
-                            threadId, file, funct, line, globals, data, globalsAndData.c_str());
+                             threadId, file, funct, line, globals, data,
+                             globalsAndData.c_str());
     }
   }
   if (level >= sRemoteMinLogLevel) {
     std::lock_guard<std::mutex> lock(sRemoteAppenderMutex);
     if (nullptr != sRemoteAppender) {
-      sRemoteAppender->append(level, eventName, eventValue, threadId, file, funct, line,
-                              globals, data);
+      sRemoteAppender->append(level, eventName, eventValue, threadId, file,
+                              funct, line, globals, data);
     }
   }
   if (level >= sGameMinLogLevel) {
     std::lock_guard<std::mutex> lock(sGameLogAppenderMutex);
     if (nullptr != sGameLogAppender) {
-      sGameLogAppender->append(level, eventName, eventValue, threadId, file, funct, line,
-                               globals, data);
+      sGameLogAppender->append(level, eventName, eventValue, threadId, file,
+                               funct, line, globals, data);
     }
   }
 }
 
-void _DAS_LogKv(DASLogLevel level, const char* eventName, const char* eventValue,
-  const std::vector< std::pair< const char*, const char* > > & keyValues)
-{
-  std::map<std::string,std::string> data;
+void _DAS_LogKv(
+    DASLogLevel level, const char* eventName, const char* eventValue,
+    const std::vector<std::pair<const char*, const char*> >& keyValues) {
+  std::map<std::string, std::string> data;
   for (const auto& keyValuePair : keyValues) {
-    data.emplace(std::string(keyValuePair.first), std::string(keyValuePair.second));
+    data.emplace(std::string(keyValuePair.first),
+                 std::string(keyValuePair.second));
   }
   _DAS_LogInternal(level, eventName, eventValue, "", "", 0, data);
 }
 
-void _DAS_LogKvMap(DASLogLevel level, const char* eventName, const char* eventValue,
-  const std::map<std::string, std::string>& keyValues)
-{
-  std::map<std::string,std::string> data = keyValues;
+void _DAS_LogKvMap(DASLogLevel level, const char* eventName,
+                   const char* eventValue,
+                   const std::map<std::string, std::string>& keyValues) {
+  std::map<std::string, std::string> data = keyValues;
   _DAS_LogInternal(level, eventName, eventValue, "", "", 0, data);
 }
 
 void _DAS_Log(DASLogLevel level, const char* eventName, const char* eventValue,
-              const char* file, const char* funct, int line, ...)
-{
-  std::map<std::string,std::string> data;
+              const char* file, const char* funct, int line, ...) {
+  std::map<std::string, std::string> data;
   va_list argList;
   va_start(argList, line);
   const char* key = nullptr;
-  while (nullptr != (key = va_arg(argList, const char *))) {
+  while (nullptr != (key = va_arg(argList, const char*))) {
     const char* value;
-    value = va_arg(argList, const char *);
+    value = va_arg(argList, const char*);
     if (nullptr == value) break;
     data.erase(key);
     data.emplace(key, value);
@@ -487,7 +494,8 @@ void _DAS_SetGlobal(const char* key, const char* value) {
   if (0 == strcmp(Anki::Das::kGameIdGlobalKey, key)) {
     if (nullptr != value && '\0' != value[0]) {
       std::lock_guard<std::mutex> lg(sGameLogAppenderMutex);
-      sGameLogAppender.reset(new Anki::Das::DasGameLogAppender(sGameLogDir, value));
+      sGameLogAppender.reset(
+          new Anki::Das::DasGameLogAppender(sGameLogDir, value));
     } else {
       _DAS_DestroyGameLogAppender();
     }
@@ -498,7 +506,8 @@ void _DAS_SetGlobal(const char* key, const char* value) {
     sDASGlobals.emplace(key, value);
   }
   sDASGlobalsRevisionNumber++;
-  (void) AnkiUtil::StoreStringMapInFile(pathToThisRunDasGlobalsFile, sDASGlobals);
+  (void)AnkiUtil::StoreStringMapInFile(pathToThisRunDasGlobalsFile,
+                                       sDASGlobals);
 }
 
 void _DAS_GetGlobal(const char* key, std::string& outValue) {
@@ -526,15 +535,15 @@ size_t _DAS_GetGlobalsForLastRunAsJsonString(char* buffer, size_t len) {
     buffer[0] = '\0';
   }
   std::string dasGlobalsFromLastRunAsJson =
-    AnkiUtil::StringFromContentsOfFile(pathToLastRunDasGlobalsFile);
+      AnkiUtil::StringFromContentsOfFile(pathToLastRunDasGlobalsFile);
   size_t requiredLen = dasGlobalsFromLastRunAsJson.size() + 1;
   if (buffer && len >= requiredLen) {
-    std::copy(dasGlobalsFromLastRunAsJson.begin(), dasGlobalsFromLastRunAsJson.end(), buffer);
+    std::copy(dasGlobalsFromLastRunAsJson.begin(),
+              dasGlobalsFromLastRunAsJson.end(), buffer);
     buffer[dasGlobalsFromLastRunAsJson.size()] = '\0';
   }
   return requiredLen;
 }
-
 
 void _DAS_ReportCrashForLastAppRun(const char* apprun) {
   if (DASNetworkingDisabled) {
@@ -555,13 +564,14 @@ void _DAS_ReportCrashForLastAppRun(const char* apprun) {
   getDASLogLevelName(level, logLevel);
   dasGlobalsFromLastRun[Anki::Das::kMessageLevelGlobalKey] = logLevel;
 
-  // Use a sequence number high enough that it will be after all of the DAS events that
-  // were reported during the apprun
+  // Use a sequence number high enough that it will be after all of the DAS
+  // events that were reported during the apprun
   dasGlobalsFromLastRun[Anki::Das::kSequenceGlobalKey] = "999999999";
 
   // We don't know when the crash occurred, so just use the current time
   std::chrono::milliseconds milliSecondsSince1970 =
-    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          std::chrono::system_clock::now().time_since_epoch());
   std::string ts = std::to_string(milliSecondsSince1970.count());
   dasGlobalsFromLastRun[Anki::Das::kTimeStampGlobalKey] = ts;
   {
@@ -581,7 +591,8 @@ void _DAS_ClearGlobals() {
   _DAS_DestroyGameLogAppender();
 
   sDASGlobalsRevisionNumber++;
-  (void) AnkiUtil::StoreStringMapInFile(pathToThisRunDasGlobalsFile, sDASGlobals);
+  (void)AnkiUtil::StoreStringMapInFile(pathToThisRunDasGlobalsFile,
+                                       sDASGlobals);
 }
 
 // _DAS_GetGameLogAppender is used by the unit tests. Don't delete!
@@ -607,9 +618,7 @@ void DASDisableNetwork(DASDisableNetworkReason reason) {
   DASNetworkingDisabled |= reason;
 }
 
-int DASGetNetworkingDisabled() {
-  return DASNetworkingDisabled;
-}
+int DASGetNetworkingDisabled() { return DASNetworkingDisabled; }
 
 void _DAS_SetLevel(const char* eventName, DASLogLevel level) {
   std::lock_guard<std::mutex> lock(sDASLevelOverrideMutex);
@@ -627,13 +636,12 @@ void _DAS_ClearSetLevels() {
   sDASLevelOverride.ClearLogLevels();
 }
 
-void getDASGlobalsAndDataString(const std::map<std::string,std::string>* globals,
-                                const std::map<std::string,std::string>& data,
-                                std::string& outGlobalsAndData)
-{
+void getDASGlobalsAndDataString(
+    const std::map<std::string, std::string>* globals,
+    const std::map<std::string, std::string>& data,
+    std::string& outGlobalsAndData) {
   outGlobalsAndData = "";
-  static const std::unordered_set<std::string> excludedKeys =
-    {
+  static const std::unordered_set<std::string> excludedKeys = {
       Anki::Das::kApplicationVersionGlobalKey,
       Anki::Das::kApplicationRunGlobalKey,
       Anki::Das::kMessageVersionGlobalKey,
@@ -642,12 +650,12 @@ void getDASGlobalsAndDataString(const std::map<std::string,std::string>* globals
       Anki::Das::kPlatformGlobalKey,
       Anki::Das::kProductGlobalKey,
       Anki::Das::kTimeStampGlobalKey,
-      Anki::Das::kUnitIdGlobalKey
-    };
+      Anki::Das::kUnitIdGlobalKey};
 
-  std::map<std::string,std::string> dict;
+  std::map<std::string, std::string> dict;
   for (const auto& kv : *globals) {
-    if (!excludedKeys.count(kv.first) && strcmp(kv.first.c_str(), Anki::Das::kUserIdGlobalKey)) {
+    if (!excludedKeys.count(kv.first) &&
+        strcmp(kv.first.c_str(), Anki::Das::kUserIdGlobalKey)) {
       dict[kv.first] = kv.second;
     }
   }
@@ -676,12 +684,12 @@ void getDASGlobalsAndDataString(const std::map<std::string,std::string>* globals
 }
 
 #if defined(VICOS)
-bool PostToServer(const std::string & url, const std::string & body, std::string & response)
-{
+bool PostToServer(const std::string& url, const std::string& body,
+                  std::string& response) {
   return dasPostToServer(url, body, response);
 }
 #endif
 
 #ifdef __cplusplus
-} // extern "C"
+}  // extern "C"
 #endif

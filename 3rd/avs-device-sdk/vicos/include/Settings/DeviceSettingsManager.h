@@ -29,7 +29,8 @@ using DoNotDisturb = SettingInterface<bool>;
 /**
  * Enumerates the settings that are kept inside DeviceSettingsManager.
  *
- * @note This enumeration must reflect the order that the settings show up in the DeviceSettingsManager declaration.
+ * @note This enumeration must reflect the order that the settings show up in
+ * the DeviceSettingsManager declaration.
  */
 enum DeviceSettingsIndex { DO_NOT_DISTURB };
 

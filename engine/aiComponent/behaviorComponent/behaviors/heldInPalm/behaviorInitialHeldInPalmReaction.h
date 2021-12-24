@@ -4,7 +4,8 @@
  * Author: Guillermo Bautista
  * Created: 2019-03-18
  *
- * Description: Behavior that selects the appropriate animation to play when Vector was recently placed in a user's palm
+ * Description: Behavior that selects the appropriate animation to play when
+ *Vector was recently placed in a user's palm
  *
  * Copyright: Anki, Inc. 2019
  *
@@ -14,44 +15,45 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorInitialHeldInPalmReaction__
 #pragma once
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include <unordered_set>
+
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Vector {
 
-class BehaviorInitialHeldInPalmReaction : public ICozmoBehavior
-{
-public: 
+class BehaviorInitialHeldInPalmReaction : public ICozmoBehavior {
+ public:
   virtual ~BehaviorInitialHeldInPalmReaction();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorInitialHeldInPalmReaction(const Json::Value& config);  
+  explicit BehaviorInitialHeldInPalmReaction(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void InitBehavior() override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-
+ private:
   struct InstanceConfig {
     InstanceConfig();
     InstanceConfig(const Json::Value& config);
-    
+
     std::unordered_set<std::string> interruptingBehaviorNames;
-    // NOTE(GB): The behaviors in this set can only cause this reaction to cancel itself, this
-    // reaction is not responsible for delegating to these behaviors.
+    // NOTE(GB): The behaviors in this set can only cause this reaction to
+    // cancel itself, this reaction is not responsible for delegating to these
+    // behaviors.
     std::unordered_set<ICozmoBehaviorPtr> interruptingBehaviors;
-    
+
     ICozmoBehaviorPtr joltInPalmReaction;
     ICozmoBehaviorPtr animSelectorBehavior;
   };
@@ -63,13 +65,13 @@ private:
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-  
-  // Checks whether any of the behaviors in `interruptingBehaviors` wants to activate
+
+  // Checks whether any of the behaviors in `interruptingBehaviors` wants to
+  // activate
   bool BehaviorShouldBeInterrupted() const;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorInitialHeldInPalmReaction__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorInitialHeldInPalmReaction__

@@ -9,12 +9,9 @@ typedef unsigned char ubyte;
 typedef signed char sbyte;
 typedef unsigned short word;
 typedef unsigned long dword;
-typedef union
-  {
-  ubyte
-    as_bytes[2];
-  word
-    as_word;
-  } CF_WORD_UNION;
+typedef union {
+  ubyte as_bytes[2];
+  word as_word;
+} CF_WORD_UNION;
 //============================================================================
 #endif

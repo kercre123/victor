@@ -26,7 +26,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #ifndef MAT3_H_INCLUDED
 #define MAT3_H_INCLUDED
 
@@ -36,8 +35,8 @@ struct kmVec3;
 struct kmQuaternion;
 struct kmMat4;
 
-typedef struct kmMat3{
-	kmScalar mat[9];
+typedef struct kmMat3 {
+  kmScalar mat[9];
 } kmMat3;
 
 #ifdef __cplusplus
@@ -48,15 +47,16 @@ kmMat3* kmMat3Fill(kmMat3* pOut, const kmScalar* pMat);
 kmMat3* kmMat3Adjugate(kmMat3* pOut, const kmMat3* pIn);
 kmMat3* kmMat3Identity(kmMat3* pOut);
 kmMat3* kmMat3Inverse(kmMat3* pOut, const kmMat3* pM);
-int  kmMat3IsIdentity(const kmMat3* pIn);
+int kmMat3IsIdentity(const kmMat3* pIn);
 kmMat3* kmMat3Transpose(kmMat3* pOut, const kmMat3* pIn);
 kmScalar kmMat3Determinant(const kmMat3* pIn);
 kmMat3* kmMat3Multiply(kmMat3* pOut, const kmMat3* pM1, const kmMat3* pM2);
-kmMat3* kmMat3ScalarMultiply(kmMat3* pOut, const kmMat3* pM, const kmScalar pFactor);
+kmMat3* kmMat3ScalarMultiply(kmMat3* pOut, const kmMat3* pM,
+                             const kmScalar pFactor);
 
 kmMat3* kmMat3Assign(kmMat3* pOut, const kmMat3* pIn);
 kmMat3* kmMat3AssignMat4(kmMat3* pOut, const struct kmMat4* pIn);
-int  kmMat3AreEqual(const kmMat3* pM1, const kmMat3* pM2);
+int kmMat3AreEqual(const kmMat3* pM1, const kmMat3* pM2);
 
 struct kmVec3* kmMat3GetUpVec3(struct kmVec3* pOut, const kmMat3* pIn);
 struct kmVec3* kmMat3GetRightVec3(struct kmVec3* pOut, const kmMat3* pIn);
@@ -72,14 +72,16 @@ kmMat3* kmMat3Translation(kmMat3* pOut, const kmScalar x, const kmScalar y);
 
 kmMat3* kmMat3RotationQuaternion(kmMat3* pOut, const struct kmQuaternion* pIn);
 
-kmMat3* kmMat3RotationAxisAngle(kmMat3* pOut, const struct kmVec3* axis, kmScalar radians);
-struct kmVec3* kmMat3RotationToAxisAngle(struct kmVec3* pAxis, kmScalar* radians, const kmMat3* pIn);
-kmMat3* kmMat3LookAt(kmMat3* pOut, const struct kmVec3* pEye, const struct kmVec3* pCenter, const struct kmVec3* pUp);
+kmMat3* kmMat3RotationAxisAngle(kmMat3* pOut, const struct kmVec3* axis,
+                                kmScalar radians);
+struct kmVec3* kmMat3RotationToAxisAngle(struct kmVec3* pAxis,
+                                         kmScalar* radians, const kmMat3* pIn);
+kmMat3* kmMat3LookAt(kmMat3* pOut, const struct kmVec3* pEye,
+                     const struct kmVec3* pCenter, const struct kmVec3* pUp);
 
 #ifdef __cplusplus
 }
 #endif
 #endif /* MAT3_H_INCLUDED */
-
 
 #endif /* header guard */

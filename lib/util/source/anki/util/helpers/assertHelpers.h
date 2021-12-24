@@ -12,11 +12,11 @@
 #include <assert.h>
 
 #define ASSERT_AND_RETURN_IF_FAIL(cond) \
-  assert(cond); \
+  assert(cond);                         \
   if (!(cond)) return;
 
 #define ASSERT_AND_RETURN_VALUE_IF_FAIL(cond, val) \
-  assert(cond); \
+  assert(cond);                                    \
   if (!(cond)) return (val);
 
-#endif // __Util_Helpers_AssertHelpers_H__
+#endif  // __Util_Helpers_AssertHelpers_H__

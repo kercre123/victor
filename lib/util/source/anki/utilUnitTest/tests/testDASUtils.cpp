@@ -4,20 +4,18 @@
 //  Copyright (c) 2018 Anki Inc. All rights reserved.
 //
 
+#include <thread>
+
 #include "util/helpers/includeGTest.h"
 #include "util/logging/DAS.h"
-#include <thread>
 
 namespace Anki {
 namespace Util {
 namespace Test {
 
-class TestDASUtils : public ::testing::Test
-{
-};
+class TestDASUtils : public ::testing::Test {};
 
-TEST_F(TestDASUtils, TestUptimeMS)
-{
+TEST_F(TestDASUtils, TestUptimeMS) {
   using namespace Anki::Util::DAS;
 
   // Count should be non-decreasing
@@ -30,11 +28,9 @@ TEST_F(TestDASUtils, TestUptimeMS)
   std::this_thread::sleep_for(std::chrono::milliseconds(10));
   const auto t4 = UptimeMS();
   ASSERT_LT(t3, t4);
-
 }
 
-TEST_F(TestDASUtils, TestEscape)
-{
+TEST_F(TestDASUtils, TestEscape) {
   using namespace Anki::Util::DAS;
 
   // Null string should become empty string
@@ -54,9 +50,8 @@ TEST_F(TestDASUtils, TestEscape)
 
   // Embedded newline should be escaped
   EXPECT_EQ("abc\\ndef", Escape("abc\ndef"));
-
 }
 
-} // namespace Test
-} // namespace Util
-} // namespace Anki
+}  // namespace Test
+}  // namespace Util
+}  // namespace Anki

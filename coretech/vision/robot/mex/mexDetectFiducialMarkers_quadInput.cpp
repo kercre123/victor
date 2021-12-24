@@ -1,19 +1,17 @@
 // TODO: update this mex file to the new API
 #if 0
 
-#include "mex.h"
+#include <string.h>
 
-#include "anki/common/robot/matlabInterface.h"
-
-#include "coretech/vision/robot/lucasKanade.h"
-#include "coretech/vision/robot/fiducialMarkers.h"
-#include "coretech/vision/robot/fiducialDetection.h"
+#include <vector>
 
 #include "anki/common/matlab/mexWrappers.h"
+#include "anki/common/robot/matlabInterface.h"
 #include "anki/common/shared/utilities_shared.h"
-
-#include <string.h>
-#include <vector>
+#include "coretech/vision/robot/fiducialDetection.h"
+#include "coretech/vision/robot/fiducialMarkers.h"
+#include "coretech/vision/robot/lucasKanade.h"
+#include "mex.h"
 
 #define VERBOSITY 0
 
@@ -230,4 +228,4 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   mxFree(memory.get_buffer());
 }
 
-#endif // TODO: update this mex file to the new API
+#endif  // TODO: update this mex file to the new API

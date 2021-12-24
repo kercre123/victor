@@ -31,9 +31,9 @@
 #ifndef GOOGLE_PROTOBUF_METADATA_LITE_H__
 #define GOOGLE_PROTOBUF_METADATA_LITE_H__
 
-#include <google/protobuf/stubs/common.h>
 #include <google/protobuf/arena.h>
 #include <google/protobuf/message_lite.h>
+#include <google/protobuf/stubs/common.h>
 #include <google/protobuf/stubs/port.h>
 
 namespace google {
@@ -137,9 +137,10 @@ class InternalMetadataWithArenaBase {
     return reinterpret_cast<intptr_t>(ptr_) & kPtrTagMask;
   }
 
-  template<typename U> U* PtrValue() const {
-    return reinterpret_cast<U*>(
-        reinterpret_cast<intptr_t>(ptr_) & kPtrValueMask);
+  template <typename U>
+  U* PtrValue() const {
+    return reinterpret_cast<U*>(reinterpret_cast<intptr_t>(ptr_) &
+                                kPtrValueMask);
   }
 
   // If ptr_'s tag is kTagContainer, it points to an instance of this struct.
@@ -154,8 +155,8 @@ class InternalMetadataWithArenaBase {
     // Two-step assignment works around a bug in clang's static analyzer:
     // https://bugs.llvm.org/show_bug.cgi?id=34198.
     ptr_ = container;
-    ptr_ = reinterpret_cast<void*>(
-        reinterpret_cast<intptr_t>(ptr_) | kTagContainer);
+    ptr_ = reinterpret_cast<void*>(reinterpret_cast<intptr_t>(ptr_) |
+                                   kTagContainer);
     container->arena = my_arena;
     return &(container->unknown_fields);
   }
@@ -171,20 +172,16 @@ class InternalMetadataWithArenaLite
   InternalMetadataWithArenaLite() {}
 
   explicit InternalMetadataWithArenaLite(Arena* arena)
-      : InternalMetadataWithArenaBase<string,
-                                      InternalMetadataWithArenaLite>(arena) {}
+      : InternalMetadataWithArenaBase<string, InternalMetadataWithArenaLite>(
+            arena) {}
 
-  void DoSwap(string* other) {
-    mutable_unknown_fields()->swap(*other);
-  }
+  void DoSwap(string* other) { mutable_unknown_fields()->swap(*other); }
 
   void DoMergeFrom(const string& other) {
     mutable_unknown_fields()->append(other);
   }
 
-  void DoClear() {
-    mutable_unknown_fields()->clear();
-  }
+  void DoClear() { mutable_unknown_fields()->clear(); }
 
   static const string& default_instance() {
     return GetEmptyStringAlreadyInited();

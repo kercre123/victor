@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -18,23 +19,28 @@
 //    Fangfang Bai, fangfang@multicorewareinc.com
 //    Jin Ma,       jin@multicorewareinc.com
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors as is and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -55,75 +61,80 @@ namespace ocl {
 
 typedef Size_MatType BruteForceMatcherFixture;
 
-OCL_PERF_TEST_P(BruteForceMatcherFixture, Match, ::testing::Combine(OCL_PERF_ENUM(OCL_SIZE_1, OCL_SIZE_2, OCL_SIZE_3), OCL_PERF_ENUM((MatType)CV_32FC1) ) )
-{
-    const Size_MatType_t params = GetParam();
-    const Size srcSize = get<0>(params);
-    const int type = get<1>(params);
+OCL_PERF_TEST_P(BruteForceMatcherFixture, Match,
+                ::testing::Combine(OCL_PERF_ENUM(OCL_SIZE_1, OCL_SIZE_2,
+                                                 OCL_SIZE_3),
+                                   OCL_PERF_ENUM((MatType)CV_32FC1))) {
+  const Size_MatType_t params = GetParam();
+  const Size srcSize = get<0>(params);
+  const int type = get<1>(params);
 
-    checkDeviceMaxMemoryAllocSize(srcSize, type);
+  checkDeviceMaxMemoryAllocSize(srcSize, type);
 
-    vector<DMatch> matches;
-    UMat uquery(srcSize, type), utrain(srcSize, type);
+  vector<DMatch> matches;
+  UMat uquery(srcSize, type), utrain(srcSize, type);
 
-    declare.in(uquery, utrain, WARMUP_RNG);
+  declare.in(uquery, utrain, WARMUP_RNG);
 
-    BFMatcher matcher(NORM_L2);
+  BFMatcher matcher(NORM_L2);
 
-    OCL_TEST_CYCLE()
-        matcher.match(uquery, utrain, matches);
+  OCL_TEST_CYCLE()
+  matcher.match(uquery, utrain, matches);
 
-    SANITY_CHECK_MATCHES(matches, 1e-3);
+  SANITY_CHECK_MATCHES(matches, 1e-3);
 }
 
-OCL_PERF_TEST_P(BruteForceMatcherFixture, KnnMatch, ::testing::Combine(OCL_PERF_ENUM(OCL_SIZE_1, OCL_SIZE_2, OCL_SIZE_3), OCL_PERF_ENUM((MatType)CV_32FC1) ) )
-{
-    const Size_MatType_t params = GetParam();
-    const Size srcSize = get<0>(params);
-    const int type = get<1>(params);
+OCL_PERF_TEST_P(BruteForceMatcherFixture, KnnMatch,
+                ::testing::Combine(OCL_PERF_ENUM(OCL_SIZE_1, OCL_SIZE_2,
+                                                 OCL_SIZE_3),
+                                   OCL_PERF_ENUM((MatType)CV_32FC1))) {
+  const Size_MatType_t params = GetParam();
+  const Size srcSize = get<0>(params);
+  const int type = get<1>(params);
 
-    checkDeviceMaxMemoryAllocSize(srcSize, type);
+  checkDeviceMaxMemoryAllocSize(srcSize, type);
 
-    vector< vector<DMatch> > matches;
-    UMat uquery(srcSize, type), utrain(srcSize, type);
+  vector<vector<DMatch> > matches;
+  UMat uquery(srcSize, type), utrain(srcSize, type);
 
-    declare.in(uquery, utrain, WARMUP_RNG);
+  declare.in(uquery, utrain, WARMUP_RNG);
 
-    BFMatcher matcher(NORM_L2);
+  BFMatcher matcher(NORM_L2);
 
-    OCL_TEST_CYCLE()
-        matcher.knnMatch(uquery, utrain, matches, 2);
+  OCL_TEST_CYCLE()
+  matcher.knnMatch(uquery, utrain, matches, 2);
 
-    vector<DMatch> & matches0 = matches[0], & matches1 = matches[1];
-    SANITY_CHECK_MATCHES(matches0, 1e-3);
-    SANITY_CHECK_MATCHES(matches1, 1e-3);
-
+  vector<DMatch>&matches0 = matches[0], &matches1 = matches[1];
+  SANITY_CHECK_MATCHES(matches0, 1e-3);
+  SANITY_CHECK_MATCHES(matches1, 1e-3);
 }
 
-OCL_PERF_TEST_P(BruteForceMatcherFixture, RadiusMatch, ::testing::Combine(OCL_PERF_ENUM(OCL_SIZE_1, OCL_SIZE_2, OCL_SIZE_3), OCL_PERF_ENUM((MatType)CV_32FC1) ) )
-{
-    const Size_MatType_t params = GetParam();
-    const Size srcSize = get<0>(params);
-    const int type = get<1>(params);
+OCL_PERF_TEST_P(BruteForceMatcherFixture, RadiusMatch,
+                ::testing::Combine(OCL_PERF_ENUM(OCL_SIZE_1, OCL_SIZE_2,
+                                                 OCL_SIZE_3),
+                                   OCL_PERF_ENUM((MatType)CV_32FC1))) {
+  const Size_MatType_t params = GetParam();
+  const Size srcSize = get<0>(params);
+  const int type = get<1>(params);
 
-    checkDeviceMaxMemoryAllocSize(srcSize, type);
+  checkDeviceMaxMemoryAllocSize(srcSize, type);
 
-    vector< vector<DMatch> > matches;
-    UMat uquery(srcSize, type), utrain(srcSize, type);
+  vector<vector<DMatch> > matches;
+  UMat uquery(srcSize, type), utrain(srcSize, type);
 
-    declare.in(uquery, utrain, WARMUP_RNG);
+  declare.in(uquery, utrain, WARMUP_RNG);
 
-    BFMatcher matcher(NORM_L2);
+  BFMatcher matcher(NORM_L2);
 
-    OCL_TEST_CYCLE()
-        matcher.radiusMatch(uquery, utrain, matches, 2.0f);
+  OCL_TEST_CYCLE()
+  matcher.radiusMatch(uquery, utrain, matches, 2.0f);
 
-    vector<DMatch> & matches0 = matches[0], & matches1 = matches[1];
-    SANITY_CHECK_MATCHES(matches0, 1e-3);
-    SANITY_CHECK_MATCHES(matches1, 1e-3);
+  vector<DMatch>&matches0 = matches[0], &matches1 = matches[1];
+  SANITY_CHECK_MATCHES(matches0, 1e-3);
+  SANITY_CHECK_MATCHES(matches1, 1e-3);
 }
 
-} // ocl
-} // cvtest
+}  // namespace ocl
+}  // namespace cvtest
 
-#endif // HAVE_OPENCL
+#endif  // HAVE_OPENCL

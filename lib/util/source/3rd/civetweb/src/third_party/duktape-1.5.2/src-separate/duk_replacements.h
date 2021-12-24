@@ -23,6 +23,6 @@ DUK_INTERNAL_DECL int duk_repl_isnan(double x);
 #if defined(DUK_USE_REPL_ISINF)
 DUK_INTERNAL_DECL int duk_repl_isinf(double x);
 #endif
-#endif  /* !DUK_SINGLE_FILE */
+#endif /* !DUK_SINGLE_FILE */
 
-#endif  /* DUK_REPLACEMENTS_H_INCLUDED */
+#endif /* DUK_REPLACEMENTS_H_INCLUDED */

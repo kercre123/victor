@@ -39,20 +39,18 @@
 #ifndef PROCESSOR_POSTFIX_EVALUATOR_INL_H__
 #define PROCESSOR_POSTFIX_EVALUATOR_INL_H__
 
-#include "processor/postfix_evaluator.h"
-
 #include <stdio.h>
 
 #include <sstream>
 
 #include "google_breakpad/processor/memory_region.h"
 #include "processor/logging.h"
+#include "processor/postfix_evaluator.h"
 
 namespace google_breakpad {
 
 using std::istringstream;
 using std::ostringstream;
-
 
 // A small class used in Evaluate to make sure to clean up the stack
 // before returning failure.
@@ -65,11 +63,9 @@ class AutoStackClearer {
   vector<string> *stack_;
 };
 
-
-template<typename ValueType>
+template <typename ValueType>
 bool PostfixEvaluator<ValueType>::EvaluateToken(
-    const string &token,
-    const string &expression,
+    const string &token, const string &expression,
     DictionaryValidityType *assigned) {
   // There are enough binary operations that do exactly the same thing
   // (other than the specific operation, of course) that it makes sense
@@ -104,7 +100,8 @@ bool PostfixEvaluator<ValueType>::EvaluateToken(
     ValueType operand2 = ValueType();
     if (!PopValues(&operand1, &operand2)) {
       BPLOG(ERROR) << "Could not PopValues to get two values for binary "
-                      "operation " << token << ": " << expression;
+                      "operation "
+                   << token << ": " << expression;
       return false;
     }
 
@@ -127,8 +124,7 @@ bool PostfixEvaluator<ValueType>::EvaluateToken(
         result = operand1 % operand2;
         break;
       case BINARY_OP_ALIGN:
-	result =
-	  operand1 & (static_cast<ValueType>(-1) ^ (operand2 - 1));
+        result = operand1 & (static_cast<ValueType>(-1) ^ (operand2 - 1));
         break;
       case BINARY_OP_NONE:
         // This will not happen, but compilers will want a default or
@@ -143,22 +139,21 @@ bool PostfixEvaluator<ValueType>::EvaluateToken(
   } else if (token == "^") {
     // ^ for unary dereference.  Can't dereference without memory.
     if (!memory_) {
-      BPLOG(ERROR) << "Attempt to dereference without memory: " <<
-                      expression;
+      BPLOG(ERROR) << "Attempt to dereference without memory: " << expression;
       return false;
     }
 
     ValueType address;
     if (!PopValue(&address)) {
-      BPLOG(ERROR) << "Could not PopValue to get value to derefence: " <<
-                      expression;
+      BPLOG(ERROR) << "Could not PopValue to get value to derefence: "
+                   << expression;
       return false;
     }
 
     ValueType value;
     if (!memory_->GetMemoryAtAddress(address, &value)) {
-      BPLOG(ERROR) << "Could not dereference memory at address " <<
-                      HexString(address) << ": " << expression;
+      BPLOG(ERROR) << "Could not dereference memory at address "
+                   << HexString(address) << ": " << expression;
       return false;
     }
 
@@ -167,8 +162,8 @@ bool PostfixEvaluator<ValueType>::EvaluateToken(
     // = for assignment.
     ValueType value;
     if (!PopValue(&value)) {
-      BPLOG(INFO) << "Could not PopValue to get value to assign: " <<
-                     expression;
+      BPLOG(INFO) << "Could not PopValue to get value to assign: "
+                  << expression;
       return false;
     }
 
@@ -178,19 +173,18 @@ bool PostfixEvaluator<ValueType>::EvaluateToken(
     string identifier;
     if (PopValueOrIdentifier(NULL, &identifier) != POP_RESULT_IDENTIFIER) {
       BPLOG(ERROR) << "PopValueOrIdentifier returned a value, but an "
-                      "identifier is needed to assign " <<
-                      HexString(value) << ": " << expression;
+                      "identifier is needed to assign "
+                   << HexString(value) << ": " << expression;
       return false;
     }
     if (identifier.empty() || identifier[0] != '$') {
-      BPLOG(ERROR) << "Can't assign " << HexString(value) << " to " <<
-                      identifier << ": " << expression;
+      BPLOG(ERROR) << "Can't assign " << HexString(value) << " to "
+                   << identifier << ": " << expression;
       return false;
     }
 
     (*dictionary_)[identifier] = value;
-    if (assigned)
-      (*assigned)[identifier] = true;
+    if (assigned) (*assigned)[identifier] = true;
   } else {
     // The token is not an operator, it's a literal value or an identifier.
     // Push it onto the stack as-is.  Use push_back instead of PushValue
@@ -201,10 +195,9 @@ bool PostfixEvaluator<ValueType>::EvaluateToken(
   return true;
 }
 
-template<typename ValueType>
+template <typename ValueType>
 bool PostfixEvaluator<ValueType>::EvaluateInternal(
-    const string &expression,
-    DictionaryValidityType *assigned) {
+    const string &expression, DictionaryValidityType *assigned) {
   // Tokenize, splitting on whitespace.
   istringstream stream(expression);
   string token;
@@ -230,33 +223,30 @@ bool PostfixEvaluator<ValueType>::EvaluateInternal(
   return true;
 }
 
-template<typename ValueType>
+template <typename ValueType>
 bool PostfixEvaluator<ValueType>::Evaluate(const string &expression,
                                            DictionaryValidityType *assigned) {
   // Ensure that the stack is cleared before returning.
   AutoStackClearer clearer(&stack_);
 
-  if (!EvaluateInternal(expression, assigned))
-    return false;
+  if (!EvaluateInternal(expression, assigned)) return false;
 
   // If there's anything left on the stack, it indicates incomplete execution.
   // This is a failure case.  If the stack is empty, evalution was complete
   // and successful.
-  if (stack_.empty())
-    return true;
+  if (stack_.empty()) return true;
 
   BPLOG(ERROR) << "Incomplete execution: " << expression;
   return false;
 }
 
-template<typename ValueType>
+template <typename ValueType>
 bool PostfixEvaluator<ValueType>::EvaluateForValue(const string &expression,
                                                    ValueType *result) {
   // Ensure that the stack is cleared before returning.
   AutoStackClearer clearer(&stack_);
 
-  if (!EvaluateInternal(expression, NULL))
-    return false;
+  if (!EvaluateInternal(expression, NULL)) return false;
 
   // A successful execution should leave exactly one value on the stack.
   if (stack_.size() != 1) {
@@ -268,13 +258,12 @@ bool PostfixEvaluator<ValueType>::EvaluateForValue(const string &expression,
   return PopValue(result);
 }
 
-template<typename ValueType>
+template <typename ValueType>
 typename PostfixEvaluator<ValueType>::PopResult
-PostfixEvaluator<ValueType>::PopValueOrIdentifier(
-    ValueType *value, string *identifier) {
+PostfixEvaluator<ValueType>::PopValueOrIdentifier(ValueType *value,
+                                                  string *identifier) {
   // There needs to be at least one element on the stack to pop.
-  if (!stack_.size())
-    return POP_RESULT_FAIL;
+  if (!stack_.size()) return POP_RESULT_FAIL;
 
   string token = stack_.back();
   stack_.pop_back();
@@ -301,8 +290,7 @@ PostfixEvaluator<ValueType>::PopValueOrIdentifier(
     if (value) {
       *value = literal;
     }
-    if (negative)
-      *value = -*value;
+    if (negative) *value = -*value;
     return POP_RESULT_VALUE;
   } else {
     if (identifier) {
@@ -312,8 +300,7 @@ PostfixEvaluator<ValueType>::PopValueOrIdentifier(
   }
 }
 
-
-template<typename ValueType>
+template <typename ValueType>
 bool PostfixEvaluator<ValueType>::PopValue(ValueType *value) {
   ValueType literal = ValueType();
   string token;
@@ -326,8 +313,7 @@ bool PostfixEvaluator<ValueType>::PopValue(ValueType *value) {
   } else {  // result == POP_RESULT_IDENTIFIER
     // There was an identifier at the top of the stack.  Resolve it to a
     // value by looking it up in the dictionary.
-    typename DictionaryType::const_iterator iterator =
-        dictionary_->find(token);
+    typename DictionaryType::const_iterator iterator = dictionary_->find(token);
     if (iterator == dictionary_->end()) {
       // The identifier wasn't found in the dictionary.  Don't imply any
       // default value, just fail.
@@ -341,23 +327,19 @@ bool PostfixEvaluator<ValueType>::PopValue(ValueType *value) {
   return true;
 }
 
-
-template<typename ValueType>
+template <typename ValueType>
 bool PostfixEvaluator<ValueType>::PopValues(ValueType *value1,
                                             ValueType *value2) {
   return PopValue(value2) && PopValue(value1);
 }
 
-
-template<typename ValueType>
+template <typename ValueType>
 void PostfixEvaluator<ValueType>::PushValue(const ValueType &value) {
   ostringstream token_stream;
   token_stream << value;
   stack_.push_back(token_stream.str());
 }
 
-
 }  // namespace google_breakpad
-
 
 #endif  // PROCESSOR_POSTFIX_EVALUATOR_INL_H__

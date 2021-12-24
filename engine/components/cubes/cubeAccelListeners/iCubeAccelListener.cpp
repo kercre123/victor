@@ -18,21 +18,16 @@
 namespace Anki {
 namespace Vector {
 namespace CubeAccelListeners {
-  
 
-void ICubeAccelListener::Update(const ActiveAccel& accel)
-{
-  if(!_inited)
-  {
+void ICubeAccelListener::Update(const ActiveAccel& accel) {
+  if (!_inited) {
     InitInternal(accel);
     _inited = true;
-  }
-  else
-  {
+  } else {
     UpdateInternal(accel);
   }
 }
-  
-}
-}
-}
+
+}  // namespace CubeAccelListeners
+}  // namespace Vector
+}  // namespace Anki

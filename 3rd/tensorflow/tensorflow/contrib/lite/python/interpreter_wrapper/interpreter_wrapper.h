@@ -15,11 +15,11 @@ limitations under the License.
 #ifndef TENSORFLOW_CONTRIB_LITE_PYTHON_INTERPRETER_WRAPPER_INTERPRETER_WRAPPER_H_
 #define TENSORFLOW_CONTRIB_LITE_PYTHON_INTERPRETER_WRAPPER_INTERPRETER_WRAPPER_H_
 
+#include <Python.h>
+
 #include <memory>
 #include <string>
 #include <vector>
-
-#include <Python.h>
 
 // We forward declare TFLite classes here to avoid exposing them to SWIG.
 namespace tflite {

@@ -1,4 +1,4 @@
- /**
+/**
  * File: tofError_vicos.h
  *
  * Author: Al Chaussee
@@ -17,13 +17,15 @@
 
 #define LOG_CHANNEL "ToF"
 
-const char * const VL53L1ErrorToString(VL53L1_Error status);
+const char* const VL53L1ErrorToString(VL53L1_Error status);
 
-#define return_if_error(status, msg, ...) {         \
-    if(status != VL53L1_ERROR_NONE) {               \
-      LOG_ERROR("ToF.return_if_error", "%s(%d) " msg, VL53L1ErrorToString(status), status, ##__VA_ARGS__); \
-      return status;                                \
-    }                                               \
+#define return_if_error(status, msg, ...)                            \
+  {                                                                  \
+    if (status != VL53L1_ERROR_NONE) {                               \
+      LOG_ERROR("ToF.return_if_error", "%s(%d) " msg,                \
+                VL53L1ErrorToString(status), status, ##__VA_ARGS__); \
+      return status;                                                 \
+    }                                                                \
   }
 
 #endif

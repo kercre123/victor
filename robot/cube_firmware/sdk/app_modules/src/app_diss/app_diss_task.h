@@ -28,7 +28,7 @@
  ****************************************************************************************
  */
 
-#include "rwip_config.h"     // SW configuration
+#include "rwip_config.h"  // SW configuration
 
 #if (BLE_DIS_SERVER)
 
@@ -41,7 +41,7 @@
  */
 
 /// Maximal number of APP DIS Task instances
-#define APP_DIS_IDX_MAX        (1)
+#define APP_DIS_IDX_MAX (1)
 
 /*
  * FUNCTION DECLARATIONS
@@ -59,14 +59,12 @@
  * @return Returns if the message is handled by the process handler
  ****************************************************************************************
  */
-enum process_event_response app_diss_process_handler(ke_msg_id_t const msgid,
-                                                     void const *param,
-                                                     ke_task_id_t const dest_id,
-                                                     ke_task_id_t const src_id,
-                                                     enum ke_msg_status_tag *msg_ret);
+enum process_event_response app_diss_process_handler(
+    ke_msg_id_t const msgid, void const *param, ke_task_id_t const dest_id,
+    ke_task_id_t const src_id, enum ke_msg_status_tag *msg_ret);
 
-#endif //(BLE_DIS_SERVER)
+#endif  //(BLE_DIS_SERVER)
 
 /// @} APPDISTASK
 
-#endif //APP_DISS_TASK_H_
+#endif  // APP_DISS_TASK_H_

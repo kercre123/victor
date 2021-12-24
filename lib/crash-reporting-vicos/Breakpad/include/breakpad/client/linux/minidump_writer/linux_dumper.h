@@ -57,14 +57,14 @@ namespace google_breakpad {
 
 // Typedef for our parsing of the auxv variables in /proc/pid/auxv.
 #if defined(__i386) || defined(__ARM_EABI__) || \
- (defined(__mips__) && _MIPS_SIM == _ABIO32)
+    (defined(__mips__) && _MIPS_SIM == _ABIO32)
 typedef Elf32_auxv_t elf_aux_entry;
 #elif defined(__x86_64) || defined(__aarch64__) || \
-     (defined(__mips__) && _MIPS_SIM != _ABIO32)
+    (defined(__mips__) && _MIPS_SIM != _ABIO32)
 typedef Elf64_auxv_t elf_aux_entry;
 #endif
 
-typedef __typeof__(((elf_aux_entry*) 0)->a_un.a_val) elf_aux_val_t;
+typedef __typeof__(((elf_aux_entry*)0)->a_un.a_val) elf_aux_val_t;
 
 // When we find the VDSO mapping in the process's address space, this
 // is the name we use for it when writing it to the minidump.
@@ -107,8 +107,8 @@ class LinuxDumper {
   }
 
   // These are only valid after a call to |Init|.
-  const wasteful_vector<pid_t> &threads() { return threads_; }
-  const wasteful_vector<MappingInfo*> &mappings() { return mappings_; }
+  const wasteful_vector<pid_t>& threads() { return threads_; }
+  const wasteful_vector<MappingInfo*>& mappings() { return mappings_; }
   const MappingInfo* FindMapping(const void* address) const;
   // Find the mapping which the given memory address falls in. Unlike
   // FindMapping, this method uses the unadjusted mapping address
@@ -165,8 +165,7 @@ class LinuxDumper {
   // Generate a File ID from the .text section of a mapped entry.
   // If not a member, mapping_id is ignored. This method can also manipulate the
   // |mapping|.name to truncate "(deleted)" from the file name if necessary.
-  bool ElfFileIdentifierForMapping(const MappingInfo& mapping,
-                                   bool member,
+  bool ElfFileIdentifierForMapping(const MappingInfo& mapping, bool member,
                                    unsigned int mapping_id,
                                    wasteful_vector<uint8_t>& identifier);
 
@@ -193,10 +192,8 @@ class LinuxDumper {
   // loading .so libs from an apk on Android) and this method is able to
   // reconstruct the original file name.
   void GetMappingEffectiveNameAndPath(const MappingInfo& mapping,
-                                      char* file_path,
-                                      size_t file_path_size,
-                                      char* file_name,
-                                      size_t file_name_size);
+                                      char* file_path, size_t file_path_size,
+                                      char* file_name, size_t file_name_size);
 
  protected:
   bool ReadAuxv();
@@ -216,7 +213,7 @@ class LinuxDumper {
   // Returns true if |path| is modified.
   bool HandleDeletedFileInMapping(char* path) const;
 
-   // ID of the crashed process.
+  // ID of the crashed process.
   const pid_t pid_;
 
   // Path of the root directory to which mapping paths are relative.
@@ -260,15 +257,14 @@ class LinuxDumper {
   // The first LOAD segment in an ELF shared library has offset zero, so the
   // ELF file header is at the start of this map entry, and in already mapped
   // memory.
-  bool GetLoadedElfHeader(uintptr_t start_addr, ElfW(Ehdr)* ehdr);
+  bool GetLoadedElfHeader(uintptr_t start_addr, ElfW(Ehdr) * ehdr);
 
   // For the ELF file mapped at |start_addr|, iterate ELF program headers to
   // find the min vaddr of all program header LOAD segments, the vaddr for
   // the DYNAMIC segment, and a count of DYNAMIC entries. Return values in
   // |min_vaddr_ptr|, |dyn_vaddr_ptr|, and |dyn_count_ptr|.
   // The program header table is also in already mapped memory.
-  void ParseLoadedElfProgramHeaders(ElfW(Ehdr)* ehdr,
-                                    uintptr_t start_addr,
+  void ParseLoadedElfProgramHeaders(ElfW(Ehdr) * ehdr, uintptr_t start_addr,
                                     uintptr_t* min_vaddr_ptr,
                                     uintptr_t* dyn_vaddr_ptr,
                                     size_t* dyn_count_ptr);
@@ -276,8 +272,7 @@ class LinuxDumper {
   // Search the DYNAMIC tags for the ELF file with the given |load_bias|, and
   // return true if the tags indicate that the file contains Android packed
   // relocations. Dynamic tags are found at |dyn_vaddr| past the |load_bias|.
-  bool HasAndroidPackedRelocations(uintptr_t load_bias,
-                                   uintptr_t dyn_vaddr,
+  bool HasAndroidPackedRelocations(uintptr_t load_bias, uintptr_t dyn_vaddr,
                                    size_t dyn_count);
 
   // If the ELF file mapped at |start_addr| contained Android packed
@@ -287,7 +282,7 @@ class LinuxDumper {
   // is necessary.
   // The effective load bias is |start_addr| adjusted downwards by the
   // min vaddr in the library LOAD segments.
-  uintptr_t GetEffectiveLoadBias(ElfW(Ehdr)* ehdr, uintptr_t start_addr);
+  uintptr_t GetEffectiveLoadBias(ElfW(Ehdr) * ehdr, uintptr_t start_addr);
 
   // Called from LateInit(). Iterates |mappings_| and rewrites the |start_addr|
   // field of any that represent ELF shared libraries with Android packed

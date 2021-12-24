@@ -12,14 +12,13 @@
  * --gtest_filter=SlotArrayTest*
  **/
 
-#include "util/helpers/includeGTest.h"
 #include "util/container/slotArray.h"
+#include "util/helpers/includeGTest.h"
 
 using Anki::Util::SlotArray;
 
-class TestObject
-{
-public:
+class TestObject {
+ public:
   TestObject() : _t(0) { refCount++; }
   TestObject(int t) : _t(t) { refCount++; }
   ~TestObject() { refCount--; }
@@ -30,14 +29,14 @@ public:
   int Get() const { return _t; }
 
   static int refCount;
-private:
+
+ private:
   int _t;
 };
 
 int TestObject::refCount = 0;
 
-TEST(SlotArrayTest, Iterator)
-{
+TEST(SlotArrayTest, Iterator) {
   SlotArray<TestObject> container{4};
   TestObject t;
   container.emplace_first(1);
@@ -52,8 +51,7 @@ TEST(SlotArrayTest, Iterator)
   EXPECT_EQ(it, container.end());
 }
 
-TEST(SlotArrayTest, MoveOperator)
-{
+TEST(SlotArrayTest, MoveOperator) {
   {
     auto f = []() -> SlotArray<TestObject> {
       SlotArray<TestObject> container{4};
@@ -75,8 +73,7 @@ TEST(SlotArrayTest, MoveOperator)
   EXPECT_EQ(TestObject::refCount, 0);
 }
 
-TEST(SlotArrayTest, CopyOperator)
-{
+TEST(SlotArrayTest, CopyOperator) {
   {
     SlotArray<TestObject> one{3};
     SlotArray<TestObject> two{4};
@@ -97,8 +94,7 @@ TEST(SlotArrayTest, CopyOperator)
   EXPECT_EQ(TestObject::refCount, 0);
 }
 
-TEST(SlotArrayTest, CopyEmplace)
-{
+TEST(SlotArrayTest, CopyEmplace) {
   {
     SlotArray<TestObject> container{3};
     TestObject* t0 = container.emplace_first(0);

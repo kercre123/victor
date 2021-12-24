@@ -18,8 +18,8 @@
  ****************************************************************************/
 #ifndef _UAPI_LINUX_MSM_AUDIO_H
 #define _UAPI_LINUX_MSM_AUDIO_H
-#include <linux/types.h>
 #include <linux/ioctl.h>
+#include <linux/types.h>
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 #define AUDIO_IOCTL_MAGIC 'a'
 #define AUDIO_START _IOW(AUDIO_IOCTL_MAGIC, 0, unsigned)
@@ -48,11 +48,13 @@
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 #define AUDIO_SET_INCALL _IOW(AUDIO_IOCTL_MAGIC, 19, struct msm_voicerec_mode)
 #define AUDIO_GET_NUM_SND_DEVICE _IOR(AUDIO_IOCTL_MAGIC, 20, unsigned)
-#define AUDIO_GET_SND_DEVICES _IOWR(AUDIO_IOCTL_MAGIC, 21, struct msm_snd_device_list)
+#define AUDIO_GET_SND_DEVICES \
+  _IOWR(AUDIO_IOCTL_MAGIC, 21, struct msm_snd_device_list)
 #define AUDIO_ENABLE_SND_DEVICE _IOW(AUDIO_IOCTL_MAGIC, 22, unsigned)
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 #define AUDIO_DISABLE_SND_DEVICE _IOW(AUDIO_IOCTL_MAGIC, 23, unsigned)
-#define AUDIO_ROUTE_STREAM _IOW(AUDIO_IOCTL_MAGIC, 24, struct msm_audio_route_config)
+#define AUDIO_ROUTE_STREAM \
+  _IOW(AUDIO_IOCTL_MAGIC, 24, struct msm_audio_route_config)
 #define AUDIO_GET_PCM_CONFIG _IOR(AUDIO_IOCTL_MAGIC, 30, unsigned)
 #define AUDIO_SET_PCM_CONFIG _IOW(AUDIO_IOCTL_MAGIC, 31, unsigned)
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
@@ -64,15 +66,20 @@
 #define AUDIO_STOP_VOICE _IOW(AUDIO_IOCTL_MAGIC, 36, unsigned)
 #define AUDIO_REINIT_ACDB _IOW(AUDIO_IOCTL_MAGIC, 39, unsigned)
 #define AUDIO_OUTPORT_FLUSH _IOW(AUDIO_IOCTL_MAGIC, 40, unsigned short)
-#define AUDIO_SET_ERR_THRESHOLD_VALUE _IOW(AUDIO_IOCTL_MAGIC, 41, unsigned short)
+#define AUDIO_SET_ERR_THRESHOLD_VALUE \
+  _IOW(AUDIO_IOCTL_MAGIC, 41, unsigned short)
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
-#define AUDIO_GET_BITSTREAM_ERROR_INFO _IOR(AUDIO_IOCTL_MAGIC, 42, struct msm_audio_bitstream_error_info)
+#define AUDIO_GET_BITSTREAM_ERROR_INFO \
+  _IOR(AUDIO_IOCTL_MAGIC, 42, struct msm_audio_bitstream_error_info)
 #define AUDIO_SET_SRS_TRUMEDIA_PARAM _IOW(AUDIO_IOCTL_MAGIC, 43, unsigned)
-#define AUDIO_SET_STREAM_CONFIG _IOW(AUDIO_IOCTL_MAGIC, 80, struct msm_audio_stream_config)
-#define AUDIO_GET_STREAM_CONFIG _IOR(AUDIO_IOCTL_MAGIC, 81, struct msm_audio_stream_config)
+#define AUDIO_SET_STREAM_CONFIG \
+  _IOW(AUDIO_IOCTL_MAGIC, 80, struct msm_audio_stream_config)
+#define AUDIO_GET_STREAM_CONFIG \
+  _IOR(AUDIO_IOCTL_MAGIC, 81, struct msm_audio_stream_config)
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 #define AUDIO_GET_SESSION_ID _IOR(AUDIO_IOCTL_MAGIC, 82, unsigned short)
-#define AUDIO_GET_STREAM_INFO _IOR(AUDIO_IOCTL_MAGIC, 83, struct msm_audio_bitstream_info)
+#define AUDIO_GET_STREAM_INFO \
+  _IOR(AUDIO_IOCTL_MAGIC, 83, struct msm_audio_bitstream_info)
 #define AUDIO_SET_PAN _IOW(AUDIO_IOCTL_MAGIC, 84, unsigned)
 #define AUDIO_SET_QCONCERT_PLUS _IOW(AUDIO_IOCTL_MAGIC, 85, unsigned)
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
@@ -87,14 +94,21 @@
 #define AUDIO_GET_BUF_CFG _IOW(AUDIO_IOCTL_MAGIC, 93, struct msm_audio_buf_cfg)
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 #define AUDIO_SET_BUF_CFG _IOW(AUDIO_IOCTL_MAGIC, 94, struct msm_audio_buf_cfg)
-#define AUDIO_SET_ACDB_BLK _IOW(AUDIO_IOCTL_MAGIC, 95, struct msm_acdb_cmd_device)
-#define AUDIO_GET_ACDB_BLK _IOW(AUDIO_IOCTL_MAGIC, 96, struct msm_acdb_cmd_device)
-#define AUDIO_REGISTER_ION _IOW(AUDIO_IOCTL_MAGIC, 97, struct msm_audio_ion_info)
+#define AUDIO_SET_ACDB_BLK \
+  _IOW(AUDIO_IOCTL_MAGIC, 95, struct msm_acdb_cmd_device)
+#define AUDIO_GET_ACDB_BLK \
+  _IOW(AUDIO_IOCTL_MAGIC, 96, struct msm_acdb_cmd_device)
+#define AUDIO_REGISTER_ION \
+  _IOW(AUDIO_IOCTL_MAGIC, 97, struct msm_audio_ion_info)
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
-#define AUDIO_DEREGISTER_ION _IOW(AUDIO_IOCTL_MAGIC, 98, struct msm_audio_ion_info)
-#define AUDIO_SET_EFFECTS_CONFIG _IOW(AUDIO_IOCTL_MAGIC, 99, struct msm_hwacc_effects_config)
-#define AUDIO_EFFECTS_SET_BUF_LEN _IOW(AUDIO_IOCTL_MAGIC, 100, struct msm_hwacc_buf_cfg)
-#define AUDIO_EFFECTS_GET_BUF_AVAIL _IOW(AUDIO_IOCTL_MAGIC, 101, struct msm_hwacc_buf_avail)
+#define AUDIO_DEREGISTER_ION \
+  _IOW(AUDIO_IOCTL_MAGIC, 98, struct msm_audio_ion_info)
+#define AUDIO_SET_EFFECTS_CONFIG \
+  _IOW(AUDIO_IOCTL_MAGIC, 99, struct msm_hwacc_effects_config)
+#define AUDIO_EFFECTS_SET_BUF_LEN \
+  _IOW(AUDIO_IOCTL_MAGIC, 100, struct msm_hwacc_buf_cfg)
+#define AUDIO_EFFECTS_GET_BUF_AVAIL \
+  _IOW(AUDIO_IOCTL_MAGIC, 101, struct msm_hwacc_buf_avail)
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 #define AUDIO_EFFECTS_WRITE _IOW(AUDIO_IOCTL_MAGIC, 102, void *)
 #define AUDIO_EFFECTS_READ _IOWR(AUDIO_IOCTL_MAGIC, 103, void *)
@@ -150,12 +164,12 @@
 #define VOC_REC_BOTH 0x02
 struct msm_audio_config {
   uint32_t buffer_size;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t buffer_count;
   uint32_t channel_count;
   uint32_t sample_rate;
   uint32_t type;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t meta_field;
   uint32_t bits;
   uint32_t unused[3];
@@ -175,24 +189,24 @@ struct msm_audio_stats {
   uint32_t byte_count;
   uint32_t sample_count;
   uint32_t unused[2];
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 };
 struct msm_audio_ion_info {
   int fd;
-  void * vaddr;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  void *vaddr;
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 };
 struct msm_audio_pmem_info {
   int fd;
-  void * vaddr;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  void *vaddr;
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 };
 struct msm_audio_aio_buf {
-  void * buf_addr;
+  void *buf_addr;
   uint32_t buf_len;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t data_len;
-  void * private_data;
+  void *private_data;
   unsigned short mfield_sz;
 };
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
@@ -200,22 +214,22 @@ struct msm_audio_aio_buf {
 #define SND_MUTE_UNMUTED 0
 #define SND_MUTE_MUTED 1
 struct msm_mute_info {
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t mute;
   uint32_t path;
 };
 struct msm_vol_info {
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t vol;
   uint32_t path;
 };
 struct msm_voicerec_mode {
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t rec_mode;
 };
 struct msm_snd_device_config {
   uint32_t device;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t ear_mute;
   uint32_t mic_mute;
 };
@@ -225,12 +239,12 @@ enum cad_device_path_type {
   CAD_DEVICE_PATH_RX,
   CAD_DEVICE_PATH_TX,
   CAD_DEVICE_PATH_RX_TX,
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   CAD_DEVICE_PATH_LB,
   CAD_DEVICE_PATH_MAX
 };
 struct cad_devices_type {
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t rx_device;
   uint32_t tx_device;
   enum cad_device_path_type pathtype;
@@ -240,7 +254,7 @@ struct msm_cad_device_config {
   struct cad_devices_type device;
   uint32_t ear_mute;
   uint32_t mic_mute;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 };
 #define CAD_SET_DEVICE _IOW(SND_IOCTL_MAGIC, 2, struct msm_cad_device_config *)
 #define SND_METHOD_VOICE 0
@@ -250,12 +264,12 @@ struct msm_snd_volume_config {
   uint32_t device;
   uint32_t method;
   uint32_t volume;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 };
 #define SND_SET_VOLUME _IOW(SND_IOCTL_MAGIC, 3, struct msm_snd_volume_config *)
 struct msm_cad_volume_config {
   struct cad_devices_type device;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t method;
   uint32_t volume;
 };
@@ -265,7 +279,7 @@ struct msm_cad_volume_config {
 struct msm_snd_endpoint {
   int id;
   char name[64];
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 };
 #define SND_GET_ENDPOINT _IOWR(SND_IOCTL_MAGIC, 5, struct msm_snd_endpoint *)
 #define SND_AVC_CTL _IOW(SND_IOCTL_MAGIC, 6, unsigned *)
@@ -275,12 +289,12 @@ struct msm_snd_endpoint {
 struct msm_cad_endpoint {
   int id;
   char name[64];
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 };
 #define CAD_GET_ENDPOINT _IOWR(SND_IOCTL_MAGIC, 5, struct msm_cad_endpoint *)
 struct msm_audio_pcm_config {
   uint32_t pcm_feedback;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t buffer_count;
   uint32_t buffer_size;
 };
@@ -295,17 +309,17 @@ struct msm_audio_pcm_config {
 #define AUDIO_CODEC_TYPE_MP3 0
 #define AUDIO_CODEC_TYPE_AAC 1
 struct msm_audio_bitstream_info {
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t codec_type;
   uint32_t chan_info;
   uint32_t sample_rate;
   uint32_t bit_stream_info;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t bit_rate;
   uint32_t unused[3];
 };
 struct msm_audio_bitstream_error_info {
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t dec_id;
   uint32_t err_msg_indicator;
   uint32_t err_type;
@@ -315,12 +329,12 @@ union msm_audio_event_payload {
   struct msm_audio_aio_buf aio_buf;
   struct msm_audio_bitstream_info stream_info;
   struct msm_audio_bitstream_error_info error_info;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   int reserved;
 };
 struct msm_audio_event {
   int event_type;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   int timeout_ms;
   union msm_audio_event_payload event_payload;
 };
@@ -330,22 +344,22 @@ struct msm_audio_event {
 #define MSM_SNDDEV_CAP_VOICE 0x4
 struct msm_snd_device_info {
   uint32_t dev_id;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t dev_cap;
   char dev_name[64];
 };
 struct msm_snd_device_list {
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t num_dev;
-  struct msm_snd_device_info * list;
+  struct msm_snd_device_info *list;
 };
 struct msm_dtmf_config {
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint16_t path;
   uint16_t dtmf_hi;
   uint16_t dtmf_low;
   uint16_t duration;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint16_t tx_gain;
   uint16_t rx_gain;
   uint16_t mixing;
@@ -360,42 +374,42 @@ struct msm_audio_route_config {
   uint32_t stream_type;
   uint32_t stream_id;
   uint32_t dev_id;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 };
 #define AUDIO_MAX_EQ_BANDS 12
 struct msm_audio_eq_band {
   uint16_t band_idx;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t filter_type;
   uint32_t center_freq_hz;
   uint32_t filter_gain;
   uint32_t q_factor;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 } __attribute__((packed));
 struct msm_audio_eq_stream_config {
   uint32_t enable;
   uint32_t num_bands;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   struct msm_audio_eq_band eq_bands[AUDIO_MAX_EQ_BANDS];
 } __attribute__((packed));
 struct msm_acdb_cmd_device {
   uint32_t command_id;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t device_id;
   uint32_t network_id;
   uint32_t sample_rate_id;
   uint32_t interface_id;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   uint32_t algorithm_block_id;
   uint32_t total_bytes;
-  uint32_t * phys_buf;
+  uint32_t *phys_buf;
 };
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 struct msm_hwacc_data_config {
   __u32 buf_size;
   __u32 num_buf;
   __u32 num_channels;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   __u8 channel_map[8];
   __u32 sample_rate;
   __u32 bits_per_sample;
@@ -415,11 +429,10 @@ struct msm_hwacc_effects_config {
   struct msm_hwacc_data_config input;
   struct msm_hwacc_data_config output;
   struct msm_hwacc_buf_cfg buf_cfg;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   __u32 meta_mode_enabled;
   __u32 overwrite_topology;
   __s32 topology;
 };
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 #endif
-

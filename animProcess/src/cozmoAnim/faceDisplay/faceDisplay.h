@@ -14,17 +14,16 @@
 #ifndef ANKI_COZMOANIM_FACE_DISPLAY_H
 #define ANKI_COZMOANIM_FACE_DISPLAY_H
 
-#include "util/singleton/dynamicSingleton.h"
-#include "anki/cozmo/shared/factory/faultCodes.h"
-
-#include "clad/types/lcdTypes.h"
-
 #include <thread>
+
+#include "anki/cozmo/shared/factory/faultCodes.h"
+#include "clad/types/lcdTypes.h"
+#include "util/singleton/dynamicSingleton.h"
 
 namespace Anki {
 
 namespace Vision {
-  class ImageRGB565;
+class ImageRGB565;
 }
 
 namespace Vector {
@@ -32,52 +31,50 @@ namespace Vector {
 class FaceDisplayImpl;
 class FaceInfoScreenManager;
 
-class FaceDisplay : public Util::DynamicSingleton<FaceDisplay>
-{
-  ANKIUTIL_FRIEND_SINGLETON(FaceDisplay); // Allows base class singleton access
+class FaceDisplay : public Util::DynamicSingleton<FaceDisplay> {
+  ANKIUTIL_FRIEND_SINGLETON(FaceDisplay);  // Allows base class singleton access
 
-public:
+ public:
   void DrawToFace(const Vision::ImageRGB565& img);
 
   // For drawing to face in various debug modes
   void DrawToFaceDebug(const Vision::ImageRGB565& img);
 
-
   void SetFaceBrightness(LCDBrightness level);
 
   // Stops the boot animation process if it is running
   void StopBootAnim();
-  
-protected:
+
+ protected:
   FaceDisplay();
   virtual ~FaceDisplay();
 
   void DrawToFaceInternal(const Vision::ImageRGB565& img);
 
-private:
-  std::unique_ptr<FaceDisplayImpl>  _displayImpl;
+ private:
+  std::unique_ptr<FaceDisplayImpl> _displayImpl;
 
   // Members for managing the drawing thread
-  std::unique_ptr<Vision::ImageRGB565>  _faceDrawImg[2];
-  Vision::ImageRGB565*                  _faceDrawNextImg = nullptr;
-  Vision::ImageRGB565*                  _faceDrawCurImg = nullptr;
-  std::thread                           _faceDrawThread;
-  std::mutex                            _faceDrawMutex;
-  std::atomic<bool>                     _stopDrawFace;
+  std::unique_ptr<Vision::ImageRGB565> _faceDrawImg[2];
+  Vision::ImageRGB565* _faceDrawNextImg = nullptr;
+  Vision::ImageRGB565* _faceDrawCurImg = nullptr;
+  std::thread _faceDrawThread;
+  std::mutex _faceDrawMutex;
+  std::atomic<bool> _stopDrawFace;
 
-  std::mutex                            _readyMutex;
-  std::condition_variable               _readyCondition;
-  bool                                  _readyFace;
+  std::mutex _readyMutex;
+  std::condition_variable _readyCondition;
+  bool _readyFace;
 
   // Whether or not the boot animation process has been stopped
   // Atomic because it is checked by the face drawing thread
   std::atomic<bool> _stopBootAnim;
-  
+
   void DrawFaceLoop();
   void UpdateNextImgPtr();
-}; // class FaceDisplay
+};  // class FaceDisplay
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // ANKI_COZMOANIM_FACE_DISPLAY_H
+#endif  // ANKI_COZMOANIM_FACE_DISPLAY_H

@@ -35,11 +35,12 @@
 // invoked by gtest_throw_on_failure_test.py, and is expected to exit
 // with non-zero in the throw-on-failure mode or 0 otherwise.
 
-#include "gtest/gtest.h"
+#include <stdio.h>   // for fflush, fprintf, NULL, etc.
+#include <stdlib.h>  // for exit
 
-#include <stdio.h>                      // for fflush, fprintf, NULL, etc.
-#include <stdlib.h>                     // for exit
-#include <exception>                    // for set_terminate
+#include <exception>  // for set_terminate
+
+#include "gtest/gtest.h"
 
 // This terminate handler aborts the program using exit() rather than abort().
 // This avoids showing pop-ups on Windows systems and core dumps on Unix-like

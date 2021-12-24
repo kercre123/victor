@@ -13,6 +13,10 @@
 #ifndef __Cozmo_Basestation_Behaviors_AiComponent_H__
 #define __Cozmo_Basestation_Behaviors_AiComponent_H__
 
+#include <assert.h>
+
+#include <string>
+
 #include "coretech/common/shared/types.h"
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
@@ -22,32 +26,34 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
-#include <assert.h>
-#include <string>
-
 namespace Anki {
 namespace Vector {
 
 class BehaviorContainer;
 
-// AIComponent is updated at the robot component level, same as BehaviorComponent
-// Therefore BCComponents (which are managed by BehaviorComponent) can't declare dependencies on AIComponent
-// since when it's Init/Update relative to BehaviorComponent must be declared by BehaviorComponent explicitly,
-// not by individual components within BehaviorComponent
-class AIComponent :  public UnreliableComponent<BCComponentID>,
-                     public IDependencyManagedComponent<RobotComponentID>,
-                     private Util::noncopyable
-{
-public:
+// AIComponent is updated at the robot component level, same as
+// BehaviorComponent Therefore BCComponents (which are managed by
+// BehaviorComponent) can't declare dependencies on AIComponent since when it's
+// Init/Update relative to BehaviorComponent must be declared by
+// BehaviorComponent explicitly, not by individual components within
+// BehaviorComponent
+class AIComponent : public UnreliableComponent<BCComponentID>,
+                    public IDependencyManagedComponent<RobotComponentID>,
+                    private Util::noncopyable {
+ public:
   explicit AIComponent();
   virtual ~AIComponent();
 
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override final;
-  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
-    dependencies.insert(RobotComponentID::Animation); // referenced by UserIntentComponent in its Init
+  virtual void InitDependent(Vector::Robot* robot,
+                             const RobotCompMap& dependentComps) override final;
+  virtual void GetInitDependencies(
+      RobotCompIDSet& dependencies) const override {
+    dependencies.insert(
+        RobotComponentID::Animation);  // referenced by UserIntentComponent in
+                                       // its Init
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::CubeComms);
     dependencies.insert(RobotComponentID::DataAccessor);
@@ -60,7 +66,8 @@ public:
     dependencies.insert(RobotComponentID::RobotStatsTracker);
   };
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
-  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
+  virtual void GetUpdateDependencies(
+      RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::BlockTapFilter);
     dependencies.insert(RobotComponentID::BlockWorld);
     dependencies.insert(RobotComponentID::CliffSensor);
@@ -75,7 +82,8 @@ public:
     dependencies.insert(RobotComponentID::VisionScheduleMediator);
   };
 
-  // Prevent hiding function warnings by exposing the (valid) unreliable component methods
+  // Prevent hiding function warnings by exposing the (valid) unreliable
+  // component methods
   using UnreliableComponent<BCComponentID>::InitDependent;
   using UnreliableComponent<BCComponentID>::GetInitDependencies;
   using UnreliableComponent<BCComponentID>::UpdateDependent;
@@ -85,20 +93,25 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
-
   ////////////////////////////////////////////////////////////////////////////////
   // Components
   ////////////////////////////////////////////////////////////////////////////////
-  template<typename T>
-  T& GetComponent() const {assert(_aiComponents); return _aiComponents->GetComponent<T>();}
+  template <typename T>
+  T& GetComponent() const {
+    assert(_aiComponents);
+    return _aiComponents->GetComponent<T>();
+  }
 
-  template<typename T>
-  T* GetComponentPtr() const {assert(_aiComponents); return _aiComponents->GetComponentPtr<T>();}
+  template <typename T>
+  T* GetComponentPtr() const {
+    assert(_aiComponents);
+    return _aiComponents->GetComponentPtr<T>();
+  }
 
-  #if ANKI_DEV_CHEATS
+#if ANKI_DEV_CHEATS
   // For test only
   BehaviorContainer& GetBehaviorContainer();
-  #endif
+#endif
 
   ////////////////////////////////////////////////////////////////////////////////
   // Message handling / dispatch
@@ -112,20 +125,22 @@ public:
   // Accessors
   ////////////////////////////////////////////////////////////////////////////////
 
-  inline bool IsSuddenObstacleDetected() const { return _suddenObstacleDetected; }
-  
-private:
+  inline bool IsSuddenObstacleDetected() const {
+    return _suddenObstacleDetected;
+  }
+
+ private:
   Robot* _robot = nullptr;
   using EntityType = DependencyManagedEntity<AIComponentID>;
   using ComponentPtr = std::unique_ptr<EntityType>;
 
   ComponentPtr _aiComponents;
-  bool   _suddenObstacleDetected;
+  bool _suddenObstacleDetected;
 
   void CheckForSuddenObstacle(Robot& robot);
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

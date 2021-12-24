@@ -50,8 +50,7 @@ class StackwalkerAddressList : public Stackwalker {
   // Initializes this stack walker with an explicit set of frame addresses.
   // |modules| and |frame_symbolizer| are passed directly through to the base
   // Stackwalker constructor.
-  StackwalkerAddressList(const uint64_t* frames,
-                         size_t frame_count,
+  StackwalkerAddressList(const uint64_t* frames, size_t frame_count,
                          const CodeModules* modules,
                          StackFrameSymbolizer* frame_symbolizer);
 

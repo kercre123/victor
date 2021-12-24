@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -14,23 +15,29 @@
 // Copyright (C) 2009-2011, Willow Garage Inc., all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
-// This software is provided by the copyright holders and contributors "as is" and
+// This software is provided by the copyright holders and contributors "as is"
+and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -40,70 +47,67 @@
 //
 //M*/
 
-#include "precomp.hpp"
 #include "opencv2/videostab/frame_source.hpp"
-#include "opencv2/videostab/ring_buffer.hpp"
 
 #include "opencv2/opencv_modules.hpp"
+#include "opencv2/videostab/ring_buffer.hpp"
+#include "precomp.hpp"
 #ifdef HAVE_OPENCV_VIDEOIO
-#  include "opencv2/videoio.hpp"
+#include "opencv2/videoio.hpp"
 #endif
 
-namespace cv
-{
-namespace videostab
-{
+namespace cv {
+namespace videostab {
 
 namespace {
 
-class VideoFileSourceImpl : public IFrameSource
-{
-public:
-    VideoFileSourceImpl(const String &path, bool volatileFrame)
-        : path_(path), volatileFrame_(volatileFrame) { reset(); }
+class VideoFileSourceImpl : public IFrameSource {
+ public:
+  VideoFileSourceImpl(const String &path, bool volatileFrame)
+      : path_(path), volatileFrame_(volatileFrame) {
+    reset();
+  }
 
-    virtual void reset()
-    {
+  virtual void reset() {
 #ifdef HAVE_OPENCV_VIDEOIO
-        vc.release();
-        vc.open(path_);
-        if (!vc.isOpened())
-            CV_Error(0, "can't open file: " + path_);
+    vc.release();
+    vc.open(path_);
+    if (!vc.isOpened()) CV_Error(0, "can't open file: " + path_);
 #else
-        CV_Error(Error::StsNotImplemented, "OpenCV has been compiled without video I/O support");
+    CV_Error(Error::StsNotImplemented,
+             "OpenCV has been compiled without video I/O support");
 #endif
-    }
+  }
 
-    virtual Mat nextFrame()
-    {
-        Mat frame;
+  virtual Mat nextFrame() {
+    Mat frame;
 #ifdef HAVE_OPENCV_VIDEOIO
-        vc >> frame;
+    vc >> frame;
 #endif
-        return volatileFrame_ ? frame : frame.clone();
-    }
+    return volatileFrame_ ? frame : frame.clone();
+  }
 
 #ifdef HAVE_OPENCV_VIDEOIO
-    int width() {return static_cast<int>(vc.get(CAP_PROP_FRAME_WIDTH));}
-    int height() {return static_cast<int>(vc.get(CAP_PROP_FRAME_HEIGHT));}
-    int count() {return static_cast<int>(vc.get(CAP_PROP_FRAME_COUNT));}
-    double fps() {return vc.get(CAP_PROP_FPS);}
+  int width() { return static_cast<int>(vc.get(CAP_PROP_FRAME_WIDTH)); }
+  int height() { return static_cast<int>(vc.get(CAP_PROP_FRAME_HEIGHT)); }
+  int count() { return static_cast<int>(vc.get(CAP_PROP_FRAME_COUNT)); }
+  double fps() { return vc.get(CAP_PROP_FPS); }
 #else
-    int width() {return 0;}
-    int height() {return 0;}
-    int count() {return 0;}
-    double fps() {return 0;}
+  int width() { return 0; }
+  int height() { return 0; }
+  int count() { return 0; }
+  double fps() { return 0; }
 #endif
 
-private:
-    String path_;
-    bool volatileFrame_;
+ private:
+  String path_;
+  bool volatileFrame_;
 #ifdef HAVE_OPENCV_VIDEOIO
-    VideoCapture vc;
+  VideoCapture vc;
 #endif
 };
 
-}//namespace
+}  // namespace
 
 VideoFileSource::VideoFileSource(const String &path, bool volatileFrame)
     : impl(new VideoFileSourceImpl(path, volatileFrame)) {}
@@ -111,10 +115,18 @@ VideoFileSource::VideoFileSource(const String &path, bool volatileFrame)
 void VideoFileSource::reset() { impl->reset(); }
 Mat VideoFileSource::nextFrame() { return impl->nextFrame(); }
 
-int VideoFileSource::width() { return ((VideoFileSourceImpl*)impl.get())->width(); }
-int VideoFileSource::height() { return ((VideoFileSourceImpl*)impl.get())->height(); }
-int VideoFileSource::count() { return ((VideoFileSourceImpl*)impl.get())->count(); }
-double VideoFileSource::fps() { return ((VideoFileSourceImpl*)impl.get())->fps(); }
+int VideoFileSource::width() {
+  return ((VideoFileSourceImpl *)impl.get())->width();
+}
+int VideoFileSource::height() {
+  return ((VideoFileSourceImpl *)impl.get())->height();
+}
+int VideoFileSource::count() {
+  return ((VideoFileSourceImpl *)impl.get())->count();
+}
+double VideoFileSource::fps() {
+  return ((VideoFileSourceImpl *)impl.get())->fps();
+}
 
-} // namespace videostab
-} // namespace cv
+}  // namespace videostab
+}  // namespace cv

@@ -16,31 +16,29 @@
 
 namespace Anki {
 namespace Vector {
-  
+
 struct ActiveAccel;
-  
+
 namespace CubeAccelListeners {
 
-class ICubeAccelListener
-{
-public:
-  virtual ~ICubeAccelListener() {};
+class ICubeAccelListener {
+ public:
+  virtual ~ICubeAccelListener(){};
 
   void Update(const ActiveAccel& accel);
-  
-protected:
-  ICubeAccelListener() { };
-  
+
+ protected:
+  ICubeAccelListener(){};
+
   virtual void InitInternal(const ActiveAccel& accel) = 0;
   virtual void UpdateInternal(const ActiveAccel& accel) = 0;
-  
-private:
+
+ private:
   bool _inited = false;
-  
 };
 
-}
-}
-}
+}  // namespace CubeAccelListeners
+}  // namespace Vector
+}  // namespace Anki
 
-#endif //__Engine_CubeAccelListeners_ICubeAccelListener_H__
+#endif  //__Engine_CubeAccelListeners_ICubeAccelListener_H__

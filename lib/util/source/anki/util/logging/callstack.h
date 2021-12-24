@@ -15,13 +15,13 @@
 
 #include <string>
 
-namespace Anki{
+namespace Anki {
 namespace Util {
 
 // dumps current callstack to log
 void sDumpCallstack(const std::string& name);
 
-} // namespace Util
-} // namespace Anki
+}  // namespace Util
+}  // namespace Anki
 
-#endif //
+#endif  //

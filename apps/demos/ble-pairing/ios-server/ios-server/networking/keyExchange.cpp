@@ -38,14 +38,17 @@ bool Anki::Switchboard::KeyExchange::CalculateSharedKeys(const uint8_t* pin) {
   // server_tx (encryptKey) needs to be sha-256'ed
   // client_rx (client's decrypt key) needs to be sha-256'ed
   //
-  bool success = crypto_kx_server_session_keys(_decryptKey, _encryptKey, _publicKey, _secretKey, _remotePublicKey) == 0;
-  
+  bool success =
+      crypto_kx_server_session_keys(_decryptKey, _encryptKey, _publicKey,
+                                    _secretKey, _remotePublicKey) == 0;
+
   // Save tmp version of encryptKey
   uint8_t tmpEncryptKey[crypto_kx_SESSIONKEYBYTES];
   memcpy(tmpEncryptKey, _encryptKey, crypto_kx_SESSIONKEYBYTES);
-  
+
   // Hash mix of pin and encryptKey to form new encryptKey
-  crypto_generichash(_encryptKey, crypto_kx_SESSIONKEYBYTES, tmpEncryptKey, crypto_kx_SESSIONKEYBYTES, pin, _numPinDigits);
-  
+  crypto_generichash(_encryptKey, crypto_kx_SESSIONKEYBYTES, tmpEncryptKey,
+                     crypto_kx_SESSIONKEYBYTES, pin, _numPinDigits);
+
   return success;
 }

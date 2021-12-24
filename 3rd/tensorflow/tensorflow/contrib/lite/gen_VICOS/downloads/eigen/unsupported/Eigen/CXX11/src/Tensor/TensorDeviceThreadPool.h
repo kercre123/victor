@@ -7,7 +7,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#if defined(EIGEN_USE_THREADS) && !defined(EIGEN_CXX11_TENSOR_TENSOR_DEVICE_THREAD_POOL_H)
+#if defined(EIGEN_USE_THREADS) && \
+    !defined(EIGEN_CXX11_TENSOR_TENSOR_DEVICE_THREAD_POOL_H)
 #define EIGEN_CXX11_TENSOR_TENSOR_DEVICE_THREAD_POOL_H
 
 namespace Eigen {
@@ -19,9 +20,7 @@ class Barrier {
   Barrier(unsigned int count) : state_(count << 1), notified_(false) {
     eigen_assert(((count << 1) >> 1) == count);
   }
-  ~Barrier() {
-    eigen_assert((state_>>1) == 0);
-  }
+  ~Barrier() { eigen_assert((state_ >> 1) == 0); }
 
   void Notify() {
     unsigned int v = state_.fetch_sub(2, std::memory_order_acq_rel) - 2;
@@ -51,21 +50,19 @@ class Barrier {
   bool notified_;
 };
 
-
 // Notification is an object that allows a user to to wait for another
 // thread to signal a notification that an event has occurred.
 //
 // Multiple threads can wait on the same Notification object,
 // but only one caller must call Notify() on the object.
 struct Notification : Barrier {
-  Notification() : Barrier(1) {};
+  Notification() : Barrier(1){};
 };
-
 
 // Runs an arbitrary function and then calls Notify() on the passed in
 // Notification.
-template <typename Function, typename... Args> struct FunctionWrapperWithNotification
-{
+template <typename Function, typename... Args>
+struct FunctionWrapperWithNotification {
   static void run(Notification* n, Function f, Args... args) {
     f(args...);
     if (n) {
@@ -74,8 +71,8 @@ template <typename Function, typename... Args> struct FunctionWrapperWithNotific
   }
 };
 
-template <typename Function, typename... Args> struct FunctionWrapperWithBarrier
-{
+template <typename Function, typename... Args>
+struct FunctionWrapperWithBarrier {
   static void run(Barrier* b, Function f, Args... args) {
     f(args...);
     if (b) {
@@ -91,11 +88,11 @@ static EIGEN_STRONG_INLINE void wait_until_ready(SyncType* n) {
   }
 }
 
-
 // Build a thread pool device on top the an existing pool of threads.
 struct ThreadPoolDevice {
   // The ownership of the thread pool remains with the caller.
-  ThreadPoolDevice(ThreadPoolInterface* pool, int num_cores) : pool_(pool), num_threads_(num_cores) { }
+  ThreadPoolDevice(ThreadPoolInterface* pool, int num_cores)
+      : pool_(pool), num_threads_(num_cores) {}
 
   EIGEN_STRONG_INLINE void* allocate(size_t num_bytes) const {
     return internal::aligned_malloc(num_bytes);
@@ -108,10 +105,12 @@ struct ThreadPoolDevice {
   EIGEN_STRONG_INLINE void memcpy(void* dst, const void* src, size_t n) const {
     ::memcpy(dst, src, n);
   }
-  EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* src, size_t n) const {
+  EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* src,
+                                              size_t n) const {
     memcpy(dst, src, n);
   }
-  EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* src, size_t n) const {
+  EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* src,
+                                              size_t n) const {
     memcpy(dst, src, n);
   }
 
@@ -119,9 +118,7 @@ struct ThreadPoolDevice {
     ::memset(buffer, c, n);
   }
 
-  EIGEN_STRONG_INLINE int numThreads() const {
-    return num_threads_;
-  }
+  EIGEN_STRONG_INLINE int numThreads() const { return num_threads_; }
 
   EIGEN_STRONG_INLINE size_t firstLevelCacheSize() const {
     return l1CacheSize();
@@ -138,22 +135,25 @@ struct ThreadPoolDevice {
   }
 
   template <class Function, class... Args>
-  EIGEN_STRONG_INLINE Notification* enqueue(Function&& f, Args&&... args) const {
+  EIGEN_STRONG_INLINE Notification* enqueue(Function&& f,
+                                            Args&&... args) const {
     Notification* n = new Notification();
-    pool_->Schedule(std::bind(&FunctionWrapperWithNotification<Function, Args...>::run, n, f, args...));
+    pool_->Schedule(
+        std::bind(&FunctionWrapperWithNotification<Function, Args...>::run, n,
+                  f, args...));
     return n;
   }
 
   template <class Function, class... Args>
-  EIGEN_STRONG_INLINE void enqueue_with_barrier(Barrier* b,
-                                                Function&& f,
+  EIGEN_STRONG_INLINE void enqueue_with_barrier(Barrier* b, Function&& f,
                                                 Args&&... args) const {
     pool_->Schedule(std::bind(
         &FunctionWrapperWithBarrier<Function, Args...>::run, b, f, args...));
   }
 
   template <class Function, class... Args>
-  EIGEN_STRONG_INLINE void enqueueNoNotification(Function&& f, Args&&... args) const {
+  EIGEN_STRONG_INLINE void enqueueNoNotification(Function&& f,
+                                                 Args&&... args) const {
     if (sizeof...(args) > 0) {
       pool_->Schedule(std::bind(f, args...));
     } else {
@@ -191,8 +191,9 @@ struct ThreadPoolDevice {
     double block_size_f = 1.0 / CostModel::taskSize(1, cost);
     const Index max_oversharding_factor = 4;
     Index block_size = numext::mini(
-        n, numext::maxi<Index>(divup<Index>(n, max_oversharding_factor * numThreads()),
-                               block_size_f));
+        n, numext::maxi<Index>(
+               divup<Index>(n, max_oversharding_factor * numThreads()),
+               block_size_f));
     const Index max_block_size = numext::mini(n, 2 * block_size);
     if (block_align) {
       Index new_block_size = block_align(block_size);
@@ -272,7 +273,6 @@ struct ThreadPoolDevice {
   int num_threads_;
 };
 
-
 }  // end namespace Eigen
 
-#endif // EIGEN_CXX11_TENSOR_TENSOR_DEVICE_THREAD_POOL_H
+#endif  // EIGEN_CXX11_TENSOR_TENSOR_DEVICE_THREAD_POOL_H

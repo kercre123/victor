@@ -16,7 +16,7 @@
  * \brief:
  *  Minimal implementation of std::tuple that can be used inside a SYCL kernel.
  *
-*****************************************************************/
+ *****************************************************************/
 
 #ifndef UNSUPPORTED_EIGEN_CXX11_SRC_TENSOR_TENSORSYCL_TUPLE_HPP
 #define UNSUPPORTED_EIGEN_CXX11_SRC_TENSOR_TENSORSYCL_TUPLE_HPP
@@ -24,9 +24,10 @@
 namespace utility {
 namespace tuple {
 /// \struct StaticIf
-/// \brief The StaticIf struct is used to statically choose the type based on the
-/// condition.
-template <bool, typename T = void> struct StaticIf;
+/// \brief The StaticIf struct is used to statically choose the type based on
+/// the condition.
+template <bool, typename T = void>
+struct StaticIf;
 /// \brief specialisation of the \ref StaticIf when the condition is true
 template <typename T>
 struct StaticIf<true, T> {
@@ -84,13 +85,15 @@ struct ElemTypeHolder<k, Tuple<T, Ts...> > {
 /// \param t is the tuple whose contents to extract
 /// \return  typename ElemTypeHolder<0, Tuple<Ts...> >::type &>::type
 
-#define TERMINATE_CONDS_TUPLE_GET(CVQual) \
-template <size_t k, class... Ts> \
-typename StaticIf<k == 0, CVQual typename ElemTypeHolder<0, Tuple<Ts...> >::type &>::type \
-get(CVQual Tuple<Ts...> &t) { \
-  static_assert(sizeof...(Ts)!=0, "The requseted value is bigger than the size of the tuple"); \
-  return t.head; \
-}
+#define TERMINATE_CONDS_TUPLE_GET(CVQual)                                      \
+  template <size_t k, class... Ts>                                             \
+  typename StaticIf<k == 0, CVQual                                             \
+                    typename ElemTypeHolder<0, Tuple<Ts...> >::type &>::type   \
+  get(CVQual Tuple<Ts...> &t) {                                                \
+    static_assert(sizeof...(Ts) != 0,                                          \
+                  "The requseted value is bigger than the size of the tuple"); \
+    return t.head;                                                             \
+  }
 
 TERMINATE_CONDS_TUPLE_GET(const)
 TERMINATE_CONDS_TUPLE_GET()
@@ -102,12 +105,13 @@ TERMINATE_CONDS_TUPLE_GET()
 /// \tparam Ts... are the type of the elements  in the tuple.
 /// \param t is the tuple whose contents to extract
 /// \return  typename ElemTypeHolder<K, Tuple<Ts...> >::type &>::type
-#define RECURSIVE_TUPLE_GET(CVQual) \
-template <size_t k, class T, class... Ts> \
-typename StaticIf<k != 0, CVQual typename ElemTypeHolder<k, Tuple<T, Ts...> >::type &>::type \
-get(CVQual Tuple<T, Ts...> &t) { \
-  return utility::tuple::get<k - 1>(t.tail); \
-}
+#define RECURSIVE_TUPLE_GET(CVQual)                                 \
+  template <size_t k, class T, class... Ts>                         \
+  typename StaticIf<k != 0, CVQual typename ElemTypeHolder<         \
+                                k, Tuple<T, Ts...> >::type &>::type \
+  get(CVQual Tuple<T, Ts...> &t) {                                  \
+    return utility::tuple::get<k - 1>(t.tail);                      \
+  }
 RECURSIVE_TUPLE_GET(const)
 RECURSIVE_TUPLE_GET()
 #undef RECURSIVE_TUPLE_GET
@@ -170,7 +174,7 @@ struct RangeBuilder : public RangeBuilder<MIN, N - 1, N - 1, Is...> {};
 /// \tparam MIN is the starting index in the tuple
 /// \tparam MAX is the size of the tuple
 template <size_t MIN, size_t MAX>
-struct IndexRange: RangeBuilder<MIN, MAX>::type {};
+struct IndexRange : RangeBuilder<MIN, MAX>::type {};
 
 /// append_base
 /// \brief unpacking the elements of the input tuple t and creating a new tuple
@@ -182,7 +186,7 @@ struct IndexRange: RangeBuilder<MIN, MAX>::type {};
 /// \param a the new elements going to be added to the tuple
 /// \return Tuple<Args..., T>
 template <typename... Args, typename T, size_t... I>
-Tuple<Args..., T> append_base(Tuple<Args...> t, T a,IndexList<I...>) {
+Tuple<Args..., T> append_base(Tuple<Args...> t, T a, IndexList<I...>) {
   return utility::tuple::make_tuple(get<I>(t)..., a);
 }
 
@@ -196,15 +200,15 @@ Tuple<Args..., T> append_base(Tuple<Args...> t, T a,IndexList<I...>) {
 /// \return Tuple<Args..., T>
 template <typename... Args, typename T>
 Tuple<Args..., T> append(Tuple<Args...> t, T a) {
-  return utility::tuple::append_base(t, a,  IndexRange<0, sizeof...(Args)>());
+  return utility::tuple::append_base(t, a, IndexRange<0, sizeof...(Args)>());
 }
 
 /// append_base
 /// \brief This is a specialisation of \ref append_base when we want to
 /// concatenate
-/// tuple t2 at the end of the tuple t1. Here we unpack both tuples, generate the
-/// IndexRange for each of them and create an output tuple T that contains both
-/// elements of t1 and t2.
+/// tuple t2 at the end of the tuple t1. Here we unpack both tuples, generate
+/// the IndexRange for each of them and create an output tuple T that contains
+/// both elements of t1 and t2.
 ///\tparam Args1... the type of the elements inside the tuple t1
 ///\tparam Args2... the type of the elements inside the tuple t2
 /// \tparam I1... is the list of index from [0 to sizeof...(t1))
@@ -213,8 +217,9 @@ Tuple<Args..., T> append(Tuple<Args...> t, T a) {
 /// \param t2 is the tuple that is going to be added on t1.
 /// \return Tuple<Args1..., Args2...>
 template <typename... Args1, typename... Args2, size_t... I1, size_t... I2>
-Tuple<Args1..., Args2...> append_base(Tuple<Args1...> t1, Tuple<Args2...> t2, IndexList<I1...>, IndexList<I2...>) {
-  return utility::tuple::make_tuple(get<I1>(t1)...,get<I2>(t2)...);
+Tuple<Args1..., Args2...> append_base(Tuple<Args1...> t1, Tuple<Args2...> t2,
+                                      IndexList<I1...>, IndexList<I2...>) {
+  return utility::tuple::make_tuple(get<I1>(t1)..., get<I2>(t2)...);
 }
 
 /// append
@@ -227,10 +232,11 @@ Tuple<Args1..., Args2...> append_base(Tuple<Args1...> t1, Tuple<Args2...> t2, In
 /// \param t2 is the tuple that is going to be added on t1.
 /// \return Tuple<Args1..., Args2...>
 template <typename... Args1, typename... Args2>
-Tuple<Args1..., Args2...> append(Tuple<Args1...> t1,Tuple<Args2...> t2) {
-  return utility::tuple::append_base(t1, t2, IndexRange<0, sizeof...(Args1)>(), IndexRange<0, sizeof...(Args2)>());
+Tuple<Args1..., Args2...> append(Tuple<Args1...> t1, Tuple<Args2...> t2) {
+  return utility::tuple::append_base(t1, t2, IndexRange<0, sizeof...(Args1)>(),
+                                     IndexRange<0, sizeof...(Args2)>());
 }
-}  // tuple
-}  // utility
+}  // namespace tuple
+}  // namespace utility
 
 #endif  // UNSUPPORTED_EIGEN_CXX11_SRC_TENSOR_TENSORSYCL_TUPLE_HPP

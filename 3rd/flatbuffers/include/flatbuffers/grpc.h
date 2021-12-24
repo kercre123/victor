@@ -30,12 +30,11 @@ class SerializationTraits<T, typename std::enable_if<std::is_base_of<
  public:
   // The type we're passing here is a BufferRef, which is already serialized
   // FlatBuffer data, which then gets passed to GRPC.
-  static grpc::Status Serialize(const T& msg,
-                                grpc_byte_buffer **buffer,
+  static grpc::Status Serialize(const T &msg, grpc_byte_buffer **buffer,
                                 bool *own_buffer) {
     // TODO(wvo): make this work without copying.
     auto slice = gpr_slice_from_copied_buffer(
-                   reinterpret_cast<const char *>(msg.buf), msg.len);
+        reinterpret_cast<const char *>(msg.buf), msg.len);
     *buffer = grpc_raw_byte_buffer_create(&slice, 1);
     *own_buffer = true;
     return grpc::Status();
@@ -43,8 +42,7 @@ class SerializationTraits<T, typename std::enable_if<std::is_base_of<
 
   // There is no de-serialization step in FlatBuffers, so we just receive
   // the data from GRPC.
-  static grpc::Status Deserialize(grpc_byte_buffer *buffer,
-                                  T *msg,
+  static grpc::Status Deserialize(grpc_byte_buffer *buffer, T *msg,
                                   int max_message_size) {
     // TODO(wvo): make this more efficient / zero copy when possible.
     auto len = grpc_byte_buffer_length(buffer);
@@ -67,6 +65,6 @@ class SerializationTraits<T, typename std::enable_if<std::is_base_of<
   }
 };
 
-}  // namespace grpc;
+}  // namespace grpc
 
 #endif  // FLATBUFFERS_GRPC_H_

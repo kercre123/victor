@@ -6,7 +6,6 @@
 
 #include <stdio.h>
 
-
 int main(void) {
   printf(FOO "\n");
   return 0;

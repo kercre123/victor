@@ -23,37 +23,38 @@
 namespace Anki {
 namespace Vector {
 
-class SleepTracker : public IDependencyManagedComponent<BCComponentID>
-                   , public Anki::Util::noncopyable
-{
-public:
+class SleepTracker : public IDependencyManagedComponent<BCComponentID>,
+                     public Anki::Util::noncopyable {
+ public:
   SleepTracker();
 
-  virtual void InitDependent( Robot* robot, const BCCompMap& dependentComps ) override;
-  virtual void GetInitDependencies( BCCompIDSet& dependencies ) const override {
+  virtual void InitDependent(Robot* robot,
+                             const BCCompMap& dependentComps) override;
+  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {
     dependencies.insert(BCComponentID::RobotInfo);
   }
-  virtual void GetUpdateDependencies( BCCompIDSet& dependencies ) const override {
+  virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {
     dependencies.insert(BCComponentID::RobotInfo);
   }
   virtual void UpdateDependent(const BCCompMap& dependentComps) override;
 
   void SetIsSleeping(bool sleeping);
 
-  // true if the robot has accumulated enough "sleep debt" to want to sleep for at least an hour (if not
-  // coming from sleep). If coming from sleep, then remain sleepy until sleep debt goes to zero. Does not take
-  // stimulation into account at all.
+  // true if the robot has accumulated enough "sleep debt" to want to sleep for
+  // at least an hour (if not coming from sleep). If coming from sleep, then
+  // remain sleepy until sleep debt goes to zero. Does not take stimulation into
+  // account at all.
   bool IsSleepy(bool fromSleep) const;
 
   // check if local time is within the defined "night time" hours
   bool IsNightTime() const;
 
-  // Add sleep debt if the current debt is below the provided min. This can be useful to make sure the robot
-  // wants to say asleep for at least a certain amount of time
+  // Add sleep debt if the current debt is below the provided min. This can be
+  // useful to make sure the robot wants to say asleep for at least a certain
+  // amount of time
   void EnsureSleepDebtAtLeast(float minDebt_s);
 
-private:
-
+ private:
   // "sleep debt" tracking
   float _sleepDebt_s = 0.0f;
 
@@ -65,8 +66,7 @@ private:
   void PopulateWebVizJson(Json::Value& data) const;
 };
 
-}
-}
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

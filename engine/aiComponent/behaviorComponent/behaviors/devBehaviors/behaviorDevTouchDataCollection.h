@@ -14,42 +14,42 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorDevTouchDataCollection_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorDevTouchDataCollection_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include <vector>
+
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Vector {
-  
+
 class IBEICondition;
-  
-class BehaviorDevTouchDataCollection : public ICozmoBehavior
-{
-public:
-  
-  virtual ~BehaviorDevTouchDataCollection() { }
+
+class BehaviorDevTouchDataCollection : public ICozmoBehavior {
+ public:
+  virtual ~BehaviorDevTouchDataCollection() {}
   virtual bool WantsToBeActivatedBehavior() const override;
-  
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = false;
     modifiers.wantsToBeActivatedWhenOffTreads = true;
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.behaviorAlwaysDelegates = false;
   }
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
-  
-protected:
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override {}
 
+ protected:
   using BExtI = BehaviorExternalInterface;
-  
+
   friend class BehaviorFactory;
   BehaviorDevTouchDataCollection(const Json::Value& config);
-  
+
   void InitBehavior() override;
-  
+
   virtual void OnBehaviorActivated() override;
 
   virtual void OnBehaviorDeactivated() override;
-  
+
   virtual void BehaviorUpdate() override;
 
   virtual void HandleWhileActivated(const RobotToEngineEvent& event) override;
@@ -58,8 +58,8 @@ protected:
   void LoopMotorsActionCallback(ActionResult res);
   bool RobotConfigMatchesExpected(BExtI& bexi) const;
 
-private:
-  enum DataAnnotation : int{
+ private:
+  enum DataAnnotation : int {
     NoTouch,
     SustainedContact,
     PettingSoft,
@@ -75,31 +75,29 @@ private:
 
   struct InstanceConfig {
     InstanceConfig();
-
   };
 
   struct DynamicVariables {
     DynamicVariables();
     // the current type of touch to collect for
-    DataAnnotation        annotation;
-    
+    DataAnnotation annotation;
+
     std::vector<uint16_t> touchValues;
     // the condition under which to collection the requisite touch samples
     // note: this reflects the motor state (and checks for valid charger)
-    CollectionMode        collectMode;
+    CollectionMode collectMode;
   };
 
-  InstanceConfig   _iConfig;
+  InstanceConfig _iConfig;
   DynamicVariables _dVars;
 
-
-  std::pair<std::string,std::string> ToString(DataAnnotation da) const;
-  std::pair<std::string,std::string> ToString(CollectionMode cm) const;
-  void OnNextDataset(BehaviorExternalInterface& bexi,
-                     CollectionMode cm, DataAnnotation da) const;
+  std::pair<std::string, std::string> ToString(DataAnnotation da) const;
+  std::pair<std::string, std::string> ToString(CollectionMode cm) const;
+  void OnNextDataset(BehaviorExternalInterface& bexi, CollectionMode cm,
+                     DataAnnotation da) const;
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorDevTouchDataCollection_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorDevTouchDataCollection_H__

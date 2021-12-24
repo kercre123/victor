@@ -3,7 +3,7 @@
 
  Module Name  - signal_level_norm
                 Signal level normalizer
-     
+
  History:    ryu - Robert Yu
              2016-02-05   ryu  first implementation
 
@@ -17,12 +17,11 @@ extern "C" {
 
 #include "se_types.h"
 
-typedef struct
-{
-    float32 gainSinDb;
+typedef struct {
+  float32 gainSinDb;
 } SlnConfig_t;
 
-#endif //SIGNAL_LEVEL_NORM_PUB_H
+#endif  // SIGNAL_LEVEL_NORM_PUB_H
 
 #ifdef __cplusplus
 }

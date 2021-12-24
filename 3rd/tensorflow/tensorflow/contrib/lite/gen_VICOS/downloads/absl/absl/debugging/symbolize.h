@@ -22,7 +22,7 @@ namespace absl {
 // Initializes this module. Symbolize() may fail prior calling this function.
 // `argv0` is the path to this program, which is usually obtained in main()
 // though argv[0].
-void InitializeSymbolizer(const char* argv0);
+void InitializeSymbolizer(const char *argv0);
 
 // Symbolizes a program counter.  On success, returns true and write the
 // symbol name to "out".  The symbol name is demangled if possible

@@ -58,7 +58,8 @@ typedef struct _aubio_sink_apple_audio_t aubio_sink_apple_audio_t;
   been called.
 
 */
-aubio_sink_apple_audio_t * new_aubio_sink_apple_audio(const char_t * uri, uint_t samplerate);
+aubio_sink_apple_audio_t *new_aubio_sink_apple_audio(const char_t *uri,
+                                                     uint_t samplerate);
 
 /**
 
@@ -75,7 +76,8 @@ aubio_sink_apple_audio_t * new_aubio_sink_apple_audio(const char_t * uri, uint_t
   The file will be opened only when both samplerate and channels have been set.
 
 */
-uint_t aubio_sink_apple_audio_preset_samplerate(aubio_sink_apple_audio_t *s, uint_t samplerate);
+uint_t aubio_sink_apple_audio_preset_samplerate(aubio_sink_apple_audio_t *s,
+                                                uint_t samplerate);
 
 /**
 
@@ -92,7 +94,8 @@ uint_t aubio_sink_apple_audio_preset_samplerate(aubio_sink_apple_audio_t *s, uin
   The file will be opened only when both samplerate and channels have been set.
 
 */
-uint_t aubio_sink_apple_audio_preset_channels(aubio_sink_apple_audio_t *s, uint_t channels);
+uint_t aubio_sink_apple_audio_preset_channels(aubio_sink_apple_audio_t *s,
+                                              uint_t channels);
 
 /**
 
@@ -123,7 +126,8 @@ uint_t aubio_sink_apple_audio_get_channels(const aubio_sink_apple_audio_t *s);
   \param write number of frames to write
 
 */
-void aubio_sink_apple_audio_do(aubio_sink_apple_audio_t * s, fvec_t * write_data, uint_t write);
+void aubio_sink_apple_audio_do(aubio_sink_apple_audio_t *s, fvec_t *write_data,
+                               uint_t write);
 
 /**
 
@@ -134,7 +138,8 @@ void aubio_sink_apple_audio_do(aubio_sink_apple_audio_t * s, fvec_t * write_data
   \param write number of frames to write
 
 */
-void aubio_sink_apple_audio_do_multi(aubio_sink_apple_audio_t * s, fmat_t * write_data, uint_t write);
+void aubio_sink_apple_audio_do_multi(aubio_sink_apple_audio_t *s,
+                                     fmat_t *write_data, uint_t write);
 
 /**
 
@@ -145,7 +150,7 @@ void aubio_sink_apple_audio_do_multi(aubio_sink_apple_audio_t * s, fmat_t * writ
   \return 0 on success, non-zero on failure
 
 */
-uint_t aubio_sink_apple_audio_close(aubio_sink_apple_audio_t * s);
+uint_t aubio_sink_apple_audio_close(aubio_sink_apple_audio_t *s);
 
 /**
 
@@ -154,7 +159,7 @@ uint_t aubio_sink_apple_audio_close(aubio_sink_apple_audio_t * s);
   \param s sink, created with ::new_aubio_sink_apple_audio
 
 */
-void del_aubio_sink_apple_audio(aubio_sink_apple_audio_t * s);
+void del_aubio_sink_apple_audio(aubio_sink_apple_audio_t *s);
 
 #ifdef __cplusplus
 }

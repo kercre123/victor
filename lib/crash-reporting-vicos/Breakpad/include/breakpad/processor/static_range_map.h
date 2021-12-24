@@ -39,18 +39,17 @@
 #ifndef PROCESSOR_STATIC_RANGE_MAP_H__
 #define PROCESSOR_STATIC_RANGE_MAP_H__
 
-
 #include "processor/static_map-inl.h"
 
 namespace google_breakpad {
 
 // AddressType is basic type, e.g.: integer types, pointers etc
 // EntryType could be a complex type, so we retrieve its pointer instead.
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 class StaticRangeMap {
  public:
-  StaticRangeMap(): map_() { }
-  explicit StaticRangeMap(const char *memory): map_(memory) { }
+  StaticRangeMap() : map_() {}
+  explicit StaticRangeMap(const char *memory) : map_(memory) {}
 
   // Locates the range encompassing the supplied address.  If there is
   // no such range, returns false.  entry_base and entry_size, if non-NULL,
@@ -64,8 +63,8 @@ class StaticRangeMap {
   // if no range meets these criteria.  entry_base and entry_size, if
   // non-NULL, are set to the base and size of the entry's range.
   bool RetrieveNearestRange(const AddressType &address, const EntryType *&entry,
-                            AddressType *entry_base, AddressType *entry_size)
-                            const;
+                            AddressType *entry_base,
+                            AddressType *entry_size) const;
 
   // Treating all ranges as a list ordered by the address spaces that they
   // occupy, locates the range at the index specified by index.  Returns
@@ -75,8 +74,8 @@ class StaticRangeMap {
   //
   // RetrieveRangeAtIndex is not optimized for speedy operation.
   bool RetrieveRangeAtIndex(int index, const EntryType *&entry,
-                            AddressType *entry_base, AddressType *entry_size)
-                            const;
+                            AddressType *entry_base,
+                            AddressType *entry_size) const;
 
   // Returns the number of ranges stored in the RangeMap.
   inline int GetCount() const { return map_.size(); }
@@ -86,15 +85,15 @@ class StaticRangeMap {
   class Range {
    public:
     AddressType base() const {
-      return *(reinterpret_cast<const AddressType*>(this));
+      return *(reinterpret_cast<const AddressType *>(this));
     }
-    const EntryType* entryptr() const {
-      return reinterpret_cast<const EntryType*>(this + sizeof(AddressType));
+    const EntryType *entryptr() const {
+      return reinterpret_cast<const EntryType *>(this + sizeof(AddressType));
     }
   };
 
   // Convenience types.
-  typedef StaticRangeMap* SelfPtr;
+  typedef StaticRangeMap *SelfPtr;
   typedef StaticMap<AddressType, Range> AddressToRangeMap;
   typedef typename AddressToRangeMap::const_iterator MapConstIterator;
 

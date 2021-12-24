@@ -24,7 +24,7 @@ namespace Vision {
 class Camera;
 class ImageCache;
 class Profiler;
-}
+}  // namespace Vision
 
 namespace Vector {
 // Forward declaration:
@@ -32,33 +32,30 @@ struct VisionPoseData;
 class VizManager;
 
 class OverheadEdgesDetector {
-
-public:
-  OverheadEdgesDetector(const Vision::Camera &camera,
-                        VizManager *vizManager,
-                        Vision::Profiler &profiler,
-                        f32 edgeThreshold = 50.0f,
+ public:
+  OverheadEdgesDetector(const Vision::Camera &camera, VizManager *vizManager,
+                        Vision::Profiler &profiler, f32 edgeThreshold = 50.0f,
                         u32 minChainLength = 3);
 
-  Result Detect(Vision::ImageCache &imageCache, const VisionPoseData &crntPoseData,
+  Result Detect(Vision::ImageCache &imageCache,
+                const VisionPoseData &crntPoseData,
                 VisionProcessingResult &currentResult);
 
-private:
-  template<typename ImageTraitType>
+ private:
+  template <typename ImageTraitType>
   Result DetectHelper(const typename ImageTraitType::ImageType &image,
                       const VisionPoseData &crntPoseData,
                       VisionProcessingResult &currentResult);
 
-  const Vision::Camera&   _camera;
-  VizManager*             _vizManager = nullptr;
-  Vision::Profiler&       _profiler;
-  const f32               _kEdgeThreshold = 50.0f;
-  const u32               _kMinChainLength = 3;
-
+  const Vision::Camera &_camera;
+  VizManager *_vizManager = nullptr;
+  Vision::Profiler &_profiler;
+  const f32 _kEdgeThreshold = 50.0f;
+  const u32 _kMinChainLength = 3;
 };
 
-}
+}  // namespace Vector
 
-}
+}  // namespace Anki
 
 #endif

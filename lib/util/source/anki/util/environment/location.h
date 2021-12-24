@@ -8,16 +8,16 @@
 #ifndef __util_environment_location_H__
 #define __util_environment_location_H__
 
+#include <string>
+
 #include "locale.h"
 #include "util/http/abstractHttpAdapter.h"
-
-#include <string>
 
 namespace Anki {
 namespace Util {
 
 class Location {
-public:
+ public:
   struct ProviderConfig {
     std::string url;
     std::string authHeaderValue;
@@ -30,18 +30,17 @@ public:
 
   static bool GetCurrentLocation(Location& location);
 
-  Location() : Location(Locale::kDefaultCountry) { }
-  Location(Locale locale) : Location(locale.GetCountry()) { }
-  Location(Locale::CountryISO2 country)
-    : _country(country) { }
+  Location() : Location(Locale::kDefaultCountry) {}
+  Location(Locale locale) : Location(locale.GetCountry()) {}
+  Location(Locale::CountryISO2 country) : _country(country) {}
 
   Locale::CountryISO2 GetCountry() const { return _country; }
 
-private:
+ private:
   Locale::CountryISO2 _country;
 };
 
-} // namespace Util
-} // namespace Anki
+}  // namespace Util
+}  // namespace Anki
 
-#endif // __util_environment_location_H__
+#endif  // __util_environment_location_H__

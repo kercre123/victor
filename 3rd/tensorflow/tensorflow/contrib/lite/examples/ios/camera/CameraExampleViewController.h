@@ -21,7 +21,7 @@
 #include "tensorflow/contrib/lite/model.h"
 
 @interface CameraExampleViewController
-    : UIViewController<UIGestureRecognizerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate> {
+    : UIViewController <UIGestureRecognizerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate> {
   IBOutlet UIView* previewView;
   AVCaptureVideoPreviewLayer* previewLayer;
   AVCaptureVideoDataOutput* videoDataOutput;

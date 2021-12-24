@@ -36,38 +36,36 @@
 #ifndef PROCESSOR_RANGE_MAP_INL_H__
 #define PROCESSOR_RANGE_MAP_INL_H__
 
-
 #include <assert.h>
 
-#include "processor/range_map.h"
 #include "processor/linked_ptr.h"
 #include "processor/logging.h"
-
+#include "processor/range_map.h"
 
 namespace google_breakpad {
 
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 void RangeMap<AddressType, EntryType>::SetEnableShrinkDown(
     bool enable_shrink_down) {
   enable_shrink_down_ = enable_shrink_down;
 }
 
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 bool RangeMap<AddressType, EntryType>::IsShrinkDownEnabled() const {
   return enable_shrink_down_;
 }
 
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 bool RangeMap<AddressType, EntryType>::StoreRange(const AddressType &base,
                                                   const AddressType &size,
                                                   const EntryType &entry) {
   return StoreRangeInternal(base, 0 /* delta */, size, entry);
 }
 
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 bool RangeMap<AddressType, EntryType>::StoreRangeInternal(
-    const AddressType &base, const AddressType &delta,
-    const AddressType &size, const EntryType &entry) {
+    const AddressType &base, const AddressType &delta, const AddressType &size,
+    const EntryType &entry) {
   AddressType high = base + (size - 1);
 
   // Check for undersize or overflow.
@@ -75,10 +73,10 @@ bool RangeMap<AddressType, EntryType>::StoreRangeInternal(
     // The processor will hit this case too frequently with common symbol
     // files in the size == 0 case, which is more suited to a DEBUG channel.
     // Filter those out since there's no DEBUG channel at the moment.
-    BPLOG_IF(INFO, size != 0) << "StoreRangeInternal failed, "
-                              << HexString(base) << "+" << HexString(size)
-                              << ", " << HexString(high)
-                              << ", delta: " << HexString(delta);
+    BPLOG_IF(INFO, size != 0)
+        << "StoreRangeInternal failed, " << HexString(base) << "+"
+        << HexString(size) << ", " << HexString(high)
+        << ", delta: " << HexString(delta);
     return false;
   }
 
@@ -98,7 +96,7 @@ bool RangeMap<AddressType, EntryType>::StoreRangeInternal(
                                 delta + additional_delta,
                                 size - additional_delta, entry);
     } else {
-      // The processor hits this case too frequently with common symbol files. 
+      // The processor hits this case too frequently with common symbol files.
       // This is most appropriate for a DEBUG channel, but since none exists
       // now simply comment out this logging.
       // AddressType other_base = iterator_base->second.base();
@@ -121,8 +119,7 @@ bool RangeMap<AddressType, EntryType>::StoreRangeInternal(
       if (enable_shrink_down_ && iterator_high->first > high) {
         // Shrink the other range down.
         AddressType other_high = iterator_high->first;
-        AddressType additional_delta =
-            high - iterator_high->second.base() + 1;
+        AddressType additional_delta = high - iterator_high->second.base() + 1;
         EntryType other_entry;
         AddressType other_base = AddressType();
         AddressType other_size = AddressType();
@@ -130,10 +127,9 @@ bool RangeMap<AddressType, EntryType>::StoreRangeInternal(
         RetrieveRange(other_high, &other_entry, &other_base, &other_delta,
                       &other_size);
         map_.erase(iterator_high);
-        map_.insert(MapValue(other_high,
-                             Range(other_base + additional_delta,
-                                   other_delta + additional_delta,
-                                   other_entry)));
+        map_.insert(MapValue(
+            other_high, Range(other_base + additional_delta,
+                              other_delta + additional_delta, other_entry)));
         // Retry to store this range.
         return StoreRangeInternal(base, delta, size, entry);
       } else {
@@ -159,8 +155,7 @@ bool RangeMap<AddressType, EntryType>::StoreRangeInternal(
   return true;
 }
 
-
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 bool RangeMap<AddressType, EntryType>::RetrieveRange(
     const AddressType &address, EntryType *entry, AddressType *entry_base,
     AddressType *entry_delta, AddressType *entry_size) const {
@@ -168,30 +163,24 @@ bool RangeMap<AddressType, EntryType>::RetrieveRange(
   assert(entry);
 
   MapConstIterator iterator = map_.lower_bound(address);
-  if (iterator == map_.end())
-    return false;
+  if (iterator == map_.end()) return false;
 
   // The map is keyed by the high address of each range, so |address| is
   // guaranteed to be lower than the range's high address.  If |range| is
   // not directly preceded by another range, it's possible for address to
   // be below the range's low address, though.  When that happens, address
   // references something not within any range, so return false.
-  if (address < iterator->second.base())
-    return false;
+  if (address < iterator->second.base()) return false;
 
   *entry = iterator->second.entry();
-  if (entry_base)
-    *entry_base = iterator->second.base();
-  if (entry_delta)
-    *entry_delta = iterator->second.delta();
-  if (entry_size)
-    *entry_size = iterator->first - iterator->second.base() + 1;
+  if (entry_base) *entry_base = iterator->second.base();
+  if (entry_delta) *entry_delta = iterator->second.delta();
+  if (entry_size) *entry_size = iterator->first - iterator->second.base() + 1;
 
   return true;
 }
 
-
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 bool RangeMap<AddressType, EntryType>::RetrieveNearestRange(
     const AddressType &address, EntryType *entry, AddressType *entry_base,
     AddressType *entry_delta, AddressType *entry_size) const {
@@ -208,23 +197,18 @@ bool RangeMap<AddressType, EntryType>::RetrieveNearestRange(
   // points to the beginning of the map - in that case, address is lower than
   // the lowest stored key, so return false.
   MapConstIterator iterator = map_.upper_bound(address);
-  if (iterator == map_.begin())
-    return false;
+  if (iterator == map_.begin()) return false;
   --iterator;
 
   *entry = iterator->second.entry();
-  if (entry_base)
-    *entry_base = iterator->second.base();
-  if (entry_delta)
-    *entry_delta = iterator->second.delta();
-  if (entry_size)
-    *entry_size = iterator->first - iterator->second.base() + 1;
+  if (entry_base) *entry_base = iterator->second.base();
+  if (entry_delta) *entry_delta = iterator->second.delta();
+  if (entry_size) *entry_size = iterator->first - iterator->second.base() + 1;
 
   return true;
 }
 
-
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 bool RangeMap<AddressType, EntryType>::RetrieveRangeAtIndex(
     int index, EntryType *entry, AddressType *entry_base,
     AddressType *entry_delta, AddressType *entry_size) const {
@@ -239,34 +223,26 @@ bool RangeMap<AddressType, EntryType>::RetrieveRangeAtIndex(
   // Walk through the map.  Although it's ordered, it's not a vector, so it
   // can't be addressed directly by index.
   MapConstIterator iterator = map_.begin();
-  for (int this_index = 0; this_index < index; ++this_index)
-    ++iterator;
+  for (int this_index = 0; this_index < index; ++this_index) ++iterator;
 
   *entry = iterator->second.entry();
-  if (entry_base)
-    *entry_base = iterator->second.base();
-  if (entry_delta)
-    *entry_delta = iterator->second.delta();
-  if (entry_size)
-    *entry_size = iterator->first - iterator->second.base() + 1;
+  if (entry_base) *entry_base = iterator->second.base();
+  if (entry_delta) *entry_delta = iterator->second.delta();
+  if (entry_size) *entry_size = iterator->first - iterator->second.base() + 1;
 
   return true;
 }
 
-
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 int RangeMap<AddressType, EntryType>::GetCount() const {
   return static_cast<int>(map_.size());
 }
 
-
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 void RangeMap<AddressType, EntryType>::Clear() {
   map_.clear();
 }
 
-
 }  // namespace google_breakpad
-
 
 #endif  // PROCESSOR_RANGE_MAP_INL_H__

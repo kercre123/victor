@@ -4,12 +4,12 @@
  * Author: Brad Neuman
  * Created: 2018-12-09
  *
- * Description: An Audio factory implementation to pass in to the AVS SDK to provide local audio files
+ * Description: An Audio factory implementation to pass in to the AVS SDK to
+ *provide local audio files
  *
  * Copyright: Anki, Inc. 2018
  *
  **/
-
 
 #include "cozmoAnim/alexa/media/alexaAudioFactory.h"
 
@@ -24,26 +24,25 @@ using namespace alexaClientSDK;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 AlexaAudioFactory::AlexaAudioFactory()
-  : _defaultFactory(new applicationUtilities::resources::audio::AudioFactory)
-  , _customAlertsFactory( new AlexaCustomAlertsAudioFactory(_defaultFactory->alerts()) )
-{
-}
+    : _defaultFactory(new applicationUtilities::resources::audio::AudioFactory),
+      _customAlertsFactory(
+          new AlexaCustomAlertsAudioFactory(_defaultFactory->alerts())) {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::shared_ptr<AlexaSDKAudio::AlertsAudioFactoryInterface> AlexaAudioFactory::alerts() const
-{
+std::shared_ptr<AlexaSDKAudio::AlertsAudioFactoryInterface>
+AlexaAudioFactory::alerts() const {
   return _customAlertsFactory;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::shared_ptr<AlexaSDKAudio::NotificationsAudioFactoryInterface> AlexaAudioFactory::notifications() const
-{
+std::shared_ptr<AlexaSDKAudio::NotificationsAudioFactoryInterface>
+AlexaAudioFactory::notifications() const {
   return _defaultFactory->notifications();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::shared_ptr<AlexaSDKAudio::CommunicationsAudioFactoryInterface> AlexaAudioFactory::communications() const
-{
+std::shared_ptr<AlexaSDKAudio::CommunicationsAudioFactoryInterface>
+AlexaAudioFactory::communications() const {
   return _defaultFactory->communications();
 }
 
@@ -53,51 +52,50 @@ std::shared_ptr<AlexaSDKAudio::CommunicationsAudioFactoryInterface> AlexaAudioFa
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 AlexaCustomAlertsAudioFactory::AlexaCustomAlertsAudioFactory(
-  std::shared_ptr<AlexaSDKAudio::AlertsAudioFactoryInterface> defaultFactory)
-  : _defaultFactory(defaultFactory)
-{
-}
+    std::shared_ptr<AlexaSDKAudio::AlertsAudioFactoryInterface> defaultFactory)
+    : _defaultFactory(defaultFactory) {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// override all short sounds with the defaults to avoid WAV files which we can't currently play
+// override all short sounds with the defaults to avoid WAV files which we can't
+// currently play
 //
-// TODO:(bn) see VIC-12393 to re-sample those, or implement WAV support, or something else (directly trigger
-// from WWISE). Basically, anything but this.
+// TODO:(bn) see VIC-12393 to re-sample those, or implement WAV support, or
+// something else (directly trigger from WWISE). Basically, anything but this.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::function<std::unique_ptr<std::istream>()> AlexaCustomAlertsAudioFactory::alarmShort() const
-{
+std::function<std::unique_ptr<std::istream>()>
+AlexaCustomAlertsAudioFactory::alarmShort() const {
   return _defaultFactory->alarmDefault();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::function<std::unique_ptr<std::istream>()> AlexaCustomAlertsAudioFactory::timerShort() const
-{
+std::function<std::unique_ptr<std::istream>()>
+AlexaCustomAlertsAudioFactory::timerShort() const {
   return _defaultFactory->timerDefault();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::function<std::unique_ptr<std::istream>()> AlexaCustomAlertsAudioFactory::reminderShort() const
-{
+std::function<std::unique_ptr<std::istream>()>
+AlexaCustomAlertsAudioFactory::reminderShort() const {
   return _defaultFactory->reminderDefault();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::function<std::unique_ptr<std::istream>()> AlexaCustomAlertsAudioFactory::alarmDefault() const
-{
+std::function<std::unique_ptr<std::istream>()>
+AlexaCustomAlertsAudioFactory::alarmDefault() const {
   return _defaultFactory->alarmDefault();
 }
-    
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::function<std::unique_ptr<std::istream>()> AlexaCustomAlertsAudioFactory::timerDefault() const
-{
+std::function<std::unique_ptr<std::istream>()>
+AlexaCustomAlertsAudioFactory::timerDefault() const {
   return _defaultFactory->timerDefault();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::function<std::unique_ptr<std::istream>()> AlexaCustomAlertsAudioFactory::reminderDefault() const
-{
+std::function<std::unique_ptr<std::istream>()>
+AlexaCustomAlertsAudioFactory::reminderDefault() const {
   return _defaultFactory->reminderDefault();
 }
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki

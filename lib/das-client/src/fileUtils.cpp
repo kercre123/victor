@@ -11,14 +11,13 @@
  **/
 
 #include "fileUtils.h"
+
 #include <unistd.h>
 
-namespace AnkiUtil
-{
+namespace AnkiUtil {
 
-bool FileExistsAtPath(const std::string& path)
-{
+bool FileExistsAtPath(const std::string& path) {
   return (0 == access(path.c_str(), F_OK));
 }
 
-} // namespace AnkiUtil
+}  // namespace AnkiUtil

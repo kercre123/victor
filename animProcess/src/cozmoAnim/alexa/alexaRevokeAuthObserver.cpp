@@ -4,13 +4,15 @@
  * Author: ross
  * Created: Nov 5 2018
  *
- * Description: Listens to onRevokeAuthorization and forwards it to the registrationManager
+ * Description: Listens to onRevokeAuthorization and forwards it to the
+ * registrationManager
  *
  * Copyright: Anki, Inc. 2018
  *
  */
 
-// Since this file an an analog to AlexaRevokeAuthObserver.cpp, some portions were copied. Here's the SDK license
+// Since this file an an analog to AlexaRevokeAuthObserver.cpp, some portions
+// were copied. Here's the SDK license
 /*
  * Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -32,25 +34,25 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-  using namespace alexaClientSDK;
-  static const std::string TAG("AlexaRevokeAuthObserver");
+using namespace alexaClientSDK;
+static const std::string TAG("AlexaRevokeAuthObserver");
 
-  #define LX(event) alexaClientSDK::avsCommon::utils::logger::LogEntry(TAG, event)
-}
+#define LX(event) alexaClientSDK::avsCommon::utils::logger::LogEntry(TAG, event)
+}  // namespace
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AlexaRevokeAuthObserver::AlexaRevokeAuthObserver( std::shared_ptr<registrationManager::RegistrationManager> manager )
-  : _manager{ manager }
-{
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+AlexaRevokeAuthObserver::AlexaRevokeAuthObserver(
+    std::shared_ptr<registrationManager::RegistrationManager> manager)
+    : _manager{manager} {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaRevokeAuthObserver::onRevokeAuthorization()
-{
-  if( _manager ) {
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void AlexaRevokeAuthObserver::onRevokeAuthorization() {
+  if (_manager) {
     _manager->logout();
   }
 }
 
-}  // namespace sampleApp
-}  // namespace alexaClientSDK
+}  // namespace Vector
+}  // namespace Anki

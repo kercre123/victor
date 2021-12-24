@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <memory>
 #include <string>
+
 #include "tensorflow/contrib/lite/toco/model.h"
 #include "tensorflow/contrib/lite/toco/model_flags.pb.h"
 #include "tensorflow/core/framework/graph.pb.h"

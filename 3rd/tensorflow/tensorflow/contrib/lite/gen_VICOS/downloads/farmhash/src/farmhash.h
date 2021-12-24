@@ -46,7 +46,8 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <string.h>   // for memcpy and memset
+#include <string.h>  // for memcpy and memset
+
 #include <utility>
 
 #ifndef NAMESPACE_FOR_HASH_FUNCTIONS
@@ -76,7 +77,6 @@ inline uint64_t Uint128Low64(const uint128_t x) { return x.first; }
 inline uint64_t Uint128High64(const uint128_t x) { return x.second; }
 inline uint128_t Uint128(uint64_t lo, uint64_t hi) { return uint128_t(lo, hi); }
 #endif
-
 
 // BASIC STRING HASHING
 
@@ -111,8 +111,8 @@ uint64_t Hash64WithSeed(const char* s, size_t len, uint64_t seed);
 // hashed into the result.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
-uint64_t Hash64WithSeeds(const char* s, size_t len,
-                       uint64_t seed0, uint64_t seed1);
+uint64_t Hash64WithSeeds(const char* s, size_t len, uint64_t seed0,
+                         uint64_t seed1);
 
 // Hash function for a byte array.
 // May change from time to time, may differ on different platforms, may differ
@@ -294,35 +294,39 @@ inline uint128_t Fingerprint128(const Str& s) {
 
 /* gently define FARMHASH_BIG_ENDIAN when detected big-endian machine */
 #if defined(__BIG_ENDIAN__)
-  #if !defined(FARMHASH_BIG_ENDIAN)
-    #define FARMHASH_BIG_ENDIAN
-  #endif
+#if !defined(FARMHASH_BIG_ENDIAN)
+#define FARMHASH_BIG_ENDIAN
+#endif
 #elif defined(__LITTLE_ENDIAN__)
-  // nothing for little-endian
-#elif defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && (__BYTE_ORDER == __ORDER_LITTLE_ENDIAN__)
-  // nothing for little-endian
-#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && (__BYTE_ORDER == __ORDER_BIG_ENDIAN__)
-  #if !defined(FARMHASH_BIG_ENDIAN)
-    #define FARMHASH_BIG_ENDIAN
-  #endif
-#elif defined(__linux__) || defined(__CYGWIN__) || defined( __GNUC__ ) || defined( __GNU_LIBRARY__ )
-  #include <endian.h> // libc6-dev, GLIBC
-  #if BYTE_ORDER == BIG_ENDIAN
-    #if !defined(FARMHASH_BIG_ENDIAN)
-      #define FARMHASH_BIG_ENDIAN
-    #endif
-  #endif
-#elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(__s390x__)
-  #include <sys/endian.h>
-  #if BYTE_ORDER == BIG_ENDIAN
-    #if !defined(FARMHASH_BIG_ENDIAN)
-      #define FARMHASH_BIG_ENDIAN
-    #endif
-  #endif
+   // nothing for little-endian
+#elif defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && \
+    (__BYTE_ORDER == __ORDER_LITTLE_ENDIAN__)
+   // nothing for little-endian
+#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && \
+    (__BYTE_ORDER == __ORDER_BIG_ENDIAN__)
+#if !defined(FARMHASH_BIG_ENDIAN)
+#define FARMHASH_BIG_ENDIAN
+#endif
+#elif defined(__linux__) || defined(__CYGWIN__) || defined(__GNUC__) || \
+    defined(__GNU_LIBRARY__)
+#include <endian.h>  // libc6-dev, GLIBC
+#if BYTE_ORDER == BIG_ENDIAN
+#if !defined(FARMHASH_BIG_ENDIAN)
+#define FARMHASH_BIG_ENDIAN
+#endif
+#endif
+#elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__FreeBSD__) || \
+    defined(__DragonFly__) || defined(__s390x__)
+#include <sys/endian.h>
+#if BYTE_ORDER == BIG_ENDIAN
+#if !defined(FARMHASH_BIG_ENDIAN)
+#define FARMHASH_BIG_ENDIAN
+#endif
+#endif
 #elif defined(_WIN32)
-  // Windows is (currently) little-endian
+   // Windows is (currently) little-endian
 #else
-  #error "Unable to determine endianness!"
+#error "Unable to determine endianness!"
 #endif /* __BIG_ENDIAN__ */
 
 #endif  // FARM_HASH_H_

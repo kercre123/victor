@@ -25,32 +25,28 @@
  ****************************************************************************************
  */
 
-
 /*
  * INCLUDE FILES
  ****************************************************************************************
  */
 
-#include "rwip_config.h"     // SW configuration
+#include "rwip_config.h"  // SW configuration
 
 #if (GTL_ITF)
-#include "rwip.h"            // SW interface
-
-#include "stdbool.h"         // boolean definition
-#include "ke_msg.h"          // kernel message definition
-#include "co_list.h"         // list API
+#include "co_list.h"  // list API
+#include "ke_msg.h"   // kernel message definition
+#include "rwip.h"     // SW interface
+#include "stdbool.h"  // boolean definition
 
 /*
  * TYPE DEFINITIONS
  ****************************************************************************************
  */
 
-
 /*
  * GLOBAL VARIABLE DECLARATIONS
  ****************************************************************************************
  */
-
 
 /*
  * FUNCTION DECLARATIONS
@@ -69,9 +65,8 @@ void gtl_init(const struct rwip_eif_api* eif);
  * @brief Stop GTL flow to enter in sleep mode
  *
  * WARNING FOR CHIPS WITHOUT EXTERNAL WAKE UP !!!
- * This function also disable the RTS signal on the UART side if UART is used as physical
- * interface.
- * After sleep, RTS should be re-enabled.
+ * This function also disable the RTS signal on the UART side if UART is used as
+ *physical interface. After sleep, RTS should be re-enabled.
  *
  * @return true if GTL has entered sleep, false otherwise
  *****************************************************************************************
@@ -91,9 +86,9 @@ void gtl_exit_sleep(void);
  *
  * @param[in] msg Kernel message to handle
  */
-void gtl_send_msg(struct ke_msg * msg);
+void gtl_send_msg(struct ke_msg* msg);
 
-#endif //GTL_ITF
+#endif  // GTL_ITF
 
 /// @} GTL
-#endif // GTL_H_
+#endif  // GTL_H_

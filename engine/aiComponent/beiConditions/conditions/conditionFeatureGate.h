@@ -18,23 +18,22 @@
 
 namespace Anki {
 namespace Vector {
-  
+
 enum class FeatureType : uint8_t;
 
-class ConditionFeatureGate : public IBEICondition
-{
-public:
+class ConditionFeatureGate : public IBEICondition {
+ public:
   explicit ConditionFeatureGate(const Json::Value& config);
 
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& bei) const override;
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& bei) const override;
 
-private:
+ private:
   FeatureType _featureType;
   bool _expected;
 };
 
-}
-}
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

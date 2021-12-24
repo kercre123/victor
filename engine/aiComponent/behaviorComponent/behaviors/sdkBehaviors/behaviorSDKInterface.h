@@ -20,45 +20,48 @@ namespace Vector {
 
 class BehaviorDriveOffCharger;
 class IGatewayInterface;
-class UserIntentComponent; 
+class UserIntentComponent;
 namespace external_interface {
-  class DriveOffChargerRequest;
-  class DriveOnChargerRequest;
-  class FindFacesRequest;
-  class LookAroundInPlaceRequest;
-  class RollBlockRequest;
-  class EnrollFaceRequest;
-}
-  
-class BehaviorSDKInterface : public ICozmoBehavior
-{
-protected:
+class DriveOffChargerRequest;
+class DriveOnChargerRequest;
+class FindFacesRequest;
+class LookAroundInPlaceRequest;
+class RollBlockRequest;
+class EnrollFaceRequest;
+}  // namespace external_interface
+
+class BehaviorSDKInterface : public ICozmoBehavior {
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorSDKInterface(const Json::Value& config);  
+  explicit BehaviorSDKInterface(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual void InitBehavior() override;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
   virtual void OnBehaviorDeactivated() override;
-  
+
   virtual void HandleWhileActivated(const AppToEngineEvent& event) override;
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
 
-private:
+ private:
   template <class ResponseType>
   void HandleBehaviorComplete();
   template <class RequestType, class ResponseType>
-  void BehaviorRequest(const RequestType& request, ICozmoBehaviorPtr behavior, std::string behaviorName);
+  void BehaviorRequest(const RequestType& request, ICozmoBehaviorPtr behavior,
+                       std::string behaviorName);
   void StopDelegatedBehavior();
 
-  // Use this to prevent (or allow) raw movement commands from the SDK. We only want to allow these when the SDK
-  // behavior is activated and _not_ delegating to another behavior.
+  // Use this to prevent (or allow) raw movement commands from the SDK. We only
+  // want to allow these when the SDK behavior is activated and _not_ delegating
+  // to another behavior.
   void SetAllowExternalMovementCommands(const bool allow);
   void ProcessUserIntents();
 
@@ -89,13 +92,13 @@ private:
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-  
+
   std::vector<Signal::SmartHandle> _signalHandles;
   AnkiEventMgr<external_interface::GatewayWrapper> _eventMgr;
 
   bool _cancelling_behaviors;
 };
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorSDKInterface__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorSDKInterface__

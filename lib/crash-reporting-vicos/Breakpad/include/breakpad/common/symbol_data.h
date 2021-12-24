@@ -33,10 +33,6 @@
 #define COMMON_SYMBOL_DATA_H_
 
 // Control what data is used from the symbol file.
-enum SymbolData {
-  ALL_SYMBOL_DATA,
-  NO_CFI,
-  ONLY_CFI
-};
+enum SymbolData { ALL_SYMBOL_DATA, NO_CFI, ONLY_CFI };
 
 #endif  // COMMON_SYMBOL_DATA_H_

@@ -60,16 +60,15 @@
 #ifndef PROCESSOR_CONTAINED_RANGE_MAP_H__
 #define PROCESSOR_CONTAINED_RANGE_MAP_H__
 
-
 #include <map>
-
 
 namespace google_breakpad {
 
 // Forward declarations (for later friend declarations of specialized template).
-template<class, class> class ContainedRangeMapSerializer;
+template <class, class>
+class ContainedRangeMapSerializer;
 
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 class ContainedRangeMap {
  public:
   // The default constructor creates a ContainedRangeMap with no geometry
@@ -86,8 +85,7 @@ class ContainedRangeMap {
   // grandchildren of this ContainedRangeMap.  Returns false for a
   // parameter error, or if the ContainedRangeMap hierarchy guarantees
   // would be violated.
-  bool StoreRange(const AddressType &base,
-                  const AddressType &size,
+  bool StoreRange(const AddressType &base, const AddressType &size,
                   const EntryType &entry);
 
   // Retrieves the most specific (smallest) descendant range encompassing
@@ -143,8 +141,6 @@ class ContainedRangeMap {
   AddressToRangeMap *map_;
 };
 
-
 }  // namespace google_breakpad
-
 
 #endif  // PROCESSOR_CONTAINED_RANGE_MAP_H__

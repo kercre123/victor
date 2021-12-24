@@ -10,7 +10,6 @@
  ****************************************************************************************
  */
 
-
 #ifndef _GAPC_H_
 #define _GAPC_H_
 
@@ -20,15 +19,14 @@
  * @ingroup GAP
  * @brief  Generic Access Profile Controller.
  *
- * The GAP Controller module is responsible for providing an API to the application in
- * to perform GAP action related to a BLE connection (pairing, update parameters,
- * disconnect ...). GAP controller is multi-instantiated, one task instance per BLE
- * connection.
+ * The GAP Controller module is responsible for providing an API to the
+ *application in to perform GAP action related to a BLE connection (pairing,
+ *update parameters, disconnect ...). GAP controller is multi-instantiated, one
+ *task instance per BLE connection.
  *
  * @{
  ****************************************************************************************
  */
-
 
 /*
  * INCLUDE FILES
@@ -38,12 +36,10 @@
 
 #if (BLE_CENTRAL || BLE_PERIPHERAL)
 
-#include "ke_task.h"
 #include "gap.h"
 #include "gapc_task.h"
+#include "ke_task.h"
 #include "llc_task.h"
-
-
 
 /*
  * DEFINES
@@ -51,77 +47,69 @@
  */
 
 /// Information source.
-enum gapc_addr_src
-{
-    /// Local info.
-    GAPC_INFO_LOCAL,
-    /// Peer info.
-    GAPC_INFO_PEER,
-    /// Maximum info source.
-    GAPC_INFO_MAX,
+enum gapc_addr_src {
+  /// Local info.
+  GAPC_INFO_LOCAL,
+  /// Peer info.
+  GAPC_INFO_PEER,
+  /// Maximum info source.
+  GAPC_INFO_MAX,
 };
 
-
-
-/// Link security status. This status represents the authentication/authorization/bonding levels of the connection
-enum gapc_lk_sec_req
-{
-    /// No security requirements on current link
-    GAPC_LK_SEC_NONE,
-    /// Link is unauthenticated
-    GAPC_LK_UNAUTHENTICATED,
-    /// Link is authenticated
-    GAPC_LK_AUTHENTICATED,
-    /// Link is authorized
-    GAPC_LK_AUTHORIZED ,
-    /// Link is bonded
-    GAPC_LK_BONDED,
-    /// Link is Encrypted
-    GAPC_LK_ENCRYPTED,
+/// Link security status. This status represents the
+/// authentication/authorization/bonding levels of the connection
+enum gapc_lk_sec_req {
+  /// No security requirements on current link
+  GAPC_LK_SEC_NONE,
+  /// Link is unauthenticated
+  GAPC_LK_UNAUTHENTICATED,
+  /// Link is authenticated
+  GAPC_LK_AUTHENTICATED,
+  /// Link is authorized
+  GAPC_LK_AUTHORIZED,
+  /// Link is bonded
+  GAPC_LK_BONDED,
+  /// Link is Encrypted
+  GAPC_LK_ENCRYPTED,
 };
-
 
 /// fields definitions.
-enum gapc_fields
-{
-    /// Local connection role
-    GAPC_ROLE      = 0,
-    /// Encrypted connection or not
-    GAPC_ENCRYPTED = 1,
-    /// Authentication informations
-    GAPC_AUTH      = 2,
-    /// Authorization informations
-    GAPC_AUTHZ     = 5,
+enum gapc_fields {
+  /// Local connection role
+  GAPC_ROLE = 0,
+  /// Encrypted connection or not
+  GAPC_ENCRYPTED = 1,
+  /// Authentication informations
+  GAPC_AUTH = 2,
+  /// Authorization informations
+  GAPC_AUTHZ = 5,
 };
-
 
 /// fields mask definitions.
-enum gapc_fields_mask
-{
-    /// Bit[0]
-    GAPC_ROLE_MASK      = 0x01,
-    /// Bit[1]
-    GAPC_ENCRYPTED_MASK = 0x02,
-    /// Bit[4-2]
-    GAPC_AUTH_MASK      = 0x1C,
-    /// Bit[6-5]
-    GAPC_AUTHZ_MASK     = 0x60,
+enum gapc_fields_mask {
+  /// Bit[0]
+  GAPC_ROLE_MASK = 0x01,
+  /// Bit[1]
+  GAPC_ENCRYPTED_MASK = 0x02,
+  /// Bit[4-2]
+  GAPC_AUTH_MASK = 0x1C,
+  /// Bit[6-5]
+  GAPC_AUTHZ_MASK = 0x60,
 };
-
 
 /*
  * MACRO DEFINITIONS
  *********************************GET*******************************************************
  */
 /// Set link configuration field
-#define GAPC_SET_FIELD(conidx, field, value)\
-    (gapc_env[conidx]->fields) = ((gapc_env[conidx]->fields) & (~GAPC_##field##_MASK)) \
-                                     | (((value) << GAPC_##field) & (GAPC_##field##_MASK))
-
+#define GAPC_SET_FIELD(conidx, field, value)                  \
+  (gapc_env[conidx]->fields) =                                \
+      ((gapc_env[conidx]->fields) & (~GAPC_##field##_MASK)) | \
+      (((value) << GAPC_##field) & (GAPC_##field##_MASK))
 
 /// Get link configuration field
-#define GAPC_GET_FIELD(conidx, field)\
-    (((gapc_env[conidx]->fields) & (GAPC_##field##_MASK)) >> GAPC_##field)
+#define GAPC_GET_FIELD(conidx, field) \
+  (((gapc_env[conidx]->fields) & (GAPC_##field##_MASK)) >> GAPC_##field)
 
 /*
  * TYPE DEFINITIONS
@@ -129,44 +117,42 @@ enum gapc_fields_mask
  */
 
 /// GAP controller environment variable structure.
-struct gapc_env_tag
-{
-    /// Request operation Kernel message
-    void* operation;
-    /// Operation requester task id
-    ke_task_id_t requester;
+struct gapc_env_tag {
+  /// Request operation Kernel message
+  void* operation;
+  /// Operation requester task id
+  ke_task_id_t requester;
 
-    /* Connection parameters to keep */
-    /// connection handle
-    uint16_t conhdl;
+  /* Connection parameters to keep */
+  /// connection handle
+  uint16_t conhdl;
 
-    /// CSRK values (Local and remote)
-    struct gap_sec_key csrk[GAPC_INFO_MAX];
-    /// signature counter values (Local and remote)
-    uint32_t sign_counter[GAPC_INFO_MAX];
+  /// CSRK values (Local and remote)
+  struct gap_sec_key csrk[GAPC_INFO_MAX];
+  /// signature counter values (Local and remote)
+  uint32_t sign_counter[GAPC_INFO_MAX];
 
-    /// Encryption key size
-    uint8_t key_size;
+  /// Encryption key size
+  uint8_t key_size;
 
-    /// Configuration fields:
-    ///   7   6   5   4   3   2   1   0
-    /// +---+---+---+---+---+---+---+---+
-    /// | - | AUTHZ |    AUTH   | E | R |
-    /// +---+---+---+---+---+---+---+---+
-    uint8_t fields;
+  /// Configuration fields:
+  ///   7   6   5   4   3   2   1   0
+  /// +---+---+---+---+---+---+---+---+
+  /// | - | AUTHZ |    AUTH   | E | R |
+  /// +---+---+---+---+---+---+---+---+
+  uint8_t fields;
 
-    /// Task id requested disconnection
-    ke_task_id_t disc_requester;
+  /// Task id requested disconnection
+  ke_task_id_t disc_requester;
 
-    // BD Address used for the link that should be kept
-    struct gap_bdaddr src[GAPC_INFO_MAX];
+  // BD Address used for the link that should be kept
+  struct gap_bdaddr src[GAPC_INFO_MAX];
 };
 
 /*
  * MACROS
  ****************************************************************************************
  */
-
 
 /*
  * GLOBAL VARIABLE DECLARATIONS
@@ -183,12 +169,12 @@ extern struct gapc_env_tag* gapc_env[GAPC_IDX_MAX];
  ****************************************************************************************
  * @brief Initialize Generic Access Profile Controller Module.
  *
- * @param[in] reset  true if it's requested by a reset; false if it's boot initialization
+ * @param[in] reset  true if it's requested by a reset; false if it's boot
+ *initialization
  *
  ****************************************************************************************
  */
 void gapc_init(bool reset);
-
 
 /**
  ****************************************************************************************
@@ -205,14 +191,16 @@ void gapc_init(bool reset);
  * @return Connection index allocated to the new connection.
  ****************************************************************************************
  */
-uint8_t gapc_con_create(struct llc_create_con_cmd_complete const *con_params,
-                        ke_task_id_t requester, struct bd_addr* laddr, uint8_t laddr_type);
+uint8_t gapc_con_create(struct llc_create_con_cmd_complete const* con_params,
+                        ke_task_id_t requester, struct bd_addr* laddr,
+                        uint8_t laddr_type);
 
 /**
  ****************************************************************************************
  * @brief A connection has been disconnected, uninitialized Controller task.
  *
- * unregister connection, and destroy environment variable allocated for current connection.
+ * unregister connection, and destroy environment variable allocated for current
+ *connection.
  *
  * @param[in] conidx  Connection index
  *
@@ -220,7 +208,6 @@ uint8_t gapc_con_create(struct llc_create_con_cmd_complete const *con_params,
  ****************************************************************************************
  */
 uint8_t gapc_con_cleanup(uint8_t conidx);
-
 
 /**
  ****************************************************************************************
@@ -233,9 +220,8 @@ uint8_t gapc_con_cleanup(uint8_t conidx);
  *
  ****************************************************************************************
  */
-void gapc_send_disconect_ind(uint8_t conidx,  uint8_t reason, uint8_t conhdl,
-                              ke_task_id_t dest_id);
-
+void gapc_send_disconect_ind(uint8_t conidx, uint8_t reason, uint8_t conhdl,
+                             ke_task_id_t dest_id);
 
 /**
  ****************************************************************************************
@@ -317,8 +303,8 @@ void gapc_send_complete_evt(uint8_t conidx, uint8_t status);
 
 /**
  ****************************************************************************************
- * @brief Send operation completed message with status error code not related to a
- * running operation.
+ * @brief Send operation completed message with status error code not related to
+ *a running operation.
  *
  * @param[in] conidx    Connection index
  * @param[in] operation Operation code
@@ -326,9 +312,8 @@ void gapc_send_complete_evt(uint8_t conidx, uint8_t status);
  * @param[in] status    Error status code
  ****************************************************************************************
  */
-void gapc_send_error_evt(uint8_t conidx, uint8_t operation, const ke_task_id_t requester, uint8_t status);
-
-
+void gapc_send_error_evt(uint8_t conidx, uint8_t operation,
+                         const ke_task_id_t requester, uint8_t status);
 
 /**
  ****************************************************************************************
@@ -354,8 +339,6 @@ bool gapc_is_sec_set(uint8_t conidx, uint8_t sec_req);
  */
 uint8_t gapc_get_enc_keysize(uint8_t conidx);
 
-
-
 /**
  ****************************************************************************************
  * @brief Set the encryption key size of the connection
@@ -367,7 +350,6 @@ uint8_t gapc_get_enc_keysize(uint8_t conidx);
  */
 void gapc_set_enc_keysize(uint8_t conidx, uint8_t key_size);
 
-
 /**
  ****************************************************************************************
  * @brief Update link status, current link is now encrypted
@@ -377,7 +359,6 @@ void gapc_set_enc_keysize(uint8_t conidx, uint8_t key_size);
  ****************************************************************************************
  */
 void gapc_link_encrypted(uint8_t conidx);
-
 
 /**
  ****************************************************************************************
@@ -390,7 +371,7 @@ void gapc_link_encrypted(uint8_t conidx);
  */
 void gapc_auth_set(uint8_t conidx, uint8_t auth);
 
-#endif // (BLE_CENTRAL || BLE_PERIPHERAL)
+#endif  // (BLE_CENTRAL || BLE_PERIPHERAL)
 /// @} GAPC
 
 #endif /* _GAPC_H_ */

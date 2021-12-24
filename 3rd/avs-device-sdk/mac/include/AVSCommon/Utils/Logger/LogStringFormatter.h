@@ -30,26 +30,24 @@ namespace logger {
  * A class used to format log strings.
  */
 class LogStringFormatter {
-public:
-    LogStringFormatter();
+ public:
+  LogStringFormatter();
 
-    /**
-     * Formats a log message into a printable string with other metadata regarding the log message.
-     *
-     * @param level The severity Level of this log line.
-     * @param time The time that the event to log occurred.
-     * @param threadMoniker Moniker of the thread that generated the event.
-     * @param text The text of the entry to log.
-     * @return The formatted string.
-     */
-    std::string format(
-        Level level,
-        std::chrono::system_clock::time_point time,
-        const char* threadMoniker,
-        const char* text);
+  /**
+   * Formats a log message into a printable string with other metadata regarding
+   * the log message.
+   *
+   * @param level The severity Level of this log line.
+   * @param time The time that the event to log occurred.
+   * @param threadMoniker Moniker of the thread that generated the event.
+   * @param text The text of the entry to log.
+   * @return The formatted string.
+   */
+  std::string format(Level level, std::chrono::system_clock::time_point time,
+                     const char* threadMoniker, const char* text);
 
-private:
-    std::shared_ptr<timing::SafeCTimeAccess> m_safeCTimeAccess;
+ private:
+  std::shared_ptr<timing::SafeCTimeAccess> m_safeCTimeAccess;
 };
 
 }  // namespace logger

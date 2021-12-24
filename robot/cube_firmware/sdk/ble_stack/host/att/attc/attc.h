@@ -20,8 +20,8 @@
  * @ingroup ATT
  * @brief Attribute Protocol Client
  *
- * The ATTC module is responsible for handling messages intended for the attribute
- * profile client. It has defined interfaces with @ref ATTM "ATTM".
+ * The ATTC module is responsible for handling messages intended for the
+ *attribute profile client. It has defined interfaces with @ref ATTM "ATTM".
  *
  * @{
  *
@@ -34,15 +34,16 @@
  ****************************************************************************************
  */
 #include <stdint.h>
-#include "ke_task.h"
+
 #include "attm.h"
+#include "ke_task.h"
 #if (BLE_ATTC)
 /*
  * DEFINES
  ****************************************************************************************
  */
 /// maximum number of ATTC instances
-#define ATTC_IDX_MAX                                    BLE_CONNECTION_MAX
+#define ATTC_IDX_MAX BLE_CONNECTION_MAX
 
 /*
  * DATA STRUCTURES
@@ -64,7 +65,8 @@
  * @brief Initialization of the ATTC module.
  * This function performs all the initializations of the ATTC module.
  *
- * @param[in] reset  true if it's requested by a reset; false if it's boot initialization
+ * @param[in] reset  true if it's requested by a reset; false if it's boot
+ *initialization
  *
  ****************************************************************************************
  */
@@ -82,8 +84,8 @@ void attc_create(uint8_t conidx);
 
 /**
  ****************************************************************************************
- * @brief Created link connection parameters (from bond data) has been set, connection
- * ready to be used.
+ * @brief Created link connection parameters (from bond data) has been set,
+ *connection ready to be used.
  *
  * @param[in] conidx     Connection Index
  *
@@ -103,4 +105,4 @@ void attc_con_enable(uint8_t conidx);
 void attc_cleanup(uint8_t conidx);
 #endif /* (BLE_ATTC) */
 /// @} ATTC
-#endif // ATT_H_
+#endif  // ATT_H_

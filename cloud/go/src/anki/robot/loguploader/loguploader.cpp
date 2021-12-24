@@ -8,16 +8,14 @@
 
 #include "platform/robotLogUploader/robotLogUploader.h"
 
-extern "C"
-{
+extern "C" {
 
 //
 // Returns 0 and outstr=url on success
 // Returns non-zero and outstr=error on failure
 // Caller is responsible for releasing outstr
 //
-int UploadDebugLogs(char ** outstr)
-{
+int UploadDebugLogs(char** outstr) {
   std::string status;
   const int result = Anki::Vector::RobotLogUploader::UploadDebugLogs(status);
   if (outstr != nullptr) {
@@ -26,4 +24,4 @@ int UploadDebugLogs(char ** outstr)
   return result;
 }
 
-} // end extern "C"
+}  // end extern "C"

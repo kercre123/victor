@@ -33,8 +33,7 @@
 #define AUBIO_FILTERBANK_H
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /** filterbank object
@@ -50,30 +49,31 @@ typedef struct _aubio_filterbank_t aubio_filterbank_t;
   \param win_s size of analysis buffer (and length the FFT transform)
 
 */
-aubio_filterbank_t *new_aubio_filterbank (uint_t n_filters, uint_t win_s);
+aubio_filterbank_t *new_aubio_filterbank(uint_t n_filters, uint_t win_s);
 
 /** destroy filterbank object
 
   \param f filterbank object, as returned by new_aubio_filterbank()
 
 */
-void del_aubio_filterbank (aubio_filterbank_t * f);
+void del_aubio_filterbank(aubio_filterbank_t *f);
 
 /** compute filterbank
 
   \param f filterbank object, as returned by new_aubio_filterbank()
   \param in input spectrum containing an input spectrum of length `win_s`
-  \param out output vector containing the energy found in each band, `nfilt` output values
+  \param out output vector containing the energy found in each band, `nfilt`
+  output values
 
 */
-void aubio_filterbank_do (aubio_filterbank_t * f, const cvec_t * in, fvec_t * out);
+void aubio_filterbank_do(aubio_filterbank_t *f, const cvec_t *in, fvec_t *out);
 
 /** return a pointer to the matrix object containing all filter coefficients
 
   \param f filterbank object, as returned by new_aubio_filterbank()
 
  */
-fmat_t *aubio_filterbank_get_coeffs (const aubio_filterbank_t * f);
+fmat_t *aubio_filterbank_get_coeffs(const aubio_filterbank_t *f);
 
 /** copy filter coefficients to the filterbank
 
@@ -81,7 +81,8 @@ fmat_t *aubio_filterbank_get_coeffs (const aubio_filterbank_t * f);
   \param filters filter bank coefficients to copy from
 
  */
-uint_t aubio_filterbank_set_coeffs (aubio_filterbank_t * f, const fmat_t * filters);
+uint_t aubio_filterbank_set_coeffs(aubio_filterbank_t *f,
+                                   const fmat_t *filters);
 
 /** set norm parameter
 
@@ -97,7 +98,7 @@ uint_t aubio_filterbank_set_coeffs (aubio_filterbank_t * f, const fmat_t * filte
   aubio_filterbank_set_mel_coeffs_slaney().
 
  */
-uint_t aubio_filterbank_set_norm (aubio_filterbank_t *f, smpl_t norm);
+uint_t aubio_filterbank_set_norm(aubio_filterbank_t *f, smpl_t norm);
 
 /** get norm parameter
 
@@ -105,7 +106,7 @@ uint_t aubio_filterbank_set_norm (aubio_filterbank_t *f, smpl_t norm);
   \returns `1` if norm is set, `0` otherwise. Defaults to `1`.
 
  */
-smpl_t aubio_filterbank_get_norm (aubio_filterbank_t *f);
+smpl_t aubio_filterbank_get_norm(aubio_filterbank_t *f);
 
 /** set power parameter
 
@@ -114,7 +115,7 @@ smpl_t aubio_filterbank_get_norm (aubio_filterbank_t *f);
   computing filterbank.  Defaults to `1`.
 
  */
-uint_t aubio_filterbank_set_power (aubio_filterbank_t *f, smpl_t power);
+uint_t aubio_filterbank_set_power(aubio_filterbank_t *f, smpl_t power);
 
 /** get power parameter
 
@@ -122,7 +123,7 @@ uint_t aubio_filterbank_set_power (aubio_filterbank_t *f, smpl_t power);
   \return current power parameter. Defaults to `1`.
 
  */
-smpl_t aubio_filterbank_get_power (aubio_filterbank_t *f);
+smpl_t aubio_filterbank_get_power(aubio_filterbank_t *f);
 
 #ifdef __cplusplus
 }

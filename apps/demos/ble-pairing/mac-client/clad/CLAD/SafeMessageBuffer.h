@@ -28,36 +28,35 @@
 #error "SafeMessageBuffer is a C++ only header!"
 #endif
 
+#include <array>
 #include <cassert>
 #include <cstdint>
-#include <vector>
 #include <string>
-#include <array>
+#include <vector>
 
-namespace CLAD
-{
+namespace CLAD {
 
-class __attribute__((visibility("default"))) SafeMessageBuffer
-{
-public:
-
+class __attribute__((visibility("default"))) SafeMessageBuffer {
+ public:
   // ========== Constructors / Destructors ==========
 
   SafeMessageBuffer();
   explicit SafeMessageBuffer(size_t inSize);
-  SafeMessageBuffer(uint8_t* inBuffer, size_t inBufferSize, bool inOwnsBufferMemory = false);
+  SafeMessageBuffer(uint8_t* inBuffer, size_t inBufferSize,
+                    bool inOwnsBufferMemory = false);
 
   ~SafeMessageBuffer();
 
   // ========== Buffer Management ==========
 
   void AllocateBuffer(size_t inBufferSize);
-  void SetBuffer(uint8_t* inBuffer, size_t inBufferSize, bool inOwnsBufferMemory = false);
+  void SetBuffer(uint8_t* inBuffer, size_t inBufferSize,
+                 bool inOwnsBufferMemory = false);
   void ReleaseBuffer();
 
-  size_t  GetBytesWritten() const;
-  size_t  GetBytesRead() const;
-  size_t  CopyBytesOut(uint8_t* outBuffer, size_t bufferSize) const;
+  size_t GetBytesWritten() const;
+  size_t GetBytesRead() const;
+  size_t CopyBytesOut(uint8_t* outBuffer, size_t bufferSize) const;
 
   void Clear();
 
@@ -66,16 +65,14 @@ public:
   bool WriteBytes(const void* srcData, size_t sizeOfWrite);
 
   template <typename T>
-  bool Write(T inVal)
-  {
+  bool Write(T inVal) {
     return WriteBytes(&inVal, sizeof(inVal));
   }
 
   template <typename T>
-  bool Write( const std::vector<T>& inVec)
-  {
-    for(const T& val : inVec) {
-      if(!Write(val)) {
+  bool Write(const std::vector<T>& inVec) {
+    for (const T& val : inVec) {
+      if (!Write(val)) {
         return false;
       }
     }
@@ -83,10 +80,9 @@ public:
   }
 
   template <typename val_t, size_t length>
-  bool WriteFArray(const std::array<val_t, length>& inArray)
-  {
-    for(const val_t& val : inArray) {
-      if(!Write(val)) {
+  bool WriteFArray(const std::array<val_t, length>& inArray) {
+    for (const val_t& val : inArray) {
+      if (!Write(val)) {
         return false;
       }
     }
@@ -94,44 +90,40 @@ public:
   }
 
   template <typename val_t, typename length_t>
-  bool WriteVArray(val_t* arrayPtr, const length_t numElements)
-  {
+  bool WriteVArray(val_t* arrayPtr, const length_t numElements) {
     bool wroteOK = Write(numElements);
-    if (wroteOK && (numElements != 0))
-    {
+    if (wroteOK && (numElements != 0)) {
       wroteOK |= WriteBytes(arrayPtr, sizeof(val_t) * numElements);
     }
     return wroteOK;
   }
 
   template <typename val_t, typename length_t>
-  bool WriteVArray( const std::vector<val_t>& inVec )
-  {
+  bool WriteVArray(const std::vector<val_t>& inVec) {
     const auto inVecLength = inVec.size();
     const length_t lengthWritten = static_cast<length_t>(inVecLength);
     assert(static_cast<decltype(inVecLength)>(lengthWritten) == inVecLength);
 
-    if(!Write(lengthWritten)) {
+    if (!Write(lengthWritten)) {
       return false;
     }
-    if(!Write(inVec)) {
+    if (!Write(inVec)) {
       return false;
     }
     return true;
   }
 
   template <typename length_t>
-  bool WritePString( const std::string& str )
-  {
+  bool WritePString(const std::string& str) {
     const std::size_t strlen = str.length();
     const length_t lengthWritten = static_cast<length_t>(strlen);
     assert(static_cast<std::size_t>(lengthWritten) == strlen);
 
-    if(!Write(lengthWritten)) {
+    if (!Write(lengthWritten)) {
       return false;
     }
-    if(lengthWritten > 0) {
-      if(!WriteBytes(str.data(), lengthWritten)) {
+    if (lengthWritten > 0) {
+      if (!WriteBytes(str.data(), lengthWritten)) {
         return false;
       }
     }
@@ -139,20 +131,20 @@ public:
   }
 
   template <typename array_length_t, typename string_length_t>
-  bool WritePStringVArray( const std::vector<std::string>& inVec )
-  {
+  bool WritePStringVArray(const std::vector<std::string>& inVec) {
     const auto inVecLength = inVec.size();
-    const array_length_t lengthWritten = static_cast<array_length_t>(inVecLength);
+    const array_length_t lengthWritten =
+        static_cast<array_length_t>(inVecLength);
     assert(static_cast<decltype(inVecLength)>(lengthWritten) == inVecLength);
 
-    if(!Write(lengthWritten)) {
+    if (!Write(lengthWritten)) {
       return false;
     }
     // In event of truncation of length, write that number of items
     const size_t numToWrite = lengthWritten;
     for (size_t i = 0; i < numToWrite; ++i) {
       const std::string& str = inVec[i];
-      if(!WritePString<string_length_t>(str)) {
+      if (!WritePString<string_length_t>(str)) {
         return false;
       }
     }
@@ -160,10 +152,9 @@ public:
   }
 
   template <size_t length, typename string_length_t>
-  bool WritePStringFArray(const std::array<std::string, length>& inArray)
-  {
-    for(const std::string& val : inArray) {
-      if(!WritePString<string_length_t>(val)) {
+  bool WritePStringFArray(const std::array<std::string, length>& inArray) {
+    for (const std::string& val : inArray) {
+      if (!WritePString<string_length_t>(val)) {
         return false;
       }
     }
@@ -175,19 +166,17 @@ public:
   bool ReadBytes(void* destData, size_t sizeOfRead) const;
 
   template <typename T>
-  bool Read(T& outVal) const
-  {
+  bool Read(T& outVal) const {
     return ReadBytes(&outVal, sizeof(outVal));
   }
 
   template <typename val_t>
-  bool Read( std::vector<val_t>& outVec, const size_t num) const
-  {
+  bool Read(std::vector<val_t>& outVec, const size_t num) const {
     outVec.clear();
     outVec.reserve(num);
     val_t val;
-    for(size_t i = 0; i < num; i++) {
-      if(!Read(val)) {
+    for (size_t i = 0; i < num; i++) {
+      if (!Read(val)) {
         return false;
       }
       outVec.push_back(val);
@@ -196,11 +185,10 @@ public:
   }
 
   template <typename val_t, size_t length>
-  bool ReadFArray( std::array<val_t, length>& outArray ) const
-  {
+  bool ReadFArray(std::array<val_t, length>& outArray) const {
     val_t val;
-    for(size_t i = 0; i < length; i++) {
-      if(!Read(val)) {
+    for (size_t i = 0; i < length; i++) {
+      if (!Read(val)) {
         return false;
       }
       outArray[i] = val;
@@ -209,41 +197,38 @@ public:
   }
 
   template <typename val_t, typename length_t>
-  bool ReadVArray( std::vector<val_t>& outVec ) const
-  {
+  bool ReadVArray(std::vector<val_t>& outVec) const {
     length_t length;
-    if(!Read(length)) {
+    if (!Read(length)) {
       return false;
     }
-    if(!Read(outVec, length)) {
+    if (!Read(outVec, length)) {
       return false;
     }
     return true;
   }
 
   template <typename length_t>
-  bool ReadPString( std::string& outStr ) const
-  {
+  bool ReadPString(std::string& outStr) const {
     length_t length;
-    if(!Read(length)) {
+    if (!Read(length)) {
       return false;
     }
-    if(!ReadString(outStr, length)) {
+    if (!ReadString(outStr, length)) {
       return false;
     }
     return true;
   }
-  
-  bool ReadString( std::string& outStr, size_t length) const
-  {
+
+  bool ReadString(std::string& outStr, size_t length) const {
     outStr.clear();
-    if(length > 0) {
+    if (length > 0) {
       outStr.reserve(length);
       // This is probably really slow!
       // TODO: figure out how to more quickly unpack a string
       std::string::value_type val;
-      for(size_t i = 0; i < length; i++) {
-        if(!Read(val)) {
+      for (size_t i = 0; i < length; i++) {
+        if (!Read(val)) {
           return false;
         }
         outStr.push_back(val);
@@ -253,18 +238,17 @@ public:
   }
 
   template <typename array_length_t, typename string_length_t>
-  bool ReadPStringVArray( std::vector<std::string>& outVec ) const
-  {
+  bool ReadPStringVArray(std::vector<std::string>& outVec) const {
     array_length_t length;
-    if(!Read(length)) {
+    if (!Read(length)) {
       return false;
     }
     const size_t num = length;
     outVec.clear();
     outVec.reserve(num);
     std::string val;
-    for(size_t i = 0; i < num; i++) {
-      if(!ReadPString<string_length_t>(val)) {
+    for (size_t i = 0; i < num; i++) {
+      if (!ReadPString<string_length_t>(val)) {
         return false;
       }
       outVec.push_back(val);
@@ -273,11 +257,10 @@ public:
   }
 
   template <size_t length, typename string_length_t>
-  bool ReadPStringFArray( std::array<std::string, length>& outArray ) const
-  {
+  bool ReadPStringFArray(std::array<std::string, length>& outArray) const {
     std::string val;
-    for(size_t i = 0; i < length; i++) {
-      if(!ReadPString<string_length_t>(val)) {
+    for (size_t i = 0; i < length; i++) {
+      if (!ReadPString<string_length_t>(val)) {
         return false;
       }
       outArray[i] = val;
@@ -286,13 +269,12 @@ public:
   }
 
   template <typename val_t>
-  bool ReadCompoundTypeVec( std::vector<val_t>& outVec, const size_t num) const
-  {
+  bool ReadCompoundTypeVec(std::vector<val_t>& outVec, const size_t num) const {
     outVec.clear();
     outVec.reserve(num);
     val_t val;
-    for(size_t i = 0; i < num; i++) {
-      if(!val.Unpack(*this)) {
+    for (size_t i = 0; i < num; i++) {
+      if (!val.Unpack(*this)) {
         return false;
       }
       outVec.push_back(val);
@@ -301,24 +283,22 @@ public:
   }
 
   template <typename val_t, typename length_t>
-  bool ReadCompoundTypeVArray( std::vector<val_t>& outVec ) const
-  {
+  bool ReadCompoundTypeVArray(std::vector<val_t>& outVec) const {
     length_t length;
-    if(!Read(length)) {
+    if (!Read(length)) {
       return false;
     }
-    if(!ReadCompoundTypeVec(outVec, length)) {
+    if (!ReadCompoundTypeVec(outVec, length)) {
       return false;
     }
     return true;
   }
 
   template <typename val_t, size_t length>
-  bool ReadCompoundTypeFArray( std::array<val_t, length>& outArray ) const
-  {
+  bool ReadCompoundTypeFArray(std::array<val_t, length>& outArray) const {
     val_t val;
-    for(size_t i = 0; i < length; i++) {
-      if(!val.Unpack(*this)) {
+    for (size_t i = 0; i < length; i++) {
+      if (!val.Unpack(*this)) {
         return false;
       }
       outArray[i] = val;
@@ -329,30 +309,27 @@ public:
   // Buffer contents equality
   bool ContentsEqual(const SafeMessageBuffer& other) const;
 
-private:
-
+ private:
   SafeMessageBuffer(const SafeMessageBuffer&);
   SafeMessageBuffer& operator=(const SafeMessageBuffer&);
 
   // ========== Member Data ==========
 
-  uint8_t*          _buffer;
-  size_t            _bufferSize;
+  uint8_t* _buffer;
+  size_t _bufferSize;
 
-  uint8_t*          _writeHead;
-  mutable uint8_t*  _readHead;
+  uint8_t* _writeHead;
+  mutable uint8_t* _readHead;
 
-  bool              _ownsBufferMemory;
+  bool _ownsBufferMemory;
 };
 
-
-template<>
+template <>
 bool SafeMessageBuffer::Write(bool inVal);
 
-template<>
+template <>
 bool SafeMessageBuffer::Read(bool& outVal) const;
 
+}  // namespace CLAD
 
-}// CLAD
-
-#endif // SAFEMESSAGEBUFFER_H_
+#endif  // SAFEMESSAGEBUFFER_H_

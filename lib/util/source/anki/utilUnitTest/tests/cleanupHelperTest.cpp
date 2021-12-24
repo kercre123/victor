@@ -6,25 +6,22 @@
 //
 // --gtest_filter=CleanupHelperTest*
 
+#include "util/helpers/cleanupHelper.h"
 #include "util/helpers/includeGTest.h"
 
-#include "util/helpers/cleanupHelper.h"
-
-TEST(CleanupHelperTest, ScopedCleanup)
-{
+TEST(CleanupHelperTest, ScopedCleanup) {
   std::cout << "Testing CleanupHelper\n";
-  
+
   bool cleanupDone = false;
-  
+
   {
     // Construct cleanup object
-    Anki::Util::CleanupHelper cleanupTester([&cleanupDone]() {
-      cleanupDone = true;
-    });
-    
+    Anki::Util::CleanupHelper cleanupTester(
+        [&cleanupDone]() { cleanupDone = true; });
+
     // When it goes out of scope here and destructs, cleanupDone should get set
     // to true by the lambda passed into the CleanupHelper's constructor
   }
-  
+
   ASSERT_TRUE(cleanupDone);
 }

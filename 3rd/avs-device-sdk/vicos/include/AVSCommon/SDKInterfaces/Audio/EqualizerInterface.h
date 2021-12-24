@@ -27,32 +27,33 @@ namespace audio {
  * Interface performing the actual equalization of the audio.
  */
 class EqualizerInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~EqualizerInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~EqualizerInterface() = default;
 
-    /**
-     * Changes the equalization parameters for the audio.
-     *
-     * @param bandLevelMap EQ bands and their levels to be applied. Levels for all bands supported must be provided.
-     */
-    virtual void setEqualizerBandLevels(EqualizerBandLevelMap bandLevelMap) = 0;
+  /**
+   * Changes the equalization parameters for the audio.
+   *
+   * @param bandLevelMap EQ bands and their levels to be applied. Levels for all
+   * bands supported must be provided.
+   */
+  virtual void setEqualizerBandLevels(EqualizerBandLevelMap bandLevelMap) = 0;
 
-    /**
-     * Returns the minimum band level (dB) supported by this equalizer.
-     *
-     * @return The minimum band level (dB) supported by this equalizer.
-     */
-    virtual int getMinimumBandLevel() = 0;
+  /**
+   * Returns the minimum band level (dB) supported by this equalizer.
+   *
+   * @return The minimum band level (dB) supported by this equalizer.
+   */
+  virtual int getMinimumBandLevel() = 0;
 
-    /**
-     * Returns the maximum band level (dB) supported by this equalizer.
-     *
-     * @return The maximum band level (dB) supported by this equalizer.
-     */
-    virtual int getMaximumBandLevel() = 0;
+  /**
+   * Returns the maximum band level (dB) supported by this equalizer.
+   *
+   * @return The maximum band level (dB) supported by this equalizer.
+   */
+  virtual int getMaximumBandLevel() = 0;
 };
 
 }  // namespace audio

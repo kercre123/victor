@@ -16,10 +16,10 @@
 #ifndef ALEXA_CLIENT_SDK_CAPABILITYAGENTS_AUDIOPLAYER_INCLUDE_AUDIOPLAYER_CLEARBEHAVIOR_H_
 #define ALEXA_CLIENT_SDK_CAPABILITYAGENTS_AUDIOPLAYER_INCLUDE_AUDIOPLAYER_CLEARBEHAVIOR_H_
 
-#include <ostream>
-
 #include <AVSCommon/SDKInterfaces/DialogUXStateObserverInterface.h>
 #include <AVSCommon/Utils/JSON/JSONUtils.h>
+
+#include <ostream>
 
 namespace alexaClientSDK {
 namespace capabilityAgents {
@@ -27,11 +27,12 @@ namespace audioPlayer {
 
 /// Used to determine clear queue behavior.
 enum class ClearBehavior {
-    /// Clears the queue and continues to play the currently playing stream.
-    CLEAR_ENQUEUED,
+  /// Clears the queue and continues to play the currently playing stream.
+  CLEAR_ENQUEUED,
 
-    /// Clears the entire playback queue and stops the currently playing stream (if applicable).
-    CLEAR_ALL
+  /// Clears the entire playback queue and stops the currently playing stream
+  /// (if applicable).
+  CLEAR_ALL
 };
 
 /**
@@ -41,13 +42,13 @@ enum class ClearBehavior {
  * @return The AVS-compliant string representation of @c clearBehavior.
  */
 inline std::string clearBehaviorToString(ClearBehavior clearBehavior) {
-    switch (clearBehavior) {
-        case ClearBehavior::CLEAR_ENQUEUED:
-            return "CLEAR_ENQUEUED";
-        case ClearBehavior::CLEAR_ALL:
-            return "CLEAR_ALL";
-    }
-    return "unknown ClearBehavior";
+  switch (clearBehavior) {
+    case ClearBehavior::CLEAR_ENQUEUED:
+      return "CLEAR_ENQUEUED";
+    case ClearBehavior::CLEAR_ALL:
+      return "CLEAR_ALL";
+  }
+  return "unknown ClearBehavior";
 }
 
 /**
@@ -57,28 +58,31 @@ inline std::string clearBehaviorToString(ClearBehavior clearBehavior) {
  * @param[out] clearBehavior The converted @c ClearBehavior.
  * @return @c true if the string converted succesfully, else @c false.
  */
-inline bool stringToClearBehavior(const std::string& text, ClearBehavior* clearBehavior) {
-    if (nullptr == clearBehavior) {
-        return false;
-    } else if (clearBehaviorToString(ClearBehavior::CLEAR_ENQUEUED) == text) {
-        *clearBehavior = ClearBehavior::CLEAR_ENQUEUED;
-        return true;
-    } else if (clearBehaviorToString(ClearBehavior::CLEAR_ALL) == text) {
-        *clearBehavior = ClearBehavior::CLEAR_ALL;
-        return true;
-    }
+inline bool stringToClearBehavior(const std::string& text,
+                                  ClearBehavior* clearBehavior) {
+  if (nullptr == clearBehavior) {
     return false;
+  } else if (clearBehaviorToString(ClearBehavior::CLEAR_ENQUEUED) == text) {
+    *clearBehavior = ClearBehavior::CLEAR_ENQUEUED;
+    return true;
+  } else if (clearBehaviorToString(ClearBehavior::CLEAR_ALL) == text) {
+    *clearBehavior = ClearBehavior::CLEAR_ALL;
+    return true;
+  }
+  return false;
 }
 
 /**
  * Write a @c ClearBehavior value to an @c ostream.
  *
  * @param stream The stream to write the value to.
- * @param clearBehavior The @c ClearBehavior value to write to the @c ostream as a string.
+ * @param clearBehavior The @c ClearBehavior value to write to the @c ostream as
+ * a string.
  * @return The @c ostream that was passed in and written to.
  */
-inline std::ostream& operator<<(std::ostream& stream, const ClearBehavior& clearBehavior) {
-    return stream << clearBehaviorToString(clearBehavior);
+inline std::ostream& operator<<(std::ostream& stream,
+                                const ClearBehavior& clearBehavior) {
+  return stream << clearBehaviorToString(clearBehavior);
 }
 
 /**
@@ -88,12 +92,13 @@ inline std::ostream& operator<<(std::ostream& stream, const ClearBehavior& clear
  * @param clearBehavior The @c ClearBehavior to convert.
  * @return @c true if conversion is successful, else @c false.
  */
-inline bool convertToValue(const rapidjson::Value& documentNode, ClearBehavior* clearBehavior) {
-    std::string text;
-    if (!avsCommon::utils::json::jsonUtils::convertToValue(documentNode, &text)) {
-        return false;
-    }
-    return stringToClearBehavior(text, clearBehavior);
+inline bool convertToValue(const rapidjson::Value& documentNode,
+                           ClearBehavior* clearBehavior) {
+  std::string text;
+  if (!avsCommon::utils::json::jsonUtils::convertToValue(documentNode, &text)) {
+    return false;
+  }
+  return stringToClearBehavior(text, clearBehavior);
 }
 
 }  // namespace audioPlayer

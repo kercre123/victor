@@ -11,7 +11,6 @@
 #define dprintf(s, ...)
 #endif
 
-
 typedef enum CoreAppErrorCode_t {
   app_SUCCESS = 0,
   app_USAGE = -1,
@@ -27,22 +26,19 @@ typedef enum CoreAppErrorCode_t {
   app_DEVICE_OPEN_ERROR = -11,
 } CoreAppErrorCode;
 
-
 void error_exit(CoreAppErrorCode, const char*, ...);
 
-#define error_return(code, msg, ...)     \
-  {                                      \
-    printf("Error %d: ", code);          \
-    printf(msg, ##__VA_ARGS__);          \
-    printf("\n\n");                      \
-    core_common_on_exit();               \
-    return code;                         \
+#define error_return(code, msg, ...) \
+  {                                  \
+    printf("Error %d: ", code);      \
+    printf(msg, ##__VA_ARGS__);      \
+    printf("\n\n");                  \
+    core_common_on_exit();           \
+    return code;                     \
   }
-
 
 // Applications must implement this
 // it should cleanup any open resources
 extern void core_common_on_exit(void);
 
-
-#endif//CORE_COMMON_H
+#endif  // CORE_COMMON_H

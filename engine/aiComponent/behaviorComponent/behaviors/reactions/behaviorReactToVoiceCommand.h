@@ -1,14 +1,15 @@
 /**
-* File: behaviorReactToVoiceCommand.h
-*
-* Author: Jarrod Hatfield
-* Created: 2/16/2018
-*
-* Description: Simple behavior to immediately respond to the voice command keyphrase, while waiting for further commands.
-*
-* Copyright: Anki, Inc. 2017
-*
-**/
+ * File: behaviorReactToVoiceCommand.h
+ *
+ * Author: Jarrod Hatfield
+ * Created: 2/16/2018
+ *
+ * Description: Simple behavior to immediately respond to the voice command
+ *keyphrase, while waiting for further commands.
+ *
+ * Copyright: Anki, Inc. 2017
+ *
+ **/
 
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToVoiceCommand_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToVoiceCommand_H__
@@ -27,45 +28,47 @@ class BehaviorReactToMicDirection;
 class ConditionUserIntentPending;
 enum class AnimationTrigger : int32_t;
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class BehaviorReactToVoiceCommand : public ICozmoBehavior
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - -
+class BehaviorReactToVoiceCommand : public ICozmoBehavior {
   friend class BehaviorFactory;
   BehaviorReactToVoiceCommand(const Json::Value& config);
 
-
-public:
-
-  // Public destructor must be explicitly defined to allow std::unique_ptr<FwdDeclaredType> (ConditionUserIntentPending)
+ public:
+  // Public destructor must be explicitly defined to allow
+  // std::unique_ptr<FwdDeclaredType> (ConditionUserIntentPending)
   ~BehaviorReactToVoiceCommand();
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
 
   virtual bool WantsToBeActivatedBehavior() const override;
-  virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
-  virtual void GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const override;
-  
-  // Empty override of AddListener because the strategy that controls this behavior is a listener
-  // The strategy controls multiple different behaviors and listeners are necessary for the other behaviors
-  // since they are generic PlayAnim behaviors (reactToVoiceCommand_Wakeup)
-  virtual void AddListener(ISubtaskListener* listener) override {};
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
 
-  // Allow other behaviors to specify a timestamp (generally the current timestamp)
-  // on which the turn on trigger/intent is disabled
-  void DisableTurnForTimestamp(EngineTimeStamp_t timestampToDisableFor){
+  // Empty override of AddListener because the strategy that controls this
+  // behavior is a listener The strategy controls multiple different behaviors
+  // and listeners are necessary for the other behaviors since they are generic
+  // PlayAnim behaviors (reactToVoiceCommand_Wakeup)
+  virtual void AddListener(ISubtaskListener* listener) override{};
+
+  // Allow other behaviors to specify a timestamp (generally the current
+  // timestamp) on which the turn on trigger/intent is disabled
+  void DisableTurnForTimestamp(EngineTimeStamp_t timestampToDisableFor) {
     _dVars.timestampToDisableTurnFor = timestampToDisableFor;
   }
-  
+
   void SetListeningAnims(const AnimationTrigger& listeningLoop,
                          const AnimationTrigger& listeningGetOut);
-  
+
   void ResetListeningAnimsToConfig();
 
-protected:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  enum class EState : uint8_t
-  {
+ protected:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
+  enum class EState : uint8_t {
     GetIn,
     ListeningGetIn,
     ListeningLoop,
@@ -73,8 +76,7 @@ protected:
     IntentReceived,
   };
 
-  enum class EIntentStatus : uint8_t
-  {
+  enum class EIntentStatus : uint8_t {
     IntentHeard,
     IntentUnknown,
     SilenceTimeout,
@@ -82,13 +84,13 @@ protected:
     Error
   };
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
   virtual void InitBehavior() override;
-  virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
-  virtual void AlwaysHandleInScope( const RobotToEngineEvent& event ) override;
+  virtual void AlwaysHandleInScope(const RobotToEngineEvent& event) override;
 
   virtual void OnBehaviorEnteredActivatableScope() override;
   virtual void OnBehaviorActivated() override;
@@ -97,7 +99,6 @@ protected:
 
   virtual void BehaviorUpdate() override;
 
-  
   void UpdateUserIntentStatus();
 
   // state / transition functions
@@ -118,8 +119,8 @@ protected:
 
   void HandleStreamFailure();
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Direction Helpers
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Direction Helpers
 
   // cache the direction we want to react to
   void ComputeReactionDirectionFromStream();
@@ -128,39 +129,38 @@ protected:
   MicDirectionIndex GetReactionDirection() const;
   // get the "best recent" direction from the mic history
   MicDirectionIndex GetDirectionFromMicHistory() const;
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Time Helpers
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Time Helpers
 
   double GetStreamingDuration() const;
   double GetListeningTimeout() const;
 
-
-private:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  struct InstanceConfig
-  {
+ private:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
+  struct InstanceConfig {
     InstanceConfig();
 
     // earcon is an audible cue to tell the user victor is listening
     AudioMetaData::GameEvent::GenericEvent earConBegin;
     AudioMetaData::GameEvent::GenericEvent earConSuccess;
     AudioMetaData::GameEvent::GenericEvent earConFail;
-    
+
     bool pushResponse;
-    
+
     AnimationTrigger animListeningGetIn;
     AnimationTrigger animListeningLoop;
     AnimationTrigger animListeningGetOut;
 
     bool backpackLights;
-    
+
     bool exitAfterGetIn;
-    
-    // If we are not streaming audio to the cloud, then this causes the behavior to exit after playing the "unheard"
-    // animation. This is to prevent the accumulation of "errors" due to unreceived intents (we would not expect any
-    // intents to come down if we are not streaming)
+
+    // If we are not streaming audio to the cloud, then this causes the behavior
+    // to exit after playing the "unheard" animation. This is to prevent the
+    // accumulation of "errors" due to unreceived intents (we would not expect
+    // any intents to come down if we are not streaming)
     bool exitAfterListeningIfNotStreaming;
 
     // response behavior to hearing the trigger word (or intent)
@@ -178,8 +178,8 @@ private:
     int _numErrorsToTriggerAnim = 0;
     RecentOccurrenceTracker cloudErrorTracker;
     RecentOccurrenceTracker wifiErrorTracker;
-    // when this handle's conditions are met, we animate to show the user there was a failure (and possibly
-    // trigger an attention transfer)
+    // when this handle's conditions are met, we animate to show the user there
+    // was a failure (and possibly trigger an attention transfer)
     RecentOccurrenceTracker::Handle wifiErrorHandle;
     RecentOccurrenceTracker::Handle cloudErrorHandle;
 
@@ -187,45 +187,43 @@ private:
 
   } _iVars;
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  struct DynamicVariables
-  {
+  struct DynamicVariables {
     DynamicVariables();
 
-    EState                    state;
-    MicDirectionIndex         reactionDirection;
-    BackpackLightDataLocator  lightsHandle;
+    EState state;
+    MicDirectionIndex reactionDirection;
+    BackpackLightDataLocator lightsHandle;
 
-    double                    streamingBeginTime;
-    double                    streamingEndTime;
+    double streamingBeginTime;
+    double streamingEndTime;
 
-    EIntentStatus             intentStatus;
-    EngineTimeStamp_t         timestampToDisableTurnFor;
+    EIntentStatus intentStatus;
+    EngineTimeStamp_t timestampToDisableTurnFor;
 
-    bool                      expectingStream;
-    
+    bool expectingStream;
+
     struct Persistent {
-
       Persistent();
 
-      AnimationTrigger          forcedAnimListeningLoop;
-      AnimationTrigger          forcedAnimListeningGetOut;
-      
-      bool                      listeningAnimsResetQueued;
+      AnimationTrigger forcedAnimListeningLoop;
+      AnimationTrigger forcedAnimListeningGetOut;
+
+      bool listeningAnimsResetQueued;
     };
     Persistent persistent;
   } _dVars;
 
   // these are dynamic vars that live beyond the activation scope ...
-  MicDirectionIndex         _triggerDirection;
+  MicDirectionIndex _triggerDirection;
 
   bool IsTurnEnabled() const;
 
-}; // class BehaviorReactToVoiceCommand
+};  // class BehaviorReactToVoiceCommand
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorReactToVoiceCommand_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorReactToVoiceCommand_H__

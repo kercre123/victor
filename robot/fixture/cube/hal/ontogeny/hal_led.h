@@ -8,7 +8,7 @@
 //        Defines
 //-----------------------------------------------------------
 
-#define HAL_NUM_LEDS  12
+#define HAL_NUM_LEDS 12
 
 //-----------------------------------------------------------
 //        Interface
@@ -30,9 +30,9 @@ enum led_e {
 };
 
 void hal_led_init(void);
-void hal_led_power(bool on); //1=enable 0=disable the VLED boost regulator
-void hal_led_on(uint16_t n); //only 1 LED is on at a time. invalid/inactive leds are turned off
-void hal_led_off(void); //all off
+void hal_led_power(bool on);  // 1=enable 0=disable the VLED boost regulator
+void hal_led_on(uint16_t n);  // only 1 LED is on at a time. invalid/inactive
+                              // leds are turned off
+void hal_led_off(void);  // all off
 
-#endif //HAL_LED_H_
-
+#endif  // HAL_LED_H_

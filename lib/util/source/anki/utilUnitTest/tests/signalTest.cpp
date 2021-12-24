@@ -7,13 +7,12 @@
 //
 // --gtest_filter=SignalTest*
 
-#include "util/helpers/includeGTest.h"
-
-#include "util/signals/simpleSignal.hpp"
 #include <iostream>
 
-TEST(SignalTest, ScopedHandles)
-{
+#include "util/helpers/includeGTest.h"
+#include "util/signals/simpleSignal.hpp"
+
+TEST(SignalTest, ScopedHandles) {
   // smart handles going out of scope should remove them
   {
     std::cout << "test handles going out of scope\n";
@@ -21,9 +20,10 @@ TEST(SignalTest, ScopedHandles)
     using TestSignal = Signal::Signal<void(void)>;
 
     TestSignal signal;
-    Signal::SmartHandle persistentHandle = signal.ScopedSubscribe( [&a] { ++a; } );
+    Signal::SmartHandle persistentHandle =
+        signal.ScopedSubscribe([&a] { ++a; });
     {
-      Signal::SmartHandle tempHandle = signal.ScopedSubscribe( [&a] { a += 5; } );
+      Signal::SmartHandle tempHandle = signal.ScopedSubscribe([&a] { a += 5; });
       signal.emit();
       ASSERT_EQ(a, 6);
     }
@@ -32,9 +32,9 @@ TEST(SignalTest, ScopedHandles)
   }
 }
 
-TEST(SignalTest, SubjectLifetime)
-{
-  // smart handles should not go bonkers if their subject is deleted before they are
+TEST(SignalTest, SubjectLifetime) {
+  // smart handles should not go bonkers if their subject is deleted before they
+  // are
   {
     std::cout << "test signals being destroyed before observers\n";
     using TestSignal = Signal::Signal<int(int&, int)>;
@@ -43,7 +43,10 @@ TEST(SignalTest, SubjectLifetime)
     {
       int a = 0;
       TestSignal signal;
-      *persistentHandle = signal.ScopedSubscribe( [] (int& a, int b) { a += b; return a; } );
+      *persistentHandle = signal.ScopedSubscribe([](int& a, int b) {
+        a += b;
+        return a;
+      });
       signal.emit(a, 2);
       signal.emit(a, 3);
       ASSERT_EQ(a, 5);
@@ -52,8 +55,7 @@ TEST(SignalTest, SubjectLifetime)
   }
 }
 
-TEST(SignalTest, HandleAssignment)
-{
+TEST(SignalTest, HandleAssignment) {
   // assigning away handles should unregister them
   {
     std::cout << "test assigning away handles properly unregistering\n";
@@ -61,33 +63,35 @@ TEST(SignalTest, HandleAssignment)
     TestSignal signal;
 
     int a = 0;
-    Signal::SmartHandle handle = signal.ScopedSubscribe( [&a] { ++a; } );
+    Signal::SmartHandle handle = signal.ScopedSubscribe([&a] { ++a; });
     signal.emit();
     ASSERT_EQ(a, 1);
     handle = nullptr;
     ASSERT_EQ(handle == nullptr, true);
     signal.emit();
     ASSERT_EQ(a, 1);
-    handle = signal.ScopedSubscribe( [&a] { a += 5; } );
+    handle = signal.ScopedSubscribe([&a] { a += 5; });
     ASSERT_EQ(handle == nullptr, false);
     signal.emit();
     ASSERT_EQ(a, 6);
   }
 }
 
-TEST(SignalTest, ClassUsage)
-{
+TEST(SignalTest, ClassUsage) {
   // test typical class usage
   {
     std::cout << "test class usage\n";
     using TestSignal = Signal::Signal<void(void)>;
 
     class TestObserver {
-    public:
+     public:
       TestObserver() {}
       ~TestObserver() {}
-      void ListenToSignal( TestSignal& signal, int& a ) { _handle = signal.ScopedSubscribe( [&a] { ++a; } ); }
-    private:
+      void ListenToSignal(TestSignal& signal, int& a) {
+        _handle = signal.ScopedSubscribe([&a] { ++a; });
+      }
+
+     private:
       Signal::SmartHandle _handle;
     };
 

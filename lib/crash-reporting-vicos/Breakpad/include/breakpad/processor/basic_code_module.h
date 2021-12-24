@@ -65,12 +65,9 @@ class BasicCodeModule : public CodeModule {
         version_(that->version()),
         is_unloaded_(that->is_unloaded()) {}
 
-  BasicCodeModule(uint64_t base_address, uint64_t size,
-                  const string &code_file,
-                  const string &code_identifier,
-                  const string &debug_file,
-                  const string &debug_identifier,
-                  const string &version,
+  BasicCodeModule(uint64_t base_address, uint64_t size, const string &code_file,
+                  const string &code_identifier, const string &debug_file,
+                  const string &debug_identifier, const string &version,
                   const bool is_unloaded = false)
       : base_address_(base_address),
         size_(size),
@@ -80,8 +77,7 @@ class BasicCodeModule : public CodeModule {
         debug_file_(debug_file),
         debug_identifier_(debug_identifier),
         version_(version),
-        is_unloaded_(is_unloaded)
-    {}
+        is_unloaded_(is_unloaded) {}
   virtual ~BasicCodeModule() {}
 
   // See code_module.h for descriptions of these methods and the associated
@@ -97,7 +93,7 @@ class BasicCodeModule : public CodeModule {
   virtual string debug_file() const { return debug_file_; }
   virtual string debug_identifier() const { return debug_identifier_; }
   virtual string version() const { return version_; }
-  virtual CodeModule* Copy() const { return new BasicCodeModule(this); }
+  virtual CodeModule *Copy() const { return new BasicCodeModule(this); }
   virtual bool is_unloaded() const { return is_unloaded_; }
 
  private:

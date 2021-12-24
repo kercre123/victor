@@ -10,35 +10,33 @@
  *
  **/
 
-
 #ifndef __Anki_Cozmo_Cube_Light_Animation_Container_H__
 #define __Anki_Cozmo_Cube_Light_Animation_Container_H__
-
-#include "engine/components/cubes/cubeLights/cubeLightAnimation.h"
 
 #include <list>
 #include <unordered_map>
 
+#include "engine/components/cubes/cubeLights/cubeLightAnimation.h"
+
 namespace Anki {
 namespace Vector {
 
-
-class CubeLightAnimationContainer
-{
-public:
+class CubeLightAnimationContainer {
+ public:
   using InitMap = std::unordered_map<std::string, const Json::Value>;
   CubeLightAnimationContainer(const InitMap& initializationMap);
   CubeLightAnimation::Animation* GetAnimation(const std::string& name);
-  const CubeLightAnimation::Animation* GetAnimation(const std::string& name) const;
-    
-private:
-  CubeLightAnimation::Animation* GetAnimationHelper(const std::string& name) const;
+  const CubeLightAnimation::Animation* GetAnimation(
+      const std::string& name) const;
+
+ private:
+  CubeLightAnimation::Animation* GetAnimationHelper(
+      const std::string& name) const;
 
   std::unordered_map<std::string, CubeLightAnimation::Animation> _animations;
 };
-  
-} // namespace Vector
-} // namespace Anki
 
-#endif // __Anki_Cozmo_Cube_Light_Animation_Container_H__
+}  // namespace Vector
+}  // namespace Anki
 
+#endif  // __Anki_Cozmo_Cube_Light_Animation_Container_H__

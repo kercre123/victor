@@ -16,26 +16,23 @@
 
 #include <ctime>
 
-
 namespace Anki {
 namespace Util {
 namespace QuestEngine {
 
 class QuestEngine;
 
-class AbstractCondition
-{
-public:
-  
+class AbstractCondition {
+ public:
   explicit AbstractCondition();
   virtual ~AbstractCondition() {}
-  
-  virtual bool IsSatisfied(QuestEngine& questEngine, std::tm& eventTime) const = 0;
 
+  virtual bool IsSatisfied(QuestEngine& questEngine,
+                           std::tm& eventTime) const = 0;
 };
-  
-} // namespace QuestEngine
-} // namespace Util
-} // namespace Anki
 
-#endif // __Util_QuestEngine_AbstractCondition_H__
+}  // namespace QuestEngine
+}  // namespace Util
+}  // namespace Anki
+
+#endif  // __Util_QuestEngine_AbstractCondition_H__

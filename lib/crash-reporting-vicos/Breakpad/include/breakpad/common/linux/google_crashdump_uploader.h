@@ -27,12 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 #ifndef COMMON_LINUX_GOOGLE_CRASHDUMP_UPLOADER_H_
 #define COMMON_LINUX_GOOGLE_CRASHDUMP_UPLOADER_H_
 
-#include <string>
 #include <map>
+#include <string>
 
 #include "common/linux/libcurl_wrapper.h"
 #include "common/scoped_ptr.h"
@@ -42,45 +41,29 @@ namespace google_breakpad {
 
 class GoogleCrashdumpUploader {
  public:
-  GoogleCrashdumpUploader(const string& product,
-                          const string& version,
-                          const string& guid,
-                          const string& ptime,
-                          const string& ctime,
-                          const string& email,
+  GoogleCrashdumpUploader(const string& product, const string& version,
+                          const string& guid, const string& ptime,
+                          const string& ctime, const string& email,
                           const string& comments,
                           const string& minidump_pathname,
-                          const string& crash_server,
-                          const string& proxy_host,
+                          const string& crash_server, const string& proxy_host,
                           const string& proxy_userpassword);
 
-  GoogleCrashdumpUploader(const string& product,
-                          const string& version,
-                          const string& guid,
-                          const string& ptime,
-                          const string& ctime,
-                          const string& email,
+  GoogleCrashdumpUploader(const string& product, const string& version,
+                          const string& guid, const string& ptime,
+                          const string& ctime, const string& email,
                           const string& comments,
                           const string& minidump_pathname,
-                          const string& crash_server,
-                          const string& proxy_host,
+                          const string& crash_server, const string& proxy_host,
                           const string& proxy_userpassword,
                           LibcurlWrapper* http_layer);
 
-  void Init(const string& product,
-            const string& version,
-            const string& guid,
-            const string& ptime,
-            const string& ctime,
-            const string& email,
-            const string& comments,
-            const string& minidump_pathname,
-            const string& crash_server,
-            const string& proxy_host,
-            const string& proxy_userpassword,
-            LibcurlWrapper* http_layer);
-  bool Upload(int* http_status_code,
-              string* http_response_header,
+  void Init(const string& product, const string& version, const string& guid,
+            const string& ptime, const string& ctime, const string& email,
+            const string& comments, const string& minidump_pathname,
+            const string& crash_server, const string& proxy_host,
+            const string& proxy_userpassword, LibcurlWrapper* http_layer);
+  bool Upload(int* http_status_code, string* http_response_header,
               string* http_response_body);
 
  private:
@@ -102,6 +85,6 @@ class GoogleCrashdumpUploader {
 
   std::map<string, string> parameters_;
 };
-}
+}  // namespace google_breakpad
 
 #endif  // COMMON_LINUX_GOOGLE_CRASHDUMP_UPLOADER_H_

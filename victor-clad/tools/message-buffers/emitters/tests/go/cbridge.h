@@ -19,7 +19,8 @@ enum {
 
 // Take the given buffer, unpack into the C version of the struct, and re-pack
 // into the out buffer so Go can verify the output on the other end is identical
-size_t RoundTrip(int type, const uint8_t* inBuf, size_t inLen, uint8_t* outBuf, size_t outLen);
+size_t RoundTrip(int type, const uint8_t* inBuf, size_t inLen, uint8_t* outBuf,
+                 size_t outLen);
 
 #ifdef __cplusplus
 };

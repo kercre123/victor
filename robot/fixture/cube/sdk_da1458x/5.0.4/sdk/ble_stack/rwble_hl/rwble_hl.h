@@ -21,8 +21,8 @@
  * @addtogroup ROOT
  * @brief Entry points of the BLE Host stack
  *
- * This module contains the primitives that allow an application accessing and running the
- * BLE protocol stack
+ * This module contains the primitives that allow an application accessing and
+ *running the BLE protocol stack
  *
  * @{
  ****************************************************************************************
@@ -33,14 +33,12 @@
  ****************************************************************************************
  */
 
-
 /**
  ****************************************************************************************
  * @brief Initialize the BLE Host stack.
  ****************************************************************************************
  */
 void rwble_hl_init(void);
-
 
 #if GTL_ITF
 /**
@@ -53,8 +51,8 @@ void rwble_hl_init(void);
  ****************************************************************************************
  */
 void rwble_hl_send_message(uint32_t error);
-#endif //GTL_ITF
+#endif  // GTL_ITF
 
 /// @} RWBLE_HL
 
-#endif // RWBLE_HL_H_
+#endif  // RWBLE_HL_H_

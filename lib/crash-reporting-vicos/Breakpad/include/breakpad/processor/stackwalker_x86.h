@@ -36,7 +36,6 @@
 //
 // Author: Mark Mentovai
 
-
 #ifndef PROCESSOR_STACKWALKER_X86_H__
 #define PROCESSOR_STACKWALKER_X86_H__
 
@@ -44,14 +43,13 @@
 
 #include "google_breakpad/common/breakpad_types.h"
 #include "google_breakpad/common/minidump_format.h"
-#include "google_breakpad/processor/stackwalker.h"
 #include "google_breakpad/processor/stack_frame_cpu.h"
+#include "google_breakpad/processor/stackwalker.h"
 #include "processor/cfi_frame_info.h"
 
 namespace google_breakpad {
 
 class CodeModules;
-
 
 class StackwalkerX86 : public Stackwalker {
  public:
@@ -59,10 +57,8 @@ class StackwalkerX86 : public Stackwalker {
   // register state corresponding to the innermost called frame to be
   // included in the stack.  The other arguments are passed directly through
   // to the base Stackwalker constructor.
-  StackwalkerX86(const SystemInfo* system_info,
-                 const MDRawContextX86* context,
-                 MemoryRegion* memory,
-                 const CodeModules* modules,
+  StackwalkerX86(const SystemInfo* system_info, const MDRawContextX86* context,
+                 MemoryRegion* memory, const CodeModules* modules,
                  StackFrameSymbolizer* frame_symbolizer);
 
  private:
@@ -81,14 +77,13 @@ class StackwalkerX86 : public Stackwalker {
   // to construct the frame that called frames.back(). The caller
   // takes ownership of the returned frame. Return NULL on failure.
   StackFrameX86* GetCallerByWindowsFrameInfo(
-      const vector<StackFrame*> &frames,
-      WindowsFrameInfo* windows_frame_info,
+      const vector<StackFrame*>& frames, WindowsFrameInfo* windows_frame_info,
       bool stack_scan_allowed);
 
   // Use cfi_frame_info (derived from STACK CFI records) to construct
   // the frame that called frames.back(). The caller takes ownership
   // of the returned frame. Return NULL on failure.
-  StackFrameX86* GetCallerByCFIFrameInfo(const vector<StackFrame*> &frames,
+  StackFrameX86* GetCallerByCFIFrameInfo(const vector<StackFrame*>& frames,
                                          CFIFrameInfo* cfi_frame_info);
 
   // Assuming a traditional frame layout --- where the caller's %ebp
@@ -96,7 +91,7 @@ class StackwalkerX86 : public Stackwalker {
   // %ebp points to the saved %ebp --- construct the frame that called
   // frames.back(). The caller takes ownership of the returned frame.
   // Return NULL on failure.
-  StackFrameX86* GetCallerByEBPAtBase(const vector<StackFrame*> &frames,
+  StackFrameX86* GetCallerByEBPAtBase(const vector<StackFrame*>& frames,
                                       bool stack_scan_allowed);
 
   // Stores the CPU context corresponding to the innermost stack frame to
@@ -110,8 +105,6 @@ class StackwalkerX86 : public Stackwalker {
   const CFIWalker cfi_walker_;
 };
 
-
 }  // namespace google_breakpad
-
 
 #endif  // PROCESSOR_STACKWALKER_X86_H__

@@ -14,8 +14,9 @@
 #ifndef __Util_QuestEngine_CountThresholdCondition_H__
 #define __Util_QuestEngine_CountThresholdCondition_H__
 
-#include "util/questEngine/abstractCondition.h"
 #include <string>
+
+#include "util/questEngine/abstractCondition.h"
 
 namespace Anki {
 namespace Util {
@@ -28,28 +29,26 @@ typedef enum {
   CountThresholdOperatorLessThan,
   CountThresholdOperatorLessThanEqual,
 } CountThresholdOperator;
-  
-class CountThresholdCondition : public AbstractCondition
-{
-public:
-  
-  CountThresholdCondition(CountThresholdOperator countOperator, const uint16_t targetValue, const std::string& triggerKey);
+
+class CountThresholdCondition : public AbstractCondition {
+ public:
+  CountThresholdCondition(CountThresholdOperator countOperator,
+                          const uint16_t targetValue,
+                          const std::string& triggerKey);
   ~CountThresholdCondition() override {}
-  
+
   bool IsSatisfied(QuestEngine& questEngine, std::tm& eventTime) const override;
-  
-private:
-  
+
+ private:
   uint16_t _targetValue;
-  
+
   CountThresholdOperator _operator;
-  
+
   std::string _triggerKey;
-
 };
- 
-} // namespace QuestEngine
-} // namespace Util
-} // namespace Anki
 
-#endif // __Util_QuestEngine_CountThresholdCondition_H__
+}  // namespace QuestEngine
+}  // namespace Util
+}  // namespace Anki
+
+#endif  // __Util_QuestEngine_CountThresholdCondition_H__

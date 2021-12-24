@@ -24,35 +24,36 @@ namespace esp {
  * The ESPDataProviderInterface should be used to provide ESPData.
  */
 class ESPDataProviderInterface {
-public:
-    /**
-     * Destructor
-     */
-    virtual ~ESPDataProviderInterface() = default;
+ public:
+  /**
+   * Destructor
+   */
+  virtual ~ESPDataProviderInterface() = default;
 
-    /**
-     * Retrieve the ESPData from the ESP Library.
-     *
-     * @return Collected ESPData if ESP is enabled, otherwise it returns ESPData::getEmptyESPData().
-     */
-    virtual capabilityAgents::aip::ESPData getESPData() = 0;
+  /**
+   * Retrieve the ESPData from the ESP Library.
+   *
+   * @return Collected ESPData if ESP is enabled, otherwise it returns
+   * ESPData::getEmptyESPData().
+   */
+  virtual capabilityAgents::aip::ESPData getESPData() = 0;
 
-    /**
-     * Return whether the ESP is enabled or not.
-     *
-     * @return @c true if ESP is enabled, else @c false.
-     */
-    virtual bool isEnabled() const = 0;
+  /**
+   * Return whether the ESP is enabled or not.
+   *
+   * @return @c true if ESP is enabled, else @c false.
+   */
+  virtual bool isEnabled() const = 0;
 
-    /**
-     * Disable ESP and stop the processing thread.
-     */
-    virtual void disable() = 0;
+  /**
+   * Disable ESP and stop the processing thread.
+   */
+  virtual void disable() = 0;
 
-    /**
-     * Enable ESP and starts the processing thread if it wasn't running yet.
-     */
-    virtual void enable() = 0;
+  /**
+   * Enable ESP and starts the processing thread if it wasn't running yet.
+   */
+  virtual void enable() = 0;
 };
 
 }  // namespace esp

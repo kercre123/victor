@@ -21,34 +21,34 @@
 
 namespace Anki {
 namespace Switchboard {
-  enum PairingProtocolVersion : uint32_t {
-    INVALID                   = 0,
-    V1                        = 1,
-    V2                        = 2,
-    V3                        = 3,
-    V4                        = 4,
-    V5                        = 5,
-    FACTORY                   = V2,
-    CURRENT                   = V5,
-  };
-  
-  enum SetupMessage : uint8_t {
-    MSG_RESERVED              = 0,
-    MSG_HANDSHAKE             = 1,
-  };
-  
-  enum WifiStatus : uint8_t {
-    Success                   = 0,
-    WrongPassword             = 1,
-    Failure                   = 2,
-  };
-  
-  enum WifiIpFlags : uint8_t {
-    None                      = 0,
-    Ipv4                      = 1 << 0,
-    Ipv6                      = 1 << 1,
-  };
-} // Switchboard
-} // Anki
+enum PairingProtocolVersion : uint32_t {
+  INVALID = 0,
+  V1 = 1,
+  V2 = 2,
+  V3 = 3,
+  V4 = 4,
+  V5 = 5,
+  FACTORY = V2,
+  CURRENT = V5,
+};
+
+enum SetupMessage : uint8_t {
+  MSG_RESERVED = 0,
+  MSG_HANDSHAKE = 1,
+};
+
+enum WifiStatus : uint8_t {
+  Success = 0,
+  WrongPassword = 1,
+  Failure = 2,
+};
+
+enum WifiIpFlags : uint8_t {
+  None = 0,
+  Ipv4 = 1 << 0,
+  Ipv6 = 1 << 1,
+};
+}  // namespace Switchboard
+}  // namespace Anki
 
 #endif /* SecurePairingMessages_h */

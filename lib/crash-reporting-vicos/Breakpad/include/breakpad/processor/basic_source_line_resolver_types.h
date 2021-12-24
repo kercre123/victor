@@ -42,39 +42,33 @@
 
 #include "common/scoped_ptr.h"
 #include "google_breakpad/processor/basic_source_line_resolver.h"
-#include "processor/source_line_resolver_base_types.h"
-
-#include "processor/address_map-inl.h"
-#include "processor/range_map-inl.h"
-#include "processor/contained_range_map-inl.h"
-
-#include "processor/linked_ptr.h"
 #include "google_breakpad/processor/stack_frame.h"
+#include "processor/address_map-inl.h"
 #include "processor/cfi_frame_info.h"
+#include "processor/contained_range_map-inl.h"
+#include "processor/linked_ptr.h"
+#include "processor/range_map-inl.h"
+#include "processor/source_line_resolver_base_types.h"
 #include "processor/windows_frame_info.h"
 
 namespace google_breakpad {
 
-struct
-BasicSourceLineResolver::Function : public SourceLineResolverBase::Function {
-  Function(const string &function_name,
-           MemAddr function_address,
-           MemAddr code_size,
-           int set_parameter_size) : Base(function_name,
-                                          function_address,
-                                          code_size,
-                                          set_parameter_size),
-                                     lines() { }
-  RangeMap< MemAddr, linked_ptr<Line> > lines;
+struct BasicSourceLineResolver::Function
+    : public SourceLineResolverBase::Function {
+  Function(const string &function_name, MemAddr function_address,
+           MemAddr code_size, int set_parameter_size)
+      : Base(function_name, function_address, code_size, set_parameter_size),
+        lines() {}
+  RangeMap<MemAddr, linked_ptr<Line> > lines;
+
  private:
   typedef SourceLineResolverBase::Function Base;
 };
 
-
 class BasicSourceLineResolver::Module : public SourceLineResolverBase::Module {
  public:
-  explicit Module(const string &name) : name_(name), is_corrupt_(false) { }
-  virtual ~Module() { }
+  explicit Module(const string &name) : name_(name), is_corrupt_(false) {}
+  virtual ~Module() {}
 
   // Loads a map from the given buffer in char* type.
   // Does NOT have ownership of memory_buffer.
@@ -115,19 +109,17 @@ class BasicSourceLineResolver::Module : public SourceLineResolverBase::Module {
 
   // Logs parse errors.  |*num_errors| is increased every time LogParseError is
   // called.
-  static void LogParseError(
-      const string &message,
-      int line_number,
-      int *num_errors);
+  static void LogParseError(const string &message, int line_number,
+                            int *num_errors);
 
   // Parses a file declaration
   bool ParseFile(char *file_line);
 
   // Parses a function declaration, returning a new Function object.
-  Function* ParseFunction(char *function_line);
+  Function *ParseFunction(char *function_line);
 
   // Parses a line declaration, returning a new Line object.
-  Line* ParseLine(char *line_line);
+  Line *ParseLine(char *line_line);
 
   // Parses a PUBLIC symbol declaration, storing it in public_symbols_.
   // Returns false if an error occurs.
@@ -142,16 +134,16 @@ class BasicSourceLineResolver::Module : public SourceLineResolverBase::Module {
 
   string name_;
   FileMap files_;
-  RangeMap< MemAddr, linked_ptr<Function> > functions_;
-  AddressMap< MemAddr, linked_ptr<PublicSymbol> > public_symbols_;
+  RangeMap<MemAddr, linked_ptr<Function> > functions_;
+  AddressMap<MemAddr, linked_ptr<PublicSymbol> > public_symbols_;
   bool is_corrupt_;
 
   // Each element in the array is a ContainedRangeMap for a type
   // listed in WindowsFrameInfoTypes. These are split by type because
   // there may be overlaps between maps of different types, but some
   // information is only available as certain types.
-  ContainedRangeMap< MemAddr, linked_ptr<WindowsFrameInfo> >
-    windows_frame_info_[WindowsFrameInfo::STACK_INFO_LAST];
+  ContainedRangeMap<MemAddr, linked_ptr<WindowsFrameInfo> >
+      windows_frame_info_[WindowsFrameInfo::STACK_INFO_LAST];
 
   // DWARF CFI stack walking data. The Module stores the initial rule sets
   // and rule deltas as strings, just as they appear in the symbol file:

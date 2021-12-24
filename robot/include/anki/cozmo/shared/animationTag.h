@@ -5,12 +5,12 @@
 
 namespace Anki {
 namespace Vector {
-  
+
 using AnimationTag = uint8_t;
 
-static const AnimationTag kNotAnimatingTag  = 0;
+static const AnimationTag kNotAnimatingTag = 0;
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif /* __Anki_Cozmo_AnimationTag_H__ */

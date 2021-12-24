@@ -23,78 +23,80 @@ namespace alexaClientSDK {
 namespace avsCommon {
 namespace avs {
 /**
- * A @c Blocking policy is a way to express what mediums are required by the policy owner
- * and whether the policy owner is blocking subsequent directives using the medium.
+ * A @c Blocking policy is a way to express what mediums are required by the
+ * policy owner and whether the policy owner is blocking subsequent directives
+ * using the medium.
  */
 class BlockingPolicy {
-public:
-    /**
-     * A policy medium represents a resource the policy owner is using.
-     */
-    struct Medium {
-        /// The medium enum.
-        enum MediumEnum {
-            /// Audio Medium.
-            AUDIO,
-            /// Visual Medium.
-            VISUAL,
-            /// Number of mediums. This MUST be the last enum member.
-            COUNT
-        };
+ public:
+  /**
+   * A policy medium represents a resource the policy owner is using.
+   */
+  struct Medium {
+    /// The medium enum.
+    enum MediumEnum {
+      /// Audio Medium.
+      AUDIO,
+      /// Visual Medium.
+      VISUAL,
+      /// Number of mediums. This MUST be the last enum member.
+      COUNT
     };
+  };
 
-    /// The mediums used by the policy owner
-    using Mediums = std::bitset<Medium::COUNT>;
+  /// The mediums used by the policy owner
+  using Mediums = std::bitset<Medium::COUNT>;
 
-    /// Policy uses @c AUDIO medium.
-    static const Mediums MEDIUM_AUDIO;
+  /// Policy uses @c AUDIO medium.
+  static const Mediums MEDIUM_AUDIO;
 
-    /// Policy uses @c VISUAL medium.
-    static const Mediums MEDIUM_VISUAL;
+  /// Policy uses @c VISUAL medium.
+  static const Mediums MEDIUM_VISUAL;
 
-    /// Policy uses @c AUDIO and @c VISUAL mediums.
-    static const Mediums MEDIUMS_AUDIO_AND_VISUAL;
+  /// Policy uses @c AUDIO and @c VISUAL mediums.
+  static const Mediums MEDIUMS_AUDIO_AND_VISUAL;
 
-    /**
-     * Policy uses no medium.
-     * This should be used for System of setting-type directives.
-     */
-    static const Mediums MEDIUMS_NONE;
+  /**
+   * Policy uses no medium.
+   * This should be used for System of setting-type directives.
+   */
+  static const Mediums MEDIUMS_NONE;
 
-    /**
-     * Constructor
-     *
-     * @param mediums The @c Mediums used by the policy owner.
-     * @param isBlocking Should this policy block another usage of owned mediums until completion.
-     */
-    BlockingPolicy(const Mediums& mediums = MEDIUMS_NONE, bool isBlocking = true);
+  /**
+   * Constructor
+   *
+   * @param mediums The @c Mediums used by the policy owner.
+   * @param isBlocking Should this policy block another usage of owned mediums
+   * until completion.
+   */
+  BlockingPolicy(const Mediums& mediums = MEDIUMS_NONE, bool isBlocking = true);
 
-    /**
-     * Is the policy valid.
-     *
-     * @return @c true if the policy is valid, @c false otherwise.
-     */
-    bool isValid() const;
+  /**
+   * Is the policy valid.
+   *
+   * @return @c true if the policy is valid, @c false otherwise.
+   */
+  bool isValid() const;
 
-    /**
-     * Is this policy blocking a @c Medium.
-     * @return @c true if the given policy is blocking, @c false otherwise.
-     */
-    bool isBlocking() const;
+  /**
+   * Is this policy blocking a @c Medium.
+   * @return @c true if the given policy is blocking, @c false otherwise.
+   */
+  bool isBlocking() const;
 
-    /**
-     * What @c Mediums are used by this policy.
-     *
-     * @return The @c Mediums used by the policy
-     */
-    Mediums getMediums() const;
+  /**
+   * What @c Mediums are used by this policy.
+   *
+   * @return The @c Mediums used by the policy
+   */
+  Mediums getMediums() const;
 
-private:
-    /// The mediums used by the policy owner.
-    Mediums m_mediums;
+ private:
+  /// The mediums used by the policy owner.
+  Mediums m_mediums;
 
-    /// Is this policy blocking other users of its mediums.
-    bool m_isBlocking;
+  /// Is this policy blocking other users of its mediums.
+  bool m_isBlocking;
 };
 
 /**
@@ -104,24 +106,26 @@ private:
  * @param policy The policy value to write to the @c ostream as a string.
  * @return The @c ostream that was passed in and written to.
  */
-inline std::ostream& operator<<(std::ostream& stream, const BlockingPolicy& policy) {
-    stream << " Mediums:";
-    auto mediums = policy.getMediums();
-    if (BlockingPolicy::MEDIUM_AUDIO == mediums) {
-        stream << "MEDIUM_AUDIO";
-    } else if (BlockingPolicy::MEDIUM_VISUAL == mediums) {
-        stream << "MEDIUM_VISUAL";
-    } else if (BlockingPolicy::MEDIUMS_AUDIO_AND_VISUAL == mediums) {
-        stream << "MEDIUMS_AUDIO_AND_VISUAL";
-    } else if (BlockingPolicy::MEDIUMS_NONE == mediums) {
-        stream << "MEDIUMS_NONE";
-    } else {
-        stream << "Unknown";
-    }
+inline std::ostream& operator<<(std::ostream& stream,
+                                const BlockingPolicy& policy) {
+  stream << " Mediums:";
+  auto mediums = policy.getMediums();
+  if (BlockingPolicy::MEDIUM_AUDIO == mediums) {
+    stream << "MEDIUM_AUDIO";
+  } else if (BlockingPolicy::MEDIUM_VISUAL == mediums) {
+    stream << "MEDIUM_VISUAL";
+  } else if (BlockingPolicy::MEDIUMS_AUDIO_AND_VISUAL == mediums) {
+    stream << "MEDIUMS_AUDIO_AND_VISUAL";
+  } else if (BlockingPolicy::MEDIUMS_NONE == mediums) {
+    stream << "MEDIUMS_NONE";
+  } else {
+    stream << "Unknown";
+  }
 
-    stream << policy.getMediums() << " .isBlocking:" << (policy.isBlocking() ? "True" : "False");
+  stream << policy.getMediums()
+         << " .isBlocking:" << (policy.isBlocking() ? "True" : "False");
 
-    return stream;
+  return stream;
 }
 
 /**

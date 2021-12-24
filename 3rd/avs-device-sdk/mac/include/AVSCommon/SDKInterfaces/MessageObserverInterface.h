@@ -26,20 +26,21 @@ namespace sdkInterfaces {
  * This class allows a client to receive messages from AVS.
  */
 class MessageObserverInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~MessageObserverInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~MessageObserverInterface() = default;
 
-    /**
-     * A function that a client must implement to receive Messages from AVS.
-     *
-     * @param contextId The context for the message, which in this case reflects the logical HTTP/2 stream the
-     * message arrived on.
-     * @param message The AVS message that has been received.
-     */
-    virtual void receive(const std::string& contextId, const std::string& message) = 0;
+  /**
+   * A function that a client must implement to receive Messages from AVS.
+   *
+   * @param contextId The context for the message, which in this case reflects
+   * the logical HTTP/2 stream the message arrived on.
+   * @param message The AVS message that has been received.
+   */
+  virtual void receive(const std::string& contextId,
+                       const std::string& message) = 0;
 };
 
 }  // namespace sdkInterfaces

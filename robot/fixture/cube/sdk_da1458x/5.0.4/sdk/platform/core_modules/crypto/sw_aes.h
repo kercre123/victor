@@ -1,18 +1,18 @@
 /**
  * Copyright (c) 2007, Cameron Rich
- * 
+ *
  * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- * * Redistributions of source code must retain the above copyright notice, 
+ * * Redistributions of source code must retain the above copyright notice,
  *   this list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice, 
- *   this list of conditions and the following disclaimer in the documentation 
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
  *   and/or other materials provided with the distribution.
- * * Neither the name of the axTLS project nor the names of its contributors 
- *   may be used to endorse or promote products derived from this software 
+ * * Neither the name of the axTLS project nor the names of its contributors
+ *   may be used to endorse or promote products derived from this software
  *   without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -27,7 +27,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 #ifndef HEADER_AES_H
 #define HEADER_AES_H
 
@@ -37,51 +37,43 @@
 #define AES_DECRYPT 0
 
 /**************************************************************************
- * AES declarations 
+ * AES declarations
  **************************************************************************/
 
-#define AES_MAXROUNDS			14
-#define AES_BLOCKSIZE		   16
-#define AES_IV_SIZE			 16
+#define AES_MAXROUNDS 14
+#define AES_BLOCKSIZE 16
+#define AES_IV_SIZE 16
 
 #ifndef htonl
-	#define htonl(a)					\
-		((((a) >> 24) & 0x000000ff) |   \
-		 (((a) >>  8) & 0x0000ff00) |   \
-		 (((a) <<  8) & 0x00ff0000) |   \
-		 (((a) << 24) & 0xff000000))
+#define htonl(a)                                            \
+  ((((a) >> 24) & 0x000000ff) | (((a) >> 8) & 0x0000ff00) | \
+   (((a) << 8) & 0x00ff0000) | (((a) << 24) & 0xff000000))
 #endif
 
 #ifndef ntohl
-	#define ntohl(a)	htonl((a))
+#define ntohl(a) htonl((a))
 #endif
 
-
-typedef struct aes_key_st 
-{
-	uint16_t rounds;
-	uint16_t key_size;
-	uint32_t ks[(AES_MAXROUNDS+1)*8];
-	uint8_t iv[AES_IV_SIZE];
+typedef struct aes_key_st {
+  uint16_t rounds;
+  uint16_t key_size;
+  uint32_t ks[(AES_MAXROUNDS + 1) * 8];
+  uint8_t iv[AES_IV_SIZE];
 } AES_CTX;
 
-typedef enum
-{
-	AES_MODE_128,
-	AES_MODE_256
-} AES_MODE;
+typedef enum { AES_MODE_128, AES_MODE_256 } AES_MODE;
 
 /**
  * Set up AES with the key/iv and cipher size.
  */
-void AES_set_key(AES_CTX *ctx, const uint8_t *key, 
-		const uint8_t *iv, AES_MODE mode);
+void AES_set_key(AES_CTX *ctx, const uint8_t *key, const uint8_t *iv,
+                 AES_MODE mode);
 
 /**
  * Encrypt a byte sequence (with a block size 16) using the AES cipher.
  */
-void AES_cbc_encrypt(AES_CTX *ctx, const uint8_t *msg, 
-		uint8_t *out, int length);
+void AES_cbc_encrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t *out,
+                     int length);
 
 /**
  * Decrypt a byte sequence (with a block size 16) using the AES cipher.
@@ -102,6 +94,5 @@ void AES_decrypt(const AES_CTX *ctx, uint32_t *data);
  * Encrypt a single block (16 bytes) of data
  */
 void AES_encrypt(const AES_CTX *ctx, uint32_t *data);
-
 
 #endif /* !HEADER_AES_H */

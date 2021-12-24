@@ -4,7 +4,8 @@
  * Author: Brad Neuman
  * Created: 2018-09-04
  *
- * Description: Checks with the sleep tracker if it is currently considered to be night time
+ * Description: Checks with the sleep tracker if it is currently considered to
+ *be night time
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -18,19 +19,16 @@
 namespace Anki {
 namespace Vector {
 
-class ConditionIsNightTime : public IBEICondition
-{
-public:
-  
+class ConditionIsNightTime : public IBEICondition {
+ public:
   explicit ConditionIsNightTime(const Json::Value& config);
 
-protected:
-  
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+ protected:
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) const override;
 };
-  
-} // namespace
-} // namespace
 
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

@@ -14,9 +14,9 @@
 #include "export.h"
 
 #ifdef __cplusplus
-# ifdef __GNUC__
-#  pragma GCC diagnostic ignored "-Wlong-long"
-# endif
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wlong-long"
+#endif
 extern "C" {
 #endif
 
@@ -30,8 +30,7 @@ int crypto_hash(unsigned char *out, const unsigned char *in,
 
 #define crypto_hash_PRIMITIVE "sha512"
 SODIUM_EXPORT
-const char *crypto_hash_primitive(void)
-            __attribute__ ((warn_unused_result));
+const char *crypto_hash_primitive(void) __attribute__((warn_unused_result));
 
 #ifdef __cplusplus
 }

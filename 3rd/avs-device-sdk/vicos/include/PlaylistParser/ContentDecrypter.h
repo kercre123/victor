@@ -30,126 +30,126 @@ typedef std::vector<unsigned char> ByteVector;
  * Helper class to decrypt downloaded media content.
  */
 class ContentDecrypter {
-public:
-    /**
-     * Constructor
-     *
-     * @param streamWriter The writer to write decrypted content.
-     */
-    ContentDecrypter(std::shared_ptr<avsCommon::avs::attachment::AttachmentWriter> streamWriter);
+ public:
+  /**
+   * Constructor
+   *
+   * @param streamWriter The writer to write decrypted content.
+   */
+  ContentDecrypter(std::shared_ptr<avsCommon::avs::attachment::AttachmentWriter>
+                       streamWriter);
 
-    /**
-     * Initializes media initialization section.
-     *
-     * @param mediaInitSection The Media initialization section.
-     */
-    void writeMediaInitSection(const ByteVector& mediaInitSection);
+  /**
+   * Initializes media initialization section.
+   *
+   * @param mediaInitSection The Media initialization section.
+   */
+  void writeMediaInitSection(const ByteVector& mediaInitSection);
 
-    /**
-     * Decrypts contents and writes to stream.
-     *
-     * @param encryptedContent The content that needs to be decrypted.
-     * @param key The encryption key.
-     * @param encryptionInfo The @c EncryptionInfo of the encrypted content.
-     * @return @c true if decryption and write to stream is successful or @c false otherwise.
-     */
-    bool decryptAndWrite(
-        const ByteVector& encryptedContent,
-        const ByteVector& key,
-        const avsCommon::utils::playlistParser::EncryptionInfo& encryptionInfo);
+  /**
+   * Decrypts contents and writes to stream.
+   *
+   * @param encryptedContent The content that needs to be decrypted.
+   * @param key The encryption key.
+   * @param encryptionInfo The @c EncryptionInfo of the encrypted content.
+   * @return @c true if decryption and write to stream is successful or @c false
+   * otherwise.
+   */
+  bool decryptAndWrite(
+      const ByteVector& encryptedContent, const ByteVector& key,
+      const avsCommon::utils::playlistParser::EncryptionInfo& encryptionInfo);
 
-    /**
-     * Converts initialization vector from hex to byte array.
-     *
-     * @param hexIV The initialization vector in HEX.
-     * @param[out] ivByteArray Pointer to result byte array if successful.
-     * @return @c true if conversion is successful or @c false if failed.
-     */
-    static bool convertIVToByteArray(const std::string& hexIV, ByteVector* ivByteArray);
+  /**
+   * Converts initialization vector from hex to byte array.
+   *
+   * @param hexIV The initialization vector in HEX.
+   * @param[out] ivByteArray Pointer to result byte array if successful.
+   * @return @c true if conversion is successful or @c false if failed.
+   */
+  static bool convertIVToByteArray(const std::string& hexIV,
+                                   ByteVector* ivByteArray);
 
-private:
-    /**
-     * Prepends media initialization section to content.
-     *
-     * @param bytes The bytes that needs to be added after media initialization section.
-     */
-    ByteVector prependMediaInitSection(const ByteVector& bytes) const;
+ private:
+  /**
+   * Prepends media initialization section to content.
+   *
+   * @param bytes The bytes that needs to be added after media initialization
+   * section.
+   */
+  ByteVector prependMediaInitSection(const ByteVector& bytes) const;
 
-    /**
-     * Decrypts AES-128 encrypted content.
-     *
-     * @param encryptedContent The content that needs to be decrypted.
-     * @param key The encryption key.
-     * @param iv The initialization vector of the encryption content.
-     * @param[out] decryptedContent The result of decryption is written to this pointer if successful.
-     * @param usePadding Flag to set if padding is required, default is @c true.
-     * @return number of decrypted bytes if successful or 0 otherwise.
-     */
-    int decryptAES(
-        const ByteVector& encryptedContent,
-        const ByteVector& key,
-        const ByteVector& iv,
-        ByteVector* decryptedContent,
-        bool usePadding = true);
+  /**
+   * Decrypts AES-128 encrypted content.
+   *
+   * @param encryptedContent The content that needs to be decrypted.
+   * @param key The encryption key.
+   * @param iv The initialization vector of the encryption content.
+   * @param[out] decryptedContent The result of decryption is written to this
+   * pointer if successful.
+   * @param usePadding Flag to set if padding is required, default is @c true.
+   * @return number of decrypted bytes if successful or 0 otherwise.
+   */
+  int decryptAES(const ByteVector& encryptedContent, const ByteVector& key,
+                 const ByteVector& iv, ByteVector* decryptedContent,
+                 bool usePadding = true);
 
-    /**
-     * Decrypted SAMPLE-AES encrypted content.
-     *
-     * @param encryptedContent The content that needs to be decrypted.
-     * @param key The encryption key.
-     * @param iv The initialization vector of the encryption content.
-     * @param[out] decryptedContent The result of decryption is written to this pointer if successful.
-     * @return number of decrypted bytes if successful or 0 otherwise.
-     */
-    bool decryptSampleAES(
-        const ByteVector& encryptedContent,
-        const ByteVector& key,
-        const ByteVector& iv,
-        ByteVector* decryptedContent);
+  /**
+   * Decrypted SAMPLE-AES encrypted content.
+   *
+   * @param encryptedContent The content that needs to be decrypted.
+   * @param key The encryption key.
+   * @param iv The initialization vector of the encryption content.
+   * @param[out] decryptedContent The result of decryption is written to this
+   * pointer if successful.
+   * @return number of decrypted bytes if successful or 0 otherwise.
+   */
+  bool decryptSampleAES(const ByteVector& encryptedContent,
+                        const ByteVector& key, const ByteVector& iv,
+                        ByteVector* decryptedContent);
 
-    /**
-     * Writes result to stream.
-     *
-     * @param content The content to be written to stream.
-     * @return @c true if conversion is successful or @c false if failed.
-     */
-    bool writeToStream(const ByteVector& content);
+  /**
+   * Writes result to stream.
+   *
+   * @param content The content to be written to stream.
+   * @return @c true if conversion is successful or @c false if failed.
+   */
+  bool writeToStream(const ByteVector& content);
 
-    /**
-     *  Helper function to get more descriptive lib av errors
-     *
-     *  @param event The name of the log event.
-     *  @param reason The reason for logging.
-     *  @param averror The error code reported by FFMpeg library.
-     */
-    static void logAVError(const char* event, const char* reason, int averror);
+  /**
+   *  Helper function to get more descriptive lib av errors
+   *
+   *  @param event The name of the log event.
+   *  @param reason The reason for logging.
+   *  @param averror The error code reported by FFMpeg library.
+   */
+  static void logAVError(const char* event, const char* reason, int averror);
 
-    /// Byte buffer for FFMpeg library.
-    struct ByteBuffer {
-        /// Pointer to input data.
-        uint8_t* data;
+  /// Byte buffer for FFMpeg library.
+  struct ByteBuffer {
+    /// Pointer to input data.
+    uint8_t* data;
 
-        /// Length of input data.
-        int len;
+    /// Length of input data.
+    int len;
 
-        /// Current position for accessing data.
-        int pos;
-    };
+    /// Current position for accessing data.
+    int pos;
+  };
 
-    /**
-     * Helper function to calculate bytes remaining
-     *
-     * @param pos The position of the pointer in buffer.
-     * @param end The end position of the pointer in buffer.
-     * @return The number of bytes between end position and current position.
-     */
-    static int bytesRemaining(uint8_t* pos, uint8_t* end);
+  /**
+   * Helper function to calculate bytes remaining
+   *
+   * @param pos The position of the pointer in buffer.
+   * @param end The end position of the pointer in buffer.
+   * @return The number of bytes between end position and current position.
+   */
+  static int bytesRemaining(uint8_t* pos, uint8_t* end);
 
-    /// Media initialization section
-    ByteVector m_mediaInitSection;
+  /// Media initialization section
+  ByteVector m_mediaInitSection;
 
-    /// Stream writer
-    std::shared_ptr<avsCommon::avs::attachment::AttachmentWriter> m_streamWriter;
+  /// Stream writer
+  std::shared_ptr<avsCommon::avs::attachment::AttachmentWriter> m_streamWriter;
 };
 
 }  // namespace playlistParser

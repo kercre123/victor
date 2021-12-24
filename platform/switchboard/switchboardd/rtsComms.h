@@ -13,41 +13,39 @@
 #pragma once
 
 #include <stdlib.h>
+
 #include "ev++.h"
-#include "switchboardd/pairingMessages.h"
-#include "switchboardd/gatewayMessagingServer.h"
-#include "switchboardd/tokenClient.h"
-#include "switchboardd/connectionIdManager.h"
-#include "switchboardd/wifiWatcher.h"
 #include "switchboardd/INetworkStream.h"
 #include "switchboardd/IRtsHandler.h"
 #include "switchboardd/ISwitchboardCommandClient.h"
+#include "switchboardd/connectionIdManager.h"
+#include "switchboardd/gatewayMessagingServer.h"
+#include "switchboardd/pairingMessages.h"
 #include "switchboardd/safeHandle.h"
 #include "switchboardd/taskExecutor.h"
+#include "switchboardd/tokenClient.h"
+#include "switchboardd/wifiWatcher.h"
 
 namespace Anki {
 namespace Switchboard {
 
 class RtsComms {
-public:
+ public:
   // Constructors
-  RtsComms(INetworkStream* stream, 
-    struct ev_loop* evloop,
-    std::shared_ptr<ISwitchboardCommandClient> engineClient,
-    std::shared_ptr<GatewayMessagingServer> gatewayServer,
-    std::shared_ptr<TokenClient> tokenClient,
-    std::shared_ptr<ConnectionIdManager> connectionIdManager,
-    std::shared_ptr<WifiWatcher> wifiWatcher,
-    std::shared_ptr<TaskExecutor> taskExecutor,
-    bool isPairing,
-    bool isOtaUpdating,
-    bool hasCloudOwner);
+  RtsComms(INetworkStream* stream, struct ev_loop* evloop,
+           std::shared_ptr<ISwitchboardCommandClient> engineClient,
+           std::shared_ptr<GatewayMessagingServer> gatewayServer,
+           std::shared_ptr<TokenClient> tokenClient,
+           std::shared_ptr<ConnectionIdManager> connectionIdManager,
+           std::shared_ptr<WifiWatcher> wifiWatcher,
+           std::shared_ptr<TaskExecutor> taskExecutor, bool isPairing,
+           bool isOtaUpdating, bool hasCloudOwner);
 
   ~RtsComms();
 
   // Types
-  using StringSignal = Signal::Signal<void (std::string)>;
-  using VoidSignal = Signal::Signal<void ()>;
+  using StringSignal = Signal::Signal<void(std::string)>;
+  using VoidSignal = Signal::Signal<void()>;
 
   //
   // API
@@ -60,7 +58,8 @@ public:
   void SetIsPairing(bool pairing);
   void SetOtaUpdating(bool updating);
   void SetHasOwner(bool hasOwner);
-  void SendOtaProgress(int32_t status, uint64_t progress, uint64_t expectedTotal);
+  void SendOtaProgress(int32_t status, uint64_t progress,
+                       uint64_t expectedTotal);
   std::string GetPin() { return _pin; }
 
   // Events
@@ -69,7 +68,7 @@ public:
   VoidSignal& OnStopPairingEvent() { return _stopPairingSignal; }
   VoidSignal& OnCompletedPairingEvent() { return _completedPairingSignal; }
 
-private:
+ private:
   // Safe Handle for async callbacks
   std::shared_ptr<SafeHandle> _safeHandle;
 
@@ -127,15 +126,17 @@ private:
   uint32_t _rtsVersion;
   RtsPairingPhase _state = RtsPairingPhase::Initial;
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Static methods
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - Static methods
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - -
 
-  static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents) {
-    struct ev_TimerStruct *wData = (struct ev_TimerStruct*)w;
+  static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w,
+                              int revents) {
+    struct ev_TimerStruct* wData = (struct ev_TimerStruct*)w;
     wData->signal->emit();
   }
 };
 
-} // Switchboard
-} // Anki
+}  // namespace Switchboard
+}  // namespace Anki

@@ -30,20 +30,21 @@
  ****************************************************************************************
  */
 
-#include "rwip_config.h"     // SW configuration
-#include "rwble_hl_config.h"
-#include "ke_msg.h"
-#include "app_msg_utils.h"
 #include "app_easy_msg_utils.h"
 #include "app_easy_timer.h"
+#include "app_msg_utils.h"
+#include "ke_msg.h"
+#include "rwble_hl_config.h"
+#include "rwip_config.h"  // SW configuration
 
 #if (BLE_APP_PRESENT)
 
-#include <stdint.h>          // Standard Integer Definition
-#include <co_bt.h>           // Common BT Definitions
-#include "arch.h"            // Platform Definitions
-#include "gapc.h"
+#include <co_bt.h>   // Common BT Definitions
+#include <stdint.h>  // Standard Integer Definition
+
 #include "app_easy_gap.h"
+#include "arch.h"  // Platform Definitions
+#include "gapc.h"
 
 #if (BLE_PROX_REPORTER)
 #include "app_proxr.h"
@@ -58,12 +59,12 @@
 #if (BLE_BAS_SERVER)
 #include "app_bass.h"
 #include "app_bass_task.h"
-#endif     
+#endif
 
 #if (BLE_SPOTA_RECEIVER)
 #include "app_spotar.h"
 #include "app_spotar_task.h"
-#endif     
+#endif
 
 /*
  * DEFINES
@@ -71,13 +72,13 @@
  */
 
 /// Advertising data maximal length
-#define APP_ADV_DATA_MAX_SIZE               (ADV_DATA_LEN - 3)
+#define APP_ADV_DATA_MAX_SIZE (ADV_DATA_LEN - 3)
 
 /// Scan Response data maximal length
-#define APP_SCAN_RESP_DATA_MAX_SIZE         (SCAN_RSP_DATA_LEN)
+#define APP_SCAN_RESP_DATA_MAX_SIZE (SCAN_RSP_DATA_LEN)
 
 /// Max connections supported by application task
-#define APP_EASY_MAX_ACTIVE_CONNECTION      (1)
+#define APP_EASY_MAX_ACTIVE_CONNECTION (1)
 
 /*
  * TYPE DEFINITIONS
@@ -85,73 +86,70 @@
  */
 
 /// APP Task messages
-enum APP_MSG
-{
-    APP_MODULE_INIT_CMP_EVT = KE_FIRST_MSG(TASK_APP),
-    
+enum APP_MSG {
+  APP_MODULE_INIT_CMP_EVT = KE_FIRST_MSG(TASK_APP),
+
 #if BLE_PROX_REPORTER
-    APP_PROXR_TIMER,
-#endif //BLE_PROX_REPORTER
+  APP_PROXR_TIMER,
+#endif  // BLE_PROX_REPORTER
 
 #if BLE_BAS_SERVER
-    APP_BASS_TIMER,
-    APP_BASS_ALERT_TIMER,
-#endif //BLE_BAS_SERVER
+  APP_BASS_TIMER,
+  APP_BASS_ALERT_TIMER,
+#endif  // BLE_BAS_SERVER
 
 #if HAS_MULTI_BOND
-    APP_ALT_PAIR_TIMER,
-#endif //HAS_MULTI_BOND
+  APP_ALT_PAIR_TIMER,
+#endif  // HAS_MULTI_BOND
 
-    APP_CREATE_TIMER,
-    APP_CANCEL_TIMER,
-    APP_MODIFY_TIMER,
-    //Do not alter the order of the next messages 
-    //they are considered a range
-    APP_TIMER_API_MES0,
-    APP_TIMER_API_MES1=APP_TIMER_API_MES0+1,
-    APP_TIMER_API_MES2=APP_TIMER_API_MES0+2,
-    APP_TIMER_API_MES3=APP_TIMER_API_MES0+3,
-    APP_TIMER_API_MES4=APP_TIMER_API_MES0+4,
-    APP_TIMER_API_MES5=APP_TIMER_API_MES0+5,
-    APP_TIMER_API_MES6=APP_TIMER_API_MES0+6,
-    APP_TIMER_API_MES7=APP_TIMER_API_MES0+7,
-    APP_TIMER_API_MES8=APP_TIMER_API_MES0+8,
-    APP_TIMER_API_MES9=APP_TIMER_API_MES0+9,
-    APP_TIMER_API_LAST_MES=APP_TIMER_API_MES9,
-    
-    APP_MSG_UTIL_API_MES0,
-    APP_MSG_UTIL_API_MES1=APP_MSG_UTIL_API_MES0+1,
-    APP_MSG_UTIL_API_MES2=APP_MSG_UTIL_API_MES0+2,
-    APP_MSG_UTIL_API_MES3=APP_MSG_UTIL_API_MES0+3,
-    APP_MSG_UTIL_API_MES4=APP_MSG_UTIL_API_MES0+4,
-    APP_MSG_UTIL_API_LAST_MES=APP_MSG_UTIL_API_MES4
+  APP_CREATE_TIMER,
+  APP_CANCEL_TIMER,
+  APP_MODIFY_TIMER,
+  // Do not alter the order of the next messages
+  // they are considered a range
+  APP_TIMER_API_MES0,
+  APP_TIMER_API_MES1 = APP_TIMER_API_MES0 + 1,
+  APP_TIMER_API_MES2 = APP_TIMER_API_MES0 + 2,
+  APP_TIMER_API_MES3 = APP_TIMER_API_MES0 + 3,
+  APP_TIMER_API_MES4 = APP_TIMER_API_MES0 + 4,
+  APP_TIMER_API_MES5 = APP_TIMER_API_MES0 + 5,
+  APP_TIMER_API_MES6 = APP_TIMER_API_MES0 + 6,
+  APP_TIMER_API_MES7 = APP_TIMER_API_MES0 + 7,
+  APP_TIMER_API_MES8 = APP_TIMER_API_MES0 + 8,
+  APP_TIMER_API_MES9 = APP_TIMER_API_MES0 + 9,
+  APP_TIMER_API_LAST_MES = APP_TIMER_API_MES9,
+
+  APP_MSG_UTIL_API_MES0,
+  APP_MSG_UTIL_API_MES1 = APP_MSG_UTIL_API_MES0 + 1,
+  APP_MSG_UTIL_API_MES2 = APP_MSG_UTIL_API_MES0 + 2,
+  APP_MSG_UTIL_API_MES3 = APP_MSG_UTIL_API_MES0 + 3,
+  APP_MSG_UTIL_API_MES4 = APP_MSG_UTIL_API_MES0 + 4,
+  APP_MSG_UTIL_API_LAST_MES = APP_MSG_UTIL_API_MES4
 
 };
 
 /// Application environment structure
-struct app_env_tag
-{
-    /// Connection handle
-    uint16_t conhdl;
-    
-    /// Connection Id
-    uint8_t conidx; // Should be used only with KE_BUILD_ID()
-    
-    /// Connection active flag
-    bool connection_active;
-    
-    /// Last initialized profile
-    //uint8_t next_prf_init;
+struct app_env_tag {
+  /// Connection handle
+  uint16_t conhdl;
 
-    /// Security enable flag
-    bool sec_en;
-    
-    // Last paired peer address type 
-    uint8_t peer_addr_type;
-    
-    // Last paired peer address 
-    struct bd_addr peer_addr;
+  /// Connection Id
+  uint8_t conidx;  // Should be used only with KE_BUILD_ID()
 
+  /// Connection active flag
+  bool connection_active;
+
+  /// Last initialized profile
+  // uint8_t next_prf_init;
+
+  /// Security enable flag
+  bool sec_en;
+
+  // Last paired peer address type
+  uint8_t peer_addr_type;
+
+  // Last paired peer address
+  struct bd_addr peer_addr;
 };
 
 /*
@@ -200,22 +198,21 @@ bool app_db_init(void);
  * @return void
  ****************************************************************************************
  */
-void app_timer_set(ke_msg_id_t const timer_id, ke_task_id_t const task_id, uint16_t delay);
-
-
+void app_timer_set(ke_msg_id_t const timer_id, ke_task_id_t const task_id,
+                   uint16_t delay);
 
 /**
  ****************************************************************************************
- * @brief Calls all the enable function of the profile registered in prf_func, 
+ * @brief Calls all the enable function of the profile registered in prf_func,
  *        custs_prf_func and user_prf_func.
  * @param[in] conhdl The connection handle
  * @return void
  ****************************************************************************************
  */
-void app_prf_enable (uint16_t conhdl);
+void app_prf_enable(uint16_t conhdl);
 
-#endif //(BLE_APP_PRESENT)
+#endif  //(BLE_APP_PRESENT)
 
 /// @} APP
 
-#endif // _APP_H_
+#endif  // _APP_H_

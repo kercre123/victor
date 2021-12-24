@@ -16,47 +16,51 @@
 #ifndef ALEXA_CLIENT_SDK_ACL_INCLUDE_ACL_TRANSPORT_TRANSPORTOBSERVERINTERFACE_H_
 #define ALEXA_CLIENT_SDK_ACL_INCLUDE_ACL_TRANSPORT_TRANSPORTOBSERVERINTERFACE_H_
 
-#include <memory>
-
 #include <ACL/Transport/TransportInterface.h>
 #include <AVSCommon/SDKInterfaces/ConnectionStatusObserverInterface.h>
+
+#include <memory>
 
 namespace alexaClientSDK {
 namespace acl {
 
 /**
- * An interface class which allows a derived class to observe a Transport implementation.
+ * An interface class which allows a derived class to observe a Transport
+ * implementation.
  */
 class TransportObserverInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~TransportObserverInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~TransportObserverInterface() = default;
 
-    /**
-     * Called when a connection to AVS is established.
-     *
-     * @param transport The transport that has connected.
-     */
-    virtual void onConnected(std::shared_ptr<TransportInterface> transport) = 0;
+  /**
+   * Called when a connection to AVS is established.
+   *
+   * @param transport The transport that has connected.
+   */
+  virtual void onConnected(std::shared_ptr<TransportInterface> transport) = 0;
 
-    /**
-     * Called when we disconnect from AVS.
-     *
-     * @param transport The transport that is no longer connected (or attempting to connect).
-     * @param reason The reason that we disconnected.
-     */
-    virtual void onDisconnected(
-        std::shared_ptr<TransportInterface> transport,
-        avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::ChangedReason reason) = 0;
+  /**
+   * Called when we disconnect from AVS.
+   *
+   * @param transport The transport that is no longer connected (or attempting
+   * to connect).
+   * @param reason The reason that we disconnected.
+   */
+  virtual void onDisconnected(
+      std::shared_ptr<TransportInterface> transport,
+      avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::ChangedReason
+          reason) = 0;
 
-    /**
-     * Called when the server asks the client to reconnect
-     *
-     * @param transport The transport that has received the disconnect request.
-     */
-    virtual void onServerSideDisconnect(std::shared_ptr<TransportInterface> transport) = 0;
+  /**
+   * Called when the server asks the client to reconnect
+   *
+   * @param transport The transport that has received the disconnect request.
+   */
+  virtual void onServerSideDisconnect(
+      std::shared_ptr<TransportInterface> transport) = 0;
 };
 
 }  // namespace acl

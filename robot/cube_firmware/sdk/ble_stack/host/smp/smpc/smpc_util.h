@@ -20,9 +20,9 @@
  * @ingroup SMPC
  * @brief Contains utility functions and macros for SMPC.
  *
- * The SMPC Utilities block contains key generating and security related functions
- * that are useful in accomplishing the task of the security manager protocol
- * layer of the Bluetooth Low Energy.
+ * The SMPC Utilities block contains key generating and security related
+ *functions that are useful in accomplishing the task of the security manager
+ *protocol layer of the Bluetooth Low Energy.
  *
  * @{
  ****************************************************************************************
@@ -74,15 +74,16 @@ extern const smpc_recv_pdu_t smpc_recv_pdu[L2C_CODE_SECURITY_MAX];
  *
  * @param[in] pdu   Pointer to the data part of the SMP command PDU.
  *
- * @return Value of check parameter status, to be reported to host or back to peer.
+ * @return Value of check parameter status, to be reported to host or back to
+ *peer.
  ****************************************************************************************
  */
 uint8_t smpc_check_param(struct l2cc_pdu *pdu);
 
-#endif //(BLE_CENTRAL || BLE_PERIPHERAL)
+#endif  //(BLE_CENTRAL || BLE_PERIPHERAL)
 
-#endif //(RW_BLE_USE_CRYPT)
+#endif  //(RW_BLE_USE_CRYPT)
 
-#endif //(SMPC_UTIL_H_)
+#endif  //(SMPC_UTIL_H_)
 
 /// @} SMPC_UTIL

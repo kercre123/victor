@@ -1,16 +1,16 @@
 /**
-* File: testBehaviorSystemManager
-*
-* Author: Kevin M. Karol
-* Created: 10/02/17
-*
-* Description: Ensure that the BehaviorSystemManager's public interface
-* works as expected
-*
-* Copyright: Anki, Inc. 2017
-*
-* --gtest_filter=BehaviorSystemManager*
-**/
+ * File: testBehaviorSystemManager
+ *
+ * Author: Kevin M. Karol
+ * Created: 10/02/17
+ *
+ * Description: Ensure that the BehaviorSystemManager's public interface
+ * works as expected
+ *
+ * Copyright: Anki, Inc. 2017
+ *
+ * --gtest_filter=BehaviorSystemManager*
+ **/
 
 // Access protected BSM functions for test purposes
 #define private public
@@ -19,61 +19,64 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
-#include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorStack.h"
+#include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "gtest/gtest.h"
-
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 #include "util/helpers/boundedWhile.h"
 
 using namespace Anki::Vector;
 
-
-
-TEST(BehaviorSystemManager, TestDelegationVariants)
-{
-  std::unique_ptr<TestSuperPoweredBehavior> baseBehavior = std::make_unique<TestSuperPoweredBehavior>();
+TEST(BehaviorSystemManager, TestDelegationVariants) {
+  std::unique_ptr<TestSuperPoweredBehavior> baseBehavior =
+      std::make_unique<TestSuperPoweredBehavior>();
   TestBehaviorFramework testFramework(1, nullptr);
-  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::ComponentPtr& comps) {
-    baseBehavior->SetBehaviorContainer(comps->GetComponent(BCComponentID::BehaviorContainer).GetComponent<BehaviorContainer>());
-  };
-  testFramework.InitializeStandardBehaviorComponent(baseBehavior.get(),initializeBehavior);
+  auto initializeBehavior =
+      [&baseBehavior](const BehaviorComponent::ComponentPtr& comps) {
+        baseBehavior->SetBehaviorContainer(
+            comps->GetComponent(BCComponentID::BehaviorContainer)
+                .GetComponent<BehaviorContainer>());
+      };
+  testFramework.InitializeStandardBehaviorComponent(baseBehavior.get(),
+                                                    initializeBehavior);
 
   BehaviorSystemManager& bsm = testFramework.GetBehaviorSystemManager();
   BehaviorExternalInterface& bei = testFramework.GetBehaviorExternalInterface();
   BehaviorContainer& behaviorContainer = testFramework.GetBehaviorContainer();
 
-  // Check to make sure that the stack exists and control is appropriately delegated
+  // Check to make sure that the stack exists and control is appropriately
+  // delegated
   ASSERT_TRUE(bsm._behaviorStack->IsInStack(baseBehavior.get()));
   IBehavior* behaviorDelegating = bsm._behaviorStack->GetTopOfStack();
   ASSERT_NE(behaviorDelegating, nullptr);
   EXPECT_FALSE(bsm.IsControlDelegated(behaviorDelegating));
 
-
   // Build up an arbitrarily large stack of delegates
   const int arbitraryDelegationNumber = 50;
   std::vector<std::unique_ptr<TestSuperPoweredBehavior>> bunchOfDelegates;
-  for(int i = 0; i < arbitraryDelegationNumber; i++){
+  for (int i = 0; i < arbitraryDelegationNumber; i++) {
     bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredBehavior>());
     bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
-    const bool wtba __attribute((unused)) = bunchOfDelegates.back()->WantsToBeActivated();
-    InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, bunchOfDelegates.back().get());
+    const bool wtba __attribute((unused)) =
+        bunchOfDelegates.back()->WantsToBeActivated();
+    InjectValidDelegateIntoBSM(testFramework, behaviorDelegating,
+                               bunchOfDelegates.back().get());
 
     EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
                              bunchOfDelegates.back().get()));
 
     // Assert control is delegated properly
-    for(auto& entry: bunchOfDelegates){
-      if(entry == bunchOfDelegates.back()){
+    for (auto& entry : bunchOfDelegates) {
+      if (entry == bunchOfDelegates.back()) {
         EXPECT_FALSE(bsm.IsControlDelegated(entry.get()));
-      }else{
+      } else {
         EXPECT_TRUE(bsm.IsControlDelegated(entry.get()));
       }
     }
@@ -86,56 +89,60 @@ TEST(BehaviorSystemManager, TestDelegationVariants)
   ASSERT_EQ(bsm._behaviorStack->_behaviorStack.size(), 0);
 
   // Ensure that injecting a behavior into the stack works properly
-  ICozmoBehavior* waitBehavior = behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(Wait)).get();
+  ICozmoBehavior* waitBehavior =
+      behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(Wait)).get();
   waitBehavior->OnEnteredActivatableScope();
 
-  InjectAndDelegate(testFramework,
-                    bsm._behaviorStack->GetTopOfStack(),
+  InjectAndDelegate(testFramework, bsm._behaviorStack->GetTopOfStack(),
                     waitBehavior);
 }
 
-
-
-TEST(BehaviorSystemManager, TestCancelingDelegation)
-{
+TEST(BehaviorSystemManager, TestCancelingDelegation) {
   // TODO: Ensure that canceling delegates operates as expected
-  std::unique_ptr<TestSuperPoweredBehavior> baseBehavior = std::make_unique<TestSuperPoweredBehavior>();
+  std::unique_ptr<TestSuperPoweredBehavior> baseBehavior =
+      std::make_unique<TestSuperPoweredBehavior>();
   TestBehaviorFramework testFramework(1, nullptr);
-  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::ComponentPtr& comps) {
-    baseBehavior->SetBehaviorContainer(comps->GetComponent(BCComponentID::BehaviorContainer).GetComponent<BehaviorContainer>());
-  };
-  testFramework.InitializeStandardBehaviorComponent(baseBehavior.get(),initializeBehavior);
+  auto initializeBehavior =
+      [&baseBehavior](const BehaviorComponent::ComponentPtr& comps) {
+        baseBehavior->SetBehaviorContainer(
+            comps->GetComponent(BCComponentID::BehaviorContainer)
+                .GetComponent<BehaviorContainer>());
+      };
+  testFramework.InitializeStandardBehaviorComponent(baseBehavior.get(),
+                                                    initializeBehavior);
 
   BehaviorSystemManager& bsm = testFramework.GetBehaviorSystemManager();
   BehaviorExternalInterface& bei = testFramework.GetBehaviorExternalInterface();
   BehaviorContainer& behaviorContainer = testFramework.GetBehaviorContainer();
 
-  // Check to make sure that the stack exists and control is appropriately delegated
+  // Check to make sure that the stack exists and control is appropriately
+  // delegated
   ASSERT_TRUE(bsm._behaviorStack->IsInStack(baseBehavior.get()));
   IBehavior* behaviorDelegating = bsm._behaviorStack->GetTopOfStack();
   ASSERT_NE(behaviorDelegating, nullptr);
   EXPECT_FALSE(bsm.IsControlDelegated(behaviorDelegating));
 
-
   // Build up an arbitrarily large stack of delegates
   const int arbitraryDelegationNumber = 50;
   std::vector<std::unique_ptr<TestSuperPoweredBehavior>> bunchOfDelegates;
-  for(int i = 0; i < arbitraryDelegationNumber; i++){
+  for (int i = 0; i < arbitraryDelegationNumber; i++) {
     bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredBehavior>());
     bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
-    const bool wtba __attribute((unused)) = bunchOfDelegates.back()->WantsToBeActivated();
-    InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, bunchOfDelegates.back().get());
+    const bool wtba __attribute((unused)) =
+        bunchOfDelegates.back()->WantsToBeActivated();
+    InjectValidDelegateIntoBSM(testFramework, behaviorDelegating,
+                               bunchOfDelegates.back().get());
 
     EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
                              bunchOfDelegates.back().get()));
 
     // Assert control is delegated properly
-    for(auto& entry: bunchOfDelegates){
-      if(entry == bunchOfDelegates.back()){
+    for (auto& entry : bunchOfDelegates) {
+      if (entry == bunchOfDelegates.back()) {
         EXPECT_FALSE(bsm.IsControlDelegated(entry.get()));
-      }else{
+      } else {
         EXPECT_TRUE(bsm.IsControlDelegated(entry.get()));
       }
     }
@@ -156,13 +163,15 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
   }
 
   behaviorDelegating = bsm._behaviorStack->GetTopOfStack();
-  for(int i = 0; i < arbitraryDelegationNumber; i++){
+  for (int i = 0; i < arbitraryDelegationNumber; i++) {
     bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredBehavior>());
     bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
-    const bool wtba __attribute((unused)) = bunchOfDelegates.back()->WantsToBeActivated();
-    InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, bunchOfDelegates.back().get());
+    const bool wtba __attribute((unused)) =
+        bunchOfDelegates.back()->WantsToBeActivated();
+    InjectValidDelegateIntoBSM(testFramework, behaviorDelegating,
+                               bunchOfDelegates.back().get());
 
     EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
                              bunchOfDelegates.back().get()));
@@ -183,13 +192,15 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
   }
 
   behaviorDelegating = bsm._behaviorStack->GetTopOfStack();
-  for(int i = 0; i < arbitraryDelegationNumber; i++){
+  for (int i = 0; i < arbitraryDelegationNumber; i++) {
     bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredBehavior>());
     bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
-    const bool wtba __attribute((unused)) = bunchOfDelegates.back()->WantsToBeActivated();
-    InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, bunchOfDelegates.back().get());
+    const bool wtba __attribute((unused)) =
+        bunchOfDelegates.back()->WantsToBeActivated();
+    InjectValidDelegateIntoBSM(testFramework, behaviorDelegating,
+                               bunchOfDelegates.back().get());
 
     EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
                              bunchOfDelegates.back().get()));

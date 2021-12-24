@@ -13,50 +13,49 @@
 #ifndef ANKI_COZMO_SPEED_CHOOSER_H
 #define ANKI_COZMO_SPEED_CHOOSER_H
 
-#include "coretech/common/engine/math/pose.h"
 #include "clad/types/pathMotionProfile.h"
+#include "coretech/common/engine/math/pose.h"
 #include "util/random/randomGenerator.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
-  namespace Vector {
-    
-    class Robot;
-    
-    class SpeedChooser
-    {
-      public:
-        SpeedChooser(Robot& robot);
-      
-        // Generates a path motion profile based on the distance to the goal pose
-        PathMotionProfile GetPathMotionProfile(const Pose3d& goal);
-      
-        // Generates a path motion profile based on the distance to the closest goal
-        PathMotionProfile GetPathMotionProfile(const std::vector<Pose3d>& goals);
+namespace Vector {
 
-        // Handle various message types
-        template<typename T>
-        void HandleMessage(const T& msg);
-      
-      private:
-        Robot& _robot;
-      
-        bool _enabled = true;
+class Robot;
 
-        // Max speed a generated motion profile can have
-        const float maxSpeed_mmps = MAX_SAFE_WHEEL_SPEED_MMPS;
-      
-        // Min speed a generated motion profile can have
-        const float minSpeed_mmps = MAX_SAFE_WHILE_CARRYING_WHEEL_SPEED_MMPS;
+class SpeedChooser {
+ public:
+  SpeedChooser(Robot& robot);
 
-        const float minAccel_mmps2 = 80.0f;
-        const float maxAccel_mmps2 = 100.0f;
-      
-        const float distToObjectForMaxSpeed_mm = 300;
-        
-        std::vector<Signal::SmartHandle> _signalHandles;
-    };
-  }
-}
+  // Generates a path motion profile based on the distance to the goal pose
+  PathMotionProfile GetPathMotionProfile(const Pose3d& goal);
 
-#endif // ANKI_COZMO_SPEED_CHOOSER_H
+  // Generates a path motion profile based on the distance to the closest goal
+  PathMotionProfile GetPathMotionProfile(const std::vector<Pose3d>& goals);
+
+  // Handle various message types
+  template <typename T>
+  void HandleMessage(const T& msg);
+
+ private:
+  Robot& _robot;
+
+  bool _enabled = true;
+
+  // Max speed a generated motion profile can have
+  const float maxSpeed_mmps = MAX_SAFE_WHEEL_SPEED_MMPS;
+
+  // Min speed a generated motion profile can have
+  const float minSpeed_mmps = MAX_SAFE_WHILE_CARRYING_WHEEL_SPEED_MMPS;
+
+  const float minAccel_mmps2 = 80.0f;
+  const float maxAccel_mmps2 = 100.0f;
+
+  const float distToObjectForMaxSpeed_mm = 300;
+
+  std::vector<Signal::SmartHandle> _signalHandles;
+};
+}  // namespace Vector
+}  // namespace Anki
+
+#endif  // ANKI_COZMO_SPEED_CHOOSER_H

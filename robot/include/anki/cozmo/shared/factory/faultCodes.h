@@ -1,25 +1,26 @@
 /**
-* File: faultCodes.h
-*
-* Author: Al Chaussee
-* Date:   4/3/2018
-*
-* Description: Hardware and software fault codes
-*              Higher codes take precedence over lower codes
-*              DO NOT MODIFY
-*
-* Copyright: Anki, Inc. 2018
-**/
+ * File: faultCodes.h
+ *
+ * Author: Al Chaussee
+ * Date:   4/3/2018
+ *
+ * Description: Hardware and software fault codes
+ *              Higher codes take precedence over lower codes
+ *              DO NOT MODIFY
+ *
+ * Copyright: Anki, Inc. 2018
+ **/
 
 #ifndef FAULT_CODES_H
 #define FAULT_CODES_H
 
-#include <inttypes.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <inttypes.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include "platform/anki-trace/tracing.h"
 
 namespace Anki {
@@ -34,81 +35,80 @@ static const char* kFaultCodeFifoName = "/run/fault_code";
 enum : uint16_t {
   NONE = 0,
 
-  //Use higher numbers for head self-tests
-  //display precedence over (external) body tests
-  DISPLAY_FAILURE       = 990,
+  // Use higher numbers for head self-tests
+  // display precedence over (external) body tests
+  DISPLAY_FAILURE = 990,
 
-  CAMERA_STOPPED        = 981,
-  CAMERA_FAILURE        = 980,
+  CAMERA_STOPPED = 981,
+  CAMERA_FAILURE = 980,
 
-  //WIFI                  = 970,
-  WIFI_HW_FAILURE       = 970, //local wifi hw checks only
+  // WIFI                  = 970,
+  WIFI_HW_FAILURE = 970,  // local wifi hw checks only
 
-  IMU_FAILURE           = 960,
+  IMU_FAILURE = 960,
 
-  TOF_FAILURE           = 950,
+  TOF_FAILURE = 950,
 
-  //critical processes
-  NO_CLOUD_PROCESS      = 923,
-  NO_GATEWAY            = 921,
-  NO_GATEWAY_CERT       = 920,
-  SYSTEMD               = 919,
-  NO_ROBOT_COMMS        = 917,
-  NO_ROBOT_PROCESS      = 916,
-  NO_ENGINE_COMMS       = 915,
-  NO_ENGINE_PROCESS     = 914,
-  NO_SWITCHBOARD        = 913,
-  AUDIO_FAILURE         = 911,
+  // critical processes
+  NO_CLOUD_PROCESS = 923,
+  NO_GATEWAY = 921,
+  NO_GATEWAY_CERT = 920,
+  SYSTEMD = 919,
+  NO_ROBOT_COMMS = 917,
+  NO_ROBOT_PROCESS = 916,
+  NO_ENGINE_COMMS = 915,
+  NO_ENGINE_PROCESS = 914,
+  NO_SWITCHBOARD = 913,
+  AUDIO_FAILURE = 911,
   STOP_BOOT_ANIM_FAILED = 909,
 
-  //Body and external errors
-  NO_BODY               = 899, //no response from syscon
-  SPINE_SELECT_TIMEOUT  = 898,
+  // Body and external errors
+  NO_BODY = 899,  // no response from syscon
+  SPINE_SELECT_TIMEOUT = 898,
 
-  RAMPOST_ERROR         = 897,
-  
-  //Sensor Errors
-  TOUCH_SENSOR          = 895,
-  TOF                   = 894,
-  CLIFF_BL              = 893,
-  CLIFF_BR              = 892,
-  CLIFF_FL              = 891,
-  CLIFF_FR              = 890,
+  RAMPOST_ERROR = 897,
 
-  //Mic Errors
-  MIC_BL                = 873,
-  MIC_BR                = 872,
-  MIC_FL                = 871,
-  MIC_FR                = 870,
+  // Sensor Errors
+  TOUCH_SENSOR = 895,
+  TOF = 894,
+  CLIFF_BL = 893,
+  CLIFF_BR = 892,
+  CLIFF_FL = 891,
+  CLIFF_FR = 890,
 
-  //Cloud Errors
-  CLOUD_READ_ESN        = 852,
-  CLOUD_TOKEN_STORE     = 851,
-  CLOUD_CERT            = 850,
+  // Mic Errors
+  MIC_BL = 873,
+  MIC_BR = 872,
+  MIC_FL = 871,
+  MIC_FR = 870,
 
-  //Camera config errors
-  NO_CAMERA_CALIB       = 840,
+  // Cloud Errors
+  CLOUD_READ_ESN = 852,
+  CLOUD_TOKEN_STORE = 851,
+  CLOUD_CERT = 850,
+
+  // Camera config errors
+  NO_CAMERA_CALIB = 840,
 
   // DO NOT CHANGE any of the codes in this section
   // They are hardcoded into various system level programs
-  BODY_COMMS_FAILURE    = 802,
-  DFU_FAILED            = 801,
-  NO_ANIM_PROCESS       = 800,
-
+  BODY_COMMS_FAILURE = 802,
+  DFU_FAILED = 801,
+  NO_ANIM_PROCESS = 800,
 
   // --------- Shutdown codes ----------
   // These codes result in only vic-dasmgr being stopped so that
-  // a DAS message for the shutdown can be backed up to file 
+  // a DAS message for the shutdown can be backed up to file
   // (and in some cases a graphic displayed) as quickly as possible.
-  
+
   // An appropriate graphic is displayed by faultCodeDisplay.cpp
   // when it receives these codes.
-  SHUTDOWN_BATTERY_CRITICAL_TEMP  = 705,
-  SHUTDOWN_BATTERY_CRITICAL_VOLT  = 702,
+  SHUTDOWN_BATTERY_CRITICAL_TEMP = 705,
+  SHUTDOWN_BATTERY_CRITICAL_VOLT = 702,
 
   // No fault code is displayed when it receives these codes.
-  SHUTDOWN_GYRO_NOT_CALIBRATING   = 701,
-  SHUTDOWN_BUTTON                 = 700,
+  SHUTDOWN_GYRO_NOT_CALIBRATING = 701,
+  SHUTDOWN_BUTTON = 700,
   // ------ End of Shutdown codes ------
 
   COUNT = 1000
@@ -117,8 +117,7 @@ enum : uint16_t {
 // Displays a fault code to the face
 // Will queue fault codes until animation process is able to read
 // from the fifo
-static int DisplayFaultCode(uint16_t code)
-{
+static int DisplayFaultCode(uint16_t code) {
   printf("DisplayFaultCode: %u\n", code);
   tracepoint(anki_ust, anki_fault_code, code);
   int fifo = open(FaultCode::kFaultCodeFifoName, O_WRONLY);
@@ -128,27 +127,27 @@ static int DisplayFaultCode(uint16_t code)
   }
 
   char faultCode[7] = {0};
-  const int numToWrite = snprintf(faultCode, sizeof(faultCode)-1, "%u\n", code);
+  const int numToWrite =
+      snprintf(faultCode, sizeof(faultCode) - 1, "%u\n", code);
   const ssize_t numWritten = write(fifo, faultCode, numToWrite);
 
   if (close(fifo) != 0) {
     printf("DisplayFaultCode: Failed to close fifo (errno %d)\n", errno);
   }
 
-  if (numWritten != numToWrite)
-  {
-    printf("DisplayFaultCode: Expected to write %d bytes but only wrote %zd (errno = %d)\n",
-           numToWrite,
-           numWritten,
-           errno);
+  if (numWritten != numToWrite) {
+    printf(
+        "DisplayFaultCode: Expected to write %d bytes but only wrote %zd "
+        "(errno = %d)\n",
+        numToWrite, numWritten, errno);
     return -1;
   }
 
   return 0;
 }
 
-}
-}
-}
+}  // namespace FaultCode
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

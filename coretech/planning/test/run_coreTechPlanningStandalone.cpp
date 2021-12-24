@@ -10,44 +10,46 @@
  *
  **/
 
+#include <getopt.h>
+#include <libgen.h>
+
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <map>
+
 #include "coretech/planning/engine/xythetaEnvironment.h"
 #include "coretech/planning/engine/xythetaPlanner.h"
 #include "coretech/planning/engine/xythetaPlannerContext.h"
 #include "json/json.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
-#include <fstream>
-#include <getopt.h>
-#include <iomanip>
-#include <iostream>
-#include <libgen.h>
-#include <map>
 
 using namespace Anki::Planning;
 using namespace std;
 
 Anki::Util::PrintfLoggerProvider* loggerProvider = nullptr;
 
-void writePath(string filename, const xythetaEnvironment& env, const xythetaPlan& plan)
-{
+void writePath(string filename, const xythetaEnvironment& env,
+               const xythetaPlan& plan) {
   ofstream outfile(filename);
   vector<State_c> plan_c;
   env.GetActionSpace().ConvertToXYPlan(plan, plan_c);
-  for(size_t i=0; i<plan_c.size(); ++i)
-    outfile<<plan_c[i].x_mm<<' '<<plan_c[i].y_mm<<' '<<plan_c[i].theta<<endl;
+  for (size_t i = 0; i < plan_c.size(); ++i)
+    outfile << plan_c[i].x_mm << ' ' << plan_c[i].y_mm << ' ' << plan_c[i].theta
+            << endl;
 
   outfile.close();
 }
 
-void usage()
-{
-  cout<<"usage: ctiPlanningStandalone -p mprim.json [--manual | --context env.json] --stat\n";
-  cout<<"       --stat causes the program to output a single line suitable for appending to a state file\n";
+void usage() {
+  cout << "usage: ctiPlanningStandalone -p mprim.json [--manual | --context "
+          "env.json] --stat\n";
+  cout << "       --stat causes the program to output a single line suitable "
+          "for appending to a state file\n";
 }
 
-int main(int argc, char *argv[])
-{
-
+int main(int argc, char* argv[]) {
   bool gotMprim = false;
   bool stats = false;
   bool quiet = false;
@@ -59,23 +61,21 @@ int main(int argc, char *argv[])
 
   std::string contextFilenameBase;
 
-  struct option opts[] = {
-    {"help", no_argument, 0, 'h'},
-    {"mprim", required_argument, 0, 'p'},
-    {"manual", no_argument, &doManualPlanner, 1},
-    {"context", required_argument, 0, 'c'},
-    {"stat", no_argument, 0, 's'},
-    {0, 0, 0, 0}
-  };
+  struct option opts[] = {{"help", no_argument, 0, 'h'},
+                          {"mprim", required_argument, 0, 'p'},
+                          {"manual", no_argument, &doManualPlanner, 1},
+                          {"context", required_argument, 0, 'c'},
+                          {"stat", no_argument, 0, 's'},
+                          {0, 0, 0, 0}};
 
   int option_index = 0;
 
-  while(true) {
-    int c = getopt_long( argc, argv, "hp:c:s", opts, &option_index );
+  while (true) {
+    int c = getopt_long(argc, argv, "hp:c:s", opts, &option_index);
     if (c == -1) {
       break;
     }
-    switch(c) {
+    switch (c) {
       case 0:
         break;
 
@@ -90,8 +90,9 @@ int main(int argc, char *argv[])
 
       case 'p':
         gotMprim = context.env.ReadMotionPrimitives(optarg);
-        if( ! gotMprim ) {
-          cerr<<"Could not read motion primitives from file "<<optarg<<endl;
+        if (!gotMprim) {
+          cerr << "Could not read motion primitives from file " << optarg
+               << endl;
           return -1;
         }
         break;
@@ -102,14 +103,14 @@ int main(int argc, char *argv[])
         Json::Reader jsonReader;
 
         char* contextFilenameBase_c = basename(optarg);
-        if( contextFilenameBase_c != nullptr ) {
+        if (contextFilenameBase_c != nullptr) {
           contextFilenameBase = contextFilenameBase_c;
         }
 
         ifstream contextStream(optarg);
         bool success = jsonReader.parse(contextStream, contextJson);
-        if( ! success ) {
-          cerr<<"Could not read context from file "<<optarg<<endl;
+        if (!success) {
+          cerr << "Could not read context from file " << optarg << endl;
           return -1;
         }
         break;
@@ -121,25 +122,24 @@ int main(int argc, char *argv[])
     }
   }
 
-  if( ! gotMprim ) {
-    cerr<<"Must pass in motion primitives!\n";
+  if (!gotMprim) {
+    cerr << "Must pass in motion primitives!\n";
     usage();
     return -1;
   }
 
-  if( ! quiet ) {
-    cout<<"Welcome to xythetaPlanner.\n";
+  if (!quiet) {
+    cout << "Welcome to xythetaPlanner.\n";
 
     loggerProvider = new Anki::Util::PrintfLoggerProvider();
     loggerProvider->SetMinLogLevel(Anki::Util::LOG_LEVEL_DEBUG);
     Anki::Util::gLoggerProvider = loggerProvider;
   }
 
-
-  if( doContextPlan ) {
+  if (doContextPlan) {
     bool success = context.Import(contextJson);
-    if( ! success ) {
-      cerr<<"Could not import planner context\n";
+    if (!success) {
+      cerr << "Could not import planner context\n";
       return -1;
     }
 
@@ -152,20 +152,21 @@ int main(int argc, char *argv[])
     xythetaPlanner planner(context);
     planner.Replan();
 
-    if( ! quiet ) {
+    if (!quiet) {
       printf("complete. Path: \n");
       context.env.GetActionSpace().PrintPlan(planner.GetPlan());
 
-      char* cwd=NULL;
+      char* cwd = NULL;
       size_t size = 0;
-      cwd = getcwd(cwd,size);
+      cwd = getcwd(cwd, size);
 
       writePath("path.txt", context.env, planner.GetPlan());
-      cout<<"check "<<cwd<<"/path.txt\n";
+      cout << "check " << cwd << "/path.txt\n";
     }
 
-    if( stats ) {
-      duration<double> time_d = duration_cast<duration<double>>(envEndT - envStartT);
+    if (stats) {
+      duration<double> time_d =
+          duration_cast<duration<double>>(envEndT - envStartT);
       double envTime = time_d.count();
 
       Json::Value statsJson;
@@ -182,7 +183,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  if( doManualPlanner ) {
+  if (doManualPlanner) {
     xythetaPlan plan;
 
     int choice = 0;
@@ -190,13 +191,13 @@ int main(int argc, char *argv[])
     GraphState curr = plan.start_;
     Cost g = 0.0;
 
-    while(choice >= 0) {
-      cout<<"current state: "<<curr<<" g = "<<g<<"\nactions:\n";
+    while (choice >= 0) {
+      cout << "current state: " << curr << " g = " << g << "\nactions:\n";
 
       SuccessorIterator it = context.env.GetSuccessors(curr.GetStateID(), g);
 
-      if(it.Done(context.env)) {
-        cout<<"  no actions!\n";
+      if (it.Done(context.env)) {
+        cout << "  no actions!\n";
         break;
       }
 
@@ -204,27 +205,31 @@ int main(int argc, char *argv[])
 
       std::map<ActionID, StateID> results;
 
-      while(!it.Done(context.env)) {
+      while (!it.Done(context.env)) {
         MotionPrimitive prim;
         string name;
-        if(!context.env.TryGetRawMotion(curr.theta, it.Front().actionID, prim)) {
-          printf("error: internal error! Could not get primitive id %d at theta %d!\n",
-                     it.Front().actionID,
-                     curr.theta);
+        if (!context.env.TryGetRawMotion(curr.theta, it.Front().actionID,
+                                         prim)) {
+          printf(
+              "error: internal error! Could not get primitive id %d at theta "
+              "%d!\n",
+              it.Front().actionID, curr.theta);
         }
-        name = context.env.GetActionSpace().GetActionType(it.Front().actionID).GetName();
+        name = context.env.GetActionSpace()
+                   .GetActionType(it.Front().actionID)
+                   .GetName();
 
-        cout<<"  "<<(int)it.Front().actionID<<": "<<left<<setw(22)<<name
-            <<GraphState(it.Front().stateID)<<" cost = "
-            <<(it.Front().g - g)<<endl;
+        cout << "  " << (int)it.Front().actionID << ": " << left << setw(22)
+             << name << GraphState(it.Front().stateID)
+             << " cost = " << (it.Front().g - g) << endl;
         results[it.Front().actionID] = it.Front().stateID;
         it.Next(context.env);
       }
 
-      cout<<" -1: exit\n> ";
-      cin>>choice;
+      cout << " -1: exit\n> ";
+      cin >> choice;
 
-      if(choice >= 0 && results.count(choice) > 0) {
+      if (choice >= 0 && results.count(choice) > 0) {
         plan.Push(choice, 0.0);
         writePath("path.txt", context.env, plan);
 
@@ -235,11 +240,13 @@ int main(int argc, char *argv[])
     printf("complete. Path: \n");
     context.env.GetActionSpace().PrintPlan(plan);
 
-    cout<<"final state: "<<context.env.State2State_c(context.env.GetActionSpace().GetPlanFinalState(plan))<<endl;
+    cout << "final state: "
+         << context.env.State2State_c(
+                context.env.GetActionSpace().GetPlanFinalState(plan))
+         << endl;
 
     printf("\n\nTestPlan:\n");
-    for(size_t i = 0; i < plan.Size(); i++)
-    {
+    for (size_t i = 0; i < plan.Size(); i++) {
       printf("plan.Push(%d);\n", plan.GetAction(i));
     }
   }

@@ -34,6 +34,7 @@
 #define COMMON_LINUX_MEMORY_MAPPED_FILE_H_
 
 #include <stddef.h>
+
 #include "common/basictypes.h"
 #include "common/memory_range.h"
 

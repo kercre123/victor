@@ -14,29 +14,29 @@
  **/
 
 #include "taskExecutor.h"
-#include <algorithm>
+
 #include <fcntl.h>
 #include <unistd.h>
 
-namespace Anki
-{
+#include <algorithm>
+
+namespace Anki {
 
 TaskExecutor::TaskExecutor(struct ev_loop* loop)
-    : _loop(loop)
-    , _pipeFileDescriptors{-1, -1}
-    , _pipeWatcher(nullptr)
-    , _timerWatcher(nullptr)
-    , _taskExecuteThread(nullptr)
-    , _syncTaskDone(false)
-    , _executing(true)
-{
+    : _loop(loop),
+      _pipeFileDescriptors{-1, -1},
+      _pipeWatcher(nullptr),
+      _timerWatcher(nullptr),
+      _taskExecuteThread(nullptr),
+      _syncTaskDone(false),
+      _executing(true) {
   // TODO: Should really be checking return values
 #if defined(ANKI_PLATFORM_LINUX) || defined(ANKI_PLATFORM_VICOS)
-  (void) pipe2(_pipeFileDescriptors, O_NONBLOCK);
+  (void)pipe2(_pipeFileDescriptors, O_NONBLOCK);
 #else
-  (void) pipe(_pipeFileDescriptors);
-  (void) fcntl(_pipeFileDescriptors[0], F_SETFL, O_NONBLOCK);
-  (void) fcntl(_pipeFileDescriptors[1], F_SETFL, O_NONBLOCK);
+  (void)pipe(_pipeFileDescriptors);
+  (void)fcntl(_pipeFileDescriptors[0], F_SETFL, O_NONBLOCK);
+  (void)fcntl(_pipeFileDescriptors[1], F_SETFL, O_NONBLOCK);
 #endif
   if (loop) {
     InitWatchers();
@@ -45,27 +45,26 @@ TaskExecutor::TaskExecutor(struct ev_loop* loop)
   }
 }
 
-TaskExecutor::~TaskExecutor()
-{
+TaskExecutor::~TaskExecutor() {
   StopExecution();
   if (_pipeFileDescriptors[1] >= 0) {
-    (void) close(_pipeFileDescriptors[1]); _pipeFileDescriptors[1] = -1;
+    (void)close(_pipeFileDescriptors[1]);
+    _pipeFileDescriptors[1] = -1;
   }
   if (_pipeFileDescriptors[0] >= 0) {
-    (void) close(_pipeFileDescriptors[0]); _pipeFileDescriptors[0] = -1;
+    (void)close(_pipeFileDescriptors[0]);
+    _pipeFileDescriptors[0] = -1;
   }
 }
 
-void TaskExecutor::WakeUpBackgroundThread(const char c)
-{
+void TaskExecutor::WakeUpBackgroundThread(const char c) {
   if (_pipeFileDescriptors[1] >= 0) {
     char buf[1] = {c};
-    (void) write(_pipeFileDescriptors[1], buf, sizeof(buf));
+    (void)write(_pipeFileDescriptors[1], buf, sizeof(buf));
   }
 }
 
-void TaskExecutor::StopExecution()
-{
+void TaskExecutor::StopExecution() {
   // Cause Execute and ProcessDeferredQueue to break out of their while loops
   _executing = false;
 
@@ -85,29 +84,27 @@ void TaskExecutor::StopExecution()
   // Wake up the background thread so that it exits
   WakeUpBackgroundThread('q');
 
-  // Join the background threads.  We created the threads in the constructor, so they
-  // should be cleaned up in our destructor.
+  // Join the background threads.  We created the threads in the constructor, so
+  // they should be cleaned up in our destructor.
   try {
     if (_taskExecuteThread && _taskExecuteThread->joinable()) {
       _taskExecuteThread->join();
     }
-  } catch ( ... )
-  {
+  } catch (...) {
     // Suppress exceptions
   }
   DestroyWatchers();
 }
 
-void TaskExecutor::Wake(std::function<void()> task)
-{
+void TaskExecutor::Wake(std::function<void()> task) {
   if (!_executing) {
     return;
   }
-  WakeAfter(std::move(task), std::chrono::time_point<std::chrono::steady_clock>::min());
+  WakeAfter(std::move(task),
+            std::chrono::time_point<std::chrono::steady_clock>::min());
 }
 
-void TaskExecutor::WakeSync(std::function<void()> task)
-{
+void TaskExecutor::WakeSync(std::function<void()> task) {
   if (!_executing) {
     return;
   }
@@ -129,11 +126,12 @@ void TaskExecutor::WakeSync(std::function<void()> task)
   AddTaskHolder(std::move(taskHolder));
 
   std::unique_lock<std::mutex> lk(_syncTaskCompleteMutex);
-  _syncTaskCondition.wait(lk, [this]{return _syncTaskDone || !_executing;});
+  _syncTaskCondition.wait(lk, [this] { return _syncTaskDone || !_executing; });
 }
 
-void TaskExecutor::WakeAfter(std::function<void()> task, std::chrono::time_point<std::chrono::steady_clock> when)
-{
+void TaskExecutor::WakeAfter(
+    std::function<void()> task,
+    std::chrono::time_point<std::chrono::steady_clock> when) {
   if (!_executing) {
     return;
   }
@@ -150,8 +148,7 @@ void TaskExecutor::WakeAfter(std::function<void()> task, std::chrono::time_point
   }
 }
 
-void TaskExecutor::AddTaskHolder(TaskHolder taskHolder)
-{
+void TaskExecutor::AddTaskHolder(TaskHolder taskHolder) {
   std::lock_guard<std::mutex> lock(_taskQueueMutex);
   if (!_executing) {
     return;
@@ -160,8 +157,7 @@ void TaskExecutor::AddTaskHolder(TaskHolder taskHolder)
   WakeUpBackgroundThread();
 }
 
-void TaskExecutor::AddTaskHolderToDeferredQueue(TaskHolder taskHolder)
-{
+void TaskExecutor::AddTaskHolderToDeferredQueue(TaskHolder taskHolder) {
   std::lock_guard<std::mutex> lock(_taskDeferredQueueMutex);
   if (!_executing) {
     return;
@@ -183,8 +179,7 @@ void TaskExecutor::CommonCallback() {
   }
 }
 
-void TaskExecutor::PipeWatcherCallback(ev::io& w, int revents)
-{
+void TaskExecutor::PipeWatcherCallback(ev::io& w, int revents) {
   if (revents & ev::READ) {
     char buf[1];
     ssize_t bytesRead;
@@ -195,38 +190,36 @@ void TaskExecutor::PipeWatcherCallback(ev::io& w, int revents)
   CommonCallback();
 }
 
-void TaskExecutor::TimerWatcherCallback(ev::timer& w, int revents)
-{
+void TaskExecutor::TimerWatcherCallback(ev::timer& w, int revents) {
   CommonCallback();
 }
 
-void TaskExecutor::InitWatchers()
-{
+void TaskExecutor::InitWatchers() {
   _loop_thread_id = std::this_thread::get_id();
   _pipeWatcher = new ev::io(_loop);
-  _pipeWatcher->set <TaskExecutor, &TaskExecutor::PipeWatcherCallback> (this);
+  _pipeWatcher->set<TaskExecutor, &TaskExecutor::PipeWatcherCallback>(this);
   _timerWatcher = new ev::timer(_loop);
-  _timerWatcher->set <TaskExecutor, &TaskExecutor::TimerWatcherCallback> (this);
-  _pipeWatcher->start (_pipeFileDescriptors[0], ev::READ);
+  _timerWatcher->set<TaskExecutor, &TaskExecutor::TimerWatcherCallback>(this);
+  _pipeWatcher->start(_pipeFileDescriptors[0], ev::READ);
 }
 
-void TaskExecutor::DestroyWatchers()
-{
-  delete _timerWatcher; _timerWatcher = nullptr;
-  delete _pipeWatcher; _pipeWatcher = nullptr;
+void TaskExecutor::DestroyWatchers() {
+  delete _timerWatcher;
+  _timerWatcher = nullptr;
+  delete _pipeWatcher;
+  _pipeWatcher = nullptr;
 }
 
-void TaskExecutor::Execute()
-{
+void TaskExecutor::Execute() {
   _loop = ev_loop_new(EVBACKEND_SELECT);
   InitWatchers();
   ev_loop(_loop, 0);
   DestroyWatchers();
-  ev_loop_destroy(_loop); _loop = nullptr;
+  ev_loop_destroy(_loop);
+  _loop = nullptr;
 }
 
-void TaskExecutor::ProcessTaskQueue()
-{
+void TaskExecutor::ProcessTaskQueue() {
   std::vector<TaskHolder> taskQueue;
   {
     // Briefly lock the mutex to move the task queue to a local variable.
@@ -248,8 +241,7 @@ void TaskExecutor::ProcessTaskQueue()
   }
 }
 
-void TaskExecutor::ProcessDeferredQueue()
-{
+void TaskExecutor::ProcessDeferredQueue() {
   std::lock_guard<std::mutex> lock(_taskDeferredQueueMutex);
   bool endLoop = false;
   while (_executing && !_deferredTaskQueue.empty() && !endLoop) {
@@ -260,13 +252,15 @@ void TaskExecutor::ProcessDeferredQueue()
       _deferredTaskQueue.pop_back();
     } else {
       endLoop = true;
-      using ev_tstamp_duration = std::chrono::duration<ev_tstamp, std::ratio<1, 1>>;
+      using ev_tstamp_duration =
+          std::chrono::duration<ev_tstamp, std::ratio<1, 1>>;
       ev_tstamp_duration duration =
-          std::chrono::duration_cast<ev_tstamp_duration>(taskHolder.when - std::chrono::steady_clock::now());
+          std::chrono::duration_cast<ev_tstamp_duration>(
+              taskHolder.when - std::chrono::steady_clock::now());
       ev_tstamp after = duration.count();
       _timerWatcher->start(after);
     }
   }
 }
 
-} // namespace Anki
+}  // namespace Anki

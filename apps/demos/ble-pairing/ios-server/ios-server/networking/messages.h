@@ -13,12 +13,13 @@
 
 namespace Anki {
 namespace Switchboard {
-  class MessageProtocol {
-  public:
-    bool ReceiveRawBuffer(uint8_t* buffer, size_t size, uint8_t* bufferOut, size_t* sizeOut);
-    void SendRawBuffer(uint8_t* buffer, size_t size);
-  };
-} // Switchboard
-} // Anki
+class MessageProtocol {
+ public:
+  bool ReceiveRawBuffer(uint8_t* buffer, size_t size, uint8_t* bufferOut,
+                        size_t* sizeOut);
+  void SendRawBuffer(uint8_t* buffer, size_t size);
+};
+}  // namespace Switchboard
+}  // namespace Anki
 
 #endif /* messages_hpp */

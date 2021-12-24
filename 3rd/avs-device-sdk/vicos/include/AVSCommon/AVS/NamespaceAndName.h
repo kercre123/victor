@@ -23,32 +23,34 @@ namespace avsCommon {
 namespace avs {
 
 /**
- * Conjoined @c namespace and @c name values (intended for identifying sub-types of @c AVSDirective).
+ * Conjoined @c namespace and @c name values (intended for identifying sub-types
+ * of @c AVSDirective).
  */
 class NamespaceAndName {
-public:
-    /**
-     * Constructor to initialize with default values.
-     */
-    NamespaceAndName() = default;
+ public:
+  /**
+   * Constructor to initialize with default values.
+   */
+  NamespaceAndName() = default;
 
-    /**
-     * Constructor to initialize wih specific values.
-     *
-     * @param nameSpaceIn The @c namespace value for this instance.
-     * @param nameIn The @c name value for this instance.
-     */
-    NamespaceAndName(const std::string& nameSpaceIn, const std::string& nameIn);
+  /**
+   * Constructor to initialize wih specific values.
+   *
+   * @param nameSpaceIn The @c namespace value for this instance.
+   * @param nameIn The @c name value for this instance.
+   */
+  NamespaceAndName(const std::string& nameSpaceIn, const std::string& nameIn);
 
-    /// The @c namespace value of this instance.
-    const std::string nameSpace;
+  /// The @c namespace value of this instance.
+  const std::string nameSpace;
 
-    /// The @c name value of this instance.
-    const std::string name;
+  /// The @c name value of this instance.
+  const std::string name;
 };
 
 /**
- * Operator == to allow @c namespaceAndName ot be used as a key in @cstd::unordered_map.
+ * Operator == to allow @c namespaceAndName ot be used as a key in
+ * @cstd::unordered_map.
  *
  * @param rhs The left hand side of the == operation.
  * @param rhs The right hand side of the == operation.
@@ -63,11 +65,13 @@ bool operator==(const NamespaceAndName& lhs, const NamespaceAndName& rhs);
 namespace std {
 
 /**
- * @ std::hash() specialization defined to allow @c NamespaceAndName to be used as a key in @c std::unordered_map.
+ * @ std::hash() specialization defined to allow @c NamespaceAndName to be used
+ * as a key in @c std::unordered_map.
  */
 template <>
 struct hash<alexaClientSDK::avsCommon::avs::NamespaceAndName> {
-    size_t operator()(const alexaClientSDK::avsCommon::avs::NamespaceAndName& in) const;
+  size_t operator()(
+      const alexaClientSDK::avsCommon::avs::NamespaceAndName& in) const;
 };
 
 }  // namespace std

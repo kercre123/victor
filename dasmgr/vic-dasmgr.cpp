@@ -1,64 +1,62 @@
 /**
-* File: vic-dasmgr.cpp
-*
-* Description: Victor DAS Manager service app
-*
-* Copyright: Anki, inc. 2018
-*
-*/
-#include "dasManager.h"
-#include "dasConfig.h"
-
-#include "coretech/common/engine/utils/data/dataPlatform.h"
-#include "json/json.h"
-#include "platform/victorCrashReports/victorCrashReporter.h"
-#include "util/logging/logging.h"
-#include "util/logging/DAS.h"
-#include "util/logging/victorLogger.h"
-
+ * File: vic-dasmgr.cpp
+ *
+ * Description: Victor DAS Manager service app
+ *
+ * Copyright: Anki, inc. 2018
+ *
+ */
 #include <signal.h>
 #include <stdlib.h>
+
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "dasConfig.h"
+#include "dasManager.h"
+#include "json/json.h"
+#include "platform/victorCrashReports/victorCrashReporter.h"
+#include "util/logging/DAS.h"
+#include "util/logging/logging.h"
+#include "util/logging/victorLogger.h"
 
 using DataPlatform = Anki::Util::Data::DataPlatform;
 using DASConfig = Anki::Vector::DASConfig;
 
 #define LOG_PROCNAME "vic-dasmgr"
-#define LOG_CHANNEL  LOG_PROCNAME
+#define LOG_CHANNEL LOG_PROCNAME
 
-namespace
-{
-  constexpr const char DEFAULT_PLATFORM_CONFIG[] = "/anki/etc/config/platform_config.json";
+namespace {
+constexpr const char DEFAULT_PLATFORM_CONFIG[] =
+    "/anki/etc/config/platform_config.json";
 
-  bool gShutdown = false;
-}
+bool gShutdown = false;
+}  // namespace
 
-void Shutdown(int signum)
-{
+void Shutdown(int signum) {
   gShutdown = true;
   // Call android log print instead of LOG_INFO so log channel is not prepended
-  // to the message, need "@@" to be at the beginning of the message so it is parsed
-  // as a termination event by dasManager
-  __android_log_print(ANDROID_LOG_INFO, "vic-dasmgr", "@@Shutdown on signal %d\n", signum);
+  // to the message, need "@@" to be at the beginning of the message so it is
+  // parsed as a termination event by dasManager
+  __android_log_print(ANDROID_LOG_INFO, "vic-dasmgr",
+                      "@@Shutdown on signal %d\n", signum);
 }
 
-static std::unique_ptr<DataPlatform> GetDataPlatform()
-{
+static std::unique_ptr<DataPlatform> GetDataPlatform() {
   std::string path = DEFAULT_PLATFORM_CONFIG;
-  const char * cp = getenv("VIC_DASMGR_PLATFORM_CONFIG");
+  const char* cp = getenv("VIC_DASMGR_PLATFORM_CONFIG");
   if (cp != nullptr) {
     path = cp;
   }
   return DataPlatform::GetDataPlatform(path);
 }
 
-static std::unique_ptr<DASConfig> GetDASConfig(const DataPlatform & dataPlatform)
-{
-  const std::string & path = dataPlatform.GetResourcePath("config/DASConfig.json");
+static std::unique_ptr<DASConfig> GetDASConfig(
+    const DataPlatform& dataPlatform) {
+  const std::string& path =
+      dataPlatform.GetResourcePath("config/DASConfig.json");
   return DASConfig::GetDASConfig(path);
 }
 
-int main(int argc, const char * argv[])
-{
+int main(int argc, const char* argv[]) {
   // Set up crash reporter
   Anki::Vector::InstallCrashReporter(LOG_PROCNAME);
 
@@ -103,5 +101,4 @@ int main(int argc, const char * argv[])
   Anki::Vector::UninstallCrashReporter();
 
   exit(status);
-
 }

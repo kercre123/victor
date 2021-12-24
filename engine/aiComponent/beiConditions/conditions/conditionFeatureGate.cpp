@@ -22,29 +22,30 @@
 
 namespace Anki {
 namespace Vector {
-  
+
 namespace {
-  const char* const kFeatureTypeKey = "feature";
-  const char* const kExpectedKey    = "expected"; // optional bool, defaults to true
-}
+const char* const kFeatureTypeKey = "feature";
+const char* const kExpectedKey = "expected";  // optional bool, defaults to true
+}  // namespace
 
 ConditionFeatureGate::ConditionFeatureGate(const Json::Value& config)
-  : IBEICondition(config)
-{
-  std::string featureStr = JsonTools::ParseString( config, kFeatureTypeKey, "ConditionFeatureGate" );
-  ANKI_VERIFY( FeatureTypeFromString( featureStr, _featureType ),
-               "ConditionFeatureGate.Ctor.Invalid",
-               "Unknown feature gate type %s",
-               featureStr.c_str() );
-  _expected = config.get( kExpectedKey, true ).asBool();
+    : IBEICondition(config) {
+  std::string featureStr =
+      JsonTools::ParseString(config, kFeatureTypeKey, "ConditionFeatureGate");
+  ANKI_VERIFY(FeatureTypeFromString(featureStr, _featureType),
+              "ConditionFeatureGate.Ctor.Invalid",
+              "Unknown feature gate type %s", featureStr.c_str());
+  _expected = config.get(kExpectedKey, true).asBool();
 }
 
-bool ConditionFeatureGate::AreConditionsMetInternal(BehaviorExternalInterface& bei) const
-{
+bool ConditionFeatureGate::AreConditionsMetInternal(
+    BehaviorExternalInterface& bei) const {
   const bool isValid = _featureType != FeatureType::Invalid;
-  const bool enabled = bei.GetRobotInfo().GetContext()->GetFeatureGate()->IsFeatureEnabled( _featureType );
+  const bool enabled =
+      bei.GetRobotInfo().GetContext()->GetFeatureGate()->IsFeatureEnabled(
+          _featureType);
   return isValid && (enabled == _expected);
 }
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki

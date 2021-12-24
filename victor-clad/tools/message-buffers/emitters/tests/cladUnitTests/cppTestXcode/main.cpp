@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #include <iostream>
 
-int main(int argc, const char * argv[]) {
+int main(int argc, const char* argv[]) {
   // insert code here...
   std::cout << "Hello, World!\n";
-    return 0;
+  return 0;
 }

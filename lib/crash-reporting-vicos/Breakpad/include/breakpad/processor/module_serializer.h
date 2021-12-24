@@ -65,20 +65,20 @@ class ModuleSerializer {
 
   // Write a module into an allocated memory chunk with required size.
   // Return the "end" of data, i.e., the address after the final byte of data.
-  char* Write(const BasicSourceLineResolver::Module &module, char *dest);
+  char *Write(const BasicSourceLineResolver::Module &module, char *dest);
 
   // Serializes a loaded Module object into a chunk of memory data and returns
   // the address of memory chunk.  If size != NULL, *size is set to the memory
   // size allocated for the serialized data.
   // Caller takes the ownership of the memory chunk (allocated on heap), and
   // owner should call delete [] to free the memory after use.
-  char* Serialize(const BasicSourceLineResolver::Module &module,
+  char *Serialize(const BasicSourceLineResolver::Module &module,
                   unsigned int *size = NULL);
 
   // Given the string format symbol_data, produces a chunk of serialized data.
   // Caller takes ownership of the serialized data (on heap), and owner should
   // call delete [] to free the memory after use.
-  char* SerializeSymbolFileData(const string &symbol_data,
+  char *SerializeSymbolFileData(const string &symbol_data,
                                 unsigned int *size = NULL);
 
   // Serializes one loaded module with given moduleid in the basic source line
@@ -116,8 +116,8 @@ class ModuleSerializer {
   StdMapSerializer<int, string> files_serializer_;
   RangeMapSerializer<MemAddr, linked_ptr<Function> > functions_serializer_;
   AddressMapSerializer<MemAddr, linked_ptr<PublicSymbol> > pubsym_serializer_;
-  ContainedRangeMapSerializer<MemAddr,
-                              linked_ptr<WindowsFrameInfo> > wfi_serializer_;
+  ContainedRangeMapSerializer<MemAddr, linked_ptr<WindowsFrameInfo> >
+      wfi_serializer_;
   RangeMapSerializer<MemAddr, string> cfi_init_rules_serializer_;
   StdMapSerializer<MemAddr, string> cfi_delta_rules_serializer_;
 };

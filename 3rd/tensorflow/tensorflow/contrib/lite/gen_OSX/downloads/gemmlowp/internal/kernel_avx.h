@@ -20,23 +20,26 @@
 #ifndef GEMMLOWP_INTERNAL_KERNEL_AVX_H_
 #define GEMMLOWP_INTERNAL_KERNEL_AVX_H_
 
-#include "kernel.h"
-
 #include <string.h>
+
 #include <cassert>
+
+#include "kernel.h"
 
 namespace gemmlowp {
 
 #ifdef GEMMLOWP_AVX2_64
 struct AVX2_64_Kernel24x8Depth2 : KernelBase {
-  typedef KernelFormat<KernelSideFormat<CellFormat<8, 2, CellOrder::WidthMajor>, 3>,
-                       KernelSideFormat<CellFormat<4, 2, CellOrder::WidthMajor>, 1>>
+  typedef KernelFormat<
+      KernelSideFormat<CellFormat<8, 2, CellOrder::WidthMajor>, 3>,
+      KernelSideFormat<CellFormat<4, 2, CellOrder::WidthMajor>, 1>>
       Format;
 
   const char *Name() const override { return "AVX, 24x8, depth 2"; }
 
-  void Run(std::int32_t *dst_ptr, std::size_t dst_row_stride, std::size_t dst_col_stride,
-           const std::uint8_t *lhs_ptr, const std::uint8_t *rhs_ptr, std::size_t start_depth,
+  void Run(std::int32_t *dst_ptr, std::size_t dst_row_stride,
+           std::size_t dst_col_stride, const std::uint8_t *lhs_ptr,
+           const std::uint8_t *rhs_ptr, std::size_t start_depth,
            std::size_t run_depth) const override {
     ScopedProfilingLabel label("optimized kernel");
     assert(dst_row_stride == 1);
@@ -114,19 +117,27 @@ struct AVX2_64_Kernel24x8Depth2 : KernelBase {
         "vpermq $0x44,%%ymm1, %%ymm1 \n\t"
         // LHS cell elements 0 and 1
         "vpmovzxbw 0x00(%[lhs_ptr]), %%ymm0\n\t"  // mov lhs to ymm0
-        "vpshufd $0x00,%%ymm1,%%ymm2     \n\t"    // move rhs 0 element to all ymm2
-        "vpshufd $0x55,%%ymm1,%%ymm3     \n\t"    // move rhs 1 element to all ymm3
+        "vpshufd $0x00,%%ymm1,%%ymm2     \n\t"    // move rhs 0 element to all
+                                                  // ymm2
+        "vpshufd $0x55,%%ymm1,%%ymm3     \n\t"    // move rhs 1 element to all
+                                                  // ymm3
         "vpmaddwd %%ymm0, %%ymm2, %%ymm2 \n\t"    // mul add lhs rhs0 into ymm2
         "vpmaddwd %%ymm0, %%ymm3, %%ymm3 \n\t"    // mul add lhs rhs1 into ymm3
-        "vpaddd %%ymm2, %%ymm4, %%ymm4   \n\t"    // add muladd lhs + rhs0 into ymm4
-        "vpaddd %%ymm3, %%ymm5, %%ymm5   \n\t"    // add muladd lhs + rhs1 into ymm5
+        "vpaddd %%ymm2, %%ymm4, %%ymm4   \n\t"    // add muladd lhs + rhs0 into
+                                                  // ymm4
+        "vpaddd %%ymm3, %%ymm5, %%ymm5   \n\t"    // add muladd lhs + rhs1 into
+                                                  // ymm5
         // LHS cell elements 2 and 3
-        "vpshufd $0xaa, %%ymm1, %%ymm2   \n\t"  // move rhs 2 element to all ymm2
+        "vpshufd $0xaa, %%ymm1, %%ymm2   \n\t"  // move rhs 2 element to all
+                                                // ymm2
         "vpmaddwd %%ymm0, %%ymm2, %%ymm2 \n\t"  // mul add lhs rh3 into ymm2
-        "vpshufd $0xff,%%ymm1,%%ymm3     \n\t"  // mov rhs 3 element into all ymm3
+        "vpshufd $0xff,%%ymm1,%%ymm3     \n\t"  // mov rhs 3 element into all
+                                                // ymm3
         "vpmaddwd %%ymm0, %%ymm3, %%ymm3 \n\t"  // mul add lhs rh4 into ymm3
-        "vpaddd %%ymm2, %%ymm6, %%ymm6   \n\t"  // add muladd lhs + rhs2 into ymm6
-        "vpaddd %%ymm3, %%ymm7, %%ymm7   \n\t"  // add muladd lhs + rhs3 into ymm7
+        "vpaddd %%ymm2, %%ymm6, %%ymm6   \n\t"  // add muladd lhs + rhs2 into
+                                                // ymm6
+        "vpaddd %%ymm3, %%ymm7, %%ymm7   \n\t"  // add muladd lhs + rhs3 into
+                                                // ymm7
 
         // cache prefect lhs //see if it works better?
         //"prefetcht0 0x80(%[lhs_ptr]) \n\t" //prefetch cache lines
@@ -136,45 +147,62 @@ struct AVX2_64_Kernel24x8Depth2 : KernelBase {
         // K = 5,6,7,8
         // next LHS cell elements 0 and 1
         "vpmovzxbw 0x10(%[lhs_ptr]), %%ymm0 \n\t"  // mov lhs to ymm0
-        "vpshufd $0x00,%%ymm1,%%ymm2        \n\t"  // mov rhs 0 element to all ymm2
-        "vpshufd $0x55,%%ymm1,%%ymm3        \n\t"  // mov rhs 1 element to all ymm3
+        "vpshufd $0x00,%%ymm1,%%ymm2        \n\t"  // mov rhs 0 element to all
+                                                   // ymm2
+        "vpshufd $0x55,%%ymm1,%%ymm3        \n\t"  // mov rhs 1 element to all
+                                                   // ymm3
         "vpmaddwd %%ymm0, %%ymm2, %%ymm2    \n\t"  // mul add lhs rhs0 into ymm2
         "vpmaddwd %%ymm0, %%ymm3, %%ymm3    \n\t"  // mul add lhs rhs1 into ymm3
-        "vpaddd %%ymm2, %%ymm8, %%ymm8      \n\t"  // add muladd lhs + rhs0 into ymm8
-        "vpaddd %%ymm3, %%ymm9, %%ymm9      \n\t"  // add muladd lhs + rhs1 into ymm9
+        "vpaddd %%ymm2, %%ymm8, %%ymm8      \n\t"  // add muladd lhs + rhs0 into
+                                                   // ymm8
+        "vpaddd %%ymm3, %%ymm9, %%ymm9      \n\t"  // add muladd lhs + rhs1 into
+                                                   // ymm9
         // next LHS cell elements 2 and 3
-        "vpshufd $0xaa,%%ymm1,%%ymm2        \n\t"  // mov rhs 2 element to all ymm2
-        "vpshufd $0xff,%%ymm1,%%ymm3        \n\t"  // mov rhs 3 element to all ymm3
+        "vpshufd $0xaa,%%ymm1,%%ymm2        \n\t"  // mov rhs 2 element to all
+                                                   // ymm2
+        "vpshufd $0xff,%%ymm1,%%ymm3        \n\t"  // mov rhs 3 element to all
+                                                   // ymm3
         "vpmaddwd %%ymm0, %%ymm2, %%ymm2    \n\t"  // mul add lhs rhs2 into ymm2
         "vpmaddwd %%ymm0, %%ymm3, %%ymm3    \n\t"  // mul add lhs rhs3 into ymm3
-        "vpaddd %%ymm2, %%ymm10, %%ymm10    \n\t"  // add muladd lhs + rhs2 into ymm10
-        "vpaddd %%ymm3, %%ymm11, %%ymm11    \n\t"  // add muladd lhs + rhs3 into ymm11
+        "vpaddd %%ymm2, %%ymm10, %%ymm10    \n\t"  // add muladd lhs + rhs2 into
+                                                   // ymm10
+        "vpaddd %%ymm3, %%ymm11, %%ymm11    \n\t"  // add muladd lhs + rhs3 into
+                                                   // ymm11
 
         // rhs lower half
         "vpmovzxbw (%[rhs_ptr]), %%ymm1 \n\t"  // mov rhs to ymm1
         "vpermq $0x44,%%ymm1, %%ymm1 \n\t"     // duplcate lower 16
 
         // next LHS cell elements 0 and 1
-        "vpmovzxbw 0x20(%[lhs_ptr]), %%ymm0 \n\t"    // mov lhs to ymm0
-        "vpshufd $0x00,%%ymm1,%%ymm2        \n\t"    // mov rhs 0 element to all ymm2
-        "vpshufd $0x55,%%ymm1,%%ymm3        \n\t"    // mov rhs 1 element to all ymm3
-        "vpmaddwd %%ymm0, %%ymm2, %%ymm2    \n\t"    // mul add lhs rhs0 into ymm2
-        "vpmaddwd %%ymm0, %%ymm3, %%ymm3    \n\t"    // mul add lhs rhs1 into ymm3
-        "vpaddd %%ymm2, %%ymm12, %%ymm12      \n\t"  // add muladd lhs + rhs0 into ymm8
-        "vpaddd %%ymm3, %%ymm13, %%ymm13      \n\t"  // add muladd lhs + rhs1 into ymm9
+        "vpmovzxbw 0x20(%[lhs_ptr]), %%ymm0 \n\t"  // mov lhs to ymm0
+        "vpshufd $0x00,%%ymm1,%%ymm2        \n\t"  // mov rhs 0 element to all
+                                                   // ymm2
+        "vpshufd $0x55,%%ymm1,%%ymm3        \n\t"  // mov rhs 1 element to all
+                                                   // ymm3
+        "vpmaddwd %%ymm0, %%ymm2, %%ymm2    \n\t"  // mul add lhs rhs0 into ymm2
+        "vpmaddwd %%ymm0, %%ymm3, %%ymm3    \n\t"  // mul add lhs rhs1 into ymm3
+        "vpaddd %%ymm2, %%ymm12, %%ymm12      \n\t"  // add muladd lhs + rhs0
+                                                     // into ymm8
+        "vpaddd %%ymm3, %%ymm13, %%ymm13      \n\t"  // add muladd lhs + rhs1
+                                                     // into ymm9
 
         // cache prefetch rhs //see if it works better?
         //"prefetcht0 0x80(%[rhs_ptr]) \n\t"
 
         // next LHS cell elements 2 and 3
-        "vpshufd $0xaa,%%ymm1,%%ymm2        \n\t"  // mov rhs 2 element to all ymm2
-        "vpshufd $0xff,%%ymm1,%%ymm3        \n\t"  // mov rhs 3 element to all ymm3
+        "vpshufd $0xaa,%%ymm1,%%ymm2        \n\t"  // mov rhs 2 element to all
+                                                   // ymm2
+        "vpshufd $0xff,%%ymm1,%%ymm3        \n\t"  // mov rhs 3 element to all
+                                                   // ymm3
         "vpmaddwd %%ymm0, %%ymm2, %%ymm2    \n\t"  // mul add lhs rhs2 into ymm2
         "vpmaddwd %%ymm0, %%ymm3, %%ymm3    \n\t"  // mul add lhs rhs3 into ymm3
-        "vpaddd %%ymm2, %%ymm14, %%ymm14    \n\t"  // add muladd lhs + rhs2 into ymm10
-        "vpaddd %%ymm3, %%ymm15, %%ymm15    \n\t"  // add muladd lhs + rhs3 into ymm11
+        "vpaddd %%ymm2, %%ymm14, %%ymm14    \n\t"  // add muladd lhs + rhs2 into
+                                                   // ymm10
+        "vpaddd %%ymm3, %%ymm15, %%ymm15    \n\t"  // add muladd lhs + rhs3 into
+                                                   // ymm11
 
-        // current result in ymm4, ymm5, ymm6, ymm7, ymm8, ymm9, ymm10 ymm11 ymm12 ymm13 ymm14 ymm15
+        // current result in ymm4, ymm5, ymm6, ymm7, ymm8, ymm9, ymm10 ymm11
+        // ymm12 ymm13 ymm14 ymm15
 
         // rhs+10 lower half
         "vpmovzxbw 0x08(%[rhs_ptr]), %%ymm1 \n\t"  // mov rhs to ymm1
@@ -191,7 +219,8 @@ struct AVX2_64_Kernel24x8Depth2 : KernelBase {
         "vpshufd $0xaa,%%ymm1,%%ymm2        \n\t"  // mov rhs 2 element to ymm2
         "vpshufd $0xff,%%ymm1,%%ymm3        \n\t"  // mov rhs 3 element to ymm2
         "vpmaddwd %%ymm0, %%ymm2, %%ymm2    \n\t"  // mul add lhs rhs2 into ymm2
-        "vpmaddwd %%ymm0, %%ymm3, %%ymm3    \n\t"  // mull add lhs rhs3 into ymm3
+        "vpmaddwd %%ymm0, %%ymm3, %%ymm3    \n\t"  // mull add lhs rhs3 into
+                                                   // ymm3
         "vpaddd %%ymm2, %%ymm6, %%ymm6      \n\t"  // add lhs rhs2 to ymm6
         "vpaddd %%ymm3, %%ymm7, %%ymm7      \n\t"  // add lhs rhs3 to ymm7
 
@@ -211,7 +240,8 @@ struct AVX2_64_Kernel24x8Depth2 : KernelBase {
         "vpshufd $0xaa,%%ymm1,%%ymm2        \n\t"  // mov rhs 2 element to ymm2
         "vpshufd $0xff,%%ymm1,%%ymm3        \n\t"  // mov rhs 3 element to ymm2
         "vpmaddwd %%ymm0, %%ymm2, %%ymm2    \n\t"  // mul add lhs rhs2 into ymm2
-        "vpmaddwd %%ymm0, %%ymm3, %%ymm3    \n\t"  // mull add lhs rhs3 into ymm3
+        "vpmaddwd %%ymm0, %%ymm3, %%ymm3    \n\t"  // mull add lhs rhs3 into
+                                                   // ymm3
         "vpaddd %%ymm2, %%ymm10, %%ymm10    \n\t"  // add lhs rhs2 to ymm10
         "vpaddd %%ymm3, %%ymm11, %%ymm11    \n\t"  // add lhs rhs3 to ymm11
 
@@ -230,7 +260,8 @@ struct AVX2_64_Kernel24x8Depth2 : KernelBase {
         "vpshufd $0xaa,%%ymm1,%%ymm2        \n\t"  // mov rhs 2 element to ymm2
         "vpshufd $0xff,%%ymm1,%%ymm3        \n\t"  // mov rhs 3 element to ymm2
         "vpmaddwd %%ymm0, %%ymm2, %%ymm2    \n\t"  // mul add lhs rhs2 into ymm2
-        "vpmaddwd %%ymm0, %%ymm3, %%ymm3    \n\t"  // mull add lhs rhs3 into ymm3
+        "vpmaddwd %%ymm0, %%ymm3, %%ymm3    \n\t"  // mull add lhs rhs3 into
+                                                   // ymm3
         "vpaddd %%ymm2, %%ymm14, %%ymm14    \n\t"  // add lhs rhs2 to ymm14
         "vpaddd %%ymm3, %%ymm15, %%ymm15    \n\t"  // add lhs rhs3 to ymm15
 
@@ -256,14 +287,18 @@ struct AVX2_64_Kernel24x8Depth2 : KernelBase {
         "vpmovzxbw (%[lhs_ptr]), %%ymm0  \n\t"      // lhs in into ymm0
         "vpshufd $0x00,%%ymm1,%%ymm2         \n\t"  // rhs element 0 into ymm2
         "vpshufd $0x55,%%ymm1,%%ymm3         \n\t"  // rhs element 1 into ymm3
-        "vpmaddwd %%ymm0, %%ymm2, %%ymm2     \n\t"  // muladd lhs rhs element 0 ymm2
-        "vpmaddwd %%ymm0, %%ymm3, %%ymm3     \n\t"  // muladd lhs rhs element 1 ymm3
+        "vpmaddwd %%ymm0, %%ymm2, %%ymm2     \n\t"  // muladd lhs rhs element 0
+                                                    // ymm2
+        "vpmaddwd %%ymm0, %%ymm3, %%ymm3     \n\t"  // muladd lhs rhs element 1
+                                                    // ymm3
         "vpaddd %%ymm2, %%ymm4, %%ymm4       \n\t"  // acc element 0 ymm4
         "vpaddd %%ymm3, %%ymm5, %%ymm5       \n\t"  // acc element 1 ymm5
         "vpshufd $0xaa,%%ymm1,%%ymm2         \n\t"  // rhs element 2 into ymm2
         "vpshufd $0xff,%%ymm1,%%ymm3         \n\t"  // rhs element 3 into ymm3
-        "vpmaddwd %%ymm0, %%ymm2, %%ymm2     \n\t"  // muladd lhs rhs element 2 ymm2
-        "vpmaddwd %%ymm0, %%ymm3, %%ymm3     \n\t"  // muladd lhs rhs element 3 ymm3
+        "vpmaddwd %%ymm0, %%ymm2, %%ymm2     \n\t"  // muladd lhs rhs element 2
+                                                    // ymm2
+        "vpmaddwd %%ymm0, %%ymm3, %%ymm3     \n\t"  // muladd lhs rhs element 3
+                                                    // ymm3
         "vpaddd %%ymm2, %%ymm6, %%ymm6       \n\t"  // acc element 2 into ymm6
         "vpaddd %%ymm3, %%ymm7, %%ymm7       \n\t"  // acc element 3 into ymm7
 
@@ -271,28 +306,36 @@ struct AVX2_64_Kernel24x8Depth2 : KernelBase {
         "vpmovzxbw 0x10(%[lhs_ptr]), %%ymm0  \n\t"  // lhs in into ymm0
         "vpshufd $0x00, %%ymm1, %%ymm2       \n\t"  // rhs element 0 into ymm2
         "vpshufd $0x55, %%ymm1, %%ymm3       \n\t"  // rhs element 1 into ymm3
-        "vpmaddwd %%ymm0, %%ymm2, %%ymm2     \n\t"  // muladd lhs rhs element 0 ymm2
-        "vpmaddwd %%ymm0, %%ymm3, %%ymm3     \n\t"  // muladd lhs rhs element 1 ymm3
+        "vpmaddwd %%ymm0, %%ymm2, %%ymm2     \n\t"  // muladd lhs rhs element 0
+                                                    // ymm2
+        "vpmaddwd %%ymm0, %%ymm3, %%ymm3     \n\t"  // muladd lhs rhs element 1
+                                                    // ymm3
         "vpaddd %%ymm2, %%ymm8, %%ymm8       \n\t"  // acc element 0 ymm8
         "vpaddd %%ymm3, %%ymm9, %%ymm9       \n\t"  // acc element 1 ymm9
         "vpshufd $0xaa,%%ymm1,%%ymm2         \n\t"  // rhs element 2 into ymm2
         "vpshufd $0xff,%%ymm1,%%ymm3         \n\t"  // rhs element 3 into ymm3
-        "vpmaddwd %%ymm0, %%ymm2, %%ymm2     \n\t"  // muladd lhs rhs element 2 ymm2
-        "vpmaddwd %%ymm0, %%ymm3, %%ymm3     \n\t"  // muladd lhs rhs element 3 ymm3
+        "vpmaddwd %%ymm0, %%ymm2, %%ymm2     \n\t"  // muladd lhs rhs element 2
+                                                    // ymm2
+        "vpmaddwd %%ymm0, %%ymm3, %%ymm3     \n\t"  // muladd lhs rhs element 3
+                                                    // ymm3
         "vpaddd %%ymm2, %%ymm10, %%ymm10     \n\t"  // acc element 2 into ymm10
         "vpaddd %%ymm3, %%ymm11, %%ymm11     \n\t"  // acc element 3 into ymm11
 
         "vpmovzxbw 0x20(%[lhs_ptr]), %%ymm0  \n\t"
         "vpshufd $0x00, %%ymm1, %%ymm2       \n\t"  // rhs element 0 into ymm2
         "vpshufd $0x55, %%ymm1, %%ymm3       \n\t"  // rhs element 1 into ymm3
-        "vpmaddwd %%ymm0, %%ymm2, %%ymm2     \n\t"  // muladd lhs rhs element 0 ymm2
-        "vpmaddwd %%ymm0, %%ymm3, %%ymm3     \n\t"  // muladd lhs rhs element 1 ymm3
+        "vpmaddwd %%ymm0, %%ymm2, %%ymm2     \n\t"  // muladd lhs rhs element 0
+                                                    // ymm2
+        "vpmaddwd %%ymm0, %%ymm3, %%ymm3     \n\t"  // muladd lhs rhs element 1
+                                                    // ymm3
         "vpaddd %%ymm2, %%ymm12, %%ymm12     \n\t"  // acc element 0 ymm12
         "vpaddd %%ymm3, %%ymm13, %%ymm13     \n\t"  // acc element 1 ymm13
         "vpshufd $0xaa,%%ymm1,%%ymm2         \n\t"  // rhs element 2 into ymm2
         "vpshufd $0xff,%%ymm1,%%ymm3         \n\t"  // rhs element 3 into ymm3
-        "vpmaddwd %%ymm0, %%ymm2, %%ymm2     \n\t"  // muladd lhs rhs element 2 ymm2
-        "vpmaddwd %%ymm0, %%ymm3, %%ymm3     \n\t"  // muladd lhs rhs element 3 ymm3
+        "vpmaddwd %%ymm0, %%ymm2, %%ymm2     \n\t"  // muladd lhs rhs element 2
+                                                    // ymm2
+        "vpmaddwd %%ymm0, %%ymm3, %%ymm3     \n\t"  // muladd lhs rhs element 3
+                                                    // ymm3
         "vpaddd %%ymm2, %%ymm14, %%ymm14     \n\t"  // acc element 2 into ymm14
         "vpaddd %%ymm3, %%ymm15, %%ymm15     \n\t"  // acc element 3 into ymm15
 
@@ -343,15 +386,16 @@ struct AVX2_64_Kernel24x8Depth2 : KernelBase {
         "vmovdqu %%ymm15, 0x40(%[dst_ptr], %%r13, 1) \n\t"  // rhs3
 
         :  // outputs
-        [lhs_ptr] "+r"(lhs_ptr), [rhs_ptr] "+r"(rhs_ptr),
-        [dst_ptr] "+r"(dst_ptr)
+        [ lhs_ptr ] "+r"(lhs_ptr), [ rhs_ptr ] "+r"(rhs_ptr),
+        [ dst_ptr ] "+r"(dst_ptr)
         :  // inputs
-        [start_depth] "r"(start_depth), [dst_col_stride_q] "r"(dst_col_stride_q),
-        [run_depth_cells] "r"(run_depth_cells)
+        [ start_depth ] "r"(start_depth),
+        [ dst_col_stride_q ] "r"(dst_col_stride_q),
+        [ run_depth_cells ] "r"(run_depth_cells)
         :  // clobbers
-        "cc", "memory", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7",
-        "%ymm8", "%ymm9", "%ymm10", "%ymm11", "%ymm12", "%ymm13", "%ymm14", "%ymm15", "%r12",
-        "%r13", "%r14");
+        "cc", "memory", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5",
+        "%ymm6", "%ymm7", "%ymm8", "%ymm9", "%ymm10", "%ymm11", "%ymm12",
+        "%ymm13", "%ymm14", "%ymm15", "%r12", "%r13", "%r14");
   }
 };
 #endif

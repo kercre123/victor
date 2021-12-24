@@ -20,22 +20,23 @@ namespace alexaClientSDK {
 namespace avsCommon {
 namespace sdkInterfaces {
 /**
- * A RevokeAuthorizationObserverInterface is an interface class that clients can extend to receive revoke authorization
- * requests.
+ * A RevokeAuthorizationObserverInterface is an interface class that clients can
+ * extend to receive revoke authorization requests.
  */
 class RevokeAuthorizationObserverInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~RevokeAuthorizationObserverInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~RevokeAuthorizationObserverInterface() = default;
 
-    /**
-     * Used to notify the observer of revoke authorization requests. The client is expected to clear access tokens and
-     * any registration information the client may hold. It should put itself back into the registration flow, if
-     * appropriate for the device (Alexa For Business devices).
-     */
-    virtual void onRevokeAuthorization() = 0;
+  /**
+   * Used to notify the observer of revoke authorization requests. The client is
+   * expected to clear access tokens and any registration information the client
+   * may hold. It should put itself back into the registration flow, if
+   * appropriate for the device (Alexa For Business devices).
+   */
+  virtual void onRevokeAuthorization() = 0;
 };
 
 }  // namespace sdkInterfaces

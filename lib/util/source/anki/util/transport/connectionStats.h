@@ -13,16 +13,15 @@
 #ifndef __Util_Transport_ConnectionStats_H__
 #define __Util_Transport_ConnectionStats_H__
 
-
-#include "util/console/consoleInterface.h"
 #include <stdint.h>
 
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Util {
 
 CONSOLE_VAR_EXTERN(bool, kNetConnStatsUpdate);
-extern int   gNetStat1NumConnections;
+extern int gNetStat1NumConnections;
 extern float gNetStat2LatencyAvg;
 extern float gNetStat3LatencySD;
 extern float gNetStat4LatencyMin;
@@ -35,7 +34,7 @@ extern float gNetStatAQueuedAvg_ms;
 extern float gNetStatBQueuedMin_ms;
 extern float gNetStatCQueuedMax_ms;
 
-} // end namespace Util
-} // end namespace Anki
+}  // end namespace Util
+}  // end namespace Anki
 
-#endif // __Util_Transport_ConnectionStats_H__
+#endif  // __Util_Transport_ConnectionStats_H__

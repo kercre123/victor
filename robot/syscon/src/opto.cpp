@@ -1,17 +1,17 @@
+#include "opto.h"
+
 #include <string.h>
 
-#include "common.h"
-#include "hardware.h"
-#include "power.h"
 #include "analog.h"
-
-#include "i2c.h"
-#include "messages.h"
-#include "lights.h"
-#include "flash.h"
+#include "common.h"
 #include "comms.h"
-#include "opto.h"
+#include "flash.h"
+#include "hardware.h"
+#include "i2c.h"
+#include "lights.h"
+#include "messages.h"
 #include "motors.h"
+#include "power.h"
 
 using namespace I2C;
 
@@ -24,55 +24,57 @@ static uint16_t cliffSense[4];
 static uint8_t stop_variable;
 static uint8_t tof_status;
 static uint16_t tof_reading;
-static uint16_t tof_signal_rate;  // fixed point 9.7
-static uint16_t tof_ambient_rate; // fixed point 9.7
-static uint16_t tof_spad_count;   // fixed point 8.8
+static uint16_t tof_signal_rate;   // fixed point 9.7
+static uint16_t tof_ambient_rate;  // fixed point 9.7
+static uint16_t tof_spad_count;    // fixed point 8.8
 static uint32_t measurement_timing_budget_us;
 
-#define TARGET(value) sizeof(value), (void*)&value
-#define VALUE(value) 1, (void*)value
+#define TARGET(value) sizeof(value), (void *)&value
+#define VALUE(value) 1, (void *)value
 
-static const int SKIP_WRITE = 8;    // Don't do the first 7 steps of I2C_LOOP
-static const int SKIP_NO_TOF = 13;  // There is no TOF sensor, so we can't access these addresses
+static const int SKIP_WRITE = 8;  // Don't do the first 7 steps of I2C_LOOP
+static const int SKIP_NO_TOF =
+    13;  // There is no TOF sensor, so we can't access these addresses
 
 const I2C_Operation I2C_LOOP[] = {
-  // Start single read on TOF sensor
-  { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x80, VALUE(0x01) },
-  { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0xFF, VALUE(0x01) },
-  { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x00, VALUE(0x00) },
-  { I2C_REG_WRITE,       0, TOF_SENSOR_ADDRESS, 0x91, TARGET(stop_variable) },
-  { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x00, VALUE(0x01) },
-  { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0xFF, VALUE(0x00) },
-  { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x80, VALUE(0x00) },
-  { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, SYSRANGE_START, VALUE(0x01) },  
+    // Start single read on TOF sensor
+    {I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x80, VALUE(0x01)},
+    {I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0xFF, VALUE(0x01)},
+    {I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x00, VALUE(0x00)},
+    {I2C_REG_WRITE, 0, TOF_SENSOR_ADDRESS, 0x91, TARGET(stop_variable)},
+    {I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x00, VALUE(0x01)},
+    {I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0xFF, VALUE(0x00)},
+    {I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x80, VALUE(0x00)},
+    {I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, SYSRANGE_START, VALUE(0x01)},
 
-  // Read the status of all the sensors
-  { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS, TARGET(tof_status) },
-  { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 10, TARGET(tof_reading) },
-  { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 6, TARGET(tof_signal_rate) },
-  { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 8, TARGET(tof_ambient_rate) },
-  { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 2, TARGET(tof_spad_count) },
-  { I2C_REG_READ, 0, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[3]) },
-  { I2C_REG_READ, 1, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[2]) },
-  { I2C_REG_READ, 2, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[1]) },
-  { I2C_REG_READ, 3, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[0]) },
+    // Read the status of all the sensors
+    {I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS,
+     TARGET(tof_status)},
+    {I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 10,
+     TARGET(tof_reading)},
+    {I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 6,
+     TARGET(tof_signal_rate)},
+    {I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 8,
+     TARGET(tof_ambient_rate)},
+    {I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 2,
+     TARGET(tof_spad_count)},
+    {I2C_REG_READ, 0, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[3])},
+    {I2C_REG_READ, 1, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[2])},
+    {I2C_REG_READ, 2, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[1])},
+    {I2C_REG_READ, 3, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[0])},
 
-  { I2C_DONE }
-};
+    {I2C_DONE}};
 
-struct SequenceStepEnables
-{
+struct SequenceStepEnables {
   bool tcc, msrc, dss, pre_range, final_range;
 };
 
-struct SequenceStepTimeouts
-{
+struct SequenceStepTimeouts {
   uint16_t pre_range_vcsel_period_pclks, final_range_vcsel_period_pclks;
 
   uint16_t msrc_dss_tcc_mclks, pre_range_mclks, final_range_mclks;
-  uint32_t msrc_dss_tcc_us,    pre_range_us,    final_range_us;
+  uint32_t msrc_dss_tcc_us, pre_range_us, final_range_us;
 };
-
 
 void Opto::tick(void) {
   static const int SLOW_COUNT_TARGET = 200;
@@ -80,12 +82,12 @@ void Opto::tick(void) {
   static const int FAST_COUNT_TARGET = 6;
   static int period_counter = 0;
   int COUNT_TARGET;
-  
+
   if (Motors::treads_driven) {
     COUNT_TARGET = FAST_COUNT_TARGET;
   } else if (Analog::on_charger) {
     COUNT_TARGET = SLOW_COUNT_TARGET;
-  } else  {
+  } else {
     COUNT_TARGET = MID_COUNT_TARGET;
   }
 
@@ -118,143 +120,139 @@ void Opto::transmit(BodyToHead *payload) {
   payload->failureCode = failure;
 }
 
-#define decodeVcselPeriod(reg_val)      (((reg_val) + 1) << 1)
-#define calcMacroPeriod(vcsel_period_pclks) ((((uint32_t)2304 * (vcsel_period_pclks) * 1655) + 500) / 1000)
+#define decodeVcselPeriod(reg_val) (((reg_val) + 1) << 1)
+#define calcMacroPeriod(vcsel_period_pclks) \
+  ((((uint32_t)2304 * (vcsel_period_pclks)*1655) + 500) / 1000)
 
-static uint16_t encodeTimeout(uint16_t timeout_mclks)
-{
+static uint16_t encodeTimeout(uint16_t timeout_mclks) {
   uint32_t ls_byte = 0;
   uint16_t ms_byte = 0;
 
-  if (timeout_mclks > 0)
-  {
+  if (timeout_mclks > 0) {
     ls_byte = timeout_mclks - 1;
 
-    while ((ls_byte & 0xFFFFFF00) > 0)
-    {
+    while ((ls_byte & 0xFFFFFF00) > 0) {
       ls_byte >>= 1;
       ms_byte++;
     }
 
     return (ms_byte << 8) | (ls_byte & 0xFF);
+  } else {
+    return 0;
   }
-  else { return 0; }
 }
 
-static uint16_t decodeTimeout(uint16_t reg_val)
-{
-  return (uint16_t)((reg_val & 0x00FF) <<
-         (uint16_t)((reg_val & 0xFF00) >> 8)) + 1;
+static uint16_t decodeTimeout(uint16_t reg_val) {
+  return (uint16_t)((reg_val & 0x00FF) << (uint16_t)((reg_val & 0xFF00) >> 8)) +
+         1;
 }
 
-static uint32_t timeoutMclksToMicroseconds(uint16_t timeout_period_mclks, uint8_t vcsel_period_pclks)
-{
+static uint32_t timeoutMclksToMicroseconds(uint16_t timeout_period_mclks,
+                                           uint8_t vcsel_period_pclks) {
   uint32_t macro_period_ns = calcMacroPeriod(vcsel_period_pclks);
 
-  return ((timeout_period_mclks * macro_period_ns) + (macro_period_ns / 2)) / 1000;
+  return ((timeout_period_mclks * macro_period_ns) + (macro_period_ns / 2)) /
+         1000;
 }
 
-static uint32_t timeoutMicrosecondsToMclks(uint32_t timeout_period_us, uint8_t vcsel_period_pclks)
-{
+static uint32_t timeoutMicrosecondsToMclks(uint32_t timeout_period_us,
+                                           uint8_t vcsel_period_pclks) {
   uint32_t macro_period_ns = calcMacroPeriod(vcsel_period_pclks);
 
-  return (((timeout_period_us * 1000) + (macro_period_ns / 2)) / macro_period_ns);
+  return (((timeout_period_us * 1000) + (macro_period_ns / 2)) /
+          macro_period_ns);
 }
 
-static void getSequenceStepEnables(SequenceStepEnables * enables)
-{
-  uint8_t sequence_config = readReg(0, TOF_SENSOR_ADDRESS, SYSTEM_SEQUENCE_CONFIG);
+static void getSequenceStepEnables(SequenceStepEnables *enables) {
+  uint8_t sequence_config =
+      readReg(0, TOF_SENSOR_ADDRESS, SYSTEM_SEQUENCE_CONFIG);
 
-  enables->tcc          = (sequence_config >> 4) & 0x1;
-  enables->dss          = (sequence_config >> 3) & 0x1;
-  enables->msrc         = (sequence_config >> 2) & 0x1;
-  enables->pre_range    = (sequence_config >> 6) & 0x1;
-  enables->final_range  = (sequence_config >> 7) & 0x1;
+  enables->tcc = (sequence_config >> 4) & 0x1;
+  enables->dss = (sequence_config >> 3) & 0x1;
+  enables->msrc = (sequence_config >> 2) & 0x1;
+  enables->pre_range = (sequence_config >> 6) & 0x1;
+  enables->final_range = (sequence_config >> 7) & 0x1;
 }
 
-static void getSequenceStepTimeouts(SequenceStepEnables const * enables, SequenceStepTimeouts * timeouts)
-{
-  timeouts->pre_range_vcsel_period_pclks = decodeVcselPeriod(readReg(0, TOF_SENSOR_ADDRESS, PRE_RANGE_CONFIG_VCSEL_PERIOD));
+static void getSequenceStepTimeouts(SequenceStepEnables const *enables,
+                                    SequenceStepTimeouts *timeouts) {
+  timeouts->pre_range_vcsel_period_pclks = decodeVcselPeriod(
+      readReg(0, TOF_SENSOR_ADDRESS, PRE_RANGE_CONFIG_VCSEL_PERIOD));
 
-  timeouts->msrc_dss_tcc_mclks = readReg(0, TOF_SENSOR_ADDRESS, MSRC_CONFIG_TIMEOUT_MACROP) + 1;
-  timeouts->msrc_dss_tcc_us =
-    timeoutMclksToMicroseconds(timeouts->msrc_dss_tcc_mclks,
-                               timeouts->pre_range_vcsel_period_pclks);
+  timeouts->msrc_dss_tcc_mclks =
+      readReg(0, TOF_SENSOR_ADDRESS, MSRC_CONFIG_TIMEOUT_MACROP) + 1;
+  timeouts->msrc_dss_tcc_us = timeoutMclksToMicroseconds(
+      timeouts->msrc_dss_tcc_mclks, timeouts->pre_range_vcsel_period_pclks);
 
-  timeouts->pre_range_mclks =
-    decodeTimeout(readReg16(0, TOF_SENSOR_ADDRESS, PRE_RANGE_CONFIG_TIMEOUT_MACROP_HI));
-  timeouts->pre_range_us =
-    timeoutMclksToMicroseconds(timeouts->pre_range_mclks,
-                               timeouts->pre_range_vcsel_period_pclks);
+  timeouts->pre_range_mclks = decodeTimeout(
+      readReg16(0, TOF_SENSOR_ADDRESS, PRE_RANGE_CONFIG_TIMEOUT_MACROP_HI));
+  timeouts->pre_range_us = timeoutMclksToMicroseconds(
+      timeouts->pre_range_mclks, timeouts->pre_range_vcsel_period_pclks);
 
-  timeouts->final_range_vcsel_period_pclks = decodeVcselPeriod(readReg(0, TOF_SENSOR_ADDRESS, FINAL_RANGE_CONFIG_VCSEL_PERIOD));
+  timeouts->final_range_vcsel_period_pclks = decodeVcselPeriod(
+      readReg(0, TOF_SENSOR_ADDRESS, FINAL_RANGE_CONFIG_VCSEL_PERIOD));
 
-  timeouts->final_range_mclks =
-    decodeTimeout(readReg16(0, TOF_SENSOR_ADDRESS, FINAL_RANGE_CONFIG_TIMEOUT_MACROP_HI));
+  timeouts->final_range_mclks = decodeTimeout(
+      readReg16(0, TOF_SENSOR_ADDRESS, FINAL_RANGE_CONFIG_TIMEOUT_MACROP_HI));
 
-  if (enables->pre_range)
-  {
+  if (enables->pre_range) {
     timeouts->final_range_mclks -= timeouts->pre_range_mclks;
   }
 
-  timeouts->final_range_us =
-    timeoutMclksToMicroseconds(timeouts->final_range_mclks,
-                               timeouts->final_range_vcsel_period_pclks);
+  timeouts->final_range_us = timeoutMclksToMicroseconds(
+      timeouts->final_range_mclks, timeouts->final_range_vcsel_period_pclks);
 }
 
-static void performSingleRefCalibration(uint8_t vhv_init_byte)
-{
-  writeReg(0, TOF_SENSOR_ADDRESS, SYSRANGE_START, 0x01 | vhv_init_byte); // VL53L0X_REG_SYSRANGE_MODE_START_STOP
+static void performSingleRefCalibration(uint8_t vhv_init_byte) {
+  writeReg(0, TOF_SENSOR_ADDRESS, SYSRANGE_START,
+           0x01 | vhv_init_byte);  // VL53L0X_REG_SYSRANGE_MODE_START_STOP
 
-  while ((readReg(0, TOF_SENSOR_ADDRESS, RESULT_INTERRUPT_STATUS) & 0x07) == 0) ;
+  while ((readReg(0, TOF_SENSOR_ADDRESS, RESULT_INTERRUPT_STATUS) & 0x07) == 0)
+    ;
 
   writeReg(0, TOF_SENSOR_ADDRESS, SYSTEM_INTERRUPT_CLEAR, 0x01);
   writeReg(0, TOF_SENSOR_ADDRESS, SYSRANGE_START, 0x00);
 }
 
-static bool setMeasurementTimingBudget(uint32_t budget_us)
-{
+static bool setMeasurementTimingBudget(uint32_t budget_us) {
   SequenceStepEnables enables;
   SequenceStepTimeouts timeouts;
 
-  uint16_t const StartOverhead      = 1320; // note that this is different than the value in get_
-  uint16_t const EndOverhead        = 960;
-  uint16_t const MsrcOverhead       = 660;
-  uint16_t const TccOverhead        = 590;
-  uint16_t const DssOverhead        = 690;
-  uint16_t const PreRangeOverhead   = 660;
+  uint16_t const StartOverhead =
+      1320;  // note that this is different than the value in get_
+  uint16_t const EndOverhead = 960;
+  uint16_t const MsrcOverhead = 660;
+  uint16_t const TccOverhead = 590;
+  uint16_t const DssOverhead = 690;
+  uint16_t const PreRangeOverhead = 660;
   uint16_t const FinalRangeOverhead = 550;
 
   uint32_t const MinTimingBudget = 20000;
 
-  if (budget_us < MinTimingBudget) { return false; }
+  if (budget_us < MinTimingBudget) {
+    return false;
+  }
 
   uint32_t used_budget_us = StartOverhead + EndOverhead;
 
   getSequenceStepEnables(&enables);
   getSequenceStepTimeouts(&enables, &timeouts);
 
-  if (enables.tcc)
-  {
+  if (enables.tcc) {
     used_budget_us += (timeouts.msrc_dss_tcc_us + TccOverhead);
   }
 
-  if (enables.dss)
-  {
+  if (enables.dss) {
     used_budget_us += 2 * (timeouts.msrc_dss_tcc_us + DssOverhead);
-  }
-  else if (enables.msrc)
-  {
+  } else if (enables.msrc) {
     used_budget_us += (timeouts.msrc_dss_tcc_us + MsrcOverhead);
   }
 
-  if (enables.pre_range)
-  {
+  if (enables.pre_range) {
     used_budget_us += (timeouts.pre_range_us + PreRangeOverhead);
   }
 
-  if (enables.final_range)
-  {
+  if (enables.final_range) {
     used_budget_us += FinalRangeOverhead;
 
     // "Note that the final range timeout is determined by the timing
@@ -263,8 +261,7 @@ static bool setMeasurementTimingBudget(uint32_t budget_us)
     // will be set. Otherwise the remaining time will be applied to
     // the final range."
 
-    if (used_budget_us > budget_us)
-    {
+    if (used_budget_us > budget_us) {
       // "Requested timeout too big."
       return false;
     }
@@ -279,21 +276,19 @@ static bool setMeasurementTimingBudget(uint32_t budget_us)
     //  timeouts must be expressed in macro periods MClks
     //  because they have different vcsel periods."
 
-    uint16_t final_range_timeout_mclks =
-      timeoutMicrosecondsToMclks(final_range_timeout_us,
-                                 timeouts.final_range_vcsel_period_pclks);
+    uint16_t final_range_timeout_mclks = timeoutMicrosecondsToMclks(
+        final_range_timeout_us, timeouts.final_range_vcsel_period_pclks);
 
-    if (enables.pre_range)
-    {
+    if (enables.pre_range) {
       final_range_timeout_mclks += timeouts.pre_range_mclks;
     }
 
     writeReg16(0, TOF_SENSOR_ADDRESS, FINAL_RANGE_CONFIG_TIMEOUT_MACROP_HI,
-      encodeTimeout(final_range_timeout_mclks));
+               encodeTimeout(final_range_timeout_mclks));
 
     // set_sequence_step_timeout() end
 
-    measurement_timing_budget_us = budget_us; // store for internal reuse
+    measurement_timing_budget_us = budget_us;  // store for internal reuse
   }
   return true;
 }
@@ -301,17 +296,17 @@ static bool setMeasurementTimingBudget(uint32_t budget_us)
 // Get the measurement timing budget in microseconds
 // based on VL53L0X_get_measurement_timing_budget_micro_seconds()
 // in us
-static uint32_t getMeasurementTimingBudget(void)
-{
+static uint32_t getMeasurementTimingBudget(void) {
   SequenceStepEnables enables;
   SequenceStepTimeouts timeouts;
 
-  uint16_t const StartOverhead     = 1910; // note that this is different than the value in set_
-  uint16_t const EndOverhead        = 960;
-  uint16_t const MsrcOverhead       = 660;
-  uint16_t const TccOverhead        = 590;
-  uint16_t const DssOverhead        = 690;
-  uint16_t const PreRangeOverhead   = 660;
+  uint16_t const StartOverhead =
+      1910;  // note that this is different than the value in set_
+  uint16_t const EndOverhead = 960;
+  uint16_t const MsrcOverhead = 660;
+  uint16_t const TccOverhead = 590;
+  uint16_t const DssOverhead = 690;
+  uint16_t const PreRangeOverhead = 660;
   uint16_t const FinalRangeOverhead = 550;
 
   // "Start and end overhead times always present"
@@ -320,31 +315,25 @@ static uint32_t getMeasurementTimingBudget(void)
   getSequenceStepEnables(&enables);
   getSequenceStepTimeouts(&enables, &timeouts);
 
-  if (enables.tcc)
-  {
+  if (enables.tcc) {
     budget_us += (timeouts.msrc_dss_tcc_us + TccOverhead);
   }
 
-  if (enables.dss)
-  {
+  if (enables.dss) {
     budget_us += 2 * (timeouts.msrc_dss_tcc_us + DssOverhead);
-  }
-  else if (enables.msrc)
-  {
+  } else if (enables.msrc) {
     budget_us += (timeouts.msrc_dss_tcc_us + MsrcOverhead);
   }
 
-  if (enables.pre_range)
-  {
+  if (enables.pre_range) {
     budget_us += (timeouts.pre_range_us + PreRangeOverhead);
   }
 
-  if (enables.final_range)
-  {
+  if (enables.final_range) {
     budget_us += (timeouts.final_range_us + FinalRangeOverhead);
   }
 
-  measurement_timing_budget_us = budget_us; // store for internal reuse
+  measurement_timing_budget_us = budget_us;  // store for internal reuse
   return budget_us;
 }
 
@@ -367,9 +356,9 @@ void Opto::start(void) {
     I2C::release();
 
     Opto::active = true;
-    return ;
+    return;
   }
-  
+
   // Turn on TOF sensor
   // "Set I2C standard mode"
   writeReg(0, TOF_SENSOR_ADDRESS, 0x88, 0x00);
@@ -382,11 +371,14 @@ void Opto::start(void) {
   writeReg(0, TOF_SENSOR_ADDRESS, 0xFF, 0x00);
   writeReg(0, TOF_SENSOR_ADDRESS, 0x80, 0x00);
 
-  // disable SIGNAL_RATE_MSRC (bit 1) and SIGNAL_RATE_PRE_RANGE (bit 4) limit checks
-  writeReg(0, TOF_SENSOR_ADDRESS, MSRC_CONFIG_CONTROL, readReg(0, TOF_SENSOR_ADDRESS, MSRC_CONFIG_CONTROL) | 0x12);
+  // disable SIGNAL_RATE_MSRC (bit 1) and SIGNAL_RATE_PRE_RANGE (bit 4) limit
+  // checks
+  writeReg(0, TOF_SENSOR_ADDRESS, MSRC_CONFIG_CONTROL,
+           readReg(0, TOF_SENSOR_ADDRESS, MSRC_CONFIG_CONTROL) | 0x12);
 
   // set final range signal rate limit to 0.25 MCPS (million counts per second)
-  writeReg16(0, TOF_SENSOR_ADDRESS, FINAL_RANGE_CONFIG_MIN_COUNT_RATE_RTN_LIMIT, 32);
+  writeReg16(0, TOF_SENSOR_ADDRESS, FINAL_RANGE_CONFIG_MIN_COUNT_RATE_RTN_LIMIT,
+             32);
 
   writeReg(0, TOF_SENSOR_ADDRESS, SYSTEM_SEQUENCE_CONFIG, 0xFF);
 
@@ -399,7 +391,8 @@ void Opto::start(void) {
     writeReg(0, TOF_SENSOR_ADDRESS, 0x00, 0x00);
 
     writeReg(0, TOF_SENSOR_ADDRESS, 0xFF, 0x06);
-    writeReg(0, TOF_SENSOR_ADDRESS, 0x83, readReg(0, TOF_SENSOR_ADDRESS, 0x83) | 0x04);
+    writeReg(0, TOF_SENSOR_ADDRESS, 0x83,
+             readReg(0, TOF_SENSOR_ADDRESS, 0x83) | 0x04);
     writeReg(0, TOF_SENSOR_ADDRESS, 0xFF, 0x07);
     writeReg(0, TOF_SENSOR_ADDRESS, 0x81, 0x01);
 
@@ -407,7 +400,8 @@ void Opto::start(void) {
 
     writeReg(0, TOF_SENSOR_ADDRESS, 0x94, 0x6b);
     writeReg(0, TOF_SENSOR_ADDRESS, 0x83, 0x00);
-    while (readReg(0, TOF_SENSOR_ADDRESS, 0x83) == 0x00) ;
+    while (readReg(0, TOF_SENSOR_ADDRESS, 0x83) == 0x00)
+      ;
     writeReg(0, TOF_SENSOR_ADDRESS, 0x83, 0x01);
     uint8_t tmp = readReg(0, TOF_SENSOR_ADDRESS, 0x92);
 
@@ -416,7 +410,8 @@ void Opto::start(void) {
 
     writeReg(0, TOF_SENSOR_ADDRESS, 0x81, 0x00);
     writeReg(0, TOF_SENSOR_ADDRESS, 0xFF, 0x06);
-    writeReg(0, TOF_SENSOR_ADDRESS, 0x83, readReg(0, TOF_SENSOR_ADDRESS, 0x83  & ~0x04));
+    writeReg(0, TOF_SENSOR_ADDRESS, 0x83,
+             readReg(0, TOF_SENSOR_ADDRESS, 0x83 & ~0x04));
     writeReg(0, TOF_SENSOR_ADDRESS, 0xFF, 0x01);
     writeReg(0, TOF_SENSOR_ADDRESS, 0x00, 0x01);
 
@@ -428,7 +423,8 @@ void Opto::start(void) {
   // the API, but the same data seems to be more easily readable from
   // GLOBAL_CONFIG_SPAD_ENABLES_REF_0 through _6, so read it from there
   uint8_t ref_spad_map[6];
-  multiOp(I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, GLOBAL_CONFIG_SPAD_ENABLES_REF_0, sizeof(ref_spad_map), ref_spad_map);
+  multiOp(I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, GLOBAL_CONFIG_SPAD_ENABLES_REF_0,
+          sizeof(ref_spad_map), ref_spad_map);
 
   writeReg(0, TOF_SENSOR_ADDRESS, 0xFF, 0x01);
   writeReg(0, TOF_SENSOR_ADDRESS, DYNAMIC_SPAD_REF_EN_START_OFFSET, 0x00);
@@ -436,24 +432,22 @@ void Opto::start(void) {
   writeReg(0, TOF_SENSOR_ADDRESS, 0xFF, 0x00);
   writeReg(0, TOF_SENSOR_ADDRESS, GLOBAL_CONFIG_REF_EN_START_SELECT, 0xB4);
 
-  uint8_t first_spad_to_enable = spad_type_is_aperture ? 12 : 0; // 12 is the first aperture spad
+  uint8_t first_spad_to_enable =
+      spad_type_is_aperture ? 12 : 0;  // 12 is the first aperture spad
   uint8_t spads_enabled = 0;
 
-  for (uint8_t i = 0; i < 48; i++)
-  {
-    if (i < first_spad_to_enable || spads_enabled == spad_count)
-    {
+  for (uint8_t i = 0; i < 48; i++) {
+    if (i < first_spad_to_enable || spads_enabled == spad_count) {
       // This bit is lower than the first one that should be enabled, or
       // (reference_spad_count) bits have already been enabled, so zero this bit
       ref_spad_map[i / 8] &= ~(1 << (i % 8));
-    }
-    else if ((ref_spad_map[i / 8] >> (i % 8)) & 0x1)
-    {
+    } else if ((ref_spad_map[i / 8] >> (i % 8)) & 0x1) {
       spads_enabled++;
     }
   }
 
-  multiOp(I2C_REG_WRITE, 0, TOF_SENSOR_ADDRESS, GLOBAL_CONFIG_SPAD_ENABLES_REF_0, sizeof(ref_spad_map), ref_spad_map);
+  multiOp(I2C_REG_WRITE, 0, TOF_SENSOR_ADDRESS,
+          GLOBAL_CONFIG_SPAD_ENABLES_REF_0, sizeof(ref_spad_map), ref_spad_map);
 
   // DefaultTuningSettings from vl53l0x_tuning.h
   writeReg(0, TOF_SENSOR_ADDRESS, 0xFF, 0x01);
@@ -552,7 +546,9 @@ void Opto::start(void) {
 
   // "Set interrupt config to new sample ready"
   writeReg(0, TOF_SENSOR_ADDRESS, SYSTEM_INTERRUPT_CONFIG_GPIO, 0x04);
-  writeReg(0, TOF_SENSOR_ADDRESS, GPIO_HV_MUX_ACTIVE_HIGH, readReg(0, TOF_SENSOR_ADDRESS, GPIO_HV_MUX_ACTIVE_HIGH) & ~0x10); // active low
+  writeReg(0, TOF_SENSOR_ADDRESS, GPIO_HV_MUX_ACTIVE_HIGH,
+           readReg(0, TOF_SENSOR_ADDRESS, GPIO_HV_MUX_ACTIVE_HIGH) &
+               ~0x10);  // active low
   writeReg(0, TOF_SENSOR_ADDRESS, SYSTEM_INTERRUPT_CLEAR, 0x01);
 
   measurement_timing_budget_us = getMeasurementTimingBudget();
@@ -587,7 +583,7 @@ void Opto::stop(void) {
 
   // I2C bus is no longer valid (block sensors)
   I2C::capture();
-  
+
   failure = BOOT_FAIL_NONE;
 
   // Turn on and configure the drop sensors
@@ -596,6 +592,4 @@ void Opto::stop(void) {
   }
 }
 
-bool Opto::sensorsValid() {
-  return Opto::active;
-}
+bool Opto::sensorsValid() { return Opto::active; }

@@ -26,34 +26,38 @@ namespace sdkInterfaces {
  * Interface for observing a SpeechSynthesizer.
  */
 class SpeechSynthesizerObserverInterface {
-public:
-    /**
-     * This is an enum class used to indicate the state of the @c SpeechSynthesizer.
-     */
-    enum class SpeechSynthesizerState {
-        /// In this state, the @c SpeechSynthesizer is playing back the speech.
-        PLAYING,
+ public:
+  /**
+   * This is an enum class used to indicate the state of the @c
+   * SpeechSynthesizer.
+   */
+  enum class SpeechSynthesizerState {
+    /// In this state, the @c SpeechSynthesizer is playing back the speech.
+    PLAYING,
 
-        /// In this state, the @c SpeechSynthesizer is idle and not playing speech.
-        FINISHED,
+    /// In this state, the @c SpeechSynthesizer is idle and not playing speech.
+    FINISHED,
 
-        /// In this state, the @c SpeechSynthesizer is gaining the channel focus while still not playing anything
-        GAINING_FOCUS,
+    /// In this state, the @c SpeechSynthesizer is gaining the channel focus
+    /// while still not playing anything
+    GAINING_FOCUS,
 
-        /// In this state, the @c SpeechSynthesizer is losing the channel focus but not yet considered @c FINISHED
-        LOSING_FOCUS
-    };
+    /// In this state, the @c SpeechSynthesizer is losing the channel focus but
+    /// not yet considered @c FINISHED
+    LOSING_FOCUS
+  };
 
-    /**
-     * Destructor.
-     */
-    virtual ~SpeechSynthesizerObserverInterface() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~SpeechSynthesizerObserverInterface() = default;
 
-    /**
-     * Notification that the @c SpeechSynthesizer state has changed. Callback functions must return as soon as possible.
-     * @param state The new state of the @c speechSynthesizer.
-     */
-    virtual void onStateChanged(SpeechSynthesizerState state) = 0;
+  /**
+   * Notification that the @c SpeechSynthesizer state has changed. Callback
+   * functions must return as soon as possible.
+   * @param state The new state of the @c speechSynthesizer.
+   */
+  virtual void onStateChanged(SpeechSynthesizerState state) = 0;
 };
 
 /**
@@ -66,21 +70,23 @@ public:
 inline std::ostream& operator<<(
     std::ostream& stream,
     const SpeechSynthesizerObserverInterface::SpeechSynthesizerState state) {
-    switch (state) {
-        case SpeechSynthesizerObserverInterface::SpeechSynthesizerState::PLAYING:
-            stream << "PLAYING";
-            break;
-        case SpeechSynthesizerObserverInterface::SpeechSynthesizerState::FINISHED:
-            stream << "FINISHED";
-            break;
-        case SpeechSynthesizerObserverInterface::SpeechSynthesizerState::GAINING_FOCUS:
-            stream << "GAINING_FOCUS";
-            break;
-        case SpeechSynthesizerObserverInterface::SpeechSynthesizerState::LOSING_FOCUS:
-            stream << "LOSING_FOCUS";
-            break;
-    }
-    return stream;
+  switch (state) {
+    case SpeechSynthesizerObserverInterface::SpeechSynthesizerState::PLAYING:
+      stream << "PLAYING";
+      break;
+    case SpeechSynthesizerObserverInterface::SpeechSynthesizerState::FINISHED:
+      stream << "FINISHED";
+      break;
+    case SpeechSynthesizerObserverInterface::SpeechSynthesizerState::
+        GAINING_FOCUS:
+      stream << "GAINING_FOCUS";
+      break;
+    case SpeechSynthesizerObserverInterface::SpeechSynthesizerState::
+        LOSING_FOCUS:
+      stream << "LOSING_FOCUS";
+      break;
+  }
+  return stream;
 }
 
 }  // namespace sdkInterfaces

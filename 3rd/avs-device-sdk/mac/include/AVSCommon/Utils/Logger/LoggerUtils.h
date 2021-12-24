@@ -148,7 +148,8 @@ void logEntry(Level level, const LogEntry& entry);
  * @param data The bytes to render.
  * @param size The number of bytes to render.
  */
-void dumpBytesToStream(std::ostream& stream, const char* prefix, size_t width, const unsigned char* data, size_t size);
+void dumpBytesToStream(std::ostream& stream, const char* prefix, size_t width,
+                       const unsigned char* data, size_t size);
 
 }  // namespace logger
 }  // namespace utils

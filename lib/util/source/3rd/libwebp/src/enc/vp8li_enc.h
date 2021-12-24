@@ -14,11 +14,11 @@
 #ifndef WEBP_ENC_VP8LI_H_
 #define WEBP_ENC_VP8LI_H_
 
-#include "./backward_references_enc.h"
-#include "./histogram_enc.h"
 #include "../utils/bit_writer_utils.h"
 #include "../webp/encode.h"
 #include "../webp/format_constants.h"
+#include "./backward_references_enc.h"
+#include "./histogram_enc.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,22 +28,22 @@ extern "C" {
 #define MAX_TRANSFORM_BITS 6
 
 typedef struct {
-  const WebPConfig* config_;      // user configuration and parameters
-  const WebPPicture* pic_;        // input picture.
+  const WebPConfig* config_;  // user configuration and parameters
+  const WebPPicture* pic_;    // input picture.
 
-  uint32_t* argb_;                // Transformed argb image data.
-  uint32_t* argb_scratch_;        // Scratch memory for argb rows
-                                  // (used for prediction).
-  uint32_t* transform_data_;      // Scratch memory for transform data.
-  uint32_t* transform_mem_;       // Currently allocated memory.
-  size_t    transform_mem_size_;  // Currently allocated memory size.
+  uint32_t* argb_;             // Transformed argb image data.
+  uint32_t* argb_scratch_;     // Scratch memory for argb rows
+                               // (used for prediction).
+  uint32_t* transform_data_;   // Scratch memory for transform data.
+  uint32_t* transform_mem_;    // Currently allocated memory.
+  size_t transform_mem_size_;  // Currently allocated memory size.
 
-  int       current_width_;       // Corresponds to packed image width.
+  int current_width_;  // Corresponds to packed image width.
 
   // Encoding parameters derived from quality parameter.
   int histo_bits_;
-  int transform_bits_;    // <= MAX_TRANSFORM_BITS.
-  int cache_bits_;        // If equal to 0, don't use color cache.
+  int transform_bits_;  // <= MAX_TRANSFORM_BITS.
+  int cache_bits_;      // If equal to 0, don't use color cache.
 
   // Encoding parameters derived from image characteristics.
   int use_cross_color_;
@@ -89,7 +89,7 @@ void VP8LColorSpaceTransform(int width, int height, int bits, int quality,
 //------------------------------------------------------------------------------
 
 #ifdef __cplusplus
-}    // extern "C"
+}  // extern "C"
 #endif
 
-#endif  /* WEBP_ENC_VP8LI_H_ */
+#endif /* WEBP_ENC_VP8LI_H_ */

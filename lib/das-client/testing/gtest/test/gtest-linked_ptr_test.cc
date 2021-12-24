@@ -33,6 +33,7 @@
 #include "gtest/internal/gtest-linked_ptr.h"
 
 #include <stdlib.h>
+
 #include "gtest/gtest.h"
 
 namespace {
@@ -46,9 +47,10 @@ Message* history = NULL;
 // Class which tracks allocation/deallocation
 class A {
  public:
-  A(): mynum(num++) { *history << "A" << mynum << " ctor\n"; }
+  A() : mynum(num++) { *history << "A" << mynum << " ctor\n"; }
   virtual ~A() { *history << "A" << mynum << " dtor\n"; }
   virtual void Use() { *history << "A" << mynum << " use\n"; }
+
  protected:
   int mynum;
 };
@@ -128,27 +130,27 @@ TEST_F(LinkedPtrTest, GeneralTest) {
   }
 
   ASSERT_STREQ(
-    "A0 ctor\n"
-    "A1 ctor\n"
-    "A2 ctor\n"
-    "B2 ctor\n"
-    "A0 use\n"
-    "A0 use\n"
-    "B2 use\n"
-    "B2 use\n"
-    "B2 use\n"
-    "B2 use\n"
-    "B2 use\n"
-    "B2 dtor\n"
-    "A2 dtor\n"
-    "A0 use\n"
-    "A0 use\n"
-    "A1 use\n"
-    "A3 ctor\n"
-    "A0 dtor\n"
-    "A3 dtor\n"
-    "A1 dtor\n",
-    history->GetString().c_str());
+      "A0 ctor\n"
+      "A1 ctor\n"
+      "A2 ctor\n"
+      "B2 ctor\n"
+      "A0 use\n"
+      "A0 use\n"
+      "B2 use\n"
+      "B2 use\n"
+      "B2 use\n"
+      "B2 use\n"
+      "B2 use\n"
+      "B2 dtor\n"
+      "A2 dtor\n"
+      "A0 use\n"
+      "A0 use\n"
+      "A1 use\n"
+      "A3 ctor\n"
+      "A0 dtor\n"
+      "A3 dtor\n"
+      "A1 dtor\n",
+      history->GetString().c_str());
 }
 
 }  // Unnamed namespace

@@ -6,61 +6,58 @@
  *  Created by Jarrod Hatfield on 12/06/17.
  *
  *  Description
- *  + This behavior will listen for directional audio and will have Victor face/interact with it in response
+ *  + This behavior will listen for directional audio and will have Victor
+ *face/interact with it in response
  *
  **********************************************************************************************************************/
 
 #ifndef __Cozmo__BehaviorReactToSound_h__
 #define __Cozmo__BehaviorReactToSound_h__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/mics/micDirectionTypes.h"
-
 #include <vector>
 
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/components/mics/micDirectionTypes.h"
 
 namespace Anki {
 namespace Vector {
 
 class BehaviorReactToMicDirection;
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class BehaviorReactToSound : public ICozmoBehavior
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+class BehaviorReactToSound : public ICozmoBehavior {
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  BehaviorReactToSound( const Json::Value& config );
+  BehaviorReactToSound(const Json::Value& config);
 
-
-public:
-
+ public:
   // data corresponding to what sounds will trigger a reaction
-  struct DirectionTrigger
-  {
-    MicDirectionConfidence  threshold;
+  struct DirectionTrigger {
+    MicDirectionConfidence threshold;
   };
 
   // data corresponding to our response to a valid trigger
-  struct DirectionResponse
-  {
-    AnimationTrigger                          animation;
-    Radians                                   facing; // note: temp until we get anims
+  struct DirectionResponse {
+    AnimationTrigger animation;
+    Radians facing;  // note: temp until we get anims
   };
 
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
 
   void InitBehavior() override;
   virtual bool WantsToBeActivatedBehavior() const override;
-  virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
-  virtual void GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
 
-protected:
+ protected:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Behavior Related Functions
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Behavior Related Functions
-
-  virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
@@ -68,54 +65,48 @@ protected:
   virtual void OnBehaviorEnteredActivatableScope() override;
   virtual void OnBehaviorLeftActivatableScope() override;
 
-
   virtual void BehaviorUpdate() override;
 
+ private:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Helper Functions
 
-private:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Helper Functions
-
-  void SetTriggerDirection( MicDirectionIndex direction );
+  void SetTriggerDirection(MicDirectionIndex direction);
   void ClearTriggerDirection();
 
   // callback function for sound reaction
-  bool OnMicPowerSampleRecorded( double, MicDirectionConfidence, MicDirectionIndex );
+  bool OnMicPowerSampleRecorded(double, MicDirectionConfidence,
+                                MicDirectionIndex);
 
-  void OnValidSoundDetected( MicDirectionIndex, double, MicDirectionConfidence );
+  void OnValidSoundDetected(MicDirectionIndex, double, MicDirectionConfidence);
   void RespondToSound();
   void OnResponseComplete();
 
   bool CanReactToSound() const;
-  bool CanReactToDirection( MicDirectionIndex ) const;
+  bool CanReactToDirection(MicDirectionIndex) const;
 
   EngineTimeStamp_t GetCurrentTimeMS() const;
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Internal Data Structure Definitions
+  // ...
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Internal Data Structure Definitions ...
-
-  enum EChargerStatus
-  {
+  enum EChargerStatus {
     EChargerStatus_OnCharger,
     EChargerStatus_OffCharger,
     EChargerStatus_Num
   };
 
-  enum EObservationStatus
-  {
+  enum EObservationStatus {
     EObservationStatus_Asleep,
     EObservationStatus_Awake,
     EObservationStatus_Num
   };
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Member Data
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Member Data
-
-  struct InstanceConfig
-  {
+  struct InstanceConfig {
     InstanceConfig();
 
     std::string reactionBehaviorString;
@@ -125,19 +116,19 @@ private:
     float minPowerThreshold;
     MicDirectionConfidence confidenceThresholdAtMinPower;
 
-    SoundReactorId  reactorId;
+    SoundReactorId reactorId;
 
   } _iVars;
 
   // these are the values that we're reacting to
-  MicDirectionIndex                     _triggeredDirection       = kInvalidMicDirectionIndex;
-  double                                _triggeredMicPower        = 0.0;
-  MicDirectionConfidence                _triggeredConfidence      = 0;
+  MicDirectionIndex _triggeredDirection = kInvalidMicDirectionIndex;
+  double _triggeredMicPower = 0.0;
+  MicDirectionConfidence _triggeredConfidence = 0;
 
-  EngineTimeStamp_t                     _triggerDetectedTime      = 0;
+  EngineTimeStamp_t _triggerDetectedTime = 0;
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo__BehaviorReactToSound_h__
+#endif  // __Cozmo__BehaviorReactToSound_h__

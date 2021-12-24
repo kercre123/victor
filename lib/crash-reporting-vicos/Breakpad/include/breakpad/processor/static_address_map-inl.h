@@ -36,17 +36,15 @@
 #ifndef PROCESSOR_STATIC_ADDRESS_MAP_INL_H__
 #define PROCESSOR_STATIC_ADDRESS_MAP_INL_H__
 
-#include "processor/static_address_map.h"
-
 #include "processor/logging.h"
+#include "processor/static_address_map.h"
 
 namespace google_breakpad {
 
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 bool StaticAddressMap<AddressType, EntryType>::Retrieve(
-    const AddressType &address,
-    const EntryType *&entry, AddressType *entry_address) const {
-
+    const AddressType &address, const EntryType *&entry,
+    AddressType *entry_address) const {
   // upper_bound gives the first element whose key is greater than address,
   // but we want the first element whose key is less than or equal to address.
   // Decrement the iterator to get there, but not if the upper_bound already
@@ -54,14 +52,12 @@ bool StaticAddressMap<AddressType, EntryType>::Retrieve(
   // the lowest stored key, so return false.
 
   MapConstIterator iterator = map_.upper_bound(address);
-  if (iterator == map_.begin())
-    return false;
+  if (iterator == map_.begin()) return false;
   --iterator;
 
   entry = iterator.GetValuePtr();
   // Make sure AddressType is a copyable basic type
-  if (entry_address)
-    *entry_address = iterator.GetKey();
+  if (entry_address) *entry_address = iterator.GetKey();
 
   return true;
 }

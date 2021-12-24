@@ -66,18 +66,18 @@ template <typename T>
 struct NamedHashFunction {
   const char *name;
 
-  typedef T (*HashFunction)(const char*);
+  typedef T (*HashFunction)(const char *);
   HashFunction function;
 };
 
 const NamedHashFunction<uint32_t> kHashFunctions32[] = {
-  { "fnv1_32",  HashFnv1<uint32_t> },
-  { "fnv1a_32", HashFnv1a<uint32_t> },
+    {"fnv1_32", HashFnv1<uint32_t>},
+    {"fnv1a_32", HashFnv1a<uint32_t>},
 };
 
 const NamedHashFunction<uint64_t> kHashFunctions64[] = {
-  { "fnv1_64",  HashFnv1<uint64_t> },
-  { "fnv1a_64", HashFnv1a<uint64_t> },
+    {"fnv1_64", HashFnv1<uint64_t>},
+    {"fnv1a_64", HashFnv1a<uint64_t>},
 };
 
 inline NamedHashFunction<uint32_t>::HashFunction FindHashFunction32(

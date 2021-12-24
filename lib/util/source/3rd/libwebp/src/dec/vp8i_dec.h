@@ -14,13 +14,14 @@
 #ifndef WEBP_DEC_VP8I_H_
 #define WEBP_DEC_VP8I_H_
 
-#include <string.h>     // for memcpy()
-#include "./common_dec.h"
-#include "./vp8li_dec.h"
+#include <string.h>  // for memcpy()
+
+#include "../dsp/dsp.h"
 #include "../utils/bit_reader_utils.h"
 #include "../utils/random_utils.h"
 #include "../utils/thread_utils.h"
-#include "../dsp/dsp.h"
+#include "./common_dec.h"
+#include "./vp8li_dec.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,10 +58,10 @@ extern "C" {
 //  '|' = left sample,   '-' = top sample,    '+' = top-left sample
 //  't' = extra top-right sample for 4x4 modes
 #define YUV_SIZE (BPS * 17 + BPS * 9)
-#define Y_SIZE   (BPS * 17)
-#define Y_OFF    (BPS * 1 + 8)
-#define U_OFF    (Y_OFF + BPS * 16 + BPS)
-#define V_OFF    (U_OFF + 16)
+#define Y_SIZE (BPS * 17)
+#define Y_OFF (BPS * 1 + 8)
+#define U_OFF (Y_OFF + BPS * 16 + BPS)
+#define V_OFF (U_OFF + 16)
 
 // minimal width under which lossy multi-threading is always disabled
 #define MIN_WIDTH_FOR_THREADS 512
@@ -80,15 +81,15 @@ typedef struct {
   uint16_t height_;
   uint8_t xscale_;
   uint8_t yscale_;
-  uint8_t colorspace_;   // 0 = YCbCr
+  uint8_t colorspace_;  // 0 = YCbCr
   uint8_t clamp_type_;
 } VP8PictureHeader;
 
 // segment features
 typedef struct {
   int use_segment_;
-  int update_map_;        // whether to update the segment map or not
-  int absolute_delta_;    // absolute or delta values for quantizer and filter
+  int update_map_;      // whether to update the segment map or not
+  int absolute_delta_;  // absolute or delta values for quantizer and filter
   int8_t quantizer_[NUM_MB_SEGMENTS];        // quantization changes
   int8_t filter_strength_[NUM_MB_SEGMENTS];  // filter strength for segments
 } VP8SegmentHeader;
@@ -96,7 +97,7 @@ typedef struct {
 // probas associated to one of the contexts
 typedef uint8_t VP8ProbaArray[NUM_PROBAS];
 
-typedef struct {   // all the probas associated to one band
+typedef struct {  // all the probas associated to one band
   VP8ProbaArray probas_[NUM_CTX];
 } VP8BandProbas;
 
@@ -110,9 +111,9 @@ typedef struct {
 
 // Filter parameters
 typedef struct {
-  int simple_;                  // 0=complex, 1=simple
-  int level_;                   // [0..63]
-  int sharpness_;               // [0..7]
+  int simple_;     // 0=complex, 1=simple
+  int level_;      // [0..63]
+  int sharpness_;  // [0..7]
   int use_lf_delta_;
   int ref_lf_delta_[NUM_REF_LF_DELTAS];
   int mode_lf_delta_[NUM_MODE_LF_DELTAS];
@@ -121,33 +122,33 @@ typedef struct {
 //------------------------------------------------------------------------------
 // Informations about the macroblocks.
 
-typedef struct {  // filter specs
-  uint8_t f_limit_;      // filter limit in [3..189], or 0 if no filtering
-  uint8_t f_ilevel_;     // inner limit in [1..63]
-  uint8_t f_inner_;      // do inner filtering?
-  uint8_t hev_thresh_;   // high edge variance threshold in [0..2]
+typedef struct {        // filter specs
+  uint8_t f_limit_;     // filter limit in [3..189], or 0 if no filtering
+  uint8_t f_ilevel_;    // inner limit in [1..63]
+  uint8_t f_inner_;     // do inner filtering?
+  uint8_t hev_thresh_;  // high edge variance threshold in [0..2]
 } VP8FInfo;
 
-typedef struct {  // Top/Left Contexts used for syntax-parsing
-  uint8_t nz_;        // non-zero AC/DC coeffs (4bit for luma + 4bit for chroma)
-  uint8_t nz_dc_;     // non-zero DC coeff (1bit)
+typedef struct {   // Top/Left Contexts used for syntax-parsing
+  uint8_t nz_;     // non-zero AC/DC coeffs (4bit for luma + 4bit for chroma)
+  uint8_t nz_dc_;  // non-zero DC coeff (1bit)
 } VP8MB;
 
 // Dequantization matrices
-typedef int quant_t[2];      // [DC / AC].  Can be 'uint16_t[2]' too (~slower).
+typedef int quant_t[2];  // [DC / AC].  Can be 'uint16_t[2]' too (~slower).
 typedef struct {
   quant_t y1_mat_, y2_mat_, uv_mat_;
 
-  int uv_quant_;   // U/V quantizer value
-  int dither_;     // dithering amplitude (0 = off, max=255)
+  int uv_quant_;  // U/V quantizer value
+  int dither_;    // dithering amplitude (0 = off, max=255)
 } VP8QuantMatrix;
 
 // Data needed to reconstruct a macroblock
 typedef struct {
-  int16_t coeffs_[384];   // 384 coeffs = (16+4+4) * 4*4
-  uint8_t is_i4x4_;       // true if intra4x4
-  uint8_t imodes_[16];    // one 16x16 mode (#0) or sixteen 4x4 modes
-  uint8_t uvmode_;        // chroma prediction mode
+  int16_t coeffs_[384];  // 384 coeffs = (16+4+4) * 4*4
+  uint8_t is_i4x4_;      // true if intra4x4
+  uint8_t imodes_[16];   // one 16x16 mode (#0) or sixteen 4x4 modes
+  uint8_t uvmode_;       // chroma prediction mode
   // bit-wise info about the content of each sub-4x4 blocks (in decoding order).
   // Each of the 4x4 blocks for y/u/v is associated with a 2b code according to:
   //   code=0 -> no coefficient
@@ -157,7 +158,7 @@ typedef struct {
   // This allows to call specialized transform functions.
   uint32_t non_zero_y_;
   uint32_t non_zero_uv_;
-  uint8_t dither_;      // local dithering strength (deduced from non_zero_*)
+  uint8_t dither_;  // local dithering strength (deduced from non_zero_*)
   uint8_t skip_;
   uint8_t segment_;
 } VP8MBData;
@@ -182,24 +183,24 @@ typedef struct {
 
 struct VP8Decoder {
   VP8StatusCode status_;
-  int ready_;     // true if ready to decode a picture with VP8Decode()
+  int ready_;              // true if ready to decode a picture with VP8Decode()
   const char* error_msg_;  // set when status_ is not OK.
 
   // Main data source
   VP8BitReader br_;
 
   // headers
-  VP8FrameHeader   frm_hdr_;
+  VP8FrameHeader frm_hdr_;
   VP8PictureHeader pic_hdr_;
-  VP8FilterHeader  filter_hdr_;
+  VP8FilterHeader filter_hdr_;
   VP8SegmentHeader segment_hdr_;
 
   // Worker
   WebPWorker worker_;
-  int mt_method_;      // multi-thread method: 0=off, 1=[parse+recon][filter]
-                       // 2=[parse][recon+filter]
-  int cache_id_;       // current cache row
-  int num_caches_;     // number of cached rows of 16 pixels (1, 2 or 3)
+  int mt_method_;   // multi-thread method: 0=off, 1=[parse+recon][filter]
+                    // 2=[parse][recon+filter]
+  int cache_id_;    // current cache row
+  int num_caches_;  // number of cached rows of 16 pixels (1, 2 or 3)
   VP8ThreadContext thread_ctx_;  // Thread context
 
   // dimension, in macroblock units.
@@ -215,8 +216,8 @@ struct VP8Decoder {
   VP8BitReader parts_[MAX_NUM_PARTITIONS];
 
   // Dithering strength, deduced from decoding options
-  int dither_;                // whether to use dithering or not
-  VP8Random dithering_rg_;    // random generator for dithering
+  int dither_;              // whether to use dithering or not
+  VP8Random dithering_rg_;  // random generator for dithering
 
   // dequantization (one set of DC/AC dequant factor per segment)
   VP8QuantMatrix dqm_[NUM_MB_SEGMENTS];
@@ -227,16 +228,16 @@ struct VP8Decoder {
   uint8_t skip_p_;
 
   // Boundary data cache and persistent buffers.
-  uint8_t* intra_t_;      // top intra modes values: 4 * mb_w_
-  uint8_t  intra_l_[4];   // left intra modes values
+  uint8_t* intra_t_;    // top intra modes values: 4 * mb_w_
+  uint8_t intra_l_[4];  // left intra modes values
 
   VP8TopSamples* yuv_t_;  // top y/u/v samples
 
-  VP8MB* mb_info_;        // contextual macroblock info (mb_w_ + 1)
-  VP8FInfo* f_info_;      // filter strength info
-  uint8_t* yuv_b_;        // main block for Y/U/V (size = YUV_SIZE)
+  VP8MB* mb_info_;    // contextual macroblock info (mb_w_ + 1)
+  VP8FInfo* f_info_;  // filter strength info
+  uint8_t* yuv_b_;    // main block for Y/U/V (size = YUV_SIZE)
 
-  uint8_t* cache_y_;      // macroblock row for storing unfiltered samples
+  uint8_t* cache_y_;  // macroblock row for storing unfiltered samples
   uint8_t* cache_u_;
   uint8_t* cache_v_;
   int cache_y_stride_;
@@ -247,8 +248,8 @@ struct VP8Decoder {
   size_t mem_size_;
 
   // Per macroblock non-persistent infos.
-  int mb_x_, mb_y_;       // current position, in macroblock units
-  VP8MBData* mb_data_;    // parsed reconstruction data
+  int mb_x_, mb_y_;     // current position, in macroblock units
+  VP8MBData* mb_data_;  // parsed reconstruction data
 
   // Filtering side-info
   int filter_type_;                          // 0=off, 1=simple, 2=complex
@@ -262,15 +263,15 @@ struct VP8Decoder {
   uint8_t* alpha_plane_mem_;  // memory allocated for alpha_plane_
   uint8_t* alpha_plane_;      // output. Persistent, contains the whole data.
   const uint8_t* alpha_prev_line_;  // last decoded alpha row (or NULL)
-  int alpha_dithering_;       // derived from decoding options (0=off, 100=full)
+  int alpha_dithering_;  // derived from decoding options (0=off, 100=full)
 };
 
 //------------------------------------------------------------------------------
 // internal functions. Not public.
 
 // in vp8.c
-int VP8SetError(VP8Decoder* const dec,
-                VP8StatusCode error, const char* const msg);
+int VP8SetError(VP8Decoder* const dec, VP8StatusCode error,
+                const char* const msg);
 
 // in tree.c
 void VP8ResetProba(VP8Proba* const proba);
@@ -294,8 +295,8 @@ int VP8ExitCritical(VP8Decoder* const dec, VP8Io* const io);
 // Return the multi-threading method to use (0=off), depending
 // on options and bitstream size. Only for lossy decoding.
 int VP8GetThreadMethod(const WebPDecoderOptions* const options,
-                       const WebPHeaderStructure* const headers,
-                       int width, int height);
+                       const WebPHeaderStructure* const headers, int width,
+                       int height);
 // Initialize dithering post-process if needed.
 void VP8InitDithering(const WebPDecoderOptions* const options,
                       VP8Decoder* const dec);
@@ -308,13 +309,13 @@ int VP8DecodeMB(VP8Decoder* const dec, VP8BitReader* const token_br);
 
 // in alpha.c
 const uint8_t* VP8DecompressAlphaRows(VP8Decoder* const dec,
-                                      const VP8Io* const io,
-                                      int row, int num_rows);
+                                      const VP8Io* const io, int row,
+                                      int num_rows);
 
 //------------------------------------------------------------------------------
 
 #ifdef __cplusplus
-}    // extern "C"
+}  // extern "C"
 #endif
 
-#endif  /* WEBP_DEC_VP8I_H_ */
+#endif /* WEBP_DEC_VP8I_H_ */

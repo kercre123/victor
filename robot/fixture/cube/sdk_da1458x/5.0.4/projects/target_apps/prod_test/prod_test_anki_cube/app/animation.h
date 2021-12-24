@@ -15,5 +15,5 @@ void animation_index(const MapCommand* map);
 #ifdef __cplusplus
 }
 #endif
-  
+
 #endif

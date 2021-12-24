@@ -30,21 +30,24 @@ namespace sdkInterfaces {
 
 /**
  * This class provides an interface to the @c ExternalMediaPlayer.
- * Currently it provides an interface for adapters to set the player in focus when they acquire focus.
+ * Currently it provides an interface for adapters to set the player in focus
+ * when they acquire focus.
  */
 class ExternalMediaPlayerInterface {
-public:
-    /**
-     * Destructor
-     */
-    virtual ~ExternalMediaPlayerInterface() = default;
+ public:
+  /**
+   * Destructor
+   */
+  virtual ~ExternalMediaPlayerInterface() = default;
 
-    /**
-     * Method to set the player in focus after an adapter has acquired the channel.
-     *
-     * @param playerInFocus The business name of the adapter that has currently acquired focus.
-     */
-    virtual void setPlayerInFocus(const std::string& playerInFocus) = 0;
+  /**
+   * Method to set the player in focus after an adapter has acquired the
+   * channel.
+   *
+   * @param playerInFocus The business name of the adapter that has currently
+   * acquired focus.
+   */
+  virtual void setPlayerInFocus(const std::string& playerInFocus) = 0;
 };
 
 }  // namespace sdkInterfaces

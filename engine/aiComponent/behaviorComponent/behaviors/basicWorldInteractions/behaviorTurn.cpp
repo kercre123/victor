@@ -16,75 +16,63 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "engine/actions/basicActions.h"
 
-
 namespace Anki {
 namespace Vector {
 
-namespace{
+namespace {
 const char* kTurnClockwiseKey = "shouldTurnClockwise";
-const char* kTurnDegreesKey   = "turnDegrees";
-}
+const char* kTurnDegreesKey = "turnDegrees";
+}  // namespace
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorTurn::InstanceConfig::InstanceConfig()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorTurn::InstanceConfig::InstanceConfig() {}
 
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorTurn::DynamicVariables::DynamicVariables() { turnRad = 0.f; }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorTurn::DynamicVariables::DynamicVariables()
-{
-  turnRad = 0.f;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorTurn::BehaviorTurn(const Json::Value& config)
-: ICozmoBehavior(config)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorTurn::BehaviorTurn(const Json::Value& config) : ICozmoBehavior(config) {
   const std::string& debugName = "BehaviorTurn.BehaviorTurn.LoadConfig";
 
-  const bool turnClockwise = JsonTools::ParseBool(config, kTurnClockwiseKey, debugName);
-  _dVars.turnRad = DEG_TO_RAD_F32(JsonTools::ParseFloat(config, kTurnDegreesKey, debugName));
+  const bool turnClockwise =
+      JsonTools::ParseBool(config, kTurnClockwiseKey, debugName);
+  _dVars.turnRad =
+      DEG_TO_RAD_F32(JsonTools::ParseFloat(config, kTurnDegreesKey, debugName));
   _dVars.turnRad = turnClockwise ? -_dVars.turnRad : _dVars.turnRad;
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTurn::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
-{
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorTurn::GetBehaviorJsonKeys(
+    std::set<const char*>& expectedKeys) const {
   const char* list[] = {
-    kTurnClockwiseKey,
-    kTurnDegreesKey,
+      kTurnClockwiseKey,
+      kTurnDegreesKey,
   };
-  expectedKeys.insert( std::begin(list), std::end(list) );
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorTurn::WantsToBeActivatedBehavior() const
-{
-  return true;
+  expectedKeys.insert(std::begin(list), std::end(list));
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool BehaviorTurn::WantsToBeActivatedBehavior() const { return true; }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTurn::OnBehaviorActivated()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorTurn::OnBehaviorActivated() {
   const bool isAbsolute = false;
   DelegateIfInControl(new TurnInPlaceAction(_dVars.turnRad, isAbsolute));
 }
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTurn::BehaviorUpdate()
-{
-  if(!IsActivated()){
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorTurn::BehaviorUpdate() {
+  if (!IsActivated()) {
     return;
   }
-
 }
 
-
-} // namespace Vector
-} // namespace Anki
-
+}  // namespace Vector
+}  // namespace Anki

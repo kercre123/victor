@@ -17,22 +17,22 @@
 #define ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_LIBCURLUTILS_HTTPRESPONSECODES_H_
 
 enum HTTPResponseCode {
-    /// No HTTP response received.
-    HTTP_RESPONSE_CODE_UNDEFINED = 0,
-    /// HTTP Success with reponse payload.
-    SUCCESS_OK = 200,
-    /// HTTP Succcess with no response payload.
-    SUCCESS_NO_CONTENT = 204,
-    /// This is used to detect the first Redirection (3xx) code
-    REDIRECTION_START_CODE = 300,
-    /// This is used to detect the last Redirection (3xx) code
-    REDIRECTION_END_CODE = 308,
-    /// HTTP code for invalid request by user.
-    BAD_REQUEST = 400,
-    /// HTTP code for forbidden request by user.
-    FORBIDDEN = 403,
-    /// HTTP code for internal error by server which didn't fulfill the request.
-    SERVER_INTERNAL_ERROR = 500
+  /// No HTTP response received.
+  HTTP_RESPONSE_CODE_UNDEFINED = 0,
+  /// HTTP Success with reponse payload.
+  SUCCESS_OK = 200,
+  /// HTTP Succcess with no response payload.
+  SUCCESS_NO_CONTENT = 204,
+  /// This is used to detect the first Redirection (3xx) code
+  REDIRECTION_START_CODE = 300,
+  /// This is used to detect the last Redirection (3xx) code
+  REDIRECTION_END_CODE = 308,
+  /// HTTP code for invalid request by user.
+  BAD_REQUEST = 400,
+  /// HTTP code for forbidden request by user.
+  FORBIDDEN = 403,
+  /// HTTP code for internal error by server which didn't fulfill the request.
+  SERVER_INTERNAL_ERROR = 500
 };
 
 #endif  // ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_LIBCURLUTILS_HTTPRESPONSECODES_H_

@@ -19,24 +19,24 @@
 namespace Anki {
 
 namespace Util {
-  class IConsoleFunction;
+class IConsoleFunction;
 }
 
 namespace Vector {
 
-class BehaviorOnboardingLookAtPhone : public ICozmoBehavior
-{
-public:
+class BehaviorOnboardingLookAtPhone : public ICozmoBehavior {
+ public:
   virtual ~BehaviorOnboardingLookAtPhone() = default;
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   explicit BehaviorOnboardingLookAtPhone(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override {}
 
   virtual void InitBehavior() override;
 
@@ -44,10 +44,10 @@ protected:
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
   virtual void AlwaysHandleInScope(const GameToEngineEvent& event) override;
-  virtual void HandleWhileInScopeButNotActivated(const GameToEngineEvent& event) override;
+  virtual void HandleWhileInScopeButNotActivated(
+      const GameToEngineEvent& event) override;
 
-private:
-
+ private:
   void CheckIfTooHotToCharge();
   void MoveHeadUp();
   void RunLoopAction();
@@ -67,10 +67,9 @@ private:
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
   bool _hasBleKeys = true;
-
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingLookAtPhone__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingLookAtPhone__

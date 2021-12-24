@@ -5,8 +5,8 @@
  * Created: 2019-02-07
  *
  * Description:
- * Returns whether or not the robot is on the charger and the battery temperature
- * so hot that charging cannot start
+ * Returns whether or not the robot is on the charger and the battery
+ *temperature so hot that charging cannot start
  *
  * Copyright: Anki, Inc. 2019
  *
@@ -20,17 +20,17 @@
 namespace Anki {
 namespace Vector {
 
-class ConditionTooHotToCharge : public IBEICondition
-{
-public:
+class ConditionTooHotToCharge : public IBEICondition {
+ public:
   explicit ConditionTooHotToCharge(const Json::Value& config);
 
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& bei) const override;
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& bei) const override;
 
-private:
+ private:
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

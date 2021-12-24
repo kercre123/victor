@@ -13,45 +13,50 @@
 #ifndef __Engine_BeiConditions_ConditionObjectKnown_H__
 #define __Engine_BeiConditions_ConditionObjectKnown_H__
 
-#include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/common/engine/robotTimeStamp.h"
+#include "engine/aiComponent/beiConditions/iBEICondition.h"
 
 namespace Anki {
 namespace Vector {
-  
+
 enum class ObjectType : int32_t;
 class ObservableObject;
-  
-class ConditionObjectKnown : public IBEICondition
-{
-public:
+
+class ConditionObjectKnown : public IBEICondition {
+ public:
   explicit ConditionObjectKnown(const Json::Value& config);
-  ConditionObjectKnown(const Json::Value& config, TimeStamp_t maxAge_ms );
-  
+  ConditionObjectKnown(const Json::Value& config, TimeStamp_t maxAge_ms);
+
   virtual ~ConditionObjectKnown();
-  
-  // returns the object(s) that made this true, or empty if the saved info no longer maps to any
-  // objects (maybe it's gone now)
-  const std::vector<const ObservableObject*> GetObjects(BehaviorExternalInterface& behaviorExternalInterface) const;
-  
-protected:
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual void SetActiveInternal(BehaviorExternalInterface& behaviorExternalInterface, bool setActive) override;
-  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requiredVisionModes) const override {
-    requiredVisionModes.insert({ VisionMode::Markers, EVisionUpdateFrequency::Low });
+
+  // returns the object(s) that made this true, or empty if the saved info no
+  // longer maps to any objects (maybe it's gone now)
+  const std::vector<const ObservableObject*> GetObjects(
+      BehaviorExternalInterface& behaviorExternalInterface) const;
+
+ protected:
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual void SetActiveInternal(
+      BehaviorExternalInterface& behaviorExternalInterface,
+      bool setActive) override;
+  virtual void GetRequiredVisionModes(
+      std::set<VisionModeRequest>& requiredVisionModes) const override {
+    requiredVisionModes.insert(
+        {VisionMode::Markers, EVisionUpdateFrequency::Low});
   }
-  
-private:
-  
+
+ private:
   // The object types we care about
   std::set<ObjectType> _targetTypes;
-  
+
   TimeStamp_t _maxAge_ms;
-  bool _setMaxAge = false; // for asserting multiple ctors
-  
+  bool _setMaxAge = false;  // for asserting multiple ctors
+
   struct ObjectInfo {
-    ObjectInfo( RobotTimeStamp_t t, ObjectID o ) : observedTime(t), objectID(o), matchedThisTickOnly(false) {}
+    ObjectInfo(RobotTimeStamp_t t, ObjectID o)
+        : observedTime(t), objectID(o), matchedThisTickOnly(false) {}
     RobotTimeStamp_t observedTime;
     ObjectID objectID;
     bool matchedThisTickOnly;
@@ -59,8 +64,7 @@ private:
   mutable std::vector<ObjectInfo> _lastObjects;
 };
 
+}  // namespace Vector
+}  // namespace Anki
 
-} // namespace Vector
-} // namespace Anki
-
-#endif // __Engine_BeiConditions_ConditionObjectKnown_H__
+#endif  // __Engine_BeiConditions_ConditionObjectKnown_H__

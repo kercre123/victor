@@ -30,8 +30,8 @@
 #ifndef CLIENT_LINUX_MINIDUMP_WRITER_CPU_SET_H_
 #define CLIENT_LINUX_MINIDUMP_WRITER_CPU_SET_H_
 
-#include <stdint.h>
 #include <assert.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "common/linux/linux_libc_support.h"
@@ -43,20 +43,17 @@ namespace google_breakpad {
 // files like /sys/devices/system/cpu/present
 // See See http://www.kernel.org/doc/Documentation/cputopology.txt
 class CpuSet {
-public:
+ public:
   // The maximum number of supported CPUs.
   static const size_t kMaxCpus = 1024;
 
-  CpuSet() {
-    my_memset(mask_, 0, sizeof(mask_));
-  }
+  CpuSet() { my_memset(mask_, 0, sizeof(mask_)); }
 
   // Parse a sysfs file to extract the corresponding CPU set.
   bool ParseSysFile(int fd) {
     char buffer[512];
-    int ret = sys_read(fd, buffer, sizeof(buffer)-1);
-    if (ret < 0)
-      return false;
+    int ret = sys_read(fd, buffer, sizeof(buffer) - 1);
+    if (ret < 0) return false;
 
     buffer[ret] = '\0';
 
@@ -72,8 +69,7 @@ public:
     const char* p_end = p + ret;
     while (p < p_end) {
       // Skip leading space, if any
-      while (p < p_end && my_isspace(*p))
-        p++;
+      while (p < p_end && my_isspace(*p)) p++;
 
       // Find start and size of current item.
       const char* item = p;
@@ -89,30 +85,25 @@ public:
       }
 
       // Ignore trailing spaces.
-      while (item_next > item && my_isspace(item_next[-1]))
-        item_next--;
+      while (item_next > item && my_isspace(item_next[-1])) item_next--;
 
       // skip empty items.
-      if (item_next == item)
-        continue;
+      if (item_next == item) continue;
 
       // read first decimal value.
       uintptr_t start = 0;
       const char* next = my_read_decimal_ptr(&start, item);
       uintptr_t end = start;
-      if (*next == '-')
-        my_read_decimal_ptr(&end, next+1);
+      if (*next == '-') my_read_decimal_ptr(&end, next + 1);
 
-      while (start <= end)
-        SetBit(start++);
+      while (start <= end) SetBit(start++);
     }
     return true;
   }
 
   // Intersect this CPU set with another one.
   void IntersectWith(const CpuSet& other) {
-    for (size_t nn = 0; nn < kMaskWordCount; ++nn)
-      mask_[nn] &= other.mask_[nn];
+    for (size_t nn = 0; nn < kMaskWordCount; ++nn) mask_[nn] &= other.mask_[nn];
   }
 
   // Return the number of CPUs in this set.
@@ -124,7 +115,7 @@ public:
     return result;
   }
 
-private:
+ private:
   void SetBit(uintptr_t index) {
     size_t nn = static_cast<size_t>(index);
     if (nn < kMaxCpus)
@@ -132,7 +123,7 @@ private:
   }
 
   typedef uint32_t MaskWordType;
-  static const size_t kMaskWordBits = 8*sizeof(MaskWordType);
+  static const size_t kMaskWordBits = 8 * sizeof(MaskWordType);
   static const size_t kMaskWordCount =
       (kMaxCpus + kMaskWordBits - 1) / kMaskWordBits;
 

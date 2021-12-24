@@ -17,18 +17,17 @@
 
 namespace Anki {
 namespace Vector {
-  
+
 enum class AnimTrackFlag : uint8_t;
 
-class AnimTrackHelpers
-{
-public:
-  // Turns animation track flags into a space separated string for easy debugging
+class AnimTrackHelpers {
+ public:
+  // Turns animation track flags into a space separated string for easy
+  // debugging
   static std::string AnimTrackFlagsToString(uint8_t tracks);
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Anki_Cozmo_Basestation_Components_AnimTrackHelpers_H__
+#endif  // __Anki_Cozmo_Basestation_Components_AnimTrackHelpers_H__

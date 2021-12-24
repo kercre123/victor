@@ -20,7 +20,7 @@ namespace Util {
 
 Locale GetCurrentLocaleIOS();
 
-} // namespace Util
-} // namespace Anki
+}  // namespace Util
+}  // namespace Anki
 
-#endif // __util_environment_locale_iososx_H__
+#endif  // __util_environment_locale_iososx_H__

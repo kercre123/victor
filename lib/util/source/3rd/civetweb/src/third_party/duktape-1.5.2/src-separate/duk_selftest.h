@@ -9,4 +9,4 @@
 DUK_INTERNAL_DECL void duk_selftest_run_tests(void);
 #endif
 
-#endif  /* DUK_SELFTEST_H_INCLUDED */
+#endif /* DUK_SELFTEST_H_INCLUDED */

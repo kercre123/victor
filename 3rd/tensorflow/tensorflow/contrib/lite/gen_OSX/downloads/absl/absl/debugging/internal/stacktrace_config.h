@@ -24,47 +24,47 @@
 // First, test platforms which only support a stub.
 #if ABSL_STACKTRACE_INL_HEADER
 #error ABSL_STACKTRACE_INL_HEADER cannot be directly set
-#elif defined(__native_client__) || defined(__APPLE__) || \
+#elif defined(__native_client__) || defined(__APPLE__) ||                   \
     defined(__FreeBSD__) || defined(__ANDROID__) || defined(__myriad2__) || \
     defined(__asmjs__) || defined(__wasm__) || defined(__Fuchsia__)
 #define ABSL_STACKTRACE_INL_HEADER \
-    "absl/debugging/internal/stacktrace_unimplemented-inl.inc"
+  "absl/debugging/internal/stacktrace_unimplemented-inl.inc"
 
 // Next, test for Mips and Windows.
 // TODO(marmstrong): Mips case, remove the check for ABSL_STACKTRACE_INL_HEADER
 #elif defined(__mips__) && !defined(ABSL_STACKTRACE_INL_HEADER)
 #define ABSL_STACKTRACE_INL_HEADER \
-    "absl/debugging/internal/stacktrace_unimplemented-inl.inc"
+  "absl/debugging/internal/stacktrace_unimplemented-inl.inc"
 #elif defined(_WIN32)  // windows
 #define ABSL_STACKTRACE_INL_HEADER \
-    "absl/debugging/internal/stacktrace_win32-inl.inc"
+  "absl/debugging/internal/stacktrace_win32-inl.inc"
 
 // Finally, test NO_FRAME_POINTER.
 #elif !defined(NO_FRAME_POINTER)
-# if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__)
 #define ABSL_STACKTRACE_INL_HEADER \
-    "absl/debugging/internal/stacktrace_x86-inl.inc"
-# elif defined(__ppc__) || defined(__PPC__)
+  "absl/debugging/internal/stacktrace_x86-inl.inc"
+#elif defined(__ppc__) || defined(__PPC__)
 #define ABSL_STACKTRACE_INL_HEADER \
-    "absl/debugging/internal/stacktrace_powerpc-inl.inc"
-# elif defined(__aarch64__)
+  "absl/debugging/internal/stacktrace_powerpc-inl.inc"
+#elif defined(__aarch64__)
 #define ABSL_STACKTRACE_INL_HEADER \
-    "absl/debugging/internal/stacktrace_aarch64-inl.inc"
-# elif defined(__arm__)
+  "absl/debugging/internal/stacktrace_aarch64-inl.inc"
+#elif defined(__arm__)
 #define ABSL_STACKTRACE_INL_HEADER \
-    "absl/debugging/internal/stacktrace_arm-inl.inc"
-# endif
+  "absl/debugging/internal/stacktrace_arm-inl.inc"
+#endif
 #else  // defined(NO_FRAME_POINTER)
-# if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__)
 #define ABSL_STACKTRACE_INL_HEADER \
-    "absl/debugging/internal/stacktrace_unimplemented-inl.inc"
-# elif defined(__ppc__) || defined(__PPC__)
+  "absl/debugging/internal/stacktrace_unimplemented-inl.inc"
+#elif defined(__ppc__) || defined(__PPC__)
 //  Use glibc's backtrace.
 #define ABSL_STACKTRACE_INL_HEADER \
-    "absl/debugging/internal/stacktrace_generic-inl.inc"
-# elif defined(__arm__)
-#   error stacktrace without frame pointer is not supported on ARM
-# endif
+  "absl/debugging/internal/stacktrace_generic-inl.inc"
+#elif defined(__arm__)
+#error stacktrace without frame pointer is not supported on ARM
+#endif
 #endif  // NO_FRAME_POINTER
 
 #if !defined(ABSL_STACKTRACE_INL_HEADER)

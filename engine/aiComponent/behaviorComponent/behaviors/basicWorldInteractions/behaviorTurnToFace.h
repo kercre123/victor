@@ -1,16 +1,16 @@
 /**
-* File: behaviorTurnToFace.h
-*
-* Author: Kevin M. Karol
-* Created: 6/6/17
-*
-* Description: Simple behavior to turn toward a face - face can either be passed
-* in as part of WantsToBeActivated, or selected using internal criteria using WantsToBeActivated
-* with a robot
-*
-* Copyright: Anki, Inc. 2017
-*
-**/
+ * File: behaviorTurnToFace.h
+ *
+ * Author: Kevin M. Karol
+ * Created: 6/6/17
+ *
+ * Description: Simple behavior to turn toward a face - face can either be
+ *passed in as part of WantsToBeActivated, or selected using internal criteria
+ *using WantsToBeActivated with a robot
+ *
+ * Copyright: Anki, Inc. 2017
+ *
+ **/
 
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorTurnToFace_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorTurnToFace_H__
@@ -20,26 +20,27 @@
 
 namespace Anki {
 namespace Vector {
-  
-class BehaviorTurnToFace : public ICozmoBehavior
-{
-protected:
+
+class BehaviorTurnToFace : public ICozmoBehavior {
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorTurnToFace(const Json::Value& config);
-  
-public:
+
+ public:
   virtual ~BehaviorTurnToFace() override {}
   virtual bool WantsToBeActivatedBehavior() const override;
-  
-protected:
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+
+ protected:
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override {}
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
-  
-private:
+
+ private:
   struct InstanceConfig {
     InstanceConfig();
   };
@@ -49,14 +50,11 @@ private:
     mutable SmartFaceID targetFace;
   };
 
-  InstanceConfig   _iConfig;
+  InstanceConfig _iConfig;
   DynamicVariables _dVars;
-
-  
 };
-  
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorTurnToFace_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorTurnToFace_H__

@@ -28,22 +28,22 @@ namespace services {
 
 /// Interface representing a BluetoothService.
 class BluetoothServiceInterface {
-public:
-    /**
-     * Returns an SDPRecord for the service.
-     *
-     * @return A @c SDPRecordInterface for the service.
-     */
-    virtual std::shared_ptr<SDPRecordInterface> getRecord() = 0;
+ public:
+  /**
+   * Returns an SDPRecord for the service.
+   *
+   * @return A @c SDPRecordInterface for the service.
+   */
+  virtual std::shared_ptr<SDPRecordInterface> getRecord() = 0;
 
-    /// Destructor.
-    virtual ~BluetoothServiceInterface() = default;
+  /// Destructor.
+  virtual ~BluetoothServiceInterface() = default;
 
-    /// Called for any necessary setup of the service.
-    virtual void setup() = 0;
+  /// Called for any necessary setup of the service.
+  virtual void setup() = 0;
 
-    /// Called for any necessary cleanup of the service.
-    virtual void cleanup() = 0;
+  /// Called for any necessary cleanup of the service.
+  virtual void cleanup() = 0;
 };
 
 }  // namespace services

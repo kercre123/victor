@@ -8,11 +8,10 @@
 // linker directives in the object file through #pragma comment(lib, ...).
 typedef short BOOL;
 
-extern "C" __declspec(dllimport)
-BOOL CopyFileW(const wchar_t*, const wchar_t*, BOOL);
-
+extern "C" __declspec(dllimport) BOOL
+    CopyFileW(const wchar_t*, const wchar_t*, BOOL);
 
 int main() {
-  CopyFileW(0, 0, 0); // kernel32
+  CopyFileW(0, 0, 0);  // kernel32
   return 0;
 }

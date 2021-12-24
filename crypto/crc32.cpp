@@ -1,6 +1,6 @@
-#include <stdint.h>
-
 #include "crc32.h"
+
+#include <stdint.h>
 
 static const uint32_t polynomial = 0xedb88320L;
 

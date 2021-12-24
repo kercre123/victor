@@ -30,8 +30,8 @@ extern "C" {
    stop on first error), or -1 on file open error.
 */
 int ini_parse(const char* filename,
-              int (*handler)(void* user, const char* section,
-                             const char* name, const char* value),
+              int (*handler)(void* user, const char* section, const char* name,
+                             const char* value),
               void* user);
 
 /* Same as ini_parse(), but takes a FILE* instead of filename. This doesn't

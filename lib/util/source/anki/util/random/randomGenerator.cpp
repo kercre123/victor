@@ -14,39 +14,34 @@
 
 #define LOG_CHANNEL "RandomGenerator"
 
-namespace Anki{ namespace Util {
+namespace Anki {
+namespace Util {
 
-
-RandomGenerator::RandomGenerator(uint32_t seed)
-: uniDbl(0, 1)
-{
+RandomGenerator::RandomGenerator(uint32_t seed) : uniDbl(0, 1) {
   SetSeed("", seed);
 }
 
-void RandomGenerator::SetSeed(const std::string& who, uint32_t seed)
-{
-  if ( 0 == seed ) {
+void RandomGenerator::SetSeed(const std::string& who, uint32_t seed) {
+  if (0 == seed) {
     std::random_device rd;
     seed = rd();
   }
 
   rng.seed(seed);
 
-  if(!who.empty())
-  {
+  if (!who.empty()) {
     // Log the actual random seed used and who set it
     DASMSG(random_generator.seed, "random_generator.seed",
            "RandomGenerator::SetSeed was called to set a new random seed");
     DASMSG_SET(i1, seed, "New random seed");
     DASMSG_SET(s1, who, "Identifier for who set the random seed");
     DASMSG_SEND();
-    
+
     LOG_INFO("random_generator.seed", "seed %u, who %s", seed, who.c_str());
   }
 }
 
-double RandomGenerator::GetNextDbl() const
-{
+double RandomGenerator::GetNextDbl() const {
   double r = uniDbl(rng);
 
   return r;
@@ -55,37 +50,26 @@ double RandomGenerator::GetNextDbl() const
 // Return a random floating point number in the range [0,maxVal).  This is much
 // better than any sort of mod-based rand because that only focuses on the lower
 // bits which are not as random as the higher bits.
-double RandomGenerator::RandDbl(double maxVal) const
-{
+double RandomGenerator::RandDbl(double maxVal) const {
   return maxVal * GetNextDbl();
 }
 
-
 // Returns a random floating point number in the range [minVal, maxVal)
-double RandomGenerator::RandDblInRange(double minVal, double maxVal) const
-{
-  return RandDbl(maxVal-minVal) + minVal;
+double RandomGenerator::RandDblInRange(double minVal, double maxVal) const {
+  return RandDbl(maxVal - minVal) + minVal;
 }
 
-
 // Returns a random integer in the range [0,numVals-1]
-int RandomGenerator::RandInt(int numVals) const
-{
+int RandomGenerator::RandInt(int numVals) const {
   return (int)(RandDbl() * numVals);
 }
 
-
 // Generate a random integer in range [minVal, maxVal]
-int RandomGenerator::RandIntInRange(int minVal, int maxVal) const
-{
-  return RandInt(maxVal-minVal+1) + minVal;
+int RandomGenerator::RandIntInRange(int minVal, int maxVal) const {
+  return RandInt(maxVal - minVal + 1) + minVal;
 }
 
+bool RandomGenerator::RandBool() const { return (RandDbl(1.0) < 0.5); }
 
-bool RandomGenerator::RandBool() const
-{
-  return (RandDbl(1.0) < 0.5);
-}
-
-} // namespace BaseStation
-} // namespace
+}  // namespace Util
+}  // namespace Anki

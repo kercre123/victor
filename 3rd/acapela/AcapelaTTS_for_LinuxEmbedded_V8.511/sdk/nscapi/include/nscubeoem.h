@@ -1,4 +1,1 @@
-NSCUBE_API nscRESULT WINAPI nscSetOemKEY(
-    nscHSRV hSrv,
-    char *pKey
-);
+NSCUBE_API nscRESULT WINAPI nscSetOemKEY(nscHSRV hSrv, char *pKey);

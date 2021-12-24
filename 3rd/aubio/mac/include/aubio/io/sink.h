@@ -76,7 +76,7 @@ typedef struct _aubio_sink_t aubio_sink_t;
   been called.
 
 */
-aubio_sink_t * new_aubio_sink(const char_t * uri, uint_t samplerate);
+aubio_sink_t *new_aubio_sink(const char_t *uri, uint_t samplerate);
 
 /**
 
@@ -141,7 +141,7 @@ uint_t aubio_sink_get_channels(const aubio_sink_t *s);
   \param write number of frames to write
 
 */
-void aubio_sink_do(aubio_sink_t * s, fvec_t * write_data, uint_t write);
+void aubio_sink_do(aubio_sink_t *s, fvec_t *write_data, uint_t write);
 
 /**
 
@@ -152,7 +152,7 @@ void aubio_sink_do(aubio_sink_t * s, fvec_t * write_data, uint_t write);
   \param write number of frames to write
 
 */
-void aubio_sink_do_multi(aubio_sink_t * s, fmat_t * write_data, uint_t write);
+void aubio_sink_do_multi(aubio_sink_t *s, fmat_t *write_data, uint_t write);
 
 /**
 
@@ -163,7 +163,7 @@ void aubio_sink_do_multi(aubio_sink_t * s, fmat_t * write_data, uint_t write);
   \return 0 on success, non-zero on failure
 
 */
-uint_t aubio_sink_close(aubio_sink_t * s);
+uint_t aubio_sink_close(aubio_sink_t *s);
 
 /**
 
@@ -172,7 +172,7 @@ uint_t aubio_sink_close(aubio_sink_t * s);
   \param s sink object, created with ::new_aubio_sink
 
 */
-void del_aubio_sink(aubio_sink_t * s);
+void del_aubio_sink(aubio_sink_t *s);
 
 #ifdef __cplusplus
 }

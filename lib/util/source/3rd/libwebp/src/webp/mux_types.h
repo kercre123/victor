@@ -16,6 +16,7 @@
 
 #include <stdlib.h>  // free()
 #include <string.h>  // memset()
+
 #include "./types.h"
 
 #ifdef __cplusplus
@@ -31,11 +32,11 @@ typedef struct WebPData WebPData;
 
 // VP8X Feature Flags.
 typedef enum WebPFeatureFlags {
-  ANIMATION_FLAG  = 0x00000002,
-  XMP_FLAG        = 0x00000004,
-  EXIF_FLAG       = 0x00000008,
-  ALPHA_FLAG      = 0x00000010,
-  ICCP_FLAG       = 0x00000020,
+  ANIMATION_FLAG = 0x00000002,
+  XMP_FLAG = 0x00000004,
+  EXIF_FLAG = 0x00000008,
+  ALPHA_FLAG = 0x00000010,
+  ICCP_FLAG = 0x00000020,
 
   ALL_VALID_FLAGS = 0x0000003e
 } WebPFeatureFlags;
@@ -50,8 +51,8 @@ typedef enum WebPMuxAnimDispose {
 // Blend operation (animation only). Indicates how transparent pixels of the
 // current frame are blended with those of the previous canvas.
 typedef enum WebPMuxAnimBlend {
-  WEBP_MUX_BLEND,              // Blend.
-  WEBP_MUX_NO_BLEND            // Do not blend.
+  WEBP_MUX_BLEND,    // Blend.
+  WEBP_MUX_NO_BLEND  // Do not blend.
 } WebPMuxAnimBlend;
 
 // Data type used to describe 'raw' data, e.g., chunk data
@@ -92,7 +93,7 @@ static WEBP_INLINE int WebPDataCopy(const WebPData* src, WebPData* dst) {
 }
 
 #ifdef __cplusplus
-}    // extern "C"
+}  // extern "C"
 #endif
 
-#endif  /* WEBP_WEBP_MUX_TYPES_H_ */
+#endif /* WEBP_WEBP_MUX_TYPES_H_ */

@@ -4,7 +4,7 @@
  * Author: shawnb
  * Created: 3/08/2018
  *
- * Description: Communication point for message coming from / 
+ * Description: Communication point for message coming from /
  *              going to the engine process. Currently this is
  *              using a tcp connection where engine acts as the
  *              server, and this is the client.
@@ -13,17 +13,20 @@
  *
  **/
 
+#include "switchboardd/engineMessagingClient.h"
+
 #include <stdio.h>
+
 #include <chrono>
-#include <thread>
 #include <iomanip>
+#include <thread>
+
 #include "anki-ble/common/log.h"
 #include "anki-wifi/wifi.h"
-#include "switchboardd/engineMessagingClient.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "switchboardd/savedSessionManager.h"
 #include "switchboardd/log.h"
+#include "switchboardd/savedSessionManager.h"
 
 using GMessageTag = Anki::Vector::ExternalInterface::MessageGameToEngineTag;
 using GMessage = Anki::Vector::ExternalInterface::MessageGameToEngine;
@@ -35,23 +38,22 @@ namespace Switchboard {
 uint8_t EngineMessagingClient::sMessageData[2048];
 
 EngineMessagingClient::EngineMessagingClient(struct ev_loop* evloop)
-: loop_(evloop)
-{}
+    : loop_(evloop) {}
 
 bool EngineMessagingClient::Init() {
   ev_timer_init(&_handleEngineMessageTimer.timer,
                 &EngineMessagingClient::sEvEngineMessageHandler,
-                kEngineMessageFrequency_s, 
-                kEngineMessageFrequency_s);
+                kEngineMessageFrequency_s, kEngineMessageFrequency_s);
   _handleEngineMessageTimer.client = &_client;
   _handleEngineMessageTimer.signal = &_pairingStatusSignal;
   return true;
 }
 
 bool Anki::Switchboard::EngineMessagingClient::Connect() {
-  bool connected = _client.Connect(Anki::Vector::ENGINE_SWITCH_CLIENT_PATH, Anki::Vector::ENGINE_SWITCH_SERVER_PATH);
+  bool connected = _client.Connect(Anki::Vector::ENGINE_SWITCH_CLIENT_PATH,
+                                   Anki::Vector::ENGINE_SWITCH_SERVER_PATH);
 
-  if(connected) {
+  if (connected) {
     ev_timer_start(loop_, &_handleEngineMessageTimer.timer);
   }
 
@@ -67,14 +69,20 @@ bool EngineMessagingClient::Disconnect() {
   return disconnected;
 }
 
-void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct ev_timer* w, int revents) {
-  struct ev_EngineMessageTimerStruct *wData = (struct ev_EngineMessageTimerStruct*)w;
+void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop,
+                                                    struct ev_timer* w,
+                                                    int revents) {
+  struct ev_EngineMessageTimerStruct* wData =
+      (struct ev_EngineMessageTimerStruct*)w;
 
   int recvSize;
-  
-  while((recvSize = wData->client->Recv((char*)sMessageData, sizeof(sMessageData))) > kMessageHeaderLength) {
+
+  while ((recvSize =
+              wData->client->Recv((char*)sMessageData, sizeof(sMessageData))) >
+         kMessageHeaderLength) {
     // Get message tag, and adjust for header size
-    const uint8_t* msgPayload = (const uint8_t*)&sMessageData[kMessageHeaderLength];
+    const uint8_t* msgPayload =
+        (const uint8_t*)&sMessageData[kMessageHeaderLength];
 
     const EMessageTag messageTag = (EMessageTag)*msgPayload;
 
@@ -82,22 +90,21 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
     uint16_t msgSize = *(uint16_t*)sMessageData;
     size_t unpackedSize = message.Unpack(msgPayload, msgSize);
 
-    if(unpackedSize != (size_t)msgSize) {
-      Log::Error("Received message from engine but had mismatch size when unpacked.");
+    if (unpackedSize != (size_t)msgSize) {
+      Log::Error(
+          "Received message from engine but had mismatch size when unpacked.");
       continue;
-    } 
+    }
 
-    switch(messageTag) {
+    switch (messageTag) {
       case EMessageTag::EnterPairing:
       case EMessageTag::ExitPairing:
       case EMessageTag::WifiScanRequest:
       case EMessageTag::WifiConnectRequest:
-      case EMessageTag::HasBleKeysRequest:
-      {
+      case EMessageTag::HasBleKeysRequest: {
         // Emit signal for message
         wData->signal->emit(message);
-      }
-        break;
+      } break;
       default:
         break;
     }
@@ -118,13 +125,12 @@ void EngineMessagingClient::HandleWifiScanRequest() {
   SendMessage(GMessage::CreateWifiScanResponse(std::move(rsp)));
 }
 
-void EngineMessagingClient::HandleWifiConnectRequest(const std::string& ssid,
-                                                     const std::string& pwd,
-                                                     bool disconnectAfterConnection) {
+void EngineMessagingClient::HandleWifiConnectRequest(
+    const std::string& ssid, const std::string& pwd,
+    bool disconnectAfterConnection) {
   // Convert ssid to hex string
   std::stringstream ss;
-  for(char c : ssid)
-  {
+  for (char c : ssid) {
     ss << std::hex << std::setfill('0') << std::setw(2) << (int)c;
   }
   const std::string ssidHex = ss.str();
@@ -135,53 +141,44 @@ void EngineMessagingClient::HandleWifiConnectRequest(const std::string& ssid,
   // Scan for access points
   std::vector<Wifi::WiFiScanResult> wifiResults;
   Wifi::WifiScanErrorCode code = Wifi::ScanForWiFiAccessPoints(wifiResults);
-  
-  if(code == Wifi::WifiScanErrorCode::SUCCESS)
-  {
+
+  if (code == Wifi::WifiScanErrorCode::SUCCESS) {
     // Scan was a success, look though results for an AP with matching ssid
     bool ssidInRange = false;
-    for(const auto& result : wifiResults)
-    {
-      if(strcmp(ssidHex.c_str(), result.ssid.c_str()) == 0)
-      {
+    for (const auto& result : wifiResults) {
+      if (strcmp(ssidHex.c_str(), result.ssid.c_str()) == 0) {
         ssidInRange = true;
-        
-        Log::Write("HandleWifiConnectRequest: Found requested ssid from scan, attempting to connect");
-        Wifi::ConnectWifiResult res = Wifi::ConnectWiFiBySsid(result.ssid,
-                                                              pwd,
-                                                              (uint8_t)result.auth,
-                                                              result.hidden,
-                                                              nullptr,
-                                                              nullptr);
 
-        if(res != 0)
-        {
+        Log::Write(
+            "HandleWifiConnectRequest: Found requested ssid from scan, "
+            "attempting to connect");
+        Wifi::ConnectWifiResult res =
+            Wifi::ConnectWiFiBySsid(result.ssid, pwd, (uint8_t)result.auth,
+                                    result.hidden, nullptr, nullptr);
+
+        if (res != 0) {
           Log::Write("HandleWifiConnectRequest: Failed to connect to ssid");
         }
-        
+
         rcp.status_code = (uint8_t)res;
         break;
       }
     }
-    
-    if(!ssidInRange)
-    {
+
+    if (!ssidInRange) {
       Log::Write("HandleWifiConnectRequest: Requested ssid not in range");
     }
-  }
-  else
-  {
+  } else {
     Log::Write("HandleWifiConnectRequest: Wifi scan failed");
     rcp.status_code = (uint8_t)code;
   }
 
-  if(disconnectAfterConnection)
-  {
+  if (disconnectAfterConnection) {
     // Immediately disconnect from ssid
     // Will do nothing if not connected to ssid
     (void)Wifi::RemoveWifiService(ssidHex);
   }
-  
+
   SendMessage(GMessage::CreateWifiConnectResponse(std::move(rcp)));
 }
 
@@ -216,12 +213,13 @@ void EngineMessagingClient::SendBLEConnectionStatus(bool connected) {
   SendMessage(GMessage::CreateSendBLEConnectionStatus(std::move(msg)));
 }
 
-void EngineMessagingClient::ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus status) {
+void EngineMessagingClient::ShowPairingStatus(
+    Anki::Vector::SwitchboardInterface::ConnectionStatus status) {
   Anki::Vector::SwitchboardInterface::SetConnectionStatus scs;
   scs.status = status;
 
   SendMessage(GMessage::CreateSetConnectionStatus(std::move(scs)));
 }
 
-} // Switchboard
-} // Anki
+}  // namespace Switchboard
+}  // namespace Anki

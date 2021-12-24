@@ -21,11 +21,12 @@ static const uint32_t SYSTEM_CLOCK = 48000000;
 static const uint32_t CONTACT_BAUDRATE = 115200;
 static const uint32_t COMMS_BAUDRATE = 3000000;
 
-static const uint32_t WATCHDOG_CLOCK  = 10000;
-static const uint32_t WATCHDOG_LIMIT  = WATCHDOG_CLOCK / 200 * 10; // 10 main execution frames
+static const uint32_t WATCHDOG_CLOCK = 10000;
+static const uint32_t WATCHDOG_LIMIT =
+    WATCHDOG_CLOCK / 200 * 10;  // 10 main execution frames
 
-static const uint32_t* HW_REVISION    = (uint32_t*)0x08000010;
-static const uint32_t  WHISKEY_MIN_VERSION = 7;
+static const uint32_t* HW_REVISION = (uint32_t*)0x08000010;
+static const uint32_t WHISKEY_MIN_VERSION = 7;
 
 #define IS_WHISKEY (*HW_REVISION >= WHISKEY_MIN_VERSION)
 
@@ -77,11 +78,11 @@ namespace MAIN_EN_VIC GPIO_DEFINE(A, 3);
 namespace MAIN_EN_WIS GPIO_DEFINE(A, 12);
 
 // Microphones
-namespace MIC_LR      GPIO_DEFINE(B, 15);
-namespace MIC2_MISO   GPIO_DEFINE(B, 4);
-namespace MIC1_MISO   GPIO_DEFINE(B, 14);
-namespace MIC2_SCK    GPIO_DEFINE(A, 5);
-namespace MIC1_SCK    GPIO_DEFINE(B, 13);
+namespace MIC_LR GPIO_DEFINE(B, 15);
+namespace MIC2_MISO GPIO_DEFINE(B, 4);
+namespace MIC1_MISO GPIO_DEFINE(B, 14);
+namespace MIC2_SCK GPIO_DEFINE(A, 5);
+namespace MIC1_SCK GPIO_DEFINE(B, 13);
 
 // Cap Sense
 namespace CAPI GPIO_DEFINE(B, 8);

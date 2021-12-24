@@ -46,10 +46,10 @@
 
 namespace google_breakpad {
 
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 class StaticContainedRangeMap {
  public:
-  StaticContainedRangeMap(): base_(), entry_size_(), entry_ptr_(), map_() { }
+  StaticContainedRangeMap() : base_(), entry_size_(), entry_ptr_(), map_() {}
   explicit StaticContainedRangeMap(const char *base);
 
   // Retrieves the most specific (smallest) descendant range encompassing
@@ -63,9 +63,8 @@ class StaticContainedRangeMap {
   friend class ModuleComparer;
   // AddressToRangeMap stores pointers.  This makes reparenting simpler in
   // StoreRange, because it doesn't need to copy entire objects.
-  typedef StaticContainedRangeMap* SelfPtr;
-  typedef
-  StaticMap<AddressType, StaticContainedRangeMap> AddressToRangeMap;
+  typedef StaticContainedRangeMap *SelfPtr;
+  typedef StaticMap<AddressType, StaticContainedRangeMap> AddressToRangeMap;
   typedef typename AddressToRangeMap::const_iterator MapConstIterator;
 
   // The base address of this range.  The high address does not need to
@@ -91,6 +90,5 @@ class StaticContainedRangeMap {
 };
 
 }  // namespace google_breakpad
-
 
 #endif  // PROCESSOR_STATIC_CONTAINED_RANGE_MAP_H__

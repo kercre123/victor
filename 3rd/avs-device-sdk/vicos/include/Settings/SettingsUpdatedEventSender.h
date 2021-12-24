@@ -24,28 +24,33 @@ namespace capabilityAgents {
 namespace settings {
 
 /**
- * This class sends the SettingsUpdated event to AVS when it receives a change in one or more settings.
+ * This class sends the SettingsUpdated event to AVS when it receives a change
+ * in one or more settings.
  */
-class SettingsUpdatedEventSender : public avsCommon::sdkInterfaces::GlobalSettingsObserverInterface {
-public:
-    /**
-     * Creates a new @c SettingsUpdatedEventSender instance.
-     * @param certifiedMessageSender The object to send messages to AVS.
-     * @return A @c std::unique_ptr to the new @c SettingsUpdatedEventSender instance.
-     */
-    static std::unique_ptr<SettingsUpdatedEventSender> create(
-        std::shared_ptr<certifiedSender::CertifiedSender> certifiedMessageSender);
+class SettingsUpdatedEventSender
+    : public avsCommon::sdkInterfaces::GlobalSettingsObserverInterface {
+ public:
+  /**
+   * Creates a new @c SettingsUpdatedEventSender instance.
+   * @param certifiedMessageSender The object to send messages to AVS.
+   * @return A @c std::unique_ptr to the new @c SettingsUpdatedEventSender
+   * instance.
+   */
+  static std::unique_ptr<SettingsUpdatedEventSender> create(
+      std::shared_ptr<certifiedSender::CertifiedSender> certifiedMessageSender);
 
-    void onSettingChanged(const std::unordered_map<std::string, std::string>& mapOfSettings) override;
+  void onSettingChanged(const std::unordered_map<std::string, std::string>&
+                            mapOfSettings) override;
 
-private:
-    /**
-     * Constructor for SettingsUpdatedEventSender.
-     */
-    SettingsUpdatedEventSender(std::shared_ptr<certifiedSender::CertifiedSender> certifiedMessageSender);
+ private:
+  /**
+   * Constructor for SettingsUpdatedEventSender.
+   */
+  SettingsUpdatedEventSender(
+      std::shared_ptr<certifiedSender::CertifiedSender> certifiedMessageSender);
 
-    /// The CertifiedSender object.
-    std::shared_ptr<certifiedSender::CertifiedSender> m_certifiedSender;
+  /// The CertifiedSender object.
+  std::shared_ptr<certifiedSender::CertifiedSender> m_certifiedSender;
 };
 }  // namespace settings
 }  // namespace capabilityAgents

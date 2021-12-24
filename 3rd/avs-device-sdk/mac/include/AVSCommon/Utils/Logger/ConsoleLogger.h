@@ -16,9 +16,9 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_LOGGER_CONSOLELOGGER_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_LOGGER_CONSOLELOGGER_H_
 
+#include "AVSCommon/Utils/Logger/LogStringFormatter.h"
 #include "AVSCommon/Utils/Logger/Logger.h"
 #include "AVSCommon/Utils/Logger/LoggerUtils.h"
-#include "AVSCommon/Utils/Logger/LogStringFormatter.h"
 
 namespace alexaClientSDK {
 namespace avsCommon {
@@ -28,33 +28,31 @@ namespace logger {
 /**
  * A very simple (e.g. not asynchronous) @c Logger that logs to console.
  *
- * Inheriting @c std::ios_base::Init ensures that the standard iostreams objects are properly initialized before @c
- * ConsoleLogger uses them.
+ * Inheriting @c std::ios_base::Init ensures that the standard iostreams objects
+ * are properly initialized before @c ConsoleLogger uses them.
  */
-class ConsoleLogger
-        : public Logger
-        , private std::ios_base::Init {
-public:
-    /**
-     * Return the one and only @c ConsoleLogger instance.
-     *
-     * @return The one and only @c ConsoleLogger instance.
-     */
-    static std::shared_ptr<Logger> instance();
+class ConsoleLogger : public Logger, private std::ios_base::Init {
+ public:
+  /**
+   * Return the one and only @c ConsoleLogger instance.
+   *
+   * @return The one and only @c ConsoleLogger instance.
+   */
+  static std::shared_ptr<Logger> instance();
 
-    void emit(Level level, std::chrono::system_clock::time_point time, const char* threadMoniker, const char* text)
-        override;
+  void emit(Level level, std::chrono::system_clock::time_point time,
+            const char* threadMoniker, const char* text) override;
 
-private:
-    /**
-     * Constructor.
-     */
-    ConsoleLogger();
+ private:
+  /**
+   * Constructor.
+   */
+  ConsoleLogger();
 
-    std::mutex m_coutMutex;
+  std::mutex m_coutMutex;
 
-    /// Object to format log strings correctly.
-    LogStringFormatter m_logFormatter;
+  /// Object to format log strings correctly.
+  LogStringFormatter m_logFormatter;
 };
 
 /**

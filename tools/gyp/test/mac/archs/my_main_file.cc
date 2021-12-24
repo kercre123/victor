@@ -3,7 +3,4 @@
  * found in the LICENSE file. */
 #include <stdio.h>
 extern int x;
-int main() {
-  printf("hello, world %d\n", x);
-}
-
+int main() { printf("hello, world %d\n", x); }

@@ -29,10 +29,11 @@
 //
 // Author: wan@google.com (Zhanyong Wan)
 
+#include "test/gtest-typed-test_test.h"
+
 #include <set>
 #include <vector>
 
-#include "test/gtest-typed-test_test.h"
 #include "gtest/gtest.h"
 
 using testing::Test;
@@ -45,9 +46,7 @@ class CommonTest : public Test {
   // For some technical reason, SetUpTestCase() and TearDownTestCase()
   // must be public.
  public:
-  static void SetUpTestCase() {
-    shared_ = new T(5);
-  }
+  static void SetUpTestCase() { shared_ = new T(5); }
 
   static void TearDownTestCase() {
     delete shared_;
@@ -128,8 +127,7 @@ TYPED_TEST(CommonTest, ValuesAreStillCorrect) {
 // translation unit.
 
 template <typename T>
-class TypedTest1 : public Test {
-};
+class TypedTest1 : public Test {};
 
 // Verifies that the second argument of TYPED_TEST_CASE can be a
 // single type.
@@ -137,8 +135,7 @@ TYPED_TEST_CASE(TypedTest1, int);
 TYPED_TEST(TypedTest1, A) {}
 
 template <typename T>
-class TypedTest2 : public Test {
-};
+class TypedTest2 : public Test {};
 
 // Verifies that the second argument of TYPED_TEST_CASE can be a
 // Types<...> type list.
@@ -153,15 +150,12 @@ TYPED_TEST(TypedTest2, A) {}
 namespace library1 {
 
 template <typename T>
-class NumericTest : public Test {
-};
+class NumericTest : public Test {};
 
 typedef Types<int, long> NumericTypes;
 TYPED_TEST_CASE(NumericTest, NumericTypes);
 
-TYPED_TEST(NumericTest, DefaultIsZero) {
-  EXPECT_EQ(0, TypeParam());
-}
+TYPED_TEST(NumericTest, DefaultIsZero) { EXPECT_EQ(0, TypeParam()); }
 
 }  // namespace library1
 
@@ -188,16 +182,14 @@ class TypedTestCasePStateTest : public Test {
 
 TEST_F(TypedTestCasePStateTest, SucceedsForMatchingList) {
   const char* tests = "A, B, C";
-  EXPECT_EQ(tests,
-            state_.VerifyRegisteredTestNames("foo.cc", 1, tests));
+  EXPECT_EQ(tests, state_.VerifyRegisteredTestNames("foo.cc", 1, tests));
 }
 
 // Makes sure that the order of the tests and spaces around the names
 // don't matter.
 TEST_F(TypedTestCasePStateTest, IgnoresOrderAndSpaces) {
   const char* tests = "A,C,   B";
-  EXPECT_EQ(tests,
-            state_.VerifyRegisteredTestNames("foo.cc", 1, tests));
+  EXPECT_EQ(tests, state_.VerifyRegisteredTestNames("foo.cc", 1, tests));
 }
 
 typedef TypedTestCasePStateTest TypedTestCasePStateDeathTest;
@@ -234,8 +226,7 @@ TEST_F(TypedTestCasePStateDeathTest, DetectsTestAfterRegistration) {
 // and SetUp()/TearDown() work correctly in type-parameterized tests.
 
 template <typename T>
-class DerivedTest : public CommonTest<T> {
-};
+class DerivedTest : public CommonTest<T> {};
 
 TYPED_TEST_CASE_P(DerivedTest);
 
@@ -259,8 +250,8 @@ TYPED_TEST_P(DerivedTest, ValuesAreStillCorrect) {
   EXPECT_EQ(2, this->value_);
 }
 
-REGISTER_TYPED_TEST_CASE_P(DerivedTest,
-                           ValuesAreCorrect, ValuesAreStillCorrect);
+REGISTER_TYPED_TEST_CASE_P(DerivedTest, ValuesAreCorrect,
+                           ValuesAreStillCorrect);
 
 typedef Types<short, long> MyTwoTypes;
 INSTANTIATE_TYPED_TEST_CASE_P(My, DerivedTest, MyTwoTypes);
@@ -269,8 +260,7 @@ INSTANTIATE_TYPED_TEST_CASE_P(My, DerivedTest, MyTwoTypes);
 // translation unit.
 
 template <typename T>
-class TypedTestP1 : public Test {
-};
+class TypedTestP1 : public Test {};
 
 TYPED_TEST_CASE_P(TypedTestP1);
 
@@ -288,8 +278,7 @@ typedef int IntBeforeRegisterTypedTestCaseP;
 REGISTER_TYPED_TEST_CASE_P(TypedTestP1, A, B);
 
 template <typename T>
-class TypedTestP2 : public Test {
-};
+class TypedTestP2 : public Test {};
 
 TYPED_TEST_CASE_P(TypedTestP2);
 
@@ -325,21 +314,17 @@ INSTANTIATE_TYPED_TEST_CASE_P(My, ContainerTest, MyContainers);
 namespace library2 {
 
 template <typename T>
-class NumericTest : public Test {
-};
+class NumericTest : public Test {};
 
 TYPED_TEST_CASE_P(NumericTest);
 
-TYPED_TEST_P(NumericTest, DefaultIsZero) {
-  EXPECT_EQ(0, TypeParam());
-}
+TYPED_TEST_P(NumericTest, DefaultIsZero) { EXPECT_EQ(0, TypeParam()); }
 
 TYPED_TEST_P(NumericTest, ZeroIsLessThanOne) {
   EXPECT_LT(TypeParam(0), TypeParam(1));
 }
 
-REGISTER_TYPED_TEST_CASE_P(NumericTest,
-                           DefaultIsZero, ZeroIsLessThanOne);
+REGISTER_TYPED_TEST_CASE_P(NumericTest, DefaultIsZero, ZeroIsLessThanOne);
 typedef Types<int, double> NumericTypes;
 INSTANTIATE_TYPED_TEST_CASE_P(My, NumericTest, NumericTypes);
 
@@ -357,4 +342,5 @@ INSTANTIATE_TYPED_TEST_CASE_P(My, NumericTest, NumericTypes);
 // must be defined). This dummy test keeps gtest_main linked in.
 TEST(DummyTest, TypedTestsAreNotSupportedOnThisPlatform) {}
 
-#endif  // #if !defined(GTEST_HAS_TYPED_TEST) && !defined(GTEST_HAS_TYPED_TEST_P)
+#endif  // #if !defined(GTEST_HAS_TYPED_TEST) &&
+        // !defined(GTEST_HAS_TYPED_TEST_P)

@@ -19,20 +19,20 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorBumpObject : public ICozmoBehavior
-{
-public: 
+class BehaviorBumpObject : public ICozmoBehavior {
+ public:
   virtual ~BehaviorBumpObject() = default;
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorBumpObject(const Json::Value& config);  
+  explicit BehaviorBumpObject(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual void InitBehavior() override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual bool WantsToBeActivatedBehavior() const override;
@@ -40,16 +40,15 @@ protected:
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-  
+ private:
   void DoFirstBump();
   void DoSecondBumpIfDesired();
   void DoReferenceHumanIfDesired();
-  
-  bool WouldBumpPushSomethingOffCliff( float driveDist_mm ) const;
-  
+
+  bool WouldBumpPushSomethingOffCliff(float driveDist_mm) const;
+
   enum class State : uint8_t {
-    Invalid=0,
+    Invalid = 0,
     FirstBump,
     SecondBump,
     ReferenceHumanAfterBump
@@ -69,15 +68,14 @@ private:
     DynamicVariables();
     bool unexpectedMovement;
     State state;
-    int bumpedAgain; // for DAS only: -1 for no, 0 for non evil, 1 for evil
+    int bumpedAgain;  // for DAS only: -1 for no, 0 for non evil, 1 for evil
   };
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorBumpObject__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorBumpObject__

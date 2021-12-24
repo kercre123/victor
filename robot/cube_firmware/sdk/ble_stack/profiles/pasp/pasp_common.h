@@ -12,7 +12,6 @@
  ****************************************************************************************
  */
 
-
 #ifndef _PASP_COMMON_H_
 #define _PASP_COMMON_H_
 
@@ -39,22 +38,22 @@
  */
 
 /// Alert Status Flags
-#define PASP_RINGER_ACTIVE              (0x01)
-#define PASP_VIBRATE_ACTIVE             (0x02)
-#define PASP_DISP_ALERT_STATUS_ACTIVE   (0x04)
-#define PASP_ALERT_STATUS_VAL_MAX       (0x07)
+#define PASP_RINGER_ACTIVE (0x01)
+#define PASP_VIBRATE_ACTIVE (0x02)
+#define PASP_DISP_ALERT_STATUS_ACTIVE (0x04)
+#define PASP_ALERT_STATUS_VAL_MAX (0x07)
 
 /// Ringer Settings Keys
-#define PASP_RINGER_SILENT              (0)
-#define PASP_RINGER_NORMAL              (1)
+#define PASP_RINGER_SILENT (0)
+#define PASP_RINGER_NORMAL (1)
 
 /// Ringer Control Point Keys
-#define PASP_SILENT_MODE                (1)
-#define PASP_MUTE_ONCE                  (2)
-#define PASP_CANCEL_SILENT_MODE         (3)
+#define PASP_SILENT_MODE (1)
+#define PASP_MUTE_ONCE (2)
+#define PASP_CANCEL_SILENT_MODE (3)
 
-#endif //(BLE_PAS_SERVER || BLE_PAS_CLIENT)
+#endif  //(BLE_PAS_SERVER || BLE_PAS_CLIENT)
 
 /// @} pasp_common
 
-#endif //(_HTP_COMMON_H_)
+#endif  //(_HTP_COMMON_H_)

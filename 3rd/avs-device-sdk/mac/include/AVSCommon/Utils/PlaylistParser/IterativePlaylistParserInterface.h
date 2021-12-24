@@ -28,36 +28,40 @@ namespace utils {
 namespace playlistParser {
 
 /**
- * An interface that can be implemented to parse playlists in a depth first search manner.
+ * An interface that can be implemented to parse playlists in a depth first
+ * search manner.
  */
 class IterativePlaylistParserInterface {
-public:
-    /**
-     * Initialize the playlist parsing. Once succesfully initialized, the method @c next can be used to retrieve
-     * playlist entries.
-     *
-     * @param url The root url that can either point to one media file or a playlist to be parsed.
-     * @return @c true if it succeeds; false otherwise.
-     */
-    virtual bool initializeParsing(std::string url) = 0;
+ public:
+  /**
+   * Initialize the playlist parsing. Once succesfully initialized, the method
+   * @c next can be used to retrieve playlist entries.
+   *
+   * @param url The root url that can either point to one media file or a
+   * playlist to be parsed.
+   * @return @c true if it succeeds; false otherwise.
+   */
+  virtual bool initializeParsing(std::string url) = 0;
 
-    /**
-     * Get the next element in the playlist.
-     *
-     * @return The parsing result. The @c url field will be valid if @c parseResult is different than ERROR.
-     */
-    virtual PlaylistEntry next() = 0;
+  /**
+   * Get the next element in the playlist.
+   *
+   * @return The parsing result. The @c url field will be valid if @c
+   * parseResult is different than ERROR.
+   */
+  virtual PlaylistEntry next() = 0;
 
-    /**
-     * Abort the current playlist parsing by causing ongoing and future calls to @c next to fail. Calls to
-     * @c initializeParsing will reset @c abort.
-     */
-    virtual void abort() = 0;
+  /**
+   * Abort the current playlist parsing by causing ongoing and future calls to
+   * @c next to fail. Calls to
+   * @c initializeParsing will reset @c abort.
+   */
+  virtual void abort() = 0;
 
-    /**
-     * Destructor.
-     */
-    virtual ~IterativePlaylistParserInterface() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~IterativePlaylistParserInterface() = default;
 };
 
 }  // namespace playlistParser

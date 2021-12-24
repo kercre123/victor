@@ -33,13 +33,12 @@
 #ifndef GOOGLE_PROTOBUF_ARENA_IMPL_H__
 #define GOOGLE_PROTOBUF_ARENA_IMPL_H__
 
-#include <atomic>
-#include <limits>
-
 #include <google/protobuf/stubs/common.h>
 #include <google/protobuf/stubs/logging.h>
-
 #include <google/protobuf/stubs/port.h>
+
+#include <atomic>
+#include <limits>
 
 #ifdef ADDRESS_SANITIZER
 #include <sanitizer/asan_interface.h>
@@ -73,12 +72,12 @@ class LIBPROTOBUF_EXPORT ArenaImpl {
 
     template <typename O>
     explicit Options(const O& options)
-      : start_block_size(options.start_block_size),
-        max_block_size(options.max_block_size),
-        initial_block(options.initial_block),
-        initial_block_size(options.initial_block_size),
-        block_alloc(options.block_alloc),
-        block_dealloc(options.block_dealloc) {}
+        : start_block_size(options.start_block_size),
+          max_block_size(options.max_block_size),
+          initial_block(options.initial_block),
+          initial_block_size(options.initial_block_size),
+          block_alloc(options.block_alloc),
+          block_dealloc(options.block_dealloc) {}
   };
 
   template <typename O>
@@ -193,11 +192,11 @@ class LIBPROTOBUF_EXPORT ArenaImpl {
     void AddCleanupFallback(void* elem, void (*cleanup)(void*));
     void CleanupListFallback();
 
-    ArenaImpl* arena_;        // Containing arena.
-    void* owner_;             // &ThreadCache of this thread;
-    Block* head_;             // Head of linked list of blocks.
-    CleanupChunk* cleanup_;   // Head of cleanup list.
-    SerialArena* next_;       // Next SerialArena in this linked list.
+    ArenaImpl* arena_;       // Containing arena.
+    void* owner_;            // &ThreadCache of this thread;
+    Block* head_;            // Head of linked list of blocks.
+    CleanupChunk* cleanup_;  // Head of cleanup list.
+    SerialArena* next_;      // Next SerialArena in this linked list.
 
     // Next pointer to allocate from.  Always 8-byte aligned.  Points inside
     // head_ (and head_->pos will always be non-canonical).  We keep these
@@ -227,7 +226,7 @@ class LIBPROTOBUF_EXPORT ArenaImpl {
     void set_pos(size_t pos) { pos_ = pos; }
 
    private:
-    Block* next_;   // Next block for this thread.
+    Block* next_;  // Next block for this thread.
     size_t pos_;
     size_t size_;
     // data follows
@@ -248,9 +247,9 @@ class LIBPROTOBUF_EXPORT ArenaImpl {
   };
   static std::atomic<int64> lifecycle_id_generator_;
 #if defined(GOOGLE_PROTOBUF_NO_THREADLOCAL)
-  // Android ndk does not support GOOGLE_THREAD_LOCAL keyword so we use a custom thread
-  // local storage class we implemented.
-  // iOS also does not support the GOOGLE_THREAD_LOCAL keyword.
+  // Android ndk does not support GOOGLE_THREAD_LOCAL keyword so we use a custom
+  // thread local storage class we implemented. iOS also does not support the
+  // GOOGLE_THREAD_LOCAL keyword.
   static ThreadCache& thread_cache();
 #elif defined(PROTOBUF_USE_DLLS)
   // Thread local variables cannot be exposed through DLL interface but we can
@@ -279,14 +278,13 @@ class LIBPROTOBUF_EXPORT ArenaImpl {
     hint_.store(serial, std::memory_order_release);
   }
 
-
   std::atomic<SerialArena*>
       threads_;                     // Pointer to a linked list of SerialArena.
   std::atomic<SerialArena*> hint_;  // Fast thread-local block access
   std::atomic<size_t> space_allocated_;  // Total size of all allocated blocks.
 
-  Block *initial_block_;     // If non-NULL, points to the block that came from
-                             // user data.
+  Block* initial_block_;  // If non-NULL, points to the block that came from
+                          // user data.
 
   Block* NewBlock(Block* last_block, size_t min_bytes);
 

@@ -31,12 +31,13 @@
 
 // Tests Google Test's throw-on-failure mode with exceptions enabled.
 
-#include "gtest/gtest.h"
-
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
 #include <stdexcept>
+
+#include "gtest/gtest.h"
 
 // Prints the given failure message and exits the program with
 // non-zero.  We use this instead of a Google Test assertion to
@@ -56,23 +57,22 @@ void TestFailureThrowsRuntimeError() {
   // A successful assertion shouldn't throw.
   try {
     EXPECT_EQ(3, 3);
-  } catch(...) {
+  } catch (...) {
     Fail("A successful assertion wrongfully threw.");
   }
 
   // A failed assertion should throw a subclass of std::runtime_error.
   try {
     EXPECT_EQ(2, 3) << "Expected failure";
-  } catch(const std::runtime_error& e) {
-    if (strstr(e.what(), "Expected failure") != NULL)
-      return;
+  } catch (const std::runtime_error& e) {
+    if (strstr(e.what(), "Expected failure") != NULL) return;
 
     printf("%s",
            "A failed assertion did throw an exception of the right type, "
            "but the message is incorrect.  Instead of containing \"Expected "
            "failure\", it is:\n");
     Fail(e.what());
-  } catch(...) {
+  } catch (...) {
     Fail("A failed assertion threw the wrong type of exception.");
   }
   Fail("A failed assertion should've thrown but didn't.");

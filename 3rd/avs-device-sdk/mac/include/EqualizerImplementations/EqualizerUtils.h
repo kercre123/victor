@@ -26,23 +26,26 @@ namespace equalizer {
  * Class containing Equalizer-related utility methods.
  */
 class EqualizerUtils {
-public:
-    /**
-     * Serializes @c EqualizerState into a string.
-     *
-     * @param state Equalizer state to serialize.
-     * @return String containing serialized Equalizer state.
-     */
-    static std::string serializeEqualizerState(const avsCommon::sdkInterfaces::audio::EqualizerState& state);
+ public:
+  /**
+   * Serializes @c EqualizerState into a string.
+   *
+   * @param state Equalizer state to serialize.
+   * @return String containing serialized Equalizer state.
+   */
+  static std::string serializeEqualizerState(
+      const avsCommon::sdkInterfaces::audio::EqualizerState& state);
 
-    /**
-     * Parses serialized Equalizer state back into @c EqualizerState object.
-     *
-     * @param serializedState String containing serialized state.
-     * @return Result containing reconstructed @c EqualizerState object on success.
-     */
-    static avsCommon::utils::error::SuccessResult<avsCommon::sdkInterfaces::audio::EqualizerState>
-    deserializeEqualizerState(const std::string& serializedState);
+  /**
+   * Parses serialized Equalizer state back into @c EqualizerState object.
+   *
+   * @param serializedState String containing serialized state.
+   * @return Result containing reconstructed @c EqualizerState object on
+   * success.
+   */
+  static avsCommon::utils::error::SuccessResult<
+      avsCommon::sdkInterfaces::audio::EqualizerState>
+  deserializeEqualizerState(const std::string& serializedState);
 };
 
 }  // namespace equalizer

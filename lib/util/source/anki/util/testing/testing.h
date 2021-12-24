@@ -15,73 +15,177 @@
 #ifndef BASESTATION_TESTING_H_
 #define BASESTATION_TESTING_H_
 
-#include "util/helpers/includeSstream.h"
+#include <boost/property_tree/ptree_fwd.hpp>
 #include <exception>
 
-#include <boost/property_tree/ptree_fwd.hpp>
-
+#include "util/helpers/includeSstream.h"
 
 using namespace boost::property_tree;
 
 // Assert macros (bt stands for basestation testing)
-#define BT_ASSERT(cond, s) {if(!(cond)){ std::stringstream __note; __note<<s; throw(BasestationTestingAssert( __FILE__, __LINE__, __note.str()));}}
-#define BT_ASSERT_EQ(lh, rh, s) {if((lh)!=(rh)){ std::stringstream __ss; __ss<<s<<". ("<<(#lh)<<": "<<(lh)<<") != ("<<(#rh)<<": "<<(rh)<<")"; throw(BasestationTestingAssert( __FILE__, __LINE__, __ss.str()));}}
-#define BT_ASSERT_NE(lh, rh, s) {if((lh)==(rh)){ std::stringstream __ss; __ss<<s<<". ("<<(#lh)<<": "<<(lh)<<") == ("<<(#rh)<<": "<<(rh)<<")"; throw(BasestationTestingAssert( __FILE__, __LINE__, __ss.str()));}}
-#define BT_ASSERT_FLT_NEAR(lh, rh, s) {if(!FLT_NEAR((lh),(rh))){std::stringstream __ss; __ss<<s<<". ("<<(#lh)<<": "<<(lh)<<") != ("<<(#rh)<<": "<<(rh)<<")"; throw(BasestationTestingAssert( __FILE__, __LINE__, __ss.str()));}}
-#define BT_ASSERT_FLT_NE(lh, rh, s) {if(FLT_NEAR((lh),(rh))){ std::stringstream __ss; __ss<<s<<". ("<<(#lh)<<": "<<(lh)<<") == ("<<(#rh)<<": "<<(rh)<<")"; throw(BasestationTestingAssert( __FILE__, __LINE__, __ss.str()));}}
-#define BT_ASSERT_FLT_WITHIN(lh, rh, eps, s) {if(!NEAR((lh),(rh),(eps))){std::stringstream __ss; __ss<<s<<". ("<<(#lh)<<": "<<(lh)<<") != ("<<(#rh)<<": "<<(rh)<<")"; throw(BasestationTestingAssert( __FILE__, __LINE__, __ss.str()));}}
-#define BT_ASSERT_FLT_LE(lh, rh, s) {if((lh)>(rh)+FLOATING_POINT_COMPARISON_TOLERANCE){std::stringstream __ss; __ss<<s<<". ("<<(#lh)<<": "<<(lh)<<") !<= ("<<(#rh)<<": "<<(rh)<<")"; throw(BasestationTestingAssert( __FILE__, __LINE__, __ss.str()));}}
-#define BT_ASSERT_FLT_GE(lh, rh, s) {if((lh)+FLOATING_POINT_COMPARISON_TOLERANCE<(rh)){std::stringstream __ss; __ss<<s<<". ("<<(#lh)<<": "<<(lh)<<") !>= ("<<(#rh)<<": "<<(rh)<<")"; throw(BasestationTestingAssert( __FILE__, __LINE__, __ss.str()));}}
-#define BT_ASSERT_LT(lh, rh, s) {if((lh)>=(rh)){std::stringstream __ss; __ss<<s<<". ("<<(#lh)<<": "<<(lh)<<") !< ("<<(#rh)<<": "<<(rh)<<")"; throw(BasestationTestingAssert( __FILE__, __LINE__, __ss.str()));}}
-#define BT_ASSERT_GT(lh, rh, s) {if((lh)<=(rh)){std::stringstream __ss; __ss<<s<<". ("<<(#lh)<<": "<<(lh)<<") !> ("<<(#rh)<<": "<<(rh)<<")"; throw(BasestationTestingAssert( __FILE__, __LINE__, __ss.str()));}}
-#define BT_ASSERT_LE(lh, rh, s) {if((lh)>(rh)){std::stringstream __ss; __ss<<s<<". ("<<(#lh)<<": "<<(lh)<<") !<= ("<<(#rh)<<": "<<(rh)<<")"; throw(BasestationTestingAssert( __FILE__, __LINE__, __ss.str()));}}
-#define BT_ASSERT_GE(lh, rh, s) {if((lh)<(rh)){std::stringstream __ss; __ss<<s<<". ("<<(#lh)<<": "<<(lh)<<") !>= ("<<(#rh)<<": "<<(rh)<<")"; throw(BasestationTestingAssert( __FILE__, __LINE__, __ss.str()));}}
+#define BT_ASSERT(cond, s)                                               \
+  {                                                                      \
+    if (!(cond)) {                                                       \
+      std::stringstream __note;                                          \
+      __note << s;                                                       \
+      throw(BasestationTestingAssert(__FILE__, __LINE__, __note.str())); \
+    }                                                                    \
+  }
+#define BT_ASSERT_EQ(lh, rh, s)                                                \
+  {                                                                            \
+    if ((lh) != (rh)) {                                                        \
+      std::stringstream __ss;                                                  \
+      __ss << s << ". (" << (#lh) << ": " << (lh) << ") != (" << (#rh) << ": " \
+           << (rh) << ")";                                                     \
+      throw(BasestationTestingAssert(__FILE__, __LINE__, __ss.str()));         \
+    }                                                                          \
+  }
+#define BT_ASSERT_NE(lh, rh, s)                                                \
+  {                                                                            \
+    if ((lh) == (rh)) {                                                        \
+      std::stringstream __ss;                                                  \
+      __ss << s << ". (" << (#lh) << ": " << (lh) << ") == (" << (#rh) << ": " \
+           << (rh) << ")";                                                     \
+      throw(BasestationTestingAssert(__FILE__, __LINE__, __ss.str()));         \
+    }                                                                          \
+  }
+#define BT_ASSERT_FLT_NEAR(lh, rh, s)                                          \
+  {                                                                            \
+    if (!FLT_NEAR((lh), (rh))) {                                               \
+      std::stringstream __ss;                                                  \
+      __ss << s << ". (" << (#lh) << ": " << (lh) << ") != (" << (#rh) << ": " \
+           << (rh) << ")";                                                     \
+      throw(BasestationTestingAssert(__FILE__, __LINE__, __ss.str()));         \
+    }                                                                          \
+  }
+#define BT_ASSERT_FLT_NE(lh, rh, s)                                            \
+  {                                                                            \
+    if (FLT_NEAR((lh), (rh))) {                                                \
+      std::stringstream __ss;                                                  \
+      __ss << s << ". (" << (#lh) << ": " << (lh) << ") == (" << (#rh) << ": " \
+           << (rh) << ")";                                                     \
+      throw(BasestationTestingAssert(__FILE__, __LINE__, __ss.str()));         \
+    }                                                                          \
+  }
+#define BT_ASSERT_FLT_WITHIN(lh, rh, eps, s)                                   \
+  {                                                                            \
+    if (!NEAR((lh), (rh), (eps))) {                                            \
+      std::stringstream __ss;                                                  \
+      __ss << s << ". (" << (#lh) << ": " << (lh) << ") != (" << (#rh) << ": " \
+           << (rh) << ")";                                                     \
+      throw(BasestationTestingAssert(__FILE__, __LINE__, __ss.str()));         \
+    }                                                                          \
+  }
+#define BT_ASSERT_FLT_LE(lh, rh, s)                                     \
+  {                                                                     \
+    if ((lh) > (rh) + FLOATING_POINT_COMPARISON_TOLERANCE) {            \
+      std::stringstream __ss;                                           \
+      __ss << s << ". (" << (#lh) << ": " << (lh) << ") !<= (" << (#rh) \
+           << ": " << (rh) << ")";                                      \
+      throw(BasestationTestingAssert(__FILE__, __LINE__, __ss.str()));  \
+    }                                                                   \
+  }
+#define BT_ASSERT_FLT_GE(lh, rh, s)                                     \
+  {                                                                     \
+    if ((lh) + FLOATING_POINT_COMPARISON_TOLERANCE < (rh)) {            \
+      std::stringstream __ss;                                           \
+      __ss << s << ". (" << (#lh) << ": " << (lh) << ") !>= (" << (#rh) \
+           << ": " << (rh) << ")";                                      \
+      throw(BasestationTestingAssert(__FILE__, __LINE__, __ss.str()));  \
+    }                                                                   \
+  }
+#define BT_ASSERT_LT(lh, rh, s)                                                \
+  {                                                                            \
+    if ((lh) >= (rh)) {                                                        \
+      std::stringstream __ss;                                                  \
+      __ss << s << ". (" << (#lh) << ": " << (lh) << ") !< (" << (#rh) << ": " \
+           << (rh) << ")";                                                     \
+      throw(BasestationTestingAssert(__FILE__, __LINE__, __ss.str()));         \
+    }                                                                          \
+  }
+#define BT_ASSERT_GT(lh, rh, s)                                                \
+  {                                                                            \
+    if ((lh) <= (rh)) {                                                        \
+      std::stringstream __ss;                                                  \
+      __ss << s << ". (" << (#lh) << ": " << (lh) << ") !> (" << (#rh) << ": " \
+           << (rh) << ")";                                                     \
+      throw(BasestationTestingAssert(__FILE__, __LINE__, __ss.str()));         \
+    }                                                                          \
+  }
+#define BT_ASSERT_LE(lh, rh, s)                                         \
+  {                                                                     \
+    if ((lh) > (rh)) {                                                  \
+      std::stringstream __ss;                                           \
+      __ss << s << ". (" << (#lh) << ": " << (lh) << ") !<= (" << (#rh) \
+           << ": " << (rh) << ")";                                      \
+      throw(BasestationTestingAssert(__FILE__, __LINE__, __ss.str()));  \
+    }                                                                   \
+  }
+#define BT_ASSERT_GE(lh, rh, s)                                         \
+  {                                                                     \
+    if ((lh) < (rh)) {                                                  \
+      std::stringstream __ss;                                           \
+      __ss << s << ". (" << (#lh) << ": " << (lh) << ") !>= (" << (#rh) \
+           << ": " << (rh) << ")";                                      \
+      throw(BasestationTestingAssert(__FILE__, __LINE__, __ss.str()));  \
+    }                                                                   \
+  }
 
 // Stupid hack to make it easier to run all tests.
-#define BT_LIST_TESTS(c) bool c::RunAllTests() { std::stringstream res; bool ret = false; res<<"\nTest package: "<<#c<<"\n";
-#define BT_END_LIST std::cout.flush(); std::cout<<res.str(); std::cout.flush(); return ret; }
-#define BT_RUN_TEST(t) {                                                \
-    SetUp();                                                            \
-    sUnSetErrG()                                                        \
-    try {                                                               \
-      (t)();                                                            \
-      if(sGetErrG())                                                    \
-        throw(BasestationTestingAssert( __FILE__, -1, "Internal error")); \
-      res<<"| "<<#t<<": PASS\n";                                        \
-    }                                                                   \
-    catch(BasestationTestingAssert e){                                  \
-      ret = true;                                                       \
-      res<<"| "<<#t<<": "<<e.what()<<std::endl;                         \
-        res<<"error: "<<#t<<": "<<e.what()<<std::endl;                  \
-    };                                                                  \
-    TearDown();                                                         \
+#define BT_LIST_TESTS(c)   \
+  bool c::RunAllTests() {  \
+    std::stringstream res; \
+    bool ret = false;      \
+    res << "\nTest package: " << #c << "\n";
+#define BT_END_LIST       \
+  std::cout.flush();      \
+  std::cout << res.str(); \
+  std::cout.flush();      \
+  return ret;             \
+  }
+#define BT_RUN_TEST(t)                                                   \
+  {                                                                      \
+    SetUp();                                                             \
+    sUnSetErrG() try {                                                   \
+      (t)();                                                             \
+      if (sGetErrG())                                                    \
+        throw(BasestationTestingAssert(__FILE__, -1, "Internal error")); \
+      res << "| " << #t << ": PASS\n";                                   \
+    } catch (BasestationTestingAssert e) {                               \
+      ret = true;                                                        \
+      res << "| " << #t << ": " << e.what() << std::endl;                \
+      res << "error: " << #t << ": " << e.what() << std::endl;           \
+    };                                                                   \
+    TearDown();                                                          \
   }
 
 // This class should only be created using the BT_ASSERT macros above
-class BasestationTestingAssert //: public std::exception
+class BasestationTestingAssert  //: public std::exception
 {
-public:
-  BasestationTestingAssert(const std::string& filename, const int linenum, const std::string& note) {
+ public:
+  BasestationTestingAssert(const std::string& filename, const int linenum,
+                           const std::string& note) {
     std::stringstream ss;
-    //ss<<filename<<':'<<linenum<<": "<<note;
-    ss<<"FAIL: "<<note<<" (line "<<linenum<<')';
+    // ss<<filename<<':'<<linenum<<": "<<note;
+    ss << "FAIL: " << note << " (line " << linenum << ')';
     //<<" (from "<<filename<<':'<<linenum<<')';
     s_ = ss.str();
   };
-  BasestationTestingAssert(const BasestationTestingAssert& other) : s_(other.s_) {};
+  BasestationTestingAssert(const BasestationTestingAssert& other)
+      : s_(other.s_){};
 
   const char* what() { return s_.c_str(); };
-private:
+
+ private:
   std::string s_;
 };
 
 typedef void (*voidFn)(void);
 
 // This is the class that should be inhereted by C++ test cases
-class BasestationTest
-{
-public:
-  BasestationTest() : config_(NULL) {};
+class BasestationTest {
+ public:
+  BasestationTest() : config_(NULL){};
 
   // Runs all tests. This is crappy, but will work for now. The
   // function shouldn't be directly implemented. Instead,
@@ -98,17 +202,16 @@ public:
   virtual bool RunAllTests() = 0;
 
   // Optional function to set the ptree config for these tests
-  void SetConfig(ptree* config) {config_ = config;};
+  void SetConfig(ptree* config) { config_ = config; };
 
   // Set-up function is called before each test
-  virtual void SetUp() {};
+  virtual void SetUp(){};
 
   // Tear-down function is called after each test
-  virtual void TearDown() {};
+  virtual void TearDown(){};
 
-protected:
+ protected:
   ptree* config_;
 };
-
 
 #endif

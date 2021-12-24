@@ -16,6 +16,7 @@ limitations under the License.
 #define TENSORFLOW_CONTRIB_LITE_ERROR_REPORTER_H_
 
 #include <cstdarg>
+
 #include "tensorflow/contrib/lite/context.h"
 
 namespace tflite {

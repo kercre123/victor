@@ -18,16 +18,15 @@
 namespace Anki {
 namespace Vector {
 
-class ConditionOnCharger : public IBEICondition
-{
-public:
+class ConditionOnCharger : public IBEICondition {
+ public:
   explicit ConditionOnCharger(const Json::Value& config);
 
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& bei) const override;
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& bei) const override;
 };
 
-}
-}
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

@@ -17,9 +17,9 @@
 #ifndef GEMMLOWP_INTERNAL_OUTPUT_NEON_H_
 #define GEMMLOWP_INTERNAL_OUTPUT_NEON_H_
 
-#include "output.h"
-
 #include <arm_neon.h>
+
+#include "output.h"
 
 namespace gemmlowp {
 

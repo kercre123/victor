@@ -16,21 +16,19 @@
 #endif
 #include "se_types.h"
 
-
 /* Configure the fifo parameters here: */
 
 /* No configuration should be necessary below here.  */
 typedef struct {
-    int size;
-    int16 *f;
-    int   r, w; // read and write indexes.
-    int count;
+  int size;
+  int16 *f;
+  int r, w;  // read and write indexes.
+  int count;
 #ifdef SE_FIFO_THREAD_SAFE
-    pthread_mutex_t mutex;
-    pthread_cond_t  var;
+  pthread_mutex_t mutex;
+  pthread_cond_t var;
 #endif
 } se_fifo_t;
-
 
 /* se_fifo_init(fifo, fifo_buffer, fifo_buffer_count)
  *
@@ -39,7 +37,7 @@ typedef struct {
  * fifo_buffer_count words.
  */
 void se_fifo_init(se_fifo_t *fifo, int16 *fifo_buffer, int16 fifo_buffer_count);
-void se_fifo_empty(se_fifo_t *fifo); // clear the fifo contents.
+void se_fifo_empty(se_fifo_t *fifo);  // clear the fifo contents.
 /* return the number of items in the buffer. */
 int se_fifo_get_count(se_fifo_t *fifo);
 /* return the number of items empty */

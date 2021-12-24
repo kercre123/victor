@@ -28,12 +28,12 @@ namespace services {
  * Interface to support A2DP streaming from SDK to bluetooth device.
  */
 class A2DPSinkInterface : public BluetoothServiceInterface {
-public:
-    /// The Service UUID.
-    static constexpr const char* UUID = "0000110b-0000-1000-8000-00805f9b34fb";
+ public:
+  /// The Service UUID.
+  static constexpr const char* UUID = "0000110b-0000-1000-8000-00805f9b34fb";
 
-    /// The Service Name.
-    static constexpr const char* NAME = "AudioSink";
+  /// The Service Name.
+  static constexpr const char* NAME = "AudioSink";
 };
 
 }  // namespace services

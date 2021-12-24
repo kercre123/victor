@@ -18,28 +18,25 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorSelfTestInitChecks : public IBehaviorSelfTest
-{
-protected:
-  
+class BehaviorSelfTestInitChecks : public IBehaviorSelfTest {
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorSelfTestInitChecks(const Json::Value& config);
-  
-protected:
-  virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
+
+ protected:
+  virtual void GetBehaviorOperationModifiersInternal(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOnCharger = true;
   }
-  
-  virtual Result        OnBehaviorActivatedInternal() override;
 
-private:
+  virtual Result OnBehaviorActivatedInternal() override;
 
+ private:
   void TransitionToChecks();
-  
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorSelfTestInitChecks_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorSelfTestInitChecks_H__

@@ -11,15 +11,14 @@
  **/
 
 #include "memutils.h"
+
 #include <stdlib.h>
 #include <string.h>
 
-void *malloc_zero(size_t size)
-{
+void* malloc_zero(size_t size) {
   void* p = malloc(size);
   if (p) {
     memset(p, 0, size);
   }
   return p;
 }
-

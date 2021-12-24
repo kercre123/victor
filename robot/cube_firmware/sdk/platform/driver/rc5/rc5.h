@@ -5,10 +5,10 @@
  *
  * @brief RC-5 s/w encoder driver header file.
  *
- * Copyright (C) 2014. Dialog Semiconductor Ltd, unpublished work. This computer 
- * program includes Confidential, Proprietary Information and is a Trade Secret of 
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
- * unless authorized in writing. All Rights Reserved.
+ * Copyright (C) 2014. Dialog Semiconductor Ltd, unpublished work. This computer
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -22,16 +22,15 @@
 
 #define __RETAINED __attribute__((section("retention_mem_area0"), zero_init))
 
-typedef enum
-{
-    IR_GEN_STATE_IDLE = 0,
-    IR_GEN_STATE_SEND_RC5_BURST_PRECEDED_BY_DELAY,
-    IR_GEN_STATE_SEND_RC5_BURST,
-    IR_GEN_STATE_SEND_RC5_BURST_BIT,
-    IR_GEN_STATE_DELAY_BEFORE_REPEAT,
-    IR_GEN_STATE_REPEAT_OR_STOP, 
-    //IR_GEN_STATE_DELAY_AFTER_NEW_KEY_OR_REPEAT,   
-    
+typedef enum {
+  IR_GEN_STATE_IDLE = 0,
+  IR_GEN_STATE_SEND_RC5_BURST_PRECEDED_BY_DELAY,
+  IR_GEN_STATE_SEND_RC5_BURST,
+  IR_GEN_STATE_SEND_RC5_BURST_BIT,
+  IR_GEN_STATE_DELAY_BEFORE_REPEAT,
+  IR_GEN_STATE_REPEAT_OR_STOP,
+  // IR_GEN_STATE_DELAY_AFTER_NEW_KEY_OR_REPEAT,
+
 } sw_timer_state_t;
 
 #define RC5_START1_BIT_INDEX 13
@@ -46,7 +45,7 @@ typedef enum
 
 /**
  ****************************************************************************************
- * @brief  Initializes RC-5 
+ * @brief  Initializes RC-5
  ****************************************************************************************
  */
 void rc5_init(void);
@@ -56,11 +55,12 @@ void rc5_init(void);
  * @brief  starts RC-5
  ****************************************************************************************
  */
-void rc5_start(uint8_t address,uint8_t cmd, uint16_t repetitions, uint16_t delay);
+void rc5_start(uint8_t address, uint8_t cmd, uint16_t repetitions,
+               uint16_t delay);
 
 /**
  ****************************************************************************************
- * @brief  
+ * @brief
  ****************************************************************************************
  */
 void rc5_stop_forced(void);
@@ -96,38 +96,37 @@ void rc5_release(void);
 
 /**
  ****************************************************************************************
- * @brief  
+ * @brief
  ****************************************************************************************
  */
 void rc5_register_callback(timer0_handler_function_t* callback);
 
 /**
  ****************************************************************************************
- * @brief  
+ * @brief
  ****************************************************************************************
  */
 void rc5_toggle(void);
 
 /**
  ****************************************************************************************
- * @brief  
+ * @brief
  ****************************************************************************************
  */
 void makeIRsignal(void);
 
 /**
  ****************************************************************************************
- * @brief  
+ * @brief
  ****************************************************************************************
  */
-void rc5_set_next_burst_data(uint8_t address,uint8_t cmd);
+void rc5_set_next_burst_data(uint8_t address, uint8_t cmd);
 
 /**
  ****************************************************************************************
- * @brief  
+ * @brief
  ****************************************************************************************
  */
 void rc5_callback_function(void);
 
-
-#endif // _RC5_H_
+#endif  // _RC5_H_

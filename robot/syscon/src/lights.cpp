@@ -1,44 +1,44 @@
+#include "lights.h"
+
 #include <string.h>
 
 #include "common.h"
 #include "hardware.h"
 #include "timer.h"
-#include "lights.h"
 
 typedef void (*void_funct)(void);
 static void_funct light_handler;
 
 struct LightChannel {
-  void_funct  funct;
-  uint8_t     shift_out;
-  uint16_t    time;
+  void_funct funct;
+  uint8_t shift_out;
+  uint16_t time;
 };
 
 struct LightWorkspace {
-  uint16_t  time;
-  uint8_t   mask;
+  uint16_t time;
+  uint8_t mask;
 };
 
-static const int LIGHT_CHANNELS   = 4;
-static const int LIGHT_COLORS     = 3;
-static const int LIGHT_MINIMUM    = 128;
-static const int WIS_LIGHT_SHIFT  = 16;
-static const int VIC_LIGHT_SHIFT  = 17;
+static const int LIGHT_CHANNELS = 4;
+static const int LIGHT_COLORS = 3;
+static const int LIGHT_MINIMUM = 128;
+static const int WIS_LIGHT_SHIFT = 16;
+static const int VIC_LIGHT_SHIFT = 17;
 
-static const uint16_t WIS_GAMMA_TABLE[] = { 30000, 30000, 30000 };
-static const uint16_t VIC_DARK_OFFSET   = 220 * 220; // 245 = 0% dark
+static const uint16_t WIS_GAMMA_TABLE[] = {30000, 30000, 30000};
+static const uint16_t VIC_DARK_OFFSET = 220 * 220;  // 245 = 0% dark
 
 static const uint8_t default_value[LIGHT_CHANNELS][LIGHT_COLORS] = {
-  { 0xFF, 0xFF, 0xFF },
-  { 0x00, 0x00, 0x00 },
-  { 0x00, 0x00, 0x00 },
-  { 0x00, 0x00, 0x00 }
-};
+    {0xFF, 0xFF, 0xFF},
+    {0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00}};
 
 static uint8_t value[LIGHT_CHANNELS][LIGHT_COLORS];
 
 static LightChannel light[LIGHT_CHANNELS * LIGHT_COLORS + 1];
-static LightChannel *current_light;
+static LightChannel* current_light;
 static bool enabled = false;
 
 static void victor_lights(LightChannel*& target);
@@ -87,8 +87,9 @@ static void output_shift_vic(uint8_t data) {
     } else {
       LED_DAT::reset();
     }
-    LED_CLK_VIC::set(); 
-    __asm { nop };
+    LED_CLK_VIC::set();
+    __asm { nop}
+    ;
     LED_CLK_VIC::reset();
   }
 }
@@ -100,8 +101,9 @@ static void output_shift_wis(uint8_t data) {
     } else {
       LED_DAT::set();
     }
-    LED_CLK_WIS::set(); 
-    __asm { nop };
+    LED_CLK_WIS::set();
+    __asm { nop}
+    ;
     LED_CLK_WIS::reset();
   }
 }
@@ -114,9 +116,7 @@ static void output_shift(uint8_t data) {
   }
 }
 
-static void leds_off(void) {
-  output_shift(0xE0);
-}
+static void leds_off(void) { output_shift(0xE0); }
 
 static void shifter() {
   output_shift(current_light->shift_out);
@@ -127,7 +127,7 @@ static void shifter() {
 
 void Lights::tick(void) {
   LightChannel* target = current_light = &light[0];
-  
+
   if (enabled) {
     if (IS_WHISKEY) {
       whiskey_lights(target);
@@ -147,7 +147,7 @@ static void whiskey_lights(LightChannel*& target) {
   using namespace Lights;
 
   const uint16_t* gamma = WIS_GAMMA_TABLE;
-  
+
   LightWorkspace light[4];
   LightWorkspace* sorted[4];
 
@@ -156,12 +156,18 @@ static void whiskey_lights(LightChannel*& target) {
 
     int clr3;
 
-    switch(clr) {
-      case 2:   clr3 = 0x10; break ;
-      default:  clr3 = 0x00; break ;
-      case 0:   clr3 = 0x08; break ;
+    switch (clr) {
+      case 2:
+        clr3 = 0x10;
+        break;
+      default:
+        clr3 = 0x00;
+        break;
+      case 0:
+        clr3 = 0x08;
+        break;
     }
-    
+
     // Stub cells
     for (int ch = 0; ch < LIGHT_CHANNELS; ch++) {
       uint32_t intensity = (uint32_t)value[ch][clr];
@@ -180,10 +186,10 @@ static void whiskey_lights(LightChannel*& target) {
     // Sort light channels
     for (int x = 0; x < LIGHT_CHANNELS; x++) {
       for (int y = x + 1; y < LIGHT_CHANNELS; y++) {
-        if (sorted[x]->time <= sorted[y]->time) continue ;
-  
-        LightWorkspace* t = sorted[y]; 
-        sorted[y] = sorted[x]; 
+        if (sorted[x]->time <= sorted[y]->time) continue;
+
+        LightWorkspace* t = sorted[y];
+        sorted[y] = sorted[x];
         sorted[x] = t;
       }
     }
@@ -230,7 +236,8 @@ static void victor_lights(LightChannel*& target) {
         intensity = 0;
       }
 
-      light[x].time = (VIC_DARK_OFFSET * intensity * intensity) >> VIC_LIGHT_SHIFT;
+      light[x].time =
+          (VIC_DARK_OFFSET * intensity * intensity) >> VIC_LIGHT_SHIFT;
 
       sorted[x] = &light[x];
     }
@@ -238,10 +245,10 @@ static void victor_lights(LightChannel*& target) {
     // Sort light channels
     for (int x = 0; x < LIGHT_COLORS - 1; x++) {
       for (int y = x + 1; y < LIGHT_COLORS; y++) {
-        if (sorted[x]->time <= sorted[y]->time) continue ;
-  
-        LightWorkspace* t = sorted[y]; 
-        sorted[y] = sorted[x]; 
+        if (sorted[x]->time <= sorted[y]->time) continue;
+
+        LightWorkspace* t = sorted[y];
+        sorted[y] = sorted[x];
         sorted[x] = t;
       }
     }
@@ -249,7 +256,7 @@ static void victor_lights(LightChannel*& target) {
     // Merge channels
     int mask = (ch != 3) ? (0xE7 ^ (0x80 >> ch)) : 0xE0;
     int prev_time = 0;
-    
+
     for (int x = 0; x < LIGHT_COLORS; x++) {
       int delta = sorted[x]->time - prev_time;
 
@@ -266,4 +273,3 @@ static void victor_lights(LightChannel*& target) {
     }
   }
 }
-

@@ -15,10 +15,10 @@ limitations under the License.
 #ifndef TENSORFLOW_CONTRIB_LITE_KERNELS_TEST_UTIL_H_
 #define TENSORFLOW_CONTRIB_LITE_KERNELS_TEST_UTIL_H_
 
-#include <vector>
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <vector>
 
 #include "tensorflow/contrib/lite/interpreter.h"
 #include "tensorflow/contrib/lite/kernels/internal/tensor_utils.h"

@@ -24,33 +24,28 @@ class ImageRGB;
 
 namespace ImageConversions {
 
-  // Converts YUV420sp formatted data of an image of size rows x cols
-  // to RGB
-  // NEON optimized
-  void ConvertYUV420spToRGB(const u8* yuv, s32 rows, s32 cols,
-                            ImageRGB& rgb);
+// Converts YUV420sp formatted data of an image of size rows x cols
+// to RGB
+// NEON optimized
+void ConvertYUV420spToRGB(const u8* yuv, s32 rows, s32 cols, ImageRGB& rgb);
 
-  // Converts a Bayer BGGR 10bit image to RGB
-  // Halves so output is half the resolution of the bayer image
-  void HalveBGGR10ToRGB(const u8* bayer, s32 rows, s32 cols,
-                        ImageRGB& rgb);
-  
-  // Converts a Bayer BGGR 10bit image to Gray
-  // Halves so output is half the resolution of the bayer image
-  void HalveBGGR10ToGray(const u8* bayer, s32 rows, s32 cols,
-                         Image& gray);
-  
-  // Converts a Bayer BGGR 10bit image to RGB
-  // Demosaics so output is same resolution as bayer image
-  void DemosaicBGGR10ToRGB(const u8* bayer, s32 rows, s32 cols,
-                           ImageRGB& rgb);
+// Converts a Bayer BGGR 10bit image to RGB
+// Halves so output is half the resolution of the bayer image
+void HalveBGGR10ToRGB(const u8* bayer, s32 rows, s32 cols, ImageRGB& rgb);
 
-  // Converts a Bayer BGGR 10bit image to RGB
-  // Output image is quarter the size of the bayer image
-  void QuarterBGGR10ToRGB(const u8* bayer, s32 rows, s32 cols,
-                         ImageRGB& rgb);
-}
-}
-}
+// Converts a Bayer BGGR 10bit image to Gray
+// Halves so output is half the resolution of the bayer image
+void HalveBGGR10ToGray(const u8* bayer, s32 rows, s32 cols, Image& gray);
+
+// Converts a Bayer BGGR 10bit image to RGB
+// Demosaics so output is same resolution as bayer image
+void DemosaicBGGR10ToRGB(const u8* bayer, s32 rows, s32 cols, ImageRGB& rgb);
+
+// Converts a Bayer BGGR 10bit image to RGB
+// Output image is quarter the size of the bayer image
+void QuarterBGGR10ToRGB(const u8* bayer, s32 rows, s32 cols, ImageRGB& rgb);
+}  // namespace ImageConversions
+}  // namespace Vision
+}  // namespace Anki
 
 #endif

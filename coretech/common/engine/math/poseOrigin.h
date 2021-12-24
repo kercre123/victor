@@ -5,7 +5,8 @@
  * Created: 7/12/2016
  *
  *
- * Description: Defines the PoseOrigin type (in case we want to flesh it out more later)
+ * Description: Defines the PoseOrigin type (in case we want to flesh it out
+ *more later)
  *
  * Copyright: Anki, Inc. 2016
  *
@@ -16,11 +17,10 @@
 
 #include "coretech/common/engine/math/pose.h"
 
-namespace Anki
-{
-  
-  using PoseOrigin = Pose3d;
-  
+namespace Anki {
+
+using PoseOrigin = Pose3d;
+
 }
 
-#endif // __Anki_Coretech_Common_PoseOrigin_H__
+#endif  // __Anki_Coretech_Common_PoseOrigin_H__

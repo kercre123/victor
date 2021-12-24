@@ -4,11 +4,11 @@
  * Author: chapados
  * Created: 1/25/17
  *
- * Collection of functions to access derived data from AnkiLabDef (POD objects) in
- * a purely function way. Each function represents a lookup or calculation that can
- * be performed on a raw data object. Rather than only hide these inside a class, they
- * are public functions to facilitate testing, validation or building alternative interfaces
- * to the underlying data.
+ * Collection of functions to access derived data from AnkiLabDef (POD objects)
+ *in a purely function way. Each function represents a lookup or calculation
+ *that can be performed on a raw data object. Rather than only hide these inside
+ *a class, they are public functions to facilitate testing, validation or
+ *building alternative interfaces to the underlying data.
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -16,31 +16,30 @@
 
 #include "util/ankiLab/ankiLabAccessors.h"
 
+#include <cmath>
+#include <ctime>
+
 #include "util/crc/crc.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "util/string/stringUtils.h"
 
-#include <ctime>
-#include <cmath>
-
-#define LOG_CHANNEL    "AnkiLab"
+#define LOG_CHANNEL "AnkiLab"
 
 namespace Anki {
 namespace Util {
 namespace AnkiLab {
 
 const Experiment* FindExperiment(const AnkiLabDef* lab,
-                                 const std::string& experimentKey)
-{
+                                 const std::string& experimentKey) {
   ASSERT_NAMED(nullptr != lab, "AnkiLab must not be NULL");
 
   // Find experiment
   const std::vector<Experiment>& experiments = lab->GetExperiments();
   auto search = std::find_if(experiments.begin(), experiments.end(),
-                                    [&experimentKey](const Experiment& e) {
-                                      return (e.GetKey() == experimentKey);
-                                    });
+                             [&experimentKey](const Experiment& e) {
+                               return (e.GetKey() == experimentKey);
+                             });
   if (search == experiments.end()) {
     // experimentKey not found
     return nullptr;
@@ -50,29 +49,32 @@ const Experiment* FindExperiment(const AnkiLabDef* lab,
 }
 
 bool IsExperimentRunning(const Experiment* experiment,
-                         const uint32_t timeSince1970Sec)
-{
+                         const uint32_t timeSince1970Sec) {
   ASSERT_NAMED(nullptr != experiment, "Experiment pointer must not be NULL");
 
   uint32_t now = timeSince1970Sec;
 
-  uint32_t startTimeSec = Util::EpochSecFromIso8601UTCDateString(experiment->GetStart_time_utc_iso8601());
+  uint32_t startTimeSec = Util::EpochSecFromIso8601UTCDateString(
+      experiment->GetStart_time_utc_iso8601());
 
   if (now < startTimeSec) {
     // experiment not started
     return false;
   }
 
-  uint32_t stopTimeSec = Util::EpochSecFromIso8601UTCDateString(experiment->GetStop_time_utc_iso8601());
+  uint32_t stopTimeSec = Util::EpochSecFromIso8601UTCDateString(
+      experiment->GetStop_time_utc_iso8601());
   if ((stopTimeSec > 0) && (now >= stopTimeSec)) {
     // experiment stopped
     return false;
   }
 
-  uint32_t pauseTimeSec = Util::EpochSecFromIso8601UTCDateString(experiment->GetPause_time_utc_iso8601());
-  uint32_t resumeTimeSec = Util::EpochSecFromIso8601UTCDateString(experiment->GetResume_time_utc_iso8601());
-  if (   ((pauseTimeSec > 0) && (now >= pauseTimeSec))
-      && ((now < resumeTimeSec) || (resumeTimeSec == 0))) {
+  uint32_t pauseTimeSec = Util::EpochSecFromIso8601UTCDateString(
+      experiment->GetPause_time_utc_iso8601());
+  uint32_t resumeTimeSec = Util::EpochSecFromIso8601UTCDateString(
+      experiment->GetResume_time_utc_iso8601());
+  if (((pauseTimeSec > 0) && (now >= pauseTimeSec)) &&
+      ((now < resumeTimeSec) || (resumeTimeSec == 0))) {
     // experiment paused
     return false;
   }
@@ -83,11 +85,11 @@ bool IsExperimentRunning(const Experiment* experiment,
 // returns true if audience tags intersect completely with audience
 // tags required to participate in experiment.
 bool IsMatchingAudience(const Experiment* experiment,
-                        const AudienceTagList& audienceTags)
-{
+                        const AudienceTagList& audienceTags) {
   ASSERT_NAMED(nullptr != experiment, "Experiment pointer must not be NULL");
 
-  const std::vector<std::string>& experimentalAudience = experiment->GetAudience_tags();
+  const std::vector<std::string>& experimentalAudience =
+      experiment->GetAudience_tags();
   if (experimentalAudience.empty()) {
     return true;
   } else {
@@ -96,16 +98,16 @@ bool IsMatchingAudience(const Experiment* experiment,
 }
 
 const ExperimentVariation* FindVariation(const Experiment* experiment,
-                                         const std::string& variationKey)
-{
+                                         const std::string& variationKey) {
   ASSERT_NAMED(nullptr != experiment, "Experiment pointer must not be NULL");
 
-  const std::vector<ExperimentVariation>& variations = experiment->GetVariations();
+  const std::vector<ExperimentVariation>& variations =
+      experiment->GetVariations();
   const auto& search =
-    std::find_if(variations.begin(), variations.end(),
-                 [&variationKey](const ExperimentVariation& v) {
-                   return (v.GetKey() == variationKey);
-                 });
+      std::find_if(variations.begin(), variations.end(),
+                   [&variationKey](const ExperimentVariation& v) {
+                     return (v.GetKey() == variationKey);
+                   });
 
   if (search == variations.end()) {
     return nullptr;
@@ -114,17 +116,16 @@ const ExperimentVariation* FindVariation(const Experiment* experiment,
   }
 }
 
-const ExperimentVariation* GetExperimentVariation(const Experiment* experiment,
-                                                  const uint8_t userHashBucket)
-{
+const ExperimentVariation* GetExperimentVariation(
+    const Experiment* experiment, const uint8_t userHashBucket) {
   ASSERT_NAMED(nullptr != experiment, "Experiment pointer must not be NULL");
 
-  LOG_DEBUG("AnkiLab.GetExperimentVariation.bucket",
-            "%s : %u",
+  LOG_DEBUG("AnkiLab.GetExperimentVariation.bucket", "%s : %u",
             experiment->GetKey().c_str(), userHashBucket);
 
   // Calculate population fraction of each variation
-  const std::vector<ExperimentVariation>& variations = experiment->GetVariations();
+  const std::vector<ExperimentVariation>& variations =
+      experiment->GetVariations();
 
   bool inExperiment = false;
   const ExperimentVariation* variation = nullptr;
@@ -133,14 +134,14 @@ const ExperimentVariation* GetExperimentVariation(const Experiment* experiment,
     uint8_t maxBucketSize = v.GetPop_frac_pct();
     if (maxBucketSize > 0) {
       uint8_t maxBucketEnd = bucketStart + (maxBucketSize - 1);
-      uint8_t bucketSize = (experiment->GetPop_frac_pct() * v.GetPop_frac_pct()) / 100.f;
+      uint8_t bucketSize =
+          (experiment->GetPop_frac_pct() * v.GetPop_frac_pct()) / 100.f;
       if (bucketSize > 0) {
         uint8_t bucketEnd = bucketStart + bucketSize - 1;
 
         LOG_DEBUG("AnkiLab.GetExperimentVariation.bucket.range",
-                  "|[%2u - %2u] - %2u| : %s",
-                  bucketStart, bucketEnd, maxBucketEnd,
-                  v.GetKey().c_str());
+                  "|[%2u - %2u] - %2u| : %s", bucketStart, bucketEnd,
+                  maxBucketEnd, v.GetKey().c_str());
 
         if ((userHashBucket >= bucketStart) && (userHashBucket <= bucketEnd)) {
           variation = &v;
@@ -156,18 +157,15 @@ const ExperimentVariation* GetExperimentVariation(const Experiment* experiment,
   if (!inExperiment) {
     return nullptr;
   } else {
-    LOG_DEBUG("AnkiLab.GetExperimentVariation.bucket.assign",
-              "%s : %u : %s",
-              experiment->GetKey().c_str(),
-              userHashBucket,
+    LOG_DEBUG("AnkiLab.GetExperimentVariation.bucket.assign", "%s : %u : %s",
+              experiment->GetKey().c_str(), userHashBucket,
               variation->GetKey().c_str());
     return variation;
   }
 }
 
 uint8_t CalculateExperimentHashBucket(const std::string& experimentKey,
-                                      const std::string& userId)
-{
+                                      const std::string& userId) {
   ASSERT_NAMED(!experimentKey.empty(),
                "CalculateExperimentHashBucket: experimentKey can not be empty");
   ASSERT_NAMED(!userId.empty(),
@@ -190,8 +188,7 @@ uint8_t CalculateExperimentHashBucket(const std::string& experimentKey,
 }
 
 bool AudienceListIsSubsetOfList(const AudienceTagList& testSet,
-                                const AudienceTagList& targetSet)
-{
+                                const AudienceTagList& targetSet) {
   // copy & sort id sets
   AudienceTagList testSetSorted = testSet;
   std::sort(testSetSorted.begin(), testSetSorted.end());
@@ -205,14 +202,14 @@ bool AudienceListIsSubsetOfList(const AudienceTagList& testSet,
                         targetSetSorted.begin(), targetSetSorted.end(),
                         std::back_inserter(intersectionList));
 
-  // if intersection list is the same as the sorted test list, then testSet is a subset of targetSet
+  // if intersection list is the same as the sorted test list, then testSet is a
+  // subset of targetSet
   const bool isSubset = (intersectionList == testSetSorted);
 
   return isSubset;
 }
 
-AudienceTagList GetKnownAudienceTags(const AnkiLabDef& labDef)
-{
+AudienceTagList GetKnownAudienceTags(const AnkiLabDef& labDef) {
   AudienceTagList tags;
   for (const auto& experiment : labDef.experiments) {
     for (const auto& tag : experiment.audience_tags) {
@@ -222,6 +219,6 @@ AudienceTagList GetKnownAudienceTags(const AnkiLabDef& labDef)
   return tags;
 }
 
-} // namespace AnkiLab
-} // namespace Util
-} // namespace Anki
+}  // namespace AnkiLab
+}  // namespace Util
+}  // namespace Anki

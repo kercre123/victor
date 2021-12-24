@@ -10,11 +10,11 @@
  *
  **/
 
-
-#include "engine/externalInterface/externalInterface.h"
 #include "engine/cozmoAPI/comms/sdkStatus.h"
-#include "engine/cozmoAPI/comms/iSocketComms.h"
+
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "engine/cozmoAPI/comms/iSocketComms.h"
+#include "engine/externalInterface/externalInterface.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
@@ -22,16 +22,15 @@ namespace Anki {
 namespace Vector {
 
 SdkStatus::SdkStatus()
-  : _recentCommands(10) // TODO Remove
-{
-}
+    : _recentCommands(10)  // TODO Remove
+{}
 
-
-void SdkStatus::OnWrongVersion(const ExternalInterface::UiDeviceConnectionWrongVersion& message)
-{
-  Util::sInfoF("robot.sdk_wrong_version", {{DDATA, message.buildVersion.c_str()}}, "");
+void SdkStatus::OnWrongVersion(
+    const ExternalInterface::UiDeviceConnectionWrongVersion& message) {
+  Util::sInfoF("robot.sdk_wrong_version",
+               {{DDATA, message.buildVersion.c_str()}}, "");
   _connectedSdkBuildVersion = message.buildVersion;
 }
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki

@@ -17,9 +17,9 @@
 
 #include <string>
 
+#include "absl/time/time.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "absl/time/time.h"
 
 // This helper is a macro so that failed expectations show up with the
 // correct line numbers.

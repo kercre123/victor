@@ -23,9 +23,9 @@ extern "C" {
 #endif
 
 typedef struct {
-  uint8_t* rgba;         // Decoded and reconstructed full frame.
-  int duration;          // Frame duration in milliseconds.
-  int is_key_frame;      // True if this frame is a key-frame.
+  uint8_t* rgba;     // Decoded and reconstructed full frame.
+  int duration;      // Frame duration in milliseconds.
+  int is_key_frame;  // True if this frame is a key-frame.
 } DecodedFrame;
 
 typedef struct {
@@ -57,7 +57,7 @@ void GetDiffAndPSNR(const uint8_t rgba1[], const uint8_t rgba2[],
                     int* const max_diff, double* const psnr);
 
 #ifdef __cplusplus
-}    // extern "C"
+}  // extern "C"
 #endif
 
 #endif  // WEBP_EXAMPLES_ANIM_UTIL_H_

@@ -1,7 +1,7 @@
 /**
  * File: christen.h
  *
- * Author: Paul Aluri, inspired by seichert's vic-christen 
+ * Author: Paul Aluri, inspired by seichert's vic-christen
  *         which was inspired by Paul Aluri's example code
  * Created: 4/26/2018
  *
@@ -17,9 +17,9 @@ namespace Anki {
 namespace Switchboard {
 
 class Christen {
-public:
+ public:
   static std::string GenerateName();
 };
 
-} // Anki
-} // Switchboard
+}  // namespace Switchboard
+}  // namespace Anki

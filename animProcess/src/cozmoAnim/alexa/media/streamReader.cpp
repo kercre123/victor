@@ -15,17 +15,15 @@
 namespace Anki {
 namespace Vector {
 
-StreamReader::StreamReader(std::shared_ptr<std::istream> stream, const bool repeat)
-: _stream(std::move(stream))
-, _repeat(repeat)
-{
-  // NOTE: BN: no idea why this is being overwritten here, but it doesn't seem to matter.
-  // see VIC-9853
+StreamReader::StreamReader(std::shared_ptr<std::istream> stream,
+                           const bool repeat)
+    : _stream(std::move(stream)), _repeat(repeat) {
+  // NOTE: BN: no idea why this is being overwritten here, but it doesn't seem
+  // to matter. see VIC-9853
   _repeat = true;
 }
 
-size_t StreamReader::GetNumUnreadBytes()
-{
+size_t StreamReader::GetNumUnreadBytes() {
   auto ret = _stream->rdbuf()->in_avail();
   if (ret == 0 && _repeat) {
     Restart();
@@ -34,8 +32,7 @@ size_t StreamReader::GetNumUnreadBytes()
   return ret;
 }
 
-size_t StreamReader::Read(uint8_t* buf, size_t toRead, Status& status)
-{
+size_t StreamReader::Read(uint8_t* buf, size_t toRead, Status& status) {
   auto unread = GetNumUnreadBytes();
   if (unread == 0) {
     status = Status::Error;
@@ -48,16 +45,12 @@ size_t StreamReader::Read(uint8_t* buf, size_t toRead, Status& status)
   return toRead;
 }
 
-void StreamReader::Close()
-{
-}
+void StreamReader::Close() {}
 
-void StreamReader::Restart()
-{
+void StreamReader::Restart() {
   _stream->clear();
   _stream->seekg(0);
 }
 
-
-}
-}
+}  // namespace Vector
+}  // namespace Anki

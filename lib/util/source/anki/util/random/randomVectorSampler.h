@@ -4,7 +4,8 @@
  * Author: Brad Neuman
  * Created: 2017-10-31
  *
- * Description: Utility for sampling a random vector with given weights, with replacement
+ * Description: Utility for sampling a random vector with given weights, with
+ *replacement
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -17,22 +18,23 @@
 #include "util/math/math.h"
 #include "util/random/randomGenerator.h"
 
-namespace Anki{
+namespace Anki {
 namespace Util {
 
-template<typename T>
+template <typename T>
 class RandomVectorSampler {
-public:
-
+ public:
   RandomVectorSampler();
-  RandomVectorSampler(const std::vector<T>& values, const std::vector<float>& weights);
+  RandomVectorSampler(const std::vector<T>& values,
+                      const std::vector<float>& weights);
 
   void PushBack(const T& val, float weight);
   void PushBack(T&& val, float weight);
 
   void Clear();
 
-  // is considered empty if there are no entries, or if the sum of the weights is near zero
+  // is considered empty if there are no entries, or if the sum of the weights
+  // is near zero
   bool Empty() const;
 
   // Erases the (first instance of the ) given element, uses ==
@@ -43,10 +45,9 @@ public:
 
   // returns true if the value is contained in the vector, even if it
   // has 0 probability of being sampled
-  bool Contains( const T& val ) const;
+  bool Contains(const T& val) const;
 
-protected:
-
+ protected:
   void ReWeight();
 
   std::vector<T> _v;
@@ -60,36 +61,29 @@ protected:
 
 ///////////////////////////////////////////////////////////////////////////////
 
-template<typename T>
-RandomVectorSampler<T>::RandomVectorSampler() :
-  _weightSum(0.0)
-{
-}
+template <typename T>
+RandomVectorSampler<T>::RandomVectorSampler() : _weightSum(0.0) {}
 
-template<typename T>
-  RandomVectorSampler<T>::RandomVectorSampler(const std::vector<T>& values, const std::vector<float>& weights) :
-  _v(values),
-  _weights(weights),
-  _weightSum(0.0)
-{
-  if(values.size() != weights.size()) {
+template <typename T>
+RandomVectorSampler<T>::RandomVectorSampler(const std::vector<T>& values,
+                                            const std::vector<float>& weights)
+    : _v(values), _weights(weights), _weightSum(0.0) {
+  if (values.size() != weights.size()) {
     PRINT_NAMED_ERROR("RandomVectorSampler.InvalidConstruction",
                       "sizes of values and weights must match!");
     Clear();
   }
 
-  for(std::vector<float>::const_iterator it = _weights.begin();
-      it != _weights.end();
-      ++it) {
+  for (std::vector<float>::const_iterator it = _weights.begin();
+       it != _weights.end(); ++it) {
     _weightSum += *it;
   }
 
   ReWeight();
 }
 
-template<typename T>
-void RandomVectorSampler<T>::PushBack(const T& val, float weight)
-{
+template <typename T>
+void RandomVectorSampler<T>::PushBack(const T& val, float weight) {
   _v.push_back(val);
   _weights.push_back(weight);
   _weightSum += weight;
@@ -97,9 +91,8 @@ void RandomVectorSampler<T>::PushBack(const T& val, float weight)
   ReWeight();
 }
 
-template<typename T>
-void RandomVectorSampler<T>::PushBack(T&& val, float weight)
-{
+template <typename T>
+void RandomVectorSampler<T>::PushBack(T&& val, float weight) {
   _v.emplace_back(val);
   _weights.push_back(weight);
   _weightSum += weight;
@@ -107,24 +100,22 @@ void RandomVectorSampler<T>::PushBack(T&& val, float weight)
   ReWeight();
 }
 
-template<typename T>
-void RandomVectorSampler<T>::Clear()
-{
+template <typename T>
+void RandomVectorSampler<T>::Clear() {
   _v.clear();
   _weights.clear();
   _cumlProbs.clear();
   _weightSum = 0.0;
 }
 
-template<typename T>
-bool RandomVectorSampler<T>::Empty() const
-{
-  if( _v.empty() ) {
+template <typename T>
+bool RandomVectorSampler<T>::Empty() const {
+  if (_v.empty()) {
     return true;
   }
 
-  for( const auto& w : _weights ) {
-    if( !IsNearZero(w) ) {
+  for (const auto& w : _weights) {
+    if (!IsNearZero(w)) {
       // has a non-zero weight, not empty
       return false;
     }
@@ -134,14 +125,13 @@ bool RandomVectorSampler<T>::Empty() const
   return true;
 }
 
-template<typename T>
-void RandomVectorSampler<T>::Remove(const T& val)
-{
+template <typename T>
+void RandomVectorSampler<T>::Remove(const T& val) {
   // find val
   bool found = false;
   size_t end = _v.size();
-  for(size_t i=0; i<end; ++i) {
-    if(_v[i] == val) {
+  for (size_t i = 0; i < end; ++i) {
+    if (_v[i] == val) {
       found = true;
 
       _v.erase(_v.begin() + i);
@@ -153,29 +143,28 @@ void RandomVectorSampler<T>::Remove(const T& val)
     }
   }
 
-  if(!found) {
+  if (!found) {
     PRINT_NAMED_WARNING("RandomVectorSampler.CannotRemove",
-                            "element not found!");
+                        "element not found!");
   }
 }
 
-template<typename T>
-const T& RandomVectorSampler<T>::Sample(RandomGenerator& rng) const
-{
-  if(_cumlProbs.empty()) {
+template <typename T>
+const T& RandomVectorSampler<T>::Sample(RandomGenerator& rng) const {
+  if (_cumlProbs.empty()) {
     PRINT_NAMED_ERROR("RandomVectorSampler.CannotSample",
-                          "The vector is empty!");
-    // TODO:(bn) return something here? Since T is a template argument, it's hard to know what to return, so
-    // this just allows undefined behavior for now
+                      "The vector is empty!");
+    // TODO:(bn) return something here? Since T is a template argument, it's
+    // hard to know what to return, so this just allows undefined behavior for
+    // now
   }
 
   float r = (float)rng.RandDbl();
   size_t i = 0;
   size_t end = _cumlProbs.size() - 1;
-  while(i < end && r >= _cumlProbs[i])
-    ++i;
+  while (i < end && r >= _cumlProbs[i]) ++i;
 
-  if(IsNearZero(_weights[i])) {
+  if (IsNearZero(_weights[i])) {
     PRINT_NAMED_WARNING("RandomVectorSampler.SampledZeroProbability",
                         "sampled an element with weight near zero!");
   }
@@ -184,26 +173,21 @@ const T& RandomVectorSampler<T>::Sample(RandomGenerator& rng) const
   return _v[i];
 }
 
-
-template<typename T>
-bool RandomVectorSampler<T>::Contains( const T& val ) const
-{
+template <typename T>
+bool RandomVectorSampler<T>::Contains(const T& val) const {
   return std::count(_v.begin(), _v.end(), val) > 0;
 }
 
-
-template<typename T>
-void RandomVectorSampler<T>::ReWeight()
-{
+template <typename T>
+void RandomVectorSampler<T>::ReWeight() {
   _cumlProbs.resize(_weights.size(), 0.0f);
 
-  if( !IsNearZero(_weightSum) ) {
-
+  if (!IsNearZero(_weightSum)) {
     float last = 0.0;
-    float recip = 1.0/_weightSum;
+    float recip = 1.0 / _weightSum;
 
     size_t size = _cumlProbs.size();
-    for(size_t i=0; i<size; ++i) {
+    for (size_t i = 0; i < size; ++i) {
       last += recip * _weights[i];
       _cumlProbs[i] = last;
     }
@@ -214,7 +198,7 @@ void RandomVectorSampler<T>::ReWeight()
 
 // TODO:(bn) port unit tests from OD repo!!
 
-}
-}
+}  // namespace Util
+}  // namespace Anki
 
 #endif

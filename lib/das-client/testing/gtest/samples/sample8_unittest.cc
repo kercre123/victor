@@ -34,9 +34,8 @@
 // and each test is given one combination as a parameter.
 
 // Use class definitions to test from this header.
-#include "prime_tables.h"
-
 #include "gtest/gtest.h"
+#include "prime_tables.h"
 
 #if GTEST_HAS_COMBINE
 
@@ -51,8 +50,9 @@ class HybridPrimeTable : public PrimeTable {
  public:
   HybridPrimeTable(bool force_on_the_fly, int max_precalculated)
       : on_the_fly_impl_(new OnTheFlyPrimeTable),
-        precalc_impl_(force_on_the_fly ? NULL :
-                          new PreCalculatedPrimeTable(max_precalculated)),
+        precalc_impl_(force_on_the_fly
+                          ? NULL
+                          : new PreCalculatedPrimeTable(max_precalculated)),
         max_precalculated_(max_precalculated) {}
   virtual ~HybridPrimeTable() {
     delete on_the_fly_impl_;
@@ -80,10 +80,10 @@ class HybridPrimeTable : public PrimeTable {
   int max_precalculated_;
 };
 
-using ::testing::TestWithParam;
 using ::testing::Bool;
-using ::testing::Values;
 using ::testing::Combine;
+using ::testing::TestWithParam;
+using ::testing::Values;
 
 // To test all code paths for HybridPrimeTable we must test it with numbers
 // both within and outside PreCalculatedPrimeTable's capacity and also with
@@ -156,8 +156,7 @@ TEST_P(PrimeTableTest, CanGetNextPrime) {
 // will put some of the tested numbers beyond the capability of the
 // PrecalcPrimeTable instance and some inside it (10). Combine will produce all
 // possible combinations.
-INSTANTIATE_TEST_CASE_P(MeaningfulTestParameters,
-                        PrimeTableTest,
+INSTANTIATE_TEST_CASE_P(MeaningfulTestParameters, PrimeTableTest,
                         Combine(Bool(), Values(1, 10)));
 
 #else

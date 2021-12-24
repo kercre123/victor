@@ -16,8 +16,8 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_STREAM_STREAMFUNCTIONS_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_STREAM_STREAMFUNCTIONS_H_
 
-#include <memory>
 #include <istream>
+#include <memory>
 
 namespace alexaClientSDK {
 namespace avsCommon {
@@ -25,13 +25,15 @@ namespace utils {
 namespace stream {
 
 /**
- * Implementation converts a byte array into a stream.  The data is never copied and multiple streams can be created to
- * the same data source without affecting each other
+ * Implementation converts a byte array into a stream.  The data is never copied
+ * and multiple streams can be created to the same data source without affecting
+ * each other
  *
  * @param data pointer to the data to make into a stream
  * @param length length of data
  */
-std::unique_ptr<std::istream> streamFromData(const unsigned char* data, size_t length);
+std::unique_ptr<std::istream> streamFromData(const unsigned char* data,
+                                             size_t length);
 
 }  // namespace stream
 }  // namespace utils

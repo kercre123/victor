@@ -1,14 +1,14 @@
 #ifndef TH_GENERAL_INC
 #define TH_GENERAL_INC
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <math.h>
-#include <limits.h>
 #include <float.h>
-#include <time.h>
+#include <limits.h>
+#include <math.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define TH_API
 

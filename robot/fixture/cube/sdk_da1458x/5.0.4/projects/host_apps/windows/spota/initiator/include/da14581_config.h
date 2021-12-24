@@ -5,10 +5,10 @@
  *
  * @brief Compile configuration file.
  *
- * Copyright (C) 2014. Dialog Semiconductor Ltd, unpublished work. This computer 
- * program includes Confidential, Proprietary Information and is a Trade Secret of 
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
- * unless authorized in writing. All Rights Reserved.
+ * Copyright (C) 2014. Dialog Semiconductor Ltd, unpublished work. This computer
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -24,5 +24,4 @@
 #define CFG_CON 6
 #define CFG_SECURITY_ON 1
 
-
-#endif // DA14581_CONFIG_H_
+#endif  // DA14581_CONFIG_H_

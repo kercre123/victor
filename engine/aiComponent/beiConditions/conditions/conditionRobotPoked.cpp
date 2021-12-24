@@ -25,23 +25,27 @@
 namespace Anki {
 namespace Vector {
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
 ConditionRobotPoked::ConditionRobotPoked(const Json::Value& config)
-: IBEICondition(config)
-{
-  _wasPokedRecentlyTimeThreshold_ms = 1000 * JsonTools::ParseFloat(config, "wasPokedRecentlyTimeThreshold_sec", "ConditionRobotPoked.Config");
-  LOG_DEBUG("ConditionRobotPoked.ParseConfig", "Time threshold set to %u ms", _wasPokedRecentlyTimeThreshold_ms);
+    : IBEICondition(config) {
+  _wasPokedRecentlyTimeThreshold_ms =
+      1000 * JsonTools::ParseFloat(config, "wasPokedRecentlyTimeThreshold_sec",
+                                   "ConditionRobotPoked.Config");
+  LOG_DEBUG("ConditionRobotPoked.ParseConfig", "Time threshold set to %u ms",
+            _wasPokedRecentlyTimeThreshold_ms);
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionRobotPoked::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool ConditionRobotPoked::AreConditionsMetInternal(
+    BehaviorExternalInterface& behaviorExternalInterface) const {
   const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
-  
+
   // Only considered Poked if robot has been alerted to a poke event recently:
   const auto& msSinceLastPoke = robotInfo.GetTimeSinceLastPoke_ms();
-  const bool wasPokedRecently = (msSinceLastPoke <= _wasPokedRecentlyTimeThreshold_ms);
+  const bool wasPokedRecently =
+      (msSinceLastPoke <= _wasPokedRecentlyTimeThreshold_ms);
 #if DEBUG_CONDITION_ROBOT_POKED
   LOG_DEBUG("ConditionRobotPoked.AreConditionsMetInternal",
             "Robot %s poked recently enough, last poke was %u ms ago",
@@ -50,5 +54,5 @@ bool ConditionRobotPoked::AreConditionsMetInternal(BehaviorExternalInterface& be
   return wasPokedRecently;
 }
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki

@@ -65,8 +65,7 @@ struct IterationVisitor {
   virtual void EndVector() {}
   virtual void Element(size_t /*i*/, ElementaryType /*type*/,
                        const TypeTable * /*type_table*/,
-                       const uint8_t * /*val*/)
-  {}
+                       const uint8_t * /*val*/) {}
   virtual ~IterationVisitor() {}
 };
 
@@ -115,10 +114,11 @@ inline int32_t LookupEnum(int32_t enum_val, const int32_t *values,
   return -1;  // Unknown enum value.
 }
 
-template<typename T> const char *EnumName(T tval, const TypeTable *type_table) {
+template <typename T>
+const char *EnumName(T tval, const TypeTable *type_table) {
   if (!type_table || !type_table->names) return nullptr;
   auto i = LookupEnum(static_cast<int32_t>(tval), type_table->values,
-                                  type_table->num_elems);
+                      type_table->num_elems);
   if (i >= 0 && i < static_cast<int32_t>(type_table->num_elems)) {
     return type_table->names[i];
   }
@@ -126,13 +126,11 @@ template<typename T> const char *EnumName(T tval, const TypeTable *type_table) {
 }
 
 void IterateObject(const uint8_t *obj, const TypeTable *type_table,
-                  IterationVisitor *visitor);
+                   IterationVisitor *visitor);
 
 inline void IterateValue(ElementaryType type, const uint8_t *val,
-                         const TypeTable *type_table,
-                         const uint8_t *prev_val,
-                         soffset_t vector_index,
-                         IterationVisitor *visitor) {
+                         const TypeTable *type_table, const uint8_t *prev_val,
+                         soffset_t vector_index, IterationVisitor *visitor) {
   switch (type) {
     case ET_UTYPE: {
       auto tval = *reinterpret_cast<const uint8_t *>(val);
@@ -211,10 +209,10 @@ inline void IterateValue(ElementaryType type, const uint8_t *val,
             auto type_vec = reinterpret_cast<const Vector<uint8_t> *>(prev_val);
             union_type = type_vec->Get(static_cast<uoffset_t>(vector_index));
           }
-          auto type_code_idx = LookupEnum(union_type, type_table->values,
-                                          type_table->num_elems);
-          if (type_code_idx >= 0 && type_code_idx <
-              static_cast<int32_t>(type_table->num_elems)) {
+          auto type_code_idx =
+              LookupEnum(union_type, type_table->values, type_table->num_elems);
+          if (type_code_idx >= 0 &&
+              type_code_idx < static_cast<int32_t>(type_table->num_elems)) {
             auto type_code = type_table->type_codes[type_code_idx];
             switch (type_code.base_type) {
               case ET_SEQUENCE: {
@@ -264,7 +262,7 @@ inline void IterateObject(const uint8_t *obj, const TypeTable *type_table,
     const uint8_t *val = nullptr;
     if (type_table->st == ST_TABLE) {
       val = reinterpret_cast<const Table *>(obj)->GetAddressOf(
-              FieldIndexToOffset(static_cast<voffset_t>(i)));
+          FieldIndexToOffset(static_cast<voffset_t>(i)));
     } else {
       val = obj + type_table->values[i];
     }
@@ -310,24 +308,30 @@ struct ToStringVisitor : public IterationVisitor {
              const char *name, const uint8_t *val) {
     if (!val) return;
     if (set_idx) s += ", ";
-    if (name) { s += name; s += ": "; }
+    if (name) {
+      s += name;
+      s += ": ";
+    }
   }
-  template<typename T> void Named(T x, const char *name) {
-    if (name) s+= name;
-    else s+= NumToString(x);
+  template <typename T>
+  void Named(T x, const char *name) {
+    if (name)
+      s += name;
+    else
+      s += NumToString(x);
   }
   void UType(uint8_t x, const char *name) { Named(x, name); }
-  void Bool(bool x) { s+= x ? "true" : "false"; }
+  void Bool(bool x) { s += x ? "true" : "false"; }
   void Char(int8_t x, const char *name) { Named(x, name); }
   void UChar(uint8_t x, const char *name) { Named(x, name); }
   void Short(int16_t x, const char *name) { Named(x, name); }
   void UShort(uint16_t x, const char *name) { Named(x, name); }
   void Int(int32_t x, const char *name) { Named(x, name); }
   void UInt(uint32_t x, const char *name) { Named(x, name); }
-  void Long(int64_t x) { s+= NumToString(x); }
-  void ULong(uint64_t x) { s+= NumToString(x); }
-  void Float(float x) { s+= NumToString(x); }
-  void Double(double x) { s+= NumToString(x); }
+  void Long(int64_t x) { s += NumToString(x); }
+  void ULong(uint64_t x) { s += NumToString(x); }
+  void Float(float x) { s += NumToString(x); }
+  void Double(double x) { s += NumToString(x); }
   void String(const struct String *str) {
     EscapeString(str->c_str(), str->size(), &s, true);
   }

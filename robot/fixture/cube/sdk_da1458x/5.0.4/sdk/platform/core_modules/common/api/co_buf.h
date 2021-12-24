@@ -24,25 +24,24 @@
  ****************************************************************************************
  */
 
-
 /*
  * INCLUDE FILES
  ****************************************************************************************
  */
-#include <stdlib.h>         // standard lib definitions
-#include <stdint.h>         // standard integer
-#include "rwip_config.h"    // stack configuration
-#include "co_list.h"        // common list definition
-#include "co_bt.h"          // common bt definitions
+#include <stdint.h>  // standard integer
+#include <stdlib.h>  // standard lib definitions
+
+#include "co_bt.h"        // common bt definitions
+#include "co_list.h"      // common list definition
+#include "rwip_config.h"  // stack configuration
 
 /*
  * DEFINES
  ****************************************************************************************
  */
- 
-/// Invalid RX handle
-#define CO_BUF_RX_INVALID   0xFF
 
+/// Invalid RX handle
+#define CO_BUF_RX_INVALID 0xFF
 
 /*
  * TYPE DEFINITIONS
@@ -51,93 +50,87 @@
 
 #if (BLE_EMB_PRESENT)
 /// Rx buffer tag
-struct co_buf_rx_desc
-{
-    /// rx pointer
-    uint16_t rxptr;
-    /// status
-    uint16_t rxstatus;
-    /// rx header
-    uint16_t rxheader;
-    /// rx chass
-    uint16_t rxchass;
-    /// data
-    uint8_t data[38];
+struct co_buf_rx_desc {
+  /// rx pointer
+  uint16_t rxptr;
+  /// status
+  uint16_t rxstatus;
+  /// rx header
+  uint16_t rxheader;
+  /// rx chass
+  uint16_t rxchass;
+  /// data
+  uint8_t data[38];
 };
 #elif (BLE_HOST_PRESENT)
 /// Rx buffer tag
-struct co_buf_rx_desc
-{
-    bool used;
-    uint8_t *data;
+struct co_buf_rx_desc {
+  bool used;
+  uint8_t *data;
 };
-#endif //BLE_EMB_PRESENT / BLE_HOST_PRESENT
+#endif  // BLE_EMB_PRESENT / BLE_HOST_PRESENT
 
 #if (BLE_EMB_PRESENT || BLE_HOST_PRESENT)
 /// Tx desc tag
-struct co_buf_tx_desc
-{
-    /// tx pointer
-    uint16_t txptr;
-    /// tx header
-    uint16_t txheader;
-    /// data
-    uint8_t data[38];
+struct co_buf_tx_desc {
+  /// tx pointer
+  uint16_t txptr;
+  /// tx header
+  uint16_t txheader;
+  /// data
+  uint8_t data[38];
 };
 /// Tx buffer tag
-struct co_buf_tx_node
-{
-    struct co_list_hdr hdr;
-    uint16_t idx;
+struct co_buf_tx_node {
+  struct co_list_hdr hdr;
+  uint16_t idx;
 };
-#endif //BLE_EMB_PRESENT || BLE_HOST_PRESENT
+#endif  // BLE_EMB_PRESENT || BLE_HOST_PRESENT
 
 #if (BLE_EMB_PRESENT)
 /// Common buffer management environment
-struct co_buf_env_tag
-{
-    /// List of free TX descriptors
-    struct co_list tx_free;
-    /// Array of TX descriptors (SW tag)
-    struct co_buf_tx_node tx_node[BLE_TX_BUFFER_CNT];
-    /// Pointer to TX descriptors
-    struct co_buf_tx_desc *tx_desc;
-    /// Pointer to TX descriptors
-    struct co_buf_rx_desc *rx_desc;
-    /// Index of the current RX buffer
-    uint8_t rx_current;
+struct co_buf_env_tag {
+  /// List of free TX descriptors
+  struct co_list tx_free;
+  /// Array of TX descriptors (SW tag)
+  struct co_buf_tx_node tx_node[BLE_TX_BUFFER_CNT];
+  /// Pointer to TX descriptors
+  struct co_buf_tx_desc *tx_desc;
+  /// Pointer to TX descriptors
+  struct co_buf_rx_desc *rx_desc;
+  /// Index of the current RX buffer
+  uint8_t rx_current;
 };
 #elif (BLE_HOST_PRESENT)
 /// Common buffer management environment
-struct co_buf_env_tag
-{
-    /// List of free TX descriptors
-    struct co_list tx_free;
-    /// Array of TX descriptors (SW tag)
-    struct co_buf_tx_node tx_node[BLE_TX_BUFFER_CNT];
-    /// Array of TX descriptors
-    struct co_buf_tx_desc tx_desc[BLE_TX_BUFFER_CNT];
-    /// Array of RX descriptors
-    struct co_buf_rx_desc rx_desc[BLE_RX_BUFFER_CNT];
-    /// Index of the current RX buffer
-    uint8_t rx_current;
+struct co_buf_env_tag {
+  /// List of free TX descriptors
+  struct co_list tx_free;
+  /// Array of TX descriptors (SW tag)
+  struct co_buf_tx_node tx_node[BLE_TX_BUFFER_CNT];
+  /// Array of TX descriptors
+  struct co_buf_tx_desc tx_desc[BLE_TX_BUFFER_CNT];
+  /// Array of RX descriptors
+  struct co_buf_rx_desc rx_desc[BLE_RX_BUFFER_CNT];
+  /// Index of the current RX buffer
+  uint8_t rx_current;
 };
-#endif //BLE_EMB_PRESENT / BLE_HOST_PRESENT
+#endif  // BLE_EMB_PRESENT / BLE_HOST_PRESENT
 
 /*
  * GLOBAL VARIABLE DECLARATIONS
  ****************************************************************************************
  */
- 
+
 #if (BLE_EMB_PRESENT || BLE_HOST_PRESENT)
 extern struct co_buf_env_tag co_buf_env;
-#endif //BLE_EMB_PRESENT || BLE_HOST_PRESENT
+#endif  // BLE_EMB_PRESENT || BLE_HOST_PRESENT
 
 /*
  * FUNCTION DECLARATIONS
  ****************************************************************************************
  */
- 
+
 /**
  ****************************************************************************************
  * @brief Initialize all the buffer pools.
@@ -166,10 +159,9 @@ void co_buf_rx_free(uint8_t hdl);
  *
  ****************************************************************************************
  */
-__INLINE struct co_buf_tx_desc *co_buf_tx_desc_get(uint16_t idx)
-{
-    // Pop a descriptor from the TX free list
-    return(&co_buf_env.tx_desc[idx]);
+__INLINE struct co_buf_tx_desc *co_buf_tx_desc_get(uint16_t idx) {
+  // Pop a descriptor from the TX free list
+  return (&co_buf_env.tx_desc[idx]);
 }
 
 /**
@@ -180,28 +172,24 @@ __INLINE struct co_buf_tx_desc *co_buf_tx_desc_get(uint16_t idx)
  *
  ****************************************************************************************
  */
-__INLINE struct co_buf_tx_node *co_buf_tx_node_get(uint16_t idx)
-{
-    // Pop a descriptor from the TX free list
-    return(&co_buf_env.tx_node[idx]);
+__INLINE struct co_buf_tx_node *co_buf_tx_node_get(uint16_t idx) {
+  // Pop a descriptor from the TX free list
+  return (&co_buf_env.tx_node[idx]);
 }
-
 
 /**
  ****************************************************************************************
  * @brief Allocation of a TX data buffer
  *
- * @return The pointer to the TX descriptor corresponding to the allocated buffer, NULL if
- *         no buffers are available anymore.
+ * @return The pointer to the TX descriptor corresponding to the allocated
+ *buffer, NULL if no buffers are available anymore.
  *
  ****************************************************************************************
  */
-__INLINE struct co_buf_tx_node *co_buf_tx_alloc(void)
-{
-    // Pop a descriptor from the TX free list
-    return((struct co_buf_tx_node *)co_list_pop_front(&co_buf_env.tx_free));
+__INLINE struct co_buf_tx_node *co_buf_tx_alloc(void) {
+  // Pop a descriptor from the TX free list
+  return ((struct co_buf_tx_node *)co_list_pop_front(&co_buf_env.tx_free));
 }
-
 
 /**
  ****************************************************************************************
@@ -209,10 +197,7 @@ __INLINE struct co_buf_tx_node *co_buf_tx_alloc(void)
  *
  ****************************************************************************************
  */
-__INLINE uint8_t co_buf_rx_current_get(void)
-{
-    return (co_buf_env.rx_current);
-}
+__INLINE uint8_t co_buf_rx_current_get(void) { return (co_buf_env.rx_current); }
 
 /**
  ****************************************************************************************
@@ -222,9 +207,8 @@ __INLINE uint8_t co_buf_rx_current_get(void)
  *
  ****************************************************************************************
  */
-__INLINE void co_buf_rx_current_set(uint8_t hdl)
-{
-    co_buf_env.rx_current = hdl;
+__INLINE void co_buf_rx_current_set(uint8_t hdl) {
+  co_buf_env.rx_current = hdl;
 }
 
 /**
@@ -235,9 +219,8 @@ __INLINE void co_buf_rx_current_set(uint8_t hdl)
  *
  ****************************************************************************************
  */
-__INLINE uint8_t co_buf_rx_next(uint8_t hdl)
-{
-    return ((hdl + 1) % BLE_RX_BUFFER_CNT);
+__INLINE uint8_t co_buf_rx_next(uint8_t hdl) {
+  return ((hdl + 1) % BLE_RX_BUFFER_CNT);
 }
 
 /**
@@ -248,11 +231,9 @@ __INLINE uint8_t co_buf_rx_next(uint8_t hdl)
  *
  ****************************************************************************************
  */
-__INLINE struct co_buf_rx_desc *co_buf_rx_get(uint8_t hdl)
-{
-    return (&co_buf_env.rx_desc[hdl]);
+__INLINE struct co_buf_rx_desc *co_buf_rx_get(uint8_t hdl) {
+  return (&co_buf_env.rx_desc[hdl]);
 }
-
 
 /**
  ****************************************************************************************
@@ -262,15 +243,13 @@ __INLINE struct co_buf_rx_desc *co_buf_rx_get(uint8_t hdl)
  *
  ****************************************************************************************
  */
-__INLINE void co_buf_tx_free(struct co_buf_tx_node *buf)
-{
-    // Push back the buffer in the TX free list
-    co_list_push_back(&co_buf_env.tx_free, &buf->hdr);
+__INLINE void co_buf_tx_free(struct co_buf_tx_node *buf) {
+  // Push back the buffer in the TX free list
+  co_list_push_back(&co_buf_env.tx_free, &buf->hdr);
 }
 
-#endif //BLE_EMB_PRESENT || BLE_HOST_PRESENT
-
+#endif  // BLE_EMB_PRESENT || BLE_HOST_PRESENT
 
 /// @} CO_BUF
 
-#endif // CO_BUF_H_
+#endif  // CO_BUF_H_

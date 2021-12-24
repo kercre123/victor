@@ -10,11 +10,13 @@
  *
  **/
 
+#include "switchboardd/keyExchange.h"
+
 #include <random>
+
+#include "auto-test/autoTest.h"
 #include "switchboardd/log.h"
 #include "util/fileUtils/fileUtils.h"
-#include "auto-test/autoTest.h"
-#include "switchboardd/keyExchange.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -44,35 +46,42 @@ bool KeyExchange::ValidateKeys(uint8_t* publicKey, uint8_t* privateKey) {
   // generate fake key pair
   crypto_kx_keypair(remotePub, remotePriv);
 
-  int serverStatus = crypto_kx_server_session_keys(decryptServer, encryptServer, publicKey, privateKey, remotePub);
-  int clientStatus = crypto_kx_client_session_keys(decryptClient, encryptClient, remotePub, remotePriv, publicKey);
+  int serverStatus = crypto_kx_server_session_keys(
+      decryptServer, encryptServer, publicKey, privateKey, remotePub);
+  int clientStatus = crypto_kx_client_session_keys(
+      decryptClient, encryptClient, remotePub, remotePriv, publicKey);
 
-  if(serverStatus != 0 || clientStatus != 0) {
+  if (serverStatus != 0 || clientStatus != 0) {
     return false;
   }
 
-  return (memcmp(decryptServer, encryptClient, crypto_kx_SESSIONKEYBYTES) == 0) &&
-    (memcmp(decryptClient, encryptServer, crypto_kx_SESSIONKEYBYTES) == 0);
+  return (memcmp(decryptServer, encryptClient, crypto_kx_SESSIONKEYBYTES) ==
+          0) &&
+         (memcmp(decryptClient, encryptServer, crypto_kx_SESSIONKEYBYTES) == 0);
 }
 
 std::string KeyExchange::GeneratePin() const {
-  std::string pin { "" };
+  std::string pin{""};
 
-  if(AutoTest::IsAutoTestBot()) {
+  if (AutoTest::IsAutoTestBot()) {
     Log::Write("Test pin file exists.");
     // Check if pin file exists--if so, use
     // as pin instead of randomly generated
-    
-    std::vector<uint8_t> pinBytes = Anki::Util::FileUtils::ReadFileAsBinary(AutoTest::kTestPinFilePath, 0, _numPinDigits);
-    
-    if(pinBytes.size() == _numPinDigits) {
+
+    std::vector<uint8_t> pinBytes = Anki::Util::FileUtils::ReadFileAsBinary(
+        AutoTest::kTestPinFilePath, 0, _numPinDigits);
+
+    if (pinBytes.size() == _numPinDigits) {
       pin = std::string((char*)pinBytes.data(), _numPinDigits);
     } else {
-      Log::Write("Error reading test pin file. File [%s] has contents of size [%d] but was expecting at least [%d] bytes.", AutoTest::kTestPinFilePath.c_str(), pinBytes.size(), _numPinDigits);
+      Log::Write(
+          "Error reading test pin file. File [%s] has contents of size [%d] "
+          "but was expecting at least [%d] bytes.",
+          AutoTest::kTestPinFilePath.c_str(), pinBytes.size(), _numPinDigits);
     }
-  } 
+  }
 
-  if(pin.empty()) {
+  if (pin.empty()) {
     pin = GeneratePin(_numPinDigits);
   }
 
@@ -80,7 +89,7 @@ std::string KeyExchange::GeneratePin() const {
 }
 
 std::string KeyExchange::GeneratePin(int digits) const {
-  if(digits == 0) {
+  if (digits == 0) {
     return "";
   }
 
@@ -91,7 +100,7 @@ std::string KeyExchange::GeneratePin(int digits) const {
   int minValue = 1;
 
   // add _numPinDigits 0s to minValue
-  for(int i = 0; i < digits - 1; i++) {
+  for (int i = 0; i < digits - 1; i++) {
     minValue *= 10;
   }
 
@@ -114,25 +123,28 @@ bool KeyExchange::CalculateSharedKeysServer(const uint8_t* pin) {
   // server_tx (encryptKey) needs to be sha-256'ed
   // client_rx (client's decrypt key) needs to be sha-256'ed
   //
-  bool success = crypto_kx_server_session_keys(
-    _decryptKey, _encryptKey, _publicKey, _secretKey, _remotePublicKey) == 0;
-  
-  // Save tmp version of encryptKey
-  std::vector<uint8_t> tmpEncryptKey(_encryptKey, _encryptKey + sizeof(_encryptKey));
+  bool success =
+      crypto_kx_server_session_keys(_decryptKey, _encryptKey, _publicKey,
+                                    _secretKey, _remotePublicKey) == 0;
 
   // Save tmp version of encryptKey
-  std::vector<uint8_t> tmpDecryptKey(_decryptKey, _decryptKey + sizeof(_decryptKey));
-  
+  std::vector<uint8_t> tmpEncryptKey(_encryptKey,
+                                     _encryptKey + sizeof(_encryptKey));
+
+  // Save tmp version of encryptKey
+  std::vector<uint8_t> tmpDecryptKey(_decryptKey,
+                                     _decryptKey + sizeof(_decryptKey));
+
   // Hash mix of pin and encryptKey to form new encryptKey
-  crypto_generichash(_encryptKey, crypto_kx_SESSIONKEYBYTES, 
-    tmpEncryptKey.data(), crypto_kx_SESSIONKEYBYTES, 
-    pin, _numPinDigits);
+  crypto_generichash(_encryptKey, crypto_kx_SESSIONKEYBYTES,
+                     tmpEncryptKey.data(), crypto_kx_SESSIONKEYBYTES, pin,
+                     _numPinDigits);
 
   // Hash mix of pin and decryptKey to form new decryptKey
-  crypto_generichash(_decryptKey, crypto_kx_SESSIONKEYBYTES, 
-    tmpDecryptKey.data(), crypto_kx_SESSIONKEYBYTES, 
-    pin, _numPinDigits);
-  
+  crypto_generichash(_decryptKey, crypto_kx_SESSIONKEYBYTES,
+                     tmpDecryptKey.data(), crypto_kx_SESSIONKEYBYTES, pin,
+                     _numPinDigits);
+
   return success;
 }
 
@@ -143,27 +155,30 @@ bool KeyExchange::CalculateSharedKeysClient(const uint8_t* pin) {
   // server_tx (encryptKey) needs to be sha-256'ed
   // client_rx (client's decrypt key) needs to be sha-256'ed
   //
-  bool success = crypto_kx_client_session_keys(
-    _decryptKey, _encryptKey, _publicKey, _secretKey, _remotePublicKey) == 0;
-  
-  // Save tmp version of encryptKey
-  std::vector<uint8_t> tmpEncryptKey(_encryptKey, _encryptKey + sizeof(_encryptKey));
+  bool success =
+      crypto_kx_client_session_keys(_decryptKey, _encryptKey, _publicKey,
+                                    _secretKey, _remotePublicKey) == 0;
 
   // Save tmp version of encryptKey
-  std::vector<uint8_t> tmpDecryptKey(_decryptKey, _decryptKey + sizeof(_decryptKey));
-  
+  std::vector<uint8_t> tmpEncryptKey(_encryptKey,
+                                     _encryptKey + sizeof(_encryptKey));
+
+  // Save tmp version of encryptKey
+  std::vector<uint8_t> tmpDecryptKey(_decryptKey,
+                                     _decryptKey + sizeof(_decryptKey));
+
   // Hash mix of pin and encryptKey to form new encryptKey
-  crypto_generichash(_encryptKey, crypto_kx_SESSIONKEYBYTES, 
-    tmpEncryptKey.data(), crypto_kx_SESSIONKEYBYTES, 
-    pin, _numPinDigits);
+  crypto_generichash(_encryptKey, crypto_kx_SESSIONKEYBYTES,
+                     tmpEncryptKey.data(), crypto_kx_SESSIONKEYBYTES, pin,
+                     _numPinDigits);
 
   // Hash mix of pin and decryptKey to form new decryptKey
-  crypto_generichash(_decryptKey, crypto_kx_SESSIONKEYBYTES, 
-    tmpDecryptKey.data(), crypto_kx_SESSIONKEYBYTES, 
-    pin, _numPinDigits);
-  
+  crypto_generichash(_decryptKey, crypto_kx_SESSIONKEYBYTES,
+                     tmpDecryptKey.data(), crypto_kx_SESSIONKEYBYTES, pin,
+                     _numPinDigits);
+
   return success;
 }
 
-} // Switchboard
-} // Anki
+}  // namespace Switchboard
+}  // namespace Anki

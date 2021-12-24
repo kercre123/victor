@@ -21,10 +21,8 @@ namespace Anki {
 namespace Util {
 #endif
 
-bool IsMessageTypeAlwaysSentUnreliably(EReliableMessageType messageType)
-{
-  switch(messageType)
-  {
+bool IsMessageTypeAlwaysSentUnreliably(EReliableMessageType messageType) {
+  switch (messageType) {
     case eRMT_SingleUnreliableMessage:
     case eRMT_MultipleReliableMessages:
     case eRMT_MultipleUnreliableMessages:
@@ -37,11 +35,8 @@ bool IsMessageTypeAlwaysSentUnreliably(EReliableMessageType messageType)
   }
 }
 
-
-bool IsMutlipleMessagesType(EReliableMessageType messageType)
-{
-  switch(messageType)
-  {
+bool IsMutlipleMessagesType(EReliableMessageType messageType) {
+  switch (messageType) {
     case eRMT_MultipleReliableMessages:
     case eRMT_MultipleUnreliableMessages:
     case eRMT_MultipleMixedMessages:
@@ -50,41 +45,49 @@ bool IsMutlipleMessagesType(EReliableMessageType messageType)
       return false;
   }
 }
-  
-  
-const char* ReliableMessageTypeToString(EReliableMessageType messageType)
-{
+
+const char* ReliableMessageTypeToString(EReliableMessageType messageType) {
 #ifdef NDEBUG
   return "";
-#else // NDEBUG
-  switch(messageType)
-  {
-    case eRMT_Invalid:                      break;
-    case eRMT_ConnectionRequest:            return "ConnRequest";
-    case eRMT_ConnectionResponse:           return "ConnResponse";
-    case eRMT_DisconnectRequest:            return "DisconnRequest";
-    case eRMT_SingleReliableMessage:        return "SingleReliable";
-    case eRMT_SingleUnreliableMessage:      return "SingleUnreliable";
-    case eRMT_MultiPartMessage:             return "MultiPartMessage";
-    case eRMT_MultipleReliableMessages:     return "MultipleReliableMessages";
-    case eRMT_MultipleUnreliableMessages:   return "MultipleUnreliableMessage";
-    case eRMT_MultipleMixedMessages:        return "MultipleMixedMessages";
-    case eRMT_ACK:                          return "ACK";
-    case eRMT_Ping:                         return "Ping";
-    case eRMT_Count:                        break;
+#else   // NDEBUG
+  switch (messageType) {
+    case eRMT_Invalid:
+      break;
+    case eRMT_ConnectionRequest:
+      return "ConnRequest";
+    case eRMT_ConnectionResponse:
+      return "ConnResponse";
+    case eRMT_DisconnectRequest:
+      return "DisconnRequest";
+    case eRMT_SingleReliableMessage:
+      return "SingleReliable";
+    case eRMT_SingleUnreliableMessage:
+      return "SingleUnreliable";
+    case eRMT_MultiPartMessage:
+      return "MultiPartMessage";
+    case eRMT_MultipleReliableMessages:
+      return "MultipleReliableMessages";
+    case eRMT_MultipleUnreliableMessages:
+      return "MultipleUnreliableMessage";
+    case eRMT_MultipleMixedMessages:
+      return "MultipleMixedMessages";
+    case eRMT_ACK:
+      return "ACK";
+    case eRMT_Ping:
+      return "Ping";
+    case eRMT_Count:
+      break;
   }
-  
+
   return "Invalid";
-#endif // NDEBUG
+#endif  // NDEBUG
 }
-  
-bool IsValidMessageType(EReliableMessageType messageType)
-{
+
+bool IsValidMessageType(EReliableMessageType messageType) {
   return messageType > eRMT_Invalid && messageType < eRMT_Count;
 }
 
-
 #ifdef __cplusplus
-} // end namespace Util
-} // end namespace Anki
+}  // end namespace Util
+}  // end namespace Anki
 #endif

@@ -5,6 +5,4 @@
 
 //#define REG_CLKRST_BASE_ADDR 0x10000000
 
-
-#endif // __REG_CLKRST_H_
-
+#endif  // __REG_CLKRST_H_

@@ -24,52 +24,59 @@ namespace alexaClientSDK {
 namespace capabilityAgents {
 namespace playbackController {
 
-class PlaybackRouter
-        : public avsCommon::sdkInterfaces::PlaybackRouterInterface
-        , public avsCommon::utils::RequiresShutdown
-        , public std::enable_shared_from_this<PlaybackRouter> {
-public:
-    /**
-     * Create an instance of @ PlaybackRouter.
-     *
-     * @param defaultHandler The default playback handler.
-     * @return A @c std::shared_ptr to the new @ PlaybackRouter instance.
-     */
-    static std::shared_ptr<PlaybackRouter> create(
-        std::shared_ptr<avsCommon::sdkInterfaces::PlaybackHandlerInterface> defaultHandler);
+class PlaybackRouter : public avsCommon::sdkInterfaces::PlaybackRouterInterface,
+                       public avsCommon::utils::RequiresShutdown,
+                       public std::enable_shared_from_this<PlaybackRouter> {
+ public:
+  /**
+   * Create an instance of @ PlaybackRouter.
+   *
+   * @param defaultHandler The default playback handler.
+   * @return A @c std::shared_ptr to the new @ PlaybackRouter instance.
+   */
+  static std::shared_ptr<PlaybackRouter> create(
+      std::shared_ptr<avsCommon::sdkInterfaces::PlaybackHandlerInterface>
+          defaultHandler);
 
-    /**
-     * Destructor.
-     */
-    virtual ~PlaybackRouter() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~PlaybackRouter() = default;
 
-    /// @name @c PlaybackRouterInterface functions.
-    /// @{
-    virtual void buttonPressed(avsCommon::avs::PlaybackButton button) override;
-    virtual void togglePressed(avsCommon::avs::PlaybackToggle toggle, bool action) override;
-    virtual void setHandler(std::shared_ptr<avsCommon::sdkInterfaces::PlaybackHandlerInterface> handler) override;
-    virtual void switchToDefaultHandler() override;
-    /// @}
+  /// @name @c PlaybackRouterInterface functions.
+  /// @{
+  virtual void buttonPressed(avsCommon::avs::PlaybackButton button) override;
+  virtual void togglePressed(avsCommon::avs::PlaybackToggle toggle,
+                             bool action) override;
+  virtual void setHandler(
+      std::shared_ptr<avsCommon::sdkInterfaces::PlaybackHandlerInterface>
+          handler) override;
+  virtual void switchToDefaultHandler() override;
+  /// @}
 
-private:
-    /**
-     * Constructor.
-     */
-    PlaybackRouter(std::shared_ptr<avsCommon::sdkInterfaces::PlaybackHandlerInterface> defaultHandler);
+ private:
+  /**
+   * Constructor.
+   */
+  PlaybackRouter(
+      std::shared_ptr<avsCommon::sdkInterfaces::PlaybackHandlerInterface>
+          defaultHandler);
 
-    /// @name RequiresShutdown Functions
-    /// @{
-    void doShutdown() override;
-    /// @}
+  /// @name RequiresShutdown Functions
+  /// @{
+  void doShutdown() override;
+  /// @}
 
-    /// The active button press handler.
-    std::shared_ptr<avsCommon::sdkInterfaces::PlaybackHandlerInterface> m_handler;
+  /// The active button press handler.
+  std::shared_ptr<avsCommon::sdkInterfaces::PlaybackHandlerInterface> m_handler;
 
-    /// The default handler to be used after @c switchToDefaultHandler has been called.
-    std::shared_ptr<avsCommon::sdkInterfaces::PlaybackHandlerInterface> m_defaultHandler;
+  /// The default handler to be used after @c switchToDefaultHandler has been
+  /// called.
+  std::shared_ptr<avsCommon::sdkInterfaces::PlaybackHandlerInterface>
+      m_defaultHandler;
 
-    /// Mutex protecting the observer pointer.
-    std::mutex m_handlerMutex;
+  /// Mutex protecting the observer pointer.
+  std::mutex m_handlerMutex;
 };
 
 }  // namespace playbackController

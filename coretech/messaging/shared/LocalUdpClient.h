@@ -10,15 +10,13 @@
  * Copyright: Anki, inc. 2017
  *
  */
-#include <string>
-
 #include <sys/socket.h>
 #include <sys/un.h>
 
-class LocalUdpClient
-{
-public:
+#include <string>
 
+class LocalUdpClient {
+ public:
   LocalUdpClient(int sndbufsz, int rcvbufsz);
   LocalUdpClient();
 
@@ -40,7 +38,7 @@ public:
   // Return count of bytes queued for write or -1 on error
   ssize_t GetOutgoingSize() const;
 
-private:
+ private:
   // Socket parameters
   int _sndbufsz;
   int _rcvbufsz;
@@ -58,7 +56,6 @@ private:
 
   struct sockaddr_un _peeraddr;
   socklen_t _peeraddr_len;
-
 };
 
 #endif

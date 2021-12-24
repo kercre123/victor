@@ -5,10 +5,10 @@
 *
 * @brief Header file for queues and threads definitions.
 *
-* Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer 
- * program includes Confidential, Proprietary Information and is a Trade Secret of 
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
- * unless authorized in writing. All Rights Reserved.
+* Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer
+* program includes Confidential, Proprietary Information and is a Trade Secret
+*of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+*prohibited unless authorized in writing. All Rights Reserved.
 *
 * <bluetooth.support@diasemi.com> and contributors.
 *
@@ -20,13 +20,11 @@
 
 #include <conio.h>
 #include <process.h>
+#include <stddef.h>  // standard definition
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <stdio.h>
 #include <windows.h>
-#include <process.h>
-#include <stddef.h>     // standard definition
-
 
 // Queue stuff.
 struct QueueStorage {
@@ -35,9 +33,8 @@ struct QueueStorage {
 };
 
 typedef struct {
-  struct QueueStorage *First,*Last;
+  struct QueueStorage *First, *Last;
 } QueueRecord;
-
 
 typedef struct {
   unsigned char payload_type;
@@ -45,22 +42,20 @@ typedef struct {
   unsigned char *payload;
 } QueueElement;
 
-
 // Used to stop the tasks.
 extern BOOL StopRxTask;
 
-extern HANDLE UARTRxQueueSem; // mutex semaphore to protect RX queue
+extern HANDLE UARTRxQueueSem;  // mutex semaphore to protect RX queue
 
 extern HANDLE Rx232Id;  // Thread handles
 
-extern QueueRecord UARTRxQueue; // UART Rx queue
+extern QueueRecord UARTRxQueue;  // UART Rx queue
 
-extern HANDLE QueueHasAvailableData; // set when the UART Rx queue is not empty
+extern HANDLE QueueHasAvailableData;  // set when the UART Rx queue is not empty
 
-void EnQueue(QueueRecord *rec,void *vdata);
+void EnQueue(QueueRecord *rec, void *vdata);
 void *DeQueue(QueueRecord *rec);
 
 void InitTasks(void);
 
-
-#endif //QUEUE_H_
+#endif  // QUEUE_H_

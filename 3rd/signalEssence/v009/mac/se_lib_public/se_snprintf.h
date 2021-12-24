@@ -1,9 +1,9 @@
 #ifdef __cplusplus
 extern "C" {
-#endif // __cplusplus
+#endif  // __cplusplus
 
 /*-----------------------------------------------------------
- (C) Copyright 2014 Signal Essence LLC; All Rights Reserved 
+ (C) Copyright 2014 Signal Essence LLC; All Rights Reserved
 
 Module Name  - se_snprintf.h
 
@@ -19,7 +19,6 @@ Machine/Compiler: ANSI C
 
 #include <stdlib.h>
 
-
 #ifdef _MSC_VER
 //
 // ms visual studio doesn't support snprintf,
@@ -32,9 +31,9 @@ int se_snprintf_msvc_hack(char* str, size_t size, const char* format, ...);
 // use stdlib version
 #define se_snprintf snprintf
 
-#endif // _msc_ver
+#endif  // _msc_ver
 
-#endif // se_snprintf_h
+#endif  // se_snprintf_h
 
 #ifdef __cplusplus
 }

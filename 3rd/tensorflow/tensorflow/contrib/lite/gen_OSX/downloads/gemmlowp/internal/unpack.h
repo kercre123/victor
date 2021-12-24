@@ -18,12 +18,12 @@
 #ifndef GEMMLOWP_INTERNAL_UNPACK_H_
 #define GEMMLOWP_INTERNAL_UNPACK_H_
 
+#include <cmath>
+
 #include "allocator.h"
 #include "block_params.h"
 #include "output.h"
 #include "pack.h"
-
-#include <cmath>
 
 namespace gemmlowp {
 

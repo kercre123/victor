@@ -169,7 +169,8 @@ class EventCount {
 
   class Waiter {
     friend class EventCount;
-    // Align to 128 byte boundary to prevent false sharing with other Waiter objects in the same vector.
+    // Align to 128 byte boundary to prevent false sharing with other Waiter
+    // objects in the same vector.
     EIGEN_ALIGN_TO_BOUNDARY(128) std::atomic<Waiter*> next;
     std::mutex mu;
     std::condition_variable cv;

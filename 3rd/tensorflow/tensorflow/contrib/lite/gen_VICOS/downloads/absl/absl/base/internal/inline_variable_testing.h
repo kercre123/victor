@@ -30,7 +30,7 @@ ABSL_INTERNAL_INLINE_CONSTEXPR(Foo, other_inline_variable_foo, {});
 ABSL_INTERNAL_INLINE_CONSTEXPR(int, inline_variable_int, 5);
 ABSL_INTERNAL_INLINE_CONSTEXPR(int, other_inline_variable_int, 5);
 
-ABSL_INTERNAL_INLINE_CONSTEXPR(void(*)(), inline_variable_fun_ptr, nullptr);
+ABSL_INTERNAL_INLINE_CONSTEXPR(void (*)(), inline_variable_fun_ptr, nullptr);
 
 const Foo& get_foo_a();
 const Foo& get_foo_b();

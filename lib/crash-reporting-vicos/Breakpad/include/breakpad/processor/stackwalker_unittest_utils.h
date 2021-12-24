@@ -38,6 +38,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+
 #include <string>
 #include <vector>
 
@@ -50,9 +51,9 @@
 #include "google_breakpad/processor/system_info.h"
 #include "processor/linked_ptr.h"
 
-class MockMemoryRegion: public google_breakpad::MemoryRegion {
+class MockMemoryRegion : public google_breakpad::MemoryRegion {
  public:
-  MockMemoryRegion(): base_address_(0) { }
+  MockMemoryRegion() : base_address_(0) {}
 
   // Set this region's address and contents. If we have placed an
   // instance of this class in a test fixture class, individual tests
@@ -65,7 +66,7 @@ class MockMemoryRegion: public google_breakpad::MemoryRegion {
   uint64_t GetBase() const { return base_address_; }
   uint32_t GetSize() const { return contents_.size(); }
 
-  bool GetMemoryAtAddress(uint64_t address, uint8_t  *value) const {
+  bool GetMemoryAtAddress(uint64_t address, uint8_t *value) const {
     return GetMemoryLittleEndian(address, value);
   }
   bool GetMemoryAtAddress(uint64_t address, uint16_t *value) const {
@@ -77,14 +78,12 @@ class MockMemoryRegion: public google_breakpad::MemoryRegion {
   bool GetMemoryAtAddress(uint64_t address, uint64_t *value) const {
     return GetMemoryLittleEndian(address, value);
   }
-  void Print() const {
-    assert(false);
-  }
+  void Print() const { assert(false); }
 
  private:
   // Fetch a little-endian value from ADDRESS in contents_ whose size
   // is BYTES, and store it in *VALUE. Return true on success.
-  template<typename ValueType>
+  template <typename ValueType>
   bool GetMemoryLittleEndian(uint64_t address, ValueType *value) const {
     if (address < base_address_ ||
         address - base_address_ + sizeof(ValueType) > contents_.size())
@@ -102,21 +101,21 @@ class MockMemoryRegion: public google_breakpad::MemoryRegion {
   string contents_;
 };
 
-class MockCodeModule: public google_breakpad::CodeModule {
+class MockCodeModule : public google_breakpad::CodeModule {
  public:
-  MockCodeModule(uint64_t base_address, uint64_t size,
-                 const string &code_file, const string &version)
-      : base_address_(base_address), size_(size), code_file_(code_file) { }
+  MockCodeModule(uint64_t base_address, uint64_t size, const string &code_file,
+                 const string &version)
+      : base_address_(base_address), size_(size), code_file_(code_file) {}
 
-  uint64_t base_address()       const { return base_address_; }
-  uint64_t size()               const { return size_; }
-  string code_file()        const { return code_file_; }
-  string code_identifier()  const { return code_file_; }
-  string debug_file()       const { return code_file_; }
+  uint64_t base_address() const { return base_address_; }
+  uint64_t size() const { return size_; }
+  string code_file() const { return code_file_; }
+  string code_identifier() const { return code_file_; }
+  string debug_file() const { return code_file_; }
   string debug_identifier() const { return code_file_; }
-  string version()          const { return version_; }
+  string version() const { return version_; }
   google_breakpad::CodeModule *Copy() const {
-    abort(); // Tests won't use this.
+    abort();  // Tests won't use this.
   }
   virtual bool is_unloaded() const { return false; }
   virtual uint64_t shrink_down_delta() const { return 0; }
@@ -129,20 +128,18 @@ class MockCodeModule: public google_breakpad::CodeModule {
   string version_;
 };
 
-class MockCodeModules: public google_breakpad::CodeModules {
+class MockCodeModules : public google_breakpad::CodeModules {
  public:
   typedef google_breakpad::CodeModule CodeModule;
   typedef google_breakpad::CodeModules CodeModules;
 
-  void Add(const MockCodeModule *module) {
-    modules_.push_back(module);
-  }
+  void Add(const MockCodeModule *module) { modules_.push_back(module); }
 
   unsigned int module_count() const { return modules_.size(); }
 
   const CodeModule *GetModuleForAddress(uint64_t address) const {
-    for (ModuleVector::const_iterator i = modules_.begin();
-         i != modules_.end(); i++) {
+    for (ModuleVector::const_iterator i = modules_.begin(); i != modules_.end();
+         i++) {
       const MockCodeModule *module = *i;
       if (module->base_address() <= address &&
           address - module->base_address() < module->size())
@@ -169,36 +166,33 @@ class MockCodeModules: public google_breakpad::CodeModules {
   }
 
   // Returns true, if module address range shrink is enabled.
-  bool IsModuleShrinkEnabled() const {
-    return false;
-  }
+  bool IsModuleShrinkEnabled() const { return false; }
 
  private:
   typedef std::vector<const MockCodeModule *> ModuleVector;
   ModuleVector modules_;
 };
 
-class MockSymbolSupplier: public google_breakpad::SymbolSupplier {
+class MockSymbolSupplier : public google_breakpad::SymbolSupplier {
  public:
   typedef google_breakpad::CodeModule CodeModule;
   typedef google_breakpad::SystemInfo SystemInfo;
   MOCK_METHOD3(GetSymbolFile, SymbolResult(const CodeModule *module,
                                            const SystemInfo *system_info,
                                            string *symbol_file));
-  MOCK_METHOD4(GetSymbolFile, SymbolResult(const CodeModule *module,
-                                           const SystemInfo *system_info,
-                                           string *symbol_file,
-                                           string *symbol_data));
-  MOCK_METHOD5(GetCStringSymbolData, SymbolResult(const CodeModule *module,
-                                                  const SystemInfo *system_info,
-                                                  string *symbol_file,
-                                                  char **symbol_data,
-                                                  size_t *symbol_data_size));
+  MOCK_METHOD4(GetSymbolFile,
+               SymbolResult(const CodeModule *module,
+                            const SystemInfo *system_info, string *symbol_file,
+                            string *symbol_data));
+  MOCK_METHOD5(GetCStringSymbolData,
+               SymbolResult(const CodeModule *module,
+                            const SystemInfo *system_info, string *symbol_file,
+                            char **symbol_data, size_t *symbol_data_size));
   MOCK_METHOD1(FreeSymbolData, void(const CodeModule *module));
 
   // Copies the passed string contents into a newly allocated buffer.
   // The newly allocated buffer will be freed during destruction.
-  char* CopySymbolDataAndOwnTheCopy(const string &info,
+  char *CopySymbolDataAndOwnTheCopy(const string &info,
                                     size_t *symbol_data_size) {
     *symbol_data_size = info.size() + 1;
     char *symbol_data = new char[*symbol_data_size];
@@ -211,15 +205,15 @@ class MockSymbolSupplier: public google_breakpad::SymbolSupplier {
   virtual ~MockSymbolSupplier() {
     for (SymbolDataVector::const_iterator i = symbol_data_to_free_.begin();
          i != symbol_data_to_free_.end(); i++) {
-      char* symbol_data = *i;
-      delete [] symbol_data;
+      char *symbol_data = *i;
+      delete[] symbol_data;
     }
   }
 
  private:
   // List of symbol data to be freed upon destruction
-  typedef std::vector<char*> SymbolDataVector;
+  typedef std::vector<char *> SymbolDataVector;
   SymbolDataVector symbol_data_to_free_;
 };
 
-#endif // PROCESSOR_STACKWALKER_UNITTEST_UTILS_H_
+#endif  // PROCESSOR_STACKWALKER_UNITTEST_UTILS_H_

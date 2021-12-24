@@ -9,17 +9,16 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-
 #ifndef __Cozmo_Basestation_Util_Http_CreateHttpAdapter_H__
 #define __Cozmo_Basestation_Util_Http_CreateHttpAdapter_H__
 
 // Forward declaration:
 namespace Anki {
 namespace Util {
-  class IHttpAdapter;
-} // end namespace Vector
-} // end namespace Anki
+class IHttpAdapter;
+}  // namespace Util
+}  // end namespace Anki
 
 Anki::Util::IHttpAdapter* CreateHttpAdapter();
 
-#endif // end __Cozmo_Basestation_Util_Http_CreateHttpAdapter_H__
+#endif  // end __Cozmo_Basestation_Util_Http_CreateHttpAdapter_H__

@@ -1,11 +1,12 @@
-#include "vectors.h"
 #include "flash.h"
-#include "power.h"
 
+#include "power.h"
 #include "stm32f0xx.h"
+#include "vectors.h"
 
 static void waitForFlash(void) {
-  while (FLASH->SR & FLASH_SR_BSY) ;
+  while (FLASH->SR & FLASH_SR_BSY)
+    ;
   FLASH->SR = FLASH_SR_EOP;
 }
 
@@ -18,19 +19,17 @@ static void unlockFlash(void) {
   }
 }
 
-static void lockFlash(void) {
-  FLASH->CR |= FLASH_CR_LOCK;
-}
+static void lockFlash(void) { FLASH->CR |= FLASH_CR_LOCK; }
 
 void Flash::writeFlash(const void* targ, const void* src, int size) {
   unlockFlash();
-  
+
   FLASH->CR |= FLASH_CR_PG;
-  
-  const uint16_t* source = (const uint16_t*) src;
-  uint16_t* target = (uint16_t*) targ;
-  
-  while(size > 0) {
+
+  const uint16_t* source = (const uint16_t*)src;
+  uint16_t* target = (uint16_t*)targ;
+
+  while (size > 0) {
     *(target++) = *(source++);
     size -= sizeof(uint16_t);
     waitForFlash();
@@ -39,7 +38,7 @@ void Flash::writeFlash(const void* targ, const void* src, int size) {
     uint32_t WRPR = FLASH->WRPR;
 
     if (SR & FLASH_SR_WRPRTERR) {
-      break ;
+      break;
     }
   }
 
@@ -55,9 +54,9 @@ void Flash::eraseApplication(void) {
     uint32_t* target = (uint32_t*)(COZMO_APPLICATION_ADDRESS + i);
 
     // Erase this page
-    FLASH->AR = (uint32_t) target;
+    FLASH->AR = (uint32_t)target;
     FLASH->CR |= FLASH_CR_STRT;
-      
+
     waitForFlash();
   }
 
@@ -69,8 +68,8 @@ void Flash::eraseApplication(void) {
 void Flash::writeFaultReason(FaultType reason) {
   // Write to first available fault slot
   for (int i = 0; i < MAX_FAULT_COUNT; i++) {
-    if (APP->faultCounter[i] != FAULT_NONE) continue ;
+    if (APP->faultCounter[i] != FAULT_NONE) continue;
     writeFlash(&APP->faultCounter[i], &reason, sizeof(reason));
-    return ;
+    return;
   }
 }

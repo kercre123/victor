@@ -27,29 +27,31 @@ namespace acl {
 class HTTP2Transport;
 
 /**
- * Interface for post-connect objects which should be used to perform activities after a connection is established.
+ * Interface for post-connect objects which should be used to perform activities
+ * after a connection is established.
  */
 class PostConnectInterface {
-public:
-    /**
-     * The main method which is responsible for doing the PostConnect action
-     * of the specific PostConnect object type.
-     *
-     * @param transport The transport to which the post connect is associated..
-     *
-     * @return A boolean to indicate that the post connect process has been successfully initiated
-     */
-    virtual bool doPostConnect(std::shared_ptr<HTTP2Transport> transport) = 0;
+ public:
+  /**
+   * The main method which is responsible for doing the PostConnect action
+   * of the specific PostConnect object type.
+   *
+   * @param transport The transport to which the post connect is associated..
+   *
+   * @return A boolean to indicate that the post connect process has been
+   * successfully initiated
+   */
+  virtual bool doPostConnect(std::shared_ptr<HTTP2Transport> transport) = 0;
 
-    /**
-     * Handle notification that the connection has been lost.
-     */
-    virtual void onDisconnect() = 0;
+  /**
+   * Handle notification that the connection has been lost.
+   */
+  virtual void onDisconnect() = 0;
 
-    /**
-     * PostConnectInterface destructor
-     */
-    virtual ~PostConnectInterface() = default;
+  /**
+   * PostConnectInterface destructor
+   */
+  virtual ~PostConnectInterface() = default;
 };
 
 }  // namespace acl

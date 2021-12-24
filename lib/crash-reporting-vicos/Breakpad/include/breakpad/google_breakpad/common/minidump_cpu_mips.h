@@ -82,7 +82,7 @@ typedef struct {
   uint64_t regs[MD_FLOATINGSAVEAREA_MIPS_FPR_COUNT];
 
   uint32_t fpcsr; /* FPU status register. */
-  uint32_t fir; /* FPU implementation register. */
+  uint32_t fir;   /* FPU implementation register. */
 } MDFloatingSaveAreaMIPS;
 
 typedef struct {
@@ -122,18 +122,18 @@ typedef struct {
  * purpose.
  */
 enum MDMIPSRegisterNumbers {
-  MD_CONTEXT_MIPS_REG_S0     = 16,
-  MD_CONTEXT_MIPS_REG_S1     = 17,
-  MD_CONTEXT_MIPS_REG_S2     = 18,
-  MD_CONTEXT_MIPS_REG_S3     = 19,
-  MD_CONTEXT_MIPS_REG_S4     = 20,
-  MD_CONTEXT_MIPS_REG_S5     = 21,
-  MD_CONTEXT_MIPS_REG_S6     = 22,
-  MD_CONTEXT_MIPS_REG_S7     = 23,
-  MD_CONTEXT_MIPS_REG_GP     = 28,
-  MD_CONTEXT_MIPS_REG_SP     = 29,
-  MD_CONTEXT_MIPS_REG_FP     = 30,
-  MD_CONTEXT_MIPS_REG_RA     = 31,
+  MD_CONTEXT_MIPS_REG_S0 = 16,
+  MD_CONTEXT_MIPS_REG_S1 = 17,
+  MD_CONTEXT_MIPS_REG_S2 = 18,
+  MD_CONTEXT_MIPS_REG_S3 = 19,
+  MD_CONTEXT_MIPS_REG_S4 = 20,
+  MD_CONTEXT_MIPS_REG_S5 = 21,
+  MD_CONTEXT_MIPS_REG_S6 = 22,
+  MD_CONTEXT_MIPS_REG_S7 = 23,
+  MD_CONTEXT_MIPS_REG_GP = 28,
+  MD_CONTEXT_MIPS_REG_SP = 29,
+  MD_CONTEXT_MIPS_REG_FP = 30,
+  MD_CONTEXT_MIPS_REG_RA = 31,
 };
 
 /* For (MDRawContextMIPS).context_flags.  These values indicate the type of
@@ -144,33 +144,32 @@ enum MDMIPSRegisterNumbers {
  * are a whole parallel minidump file format for Windows CE.
  * Therefore, Breakpad defines its own value for MIPS CPUs.
  */
-#define MD_CONTEXT_MIPS  0x00040000
-#define MD_CONTEXT_MIPS_INTEGER           (MD_CONTEXT_MIPS | 0x00000002)
-#define MD_CONTEXT_MIPS_FLOATING_POINT    (MD_CONTEXT_MIPS | 0x00000004)
-#define MD_CONTEXT_MIPS_DSP               (MD_CONTEXT_MIPS | 0x00000008)
+#define MD_CONTEXT_MIPS 0x00040000
+#define MD_CONTEXT_MIPS_INTEGER (MD_CONTEXT_MIPS | 0x00000002)
+#define MD_CONTEXT_MIPS_FLOATING_POINT (MD_CONTEXT_MIPS | 0x00000004)
+#define MD_CONTEXT_MIPS_DSP (MD_CONTEXT_MIPS | 0x00000008)
 
-#define MD_CONTEXT_MIPS_FULL              (MD_CONTEXT_MIPS_INTEGER | \
-                                           MD_CONTEXT_MIPS_FLOATING_POINT | \
-                                           MD_CONTEXT_MIPS_DSP)
+#define MD_CONTEXT_MIPS_FULL                                  \
+  (MD_CONTEXT_MIPS_INTEGER | MD_CONTEXT_MIPS_FLOATING_POINT | \
+   MD_CONTEXT_MIPS_DSP)
 
-#define MD_CONTEXT_MIPS_ALL               (MD_CONTEXT_MIPS_INTEGER | \
-                                           MD_CONTEXT_MIPS_FLOATING_POINT \
-                                           MD_CONTEXT_MIPS_DSP)
+#define MD_CONTEXT_MIPS_ALL \
+  (MD_CONTEXT_MIPS_INTEGER | MD_CONTEXT_MIPS_FLOATING_POINT MD_CONTEXT_MIPS_DSP)
 
 /**
  * Breakpad defines for MIPS64
  */
-#define MD_CONTEXT_MIPS64  0x00080000
-#define MD_CONTEXT_MIPS64_INTEGER           (MD_CONTEXT_MIPS64 | 0x00000002)
-#define MD_CONTEXT_MIPS64_FLOATING_POINT    (MD_CONTEXT_MIPS64 | 0x00000004)
-#define MD_CONTEXT_MIPS64_DSP               (MD_CONTEXT_MIPS64 | 0x00000008)
+#define MD_CONTEXT_MIPS64 0x00080000
+#define MD_CONTEXT_MIPS64_INTEGER (MD_CONTEXT_MIPS64 | 0x00000002)
+#define MD_CONTEXT_MIPS64_FLOATING_POINT (MD_CONTEXT_MIPS64 | 0x00000004)
+#define MD_CONTEXT_MIPS64_DSP (MD_CONTEXT_MIPS64 | 0x00000008)
 
-#define MD_CONTEXT_MIPS64_FULL              (MD_CONTEXT_MIPS64_INTEGER | \
-                                             MD_CONTEXT_MIPS64_FLOATING_POINT | \
-                                             MD_CONTEXT_MIPS64_DSP)
+#define MD_CONTEXT_MIPS64_FULL                                    \
+  (MD_CONTEXT_MIPS64_INTEGER | MD_CONTEXT_MIPS64_FLOATING_POINT | \
+   MD_CONTEXT_MIPS64_DSP)
 
-#define MD_CONTEXT_MIPS64_ALL               (MD_CONTEXT_MIPS64_INTEGER | \
-                                             MD_CONTEXT_MIPS64_FLOATING_POINT \
-                                             MD_CONTEXT_MIPS64_DSP)
+#define MD_CONTEXT_MIPS64_ALL  \
+  (MD_CONTEXT_MIPS64_INTEGER | \
+   MD_CONTEXT_MIPS64_FLOATING_POINT MD_CONTEXT_MIPS64_DSP)
 
 #endif  // GOOGLE_BREAKPAD_COMMON_MINIDUMP_CPU_MIPS_H__

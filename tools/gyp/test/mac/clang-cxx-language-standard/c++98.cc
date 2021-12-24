@@ -21,4 +21,3 @@ enum cxx11_keywords {
 };
 
 int main() { return 0; }
-

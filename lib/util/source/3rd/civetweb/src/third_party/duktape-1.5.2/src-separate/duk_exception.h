@@ -11,8 +11,8 @@
 
 #if defined(DUK_USE_CPP_EXCEPTIONS)
 class duk_internal_exception {
-	/* intentionally empty */
+  /* intentionally empty */
 };
 #endif
 
-#endif  /* DUK_EXCEPTION_H_INCLUDED */
+#endif /* DUK_EXCEPTION_H_INCLUDED */

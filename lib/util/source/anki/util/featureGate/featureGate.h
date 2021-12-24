@@ -4,7 +4,8 @@
  * Author: baustin
  * Created: 1/6/16
  *
- * Description: Interface to config options specifying if features should be enabled/disabled
+ * Description: Interface to config options specifying if features should be
+ *enabled/disabled
  *
  * Copyright: Anki, Inc. 2016
  *
@@ -21,9 +22,8 @@
 namespace Anki {
 namespace Util {
 
-class FeatureGate
-{
-public:
+class FeatureGate {
+ public:
   void Init(const std::string& jsonContents);
 
   bool IsFeatureEnabled(const std::string& featureName) const;
@@ -32,12 +32,11 @@ public:
   using FeatureList = std::vector<FeaturePair>;
   FeatureList GetFeatures() const;
 
-protected:
+ protected:
   std::map<std::string, bool> _features;
 };
 
-} // namespace Util
-} // namespace Anki
+}  // namespace Util
+}  // namespace Anki
 
-
-#endif // __Util_FeatureGate_H_
+#endif  // __Util_FeatureGate_H_

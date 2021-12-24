@@ -27,6 +27,7 @@
  */
 
 #include "cozmoAnim/alexa/alexaAudioInput.h"
+
 #include "util/logging/logging.h"
 
 namespace Anki {
@@ -36,71 +37,79 @@ using namespace alexaClientSDK;
 using avsCommon::avs::AudioInputStream;
 #define LOG_CHANNEL "Alexa"
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::unique_ptr<AlexaAudioInput> AlexaAudioInput::Create( std::shared_ptr<AudioInputStream> stream )
-{
-  if( !stream ) {
-    LOG_ERROR("AlexaAudioInput.Create.InvalidStream", "Input stream is invalid");
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+std::unique_ptr<AlexaAudioInput> AlexaAudioInput::Create(
+    std::shared_ptr<AudioInputStream> stream) {
+  if (!stream) {
+    LOG_ERROR("AlexaAudioInput.Create.InvalidStream",
+              "Input stream is invalid");
     return nullptr;
   }
-  
-  std::unique_ptr<AlexaAudioInput> alexaAudioInput( new AlexaAudioInput{stream} );
-  if( !alexaAudioInput->Initialize() ) {
-    LOG_ERROR("AlexaAudioInput.Create.CouldNotInit", "Failed to initialize AlexaAudioInput");
+
+  std::unique_ptr<AlexaAudioInput> alexaAudioInput(new AlexaAudioInput{stream});
+  if (!alexaAudioInput->Initialize()) {
+    LOG_ERROR("AlexaAudioInput.Create.CouldNotInit",
+              "Failed to initialize AlexaAudioInput");
     return nullptr;
   }
   return alexaAudioInput;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AlexaAudioInput::AlexaAudioInput( std::shared_ptr<AudioInputStream> stream )
-: _audioInputStream{ std::move(stream) }
-, _streaming{ false }
-, _totalNumSamples{ 0 }
-{
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+AlexaAudioInput::AlexaAudioInput(std::shared_ptr<AudioInputStream> stream)
+    : _audioInputStream{std::move(stream)},
+      _streaming{false},
+      _totalNumSamples{0} {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AlexaAudioInput::Initialize()
-{
-  _writer = _audioInputStream->createWriter( AudioInputStream::Writer::Policy::NONBLOCKABLE );
-  if( !_writer ) {
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool AlexaAudioInput::Initialize() {
+  _writer = _audioInputStream->createWriter(
+      AudioInputStream::Writer::Policy::NONBLOCKABLE);
+  if (!_writer) {
     return false;
   }
   return true;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
 bool AlexaAudioInput::startStreamingMicrophoneData() {
   LOG_INFO("Alexa.AlexaAudioInput.StartStreaming", "");
   _streaming = true;
   return true;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
 bool AlexaAudioInput::stopStreamingMicrophoneData() {
   LOG_INFO("Alexa.AlexaAudioInput.StopStreaming", "");
   _streaming = false;
   return true;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaAudioInput::AddSamples( const AudioUtil::AudioSample* data, size_t size )
-{
-  if( !_streaming || (_writer == nullptr) ) {
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void AlexaAudioInput::AddSamples(const AudioUtil::AudioSample* data,
+                                 size_t size) {
+  if (!_streaming || (_writer == nullptr)) {
     return;
   }
-  
+
   _totalNumSamples += size;
-  
-  _writer->write( data, size );
+
+  _writer->write(data, size);
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::unique_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream::Reader> AlexaAudioInput::GetReader()
-{
-  if( _audioInputStream ) {
-    return _audioInputStream->createReader( AudioInputStream::Reader::Policy::NONBLOCKING );
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+std::unique_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream::Reader>
+AlexaAudioInput::GetReader() {
+  if (_audioInputStream) {
+    return _audioInputStream->createReader(
+        AudioInputStream::Reader::Policy::NONBLOCKING);
   }
   return {};
 }

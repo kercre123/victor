@@ -21,24 +21,24 @@ namespace Vector {
 
 class BEIConditionMessageHelper;
 
-class ConditionStuckOnEdge : public IBEICondition
-{
-public:
+class ConditionStuckOnEdge : public IBEICondition {
+ public:
   explicit ConditionStuckOnEdge(const Json::Value& config);
 
-  virtual ~ConditionStuckOnEdge() {};
+  virtual ~ConditionStuckOnEdge(){};
 
-protected:
-  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  
-private:
+ protected:
+  virtual void InitInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) const override;
+
+ private:
   bool enabledWhileHeldOnPalm = false;
   mutable float _onEdgeStartTime_s;
 };
 
+}  // namespace Vector
+}  // namespace Anki
 
-} // namespace Vector
-} // namespace Anki
-
-#endif // __AiComponent_BeiConditions_ConditionStuckOnEdge__
+#endif  // __AiComponent_BeiConditions_ConditionStuckOnEdge__

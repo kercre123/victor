@@ -4,8 +4,9 @@
  * Author: ross
  * Created: 2018-03-12
  *
- * Description: behavior that activates upon and turns toward motion, with options for first looking with the eyes
- *              and using either animation or procedural eyes
+ * Description: behavior that activates upon and turns toward motion, with
+ *options for first looking with the eyes and using either animation or
+ *procedural eyes
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -19,24 +20,24 @@
 
 namespace Anki {
 namespace Vector {
-  
+
 class ConditionMotionDetected;
 
-class BehaviorReactToMotion : public ICozmoBehavior
-{
-public: 
+class BehaviorReactToMotion : public ICozmoBehavior {
+ public:
   virtual ~BehaviorReactToMotion();
-  
+
   void DevAddFakeMotion();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorReactToMotion(const Json::Value& config);  
+  explicit BehaviorReactToMotion(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
   virtual void InitBehavior() override;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
@@ -45,32 +46,28 @@ protected:
   virtual void OnBehaviorEnteredActivatableScope() override;
   virtual void OnBehaviorLeftActivatableScope() override;
 
-private:
-  
-  enum class MotionArea : uint8_t {
-    None = 0,
-    Left,
-    Right,
-    Top
-  };
-  
-  void TransitionToEyeAnimation( MotionArea area );
-  void TransitionToProceduralEyes( MotionArea area );
+ private:
+  enum class MotionArea : uint8_t { None = 0, Left, Right, Top };
+
+  void TransitionToEyeAnimation(MotionArea area);
+  void TransitionToProceduralEyes(MotionArea area);
   void TransitionToTurnedAndWaiting();
   void TransitionToTurnAnimation();
   void TransitionToProceduralTurn();
-  void TransitionToCompleted( bool revertHead = true );
-  
+  void TransitionToCompleted(bool revertHead = true);
+
   void UpdateConditions();
-  
+
   MotionArea GetAreaWithMostMotion() const;
-  
+
   struct AreaCondition {
-    AreaCondition(MotionArea a, unsigned int intervalSize, Json::Value& config, const std::string& ownerDebugLabel);
+    AreaCondition(MotionArea a, unsigned int intervalSize, Json::Value& config,
+                  const std::string& ownerDebugLabel);
     void Reset();
-    
+
     MotionArea area;
-    // keep our own conditions here instead of the base class so that it can be reused once the behavior is activated
+    // keep our own conditions here instead of the base class so that it can be
+    // reused once the behavior is activated
     std::shared_ptr<ConditionMotionDetected> condition;
     // if true, motion was spotted the last time UpdateConditions was called
     bool sawMotionLastTick;
@@ -85,14 +82,16 @@ private:
   };
 
   struct InstanceConfig {
-    InstanceConfig( const Json::Value& config );
+    InstanceConfig(const Json::Value& config);
 
-    // if true, uses actions and procedural eyes. if false, uses animation groups
+    // if true, uses actions and procedural eyes. if false, uses animation
+    // groups
     bool procedural;
-    // if eyes have already moved, an no more motion has been detected after this long, exit
+    // if eyes have already moved, an no more motion has been detected after
+    // this long, exit
     float eyeTimeout_s;
-    // if eyes have moved, no motion is detected in that direction for this long, and motion is
-    // detected elsewhere, shift there
+    // if eyes have moved, no motion is detected in that direction for this
+    // long, and motion is detected elsewhere, shift there
     float eyeShiftTimeout_s;
     // if there are this many ticks with motion, within in some interval, turn
     unsigned int ticksInIntervalForTurn;
@@ -102,11 +101,10 @@ private:
     float procTurnAngle_deg;
     // if procedural turns are used, the head angle
     float procHeadAngle_deg;
-    
   };
-  
+
   enum class State : uint8_t {
-    Invalid=0,
+    Invalid = 0,
     EyeTracking,
     Turning,
     TurnedAndWaiting,
@@ -116,25 +114,25 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     void Reset();
-    
+
     State state;
     MotionArea lookingDirection;
     bool proceduralEyeShiftActive;
     bool animationEyeShiftActive;
     bool proceduralHeadUp;
     float timeFinishedTurning_s;
-    
+
     // persistent
     std::vector<AreaCondition> motionConditions;
-    bool inMotion; // when the robot is moved or moves. used to reset some stuff or exit when picked up
+    bool inMotion;  // when the robot is moved or moves. used to reset some
+                    // stuff or exit when picked up
   };
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToMotion__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToMotion__

@@ -6,5 +6,4 @@ typedef uint32_t crc_t;
 
 crc_t calc_crc(const uint8_t* buf, int len);
 
-
-#endif//SPINE_CRC_H
+#endif  // SPINE_CRC_H

@@ -2,6 +2,4 @@
 
 #include "MyHeader.h"
 
-int main() {
-  printf("%s\n", kFoo);
-}
+int main() { printf("%s\n", kFoo); }

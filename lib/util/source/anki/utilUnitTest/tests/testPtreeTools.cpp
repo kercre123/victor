@@ -10,20 +10,20 @@
  *
  **/
 
-#include "util/helpers/includeGTest.h"
-#include "util/ptree/ptreeTools.h"
-#include "util/ptree/ptreeKey.h"
-#include "util/ptree/ptreeTraverser.h"
 #include <boost/foreach.hpp>
 #include <boost/optional.hpp>
-#include "util/ptree/includeJSONParser.h"
 #include <string>
+
+#include "util/helpers/includeGTest.h"
+#include "util/ptree/includeJSONParser.h"
+#include "util/ptree/ptreeKey.h"
+#include "util/ptree/ptreeTools.h"
+#include "util/ptree/ptreeTraverser.h"
 
 using namespace std;
 using namespace boost;
 
-TEST(PtreeTools, shallowMerge)
-{
+TEST(PtreeTools, shallowMerge) {
   ptree first;
   ptree second;
 
@@ -48,8 +48,7 @@ TEST(PtreeTools, shallowMerge)
   ASSERT_FALSE(optionalChild52);
 }
 
-TEST(PtreeTools, shallowMergeWithCopy)
-{
+TEST(PtreeTools, shallowMergeWithCopy) {
   ptree first;
   ptree second;
 
@@ -74,9 +73,7 @@ TEST(PtreeTools, shallowMergeWithCopy)
   ASSERT_FALSE(optionalChild52);
 }
 
-
-TEST(PtreeTools, deepMergeLimited)
-{
+TEST(PtreeTools, deepMergeLimited) {
   ptree first;
   ptree second;
 
@@ -103,10 +100,7 @@ TEST(PtreeTools, deepMergeLimited)
   ASSERT_EQ(optionalChild52.get(), 52);
 }
 
-
-
-TEST(PtreeTools, deepMerge)
-{
+TEST(PtreeTools, deepMerge) {
   ptree first;
   ptree second;
 
@@ -137,25 +131,21 @@ TEST(PtreeTools, deepMerge)
   EXPECT_TRUE(optionalChild52);
   EXPECT_EQ(optionalChild52.get(), 52);
 
-/*
-  write_json(cout, first, true);
-  write_json(cout, second, true);
-  write_json(cout, result, true);
-*/
+  /*
+    write_json(cout, first, true);
+    write_json(cout, second, true);
+    write_json(cout, result, true);
+  */
 
   ASSERT_EQ(first.get<int>("8.1.1.1"), 8111);
   ASSERT_EQ(first.get<int>("8.1.1.2"), 8115);
   ASSERT_EQ(first.get<int>("8.1.1.3"), 8113);
   ASSERT_EQ(first.get<int>("8.1.2"), 812);
-
 }
 
-
-TEST(PtreeTools, deepMergeEmpty)
-{
+TEST(PtreeTools, deepMergeEmpty) {
   ptree first;
   ptree second;
-
 
   second.put("2", 10);
   second.put("7", 7);
@@ -172,97 +162,96 @@ TEST(PtreeTools, deepMergeEmpty)
   optional<int> optionalChild52 = first.get_optional<int>("5.2");
   EXPECT_FALSE(optionalChild52);
 
-/*
-  write_json(cout, first, true);
-  write_json(cout, second, true);
-  write_json(cout, result, true);
-*/
+  /*
+    write_json(cout, first, true);
+    write_json(cout, second, true);
+    write_json(cout, result, true);
+  */
 
   EXPECT_EQ(first.get<int>("8.1.1.2"), 8115);
   EXPECT_EQ(first.get<int>("8.1.1.3"), 8113);
   EXPECT_EQ(first.get<int>("8.1.2"), 812);
-
 }
 
-
-TEST(PtreeTools, shallowMergeList)
-{
-  string data("{     "
-    "    \"game_state\": {"
-    "        \"energy_system\": {"
-    "            \"max_energy\" : 10.0"
-    "         },"
-    "        \"simple_list\": ["
-    "        1,2,3,4"
-    "        ],"
-    "        \"objects_in_list\": ["
-    " { \"a\" : \"a\"},"
-    " { \"b\" : \"b\"}"
-    "        ]"
-    "    }"
-    "}  ");
+TEST(PtreeTools, shallowMergeList) {
+  string data(
+      "{     "
+      "    \"game_state\": {"
+      "        \"energy_system\": {"
+      "            \"max_energy\" : 10.0"
+      "         },"
+      "        \"simple_list\": ["
+      "        1,2,3,4"
+      "        ],"
+      "        \"objects_in_list\": ["
+      " { \"a\" : \"a\"},"
+      " { \"b\" : \"b\"}"
+      "        ]"
+      "    }"
+      "}  ");
   istringstream dataStream;
   dataStream.str(data);
   ptree first;
   read_json(dataStream, first);
 
-
-  data = "{     "
-    "    \"game_state\": {"
-    "        \"energy_system\": {"
-    "            \"max_energy\" : 10.0"
-    "         },"
-    "        \"mess\": ["
-    "        4,"
-    " { \"d\" : \"d\"}"
-    "        ],"
-    "        \"simple_list\": ["
-    "        4,6,7,8"
-    "        ],"
-    "        \"objects_in_list\": ["
-    " { \"a\" : \"a\"},"
-    " { \"c\" : \"c\"}"
-    "        ]"
-    "    }"
-    "}  ";
+  data =
+      "{     "
+      "    \"game_state\": {"
+      "        \"energy_system\": {"
+      "            \"max_energy\" : 10.0"
+      "         },"
+      "        \"mess\": ["
+      "        4,"
+      " { \"d\" : \"d\"}"
+      "        ],"
+      "        \"simple_list\": ["
+      "        4,6,7,8"
+      "        ],"
+      "        \"objects_in_list\": ["
+      " { \"a\" : \"a\"},"
+      " { \"c\" : \"c\"}"
+      "        ]"
+      "    }"
+      "}  ";
   dataStream.str(data);
   ptree second;
   read_json(dataStream, second);
-
-
 
   ptree result = Anki::Util::PtreeTools::ShallowMergeWithCopy(first, second);
 
-/*
-  write_json(cout, first, true);
-  write_json(cout, second, true);
-  try {
-    write_json(cout, result, true);
-  }
-  catch(...) {}
-*/
+  /*
+    write_json(cout, first, true);
+    write_json(cout, second, true);
+    try {
+      write_json(cout, result, true);
+    }
+    catch(...) {}
+  */
 
   int itemsInMess = 0;
-  boost::optional<ptree &> messList = result.get_child_optional("game_state.mess");
+  boost::optional<ptree &> messList =
+      result.get_child_optional("game_state.mess");
   if (messList) {
-    BOOST_FOREACH(__attribute__((unused)) const ptree::value_type &v, messList.get())
-    {
+    BOOST_FOREACH (__attribute__((unused)) const ptree::value_type &v,
+                   messList.get()) {
       itemsInMess++;
     }
   }
   int itemsInObjectList = 0;
-  boost::optional<ptree &> objectListList = result.get_child_optional("game_state.objects_in_list");
+  boost::optional<ptree &> objectListList =
+      result.get_child_optional("game_state.objects_in_list");
   if (objectListList) {
-    BOOST_FOREACH(__attribute__((unused)) const ptree::value_type &v, objectListList.get())
-    {
+    BOOST_FOREACH (__attribute__((unused)) const ptree::value_type &v,
+                   objectListList.get()) {
       itemsInObjectList++;
     }
   }
   int itemsInSimpleList = 0;
-  boost::optional<ptree &> simpleList = result.get_child_optional("game_state.simple_list");
+  boost::optional<ptree &> simpleList =
+      result.get_child_optional("game_state.simple_list");
   if (simpleList) {
-    BOOST_FOREACH(__attribute__((unused)) const ptree::value_type &v, simpleList.get())
-    {
+    BOOST_FOREACH (__attribute__((unused)) const ptree::value_type &v,
+                   simpleList.get()) {
       itemsInSimpleList++;
     }
   }
@@ -270,87 +259,88 @@ TEST(PtreeTools, shallowMergeList)
   EXPECT_EQ(itemsInMess, 2);
   EXPECT_EQ(itemsInObjectList, 2);
   EXPECT_EQ(itemsInSimpleList, 4);
-
 }
 
-TEST(PtreeTools, deepMergeLimitedList)
-{
-  string data("{     "
-    "    \"game_state\": {"
-    "        \"energy_system\": {"
-    "            \"max_energy\" : 10.0"
-    "         },"
-    "        \"simple_list\": ["
-    "        1,2,3"
-    "        ],"
-    "        \"objects_in_list\": ["
-    " { \"a\" : \"a\"},"
-    " { \"b\" : \"b\"}"
-    "        ]"
-    "    }"
-    "}  ");
+TEST(PtreeTools, deepMergeLimitedList) {
+  string data(
+      "{     "
+      "    \"game_state\": {"
+      "        \"energy_system\": {"
+      "            \"max_energy\" : 10.0"
+      "         },"
+      "        \"simple_list\": ["
+      "        1,2,3"
+      "        ],"
+      "        \"objects_in_list\": ["
+      " { \"a\" : \"a\"},"
+      " { \"b\" : \"b\"}"
+      "        ]"
+      "    }"
+      "}  ");
   istringstream dataStream;
   dataStream.str(data);
   ptree first;
   read_json(dataStream, first);
 
-
-  data = "{     "
-    "    \"game_state\": {"
-    "        \"energy_system\": {"
-    "            \"max_energy\" : 10.0"
-    "         },"
-    "        \"mess\": ["
-    "        4,"
-    " { \"d\" : \"d\"}"
-    "        ],"
-    "        \"simple_list\": ["
-    "        4,6,7,8"
-    "        ],"
-    "        \"objects_in_list\": ["
-    " { \"a\" : \"a\"},"
-    " { \"c\" : \"c\"}"
-    "        ]"
-    "    }"
-    "}  ";
+  data =
+      "{     "
+      "    \"game_state\": {"
+      "        \"energy_system\": {"
+      "            \"max_energy\" : 10.0"
+      "         },"
+      "        \"mess\": ["
+      "        4,"
+      " { \"d\" : \"d\"}"
+      "        ],"
+      "        \"simple_list\": ["
+      "        4,6,7,8"
+      "        ],"
+      "        \"objects_in_list\": ["
+      " { \"a\" : \"a\"},"
+      " { \"c\" : \"c\"}"
+      "        ]"
+      "    }"
+      "}  ";
   dataStream.str(data);
   ptree second;
   read_json(dataStream, second);
 
+  ptree result =
+      Anki::Util::PtreeTools::DeepMergeLimited(first, second, "simple_list");
 
-
-  ptree result = Anki::Util::PtreeTools::DeepMergeLimited(first, second, "simple_list");
-
-/*
-  write_json(cout, first, true);
-  write_json(cout, second, true);
-  try {
-    write_json(cout, result, true);
-  }
-  catch(...) {}
-*/
+  /*
+    write_json(cout, first, true);
+    write_json(cout, second, true);
+    try {
+      write_json(cout, result, true);
+    }
+    catch(...) {}
+  */
 
   int itemsInMess = 0;
-  boost::optional<ptree &> messList = result.get_child_optional("game_state.mess");
+  boost::optional<ptree &> messList =
+      result.get_child_optional("game_state.mess");
   if (messList) {
-    BOOST_FOREACH(__attribute__((unused)) const ptree::value_type &v, messList.get())
-    {
+    BOOST_FOREACH (__attribute__((unused)) const ptree::value_type &v,
+                   messList.get()) {
       itemsInMess++;
     }
   }
   int itemsInObjectList = 0;
-  boost::optional<ptree &> objectListList = result.get_child_optional("game_state.objects_in_list");
+  boost::optional<ptree &> objectListList =
+      result.get_child_optional("game_state.objects_in_list");
   if (objectListList) {
-    BOOST_FOREACH(__attribute__((unused)) const ptree::value_type &v, objectListList.get())
-    {
+    BOOST_FOREACH (__attribute__((unused)) const ptree::value_type &v,
+                   objectListList.get()) {
       itemsInObjectList++;
     }
   }
   int itemsInSimpleList = 0;
-  boost::optional<ptree &> simpleList = result.get_child_optional("game_state.simple_list");
+  boost::optional<ptree &> simpleList =
+      result.get_child_optional("game_state.simple_list");
   if (simpleList) {
-    BOOST_FOREACH(__attribute__((unused)) const ptree::value_type &v, simpleList.get())
-    {
+    BOOST_FOREACH (__attribute__((unused)) const ptree::value_type &v,
+                   simpleList.get()) {
       itemsInSimpleList++;
     }
   }
@@ -358,89 +348,88 @@ TEST(PtreeTools, deepMergeLimitedList)
   EXPECT_EQ(itemsInMess, 2);
   EXPECT_EQ(itemsInObjectList, 2);
   EXPECT_EQ(itemsInSimpleList, 4);
-
 }
 
-
-TEST(PtreeTools, deepMergeList)
-{
-  string data("{     "
-    "    \"game_state\": {"
-    "        \"energy_system\": {"
-    "            \"max_energy\" : 10.0"
-    "         },"
-    "        \"simple_list\": ["
-    "        1,2,3,4"
-    "        ],"
-    "        \"objects_in_list\": ["
-    " { \"a\" : \"a\"},"
-    " { \"b\" : \"b\"}"
-    "        ]"
-    "    }"
-    "}  ");
+TEST(PtreeTools, deepMergeList) {
+  string data(
+      "{     "
+      "    \"game_state\": {"
+      "        \"energy_system\": {"
+      "            \"max_energy\" : 10.0"
+      "         },"
+      "        \"simple_list\": ["
+      "        1,2,3,4"
+      "        ],"
+      "        \"objects_in_list\": ["
+      " { \"a\" : \"a\"},"
+      " { \"b\" : \"b\"}"
+      "        ]"
+      "    }"
+      "}  ");
   istringstream dataStream;
   dataStream.str(data);
   ptree first;
   read_json(dataStream, first);
 
-
-  data = "{     "
-    "    \"game_state\": {"
-    "        \"energy_system\": {"
-    "            \"max_energy\" : 10.0"
-    "         },"
-    "        \"mess\": ["
-    "        4,"
-    " { \"d\" : \"d\"}"
-    "        ],"
-    "        \"simple_list\": ["
-    "        4,6,7,8"
-    "        ],"
-    "        \"objects_in_list\": ["
-    " { \"a\" : \"a\"},"
-    " { \"c\" : \"c\"}"
-    "        ]"
-    "    }"
-    "}  ";
+  data =
+      "{     "
+      "    \"game_state\": {"
+      "        \"energy_system\": {"
+      "            \"max_energy\" : 10.0"
+      "         },"
+      "        \"mess\": ["
+      "        4,"
+      " { \"d\" : \"d\"}"
+      "        ],"
+      "        \"simple_list\": ["
+      "        4,6,7,8"
+      "        ],"
+      "        \"objects_in_list\": ["
+      " { \"a\" : \"a\"},"
+      " { \"c\" : \"c\"}"
+      "        ]"
+      "    }"
+      "}  ";
   dataStream.str(data);
   ptree second;
   read_json(dataStream, second);
 
-
-
-  ptree result = first; // don't really need the copy
+  ptree result = first;  // don't really need the copy
   Anki::Util::PtreeTools::FastDeepOverride(result, second);
 
-/*
-  write_json(cout, first, true);
-  write_json(cout, second, true);
-  try {
-    write_json(cout, result, true);
-  }
-  catch(...) {}
-*/
+  /*
+    write_json(cout, first, true);
+    write_json(cout, second, true);
+    try {
+      write_json(cout, result, true);
+    }
+    catch(...) {}
+  */
 
   int itemsInMess = 0;
-  boost::optional<ptree &> messList = result.get_child_optional("game_state.mess");
+  boost::optional<ptree &> messList =
+      result.get_child_optional("game_state.mess");
   if (messList) {
-    BOOST_FOREACH(__attribute__((unused)) const ptree::value_type &v, messList.get())
-    {
+    BOOST_FOREACH (__attribute__((unused)) const ptree::value_type &v,
+                   messList.get()) {
       itemsInMess++;
     }
   }
   int itemsInObjectList = 0;
-  boost::optional<ptree &> objectListList = result.get_child_optional("game_state.objects_in_list");
+  boost::optional<ptree &> objectListList =
+      result.get_child_optional("game_state.objects_in_list");
   if (objectListList) {
-    BOOST_FOREACH(__attribute__((unused)) const ptree::value_type &v, objectListList.get())
-    {
+    BOOST_FOREACH (__attribute__((unused)) const ptree::value_type &v,
+                   objectListList.get()) {
       itemsInObjectList++;
     }
   }
   int itemsInSimpleList = 0;
-  boost::optional<ptree &> simpleList = result.get_child_optional("game_state.simple_list");
+  boost::optional<ptree &> simpleList =
+      result.get_child_optional("game_state.simple_list");
   if (simpleList) {
-    BOOST_FOREACH(__attribute__((unused)) const ptree::value_type &v, simpleList.get())
-    {
+    BOOST_FOREACH (__attribute__((unused)) const ptree::value_type &v,
+                   simpleList.get()) {
       itemsInSimpleList++;
     }
   }
@@ -448,86 +437,85 @@ TEST(PtreeTools, deepMergeList)
   EXPECT_EQ(itemsInMess, 2);
   EXPECT_EQ(itemsInObjectList, 4);
   EXPECT_EQ(itemsInSimpleList, 8);
-
 }
 
-
-TEST(PtreeTools, deepMergeEmptyList)
-{
-  string data("{     "
-    "    \"game_state\": {"
-    "        \"energy_system\": {"
-    "            \"max_energy\" : 10.0"
-    "         },"
-    "        \"mess\": ["
-    "        4"
-    "        ],"
-    "        \"simple_list\": ["
-    "        ],"
-    "        \"objects_in_list\": ["
-    " { \"a\" : \"a\"},"
-    " { \"b\" : \"b\"}"
-    "        ]"
-    "    }"
-    "}  ");
+TEST(PtreeTools, deepMergeEmptyList) {
+  string data(
+      "{     "
+      "    \"game_state\": {"
+      "        \"energy_system\": {"
+      "            \"max_energy\" : 10.0"
+      "         },"
+      "        \"mess\": ["
+      "        4"
+      "        ],"
+      "        \"simple_list\": ["
+      "        ],"
+      "        \"objects_in_list\": ["
+      " { \"a\" : \"a\"},"
+      " { \"b\" : \"b\"}"
+      "        ]"
+      "    }"
+      "}  ");
   istringstream dataStream;
   dataStream.str(data);
   ptree first;
   read_json(dataStream, first);
 
-
-  data = "{     "
-    "    \"game_state\": {"
-    "        \"energy_system\": {"
-    "            \"max_energy\" : 10.0"
-    "         },"
-    "        \"mess\": ["
-    " { \"d\" : \"d\"}"
-    "        ],"
-    "        \"simple_list\": ["
-    "        4,6,7,8"
-    "        ]"
-    "    }"
-    "}  ";
+  data =
+      "{     "
+      "    \"game_state\": {"
+      "        \"energy_system\": {"
+      "            \"max_energy\" : 10.0"
+      "         },"
+      "        \"mess\": ["
+      " { \"d\" : \"d\"}"
+      "        ],"
+      "        \"simple_list\": ["
+      "        4,6,7,8"
+      "        ]"
+      "    }"
+      "}  ";
   dataStream.str(data);
   ptree second;
   read_json(dataStream, second);
 
-
-
   ptree result = first;
   Anki::Util::PtreeTools::FastDeepOverride(result, second);
 
-/*
-  write_json(cout, first, true);
-  write_json(cout, second, true);
-  try {
-    write_json(cout, result, true);
-  }
-  catch(...) {}
-*/
+  /*
+    write_json(cout, first, true);
+    write_json(cout, second, true);
+    try {
+      write_json(cout, result, true);
+    }
+    catch(...) {}
+  */
 
   int itemsInMess = 0;
-  boost::optional<ptree &> messList = result.get_child_optional("game_state.mess");
+  boost::optional<ptree &> messList =
+      result.get_child_optional("game_state.mess");
   if (messList) {
-    BOOST_FOREACH(__attribute__((unused)) const ptree::value_type &v, messList.get())
-    {
+    BOOST_FOREACH (__attribute__((unused)) const ptree::value_type &v,
+                   messList.get()) {
       itemsInMess++;
     }
   }
   int itemsInObjectList = 0;
-  boost::optional<ptree &> objectListList = result.get_child_optional("game_state.objects_in_list");
+  boost::optional<ptree &> objectListList =
+      result.get_child_optional("game_state.objects_in_list");
   if (objectListList) {
-    BOOST_FOREACH(__attribute__((unused)) const ptree::value_type &v, objectListList.get())
-    {
+    BOOST_FOREACH (__attribute__((unused)) const ptree::value_type &v,
+                   objectListList.get()) {
       itemsInObjectList++;
     }
   }
   int itemsInSimpleList = 0;
-  boost::optional<ptree &> simpleList = result.get_child_optional("game_state.simple_list");
+  boost::optional<ptree &> simpleList =
+      result.get_child_optional("game_state.simple_list");
   if (simpleList) {
-    BOOST_FOREACH(__attribute__((unused)) const ptree::value_type &v, simpleList.get())
-    {
+    BOOST_FOREACH (__attribute__((unused)) const ptree::value_type &v,
+                   simpleList.get()) {
       itemsInSimpleList++;
     }
   }
@@ -535,23 +523,20 @@ TEST(PtreeTools, deepMergeEmptyList)
   EXPECT_EQ(itemsInMess, 2);
   EXPECT_EQ(itemsInObjectList, 2);
   EXPECT_EQ(itemsInSimpleList, 4);
-
 }
 
-TEST(PtreeTools, ListKeys)
-{
+TEST(PtreeTools, ListKeys) {
   string data(
-    "{\n"
-    "  \"a\": \"asdf\",\n"
-    "  \"lst1\": [\n"
-    "    {\"a\": \"2.5\"},\n"
-    "    {\"list1_1\": [\"1.0\", \"2.0\", \"3.0\"]}\n"
-    "  ],\n"
-    "  \"grp\": {\n"
-    "    \"lst\": [\"0.0\"]\n"
-    "  }\n"
-    "}\n"
-    );
+      "{\n"
+      "  \"a\": \"asdf\",\n"
+      "  \"lst1\": [\n"
+      "    {\"a\": \"2.5\"},\n"
+      "    {\"list1_1\": [\"1.0\", \"2.0\", \"3.0\"]}\n"
+      "  ],\n"
+      "  \"grp\": {\n"
+      "    \"lst\": [\"0.0\"]\n"
+      "  }\n"
+      "}\n");
 
   istringstream dataStream;
   dataStream.str(data);
@@ -568,30 +553,30 @@ TEST(PtreeTools, ListKeys)
 
   Anki::Util::PtreeTools::PtreeKey key2;
   key2.push_back(pair<string, int>("a", -1));
-  ptree t2 = Anki::Util::PtreeTools::Deprecated::GetChild_Deprecated(input, key2);
+  ptree t2 =
+      Anki::Util::PtreeTools::Deprecated::GetChild_Deprecated(input, key2);
   EXPECT_EQ("asdf", t2.get<string>(""));
 
   Anki::Util::PtreeTools::PtreeKey key3;
   key3.push_back(pair<string, int>("grp", -1));
   key3.push_back(pair<string, int>("lst", 0));
-  ptree t3 = Anki::Util::PtreeTools::Deprecated::GetChild_Deprecated(input, key3);
+  ptree t3 =
+      Anki::Util::PtreeTools::Deprecated::GetChild_Deprecated(input, key3);
   EXPECT_EQ(0.0, t3.get<double>(""));
 }
 
-TEST(PtreeTools, ListKeysRef)
-{
+TEST(PtreeTools, ListKeysRef) {
   string data(
-    "{\n"
-    "  \"a\": \"asdf\",\n"
-    "  \"lst1\": [\n"
-    "    {\"a\": \"2.5\"},\n"
-    "    {\"list1_1\": [\"1.0\", \"2.0\", \"3.0\"]}\n"
-    "  ],\n"
-    "  \"grp\": {\n"
-    "    \"lst\": [\"0.0\"]\n"
-    "  }\n"
-    "}\n"
-    );
+      "{\n"
+      "  \"a\": \"asdf\",\n"
+      "  \"lst1\": [\n"
+      "    {\"a\": \"2.5\"},\n"
+      "    {\"list1_1\": [\"1.0\", \"2.0\", \"3.0\"]}\n"
+      "  ],\n"
+      "  \"grp\": {\n"
+      "    \"lst\": [\"0.0\"]\n"
+      "  }\n"
+      "}\n");
 
   istringstream dataStream;
   dataStream.str(data);
@@ -601,7 +586,7 @@ TEST(PtreeTools, ListKeysRef)
   Anki::Util::PtreeTools::PtreeKey key;
   key.push_back(pair<string, int>("lst1", 1));
   key.push_back(pair<string, int>("list1_1", 2));
-  
+
   ptree insert;
   insert.put("newval", "asdf");
   insert.put("newval2", "asdf");
@@ -611,52 +596,50 @@ TEST(PtreeTools, ListKeysRef)
   Anki::Util::PtreeTools::PtreeKey key2;
   key2.push_back(pair<string, int>("lst1", 0));
 
-  Anki::Util::PtreeTools::Deprecated::GetChild_Deprecated(input, key2).put("a", 3.5);
+  Anki::Util::PtreeTools::Deprecated::GetChild_Deprecated(input, key2)
+      .put("a", 3.5);
 
   string data2(
-    "{\n"
-    "  \"a\": \"asdf\",\n"
-    "  \"lst1\": [\n"
-    "    {\"a\": \"3.5\"},\n"
-    "    {\"list1_1\": [\"1.0\", \"2.0\", {\n"
-    "      \"newval\": \"asdf\",\n"
-    "      \"newval2\": \"asdf\"\n"
-    "    }]}\n"
-    "  ],\n"
-    "  \"grp\": {\n"
-    "    \"lst\": [\"0.0\"]\n"
-    "  }\n"
-    "}\n"
-    );
+      "{\n"
+      "  \"a\": \"asdf\",\n"
+      "  \"lst1\": [\n"
+      "    {\"a\": \"3.5\"},\n"
+      "    {\"list1_1\": [\"1.0\", \"2.0\", {\n"
+      "      \"newval\": \"asdf\",\n"
+      "      \"newval2\": \"asdf\"\n"
+      "    }]}\n"
+      "  ],\n"
+      "  \"grp\": {\n"
+      "    \"lst\": [\"0.0\"]\n"
+      "  }\n"
+      "}\n");
   istringstream dataStream2;
   dataStream2.str(data2);
   ptree output;
   read_json(dataStream2, output);
-  
+
   EXPECT_EQ(input, output);
 }
 
-TEST(PtreeTools, ParseKey)
-{
+TEST(PtreeTools, ParseKey) {
   using namespace Anki::Util::PtreeTools;
 
   string data(
-    "{\n"
-    "  \"a\": \"asdf\",\n"
-    "  \"x\": {\n"
-    "    \"lst1\": [\n"
-    "      {\"a\": \"2\"},\n"
-    "      {\"list1_1\": [\"1\", \"3\", \"4\"]}\n"
-    "    ]\n"
-    "  },\n"
-    "  \"grp\": {\n"
-    "    \"lst\": [\"0.0\"]\n"
-    "  },\n"
-    "  \"b\": {\n"
-    "    \"c\": 22\n"
-    "  }\n"
-    "}\n"
-    );
+      "{\n"
+      "  \"a\": \"asdf\",\n"
+      "  \"x\": {\n"
+      "    \"lst1\": [\n"
+      "      {\"a\": \"2\"},\n"
+      "      {\"list1_1\": [\"1\", \"3\", \"4\"]}\n"
+      "    ]\n"
+      "  },\n"
+      "  \"grp\": {\n"
+      "    \"lst\": [\"0.0\"]\n"
+      "  },\n"
+      "  \"b\": {\n"
+      "    \"c\": 22\n"
+      "  }\n"
+      "}\n");
 
   istringstream dataStream;
   dataStream.str(data);
@@ -674,28 +657,25 @@ TEST(PtreeTools, ParseKey)
 
   PtreeKey key3("x.lst1[1].list1_1[2]");
   EXPECT_EQ(Deprecated::GetChild_Deprecated(tree, key3).get<int>(""), 4);
-
 }
 
-TEST(PtreeTools, Traversal)
-{
+TEST(PtreeTools, Traversal) {
   string data(
-    "{\n"
-    "  \"val\": \"0\",\n"
-    "  \"lst\": [\n"
-    "    { \"lst\": [{\"val\": \"1\"},{\"val\": \"2\"}]},\n"
-    "    {\"val\": \"3\"}\n"
-    "  ],\n"
-    "  \"sub\": {\n"
-    "    \"val\": \"4\",\n"
-    "    \"lst\":[\n"
-    "      {\"val\": \"5\"},\n"
-    "      {\"val\": \"6\"},\n"
-    "      {\"notval\": \"33\", \"val\": \"7\"}\n"
-    "    ]\n"
-    "  }\n"
-    "}\n"
-    );
+      "{\n"
+      "  \"val\": \"0\",\n"
+      "  \"lst\": [\n"
+      "    { \"lst\": [{\"val\": \"1\"},{\"val\": \"2\"}]},\n"
+      "    {\"val\": \"3\"}\n"
+      "  ],\n"
+      "  \"sub\": {\n"
+      "    \"val\": \"4\",\n"
+      "    \"lst\":[\n"
+      "      {\"val\": \"5\"},\n"
+      "      {\"val\": \"6\"},\n"
+      "      {\"notval\": \"33\", \"val\": \"7\"}\n"
+      "    ]\n"
+      "  }\n"
+      "}\n");
   istringstream dataStream;
   dataStream.str(data);
   ptree input;
@@ -703,25 +683,28 @@ TEST(PtreeTools, Traversal)
 
   // we should see every number in 0:8
   bool seen[8];
-  for(unsigned int i=0; i<8; ++i)
-    seen[i] = false;
+  for (unsigned int i = 0; i < 8; ++i) seen[i] = false;
 
   Anki::Util::PtreeTools::PtreeTraverser trav(input);
   EXPECT_FALSE(trav.done());
 
   unsigned int numSteps = 0;
-  while(!trav.done()) {
+  while (!trav.done()) {
     numSteps++;
 
     // cout<<"traversal "<<numSteps<<"\n\n";
     // Anki::Util::PtreeTools::PrintJson((trav.topTree());
- 
+
     ASSERT_LT(numSteps, 30);
 
-    EXPECT_EQ(trav.topTree(), Anki::Util::PtreeTools::Deprecated::GetChild_Deprecated(input,trav.topKey())) << "tree mismatch!";
+    EXPECT_EQ(trav.topTree(),
+              Anki::Util::PtreeTools::Deprecated::GetChild_Deprecated(
+                  input, trav.topKey()))
+        << "tree mismatch!";
 
-    boost::optional<unsigned int> idx = trav.topTree().get_optional<unsigned int>("val");
-    if(idx) {
+    boost::optional<unsigned int> idx =
+        trav.topTree().get_optional<unsigned int>("val");
+    if (idx) {
       ASSERT_LT(*idx, 8);
       EXPECT_FALSE(seen[*idx]);
       seen[*idx] = true;
@@ -730,58 +713,54 @@ TEST(PtreeTools, Traversal)
     trav.next();
   }
 
-  for(unsigned int i=0; i<8; ++i)
-    EXPECT_TRUE(seen[i]);
+  for (unsigned int i = 0; i < 8; ++i) EXPECT_TRUE(seen[i]);
 
   EXPECT_EQ(numSteps, 12);
 }
 
-TEST(PtreeTools, PreprocessSimpleTree)
-{
+TEST(PtreeTools, PreprocessSimpleTree) {
   string inData(
-    "{\n"
-    "  \"grp1\": {\n"
-    "    \"val\": \"3.7\",\n"
-    "    \"id\": \"g1\",\n"
-    "    \"subgrp1\": {\n"
-    "      \"val\": \"1.5\",\n"
-    "      \"val2\": \"asdf\"\n"
-    "    }\n"
-    "  },\n"
-    "  \"outer_grp\": {\n"
-    "    \"sub_group\": {\n"
-    "      \"extends\": \"g1\",\n"
-    "      \"val\": \"1.0\"\n"
-    "    }\n"
-    "  }\n"
-    "}\n"
-    );
+      "{\n"
+      "  \"grp1\": {\n"
+      "    \"val\": \"3.7\",\n"
+      "    \"id\": \"g1\",\n"
+      "    \"subgrp1\": {\n"
+      "      \"val\": \"1.5\",\n"
+      "      \"val2\": \"asdf\"\n"
+      "    }\n"
+      "  },\n"
+      "  \"outer_grp\": {\n"
+      "    \"sub_group\": {\n"
+      "      \"extends\": \"g1\",\n"
+      "      \"val\": \"1.0\"\n"
+      "    }\n"
+      "  }\n"
+      "}\n");
   istringstream inDataStream;
   inDataStream.str(inData);
   ptree input;
   read_json(inDataStream, input);
 
   string outData(
-    "{\n"
-    "  \"grp1\": {\n"
-    "    \"val\": \"3.7\",\n"
-    "    \"id\": \"g1\",\n"
-    "    \"subgrp1\": {\n"
-    "      \"val\": \"1.5\",\n"
-    "      \"val2\": \"asdf\"\n"
-    "    }\n"
-    "  },\n"
-    "  \"outer_grp\": {\n"
-    "    \"sub_group\": {\n"
-    "      \"val\": \"1.0\",\n"
-    "      \"subgrp1\": {\n"
-    "        \"val\": \"1.5\",\n"
-    "        \"val2\": \"asdf\"\n"
-    "      }\n"
-    "    }\n"
-    "  }\n"
-    "}\n"
-    );
+      "{\n"
+      "  \"grp1\": {\n"
+      "    \"val\": \"3.7\",\n"
+      "    \"id\": \"g1\",\n"
+      "    \"subgrp1\": {\n"
+      "      \"val\": \"1.5\",\n"
+      "      \"val2\": \"asdf\"\n"
+      "    }\n"
+      "  },\n"
+      "  \"outer_grp\": {\n"
+      "    \"sub_group\": {\n"
+      "      \"val\": \"1.0\",\n"
+      "      \"subgrp1\": {\n"
+      "        \"val\": \"1.5\",\n"
+      "        \"val2\": \"asdf\"\n"
+      "      }\n"
+      "    }\n"
+      "  }\n"
+      "}\n");
   istringstream outDataStream;
   outDataStream.str(outData);
   ptree output;
@@ -799,114 +778,111 @@ TEST(PtreeTools, PreprocessSimpleTree)
   EXPECT_EQ(input, output);
 }
 
-TEST(PtreeTools, PreprocessComplexTree)
-{
+TEST(PtreeTools, PreprocessComplexTree) {
   string inData(
-    "{\n"
-    "  \"grp1\": {\n"
-    "    \"val\": \"3.7\",\n"
-    "    \"id\": \"g1\",\n"
-    "    \"subgrp1\": {\n"
-    "      \"val\": \"1.5\",\n"
-    "      \"extends\": \"g3\"\n"
-    "    },\n"
-    "    \"subgrp2\": {\n"
-    "      \"val\": \"1.5\",\n"
-    "      \"extends\": \"g5\"\n"
-    "    }\n"
-    "  },\n"
-    "  \"outer_grp\": {\n"
-    "    \"sub_group\": {\n"
-    "      \"extends\": \"g1\",\n"
-    "      \"val\": \"1.0\"\n"
-    "    }\n"
-    "  },\n"
-    "  \"outer_2\": {\n"
-    "    \"id\": \"g3\",\n"
-    "    \"extends\": \"g4\",\n"
-    "    \"val\": \"3.0\",\n"
-    "    \"sub\": {\n"
-    "      \"extends\": \"g5\"\n"
-    "    }\n"
-    "  },\n"
-    "  \"defs\": [\n"
-    "  {\n"
-    "    \"id\": \"g4\",\n"
-    "    \"val4\": \"4.0\",\n"
-    "    \"val\": \"0.4\"\n"
-    "  },\n"
-    "  {\n"
-    "    \"id\": \"g5\",\n"
-    "    \"strval\": \"string\"\n"
-    "  }\n"
-    "  ],\n"
-    "  \"dot\": {\n"
-    "    \"extends\": \"g5\"\n"
-    "  }\n"
-    "}\n"
-    );
+      "{\n"
+      "  \"grp1\": {\n"
+      "    \"val\": \"3.7\",\n"
+      "    \"id\": \"g1\",\n"
+      "    \"subgrp1\": {\n"
+      "      \"val\": \"1.5\",\n"
+      "      \"extends\": \"g3\"\n"
+      "    },\n"
+      "    \"subgrp2\": {\n"
+      "      \"val\": \"1.5\",\n"
+      "      \"extends\": \"g5\"\n"
+      "    }\n"
+      "  },\n"
+      "  \"outer_grp\": {\n"
+      "    \"sub_group\": {\n"
+      "      \"extends\": \"g1\",\n"
+      "      \"val\": \"1.0\"\n"
+      "    }\n"
+      "  },\n"
+      "  \"outer_2\": {\n"
+      "    \"id\": \"g3\",\n"
+      "    \"extends\": \"g4\",\n"
+      "    \"val\": \"3.0\",\n"
+      "    \"sub\": {\n"
+      "      \"extends\": \"g5\"\n"
+      "    }\n"
+      "  },\n"
+      "  \"defs\": [\n"
+      "  {\n"
+      "    \"id\": \"g4\",\n"
+      "    \"val4\": \"4.0\",\n"
+      "    \"val\": \"0.4\"\n"
+      "  },\n"
+      "  {\n"
+      "    \"id\": \"g5\",\n"
+      "    \"strval\": \"string\"\n"
+      "  }\n"
+      "  ],\n"
+      "  \"dot\": {\n"
+      "    \"extends\": \"g5\"\n"
+      "  }\n"
+      "}\n");
   istringstream inDataStream;
   inDataStream.str(inData);
   ptree input;
   read_json(inDataStream, input);
 
   string outData(
-    "{\n"
-    "  \"grp1\": {\n"
-    "    \"val\": \"3.7\",\n"
-    "    \"id\": \"g1\",\n"
-    "      \"subgrp1\": {\n"
-    "      \"val4\": \"4.0\",\n"
-    "      \"val\": \"1.5\",\n"
-    "      \"sub\": {\n"
-    "        \"strval\": \"string\"\n"
-    "      }\n"
-    "    },\n"
-    "    \"subgrp2\": {\n"
-    "      \"strval\": \"string\",\n"
-    "      \"val\": \"1.5\"\n"
-    "    }\n"
-    "  },\n"
-    "  \"outer_grp\": {\n"
-    "    \"sub_group\": {\n"
-    "      \"val\": \"1.0\",\n"
-    "        \"subgrp1\": {\n"
-    "        \"val4\": \"4.0\",\n"
-    "        \"val\": \"1.5\",\n"
-    "        \"sub\": {\n"
-    "          \"strval\": \"string\"\n"
-    "        }\n"
-    "      },\n"
-    "      \"subgrp2\": {\n"
-    "        \"strval\": \"string\",\n"
-    "        \"val\": \"1.5\"\n"
-    "      }\n"
-    "    }\n"
-    "  },\n"
-    "  \"outer_2\": {\n"
-    "    \"val4\": \"4.0\",\n"
-    "    \"val\": \"3.0\",\n"
-    "    \"id\": \"g3\",\n"
-    "    \"sub\": {\n"
-    "      \"strval\": \"string\"\n"
-    "    }\n"
-    "  },\n"
-    "  \"defs\": [\n"
-    "  {\n"
-    "    \"id\": \"g4\",\n"
-    "    \"val4\": \"4.0\",\n"
-    "    \"val\": \"0.4\"\n"
-    "  },\n"
-    "  {\n"
-    "    \"id\": \"g5\",\n"
-    "    \"strval\": \"string\"\n"
-    "  }\n"
-    "  ],\n"
-    "  \"dot\": {\n"
-    "    \"strval\": \"string\"\n"
-    "  }\n"
-    "}\n"
-    );
+      "{\n"
+      "  \"grp1\": {\n"
+      "    \"val\": \"3.7\",\n"
+      "    \"id\": \"g1\",\n"
+      "      \"subgrp1\": {\n"
+      "      \"val4\": \"4.0\",\n"
+      "      \"val\": \"1.5\",\n"
+      "      \"sub\": {\n"
+      "        \"strval\": \"string\"\n"
+      "      }\n"
+      "    },\n"
+      "    \"subgrp2\": {\n"
+      "      \"strval\": \"string\",\n"
+      "      \"val\": \"1.5\"\n"
+      "    }\n"
+      "  },\n"
+      "  \"outer_grp\": {\n"
+      "    \"sub_group\": {\n"
+      "      \"val\": \"1.0\",\n"
+      "        \"subgrp1\": {\n"
+      "        \"val4\": \"4.0\",\n"
+      "        \"val\": \"1.5\",\n"
+      "        \"sub\": {\n"
+      "          \"strval\": \"string\"\n"
+      "        }\n"
+      "      },\n"
+      "      \"subgrp2\": {\n"
+      "        \"strval\": \"string\",\n"
+      "        \"val\": \"1.5\"\n"
+      "      }\n"
+      "    }\n"
+      "  },\n"
+      "  \"outer_2\": {\n"
+      "    \"val4\": \"4.0\",\n"
+      "    \"val\": \"3.0\",\n"
+      "    \"id\": \"g3\",\n"
+      "    \"sub\": {\n"
+      "      \"strval\": \"string\"\n"
+      "    }\n"
+      "  },\n"
+      "  \"defs\": [\n"
+      "  {\n"
+      "    \"id\": \"g4\",\n"
+      "    \"val4\": \"4.0\",\n"
+      "    \"val\": \"0.4\"\n"
+      "  },\n"
+      "  {\n"
+      "    \"id\": \"g5\",\n"
+      "    \"strval\": \"string\"\n"
+      "  }\n"
+      "  ],\n"
+      "  \"dot\": {\n"
+      "    \"strval\": \"string\"\n"
+      "  }\n"
+      "}\n");
   istringstream outDataStream;
   outDataStream.str(outData);
   ptree output;

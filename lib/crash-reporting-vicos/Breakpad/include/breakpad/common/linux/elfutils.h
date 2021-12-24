@@ -84,22 +84,17 @@ int ElfClass(const void* elf_base);
 // in the ELF binary data at |elf_mapped_base|. On success, returns true
 // and sets |*section_start| to point to the start of the section data,
 // and |*section_size| to the size of the section's data.
-bool FindElfSection(const void *elf_mapped_base,
-                    const char *section_name,
-                    uint32_t section_type,
-                    const void **section_start,
-                    size_t *section_size);
+bool FindElfSection(const void* elf_mapped_base, const char* section_name,
+                    uint32_t section_type, const void** section_start,
+                    size_t* section_size);
 
 // Internal helper method, exposed for convenience for callers
 // that already have more info.
-template<typename ElfClass>
-const typename ElfClass::Shdr*
-FindElfSectionByName(const char* name,
-                     typename ElfClass::Word section_type,
-                     const typename ElfClass::Shdr* sections,
-                     const char* section_names,
-                     const char* names_end,
-                     int nsection);
+template <typename ElfClass>
+const typename ElfClass::Shdr* FindElfSectionByName(
+    const char* name, typename ElfClass::Word section_type,
+    const typename ElfClass::Shdr* sections, const char* section_names,
+    const char* names_end, int nsection);
 
 struct ElfSegment {
   const void* start;
@@ -109,18 +104,16 @@ struct ElfSegment {
 // Attempt to find all segments of type |segment_type| in the ELF
 // binary data at |elf_mapped_base|. On success, returns true and fills
 // |*segments| with a list of segments of the given type.
-bool FindElfSegments(const void* elf_mapped_base,
-                     uint32_t segment_type,
+bool FindElfSegments(const void* elf_mapped_base, uint32_t segment_type,
                      wasteful_vector<ElfSegment>* segments);
 
 // Convert an offset from an Elf header into a pointer to the mapped
 // address in the current process. Takes an extra template parameter
 // to specify the return type to avoid having to dynamic_cast the
 // result.
-template<typename ElfClass, typename T>
-const T*
-GetOffset(const typename ElfClass::Ehdr* elf_header,
-          typename ElfClass::Off offset);
+template <typename ElfClass, typename T>
+const T* GetOffset(const typename ElfClass::Ehdr* elf_header,
+                   typename ElfClass::Off offset);
 
 }  // namespace google_breakpad
 

@@ -35,7 +35,6 @@
 //
 // Author: Siyang Xie (lambxsy@google.com)
 
-
 #ifndef PROCESSOR_STATIC_MAP_ITERATOR_H__
 #define PROCESSOR_STATIC_MAP_ITERATOR_H__
 
@@ -44,15 +43,16 @@
 namespace google_breakpad {
 
 // Forward declaration.
-template<typename Key, typename Value, typename Compare> class StaticMap;
+template <typename Key, typename Value, typename Compare>
+class StaticMap;
 
 // StaticMapIterator does not support operator*() or operator->(),
 // User should use GetKey(), GetKeyPtr(), GetValuePtr() instead;
-template<typename Key, typename Value, typename Compare>
+template <typename Key, typename Value, typename Compare>
 class StaticMapIterator {
  public:
   // Constructors.
-  StaticMapIterator(): index_(-1), base_(NULL) { }
+  StaticMapIterator() : index_(-1), base_(NULL) {}
 
   // Increment & Decrement operators:
   StaticMapIterator& operator++();
@@ -87,7 +87,7 @@ class StaticMapIterator {
   friend class StaticMap<Key, Value, Compare>;
 
   // Only StaticMap can call this constructor.
-  explicit StaticMapIterator(const char* base, const int32_t &index);
+  explicit StaticMapIterator(const char* base, const int32_t& index);
 
   // Index of node that the iterator is pointing to.
   int32_t index_;

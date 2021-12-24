@@ -8,16 +8,14 @@
 //-----------------------------------------------------------
 
 #ifdef __cplusplus
-namespace FLEXFLOW
-{
-  void init(int baud = 3000000);
-  void deinit();
-  
-  int  printf(const char * format, ... );
-  void write(const char *s);
-  void putchar(char c);
-}
+namespace FLEXFLOW {
+void init(int baud = 3000000);
+void deinit();
+
+int printf(const char *format, ...);
+void write(const char *s);
+void putchar(char c);
+}  // namespace FLEXFLOW
 #endif /* __cplusplus */
 
-#endif //__FLEXFLOW_H
-
+#endif  //__FLEXFLOW_H

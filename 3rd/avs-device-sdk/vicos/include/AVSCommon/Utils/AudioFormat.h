@@ -29,59 +29,60 @@ namespace utils {
  * The format of audio data.
  */
 struct AudioFormat {
-    /**
-     * An enum class used to represent the encoding of audio data.
-     */
-    enum class Encoding {
-        /// Represents LPCM (Linear pulse code modulation) encoding.
-        LPCM,
+  /**
+   * An enum class used to represent the encoding of audio data.
+   */
+  enum class Encoding {
+    /// Represents LPCM (Linear pulse code modulation) encoding.
+    LPCM,
 
-        /// Represents OPUS encoding.
-        OPUS
-    };
+    /// Represents OPUS encoding.
+    OPUS
+  };
 
-    /**
-     * An enum class to represent layout of audio files for streams with more than one channel.
-     */
-    enum class Layout {
-        /// Non-Interleaved : The L and R are separated in different streams.
-        NON_INTERLEAVED,
+  /**
+   * An enum class to represent layout of audio files for streams with more than
+   * one channel.
+   */
+  enum class Layout {
+    /// Non-Interleaved : The L and R are separated in different streams.
+    NON_INTERLEAVED,
 
-        /// Interleaved : The L and R sides of a stereo recording are interleaved.
-        INTERLEAVED
-    };
+    /// Interleaved : The L and R sides of a stereo recording are interleaved.
+    INTERLEAVED
+  };
 
-    /**
-     * An enum class used to represent the endianness of audio data.
-     */
-    enum class Endianness {
-        /// Represents little endianness.
-        LITTLE,
+  /**
+   * An enum class used to represent the endianness of audio data.
+   */
+  enum class Endianness {
+    /// Represents little endianness.
+    LITTLE,
 
-        /// Represents big endianness.
-        BIG
-    };
+    /// Represents big endianness.
+    BIG
+  };
 
-    /// The encoding of the data.
-    Encoding encoding;
+  /// The encoding of the data.
+  Encoding encoding;
 
-    /// The endianness of the data.
-    Endianness endianness;
+  /// The endianness of the data.
+  Endianness endianness;
 
-    /// The number of samples recorded or played per second.
-    unsigned int sampleRateHz;
+  /// The number of samples recorded or played per second.
+  unsigned int sampleRateHz;
 
-    /// The bits per sample.
-    unsigned int sampleSizeInBits;
+  /// The bits per sample.
+  unsigned int sampleSizeInBits;
 
-    /// The number of channels.
-    unsigned int numChannels;
+  /// The number of channels.
+  unsigned int numChannels;
 
-    /// @c true if the data is signed @c false otherwise.
-    bool dataSigned;
+  /// @c true if the data is signed @c false otherwise.
+  bool dataSigned;
 
-    /// The layout of format for cases where numChannels > 1.
-    Layout layout;
+  /// The layout of format for cases where numChannels > 1.
+  Layout layout;
 };
 
 /**
@@ -91,35 +92,38 @@ struct AudioFormat {
  * @param encoding The encoding value to write to the @c ostream as a string.
  * @return The @c ostream that was passed in and written to.
  */
-inline std::ostream& operator<<(std::ostream& stream, const AudioFormat::Encoding& encoding) {
-    switch (encoding) {
-        case AudioFormat::Encoding::LPCM:
-            stream << "LPCM";
-            break;
-        case AudioFormat::Encoding::OPUS:
-            stream << "OPUS";
-            break;
-    }
-    return stream;
+inline std::ostream& operator<<(std::ostream& stream,
+                                const AudioFormat::Encoding& encoding) {
+  switch (encoding) {
+    case AudioFormat::Encoding::LPCM:
+      stream << "LPCM";
+      break;
+    case AudioFormat::Encoding::OPUS:
+      stream << "OPUS";
+      break;
+  }
+  return stream;
 }
 
 /**
  * Write an @c Endianness value to an @c ostream as a string.
  *
  * @param stream The stream to write the value to.
- * @param endianness The endianness value to write to the @c ostream as a string.
+ * @param endianness The endianness value to write to the @c ostream as a
+ * string.
  * @return The @c ostream that was passed in and written to.
  */
-inline std::ostream& operator<<(std::ostream& stream, const AudioFormat::Endianness& endianness) {
-    switch (endianness) {
-        case AudioFormat::Endianness::LITTLE:
-            stream << "LITTLE";
-            break;
-        case AudioFormat::Endianness::BIG:
-            stream << "BIG";
-            break;
-    }
-    return stream;
+inline std::ostream& operator<<(std::ostream& stream,
+                                const AudioFormat::Endianness& endianness) {
+  switch (endianness) {
+    case AudioFormat::Endianness::LITTLE:
+      stream << "LITTLE";
+      break;
+    case AudioFormat::Endianness::BIG:
+      stream << "BIG";
+      break;
+  }
+  return stream;
 }
 
 }  // namespace utils

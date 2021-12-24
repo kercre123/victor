@@ -2,9 +2,9 @@
 #define __TOUCH_H
 
 namespace Touch {
-	void init(void);
-  void transmit(uint16_t* data);
-	void tick(void);
-}
+void init(void);
+void transmit(uint16_t* data);
+void tick(void);
+}  // namespace Touch
 
 #endif

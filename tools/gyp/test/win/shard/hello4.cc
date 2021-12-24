@@ -2,6 +2,4 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-int f4() {
-  return 0;
-}
+int f4() { return 0; }

@@ -16,6 +16,7 @@ limitations under the License.
 #define TENSORFLOW_CONTRIB_LITE_KERNELS_INTERNAL_TENSOR_H_
 
 #include <vector>
+
 #include "tensorflow/contrib/lite/context.h"
 #include "tensorflow/contrib/lite/kernels/internal/types.h"
 

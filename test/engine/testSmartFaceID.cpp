@@ -10,43 +10,37 @@
  *
  **/
 
-#include "gtest/gtest.h"
-
+#include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
 #include "engine/smartFaceId.h"
-#include "engine/cozmoAPI/comms/uiMessageHandler.h"
-
+#include "gtest/gtest.h"
 
 using namespace Anki;
 using namespace Anki::Vector;
 
 extern CozmoContext* cozmoContext;
 
-void DeleteFace(Robot& robot, int faceID)
-{
+void DeleteFace(Robot& robot, int faceID) {
   using namespace ExternalInterface;
   robot.Broadcast(MessageEngineToGame(RobotDeletedFace(faceID)));
 }
 
-void ChangeFaceID(Robot& robot, int oldID, int newID)
-{
+void ChangeFaceID(Robot& robot, int oldID, int newID) {
   using namespace ExternalInterface;
-  robot.Broadcast(MessageEngineToGame(RobotChangedObservedFaceID(oldID, newID)));
+  robot.Broadcast(
+      MessageEngineToGame(RobotChangedObservedFaceID(oldID, newID)));
 }
 
-
-TEST(SmartFaceID, Empty)
-{
+TEST(SmartFaceID, Empty) {
   SmartFaceID sfid;
 
-  EXPECT_FALSE( sfid.IsValid() );
+  EXPECT_FALSE(sfid.IsValid());
   EXPECT_TRUE(sfid.MatchesFaceID(0));
 }
 
-TEST(SmartFaceID, Invalid)
-{
+TEST(SmartFaceID, Invalid) {
   Robot robot(0, cozmoContext);
 
   SmartFaceID sfid = robot.GetFaceWorld().GetSmartFaceID(0);
@@ -55,8 +49,7 @@ TEST(SmartFaceID, Invalid)
   EXPECT_TRUE(sfid.MatchesFaceID(0));
 }
 
-TEST(SmartFaceID, Valid)
-{
+TEST(SmartFaceID, Valid) {
   Robot robot(0, cozmoContext);
 
   SmartFaceID sfid = robot.GetFaceWorld().GetSmartFaceID(42);
@@ -65,8 +58,7 @@ TEST(SmartFaceID, Valid)
   EXPECT_TRUE(sfid.MatchesFaceID(42));
 }
 
-TEST(SmartFaceID, DeletedSimple)
-{
+TEST(SmartFaceID, DeletedSimple) {
   Robot robot(0, cozmoContext);
 
   SmartFaceID sfid = robot.GetFaceWorld().GetSmartFaceID(42);
@@ -77,11 +69,10 @@ TEST(SmartFaceID, DeletedSimple)
   DeleteFace(robot, 42);
 
   EXPECT_FALSE(sfid.IsValid());
-  EXPECT_TRUE(sfid.MatchesFaceID(0));  
+  EXPECT_TRUE(sfid.MatchesFaceID(0));
 }
 
-TEST(SmartFaceID, ChangedSimple)
-{
+TEST(SmartFaceID, ChangedSimple) {
   Robot robot(0, cozmoContext);
 
   SmartFaceID sfid = robot.GetFaceWorld().GetSmartFaceID(42);
@@ -95,8 +86,7 @@ TEST(SmartFaceID, ChangedSimple)
   EXPECT_TRUE(sfid.MatchesFaceID(20));
 }
 
-TEST(SmartFaceID, ComplexSingleFace)
-{
+TEST(SmartFaceID, ComplexSingleFace) {
   Robot robot(0, cozmoContext);
 
   SmartFaceID sfid = robot.GetFaceWorld().GetSmartFaceID(42);
@@ -126,7 +116,7 @@ TEST(SmartFaceID, ComplexSingleFace)
   EXPECT_TRUE(sfid.MatchesFaceID(20));
 
   robot.GetFaceWorld().UpdateSmartFaceToID(55, sfid);
-  
+
   EXPECT_TRUE(sfid.IsValid());
   EXPECT_TRUE(sfid.MatchesFaceID(55));
 
@@ -141,9 +131,7 @@ TEST(SmartFaceID, ComplexSingleFace)
   EXPECT_TRUE(sfid.MatchesFaceID(0));
 }
 
-
-TEST(SmartFaceID, CopyConstructor)
-{
+TEST(SmartFaceID, CopyConstructor) {
   Robot robot(0, cozmoContext);
 
   SmartFaceID sfid = robot.GetFaceWorld().GetSmartFaceID(42);
@@ -207,12 +195,12 @@ TEST(SmartFaceID, CopyConstructor)
   EXPECT_TRUE(sfid2.MatchesFaceID(0));
 }
 
-TEST(SmartFaceID, CopyWithDelete)
-{
+TEST(SmartFaceID, CopyWithDelete) {
   Robot robot(0, cozmoContext);
 
-  SmartFaceID* sfidPtr = new SmartFaceID(robot.GetFaceWorld().GetSmartFaceID(42));
-  
+  SmartFaceID* sfidPtr =
+      new SmartFaceID(robot.GetFaceWorld().GetSmartFaceID(42));
+
   EXPECT_TRUE(sfidPtr->IsValid());
   EXPECT_TRUE(sfidPtr->MatchesFaceID(42));
 
@@ -281,9 +269,9 @@ TEST(SmartFaceID, CopyWithDelete)
 
     EXPECT_TRUE(sfid4.IsValid());
     EXPECT_TRUE(sfid4.MatchesFaceID(55));
-    
+
     SmartFaceID sfid5(*sfidPtr);
-    
+
     EXPECT_TRUE(sfidPtr->IsValid());
     EXPECT_TRUE(sfidPtr->MatchesFaceID(55));
     EXPECT_TRUE(sfid5.IsValid());
@@ -325,8 +313,7 @@ TEST(SmartFaceID, CopyWithDelete)
   }
 }
 
-TEST(SmartFaceID, RValue)
-{
+TEST(SmartFaceID, RValue) {
   Robot robot(0, cozmoContext);
 
   SmartFaceID sfid = robot.GetFaceWorld().GetSmartFaceID(1);
@@ -341,7 +328,7 @@ TEST(SmartFaceID, RValue)
 
   // sfid is invalid now
   SmartFaceID sfid2(std::move(sfid));
-  
+
   EXPECT_TRUE(sfid2.IsValid());
   EXPECT_TRUE(sfid2.MatchesFaceID(2));
 

@@ -7,5 +7,4 @@
 
 int run_lua(const char *file_name);
 
-
 #endif

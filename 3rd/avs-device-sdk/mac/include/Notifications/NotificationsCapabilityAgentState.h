@@ -24,36 +24,39 @@ namespace notifications {
 #include <string>
 
 enum class NotificationsCapabilityAgentState {
-    // The capability agent is awaiting directives.
-    IDLE,
-    // A call to renderNotification() has been made, but the notification has not yet finished rendering.
-    PLAYING,
-    // A call to cancelNotificationRendering() has been made, but the notification has not yet been cancelled.
-    CANCELING_PLAY,
-    // The capability agent is shutting down.
-    SHUTTING_DOWN,
-    // The capability agent has finished shutting down.
-    SHUTDOWN
+  // The capability agent is awaiting directives.
+  IDLE,
+  // A call to renderNotification() has been made, but the notification has not
+  // yet finished rendering.
+  PLAYING,
+  // A call to cancelNotificationRendering() has been made, but the notification
+  // has not yet been cancelled.
+  CANCELING_PLAY,
+  // The capability agent is shutting down.
+  SHUTTING_DOWN,
+  // The capability agent has finished shutting down.
+  SHUTDOWN
 };
 
 inline std::string stateToString(NotificationsCapabilityAgentState state) {
-    switch (state) {
-        case NotificationsCapabilityAgentState::IDLE:
-            return "IDLE";
-        case NotificationsCapabilityAgentState::PLAYING:
-            return "PLAYING";
-        case NotificationsCapabilityAgentState::CANCELING_PLAY:
-            return "CANCELING_PLAY";
-        case NotificationsCapabilityAgentState::SHUTTING_DOWN:
-            return "SHUTTING_DOWN";
-        case NotificationsCapabilityAgentState::SHUTDOWN:
-            return "SHUTDOWN";
-    }
-    return "Unknown NotificationsCapabilityAgent State";
+  switch (state) {
+    case NotificationsCapabilityAgentState::IDLE:
+      return "IDLE";
+    case NotificationsCapabilityAgentState::PLAYING:
+      return "PLAYING";
+    case NotificationsCapabilityAgentState::CANCELING_PLAY:
+      return "CANCELING_PLAY";
+    case NotificationsCapabilityAgentState::SHUTTING_DOWN:
+      return "SHUTTING_DOWN";
+    case NotificationsCapabilityAgentState::SHUTDOWN:
+      return "SHUTDOWN";
+  }
+  return "Unknown NotificationsCapabilityAgent State";
 }
 
-inline std::ostream& operator<<(std::ostream& stream, const NotificationsCapabilityAgentState& state) {
-    return stream << stateToString(state);
+inline std::ostream& operator<<(
+    std::ostream& stream, const NotificationsCapabilityAgentState& state) {
+  return stream << stateToString(state);
 }
 
 }  // namespace notifications

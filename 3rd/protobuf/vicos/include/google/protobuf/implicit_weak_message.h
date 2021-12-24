@@ -31,8 +31,8 @@
 #ifndef GOOGLE_PROTOBUF_IMPLICIT_WEAK_MESSAGE_H__
 #define GOOGLE_PROTOBUF_IMPLICIT_WEAK_MESSAGE_H__
 
-#include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/arena.h>
+#include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/message_lite.h>
 
 // This file is logically internal-only and should only be used by protobuf
@@ -101,19 +101,23 @@ class ImplicitWeakTypeHandler {
   // GenericTypeHandler. The latter avoids creating a strong dependency, by
   // simply calling MessageLite::New.
   static inline ::google::protobuf::MessageLite* NewFromPrototype(
-      const ::google::protobuf::MessageLite* prototype, ::google::protobuf::Arena* arena = NULL) {
+      const ::google::protobuf::MessageLite* prototype,
+      ::google::protobuf::Arena* arena = NULL) {
     return prototype->New(arena);
   }
 
-  static inline void Delete(::google::protobuf::MessageLite* value, Arena* arena) {
+  static inline void Delete(::google::protobuf::MessageLite* value,
+                            Arena* arena) {
     if (arena == NULL) {
       delete value;
     }
   }
-  static inline ::google::protobuf::Arena* GetArena(::google::protobuf::MessageLite* value) {
+  static inline ::google::protobuf::Arena* GetArena(
+      ::google::protobuf::MessageLite* value) {
     return value->GetArena();
   }
-  static inline void* GetMaybeArenaPointer(::google::protobuf::MessageLite* value) {
+  static inline void* GetMaybeArenaPointer(
+      ::google::protobuf::MessageLite* value) {
     return value->GetArena();
   }
   static inline void Clear(::google::protobuf::MessageLite* value) {

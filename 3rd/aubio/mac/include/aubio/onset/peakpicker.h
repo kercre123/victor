@@ -37,18 +37,18 @@ extern "C" {
 typedef struct _aubio_peakpicker_t aubio_peakpicker_t;
 
 /** peak-picker creation function */
-aubio_peakpicker_t * new_aubio_peakpicker(void);
+aubio_peakpicker_t *new_aubio_peakpicker(void);
 /** real time peak picking function */
-void aubio_peakpicker_do(aubio_peakpicker_t * p, fvec_t * in, fvec_t * out);
+void aubio_peakpicker_do(aubio_peakpicker_t *p, fvec_t *in, fvec_t *out);
 /** destroy peak picker structure */
-void del_aubio_peakpicker(aubio_peakpicker_t * p);
+void del_aubio_peakpicker(aubio_peakpicker_t *p);
 
 /** get current peak value */
-fvec_t *aubio_peakpicker_get_thresholded_input (aubio_peakpicker_t * p);
+fvec_t *aubio_peakpicker_get_thresholded_input(aubio_peakpicker_t *p);
 /** set peak picking threshold */
-uint_t aubio_peakpicker_set_threshold(aubio_peakpicker_t * p, smpl_t threshold);
+uint_t aubio_peakpicker_set_threshold(aubio_peakpicker_t *p, smpl_t threshold);
 /** get peak picking threshold */
-smpl_t aubio_peakpicker_get_threshold(aubio_peakpicker_t * p);
+smpl_t aubio_peakpicker_get_threshold(aubio_peakpicker_t *p);
 
 #ifdef __cplusplus
 }

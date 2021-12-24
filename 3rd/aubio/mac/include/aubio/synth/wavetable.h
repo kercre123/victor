@@ -49,7 +49,7 @@ typedef struct _aubio_wavetable_t aubio_wavetable_t;
   \return the newly created aubio_wavetable_t
 
 */
-aubio_wavetable_t * new_aubio_wavetable(uint_t samplerate, uint_t hop_size);
+aubio_wavetable_t* new_aubio_wavetable(uint_t samplerate, uint_t hop_size);
 
 /** load source in wavetable
 
@@ -61,7 +61,7 @@ aubio_wavetable_t * new_aubio_wavetable(uint_t samplerate, uint_t hop_size);
   \return 0 if successful, non-zero otherwise
 
 */
-uint_t aubio_wavetable_load( aubio_wavetable_t * o, const char_t * uri );
+uint_t aubio_wavetable_load(aubio_wavetable_t* o, const char_t* uri);
 
 /** process wavetable function
 
@@ -71,11 +71,12 @@ uint_t aubio_wavetable_load( aubio_wavetable_t * o, const char_t * uri );
 
 This function adds the new samples from the playing wavetable to the output.
 
-If `input` is not NULL and different from `output`, then the samples from `input`
-are added to the output.
+If `input` is not NULL and different from `output`, then the samples from
+`input` are added to the output.
 
 */
-void aubio_wavetable_do ( aubio_wavetable_t * o, const fvec_t * input, fvec_t * output);
+void aubio_wavetable_do(aubio_wavetable_t* o, const fvec_t* input,
+                        fvec_t* output);
 
 /** process wavetable function, multiple channels
 
@@ -85,11 +86,12 @@ void aubio_wavetable_do ( aubio_wavetable_t * o, const fvec_t * input, fvec_t * 
 
 This function adds the new samples from the playing wavetable to the output.
 
-If `input` is not NULL and different from `output`, then the samples from `input`
-are added to the output.
+If `input` is not NULL and different from `output`, then the samples from
+`input` are added to the output.
 
 */
-void aubio_wavetable_do_multi ( aubio_wavetable_t * o, const fmat_t * input, fmat_t * output);
+void aubio_wavetable_do_multi(aubio_wavetable_t* o, const fmat_t* input,
+                              fmat_t* output);
 
 /** get current playing state
 
@@ -98,7 +100,7 @@ void aubio_wavetable_do_multi ( aubio_wavetable_t * o, const fmat_t * input, fma
   \return 0 if not playing, 1 if playing
 
 */
-uint_t aubio_wavetable_get_playing ( const aubio_wavetable_t * o );
+uint_t aubio_wavetable_get_playing(const aubio_wavetable_t* o);
 
 /** set current playing state
 
@@ -108,7 +110,7 @@ uint_t aubio_wavetable_get_playing ( const aubio_wavetable_t * o );
   \return 0 if successful, 1 otherwise
 
 */
-uint_t aubio_wavetable_set_playing ( aubio_wavetable_t * o, uint_t playing );
+uint_t aubio_wavetable_set_playing(aubio_wavetable_t* o, uint_t playing);
 
 /** play sample from start
 
@@ -117,7 +119,7 @@ uint_t aubio_wavetable_set_playing ( aubio_wavetable_t * o, uint_t playing );
   \return 0 if successful, 1 otherwise
 
 */
-uint_t aubio_wavetable_play ( aubio_wavetable_t * o );
+uint_t aubio_wavetable_play(aubio_wavetable_t* o);
 
 /** stop wavetable
 
@@ -126,7 +128,7 @@ uint_t aubio_wavetable_play ( aubio_wavetable_t * o );
   \return 0 if successful, 1 otherwise
 
 */
-uint_t aubio_wavetable_stop ( aubio_wavetable_t * o );
+uint_t aubio_wavetable_stop(aubio_wavetable_t* o);
 
 /** set wavetable frequency
 
@@ -136,7 +138,7 @@ uint_t aubio_wavetable_stop ( aubio_wavetable_t * o );
   \return 0 if successful, 1 otherwise
 
 */
-uint_t aubio_wavetable_set_freq ( aubio_wavetable_t * o, smpl_t freq );
+uint_t aubio_wavetable_set_freq(aubio_wavetable_t* o, smpl_t freq);
 
 /** get wavetable frequency
 
@@ -145,7 +147,7 @@ uint_t aubio_wavetable_set_freq ( aubio_wavetable_t * o, smpl_t freq );
   \return current frequency, in Hz
 
 */
-smpl_t aubio_wavetable_get_freq ( const aubio_wavetable_t * o);
+smpl_t aubio_wavetable_get_freq(const aubio_wavetable_t* o);
 
 /** set wavetable amplitude
 
@@ -155,7 +157,7 @@ smpl_t aubio_wavetable_get_freq ( const aubio_wavetable_t * o);
   \return 0 if successful, 1 otherwise
 
 */
-uint_t aubio_wavetable_set_amp ( aubio_wavetable_t * o, smpl_t amp );
+uint_t aubio_wavetable_set_amp(aubio_wavetable_t* o, smpl_t amp);
 
 /** get wavetable amplitude
 
@@ -164,14 +166,14 @@ uint_t aubio_wavetable_set_amp ( aubio_wavetable_t * o, smpl_t amp );
   \return current amplitude
 
 */
-smpl_t aubio_wavetable_get_amp ( const aubio_wavetable_t * o);
+smpl_t aubio_wavetable_get_amp(const aubio_wavetable_t* o);
 
 /** destroy aubio_wavetable_t object
 
   \param o wavetable, created by new_aubio_wavetable()
 
 */
-void del_aubio_wavetable( aubio_wavetable_t * o );
+void del_aubio_wavetable(aubio_wavetable_t* o);
 
 #ifdef __cplusplus
 }

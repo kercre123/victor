@@ -6,85 +6,90 @@ Created: 2014
 Thread-safe FixedLengthList. Works in Windows or Posix.
 
 Copyright Anki, Inc. 2014
-For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+For internal use only. No part of this code may be used without a signed
+non-disclosure agreement with Anki, inc.
 **/
 
 #ifndef _THREAD_SAFE_FIXED_LENGTH_LIST_H_
 #define _THREAD_SAFE_FIXED_LENGTH_LIST_H_
 
-#include "anki/tools/threads/threadSafeUtilities.h"
-
 #include <vector>
 
-namespace Anki
-{
-  namespace Embedded
-  {
-    template<typename Type> class ThreadSafeFixedLengthList
-    {
-    public:
-      ThreadSafeFixedLengthList(s32 maximumSize, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false));
+#include "anki/tools/threads/threadSafeUtilities.h"
 
-      // The maximum size is set at object construction
-      s32 get_maximumSize() const;
+namespace Anki {
+namespace Embedded {
+template <typename Type>
+class ThreadSafeFixedLengthList {
+ public:
+  ThreadSafeFixedLengthList(s32 maximumSize, MemoryStack& memory,
+                            const Flags::Buffer flags = Flags::Buffer(true,
+                                                                      false,
+                                                                      false));
 
-      bool IsValid() const;
+  // The maximum size is set at object construction
+  s32 get_maximumSize() const;
 
-      // Get or release exclusive access to the buffer
-      void Lock() const;
-      void Unlock() const;
+  bool IsValid() const;
 
-      // WARNING: allows non-thread-safe access. Unless you're sure no-one else is writing to it, use Lock and Unlock.
-      FixedLengthList<Type>& get_buffer();
+  // Get or release exclusive access to the buffer
+  void Lock() const;
+  void Unlock() const;
 
-    protected:
-      mutable SimpleMutex mutex;
+  // WARNING: allows non-thread-safe access. Unless you're sure no-one else is
+  // writing to it, use Lock and Unlock.
+  FixedLengthList<Type>& get_buffer();
 
-      FixedLengthList<Type> buffer;
-    }; // class ThreadSafeFixedLengthList
+ protected:
+  mutable SimpleMutex mutex;
 
-    template<typename Type> ThreadSafeFixedLengthList<Type>::ThreadSafeFixedLengthList(s32 maximumSize, MemoryStack &memory, const Flags::Buffer flags)
-    {
+  FixedLengthList<Type> buffer;
+};  // class ThreadSafeFixedLengthList
+
+template <typename Type>
+ThreadSafeFixedLengthList<Type>::ThreadSafeFixedLengthList(
+    s32 maximumSize, MemoryStack& memory, const Flags::Buffer flags) {
 #ifdef _MSC_VER
-      mutex = CreateMutex(NULL, FALSE, NULL);
+  mutex = CreateMutex(NULL, FALSE, NULL);
 #else
-      pthread_mutex_init(&mutex, NULL);
+  pthread_mutex_init(&mutex, NULL);
 #endif
 
-      buffer = FixedLengthList<Type>(maximumSize, memory, flags);
-    } // template<typename Type> ThreadSafeFixedLengthList::ThreadSafeFixedLengthList()
+  buffer = FixedLengthList<Type>(maximumSize, memory, flags);
+}  // template<typename Type>
+   // ThreadSafeFixedLengthList::ThreadSafeFixedLengthList()
 
-    template<typename Type> s32 ThreadSafeFixedLengthList<Type>::get_maximumSize() const
-    {
-      return buffer.get_maximumSize();
-    }
+template <typename Type>
+s32 ThreadSafeFixedLengthList<Type>::get_maximumSize() const {
+  return buffer.get_maximumSize();
+}
 
-    template<typename Type> bool ThreadSafeFixedLengthList<Type>::IsValid() const
-    {
-      LockSimpleMutex(mutex);
+template <typename Type>
+bool ThreadSafeFixedLengthList<Type>::IsValid() const {
+  LockSimpleMutex(mutex);
 
-      const bool isValid = this->buffer.IsValid();
+  const bool isValid = this->buffer.IsValid();
 
-      UnlockSimpleMutex(mutex);
+  UnlockSimpleMutex(mutex);
 
-      return isValid;
-    }
+  return isValid;
+}
 
-    template<typename Type> void ThreadSafeFixedLengthList<Type>::Lock() const
-    {
-      LockSimpleMutex(mutex);
-    }
+template <typename Type>
+void ThreadSafeFixedLengthList<Type>::Lock() const {
+  LockSimpleMutex(mutex);
+}
 
-    template<typename Type> void ThreadSafeFixedLengthList<Type>::Unlock() const
-    {
-      UnlockSimpleMutex(mutex);
-    }
+template <typename Type>
+void ThreadSafeFixedLengthList<Type>::Unlock() const {
+  UnlockSimpleMutex(mutex);
+}
 
-    template<typename Type> FixedLengthList<Type>& ThreadSafeFixedLengthList<Type>::get_buffer()
-    {
-      return this->buffer;
-    }
-  } // namespace Embedded
-} // namespace Anki
+template <typename Type>
+FixedLengthList<Type>& ThreadSafeFixedLengthList<Type>::get_buffer() {
+  return this->buffer;
+}
+}  // namespace Embedded
+}  // namespace Anki
 
-#endif // _THREAD_SAFE_FIXED_LENGTH_LIST_H_
+#endif  // _THREAD_SAFE_FIXED_LENGTH_LIST_H_

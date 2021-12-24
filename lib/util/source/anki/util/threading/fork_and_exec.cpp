@@ -12,8 +12,6 @@
 
 #include "fork_and_exec.h"
 
-#include "util/helpers/temp_failure_retry.h"
-
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
@@ -23,8 +21,9 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define ARRAY_SIZE(x)   (sizeof(x) / sizeof(*(x)))
+#include "util/helpers/temp_failure_retry.h"
 
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 
 namespace Anki {
 
@@ -33,23 +32,22 @@ static pid_t sChildPid = -1;
 static int ExecChild(const std::vector<std::string>& args) {
   char* argv_child[args.size() + 1];
 
-  for (size_t i = 0 ; i < args.size() ; ++i) {
-    argv_child[i] = (char *) malloc(args[i].size() + 1);
+  for (size_t i = 0; i < args.size(); ++i) {
+    argv_child[i] = (char*)malloc(args[i].size() + 1);
     strcpy(argv_child[i], args[i].c_str());
   }
   argv_child[args.size()] = NULL;
 
   int rc = execvp(argv_child[0], argv_child);
   fprintf(stderr, "%s: %s\n", argv_child[0], strerror(errno));
-  for (size_t i = 0 ; i < args.size() + 1 ; ++i) {
+  for (size_t i = 0; i < args.size() + 1; ++i) {
     free(argv_child[i]);
   }
   _exit(-1);
   return rc;
 }
 
-int ForkAndExec(const std::vector<std::string>& args)
-{
+int ForkAndExec(const std::vector<std::string>& args) {
   pid_t pid;
   int rc;
 
@@ -77,26 +75,25 @@ int ForkAndExec(const std::vector<std::string>& args)
   return rc;
 }
 
-int ForkAndExecAndForget(const std::vector<std::string>& args)
-{
+int ForkAndExecAndForget(const std::vector<std::string>& args) {
   pid_t pid;
 
   pid = fork();
   if (pid < 0) {
     return -1;
   } else if (!pid) {
-    (void) ExecChild(args);
+    (void)ExecChild(args);
   }
   return 0;
 }
 
 void KillChildProcess() {
   if (sChildPid > 0) {
-    (void) kill(sChildPid, SIGINT);
-    (void) kill(sChildPid, SIGQUIT);
-    (void) kill(sChildPid, SIGKILL);
+    (void)kill(sChildPid, SIGINT);
+    (void)kill(sChildPid, SIGQUIT);
+    (void)kill(sChildPid, SIGKILL);
     sChildPid = -1;
   }
 }
 
-} // namespace Anki
+}  // namespace Anki

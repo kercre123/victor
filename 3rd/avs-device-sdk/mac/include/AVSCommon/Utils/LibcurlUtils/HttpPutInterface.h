@@ -28,23 +28,22 @@ namespace libcurlUtils {
 
 /// Minimal interface for making HTTP PUT requests.
 class HttpPutInterface {
-public:
-    /// Virtual destructor to assure proper cleanup of derived types.
-    virtual ~HttpPutInterface() = default;
+ public:
+  /// Virtual destructor to assure proper cleanup of derived types.
+  virtual ~HttpPutInterface() = default;
 
-    /**
-     * Perform an HTTP Put request returning the response body as a string. This method blocks for the duration
-     * of the request.
-     *
-     * @param url The URL to send the PUT to.
-     * @param headers vector of strings to add in the header.
-     * @param data The PUT data to send in the request.
-     * @return An object describing the response to the PUT request.
-     */
-    virtual HTTPResponse doPut(
-        const std::string& url,
-        const std::vector<std::string>& headers,
-        const std::string& data) = 0;
+  /**
+   * Perform an HTTP Put request returning the response body as a string. This
+   * method blocks for the duration of the request.
+   *
+   * @param url The URL to send the PUT to.
+   * @param headers vector of strings to add in the header.
+   * @param data The PUT data to send in the request.
+   * @return An object describing the response to the PUT request.
+   */
+  virtual HTTPResponse doPut(const std::string& url,
+                             const std::vector<std::string>& headers,
+                             const std::string& data) = 0;
 };
 
 }  // namespace libcurlUtils

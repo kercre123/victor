@@ -37,17 +37,17 @@ extern "C" {
 // BITS can be any multiple of 8 from 8 to 56 (inclusive).
 // Pick values that fit natural register size.
 
-#if defined(__i386__) || defined(_M_IX86)      // x86 32bit
+#if defined(__i386__) || defined(_M_IX86)  // x86 32bit
 #define BITS 24
-#elif defined(__x86_64__) || defined(_M_X64)   // x86 64bit
+#elif defined(__x86_64__) || defined(_M_X64)  // x86 64bit
 #define BITS 56
-#elif defined(__arm__) || defined(_M_ARM)      // ARM
+#elif defined(__arm__) || defined(_M_ARM)  // ARM
 #define BITS 24
-#elif defined(__aarch64__)                     // ARM 64bit
+#elif defined(__aarch64__)  // ARM 64bit
 #define BITS 56
-#elif defined(__mips__)                        // MIPS
+#elif defined(__mips__)  // MIPS
 #define BITS 24
-#else                                          // reasonable default
+#else  // reasonable default
 #define BITS 24
 #endif
 
@@ -70,22 +70,22 @@ typedef uint32_t range_t;
 typedef struct VP8BitReader VP8BitReader;
 struct VP8BitReader {
   // boolean decoder  (keep the field ordering as is!)
-  bit_t value_;               // current value
-  range_t range_;             // current range minus 1. In [127, 254] interval.
-  int bits_;                  // number of valid bits left
+  bit_t value_;    // current value
+  range_t range_;  // current range minus 1. In [127, 254] interval.
+  int bits_;       // number of valid bits left
   // read buffer
-  const uint8_t* buf_;        // next byte to be read
-  const uint8_t* buf_end_;    // end of read buffer
-  const uint8_t* buf_max_;    // max packed-read position on buffer
-  int eof_;                   // true if input is exhausted
+  const uint8_t* buf_;      // next byte to be read
+  const uint8_t* buf_end_;  // end of read buffer
+  const uint8_t* buf_max_;  // max packed-read position on buffer
+  int eof_;                 // true if input is exhausted
 };
 
 // Initialize the bit reader and the boolean decoder.
-void VP8InitBitReader(VP8BitReader* const br,
-                      const uint8_t* const start, size_t size);
+void VP8InitBitReader(VP8BitReader* const br, const uint8_t* const start,
+                      size_t size);
 // Sets the working read buffer.
-void VP8BitReaderSetBuffer(VP8BitReader* const br,
-                           const uint8_t* const start, size_t size);
+void VP8BitReaderSetBuffer(VP8BitReader* const br, const uint8_t* const start,
+                           size_t size);
 
 // Update internal pointers to displace the byte buffer by the
 // relative offset 'offset'.
@@ -119,16 +119,15 @@ int32_t VP8GetSignedValue(VP8BitReader* const br, int num_bits);
 typedef uint64_t vp8l_val_t;  // right now, this bit-reader can only use 64bit.
 
 typedef struct {
-  vp8l_val_t     val_;        // pre-fetched bits
-  const uint8_t* buf_;        // input byte buffer
-  size_t         len_;        // buffer length
-  size_t         pos_;        // byte position in buf_
-  int            bit_pos_;    // current bit-reading position in val_
-  int            eos_;        // true if a bit was read past the end of buffer
+  vp8l_val_t val_;      // pre-fetched bits
+  const uint8_t* buf_;  // input byte buffer
+  size_t len_;          // buffer length
+  size_t pos_;          // byte position in buf_
+  int bit_pos_;         // current bit-reading position in val_
+  int eos_;             // true if a bit was read past the end of buffer
 } VP8LBitReader;
 
-void VP8LInitBitReader(VP8LBitReader* const br,
-                       const uint8_t* const start,
+void VP8LInitBitReader(VP8LBitReader* const br, const uint8_t* const start,
                        size_t length);
 
 //  Sets a new data buffer.
@@ -168,7 +167,7 @@ static WEBP_INLINE void VP8LFillBitWindow(VP8LBitReader* const br) {
 }
 
 #ifdef __cplusplus
-}    // extern "C"
+}  // extern "C"
 #endif
 
-#endif  /* WEBP_UTILS_BIT_READER_H_ */
+#endif /* WEBP_UTILS_BIT_READER_H_ */

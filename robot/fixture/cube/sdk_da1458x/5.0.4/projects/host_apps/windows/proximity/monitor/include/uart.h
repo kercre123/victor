@@ -5,10 +5,10 @@
  *
  * @brief Definitions for uart interface.
  *
- * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer 
- * program includes Confidential, Proprietary Information and is a Trade Secret of 
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
- * unless authorized in writing. All Rights Reserved.
+ * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -30,7 +30,7 @@
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void UARTSend(unsigned short size, unsigned char *data);
 
 /*
@@ -42,18 +42,18 @@ void UARTSend(unsigned short size, unsigned char *data);
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void SendToMain(unsigned short length, uint8_t *bInputDataPtr);
 
 /*
  ****************************************************************************************
  * @brief UART Reception thread loop.
- * 
+ *
  *  @param[in] unused  Pointer to user data.
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void UARTProc(PVOID unused);
 
 /*
@@ -65,7 +65,7 @@ void UARTProc(PVOID unused);
  *
  * @return -1 on failure / 0 on success.
  ****************************************************************************************
-*/
+ */
 uint8_t InitUART(int Port, int BaudRate);
 
 #endif /* _UART_H_ */

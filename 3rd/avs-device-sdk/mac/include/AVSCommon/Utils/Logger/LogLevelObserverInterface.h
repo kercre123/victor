@@ -24,22 +24,22 @@ namespace utils {
 namespace logger {
 
 /**
- * This interface class allows notifications from a Logger object (or any derived class) when the
- * logLevel changes.
+ * This interface class allows notifications from a Logger object (or any
+ * derived class) when the logLevel changes.
  */
 class LogLevelObserverInterface {
-public:
-    /**
-     * This function will be called when the logLevel changes.
-     *
-     * @param status The updated logLevel
-     */
-    virtual void onLogLevelChanged(Level level) = 0;
+ public:
+  /**
+   * This function will be called when the logLevel changes.
+   *
+   * @param status The updated logLevel
+   */
+  virtual void onLogLevelChanged(Level level) = 0;
 
-    /**
-     * Destructor.
-     */
-    virtual ~LogLevelObserverInterface() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~LogLevelObserverInterface() = default;
 };
 
 }  // namespace logger

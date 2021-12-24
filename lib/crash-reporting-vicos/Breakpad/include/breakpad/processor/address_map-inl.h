@@ -36,22 +36,21 @@
 #ifndef PROCESSOR_ADDRESS_MAP_INL_H__
 #define PROCESSOR_ADDRESS_MAP_INL_H__
 
-#include "processor/address_map.h"
-
 #include <assert.h>
 
+#include "processor/address_map.h"
 #include "processor/logging.h"
 
 namespace google_breakpad {
 
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 bool AddressMap<AddressType, EntryType>::Store(const AddressType &address,
                                                const EntryType &entry) {
   // Ensure that the specified address doesn't conflict with something already
   // in the map.
   if (map_.find(address) != map_.end()) {
-    BPLOG(INFO) << "Store failed, address " << HexString(address) <<
-                   " is already present";
+    BPLOG(INFO) << "Store failed, address " << HexString(address)
+                << " is already present";
     return false;
   }
 
@@ -59,10 +58,10 @@ bool AddressMap<AddressType, EntryType>::Store(const AddressType &address,
   return true;
 }
 
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 bool AddressMap<AddressType, EntryType>::Retrieve(
-    const AddressType &address,
-    EntryType *entry, AddressType *entry_address) const {
+    const AddressType &address, EntryType *entry,
+    AddressType *entry_address) const {
   BPLOG_IF(ERROR, !entry) << "AddressMap::Retrieve requires |entry|";
   assert(entry);
 
@@ -72,18 +71,16 @@ bool AddressMap<AddressType, EntryType>::Retrieve(
   // points to the beginning of the map - in that case, address is lower than
   // the lowest stored key, so return false.
   MapConstIterator iterator = map_.upper_bound(address);
-  if (iterator == map_.begin())
-    return false;
+  if (iterator == map_.begin()) return false;
   --iterator;
 
   *entry = iterator->second;
-  if (entry_address)
-    *entry_address = iterator->first;
+  if (entry_address) *entry_address = iterator->first;
 
   return true;
 }
 
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 void AddressMap<AddressType, EntryType>::Clear() {
   map_.clear();
 }

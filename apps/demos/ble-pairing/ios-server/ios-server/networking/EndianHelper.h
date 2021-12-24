@@ -12,59 +12,59 @@
 #include <stdlib.h>
 
 class EndianHelper {
-public:
+ public:
   static bool IsHostLittleEndian() {
     uint32_t value = 0x01;
     return *((char*)(&value)) == 0x01;
   }
-  
+
   template <typename value>
   static value ConvertHostToNetworkOrder(value a) {
     return ConvertHostToBigEndian(a);
   }
-  
+
   template <typename value>
   static value ConvertNetworkOrderToHost(value a) {
     return ConvertBigEndianToHost(a);
   }
-  
+
   template <typename value>
   static value ConvertHostToLittleEndian(value a) {
-    if(IsHostLittleEndian()) {
+    if (IsHostLittleEndian()) {
       return a;
     } else {
       return ReverseBytesCopy(a);
     }
   }
-  
+
   template <typename value>
   static value ConvertHostToBigEndian(value a) {
-    if(!IsHostLittleEndian()) {
+    if (!IsHostLittleEndian()) {
       return a;
     } else {
       return ReverseBytesCopy(a);
     }
   }
-  
+
   template <typename value>
   static value ConvertLittleEndianToHost(value a) {
-    if(IsHostLittleEndian()) {
+    if (IsHostLittleEndian()) {
       return a;
     } else {
       return ReverseBytesCopy(a);
     }
   }
-  
+
   template <typename value>
   static value ConvertBigEndianToHost(value a) {
-    if(!IsHostLittleEndian()) {
+    if (!IsHostLittleEndian()) {
       return a;
     } else {
       return ReverseBytesCopy(a);
     }
   }
-  
-private:
+
+ private:
   template <typename T>
   static T ReverseBytesCopy(const T& value) {
     /*htonl(<#x#>)
@@ -73,11 +73,11 @@ private:
     ntohl(<#x#>);
     ntohs(<#x#>);
     ntohll(<#x#>);*/
-    
+
     T output = value;
-    
+
     std::reverse((char*)(&output), (char*)(&output) + sizeof(T));
-    
+
     return output;
   }
 };

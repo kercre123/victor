@@ -19,8 +19,8 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_CONTEXTREQUESTERINTERFACE_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_CONTEXTREQUESTERINTERFACE_H_
 
-#include <string>
 #include <ostream>
+#include <string>
 
 namespace alexaClientSDK {
 namespace avsCommon {
@@ -30,42 +30,48 @@ namespace sdkInterfaces {
  * This enum expresses the result of a getContext operation.
  */
 enum class ContextRequestError {
-    /// @c getContext request failed due to a timeout on one or more @c stateProviderInterfaces.
-    STATE_PROVIDER_TIMEDOUT,
+  /// @c getContext request failed due to a timeout on one or more @c
+  /// stateProviderInterfaces.
+  STATE_PROVIDER_TIMEDOUT,
 
-    /// @c getContext request failed due to an error building the context.
-    BUILD_CONTEXT_ERROR
+  /// @c getContext request failed due to an error building the context.
+  BUILD_CONTEXT_ERROR
 };
 
 /**
  * This specifies the interface to a contextRequester.
  */
 class ContextRequesterInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~ContextRequesterInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~ContextRequesterInterface() = default;
 
-    /**
-     * This is called by the ContextManager once the context is ready and available.
-     *
-     * @note The @c ContextRequester should perform minimum processing and return quickly. Otherwise it will block
-     * the processing of updating the of other @c ContextProviders.
-     *
-     * @param jsonContext Context information.Context provided is of the format {"context"[{...}, {...}]}
-     */
-    virtual void onContextAvailable(const std::string& jsonContext) = 0;
+  /**
+   * This is called by the ContextManager once the context is ready and
+   * available.
+   *
+   * @note The @c ContextRequester should perform minimum processing and return
+   * quickly. Otherwise it will block the processing of updating the of other @c
+   * ContextProviders.
+   *
+   * @param jsonContext Context information.Context provided is of the format
+   * {"context"[{...}, {...}]}
+   */
+  virtual void onContextAvailable(const std::string& jsonContext) = 0;
 
-    /**
-     * The contextManager calls this if it is unable to process a @c getContext request successfully.
-     *
-     * @note The @c ContextRequester should perform minimum processing and return quickly. Otherwise it will block
-     * the processing of updating the of other @c ContextProviders.
-     *
-     * @param error The reason why the getContext request failed.
-     */
-    virtual void onContextFailure(const ContextRequestError error) = 0;
+  /**
+   * The contextManager calls this if it is unable to process a @c getContext
+   * request successfully.
+   *
+   * @note The @c ContextRequester should perform minimum processing and return
+   * quickly. Otherwise it will block the processing of updating the of other @c
+   * ContextProviders.
+   *
+   * @param error The reason why the getContext request failed.
+   */
+  virtual void onContextFailure(const ContextRequestError error) = 0;
 };
 
 /**
@@ -75,16 +81,17 @@ public:
  * @param error The error value to write to the @c ostream as a string.
  * @return The @c ostream that was passed in and written to.
  */
-inline std::ostream& operator<<(std::ostream& stream, const ContextRequestError& error) {
-    switch (error) {
-        case ContextRequestError::STATE_PROVIDER_TIMEDOUT:
-            stream << "STATE_PROVIDER_TIMEDOUT";
-            break;
-        case ContextRequestError::BUILD_CONTEXT_ERROR:
-            stream << "BUILD_CONTEXT_ERROR";
-            break;
-    }
-    return stream;
+inline std::ostream& operator<<(std::ostream& stream,
+                                const ContextRequestError& error) {
+  switch (error) {
+    case ContextRequestError::STATE_PROVIDER_TIMEDOUT:
+      stream << "STATE_PROVIDER_TIMEDOUT";
+      break;
+    case ContextRequestError::BUILD_CONTEXT_ERROR:
+      stream << "BUILD_CONTEXT_ERROR";
+      break;
+  }
+  return stream;
 }
 
 }  // namespace sdkInterfaces

@@ -4,8 +4,8 @@
  * Author: ross
  * Created: Oct 20 2018
  *
- * Description: An implementation of the KeyWordObserverInterface that uses our special AlexaClient
- *              instead of the SDK's client
+ * Description: An implementation of the KeyWordObserverInterface that uses our
+ * special AlexaClient instead of the SDK's client
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -28,49 +28,54 @@
  */
 
 #include "cozmoAnim/alexa/alexaKeywordObserver.h"
+
 #include "cozmoAnim/alexa/alexaClient.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
 namespace Vector {
-  
+
 using namespace alexaClientSDK;
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AlexaKeywordObserver::AlexaKeywordObserver( std::shared_ptr<AlexaClient> client,
-                                            capabilityAgents::aip::AudioProvider audioProvider,
-                                            std::shared_ptr<esp::ESPDataProviderInterface> espProvider )
-  : _client{ client }
-  , _audioProvider{ audioProvider }
-  , _espProvider{ espProvider }
-{
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+AlexaKeywordObserver::AlexaKeywordObserver(
+    std::shared_ptr<AlexaClient> client,
+    capabilityAgents::aip::AudioProvider audioProvider,
+    std::shared_ptr<esp::ESPDataProviderInterface> espProvider)
+    : _client{client},
+      _audioProvider{audioProvider},
+      _espProvider{espProvider} {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaKeywordObserver::onKeyWordDetected( std::shared_ptr<avsCommon::avs::AudioInputStream> stream,
-                                              std::string keyword,
-                                              avsCommon::avs::AudioInputStream::Index beginIndex,
-                                              avsCommon::avs::AudioInputStream::Index endIndex,
-                                              std::shared_ptr<const std::vector<char>> KWDMetadata )
-{
-  if( (endIndex != avsCommon::sdkInterfaces::KeyWordObserverInterface::UNSPECIFIED_INDEX)
-      && (beginIndex == avsCommon::sdkInterfaces::KeyWordObserverInterface::UNSPECIFIED_INDEX) )
-  {
-    if( _client ) {
-      _client->NotifyOfTapToTalk( _audioProvider, endIndex );
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void AlexaKeywordObserver::onKeyWordDetected(
+    std::shared_ptr<avsCommon::avs::AudioInputStream> stream,
+    std::string keyword, avsCommon::avs::AudioInputStream::Index beginIndex,
+    avsCommon::avs::AudioInputStream::Index endIndex,
+    std::shared_ptr<const std::vector<char>> KWDMetadata) {
+  if ((endIndex !=
+       avsCommon::sdkInterfaces::KeyWordObserverInterface::UNSPECIFIED_INDEX) &&
+      (beginIndex ==
+       avsCommon::sdkInterfaces::KeyWordObserverInterface::UNSPECIFIED_INDEX)) {
+    if (_client) {
+      _client->NotifyOfTapToTalk(_audioProvider, endIndex);
     }
-  } else if ( (endIndex != avsCommon::sdkInterfaces::KeyWordObserverInterface::UNSPECIFIED_INDEX)
-              && (beginIndex != avsCommon::sdkInterfaces::KeyWordObserverInterface::UNSPECIFIED_INDEX) )
-  {
+  } else if ((endIndex != avsCommon::sdkInterfaces::KeyWordObserverInterface::
+                              UNSPECIFIED_INDEX) &&
+             (beginIndex != avsCommon::sdkInterfaces::KeyWordObserverInterface::
+                                UNSPECIFIED_INDEX)) {
     auto espData = capabilityAgents::aip::ESPData::getEmptyESPData();
-    if( _espProvider ) {
+    if (_espProvider) {
       espData = _espProvider->getESPData();
     }
 
-    if( _client ) {
-      // TODO(ACSDK-1976): We need to take into consideration the keyword duration.
+    if (_client) {
+      // TODO(ACSDK-1976): We need to take into consideration the keyword
+      // duration.
       auto startOfSpeechTimestamp = std::chrono::steady_clock::now();
-      _client->NotifyOfWakeWord( _audioProvider, beginIndex, endIndex, keyword, startOfSpeechTimestamp, espData, KWDMetadata );
+      _client->NotifyOfWakeWord(_audioProvider, beginIndex, endIndex, keyword,
+                                startOfSpeechTimestamp, espData, KWDMetadata);
     }
   }
 }

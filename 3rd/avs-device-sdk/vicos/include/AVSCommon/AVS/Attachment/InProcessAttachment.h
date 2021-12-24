@@ -19,7 +19,6 @@
 #include "AVSCommon/AVS/Attachment/Attachment.h"
 #include "AVSCommon/AVS/Attachment/InProcessAttachmentReader.h"
 #include "AVSCommon/AVS/Attachment/InProcessAttachmentWriter.h"
-
 #include "AVSCommon/Utils/SDS/InProcessSDS.h"
 
 namespace alexaClientSDK {
@@ -28,34 +27,39 @@ namespace avs {
 namespace attachment {
 
 /**
- * A class that represents an AVS attachment following an in-process memory management model.
+ * A class that represents an AVS attachment following an in-process memory
+ * management model.
  */
 class InProcessAttachment : public Attachment {
-public:
-    /// Type aliases for convenience.
-    using SDSType = avsCommon::utils::sds::InProcessSDS;
-    using SDSBufferType = avsCommon::utils::sds::InProcessSDSTraits::Buffer;
+ public:
+  /// Type aliases for convenience.
+  using SDSType = avsCommon::utils::sds::InProcessSDS;
+  using SDSBufferType = avsCommon::utils::sds::InProcessSDSTraits::Buffer;
 
-    /// Default size of underlying SDS when created internally.
-    static const int SDS_BUFFER_DEFAULT_SIZE_IN_BYTES = 0x100000;
+  /// Default size of underlying SDS when created internally.
+  static const int SDS_BUFFER_DEFAULT_SIZE_IN_BYTES = 0x100000;
 
-    /**
-     * Constructor.
-     *
-     * @param id The attachment id.
-     * @param sds The underlying @c SharedDataStream object.  If not specified, then this class will create its own.
-     */
-    InProcessAttachment(const std::string& id, std::unique_ptr<SDSType> sds = nullptr);
+  /**
+   * Constructor.
+   *
+   * @param id The attachment id.
+   * @param sds The underlying @c SharedDataStream object.  If not specified,
+   * then this class will create its own.
+   */
+  InProcessAttachment(const std::string& id,
+                      std::unique_ptr<SDSType> sds = nullptr);
 
-    std::unique_ptr<AttachmentWriter> createWriter(
-        InProcessAttachmentWriter::SDSTypeWriter::Policy policy =
-            InProcessAttachmentWriter::SDSTypeWriter::Policy::ALL_OR_NOTHING) override;
+  std::unique_ptr<AttachmentWriter> createWriter(
+      InProcessAttachmentWriter::SDSTypeWriter::Policy policy =
+          InProcessAttachmentWriter::SDSTypeWriter::Policy::ALL_OR_NOTHING)
+      override;
 
-    std::unique_ptr<AttachmentReader> createReader(InProcessAttachmentReader::SDSTypeReader::Policy policy) override;
+  std::unique_ptr<AttachmentReader> createReader(
+      InProcessAttachmentReader::SDSTypeReader::Policy policy) override;
 
-private:
-    // The sds from which we will create the reader and writer.
-    std::shared_ptr<SDSType> m_sds;
+ private:
+  // The sds from which we will create the reader and writer.
+  std::shared_ptr<SDSType> m_sds;
 };
 
 }  // namespace attachment

@@ -4,7 +4,9 @@
  * Author: Kevin M. Karol
  * Created: 2018-06-04
  *
- * Description: Centers face/s so that they will look pleasing in an image - this may not be true center if aesthetics dictate more space should be left on the top/bottom of the frame
+ * Description: Centers face/s so that they will look pleasing in an image -
+ *this may not be true center if aesthetics dictate more space should be left on
+ *the top/bottom of the frame
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -15,39 +17,34 @@
 #pragma once
 
 #include "coretech/common/engine/robotTimeStamp.h"
-
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-
 #include "engine/aiComponent/faceSelectionComponent.h"
 
 namespace Anki {
 namespace Vector {
 
-class BehaviorAestheticallyCenterFaces : public ICozmoBehavior
-{
-public: 
+class BehaviorAestheticallyCenterFaces : public ICozmoBehavior {
+ public:
   virtual ~BehaviorAestheticallyCenterFaces();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorAestheticallyCenterFaces(const Json::Value& config);  
+  explicit BehaviorAestheticallyCenterFaces(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual void InitBehavior() override;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-  enum class BehaviorState{
-    SearchForFace,
-    CenterFace
-  };
+ private:
+  enum class BehaviorState { SearchForFace, CenterFace };
 
   struct InstanceConfig {
     InstanceConfig();
@@ -67,11 +64,9 @@ private:
   void TransitionToSearchForFaces();
   void TransitionToCenterFace();
   const Vision::TrackedFace* GetBestFaceToCenter();
-
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorAestheticallyCenterFaces__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorAestheticallyCenterFaces__

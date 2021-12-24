@@ -22,12 +22,12 @@ namespace alexaClientSDK {
 namespace acl {
 
 class TransportDefines {
-public:
-    /// Table with the retry times on subsequent retries.
-    const static std::vector<int> RETRY_TABLE;
+ public:
+  /// Table with the retry times on subsequent retries.
+  const static std::vector<int> RETRY_TABLE;
 
-    /// Retry Timer Object for transport.
-    static avsCommon::utils::RetryTimer RETRY_TIMER;
+  /// Retry Timer Object for transport.
+  static avsCommon::utils::RetryTimer RETRY_TIMER;
 };
 
 }  // namespace acl

@@ -39,8 +39,9 @@ constexpr std::array<absl::LogSeverity, 4> LogSeverities() {
            absl::LogSeverity::kError, absl::LogSeverity::kFatal}};
 }
 
-// Returns the all-caps std::string representation (e.g. "INFO") of the specified
-// severity level if it is one of the normal levels and "UNKNOWN" otherwise.
+// Returns the all-caps std::string representation (e.g. "INFO") of the
+// specified severity level if it is one of the normal levels and "UNKNOWN"
+// otherwise.
 constexpr const char* LogSeverityName(absl::LogSeverity s) {
   return s == absl::LogSeverity::kInfo
              ? "INFO"

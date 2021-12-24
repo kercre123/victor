@@ -14,37 +14,34 @@
 #ifndef ANIM_PROCESS_MESSAGES_H
 #define ANIM_PROCESS_MESSAGES_H
 
-#include "coretech/common/shared/types.h"
-
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "coretech/common/shared/types.h"
 
 namespace Anki {
 namespace Vector {
 
 // Forward declarations
 namespace Anim {
-  class AnimationStreamer;
-  class StreamingAnimationModifier;
-  class AnimContext;
-  class AnimEngine;
-}
+class AnimationStreamer;
+class StreamingAnimationModifier;
+class AnimContext;
+class AnimEngine;
+}  // namespace Anim
 
 namespace Audio {
 class EngineRobotAudioInput;
 }
 
-class AnimProcessMessages
-{
-public:
-
+class AnimProcessMessages {
+ public:
   // Initialize message handlers.
   // Arguments may not be null.
-  static Result Init(Anim::AnimEngine* animEngine,
-                     Anim::AnimationStreamer* animStreamer,
-                     Anim::StreamingAnimationModifier* streamingAnimationModifier,
-                     Audio::EngineRobotAudioInput* audioInput,
-                     const Anim::AnimContext* context);
+  static Result Init(
+      Anim::AnimEngine* animEngine, Anim::AnimationStreamer* animStreamer,
+      Anim::StreamingAnimationModifier* streamingAnimationModifier,
+      Audio::EngineRobotAudioInput* audioInput,
+      const Anim::AnimContext* context);
 
   // Process message traffic
   static Result Update(BaseStationTime_t currTime_nanosec);
@@ -58,7 +55,8 @@ public:
   static bool SendAnimToRobot(const RobotInterface::EngineToRobot& msg);
 
   // Dispatch message from engine
-  static void ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg);
+  static void ProcessMessageFromEngine(
+      const RobotInterface::EngineToRobot& msg);
 
   // Dispatch message from robot
   static void ProcessMessageFromRobot(const RobotInterface::RobotToEngine& msg);
@@ -68,7 +66,7 @@ public:
   static uint32_t GetMessageCountRtA() { return _messageCountRobotToAnim; }
   static uint32_t GetMessageCountEtA() { return _messageCountEngineToAnim; }
 
-private:
+ private:
   // Check state & send firmware handshake when engine connects
   static Result MonitorConnectionState(BaseStationTime_t currTime_nanosec);
 
@@ -78,8 +76,7 @@ private:
   static uint32_t _messageCountEngineToAnim;
 };
 
-} // namespace Vector
-} // namespace Anki
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif  // #ifndef ANIM_PROCESS_MESSAGES_H

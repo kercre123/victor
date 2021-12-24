@@ -1,11 +1,13 @@
+#include "hmac.h"
+
 #include <string.h>
 
 #include "md5.h"
-#include "hmac.h"
 
 static const int BLOCK_LENGTH = 64;
 
-bool test_hmac(const uint8_t* hmac, const uint8_t* nonce, int nonce_length, const uint8_t* data, int data_length) {
+bool test_hmac(const uint8_t* hmac, const uint8_t* nonce, int nonce_length,
+               const uint8_t* data, int data_length) {
   uint8_t cmp[HMAC_LENGTH];
 
   create_hmac(cmp, nonce, nonce_length, data, data_length);
@@ -13,7 +15,8 @@ bool test_hmac(const uint8_t* hmac, const uint8_t* nonce, int nonce_length, cons
   return memcmp(hmac, cmp, HMAC_LENGTH) == 0;
 }
 
-void create_hmac(uint8_t* hmac, const uint8_t* nonce, int nonce_length, const uint8_t* data, int data_length) {
+void create_hmac(uint8_t* hmac, const uint8_t* nonce, int nonce_length,
+                 const uint8_t* data, int data_length) {
   MD5_CTX ctx;
   uint8_t pad[BLOCK_LENGTH];
 

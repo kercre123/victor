@@ -38,6 +38,4 @@ TEST(DummyTest, Dummy) {
   // called first.
 }
 
-int main() {
-  return RUN_ALL_TESTS();
-}
+int main() { return RUN_ALL_TESTS(); }

@@ -17,9 +17,9 @@
 #ifndef GEMMLOWP_INTERNAL_PACK_MSA_H_
 #define GEMMLOWP_INTERNAL_PACK_MSA_H_
 
-#include "pack.h"
-
 #include <msa.h>
+
+#include "pack.h"
 
 namespace gemmlowp {
 

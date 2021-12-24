@@ -42,7 +42,7 @@ namespace google_breakpad {
 // Splits line into at most max_tokens tokens, separated by any of the
 // characters in separators and placing them in the tokens vector.
 // line is a 0-terminated string that optionally ends with a newline
-// character or combination, which will be removed. 
+// character or combination, which will be removed.
 // If more tokens than max_tokens are present, the final token is placed
 // into the vector without splitting it up at all.  This modifies line as
 // a side effect.  Returns true if exactly max_tokens tokens are returned,
@@ -50,10 +50,8 @@ namespace google_breakpad {
 // Tokenize, but may be treated as a failure if the caller expects an
 // exact, as opposed to maximum, number of tokens.
 
-bool Tokenize(char *line,
-              const char *separators,
-              int max_tokens,
-              std::vector<char*> *tokens);
+bool Tokenize(char *line, const char *separators, int max_tokens,
+              std::vector<char *> *tokens);
 // For convenience, since you need a char* to pass to Tokenize.
 // You can call StringToVector on a string, and use &vec[0].
 void StringToVector(const string &str, std::vector<char> &vec);

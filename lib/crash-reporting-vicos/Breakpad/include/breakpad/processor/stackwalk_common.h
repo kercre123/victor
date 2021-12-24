@@ -30,7 +30,6 @@
 // stackwalk_common.cc: Module shared by the {micro,mini}dump_stackwalck
 // executables to print the content of dumps (w/ stack traces) on the console.
 
-
 #ifndef PROCESSOR_STACKWALK_COMMON_H__
 #define PROCESSOR_STACKWALK_COMMON_H__
 

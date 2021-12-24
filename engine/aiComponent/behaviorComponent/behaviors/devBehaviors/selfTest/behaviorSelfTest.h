@@ -4,8 +4,8 @@
  * Author: Al Chaussee
  * Created: 11/15/2018
  *
- * Description: Runs individual steps (behaviors) of the self test and manages switching between them and dealing
- *              with failures
+ * Description: Runs individual steps (behaviors) of the self test and manages
+ *switching between them and dealing with failures
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -14,11 +14,9 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_DevBehaviors_SelfTest_BehaviorSelfTest_H__
 #define __Cozmo_Basestation_BehaviorSystem_DevBehaviors_SelfTest_BehaviorSelfTest_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-
-#include "util/signals/simpleSignal_fwd.h"
-
 #include "clad/types/selfTestTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
 namespace Vector {
@@ -26,24 +24,24 @@ namespace Vector {
 class IBehaviorSelfTest;
 class Robot;
 
-class BehaviorSelfTest : public ICozmoBehavior
-{
-public:
-  
+class BehaviorSelfTest : public ICozmoBehavior {
+ public:
   BehaviorSelfTest(const Json::Value& config);
-  virtual ~BehaviorSelfTest() {};
-  
+  virtual ~BehaviorSelfTest(){};
+
   virtual void BehaviorUpdate() override;
-  
-  template<typename T>
+
+  template <typename T>
   void HandleMessage(const T& msg);
-  
-protected:
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+
+ protected:
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.wantsToBeActivatedWhenOffTreads = true;
     modifiers.behaviorAlwaysDelegates = false;
-    modifiers.visionModesForActiveScope->insert({VisionMode::Markers, EVisionUpdateFrequency::High});
+    modifiers.visionModesForActiveScope->insert(
+        {VisionMode::Markers, EVisionUpdateFrequency::High});
   }
 
   virtual void InitBehavior() override;
@@ -53,19 +51,20 @@ protected:
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
-  
+
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
   virtual void HandleWhileActivated(const GameToEngineEvent& event) override;
 
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override { }
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override {}
 
-private:
-  
+ private:
   // Handle the playpen result and finish up the test
   void HandleResult(SelfTestResultCode result);
 
-  // Display appropriate stuff on the face and backpack lights depending on the result
+  // Display appropriate stuff on the face and backpack lights depending on the
+  // result
   void DisplayResult(SelfTestResultCode result);
 
   // Reset all playpen behaviors and state
@@ -76,7 +75,7 @@ private:
 
   // Perform any final checks
   SelfTestResultCode DoFinalChecks();
-  
+
   using SelfTestBehavior = std::shared_ptr<IBehaviorSelfTest>;
 
   // The current running self test behavior
@@ -85,7 +84,7 @@ private:
   // List of all self test behaviors
   std::vector<SelfTestBehavior>::iterator _currentSelfTestBehaviorIter;
   std::vector<SelfTestBehavior> _selfTestBehaviors;
-  
+
   std::vector<::Signal::SmartHandle> _signalHandles;
 
   // Whether or not we are waiting on button press to finish the self test
@@ -93,8 +92,7 @@ private:
   bool _waitForButtonToEndTest = false;
   bool _buttonPressed = false;
 
-  enum class RadioScanState
-  {
+  enum class RadioScanState {
     None,
     WaitingForWifiResult,
     WaitingForCubeResult,
@@ -103,10 +101,9 @@ private:
   };
 
   RadioScanState _radioScanState = RadioScanState::None;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

@@ -9,7 +9,7 @@
 //     Purpose: Describes the IPP version
 //
 */
-#if !defined( __IPPVERSION_H__ )
+#if !defined(__IPPVERSION_H__)
 #define __IPPVERSION_H__
 
 #define IPP_VERSION_MAJOR 7

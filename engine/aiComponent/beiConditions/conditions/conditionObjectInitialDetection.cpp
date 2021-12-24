@@ -11,48 +11,51 @@
  **/
 
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectInitialDetection.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionObjectKnown.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+
 #include "coretech/common/engine/jsonTools.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionObjectKnown.h"
 
 namespace Anki {
 namespace Vector {
 
-namespace{
-  const char* kFirstTimeOnlyKey = "firstTimeOnly";
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionObjectInitialDetection::ConditionObjectInitialDetection(const Json::Value& config)
- : ConditionObjectKnown( config, 0 ) // 0 means "this tick"
-{
-  _firstTimeOnly = JsonTools::ParseBool(config,
-                                        kFirstTimeOnlyKey,
-                                        "ConditionObjectInitialDetection.ConfigError.FirstTimeOnly");
+namespace {
+const char* kFirstTimeOnlyKey = "firstTimeOnly";
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionObjectInitialDetection::~ConditionObjectInitialDetection()
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+ConditionObjectInitialDetection::ConditionObjectInitialDetection(
+    const Json::Value& config)
+    : ConditionObjectKnown(config, 0)  // 0 means "this tick"
 {
+  _firstTimeOnly = JsonTools::ParseBool(
+      config, kFirstTimeOnlyKey,
+      "ConditionObjectInitialDetection.ConfigError.FirstTimeOnly");
 }
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionObjectInitialDetection::SetActiveInternal(BehaviorExternalInterface& behaviorExternalInterface, bool setActive)
-{
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+ConditionObjectInitialDetection::~ConditionObjectInitialDetection() {}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void ConditionObjectInitialDetection::SetActiveInternal(
+    BehaviorExternalInterface& behaviorExternalInterface, bool setActive) {
   _reacted = false;
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionObjectInitialDetection::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool ConditionObjectInitialDetection::AreConditionsMetInternal(
+    BehaviorExternalInterface& behaviorExternalInterface) const {
   if (_firstTimeOnly && _reacted) {
     return false;
   }
-  
-  const bool baseConditionsMet = ConditionObjectKnown::AreConditionsMetInternal( behaviorExternalInterface );
-  if( baseConditionsMet ) {
+
+  const bool baseConditionsMet =
+      ConditionObjectKnown::AreConditionsMetInternal(behaviorExternalInterface);
+  if (baseConditionsMet) {
     _reacted = true;
     return true;
   } else {
@@ -60,6 +63,5 @@ bool ConditionObjectInitialDetection::AreConditionsMetInternal(BehaviorExternalI
   }
 }
 
-
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki

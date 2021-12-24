@@ -15,118 +15,99 @@
 #ifndef __COMMON_BASESTATION_MATH_POLYGON_IMPL_H__
 #define __COMMON_BASESTATION_MATH_POLYGON_IMPL_H__
 
+#include <limits>
+#include <utility>
+
 #include "coretech/common/engine/math/polygon_fwd.h"
 #include "coretech/common/engine/math/quad.h"
 #include "coretech/common/engine/math/rotatedRect.h"
 #include "coretech/common/engine/utils/helpers/compareFcns.h"
 #include "coretech/common/shared/utilities_shared.h"
 
-#include <utility>
-#include <limits>
-
 namespace Anki {
 
 template <PolygonDimType N, typename T>
-Polygon<N,T>::Polygon()
-{
-}
+Polygon<N, T>::Polygon() {}
 
 template <PolygonDimType N, typename T>
-Polygon<N,T>::Polygon(const Polygon<N,T>& other)
-  : _points(other._points)
-{
-}
+Polygon<N, T>::Polygon(const Polygon<N, T>& other) : _points(other._points) {}
 
 template <PolygonDimType N, typename T>
-Polygon<N,T>::Polygon( std::initializer_list< Point<N,T> > points )
-  : _points(points)
-{
-}
+Polygon<N, T>::Polygon(std::initializer_list<Point<N, T> > points)
+    : _points(points) {}
 
 template <PolygonDimType N, typename T>
-Polygon<N,T>::Polygon(const std::vector<CladPoint2d>& cladPoints)
-{
+Polygon<N, T>::Polygon(const std::vector<CladPoint2d>& cladPoints) {
   static_assert(N == 2, "Must use 2D to convert from vector of CladPoint2d");
   this->reserve(cladPoints.size());
-  for(auto& cladPoint : cladPoints)
-  {
+  for (auto& cladPoint : cladPoints) {
     this->emplace_back({cladPoint.x, cladPoint.y});
   }
 }
-  
+
 template <PolygonDimType N, typename T>
-Polygon<N,T>::Polygon(const std::vector<CladPoint3d>& cladPoints)
-{
+Polygon<N, T>::Polygon(const std::vector<CladPoint3d>& cladPoints) {
   static_assert(N == 3, "Must use 3D to convert from vector of CladPoint3d");
   this->reserve(cladPoints.size());
-  for(auto& cladPoint : cladPoints)
-  {
+  for (auto& cladPoint : cladPoints) {
     this->emplace_back({cladPoint.x, cladPoint.y, cladPoint.z});
   }
 }
- 
+
 template <PolygonDimType N, typename T>
-std::vector<CladPoint2d> Polygon<N,T>::ToCladPoint2dVector() const
-{
+std::vector<CladPoint2d> Polygon<N, T>::ToCladPoint2dVector() const {
   static_assert(N == 2, "Must use 2D to convert to vector of CladPoint2d");
   std::vector<CladPoint2d> vec;
   vec.reserve(this->size());
-  for(const auto& point : _points)
-  {
+  for (const auto& point : _points) {
     vec.emplace_back(CladPoint2d(point.x(), point.y()));
   }
   return vec;
 }
 
 template <PolygonDimType N, typename T>
-std::vector<CladPoint3d> Polygon<N,T>::ToCladPoint3dVector() const
-{
+std::vector<CladPoint3d> Polygon<N, T>::ToCladPoint3dVector() const {
   static_assert(N == 3, "Must use 3D to convert to vector of CladPoint3d");
   std::vector<CladPoint3d> vec;
   vec.reserve(this->size());
-  for(const auto& point : _points)
-  {
+  for (const auto& point : _points) {
     vec.emplace_back(CladPoint3d(point.x(), point.y(), point.z()));
   }
   return vec;
 }
-  
+
 template <PolygonDimType N, typename T>
-Polygon<N,T>::Polygon(const Polygon<N+1,T>& other)
-{
-  for( const auto& point : other ) {
+Polygon<N, T>::Polygon(const Polygon<N + 1, T>& other) {
+  for (const auto& point : other) {
     // use points N+1 constructor to drop the last dimension
     _points.emplace_back(point);
   }
 }
 
 template <PolygonDimType N, typename T>
-Polygon<N,T>::Polygon(const Rectangle<T>& rect)
-  : _points{rect.GetTopLeft(), rect.GetTopRight(), rect.GetBottomRight(), rect.GetBottomLeft()}
-{
+Polygon<N, T>::Polygon(const Rectangle<T>& rect)
+    : _points{rect.GetTopLeft(), rect.GetTopRight(), rect.GetBottomRight(),
+              rect.GetBottomLeft()} {
   static_assert(N == 2, "Must use 2D for rectangles");
 }
 
 template <PolygonDimType N, typename T>
-Polygon<N,T>::Polygon(const RotatedRectangle& rect)
-{
+Polygon<N, T>::Polygon(const RotatedRectangle& rect) {
   static_assert(N == 2, "Must use 2D for rotated rectangles");
 
   ImportQuad2d(rect.GetQuad());
 }
 
 template <PolygonDimType N, typename T>
-Polygon<N,T>::Polygon(const Quadrilateral<2, T>& quad)
-{
+Polygon<N, T>::Polygon(const Quadrilateral<2, T>& quad) {
   ImportQuad2d(quad);
 }
 
 template <PolygonDimType N, typename T>
-void Polygon<N,T>::ImportQuad(const Quadrilateral<N,T>& quad)
-{
+void Polygon<N, T>::ImportQuad(const Quadrilateral<N, T>& quad) {
   static_assert(N != 2, "Must use ImportQuad2D for 2d");
 
-  Quadrilateral<N,T> sortedQuad ( quad.SortCornersClockwise( Z_AXIS_3D() ) );
+  Quadrilateral<N, T> sortedQuad(quad.SortCornersClockwise(Z_AXIS_3D()));
 
   // For some reason, these need to be backwards for things to work...
 
@@ -139,15 +120,13 @@ void Polygon<N,T>::ImportQuad(const Quadrilateral<N,T>& quad)
   _points.emplace_back(sortedQuad[Quad::BottomLeft]);
   _points.emplace_back(sortedQuad[Quad::BottomRight]);
   _points.emplace_back(sortedQuad[Quad::TopRight]);
-
 }
 
 template <PolygonDimType N, typename T>
-void Polygon<N,T>::ImportQuad2d(const Quadrilateral<2,T>& quad)
-{
+void Polygon<N, T>::ImportQuad2d(const Quadrilateral<2, T>& quad) {
   static_assert(N == 2, "Must use ImportQuad for > 2d");
 
-  Quadrilateral<2,T> sortedQuad ( quad.SortCornersClockwise(  ) );
+  Quadrilateral<2, T> sortedQuad(quad.SortCornersClockwise());
 
   // For some reason, these need to be backwards for things to work...
 
@@ -160,18 +139,15 @@ void Polygon<N,T>::ImportQuad2d(const Quadrilateral<2,T>& quad)
   _points.emplace_back(sortedQuad[Quad::BottomLeft]);
   _points.emplace_back(sortedQuad[Quad::BottomRight]);
   _points.emplace_back(sortedQuad[Quad::TopRight]);
-
 }
 
-
 template <PolygonDimType N, typename T>
-void Polygon<N,T>::Print() const
-{
+void Polygon<N, T>::Print() const {
   // BN: tried to copy the format from Quadrilateral::Print
   CoreTechPrint("Polygon: ");
-  for(const auto& point : _points) {
+  for (const auto& point : _points) {
     CoreTechPrint("(");
-    for(PolygonDimType i = 0; i < N; ++i) {
+    for (PolygonDimType i = 0; i < N; ++i) {
       CoreTechPrint(" %f", point[i]);
     }
     CoreTechPrint(")\n");
@@ -179,11 +155,10 @@ void Polygon<N,T>::Print() const
 }
 
 template <PolygonDimType N, typename T>
-T Polygon<N,T>::GetMinX(void) const
-{
+T Polygon<N, T>::GetMinX(void) const {
   T minX = std::numeric_limits<T>::max();
-  for(const auto& it : _points) {
-    if( it.x() < minX) {
+  for (const auto& it : _points) {
+    if (it.x() < minX) {
       minX = it.x();
     }
   }
@@ -192,11 +167,10 @@ T Polygon<N,T>::GetMinX(void) const
 }
 
 template <PolygonDimType N, typename T>
-T Polygon<N,T>::GetMaxX(void) const
-{
+T Polygon<N, T>::GetMaxX(void) const {
   T maxX = std::numeric_limits<T>::lowest();
-  for(const auto& it : _points) {
-    if( it.x() > maxX) {
+  for (const auto& it : _points) {
+    if (it.x() > maxX) {
       maxX = it.x();
     }
   }
@@ -205,11 +179,10 @@ T Polygon<N,T>::GetMaxX(void) const
 }
 
 template <PolygonDimType N, typename T>
-T Polygon<N,T>::GetMinY(void) const
-{
+T Polygon<N, T>::GetMinY(void) const {
   T minX = std::numeric_limits<T>::max();
-  for(const auto& it : _points) {
-    if( it.y() < minX) {
+  for (const auto& it : _points) {
+    if (it.y() < minX) {
       minX = it.y();
     }
   }
@@ -218,11 +191,10 @@ T Polygon<N,T>::GetMinY(void) const
 }
 
 template <PolygonDimType N, typename T>
-T Polygon<N,T>::GetMaxY(void) const
-{
+T Polygon<N, T>::GetMaxY(void) const {
   T maxX = std::numeric_limits<T>::lowest();
-  for(const auto& it : _points) {
-    if( it.y() > maxX) {
+  for (const auto& it : _points) {
+    if (it.y() > maxX) {
       maxX = it.y();
     }
   }
@@ -231,66 +203,56 @@ T Polygon<N,T>::GetMaxY(void) const
 }
 
 template <PolygonDimType N, typename T>
-void Polygon<N,T>::reserve(size_t n)
-{
+void Polygon<N, T>::reserve(size_t n) {
   _points.reserve(n);
 }
 
 template <PolygonDimType N, typename T>
-void Polygon<N,T>::push_back(const Point<N, T>& val)
-{
+void Polygon<N, T>::push_back(const Point<N, T>& val) {
   _points.push_back(val);
 }
 
 template <PolygonDimType N, typename T>
-void Polygon<N,T>::push_back(Point<N, T>&& val)
-{
-  _points.push_back(std::forward< Point<N,T> >(val));
+void Polygon<N, T>::push_back(Point<N, T>&& val) {
+  _points.push_back(std::forward<Point<N, T> >(val));
 }
 
 template <PolygonDimType N, typename T>
-void Polygon<N,T>::emplace_back(Point<N, T>&& val)
-{
-  _points.emplace_back(std::forward< Point<N,T> >(val));
+void Polygon<N, T>::emplace_back(Point<N, T>&& val) {
+  _points.emplace_back(std::forward<Point<N, T> >(val));
 }
 
 template <PolygonDimType N, typename T>
-void Polygon<N,T>::pop_back()
-{
+void Polygon<N, T>::pop_back() {
   _points.pop_back();
 }
 
 template <PolygonDimType N, typename T>
-size_t Polygon<N,T>::size() const
-{
+size_t Polygon<N, T>::size() const {
   return _points.size();
 }
 
 template <PolygonDimType N, typename T>
-Point<N,T>& Polygon<N,T>::operator[] (size_t idx)
-{
+Point<N, T>& Polygon<N, T>::operator[](size_t idx) {
   return _points[idx];
 }
 
 template <PolygonDimType N, typename T>
-const Point<N,T>& Polygon<N,T>::operator[] (size_t idx) const
-{
+const Point<N, T>& Polygon<N, T>::operator[](size_t idx) const {
   return _points[idx];
 }
 
-
 template <PolygonDimType N, typename T>
-T Polygon<N,T>::GetEdgeAngle(size_t idx) const
-{
+T Polygon<N, T>::GetEdgeAngle(size_t idx) const {
   assert(!_points.empty());
 
   size_t idx2 = (idx + 1) % _points.size();
-  return atan2(_points[idx2].y() - _points[idx].y(), _points[idx2].x() - _points[idx].x());
+  return atan2(_points[idx2].y() - _points[idx].y(),
+               _points[idx2].x() - _points[idx].x());
 }
 
 template <PolygonDimType N, typename T>
-Point<N,T> Polygon<N,T>::GetEdgeVector(size_t idx) const
-{
+Point<N, T> Polygon<N, T>::GetEdgeVector(size_t idx) const {
   assert(!_points.empty());
 
   size_t idx2 = (idx + 1) % _points.size();
@@ -298,19 +260,18 @@ Point<N,T> Polygon<N,T>::GetEdgeVector(size_t idx) const
 }
 
 template <PolygonDimType N, typename T>
-Point<N,T> Polygon<N,T>::ComputeWeightedAverage() const
-{
+Point<N, T> Polygon<N, T>::ComputeWeightedAverage() const {
   Point<N, T> ret;
 
-  for(PolygonDimType dim = 0; dim < N; ++dim) {
-    ret[dim] = (T) 0;
+  for (PolygonDimType dim = 0; dim < N; ++dim) {
+    ret[dim] = (T)0;
   }
 
   // NOTE: this won't work for integer types!
-  T oneOverNum = ((T) 1.0) / ((T) _points.size());
+  T oneOverNum = ((T)1.0) / ((T)_points.size());
 
-  for(const auto& point : _points) {
-    for(PolygonDimType dim = 0; dim < N; ++dim) {
+  for (const auto& point : _points) {
+    for (PolygonDimType dim = 0; dim < N; ++dim) {
       ret[dim] += point[dim] * oneOverNum;
     }
   }
@@ -318,8 +279,6 @@ Point<N,T> Polygon<N,T>::ComputeWeightedAverage() const
   return ret;
 }
 
-
-}
-
+}  // namespace Anki
 
 #endif

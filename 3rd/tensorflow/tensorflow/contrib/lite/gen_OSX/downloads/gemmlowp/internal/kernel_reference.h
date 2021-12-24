@@ -20,10 +20,10 @@
 #ifndef GEMMLOWP_INTERNAL_KERNEL_REFERENCE_H_
 #define GEMMLOWP_INTERNAL_KERNEL_REFERENCE_H_
 
-#include "kernel.h"
-
 #include <cstdio>
 #include <cstring>
+
+#include "kernel.h"
 
 namespace gemmlowp {
 

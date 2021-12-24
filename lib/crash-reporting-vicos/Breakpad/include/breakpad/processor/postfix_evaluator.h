@@ -69,7 +69,6 @@
 #ifndef PROCESSOR_POSTFIX_EVALUATOR_H__
 #define PROCESSOR_POSTFIX_EVALUATOR_H__
 
-
 #include <map>
 #include <string>
 #include <vector>
@@ -83,7 +82,7 @@ using std::vector;
 
 class MemoryRegion;
 
-template<typename ValueType>
+template <typename ValueType>
 class PostfixEvaluator {
  public:
   typedef map<string, ValueType> DictionaryType;
@@ -113,10 +112,10 @@ class PostfixEvaluator {
   // Otherwise, return false.
   bool EvaluateForValue(const string &expression, ValueType *result);
 
-  DictionaryType* dictionary() const { return dictionary_; }
+  DictionaryType *dictionary() const { return dictionary_; }
 
   // Reset the dictionary.  PostfixEvaluator does not take ownership.
-  void set_dictionary(DictionaryType *dictionary) {dictionary_ = dictionary; }
+  void set_dictionary(DictionaryType *dictionary) { dictionary_ = dictionary; }
 
  private:
   // Return values for PopValueOrIdentifier
@@ -154,8 +153,7 @@ class PostfixEvaluator {
   bool EvaluateInternal(const string &expression,
                         DictionaryValidityType *assigned);
 
-  bool EvaluateToken(const string &token,
-                     const string &expression,
+  bool EvaluateToken(const string &token, const string &expression,
                      DictionaryValidityType *assigned);
 
   // The dictionary mapping constant and variable identifiers (strings) to
@@ -174,6 +172,5 @@ class PostfixEvaluator {
 };
 
 }  // namespace google_breakpad
-
 
 #endif  // PROCESSOR_POSTFIX_EVALUATOR_H__

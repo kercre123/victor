@@ -16,55 +16,65 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_USERINACTIVITYMONITORINTERFACE_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_USERINACTIVITYMONITORINTERFACE_H_
 
-#include <chrono>
-
 #include <AVSCommon/SDKInterfaces/UserInactivityMonitorObserverInterface.h>
+
+#include <chrono>
 
 namespace alexaClientSDK {
 namespace avsCommon {
 namespace sdkInterfaces {
 
 /**
- * This interface is used to notify an implementation of the user activity. Any component that interacts with the user
- * (e.g. AudioInputProcessor) should register an instance of this interface to signal when user interaction is detected
- * (e.g. SpeechStarted).
+ * This interface is used to notify an implementation of the user activity. Any
+ * component that interacts with the user (e.g. AudioInputProcessor) should
+ * register an instance of this interface to signal when user interaction is
+ * detected (e.g. SpeechStarted).
  *
- * This interface should also send the System.UserInactivityReport Event as defined here:
+ * This interface should also send the System.UserInactivityReport Event as
+ * defined here:
  * https://developer.amazon.com/docs/alexa-voice-service/system.html#userinactivityreport
  * and notify its observers when this occurs.
  */
 class UserInactivityMonitorInterface {
-public:
-    /// Destructor.
-    virtual ~UserInactivityMonitorInterface() = default;
+ public:
+  /// Destructor.
+  virtual ~UserInactivityMonitorInterface() = default;
 
-    /// The function to be called when the user has become active.
-    virtual void onUserActive() = 0;
+  /// The function to be called when the user has become active.
+  virtual void onUserActive() = 0;
 
-    /**
-     * Calculates how many seconds have elapsed since a user last interacted with the device.
-     *
-     * @return How many seconds have elapsed since a user last interacted with the device.
-     */
-    virtual std::chrono::seconds timeSinceUserActivity() = 0;
+  /**
+   * Calculates how many seconds have elapsed since a user last interacted with
+   * the device.
+   *
+   * @return How many seconds have elapsed since a user last interacted with the
+   * device.
+   */
+  virtual std::chrono::seconds timeSinceUserActivity() = 0;
 
-    /**
-     * Adds an observer to be notified when the System.UserInactivityReport Event has been sent.
-     *
-     * @param observer The observer to be notified when the System.UserInactivityReport Event has been sent.
-     */
-    virtual void addObserver(
-        std::shared_ptr<avsCommon::sdkInterfaces::UserInactivityMonitorObserverInterface> observer) = 0;
+  /**
+   * Adds an observer to be notified when the System.UserInactivityReport Event
+   * has been sent.
+   *
+   * @param observer The observer to be notified when the
+   * System.UserInactivityReport Event has been sent.
+   */
+  virtual void addObserver(
+      std::shared_ptr<
+          avsCommon::sdkInterfaces::UserInactivityMonitorObserverInterface>
+          observer) = 0;
 
-    /**
-     * Removes an observer from the collection of observers which will be notified when the System.UserInactivityReport
-     * Event has been sent.
-     *
-     * @param observer The observer that should no longer be notified when the System.UserInactivityReport Event has
-     * been sent.
-     */
-    virtual void removeObserver(
-        std::shared_ptr<avsCommon::sdkInterfaces::UserInactivityMonitorObserverInterface> observer) = 0;
+  /**
+   * Removes an observer from the collection of observers which will be notified
+   * when the System.UserInactivityReport Event has been sent.
+   *
+   * @param observer The observer that should no longer be notified when the
+   * System.UserInactivityReport Event has been sent.
+   */
+  virtual void removeObserver(
+      std::shared_ptr<
+          avsCommon::sdkInterfaces::UserInactivityMonitorObserverInterface>
+          observer) = 0;
 };
 
 }  // namespace sdkInterfaces

@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -14,23 +15,29 @@
 // Copyright (C) 2009, Willow Garage Inc., all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
-// This software is provided by the copyright holders and contributors "as is" and
+// This software is provided by the copyright holders and contributors "as is"
+and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -44,30 +51,31 @@
 #define OPENCV_OLD_CV_H
 
 #if defined(_MSC_VER)
-    #define CV_DO_PRAGMA(x) __pragma(x)
-    #define __CVSTR2__(x) #x
-    #define __CVSTR1__(x) __CVSTR2__(x)
-    #define __CVMSVCLOC__ __FILE__ "("__CVSTR1__(__LINE__)") : "
-    #define CV_MSG_PRAGMA(_msg) CV_DO_PRAGMA(message (__CVMSVCLOC__ _msg))
+#define CV_DO_PRAGMA(x) __pragma(x)
+#define __CVSTR2__(x) #x
+#define __CVSTR1__(x) __CVSTR2__(x)
+#define __CVMSVCLOC__ __FILE__ "("__CVSTR1__(__LINE__) ") : "
+#define CV_MSG_PRAGMA(_msg) CV_DO_PRAGMA(message(__CVMSVCLOC__ _msg))
 #elif defined(__GNUC__)
-    #define CV_DO_PRAGMA(x) _Pragma (#x)
-    #define CV_MSG_PRAGMA(_msg) CV_DO_PRAGMA(message (_msg))
+#define CV_DO_PRAGMA(x) _Pragma(#x)
+#define CV_MSG_PRAGMA(_msg) CV_DO_PRAGMA(message(_msg))
 #else
-    #define CV_DO_PRAGMA(x)
-    #define CV_MSG_PRAGMA(_msg)
+#define CV_DO_PRAGMA(x)
+#define CV_MSG_PRAGMA(_msg)
 #endif
 #define CV_WARNING(x) CV_MSG_PRAGMA("Warning: " #x)
 
-//CV_WARNING("This is a deprecated opencv header provided for compatibility. Please include a header from a corresponding opencv module")
+// CV_WARNING("This is a deprecated opencv header provided for compatibility.
+// Please include a header from a corresponding opencv module")
 
 #include "opencv2/core/core_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
+#include "opencv2/objdetect/objdetect_c.h"
 #include "opencv2/photo/photo_c.h"
 #include "opencv2/video/tracking_c.h"
-#include "opencv2/objdetect/objdetect_c.h"
 
 #if !defined(CV_IMPL)
 #define CV_IMPL extern "C"
-#endif //CV_IMPL
+#endif  // CV_IMPL
 
-#endif // __OPENCV_OLD_CV_H_
+#endif  // __OPENCV_OLD_CV_H_

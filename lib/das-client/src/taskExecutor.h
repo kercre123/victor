@@ -13,52 +13,50 @@
  *
  **/
 #ifndef __TaskExecutor_H__
-#define	__TaskExecutor_H__
+#define __TaskExecutor_H__
 
 #include <chrono>
+#include <condition_variable>
+#include <mutex>
 #include <thread>
 #include <vector>
-#include <mutex>
-#include <condition_variable>
 
-namespace Anki
-{
-namespace Das
-{
+namespace Anki {
+namespace Das {
 
 typedef struct _TaskHolder {
   bool sync;
   std::function<void()> task;
   std::chrono::time_point<std::chrono::system_clock> when;
 
-  bool operator < (const _TaskHolder& th) const
-  {
-    return (when > th.when);
-  }
+  bool operator<(const _TaskHolder& th) const { return (when > th.when); }
 } TaskHolder;
 
 class TaskExecutor {
-public:
+ public:
   TaskExecutor();
   ~TaskExecutor();
   void Wake(std::function<void()> task);
   void WakeSync(std::function<void()> task);
-  void WakeAfter(std::function<void()> task, std::chrono::time_point<std::chrono::system_clock> when);
+  void WakeAfter(std::function<void()> task,
+                 std::chrono::time_point<std::chrono::system_clock> when);
   void StopExecution();
-protected:
+
+ protected:
   TaskExecutor(const TaskExecutor&) = delete;
   TaskExecutor& operator=(const TaskExecutor&) = delete;
-  void Wait(std::unique_lock<std::mutex> &lock,
-            std::condition_variable &condition,
+  void Wait(std::unique_lock<std::mutex>& lock,
+            std::condition_variable& condition,
             const std::vector<TaskHolder>* tasks) const;
-private:
+
+ private:
   void AddTaskHolder(TaskHolder taskHolder);
   void AddTaskHolderToDeferredQueue(TaskHolder taskHolder);
   void Execute();
   void ProcessDeferredQueue();
-  void Run(std::unique_lock<std::mutex> &lock);
+  void Run(std::unique_lock<std::mutex>& lock);
 
-private:
+ private:
   std::thread _taskExecuteThread;
   std::mutex _taskQueueMutex;
   std::condition_variable _taskQueueCondition;
@@ -74,7 +72,7 @@ private:
   bool _executing;
 };
 
-} // namespace Das
-} // namespace Anki
+}  // namespace Das
+}  // namespace Anki
 
-#endif	/* __TaskExecutor_H__ */
+#endif /* __TaskExecutor_H__ */

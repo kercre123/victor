@@ -8,17 +8,11 @@
 
 #include "util/helpers/includeGTest.h"
 
-class QuestRuleTest : public ::testing::Test
-{
-public:
-  
+class QuestRuleTest : public ::testing::Test {
+ public:
   static void SetUpTestCase() {}
-  
+
   static void TearDownTestCase() {}
-  
 };
 
-TEST_F(QuestRuleTest, Trigger)
-{
-  
-}
+TEST_F(QuestRuleTest, Trigger) {}

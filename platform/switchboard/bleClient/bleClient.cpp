@@ -10,8 +10,9 @@
  *
  **/
 
-#include "anki-ble/common/anki_ble_uuids.h"
 #include "bleClient/bleClient.h"
+
+#include "anki-ble/common/anki_ble_uuids.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -25,16 +26,13 @@ bool BleClient::SendEncrypted(uint8_t* msg, size_t length) {
 }
 
 bool BleClient::Send(uint8_t* msg, size_t length, std::string charUuid) {
-  if(_connectionId == -1) {
+  if (_connectionId == -1) {
     return false;
   }
 
-  std::vector<uint8_t> msgVector(msg, msg+length);
+  std::vector<uint8_t> msgVector(msg, msg + length);
 
-  SendMessage(_connectionId,
-              charUuid,
-              true,
-              msgVector);
+  SendMessage(_connectionId, charUuid, true, msgVector);
 
   return true;
 }
@@ -42,12 +40,14 @@ bool BleClient::Send(uint8_t* msg, size_t length, std::string charUuid) {
 void BleClient::OnReceiveMessage(const int connection_id,
                                  const std::string& characteristic_uuid,
                                  const std::vector<uint8_t>& value) {
-  if(characteristic_uuid == kAppWriteCharacteristicUUID) {
+  if (characteristic_uuid == kAppWriteCharacteristicUUID) {
     // We are receiving input to read stream
-    ((Anki::Switchboard::INetworkStream*)_stream)->ReceivePlainText((uint8_t*)&value[0], value.size());
-  } else if(characteristic_uuid == kAppWriteCharacteristicUUID) {
+    ((Anki::Switchboard::INetworkStream*)_stream)
+        ->ReceivePlainText((uint8_t*)&value[0], value.size());
+  } else if (characteristic_uuid == kAppWriteCharacteristicUUID) {
     // We are receiving input to read stream
-    ((Anki::Switchboard::INetworkStream*)_stream)->ReceiveEncrypted((uint8_t*)&value[0], value.size());
+    ((Anki::Switchboard::INetworkStream*)_stream)
+        ->ReceiveEncrypted((uint8_t*)&value[0], value.size());
   }
 }
 
@@ -59,15 +59,16 @@ void BleClient::OnInboundConnectionChange(int connection_id, int connected) {
   if (isConnectedToCentral) {
     _connectionId = connection_id;
 
-    if(nullptr == _stream) {
+    if (nullptr == _stream) {
       _stream = new IpcBleStream();
-      _stream->OnSendEvent().SubscribeForever([this](uint8_t* bytes, int length, bool encrypted) {
-        if(encrypted) {
-          this->SendEncrypted(bytes, length);
-        } else {
-          this->SendPlainText(bytes, length);
-        }
-      });
+      _stream->OnSendEvent().SubscribeForever(
+          [this](uint8_t* bytes, int length, bool encrypted) {
+            if (encrypted) {
+              this->SendEncrypted(bytes, length);
+            } else {
+              this->SendPlainText(bytes, length);
+            }
+          });
     }
 
     _connectedSignal.emit(_connectionId, _stream);
@@ -81,7 +82,7 @@ void BleClient::OnPeripheralStateUpdate(const bool advertising,
                                         const int connection_id,
                                         const int connected,
                                         const bool congested) {
-  (void)congested; // unused
+  (void)congested;  // unused
   OnInboundConnectionChange(connection_id, connected);
 
   _advertisingUpdateSignal.emit(advertising);
@@ -92,6 +93,5 @@ void BleClient::OnPeerClose(const int sockfd) {
   _ipcDisconnectedSignal.emit();
 }
 
-
-} // Switchboard
-} // Anki
+}  // namespace Switchboard
+}  // namespace Anki

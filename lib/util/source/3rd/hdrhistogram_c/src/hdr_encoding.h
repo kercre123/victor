@@ -47,12 +47,12 @@ size_t hdr_base64_encoded_len(size_t decoded_size);
  * @param output the buffer to write the output to
  * @param output_len the number of bytes to write to the output
  */
-int hdr_base64_encode(
-    const uint8_t* input, size_t input_len, char* output, size_t output_len);
+int hdr_base64_encode(const uint8_t* input, size_t input_len, char* output,
+                      size_t output_len);
 
 /**
- * Gets the length in bytes of decoded base64 data, given the size of the base64 encoded
- * data.
+ * Gets the length in bytes of decoded base64 data, given the size of the base64
+ * encoded data.
  *
  * @param encoded_size the size of the encoded value.
  * @return the decoded size
@@ -67,11 +67,11 @@ size_t hdr_base64_decoded_len(size_t encoded_size);
  * @param output the buffer to write the decoded data to
  * @param output_len the number of bytes to write to the output data
  */
-int hdr_base64_decode(
-    const char* input, size_t input_len, uint8_t* output, size_t output_len);
+int hdr_base64_decode(const char* input, size_t input_len, uint8_t* output,
+                      size_t output_len);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //HDR_HISTOGRAM_HDR_ENCODING_H
+#endif  // HDR_HISTOGRAM_HDR_ENCODING_H

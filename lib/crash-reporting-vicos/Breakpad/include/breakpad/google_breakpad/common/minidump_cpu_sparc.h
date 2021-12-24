@@ -80,13 +80,12 @@
 #define MD_FLOATINGSAVEAREA_SPARC_FPR_COUNT 32
 
 typedef struct {
-
   /* FPU floating point regs */
-  uint64_t      regs[MD_FLOATINGSAVEAREA_SPARC_FPR_COUNT];
+  uint64_t regs[MD_FLOATINGSAVEAREA_SPARC_FPR_COUNT];
 
-  uint64_t      filler;
-  uint64_t      fsr;        /* FPU status register */
-} MDFloatingSaveAreaSPARC;  /* FLOATING_SAVE_AREA */
+  uint64_t filler;
+  uint64_t fsr;            /* FPU status register */
+} MDFloatingSaveAreaSPARC; /* FLOATING_SAVE_AREA */
 
 #define MD_CONTEXT_SPARC_GPR_COUNT 32
 
@@ -94,8 +93,8 @@ typedef struct {
   /* The next field determines the layout of the structure, and which parts
    * of it are populated
    */
-  uint32_t      context_flags;
-  uint32_t      flag_pad;
+  uint32_t context_flags;
+  uint32_t flag_pad;
   /*
    * General register access (SPARC).
    * Don't confuse definitions here with definitions in <sys/regset.h>.
@@ -110,54 +109,52 @@ typedef struct {
    * g_r[16-23] local registers(l0-l7)
    * g_r[24-31] in registers(i0-i7)
    */
-  uint64_t     g_r[MD_CONTEXT_SPARC_GPR_COUNT];
+  uint64_t g_r[MD_CONTEXT_SPARC_GPR_COUNT];
 
   /* several control registers */
 
   /* Processor State register(PSR) for SPARC V7/V8
    * Condition Code register (CCR) for SPARC V9
    */
-  uint64_t     ccr;
+  uint64_t ccr;
 
-  uint64_t     pc;     /* Program Counter register (PC) */
-  uint64_t     npc;    /* Next Program Counter register (nPC) */
-  uint64_t     y;      /* Y register (Y) */
+  uint64_t pc;  /* Program Counter register (PC) */
+  uint64_t npc; /* Next Program Counter register (nPC) */
+  uint64_t y;   /* Y register (Y) */
 
   /* Address Space Identifier register (ASI) for SPARC V9
    * WIM for SPARC V7/V8
    */
-  uint64_t     asi;
+  uint64_t asi;
 
   /* Floating-Point Registers State register (FPRS) for SPARC V9
    * TBR for for SPARC V7/V8
    */
-  uint64_t     fprs;
+  uint64_t fprs;
 
   /* The next field is included with MD_CONTEXT_SPARC_FLOATING_POINT */
   MDFloatingSaveAreaSPARC float_save;
 
-} MDRawContextSPARC;  /* CONTEXT_SPARC */
+} MDRawContextSPARC; /* CONTEXT_SPARC */
 
 /* Indices into g_r for registers with a dedicated or conventional purpose. */
-enum MDSPARCRegisterNumbers {
-  MD_CONTEXT_SPARC_REG_SP = 14
-};
+enum MDSPARCRegisterNumbers { MD_CONTEXT_SPARC_REG_SP = 14 };
 
 /* For (MDRawContextSPARC).context_flags.  These values indicate the type of
  * context stored in the structure.  MD_CONTEXT_SPARC is Breakpad-defined.  Its
  * value was chosen to avoid likely conflicts with MD_CONTEXT_* for other
  * CPUs. */
-#define MD_CONTEXT_SPARC                 0x10000000
-#define MD_CONTEXT_SPARC_CONTROL         (MD_CONTEXT_SPARC | 0x00000001)
-#define MD_CONTEXT_SPARC_INTEGER         (MD_CONTEXT_SPARC | 0x00000002)
+#define MD_CONTEXT_SPARC 0x10000000
+#define MD_CONTEXT_SPARC_CONTROL (MD_CONTEXT_SPARC | 0x00000001)
+#define MD_CONTEXT_SPARC_INTEGER (MD_CONTEXT_SPARC | 0x00000002)
 #define MD_CONTEXT_SAPARC_FLOATING_POINT (MD_CONTEXT_SPARC | 0x00000004)
-#define MD_CONTEXT_SAPARC_EXTRA          (MD_CONTEXT_SPARC | 0x00000008)
+#define MD_CONTEXT_SAPARC_EXTRA (MD_CONTEXT_SPARC | 0x00000008)
 
-#define MD_CONTEXT_SPARC_FULL            (MD_CONTEXT_SPARC_CONTROL | \
-                                          MD_CONTEXT_SPARC_INTEGER)
+#define MD_CONTEXT_SPARC_FULL \
+  (MD_CONTEXT_SPARC_CONTROL | MD_CONTEXT_SPARC_INTEGER)
 
-#define MD_CONTEXT_SPARC_ALL             (MD_CONTEXT_SPARC_FULL | \
-                                          MD_CONTEXT_SAPARC_FLOATING_POINT | \
-                                          MD_CONTEXT_SAPARC_EXTRA)
+#define MD_CONTEXT_SPARC_ALL                                  \
+  (MD_CONTEXT_SPARC_FULL | MD_CONTEXT_SAPARC_FLOATING_POINT | \
+   MD_CONTEXT_SAPARC_EXTRA)
 
 #endif /* GOOGLE_BREAKPAD_COMMON_MINIDUMP_CPU_SPARC_H__ */

@@ -16,33 +16,34 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_CAPABILITYCONFIGURATIONINTERFACE_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_CAPABILITYCONFIGURATIONINTERFACE_H_
 
+#include <AVSCommon/AVS/CapabilityConfiguration.h>
+
 #include <memory>
 #include <unordered_set>
-
-#include <AVSCommon/AVS/CapabilityConfiguration.h>
 
 namespace alexaClientSDK {
 namespace avsCommon {
 namespace sdkInterfaces {
 
 /**
- * This interface provides the CapabilitiesDelegate access to the version and configurations of the capabilities
- * being implemented by a capability agent.
+ * This interface provides the CapabilitiesDelegate access to the version and
+ * configurations of the capabilities being implemented by a capability agent.
  */
 class CapabilityConfigurationInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~CapabilityConfigurationInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~CapabilityConfigurationInterface() = default;
 
-    /**
-     * Returns the configurations of the capability interfaces being implemented.
-     *
-     * @return A set of CapabilityConfigurations
-     */
-    virtual std::unordered_set<std::shared_ptr<avsCommon::avs::CapabilityConfiguration>>
-    getCapabilityConfigurations() = 0;
+  /**
+   * Returns the configurations of the capability interfaces being implemented.
+   *
+   * @return A set of CapabilityConfigurations
+   */
+  virtual std::unordered_set<
+      std::shared_ptr<avsCommon::avs::CapabilityConfiguration>>
+  getCapabilityConfigurations() = 0;
 };
 
 }  // namespace sdkInterfaces

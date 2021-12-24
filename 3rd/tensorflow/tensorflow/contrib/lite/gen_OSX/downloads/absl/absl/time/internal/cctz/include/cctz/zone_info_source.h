@@ -30,7 +30,7 @@ class ZoneInfoSource {
   virtual ~ZoneInfoSource();
 
   virtual std::size_t Read(void* ptr, std::size_t size) = 0;  // like fread()
-  virtual int Skip(std::size_t offset) = 0;  // like fseek()
+  virtual int Skip(std::size_t offset) = 0;                   // like fseek()
 };
 
 }  // namespace cctz
@@ -47,8 +47,8 @@ namespace cctz_extension {
 using ZoneInfoSourceFactory =
     std::unique_ptr<absl::time_internal::cctz::ZoneInfoSource> (*)(
         const std::string&,
-        const std::function<std::unique_ptr<absl::time_internal::cctz::ZoneInfoSource>(
-            const std::string&)>&);
+        const std::function<std::unique_ptr<
+            absl::time_internal::cctz::ZoneInfoSource>(const std::string&)>&);
 
 // The user can control the mapping of zone names to zoneinfo data by
 // providing a definition for cctz_extension::zone_info_source_factory.

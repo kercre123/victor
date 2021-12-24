@@ -26,8 +26,8 @@ void UnInstallGoogleBreakpad();
 // Generate a minidump in crash directory.
 // Returns path to minidump as OUTPUT PARAMETER.
 // Returns true on success, else false.
-bool WriteMinidump(const std::string & prefix, std::string & out_dump_path);
+bool WriteMinidump(const std::string& prefix, std::string& out_dump_path);
 
-} // end namespace
+}  // namespace GoogleBreakpad
 
-#endif // #ifndef __GOOGLE_BREAKPAD_H__
+#endif  // #ifndef __GOOGLE_BREAKPAD_H__

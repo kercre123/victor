@@ -5,10 +5,10 @@
  *
  * @brief Empty peripheral template project header file.
  *
- * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer 
- * program includes Confidential, Proprietary Information and is a Trade Secret of 
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
- * unless authorized in writing. All Rights Reserved.
+ * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -23,7 +23,7 @@
  * @addtogroup APP
  * @ingroup RICOW
  *
- * @brief 
+ * @brief
  *
  * @{
  ****************************************************************************************
@@ -34,14 +34,13 @@
  ****************************************************************************************
  */
 
+#include "app.h"        // application definitions
+#include "app_task.h"   // application task
+#include "co_error.h"   // error code definitions
+#include "gapc_task.h"  // gap functions and messages
+#include "gapm_task.h"  // gap functions and messages
 #include "rwble_config.h"
-#include "app_task.h"                  // application task
-#include "gapc_task.h"                 // gap functions and messages
-#include "gapm_task.h"                 // gap functions and messages
-#include "app.h"                       // application definitions
-#include "co_error.h"                  // error code definitions
-#include "smpc_task.h"                 // error code definitions
- 
+#include "smpc_task.h"  // error code definitions
 
 /****************************************************************************
 Add here supported profiles' application header files.
@@ -67,10 +66,11 @@ i.e.
  ****************************************************************************************
  */
 
-void user_on_connection(uint8_t connection_idx, struct gapc_connection_req_ind const *param);
+void user_on_connection(uint8_t connection_idx,
+                        struct gapc_connection_req_ind const *param);
 
-void user_on_disconnect( struct gapc_disconnect_ind const *param );
+void user_on_disconnect(struct gapc_disconnect_ind const *param);
 
 /// @} APP
 
-#endif // _USER_EMPTY_PERIPHERAL_TEMPLATE_H_
+#endif  // _USER_EMPTY_PERIPHERAL_TEMPLATE_H_

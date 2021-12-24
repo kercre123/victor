@@ -12,18 +12,15 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IFistBumpListener_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IFistBumpListener_H__
 
-
 namespace Anki {
 namespace Vector {
 
-class IFistBumpListener{
-public:
+class IFistBumpListener {
+ public:
   virtual void ResetTrigger(bool updateLastCompletionTime) = 0;
 };
 
+}  // namespace Vector
+}  // namespace Anki
 
-} // namespace Vector
-} // namespace Anki
-
-#endif // __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IFistBumpListener_H__
-
+#endif  // __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IFistBumpListener_H__

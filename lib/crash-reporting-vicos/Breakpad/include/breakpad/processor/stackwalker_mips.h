@@ -39,8 +39,8 @@
 
 #include "google_breakpad/common/breakpad_types.h"
 #include "google_breakpad/common/minidump_format.h"
-#include "google_breakpad/processor/stackwalker.h"
 #include "google_breakpad/processor/stack_frame_cpu.h"
+#include "google_breakpad/processor/stackwalker.h"
 #include "processor/cfi_frame_info.h"
 
 namespace google_breakpad {
@@ -54,8 +54,7 @@ class StackwalkerMIPS : public Stackwalker {
   // included in the stack.  The other arguments are passed directly
   // through to the base Stackwalker constructor.
   StackwalkerMIPS(const SystemInfo* system_info,
-                  const MDRawContextMIPS* context,
-                  MemoryRegion* memory,
+                  const MDRawContextMIPS* context, MemoryRegion* memory,
                   const CodeModules* modules,
                   StackFrameSymbolizer* frame_symbolizer);
 
@@ -71,7 +70,7 @@ class StackwalkerMIPS : public Stackwalker {
   StackFrameMIPS* GetCallerByCFIFrameInfo(const vector<StackFrame*>& frames,
                                           CFIFrameInfo* cfi_frame_info);
 
-  // Scan the stack for plausible return address and frame pointer pair. 
+  // Scan the stack for plausible return address and frame pointer pair.
   // The caller takes ownership of the returned frame. Return NULL on failure.
   StackFrameMIPS* GetCallerByStackScan(const vector<StackFrame*>& frames);
 

@@ -13,20 +13,22 @@
 #pragma once
 
 #include <stdlib.h>
+
 #include <string>
 
 namespace Anki {
 namespace Switchboard {
 
 class ConnectionIdManager {
-public:
+ public:
   void Clear();
   void SetConnectionId(std::string id);
   std::string GetConnectionId();
   bool IsValidId(std::string id);
-private:
+
+ private:
   std::string _connectionId;
 };
 
-} // Switchboard
-} // Anki
+}  // namespace Switchboard
+}  // namespace Anki

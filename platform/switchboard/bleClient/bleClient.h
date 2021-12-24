@@ -10,74 +10,66 @@
  *
  **/
 #ifndef __BleClient_H__
-#define  __BleClient_H__
-
-#include "anki-ble/common/ipc-client.h"
-#include "signals/simpleSignal.hpp"
-#include "bleClient/ipcBleStream.h"
+#define __BleClient_H__
 
 #include <string>
 
+#include "anki-ble/common/ipc-client.h"
+#include "bleClient/ipcBleStream.h"
+#include "signals/simpleSignal.hpp"
+
 namespace Anki {
-namespace Switchboard { 
-  class BleClient : public Anki::BluetoothDaemon::IPCClient {
-  public:
-    // Constructor
-    BleClient(struct ev_loop* loop)
-      : IPCClient(loop)
-      , _connectionId(-1)
-      , _stream(nullptr) {
-    }
+namespace Switchboard {
+class BleClient : public Anki::BluetoothDaemon::IPCClient {
+ public:
+  // Constructor
+  BleClient(struct ev_loop* loop)
+      : IPCClient(loop), _connectionId(-1), _stream(nullptr) {}
 
-    // Types
-    using ConnectionSignal = Signal::Signal<void (int connectionId, IpcBleStream* stream)>;
-    using PeerSignal = Signal::Signal<void ()>;
-    using AdvertisingSignal = Signal::Signal<void (bool advertising)>;
+  // Types
+  using ConnectionSignal =
+      Signal::Signal<void(int connectionId, IpcBleStream* stream)>;
+  using PeerSignal = Signal::Signal<void()>;
+  using AdvertisingSignal = Signal::Signal<void(bool advertising)>;
 
-    AdvertisingSignal& OnAdvertisingUpdateEvent() {
-      return _advertisingUpdateSignal;
-    }
+  AdvertisingSignal& OnAdvertisingUpdateEvent() {
+    return _advertisingUpdateSignal;
+  }
 
-    ConnectionSignal& OnConnectedEvent() {
-      return _connectedSignal;
-    }
+  ConnectionSignal& OnConnectedEvent() { return _connectedSignal; }
 
-    ConnectionSignal& OnDisconnectedEvent() {
-      return _disconnectedSignal;
-    }
+  ConnectionSignal& OnDisconnectedEvent() { return _disconnectedSignal; }
 
-    PeerSignal& OnIpcDisconnection() {
-      return _ipcDisconnectedSignal;
-    }
+  PeerSignal& OnIpcDisconnection() { return _ipcDisconnectedSignal; }
 
-  protected:
-    virtual void OnInboundConnectionChange(int connection_id, int connected);
-    virtual void OnReceiveMessage(const int connection_id,
-                                  const std::string& characteristic_uuid,
-                                  const std::vector<uint8_t>& value);
-    virtual void OnPeripheralStateUpdate(const bool advertising,
-                                        const int connection_id,
-                                        const int connected,
-                                        const bool congested);
+ protected:
+  virtual void OnInboundConnectionChange(int connection_id, int connected);
+  virtual void OnReceiveMessage(const int connection_id,
+                                const std::string& characteristic_uuid,
+                                const std::vector<uint8_t>& value);
+  virtual void OnPeripheralStateUpdate(const bool advertising,
+                                       const int connection_id,
+                                       const int connected,
+                                       const bool congested);
 
-  private:
-    bool Send(uint8_t* msg, size_t length, std::string charUuid);
-    bool SendPlainText(uint8_t* msg, size_t length);
-    bool SendEncrypted(uint8_t* msg, size_t length);
+ private:
+  bool Send(uint8_t* msg, size_t length, std::string charUuid);
+  bool SendPlainText(uint8_t* msg, size_t length);
+  bool SendEncrypted(uint8_t* msg, size_t length);
 
-    virtual void OnPeerClose(const int sockfd);
-    
-    int _connectionId;
-    IpcBleStream* _stream;
+  virtual void OnPeerClose(const int sockfd);
 
-    AdvertisingSignal _advertisingUpdateSignal;
+  int _connectionId;
+  IpcBleStream* _stream;
 
-    ConnectionSignal _connectedSignal;
-    ConnectionSignal _disconnectedSignal;
+  AdvertisingSignal _advertisingUpdateSignal;
 
-    PeerSignal _ipcDisconnectedSignal;
-  };
-} // Switchboard
-} // Anki
+  ConnectionSignal _connectedSignal;
+  ConnectionSignal _disconnectedSignal;
 
-#endif // __BleClient_H__
+  PeerSignal _ipcDisconnectedSignal;
+};
+}  // namespace Switchboard
+}  // namespace Anki
+
+#endif  // __BleClient_H__

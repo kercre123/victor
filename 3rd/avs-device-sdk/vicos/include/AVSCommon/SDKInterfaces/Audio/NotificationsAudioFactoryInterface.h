@@ -16,8 +16,8 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_AUDIO_NOTIFICATIONSAUDIOFACTORYINTERFACE_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_AUDIO_NOTIFICATIONSAUDIOFACTORYINTERFACE_H_
 
-#include <istream>
 #include <functional>
+#include <istream>
 #include <memory>
 
 namespace alexaClientSDK {
@@ -29,10 +29,11 @@ namespace audio {
  * This is an interface to produce the default notification sound.
  */
 class NotificationsAudioFactoryInterface {
-public:
-    virtual ~NotificationsAudioFactoryInterface() = default;
+ public:
+  virtual ~NotificationsAudioFactoryInterface() = default;
 
-    virtual std::function<std::unique_ptr<std::istream>()> notificationDefault() const = 0;
+  virtual std::function<std::unique_ptr<std::istream>()> notificationDefault()
+      const = 0;
 };
 
 }  // namespace audio

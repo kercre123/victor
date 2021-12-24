@@ -67,11 +67,14 @@
   // phase vocoder
   aubio_pvoc_t *pv = new_aubio_pvoc (winsize, stepsize);
   // onset detection
-  aubio_onset_t *onset = new_aubio_onset (method, winsize, stepsize, samplerate);
+  aubio_onset_t *onset = new_aubio_onset (method, winsize, stepsize,
+  samplerate);
   // pitch detection
-  aubio_pitch_t *pitch = new_aubio_pitch (method, winsize, stepsize, samplerate);
+  aubio_pitch_t *pitch = new_aubio_pitch (method, winsize, stepsize,
+  samplerate);
   // beat tracking
-  aubio_tempo_t *tempo = new_aubio_tempo (method, winsize, stepsize, samplerate);
+  aubio_tempo_t *tempo = new_aubio_tempo (method, winsize, stepsize,
+  samplerate);
 
   \endcode
 
@@ -79,8 +82,8 @@
 
   \subsection example Example
 
-  Here is a simple example that creates an A-Weighting filter and applies it to a
-  vector.
+  Here is a simple example that creates an A-Weighting filter and applies it to
+  a vector.
 
   \code
 
@@ -108,8 +111,8 @@
 
   \endcode
 
-  Several examples of C programs are available in the \p examples/ and \p tests/src
-  directories of the source tree.
+  Several examples of C programs are available in the \p examples/ and \p
+  tests/src directories of the source tree.
 
   Some examples:
   - @ref spectral/test-fft.c
@@ -164,64 +167,63 @@
  */
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /* in this order */
-#include "types.h"
-#include "fvec.h"
 #include "cvec.h"
-#include "lvec.h"
 #include "fmat.h"
+#include "fvec.h"
+#include "io/sink.h"
+#include "io/source.h"
+#include "lvec.h"
 #include "musicutils.h"
-#include "vecutils.h"
-#include "temporal/resampler.h"
-#include "temporal/filter.h"
-#include "temporal/biquad.h"
-#include "temporal/a_weighting.h"
-#include "temporal/c_weighting.h"
-#include "spectral/fft.h"
+#include "notes/notes.h"
+#include "onset/onset.h"
+#include "pitch/pitch.h"
+#include "spectral/awhitening.h"
 #include "spectral/dct.h"
-#include "spectral/phasevoc.h"
+#include "spectral/fft.h"
 #include "spectral/filterbank.h"
 #include "spectral/filterbank_mel.h"
 #include "spectral/mfcc.h"
+#include "spectral/phasevoc.h"
 #include "spectral/specdesc.h"
-#include "spectral/awhitening.h"
 #include "spectral/tss.h"
-#include "pitch/pitch.h"
-#include "onset/onset.h"
-#include "tempo/tempo.h"
-#include "notes/notes.h"
-#include "io/source.h"
-#include "io/sink.h"
 #include "synth/sampler.h"
 #include "synth/wavetable.h"
-#include "utils/parameter.h"
+#include "tempo/tempo.h"
+#include "temporal/a_weighting.h"
+#include "temporal/biquad.h"
+#include "temporal/c_weighting.h"
+#include "temporal/filter.h"
+#include "temporal/resampler.h"
+#include "types.h"
 #include "utils/log.h"
+#include "utils/parameter.h"
+#include "vecutils.h"
 
 #if AUBIO_UNSTABLE
-#include "mathutils.h"
-#include "io/source_sndfile.h"
+#include "io/audio_unit.h"
+#include "io/sink_apple_audio.h"
+#include "io/sink_sndfile.h"
+#include "io/sink_wavwrite.h"
 #include "io/source_apple_audio.h"
 #include "io/source_avcodec.h"
+#include "io/source_sndfile.h"
 #include "io/source_wavread.h"
-#include "io/sink_sndfile.h"
-#include "io/sink_apple_audio.h"
-#include "io/sink_wavwrite.h"
-#include "io/audio_unit.h"
+#include "mathutils.h"
 #include "onset/peakpicker.h"
-#include "pitch/pitchmcomb.h"
-#include "pitch/pitchyin.h"
-#include "pitch/pitchyinfft.h"
-#include "pitch/pitchyinfast.h"
-#include "pitch/pitchschmitt.h"
 #include "pitch/pitchfcomb.h"
+#include "pitch/pitchmcomb.h"
+#include "pitch/pitchschmitt.h"
 #include "pitch/pitchspecacf.h"
+#include "pitch/pitchyin.h"
+#include "pitch/pitchyinfast.h"
+#include "pitch/pitchyinfft.h"
 #include "tempo/beattracking.h"
-#include "utils/scale.h"
 #include "utils/hist.h"
+#include "utils/scale.h"
 #endif
 
 #ifdef __cplusplus

@@ -5,10 +5,10 @@
 *
 * @brief SysTick driver header file.
 *
-* Copyright (C) 2014. Dialog Semiconductor Ltd, unpublished work. This computer 
- * program includes Confidential, Proprietary Information and is a Trade Secret of 
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
- * unless authorized in writing. All Rights Reserved.
+* Copyright (C) 2014. Dialog Semiconductor Ltd, unpublished work. This computer
+* program includes Confidential, Proprietary Information and is a Trade Secret
+*of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+*prohibited unless authorized in writing. All Rights Reserved.
 *
 * <bluetooth.support@diasemi.com> and contributors.
 *
@@ -50,8 +50,8 @@ void systick_register_callback(systick_callback_function_t callback);
  ****************************************************************************************
  * @brief Function to start the SysTick timer.
  * @param[in] usec      The duration of the countdown
- * @param[in] exception Set to TRUE to generate an exception when the timer counts down
- *                      to 0, FALSE not to
+ * @param[in] exception Set to TRUE to generate an exception when the timer
+ *counts down to 0, FALSE not to
  * @return void
  ****************************************************************************************
  */
@@ -82,4 +82,4 @@ void systick_stop(void);
  */
 uint32_t systick_value(void);
 
-#endif //_SYSTICK_H_
+#endif  //_SYSTICK_H_

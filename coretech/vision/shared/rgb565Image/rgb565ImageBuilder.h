@@ -15,10 +15,10 @@
 #include "util/cladHelpers/cladEnumToStringMap.h"
 
 namespace Anki {
-namespace Vision{
+namespace Vision {
 
 class RGB565ImageBuilder {
-public:
+ public:
   static const unsigned int PIXEL_COUNT = 17664;
   static const unsigned int PIXEL_COUNT_PER_CHUNK = 600;
   using ChunkDataContainer = std::array<uint16_t, PIXEL_COUNT_PER_CHUNK>;
@@ -28,7 +28,8 @@ public:
   virtual ~RGB565ImageBuilder();
 
   // Add a new chunk to the internal image representation
-  void AddDataChunk(const ChunkDataContainer& chunkData, uint16_t chunkIndex, uint16_t numPixels);
+  void AddDataChunk(const ChunkDataContainer& chunkData, uint16_t chunkIndex,
+                    uint16_t numPixels);
 
   // Returns a bitmask of the chunkIndexes we have recieved
   inline uint32_t GetRecievedChunkMask() const { return _chunkMask; }
@@ -39,12 +40,12 @@ public:
   // flushes all construction data
   void Clear();
 
-private:
+ private:
   uint32_t _chunkMask;
   FullDataContainer _data;
 };
 
-};
-};
+};  // namespace Vision
+};  // namespace Anki
 
-#endif // __RGB565_Image_Builder_H__
+#endif  // __RGB565_Image_Builder_H__

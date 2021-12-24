@@ -11,25 +11,22 @@
 
 #if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
 
+#define HDR_ALIGN_PREFIX(alignment) __declspec(align(alignment))
+#define HDR_ALIGN_SUFFIX(alignment)
 
-#define HDR_ALIGN_PREFIX(alignment) __declspec( align(alignment) )
-#define HDR_ALIGN_SUFFIX(alignment) 
-
-typedef struct hdr_mutex
-{
-    uint8_t _critical_section[40];
+typedef struct hdr_mutex {
+  uint8_t _critical_section[40];
 } hdr_mutex;
 
 #else
 
 #include <pthread.h>
 
-#define HDR_ALIGN_PREFIX(alignment) 
+#define HDR_ALIGN_PREFIX(alignment)
 #define HDR_ALIGN_SUFFIX(alignment) __attribute__((aligned(alignment)))
 
-typedef struct hdr_mutex
-{
-    pthread_mutex_t _mutex;
+typedef struct hdr_mutex {
+  pthread_mutex_t _mutex;
 } hdr_mutex;
 #endif
 

@@ -60,7 +60,6 @@
 
 // Author: Siyang Xie (lambxsy@google.com)
 
-
 #ifndef PROCESSOR_STATIC_MAP_H__
 #define PROCESSOR_STATIC_MAP_H__
 
@@ -69,7 +68,7 @@
 namespace google_breakpad {
 
 // Default functor to compare keys.
-template<typename Key>
+template <typename Key>
 class DefaultCompare {
  public:
   int operator()(const Key &k1, const Key &k2) const {
@@ -79,18 +78,15 @@ class DefaultCompare {
   }
 };
 
-template<typename Key, typename Value, typename Compare = DefaultCompare<Key> >
+template <typename Key, typename Value, typename Compare = DefaultCompare<Key> >
 class StaticMap {
  public:
   typedef StaticMapIterator<Key, Value, Compare> iterator;
   typedef StaticMapIterator<Key, Value, Compare> const_iterator;
 
-  StaticMap() : raw_data_(0),
-                num_nodes_(0),
-                offsets_(0),
-                compare_() { }
+  StaticMap() : raw_data_(0), num_nodes_(0), offsets_(0), compare_() {}
 
-  explicit StaticMap(const char* raw_data);
+  explicit StaticMap(const char *raw_data);
 
   inline bool empty() const { return num_nodes_ == 0; }
   inline unsigned int size() const { return num_nodes_; }
@@ -123,7 +119,7 @@ class StaticMap {
   const Key GetKeyAtIndex(int i) const;
 
   // Start address of a raw memory chunk with serialized data.
-  const char* raw_data_;
+  const char *raw_data_;
 
   // Number of nodes in the static map.
   int32_t num_nodes_;
@@ -131,10 +127,10 @@ class StaticMap {
   // Array of offset addresses for stored values.
   // For example:
   // address_of_i-th_node_value = raw_data_ + offsets_[i]
-  const uint32_t* offsets_;
+  const uint32_t *offsets_;
 
   // keys_[i] = key of i_th node
-  const Key* keys_;
+  const Key *keys_;
 
   Compare compare_;
 };

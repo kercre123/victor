@@ -16,10 +16,10 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_HTTPCONTENTFETCHERINTERFACE_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_HTTPCONTENTFETCHERINTERFACE_H_
 
-#include <memory>
-
 #include <AVSCommon/Utils/HTTPContent.h>
 #include <AVSCommon/Utils/SDKVersion.h>
+
+#include <memory>
 
 namespace alexaClientSDK {
 namespace avsCommon {
@@ -29,44 +29,50 @@ namespace sdkInterfaces {
  * This class allows users to fetch content from remote location using HTTP(S).
  */
 class HTTPContentFetcherInterface {
-public:
-    /// Represents what HTTP content to fetch.
-    enum class FetchOptions {
-        /// Retrieves the content type part of the HTTP header.
-        CONTENT_TYPE,
+ public:
+  /// Represents what HTTP content to fetch.
+  enum class FetchOptions {
+    /// Retrieves the content type part of the HTTP header.
+    CONTENT_TYPE,
 
-        /// Retrieves the entire body of the remote location.
-        ENTIRE_BODY
-    };
+    /// Retrieves the entire body of the remote location.
+    ENTIRE_BODY
+  };
 
-    /**
-     * Destructor.
-     */
-    virtual ~HTTPContentFetcherInterface() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~HTTPContentFetcherInterface() = default;
 
-    /**
-     * This function retrieves content from a remote location. No thread safety is guaranteed.
-     *
-     * @param option Flag indicating desired content.
-     * @param writer An optional writer parameter to be used when writing to an external stream.
-     * @param customHeaders An optional list of headers to be attached to the request.
-     * @return A new @c HTTPContent object or @c nullptr if a failure occured.
-     */
-    virtual std::unique_ptr<avsCommon::utils::HTTPContent> getContent(
-        FetchOptions option,
-        std::shared_ptr<avsCommon::avs::attachment::AttachmentWriter> writer = nullptr,
-        const std::vector<std::string>& customHeaders = std::vector<std::string>()) = 0;
+  /**
+   * This function retrieves content from a remote location. No thread safety is
+   * guaranteed.
+   *
+   * @param option Flag indicating desired content.
+   * @param writer An optional writer parameter to be used when writing to an
+   * external stream.
+   * @param customHeaders An optional list of headers to be attached to the
+   * request.
+   * @return A new @c HTTPContent object or @c nullptr if a failure occured.
+   */
+  virtual std::unique_ptr<avsCommon::utils::HTTPContent> getContent(
+      FetchOptions option,
+      std::shared_ptr<avsCommon::avs::attachment::AttachmentWriter> writer =
+          nullptr,
+      const std::vector<std::string>& customHeaders =
+          std::vector<std::string>()) = 0;
 
-    /**
-     * Returns a string that represents the User-Agent to be used in HTTP requests.
-     *
-     * @return User-Agent string to be used in HTTP requests.
-     */
-    inline static std::string getUserAgent();
+  /**
+   * Returns a string that represents the User-Agent to be used in HTTP
+   * requests.
+   *
+   * @return User-Agent string to be used in HTTP requests.
+   */
+  inline static std::string getUserAgent();
 };
 
 std::string HTTPContentFetcherInterface::getUserAgent() {
-    return "AvsDeviceSdk/" + utils::sdkVersion::getCurrentVersion();
+  return "AvsDeviceSdk/" + utils::sdkVersion::getCurrentVersion();
 }
 
 }  // namespace sdkInterfaces

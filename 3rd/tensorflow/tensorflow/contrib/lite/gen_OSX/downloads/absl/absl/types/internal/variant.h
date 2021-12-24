@@ -402,13 +402,13 @@ struct VariantCoreAccess {
         variant_internal::IndexOfConstructedType<Left, QualifiedNew>;
 
     void operator()(SizeT<NewIndex::value> /*old_i*/
-                    ) const {
+    ) const {
       Access<NewIndex::value>(*left) = absl::forward<QualifiedNew>(other);
     }
 
     template <std::size_t OldIndex>
     void operator()(SizeT<OldIndex> /*old_i*/
-                    ) const {
+    ) const {
       using New =
           typename absl::variant_alternative<NewIndex::value, Left>::type;
       if (std::is_nothrow_constructible<New, QualifiedNew>::value ||
@@ -904,8 +904,8 @@ struct VariantHelper<variant<Ts...>> {
   // CanAccept can't be just an alias because there is a MSVC bug on parameter
   // pack expansion involving decltype.
   template <typename U>
-  struct CanAccept :
-      std::integral_constant<bool, !std::is_void<BestMatch<U>>::value> {};
+  struct CanAccept
+      : std::integral_constant<bool, !std::is_void<BestMatch<U>>::value> {};
 
   // Type metafunction which returns true if Other is an instantiation of
   // variant, and variants's converting constructor from Other will be
@@ -928,8 +928,8 @@ struct TrivialMoveOnly {
 // A union's defaulted copy/move constructor is deleted if any variant member's
 // copy/move constructor is nontrivial.
 template <typename T>
-struct IsTriviallyMoveConstructible:
-  std::is_move_constructible<Union<T, TrivialMoveOnly>> {};
+struct IsTriviallyMoveConstructible
+    : std::is_move_constructible<Union<T, TrivialMoveOnly>> {};
 
 // To guarantee triviality of all special-member functions that can be trivial,
 // we use a chain of conditional bases for each one.
@@ -1162,14 +1162,14 @@ class VariantMoveAssignBaseNontrivial : protected VariantCopyBase<T...> {
   VariantMoveAssignBaseNontrivial& operator=(
       VariantMoveAssignBaseNontrivial const&) = default;
 
-    VariantMoveAssignBaseNontrivial&
-    operator=(VariantMoveAssignBaseNontrivial&& other) noexcept(
-        absl::conjunction<std::is_nothrow_move_constructible<T>...,
-                          std::is_nothrow_move_assignable<T>...>::value) {
-      variant_internal::visit_indices<sizeof...(T)>(
-          VariantCoreAccess::MakeMoveAssignVisitor(this, &other), other.index_);
-      return *this;
-    }
+  VariantMoveAssignBaseNontrivial&
+  operator=(VariantMoveAssignBaseNontrivial&& other) noexcept(
+      absl::conjunction<std::is_nothrow_move_constructible<T>...,
+                        std::is_nothrow_move_assignable<T>...>::value) {
+    variant_internal::visit_indices<sizeof...(T)>(
+        VariantCoreAccess::MakeMoveAssignVisitor(this, &other), other.index_);
+    return *this;
+  }
 
  protected:
   using Base::index_;
@@ -1193,12 +1193,12 @@ class VariantCopyAssignBaseNontrivial : protected VariantMoveAssignBase<T...> {
   VariantCopyAssignBaseNontrivial& operator=(
       VariantCopyAssignBaseNontrivial&&) = default;
 
-    VariantCopyAssignBaseNontrivial& operator=(
-        const VariantCopyAssignBaseNontrivial& other) {
-      variant_internal::visit_indices<sizeof...(T)>(
-          VariantCoreAccess::MakeCopyAssignVisitor(this, other), other.index_);
-      return *this;
-    }
+  VariantCopyAssignBaseNontrivial& operator=(
+      const VariantCopyAssignBaseNontrivial& other) {
+    variant_internal::visit_indices<sizeof...(T)>(
+        VariantCoreAccess::MakeCopyAssignVisitor(this, other), other.index_);
+    return *this;
+  }
 
  protected:
   using Base::index_;

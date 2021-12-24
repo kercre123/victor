@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -18,23 +19,28 @@
 //    Fangfang Bai, fangfang@multicorewareinc.com
 //    Jin Ma,       jin@multicorewareinc.com
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other Materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors as is and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -58,21 +64,21 @@ typedef tuple<Size, bool> MomentsParams;
 typedef TestBaseWithParam<MomentsParams> MomentsFixture;
 
 OCL_PERF_TEST_P(MomentsFixture, Moments,
-    ::testing::Combine(OCL_TEST_SIZES, ::testing::Bool()))
-{
-    const MomentsParams params = GetParam();
-    const Size srcSize = get<0>(params);
-    const bool binaryImage = get<1>(params);
+                ::testing::Combine(OCL_TEST_SIZES, ::testing::Bool())) {
+  const MomentsParams params = GetParam();
+  const Size srcSize = get<0>(params);
+  const bool binaryImage = get<1>(params);
 
-    cv::Moments m;
-    UMat src(srcSize, CV_8UC1);
-    declare.in(src, WARMUP_RNG);
+  cv::Moments m;
+  UMat src(srcSize, CV_8UC1);
+  declare.in(src, WARMUP_RNG);
 
-    OCL_TEST_CYCLE() m = cv::moments(src, binaryImage);
+  OCL_TEST_CYCLE() m = cv::moments(src, binaryImage);
 
-    SANITY_CHECK_MOMENTS(m, 1e-6, ERROR_RELATIVE);
+  SANITY_CHECK_MOMENTS(m, 1e-6, ERROR_RELATIVE);
 }
 
-} } // namespace cvtest::ocl
+}  // namespace ocl
+}  // namespace cvtest
 
-#endif // HAVE_OPENCL
+#endif  // HAVE_OPENCL

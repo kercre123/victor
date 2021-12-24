@@ -19,35 +19,31 @@
 namespace Anki {
 namespace Vector {
 
-class AlexaReader
-{
-public:
-
+class AlexaReader {
+ public:
   virtual ~AlexaReader() {}
 
-  enum class Status : uint8_t {
-    Ok,
-    WouldBlock,
-    Timeout,
-    Error
-  };
+  enum class Status : uint8_t { Ok, WouldBlock, Timeout, Error };
 
   static const char* StatusToString(const Status& status) {
-    switch(status) {
-      case Status::Ok: return "Ok";
-      case Status::WouldBlock: return "WouldBlock";
-      case Status::Timeout: return "Timeout";
-      case Status::Error: return "Error";
+    switch (status) {
+      case Status::Ok:
+        return "Ok";
+      case Status::WouldBlock:
+        return "WouldBlock";
+      case Status::Timeout:
+        return "Timeout";
+      case Status::Error:
+        return "Error";
     }
   }
 
   virtual size_t GetNumUnreadBytes() = 0;
   virtual size_t Read(uint8_t* buf, size_t toRead, Status& status) = 0;
   virtual void Close() = 0;
-
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

@@ -3,20 +3,17 @@
 
 #include "json/json-forwards.h"
 
-namespace Anki
-{
+namespace Anki {
 
 namespace Util {
 class JsonWriter;
 }
 
-namespace Planning
-{
+namespace Planning {
 
-// This struct holds values that the motions will use to calculate costs, based on the turning radius and
-// velocity of the robot
-struct RobotActionParams
-{
+// This struct holds values that the motions will use to calculate costs, based
+// on the turning radius and velocity of the robot
+struct RobotActionParams {
   RobotActionParams();
 
   void Reset();
@@ -31,8 +28,7 @@ struct RobotActionParams
   double oneOverMaxVelocity;
 };
 
-
-}
-}
+}  // namespace Planning
+}  // namespace Anki
 
 #endif

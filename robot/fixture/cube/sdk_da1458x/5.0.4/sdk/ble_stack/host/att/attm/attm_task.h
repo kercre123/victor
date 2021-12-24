@@ -32,25 +32,23 @@
  * INCLUDES
  ****************************************************************************************
  */
-#include "attm_cfg.h"
 #include "attm.h"
+#include "attm_cfg.h"
 #if (BLE_CENTRAL || BLE_PERIPHERAL)
 /*
  * DEFINES
  ****************************************************************************************
  */
 /// Maximum number of ATTM task
-#define ATTM_IDX_MAX                                 0x01
+#define ATTM_IDX_MAX 0x01
 
 /// states of ATTM task
-enum attm_state_id
-{
-    /// idle state
-    ATTM_IDLE,
-    /// Number of defined states.
-    ATTM_STATE_MAX
+enum attm_state_id {
+  /// idle state
+  ATTM_IDLE,
+  /// Number of defined states.
+  ATTM_STATE_MAX
 };
-
 
 /*
  * FUNCTION DECLARATIONS
@@ -59,6 +57,6 @@ enum attm_state_id
 extern const struct ke_state_handler attm_state_handler[ATTM_STATE_MAX];
 extern const struct ke_state_handler attm_default_handler;
 extern ke_state_t attm_state[ATTM_IDX_MAX];
-#endif // #if (BLE_CENTRAL || BLE_PERIPHERAL)
+#endif  // #if (BLE_CENTRAL || BLE_PERIPHERAL)
 /// @} ATTMTASK
-#endif // ATTM_TASK_H_
+#endif  // ATTM_TASK_H_

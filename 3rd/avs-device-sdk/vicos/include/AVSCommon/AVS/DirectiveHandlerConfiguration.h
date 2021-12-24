@@ -18,18 +18,19 @@
 
 #include <unordered_map>
 
-#include "NamespaceAndName.h"
 #include "BlockingPolicy.h"
+#include "NamespaceAndName.h"
 
 namespace alexaClientSDK {
 namespace avsCommon {
 namespace avs {
 
 /**
- * Map of @c NamespaceAndName values to @c BlockingPolicy with which to register a @c DirectiveHandlerInterface to a @c
- * DirectiveSequencer.
+ * Map of @c NamespaceAndName values to @c BlockingPolicy with which to register
+ * a @c DirectiveHandlerInterface to a @c DirectiveSequencer.
  */
-using DirectiveHandlerConfiguration = std::unordered_map<NamespaceAndName, BlockingPolicy>;
+using DirectiveHandlerConfiguration =
+    std::unordered_map<NamespaceAndName, BlockingPolicy>;
 
 }  // namespace avs
 }  // namespace avsCommon

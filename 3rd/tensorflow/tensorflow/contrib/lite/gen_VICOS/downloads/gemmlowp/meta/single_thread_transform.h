@@ -16,6 +16,7 @@
 #define GEMMLOWP_META_SINGLE_THREAD_TRANSFORM_H_
 
 #include <iostream>
+
 #include "base.h"
 
 namespace gemmlowp {

@@ -22,9 +22,9 @@ namespace NavMapFactory {
 
 // creates the proper nav memory map (through default, config, etc)
 INavMap* CreateMemoryMap();
-  
-} // namespace
-} // namespace
-} // namespace
 
-#endif // ANKI_COZMO_NAV_MEMORY_MAP_FACTORY_H
+}  // namespace NavMapFactory
+}  // namespace Vector
+}  // namespace Anki
+
+#endif  // ANKI_COZMO_NAV_MEMORY_MAP_FACTORY_H

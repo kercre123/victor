@@ -40,7 +40,8 @@ extern "C" {
 
   Vector of real-valued data
 
-  ::fvec_t is is the structure used to store vector of real-valued data, ::smpl_t .
+  ::fvec_t is is the structure used to store vector of real-valued data,
+  ::smpl_t .
 
   \code
 
@@ -65,8 +66,8 @@ extern "C" {
 
  */
 typedef struct {
-  uint_t length;  /**< length of buffer */
-  smpl_t *data;   /**< data vector of length ::fvec_t.length */
+  uint_t length; /**< length of buffer */
+  smpl_t *data;  /**< data vector of length ::fvec_t.length */
 } fvec_t;
 
 /** fvec_t buffer creation function
@@ -74,7 +75,7 @@ typedef struct {
   \param length the length of the buffer to create
 
 */
-fvec_t * new_fvec(uint_t length);
+fvec_t *new_fvec(uint_t length);
 
 /** fvec_t buffer deletion function
 
@@ -98,14 +99,14 @@ smpl_t fvec_get_sample(const fvec_t *s, uint_t position);
   \param position sample position to write to
 
 */
-void  fvec_set_sample(fvec_t *s, smpl_t data, uint_t position);
+void fvec_set_sample(fvec_t *s, smpl_t data, uint_t position);
 
 /** read data from a buffer
 
   \param s vector to read from
 
 */
-smpl_t * fvec_get_data(const fvec_t *s);
+smpl_t *fvec_get_data(const fvec_t *s);
 
 /** print out fvec data
 
@@ -120,7 +121,7 @@ void fvec_print(const fvec_t *s);
   \param val value to set elements to
 
 */
-void fvec_set_all (fvec_t *s, smpl_t val);
+void fvec_set_all(fvec_t *s, smpl_t val);
 
 /** set all elements to zero
 

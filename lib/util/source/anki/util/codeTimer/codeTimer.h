@@ -18,13 +18,12 @@
 namespace Anki {
 namespace Util {
 
-class CodeTimer
-{
-public:
+class CodeTimer {
+ public:
   using TimePoint = std::chrono::time_point<std::chrono::steady_clock>;
   using TimeAccumulator = std::chrono::nanoseconds;
-  using MillisecondDuration = std::chrono::duration<int,std::milli>;
-  static inline TimePoint Start() { return std::chrono::steady_clock::now();}
+  using MillisecondDuration = std::chrono::duration<int, std::milli>;
+  static inline TimePoint Start() { return std::chrono::steady_clock::now(); }
   static inline int MillisecondsElapsed(const TimePoint start) {
     auto end = std::chrono::steady_clock::now();
     auto diff = end - start;
@@ -33,7 +32,8 @@ public:
   static inline TimeAccumulator InitTimeAccumulator() {
     return TimeAccumulator::zero();
   }
-  static inline void Accumulate(const TimePoint start, TimeAccumulator& accumulator) {
+  static inline void Accumulate(const TimePoint start,
+                                TimeAccumulator& accumulator) {
     auto end = std::chrono::steady_clock::now();
     auto diff = end - start;
     accumulator += diff;
@@ -43,7 +43,7 @@ public:
   }
 };
 
-} // namespace Util
-} // namespace Anki
+}  // namespace Util
+}  // namespace Anki
 
-#endif // __util_codeTimer_codeTimer_H__
+#endif  // __util_codeTimer_codeTimer_H__

@@ -34,8 +34,8 @@
 #ifndef CLIENT_LINUX_LINUX_LIBC_SUPPORT_H_
 #define CLIENT_LINUX_LINUX_LIBC_SUPPORT_H_
 
-#include <stdint.h>
 #include <limits.h>
+#include <stdint.h>
 #include <sys/types.h>
 
 extern "C" {
@@ -81,9 +81,9 @@ extern void* my_memchr(const void* src, int c, size_t len);
 
 // The following are considered safe to use in a compromised environment.
 // Besides, this gives the compiler an opportunity to optimize their calls.
-#define my_memcpy  memcpy
+#define my_memcpy memcpy
 #define my_memmove memmove
-#define my_memcmp  memcmp
+#define my_memcmp memcmp
 
 extern size_t my_strlcpy(char* s1, const char* s2, size_t len);
 

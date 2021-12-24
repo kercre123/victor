@@ -25,14 +25,14 @@ namespace http2 {
  * Status returned from various send operations.
  */
 enum class HTTP2SendStatus {
-    /// Operation succeeded.  Continue.
-    CONTINUE,
-    /// Operation delayed.  Retry later.
-    PAUSE,
-    /// Operation completed successfully.
-    COMPLETE,
-    /// Operation failed.  Abort.
-    ABORT
+  /// Operation succeeded.  Continue.
+  CONTINUE,
+  /// Operation delayed.  Retry later.
+  PAUSE,
+  /// Operation completed successfully.
+  COMPLETE,
+  /// Operation failed.  Abort.
+  ABORT
 };
 
 }  // namespace http2

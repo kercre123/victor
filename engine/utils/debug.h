@@ -13,11 +13,6 @@
 #ifndef BASESTATION_UTILS_DEBUG_H_
 #define BASESTATION_UTILS_DEBUG_H_
 
-namespace Anki {
-  
-  
-} // namespace Anki
+namespace Anki {}  // namespace Anki
 
-#endif // BASESTATION_UTILS_DEBUG_H_
-
-
+#endif  // BASESTATION_UTILS_DEBUG_H_

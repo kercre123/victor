@@ -18,32 +18,28 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorPlaypenSoundCheck : public IBehaviorPlaypen
-{
-protected:
-  
+class BehaviorPlaypenSoundCheck : public IBehaviorPlaypen {
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorPlaypenSoundCheck(const Json::Value& config);
-  
-protected:
+
+ protected:
   virtual void InitBehaviorInternal() override;
-  
+
   virtual Result OnBehaviorActivatedInternal() override;
-  virtual void   OnBehaviorDeactivated() override;
+  virtual void OnBehaviorDeactivated() override;
 
   virtual void AlwaysHandleInScope(const RobotToEngineEvent& event) override;
-  
-private:
-  
+
+ private:
   void TransitionToPlayingSound();
-  
+
   // Whether or not the sound animation has completed
   bool _soundComplete = false;
-
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorPlaypenDriftCheck_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorPlaypenDriftCheck_H__

@@ -3,9 +3,9 @@
  *
  * Author: damjan
  * Created: 4/14/14
- * 
+ *
  * Description: Helper functions for measuring time on different platforms
- * 
+ *
  *
  * Copyright: Anki, Inc. 2014
  *
@@ -18,28 +18,32 @@
 #else
 #error Attempting build for unsupported OS
 #endif
-#include "util/math/numericCast.h"
 #include <cassert>
 
-namespace Anki{ namespace Util {
+#include "util/math/numericCast.h"
+
+namespace Anki {
+namespace Util {
 
 namespace Time {
 
 // returns time in nanoseconds
-unsigned long long int UniversalTime::GetCurrentTimeInNanoseconds()
-{
+unsigned long long int UniversalTime::GetCurrentTimeInNanoseconds() {
 #if defined(__MACH__) && defined(__APPLE__)
   static mach_timebase_info_data_t s_timebase_info;
 
   if (s_timebase_info.denom == 0) {
-    (void) mach_timebase_info(&s_timebase_info);
+    (void)mach_timebase_info(&s_timebase_info);
   }
 
-  return (unsigned long long int)((mach_absolute_time() * s_timebase_info.numer) /  s_timebase_info.denom);
+  return (
+      unsigned long long int)((mach_absolute_time() * s_timebase_info.numer) /
+                              s_timebase_info.denom);
 #elif defined(ANDROID) || defined(LINUX) || defined(VICOS)
   timespec t;
   clock_gettime(CLOCK_MONOTONIC, &t);
-  return (unsigned long long)(t.tv_sec*1000000000ULL) + (unsigned long long)t.tv_nsec;
+  return (unsigned long long)(t.tv_sec * 1000000000ULL) +
+         (unsigned long long)t.tv_nsec;
 #else
   // What OS did you build for?
   assert(false);
@@ -47,17 +51,15 @@ unsigned long long int UniversalTime::GetCurrentTimeInNanoseconds()
 #endif
 }
 
-  // returns time in milliseconds
-double UniversalTime::GetCurrentTimeInMilliseconds()
-{
+// returns time in milliseconds
+double UniversalTime::GetCurrentTimeInMilliseconds() {
   const unsigned long long int timeNano = GetCurrentTimeInNanoseconds();
   const double timeMs = numeric_cast<double>(timeNano) * 1e-6;
   return timeMs;
 }
 
 // returns time in milliseconds
-double UniversalTime::GetCurrentTimeInSeconds()
-{
+double UniversalTime::GetCurrentTimeInSeconds() {
   const unsigned long long int timeNano = GetCurrentTimeInNanoseconds();
   const double time_s = numeric_cast<double>(timeNano) * 1e-9;
   return time_s;
@@ -66,14 +68,14 @@ double UniversalTime::GetCurrentTimeInSeconds()
 // returns time value
 // note this is not in Milli Seconds nor nanoseconds
 // use GetCurrentTimeInNanoseconds to get nanoseconds
-unsigned long long int UniversalTime::GetCurrentTimeValue()
-{
+unsigned long long int UniversalTime::GetCurrentTimeValue() {
 #if defined(__MACH__) && defined(__APPLE__)
   return mach_absolute_time();
-#elif defined(ANDROID)  || defined(LINUX) || defined(VICOS)
+#elif defined(ANDROID) || defined(LINUX) || defined(VICOS)
   timespec t;
   clock_gettime(CLOCK_MONOTONIC, &t);
-  return (unsigned long long)(t.tv_sec*1000000000ULL) + (unsigned long long)t.tv_nsec;
+  return (unsigned long long)(t.tv_sec * 1000000000ULL) +
+         (unsigned long long)t.tv_nsec;
 #else
   // What OS did you build for?
   assert(false);
@@ -82,14 +84,14 @@ unsigned long long int UniversalTime::GetCurrentTimeValue()
 }
 
 // returns nanoseconds since previous time
-unsigned long long int UniversalTime::GetNanosecondsElapsedSince(unsigned long long int previousTime)
-{
+unsigned long long int UniversalTime::GetNanosecondsElapsedSince(
+    unsigned long long int previousTime) {
 #if defined(__MACH__) && defined(__APPLE__)
   // Stop the clock.
   uint64_t end = mach_absolute_time();
 
-  uint64_t        elapsed;
-  static mach_timebase_info_data_t    sTimebaseInfo;
+  uint64_t elapsed;
+  static mach_timebase_info_data_t sTimebaseInfo;
 
   // Calculate the duration.
   elapsed = end - previousTime;
@@ -100,8 +102,8 @@ unsigned long long int UniversalTime::GetNanosecondsElapsedSince(unsigned long l
   // We can use denom == 0 to indicate that sTimebaseInfo is
   // uninitialised because it makes no sense to have a zero
   // denominator is a fraction.
-  if ( sTimebaseInfo.denom == 0 ) {
-    (void) mach_timebase_info(&sTimebaseInfo);
+  if (sTimebaseInfo.denom == 0) {
+    (void)mach_timebase_info(&sTimebaseInfo);
   }
 
   // Do the maths. We hope that the multiplication doesn't
@@ -110,13 +112,15 @@ unsigned long long int UniversalTime::GetNanosecondsElapsedSince(unsigned long l
 #elif defined(ANDROID) || defined(LINUX) || defined(VICOS)
   timespec t;
   clock_gettime(CLOCK_MONOTONIC, &t);
-  return ((unsigned long long)(t.tv_sec*1000000000ULL) + (unsigned long long)t.tv_nsec) - previousTime;
+  return ((unsigned long long)(t.tv_sec * 1000000000ULL) +
+          (unsigned long long)t.tv_nsec) -
+         previousTime;
 #else
   return 0;
 #endif
 }
 
-} // end namespace Time
+}  // end namespace Time
 
-} // end namespace Anki
-} // namespace
+}  // namespace Util
+}  // namespace Anki

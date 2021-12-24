@@ -6,9 +6,9 @@
  * @brief Battery server application header file.
  *
  * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer
- * program includes Confidential, Proprietary Information and is a Trade Secret of
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited
- * unless authorized in writing. All Rights Reserved.
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -37,7 +37,8 @@
 #include "user_profiles_config.h"
 
 #if (BLE_BAS_SERVER)
-#include <stdint.h>          // standard integer definition
+#include <stdint.h>  // standard integer definition
+
 #include "gpio.h"
 
 extern uint8_t cur_batt_level;
@@ -64,7 +65,7 @@ void app_batt_init(void);
  * @return void
  ****************************************************************************************
  */
- void app_bass_enable(uint16_t conhdl);
+void app_bass_enable(uint16_t conhdl);
 
 /**
  ****************************************************************************************
@@ -76,7 +77,8 @@ void app_batt_init(void);
  * @return void
  ****************************************************************************************
  */
-void app_batt_config(uint8_t batt_lvl, uint8_t lvl_alert_used, GPIO_PORT led_port, GPIO_PIN led_pin);
+void app_batt_config(uint8_t batt_lvl, uint8_t lvl_alert_used,
+                     GPIO_PORT led_port, GPIO_PIN led_pin);
 
 /**
  ****************************************************************************************
@@ -88,8 +90,8 @@ void app_bass_create_db(void);
 
 /**
  ****************************************************************************************
- * @brief Reads devices current battery level and sends battery level update request to
- *        Battery Service.
+ * @brief Reads devices current battery level and sends battery level update
+ *request to Battery Service.
  * @return void
  ****************************************************************************************
  */
@@ -126,7 +128,7 @@ void app_batt_poll_stop(void);
  * @brief Starts battery alert. Battery Low.
  * @return void
  ****************************************************************************************
-*/
+ */
 void app_batt_alert_start(void);
 
 /**
@@ -145,8 +147,8 @@ void app_batt_alert_stop(void);
  */
 void app_batt_port_reinit(void);
 
-#endif // (BLE_BAS_SERVER)
+#endif  // (BLE_BAS_SERVER)
 
 /// @} APP
 
-#endif // _APP_BASS_H_
+#endif  // _APP_BASS_H_

@@ -11,9 +11,10 @@
 #ifndef __Anki_Vision_BrightColorDetector_H__
 #define __Anki_Vision_BrightColorDetector_H__
 
-#include "coretech/common/shared/types.h"
-#include "clad/types/salientPointTypes.h"
 #include <list>
+
+#include "clad/types/salientPointTypes.h"
+#include "coretech/common/shared/types.h"
 
 namespace Anki {
 namespace Vision {
@@ -21,22 +22,22 @@ namespace Vision {
 class Camera;
 class ImageRGB;
 
-class BrightColorDetector
-{
-public:
-
-  BrightColorDetector (const Camera& camera);
-  ~BrightColorDetector ();
+class BrightColorDetector {
+ public:
+  BrightColorDetector(const Camera& camera);
+  ~BrightColorDetector();
 
   Result Init();
   Result Detect(const ImageRGB& inputImage,
                 std::list<SalientPoint>& salientPoints);
 
-private:
+ private:
   /**
-   * @brief Compute colorfulness based on Hasler and Susstrunk, "Measuring colourfulness in natural images"
-   * @details Compute the colorfulness core. From "Measuring colourfulness in natural images", the output score
-   * is a range of [0,?] with scores having meaning across seven possible thresholds for "colorfulness.
+   * @brief Compute colorfulness based on Hasler and Susstrunk, "Measuring
+   * colourfulness in natural images"
+   * @details Compute the colorfulness core. From "Measuring colourfulness in
+   * natural images", the output score is a range of [0,?] with scores having
+   * meaning across seven possible thresholds for "colorfulness.
    *
    * Not Colorful - 0
    * Slightly Colorful - 15
@@ -49,7 +50,8 @@ private:
    * @param image - input image to compute score for
    * @return Score between [0,?] representing colorfulness
    *
-   * @note Requires ANKICORETECH_USE_OPENCV to be on, otherwise it always returns 0.f
+   * @note Requires ANKICORETECH_USE_OPENCV to be on, otherwise it always
+   * returns 0.f
    * @todo Ignore region arguments
    */
   float GetScore(const ImageRGB& image);

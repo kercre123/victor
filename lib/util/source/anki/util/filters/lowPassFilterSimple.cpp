@@ -21,51 +21,46 @@ namespace Anki {
 namespace Util {
 
 LowPassFilterSimple::LowPassFilterSimple(const float samplePeriod_sec,
-                                         const float desiredTimeConstant_sec)
-{
+                                         const float desiredTimeConstant_sec) {
   UpdateFilterCoeff(samplePeriod_sec, desiredTimeConstant_sec);
 }
 
-float LowPassFilterSimple::AddSample(const float value)
-{
+float LowPassFilterSimple::AddSample(const float value) {
   if (!_initialized) {
     _filteredValue = value;
     _initialized = true;
   } else {
     _filteredValue = _filterCoef * value + (1 - _filterCoef) * _filteredValue;
   }
-  
+
   return _filteredValue;
 }
 
-
-float LowPassFilterSimple::GetFilteredValue() const
-{
-  DEV_ASSERT(_initialized, "LowPassFilterSimple.GetFilteredValue.NotInitialized");
+float LowPassFilterSimple::GetFilteredValue() const {
+  DEV_ASSERT(_initialized,
+             "LowPassFilterSimple.GetFilteredValue.NotInitialized");
   return _filteredValue;
 }
 
-
-void LowPassFilterSimple::Reset()
-{
+void LowPassFilterSimple::Reset() {
   _filteredValue = 0.f;
   _initialized = false;
 }
 
-void LowPassFilterSimple::SetSamplePeriod(const float samplePeriod_sec)
-{
+void LowPassFilterSimple::SetSamplePeriod(const float samplePeriod_sec) {
   UpdateFilterCoeff(samplePeriod_sec, _desiredTimeConstant_sec);
 }
 
-void LowPassFilterSimple::SetTimeConstant(const float desiredTimeConstant_sec)
-{
+void LowPassFilterSimple::SetTimeConstant(const float desiredTimeConstant_sec) {
   UpdateFilterCoeff(_samplePeriod_sec, desiredTimeConstant_sec);
 }
 
-void LowPassFilterSimple::UpdateFilterCoeff(const float samplePeriod_sec, const float desiredTimeConstant_sec)
-{
-  DEV_ASSERT(samplePeriod_sec > 0, "LowPassFilterSimple.UpdateFilterCoeff.InvalidSamplePeriod");
-  DEV_ASSERT(desiredTimeConstant_sec > 0, "LowPassFilterSimple.UpdateFilterCoeff.InvalidTimeConstant");
+void LowPassFilterSimple::UpdateFilterCoeff(
+    const float samplePeriod_sec, const float desiredTimeConstant_sec) {
+  DEV_ASSERT(samplePeriod_sec > 0,
+             "LowPassFilterSimple.UpdateFilterCoeff.InvalidSamplePeriod");
+  DEV_ASSERT(desiredTimeConstant_sec > 0,
+             "LowPassFilterSimple.UpdateFilterCoeff.InvalidTimeConstant");
 
   _samplePeriod_sec = samplePeriod_sec;
   _desiredTimeConstant_sec = desiredTimeConstant_sec;
@@ -75,6 +70,5 @@ void LowPassFilterSimple::UpdateFilterCoeff(const float samplePeriod_sec, const 
   _filterCoef = samplePeriod_sec / (desiredTimeConstant_sec + samplePeriod_sec);
 }
 
-} // namespace Util
-} // namespace Anki
-
+}  // namespace Util
+}  // namespace Anki

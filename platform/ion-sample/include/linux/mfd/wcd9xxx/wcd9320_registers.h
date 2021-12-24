@@ -1739,8 +1739,13 @@
 #define TAIKO_SLIM_PGD_PORT_INT_RX_SOURCE0 (0x60)
 #define TAIKO_SLIM_PGD_PORT_INT_TX_SOURCE0 (0x70)
 #define TAIKO_PACKED_REG_SIZE sizeof(u32)
-#define TAIKO_CODEC_PACK_ENTRY(reg,mask,val) ((val & 0xff) | ((mask & 0xff) << 8) | ((reg & 0xffff) << 16))
+#define TAIKO_CODEC_PACK_ENTRY(reg, mask, val) \
+  ((val & 0xff) | ((mask & 0xff) << 8) | ((reg & 0xffff) << 16))
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
-#define TAIKO_CODEC_UNPACK_ENTRY(packed,reg,mask,val) do { ((reg) = ((packed >> 16) & (0xffff))); ((mask) = ((packed >> 8) & (0xff))); ((val) = ((packed) & (0xff))); } while(0);
+#define TAIKO_CODEC_UNPACK_ENTRY(packed, reg, mask, val) \
+  do {                                                   \
+    ((reg) = ((packed >> 16) & (0xffff)));               \
+    ((mask) = ((packed >> 8) & (0xff)));                 \
+    ((val) = ((packed) & (0xff)));                       \
+  } while (0);
 #endif
-

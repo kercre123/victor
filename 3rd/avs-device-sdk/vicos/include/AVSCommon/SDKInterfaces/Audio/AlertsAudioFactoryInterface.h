@@ -26,18 +26,23 @@ namespace sdkInterfaces {
 namespace audio {
 
 /**
- * This is an interface to produce functions that provide streams to the alert audio resources.
+ * This is an interface to produce functions that provide streams to the alert
+ * audio resources.
  */
 class AlertsAudioFactoryInterface {
-public:
-    virtual ~AlertsAudioFactoryInterface() = default;
+ public:
+  virtual ~AlertsAudioFactoryInterface() = default;
 
-    virtual std::function<std::unique_ptr<std::istream>()> alarmDefault() const = 0;
-    virtual std::function<std::unique_ptr<std::istream>()> alarmShort() const = 0;
-    virtual std::function<std::unique_ptr<std::istream>()> timerDefault() const = 0;
-    virtual std::function<std::unique_ptr<std::istream>()> timerShort() const = 0;
-    virtual std::function<std::unique_ptr<std::istream>()> reminderDefault() const = 0;
-    virtual std::function<std::unique_ptr<std::istream>()> reminderShort() const = 0;
+  virtual std::function<std::unique_ptr<std::istream>()> alarmDefault()
+      const = 0;
+  virtual std::function<std::unique_ptr<std::istream>()> alarmShort() const = 0;
+  virtual std::function<std::unique_ptr<std::istream>()> timerDefault()
+      const = 0;
+  virtual std::function<std::unique_ptr<std::istream>()> timerShort() const = 0;
+  virtual std::function<std::unique_ptr<std::istream>()> reminderDefault()
+      const = 0;
+  virtual std::function<std::unique_ptr<std::istream>()> reminderShort()
+      const = 0;
 };
 
 }  // namespace audio

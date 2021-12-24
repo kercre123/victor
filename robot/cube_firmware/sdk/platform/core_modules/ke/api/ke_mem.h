@@ -14,10 +14,11 @@
 #ifndef _KE_MEM_H_
 #define _KE_MEM_H_
 
-#include "rwip_config.h"     // IP configuration
-#include <stdint.h>          // standard integer
-#include <stdbool.h>         // standard includes
-#include "ke_config.h"       // kernel configuration
+#include <stdbool.h>  // standard includes
+#include <stdint.h>   // standard integer
+
+#include "ke_config.h"    // kernel configuration
+#include "rwip_config.h"  // IP configuration
 
 /**
  ****************************************************************************************
@@ -25,15 +26,14 @@
  * @ingroup KERNEL
  * @brief Heap management module.
  *
- * This module implements heap management functions that allow initializing heap,
- * allocating and freeing memory.
+ * This module implements heap management functions that allow initializing
+ *heap, allocating and freeing memory.
  *
  * @{
  ****************************************************************************************
  */
 
 #if (KE_MEM_RW)
-
 
 // forward declarations
 struct mblock_free;
@@ -44,8 +44,8 @@ struct mblock_free;
  *
  * This function performs the following operations:
  * - sanity checks
- * - check memory allocated is at least large enough to hold two block descriptors to hold
- * start and end
+ * - check memory allocated is at least large enough to hold two block
+ *descriptors to hold start and end
  * - initialize the first and last descriptors
  * - save heap into kernel environment variable.
  *
@@ -62,7 +62,8 @@ void ke_mem_init(uint8_t type, uint8_t* heap, uint16_t heap_size);
  ****************************************************************************************
  * @brief Allocation of a block of memory.
  *
- * Allocates a memory block whose size is size; if no memory is available return NULL
+ * Allocates a memory block whose size is size; if no memory is available return
+ *NULL
  *
  * @param[in] size Size of the memory area that need to be allocated.
  * @param[in] type Type of memory block
@@ -71,21 +72,20 @@ void ke_mem_init(uint8_t type, uint8_t* heap, uint16_t heap_size);
  *
  ****************************************************************************************
  */
-void *ke_malloc(uint32_t size, uint8_t type);
+void* ke_malloc(uint32_t size, uint8_t type);
 
 /**
  ****************************************************************************************
  * @brief Freeing of a block of memory.
  *
- * Free the memory area pointed by mem_ptr : mark the block as free and insert it in
- * the pool of free block.
+ * Free the memory area pointed by mem_ptr : mark the block as free and insert
+ *it in the pool of free block.
  *
  * @param[in] mem_ptr Pointer to the memory area that need to be freed.
  *
  ****************************************************************************************
  */
-void ke_free(void *mem_ptr);
-
+void ke_free(void* mem_ptr);
 
 /**
  ****************************************************************************************
@@ -97,7 +97,6 @@ void ke_free(void *mem_ptr);
  ****************************************************************************************
  */
 bool ke_mem_is_empty(uint8_t type);
-
 
 #ifdef __DA14581__
 /**
@@ -124,7 +123,6 @@ bool ke_is_free(void* mem_ptr);
  */
 uint16_t ke_get_mem_usage(uint8_t type);
 
-
 /**
  ****************************************************************************************
  * @brief Retrieve max memory usage of all heap.
@@ -135,25 +133,16 @@ uint16_t ke_get_mem_usage(uint8_t type);
  */
 uint32_t ke_get_max_mem_usage(void);
 
-#endif // (KE_PROFILING)
-
-
-
+#endif  // (KE_PROFILING)
 
 #elif (KE_MEM_LINUX)
 // Wrappers to Linux mem functions here
 
 #include <linux/slab.h>
 
-__INLINE void *ke_malloc(uint32_t size)
-{
-    return kmalloc(size, GFP_KERNEL);
-}
+__INLINE void *ke_malloc(uint32_t size) { return kmalloc(size, GFP_KERNEL); }
 
-__INLINE void ke_free (void * mem_ptr)
-{
-    kfree(mem_ptr);
-}
+__INLINE void ke_free(void *mem_ptr) { kfree(mem_ptr); }
 
 #elif (KE_MEM_LIBC)
 // Wrapper to lib C mem functions here
@@ -161,11 +150,10 @@ __INLINE void ke_free (void * mem_ptr)
 
 __INLINE void *ke_malloc(uint32_t size) { return malloc(size); }
 
-__INLINE void ke_free(void * mem_ptr) { free(mem_ptr); }
+__INLINE void ke_free(void *mem_ptr) { free(mem_ptr); }
 
-#endif // KE_MEM_RW
+#endif  // KE_MEM_RW
 
 ///@} MEM
 
-#endif // _KE_MEM_H_
-
+#endif  // _KE_MEM_H_

@@ -5,4 +5,3 @@
 static_assert(__cplusplus == 201103L, "wrong c++ standard version");
 
 int main() { return 0; }
-

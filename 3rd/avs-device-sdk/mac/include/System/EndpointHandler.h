@@ -16,65 +16,86 @@
 #ifndef ALEXA_CLIENT_SDK_CAPABILITYAGENTS_SYSTEM_INCLUDE_SYSTEM_ENDPOINTHANDLER_H_
 #define ALEXA_CLIENT_SDK_CAPABILITYAGENTS_SYSTEM_INCLUDE_SYSTEM_ENDPOINTHANDLER_H_
 
-#include <memory>
-
 #include <AVSCommon/AVS/CapabilityAgent.h>
 #include <AVSCommon/SDKInterfaces/AVSEndpointAssignerInterface.h>
+
+#include <memory>
 
 namespace alexaClientSDK {
 namespace capabilityAgents {
 namespace system {
 
 /**
- * This class implementes a @c CapabilityAgent that handles the @c SetEndpoint directive.
+ * This class implementes a @c CapabilityAgent that handles the @c SetEndpoint
+ * directive.
  */
 class EndpointHandler : public avsCommon::avs::CapabilityAgent {
-public:
-    /**
-     * Create an instance of @c EndpointHandler.
-     *
-     * @param avsEndpointAssigner The interface to be notified when a new @c SetEndpoint directive comes.
-     * @param exceptionEncounteredSender The interface that sends exceptions.
-     * @return @c nullptr if the inputs are not defined, else a new instance of @c EndpointHandler.
-     */
-    static std::shared_ptr<EndpointHandler> create(
-        std::shared_ptr<avsCommon::sdkInterfaces::AVSEndpointAssignerInterface> avsEndpointAssigner,
-        std::shared_ptr<avsCommon::sdkInterfaces::ExceptionEncounteredSenderInterface> exceptionEncounteredSender);
+ public:
+  /**
+   * Create an instance of @c EndpointHandler.
+   *
+   * @param avsEndpointAssigner The interface to be notified when a new @c
+   * SetEndpoint directive comes.
+   * @param exceptionEncounteredSender The interface that sends exceptions.
+   * @return @c nullptr if the inputs are not defined, else a new instance of @c
+   * EndpointHandler.
+   */
+  static std::shared_ptr<EndpointHandler> create(
+      std::shared_ptr<avsCommon::sdkInterfaces::AVSEndpointAssignerInterface>
+          avsEndpointAssigner,
+      std::shared_ptr<
+          avsCommon::sdkInterfaces::ExceptionEncounteredSenderInterface>
+          exceptionEncounteredSender);
 
-    /// @name DirectiveHandlerInterface and CapabilityAgent Functions
-    /// @{
-    avsCommon::avs::DirectiveHandlerConfiguration getConfiguration() const override;
-    void handleDirectiveImmediately(std::shared_ptr<avsCommon::avs::AVSDirective> directive) override;
-    void preHandleDirective(std::shared_ptr<avsCommon::avs::CapabilityAgent::DirectiveInfo> info) override;
-    void handleDirective(std::shared_ptr<avsCommon::avs::CapabilityAgent::DirectiveInfo> info) override;
-    void cancelDirective(std::shared_ptr<avsCommon::avs::CapabilityAgent::DirectiveInfo> info) override;
-    /// @}
+  /// @name DirectiveHandlerInterface and CapabilityAgent Functions
+  /// @{
+  avsCommon::avs::DirectiveHandlerConfiguration getConfiguration()
+      const override;
+  void handleDirectiveImmediately(
+      std::shared_ptr<avsCommon::avs::AVSDirective> directive) override;
+  void preHandleDirective(
+      std::shared_ptr<avsCommon::avs::CapabilityAgent::DirectiveInfo> info)
+      override;
+  void handleDirective(
+      std::shared_ptr<avsCommon::avs::CapabilityAgent::DirectiveInfo> info)
+      override;
+  void cancelDirective(
+      std::shared_ptr<avsCommon::avs::CapabilityAgent::DirectiveInfo> info)
+      override;
+  /// @}
 
-private:
-    /**
-     * Constructor.
-     *
-     * @param avsEndpointAssigner The interface to be notified when a new @c SetEndpoint directive comes.
-     * @param exceptionEncounteredSender The interface that sends exceptions.
-     */
-    EndpointHandler(
-        std::shared_ptr<avsCommon::sdkInterfaces::AVSEndpointAssignerInterface> avsEndpointAssigner,
-        std::shared_ptr<avsCommon::sdkInterfaces::ExceptionEncounteredSenderInterface> exceptionEncounteredSender);
+ private:
+  /**
+   * Constructor.
+   *
+   * @param avsEndpointAssigner The interface to be notified when a new @c
+   * SetEndpoint directive comes.
+   * @param exceptionEncounteredSender The interface that sends exceptions.
+   */
+  EndpointHandler(
+      std::shared_ptr<avsCommon::sdkInterfaces::AVSEndpointAssignerInterface>
+          avsEndpointAssigner,
+      std::shared_ptr<
+          avsCommon::sdkInterfaces::ExceptionEncounteredSenderInterface>
+          exceptionEncounteredSender);
 
-    /**
-     * Remove the directive (if possible) while invoking callbacks to @c DirectiveHandlerResultInterface.
-     *
-     * @param info The @c DirectiveInfo we are trying to remove.
-     * @param isFailure Boolean flag set to @c true if something went wrong before removing the directive.
-     * @param report The report that we will pass to @c setFailed in case @c isFailure is @c true.
-     */
-    void removeDirectiveGracefully(
-        std::shared_ptr<avsCommon::avs::CapabilityAgent::DirectiveInfo> info,
-        bool isFailure = false,
-        const std::string& report = "");
+  /**
+   * Remove the directive (if possible) while invoking callbacks to @c
+   * DirectiveHandlerResultInterface.
+   *
+   * @param info The @c DirectiveInfo we are trying to remove.
+   * @param isFailure Boolean flag set to @c true if something went wrong before
+   * removing the directive.
+   * @param report The report that we will pass to @c setFailed in case @c
+   * isFailure is @c true.
+   */
+  void removeDirectiveGracefully(
+      std::shared_ptr<avsCommon::avs::CapabilityAgent::DirectiveInfo> info,
+      bool isFailure = false, const std::string& report = "");
 
-    /// The @c AVSEndpointAssignerInterface used to signal endpoint change.
-    std::shared_ptr<avsCommon::sdkInterfaces::AVSEndpointAssignerInterface> m_avsEndpointAssigner;
+  /// The @c AVSEndpointAssignerInterface used to signal endpoint change.
+  std::shared_ptr<avsCommon::sdkInterfaces::AVSEndpointAssignerInterface>
+      m_avsEndpointAssigner;
 };
 
 }  // namespace system

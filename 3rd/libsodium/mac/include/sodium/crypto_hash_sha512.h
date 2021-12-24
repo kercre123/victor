@@ -15,16 +15,16 @@
 #include "export.h"
 
 #ifdef __cplusplus
-# ifdef __GNUC__
-#  pragma GCC diagnostic ignored "-Wlong-long"
-# endif
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wlong-long"
+#endif
 extern "C" {
 #endif
 
 typedef struct crypto_hash_sha512_state {
-    uint64_t state[8];
-    uint64_t count[2];
-    uint8_t  buf[128];
+  uint64_t state[8];
+  uint64_t count[2];
+  uint8_t buf[128];
 } crypto_hash_sha512_state;
 
 SODIUM_EXPORT

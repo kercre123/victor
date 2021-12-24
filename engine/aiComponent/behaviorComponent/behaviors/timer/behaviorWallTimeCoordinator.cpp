@@ -1,133 +1,124 @@
 /**
-* File: behaviorWallTimeCoordinator.cpp
-*
-* Author: Kevin M. Karol
-* Created: 2018-06-15
-*
-* Description: Manage the designed response to a user request for the wall time
-*
-* Copyright: Anki, Inc. 2018
-*
-**/
-
+ * File: behaviorWallTimeCoordinator.cpp
+ *
+ * Author: Kevin M. Karol
+ * Created: 2018-06-15
+ *
+ * Description: Manage the designed response to a user request for the wall time
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorWallTimeCoordinator.h"
 
-#include "clad/audio/audioSwitchTypes.h"
+#include <iomanip>
 
+#include "clad/audio/audioSwitchTypes.h"
+#include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorDisplayWallTime.h"
-#include "engine/actions/animActions.h"
 #include "engine/components/settingsManager.h"
 #include "engine/components/textToSpeech/textToSpeechCoordinator.h"
 #include "engine/faceWorld.h"
 #include "osState/wallTime.h"
 
-#include <iomanip>
-
 namespace Anki {
 namespace Vector {
 
+namespace {}
 
-namespace{
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorWallTimeCoordinator::InstanceConfig::InstanceConfig() {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorWallTimeCoordinator::InstanceConfig::InstanceConfig()
-{
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorWallTimeCoordinator::DynamicVariables::DynamicVariables()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorWallTimeCoordinator::DynamicVariables::DynamicVariables() {
   utteranceID = kInvalidUtteranceID;
   utteranceState = UtteranceState::Generating;
   isShowingTime = false;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorWallTimeCoordinator::BehaviorWallTimeCoordinator(
+    const Json::Value& config)
+    : ICozmoBehavior(config) {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorWallTimeCoordinator::BehaviorWallTimeCoordinator(const Json::Value& config)
-: ICozmoBehavior(config)
-{
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorWallTimeCoordinator::~BehaviorWallTimeCoordinator() {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorWallTimeCoordinator::~BehaviorWallTimeCoordinator()
-{
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWallTimeCoordinator::GetAllDelegates(std::set<IBehavior*>& delegates) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorWallTimeCoordinator::GetAllDelegates(
+    std::set<IBehavior*>& delegates) const {
   delegates.insert(_iConfig.iCantDoThatBehavior.get());
   delegates.insert(_iConfig.showWallTime.get());
   delegates.insert(_iConfig.lookAtFaceInFront.get());
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWallTimeCoordinator::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorWallTimeCoordinator::GetBehaviorOperationModifiers(
+    BehaviorOperationModifiers& modifiers) const {
   modifiers.behaviorAlwaysDelegates = true;
   modifiers.wantsToBeActivatedWhenOffTreads = true;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorWallTimeCoordinator::GetBehaviorJsonKeys(
+    std::set<const char*>& expectedKeys) const {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWallTimeCoordinator::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
-{
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorWallTimeCoordinator::WantsToBeActivatedBehavior() const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool BehaviorWallTimeCoordinator::WantsToBeActivatedBehavior() const {
   return true;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWallTimeCoordinator::InitBehavior()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorWallTimeCoordinator::InitBehavior() {
   auto& behaviorContainer = GetBEI().GetBehaviorContainer();
 
-  _iConfig.iCantDoThatBehavior = behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(SingletonICantDoThat));
-  _iConfig.lookAtFaceInFront   = behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(SingletonFindFaceInFrontWallTime));
+  _iConfig.iCantDoThatBehavior =
+      behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(SingletonICantDoThat));
+  _iConfig.lookAtFaceInFront = behaviorContainer.FindBehaviorByID(
+      BEHAVIOR_ID(SingletonFindFaceInFrontWallTime));
 
   behaviorContainer.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(ShowWallTime),
                                                 BEHAVIOR_CLASS(DisplayWallTime),
                                                 _iConfig.showWallTime);
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWallTimeCoordinator::OnBehaviorActivated()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorWallTimeCoordinator::OnBehaviorActivated() {
   _dVars = DynamicVariables();
 
-  if(WallTime::getInstance()->GetApproximateLocalTime(_dVars.time)){
+  if (WallTime::getInstance()->GetApproximateLocalTime(_dVars.time)) {
     StartTTSGeneration();
     // let's look for a face while we're generating TTS
     TransitionToFindFaceInFront();
   }
 
   // if we failed to start the "find face" behavior, we need to bail
-  if(!IsControlDelegated()){
+  if (!IsControlDelegated()) {
     TransitionToICantDoThat();
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWallTimeCoordinator::BehaviorUpdate()
-{
-  if(!IsActivated()){
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorWallTimeCoordinator::BehaviorUpdate() {
+  if (!IsActivated()) {
     return;
   }
 
-  if (!_dVars.isShowingTime){
-    switch (_dVars.utteranceState)
-    {
+  if (!_dVars.isShowingTime) {
+    switch (_dVars.utteranceState) {
       case UtteranceState::Ready:
       case UtteranceState::Invalid:
         // cancel look for face and immediately show wall clock once we're ready
@@ -142,48 +133,51 @@ void BehaviorWallTimeCoordinator::BehaviorUpdate()
   }
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWallTimeCoordinator::OnBehaviorDeactivated()
-{
-  if (kInvalidUtteranceID != _dVars.utteranceID){
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorWallTimeCoordinator::OnBehaviorDeactivated() {
+  if (kInvalidUtteranceID != _dVars.utteranceID) {
     GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
   }
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWallTimeCoordinator::TransitionToICantDoThat()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorWallTimeCoordinator::TransitionToICantDoThat() {
   ANKI_VERIFY(_iConfig.iCantDoThatBehavior->WantsToBeActivated(),
-              "BehaviorWallTimeCoordinator.TransitionToICantDoThat.BehaviorDoesntWantToBeActivated", "");
+              "BehaviorWallTimeCoordinator.TransitionToICantDoThat."
+              "BehaviorDoesntWantToBeActivated",
+              "");
   DelegateIfInControl(_iConfig.iCantDoThatBehavior.get());
   // annnnnd we're done (behaviorAlwaysDelegates = false)
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWallTimeCoordinator::TransitionToFindFaceInFront()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorWallTimeCoordinator::TransitionToFindFaceInFront() {
   ANKI_VERIFY(_iConfig.lookAtFaceInFront->WantsToBeActivated(),
-              "BehaviorWallTimeCoordinator.TransitionToShowWallTime.BehaviorDoesntWantToBeActivated", "");
-  DelegateIfInControl(_iConfig.lookAtFaceInFront.get(), [this](){
-    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::LookAtUserEndearingly));
+              "BehaviorWallTimeCoordinator.TransitionToShowWallTime."
+              "BehaviorDoesntWantToBeActivated",
+              "");
+  DelegateIfInControl(_iConfig.lookAtFaceInFront.get(), [this]() {
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(
+        AnimationTrigger::LookAtUserEndearingly));
   });
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWallTimeCoordinator::TransitionToShowWallTime()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorWallTimeCoordinator::TransitionToShowWallTime() {
   _dVars.isShowingTime = true;
 
-  auto playUtteranceCallback = [this](){
+  auto playUtteranceCallback = [this]() {
     // only play TTS if it was generated, else we're fine with just the clock
-    if ((kInvalidUtteranceID != _dVars.utteranceID) && (_dVars.utteranceState == UtteranceState::Ready)){
+    if ((kInvalidUtteranceID != _dVars.utteranceID) &&
+        (_dVars.utteranceState == UtteranceState::Ready)) {
       GetBEI().GetTextToSpeechCoordinator().PlayUtterance(_dVars.utteranceID);
     } else {
-      LOG_ERROR("BehaviorWallTimeCoordinator", "Attempted to play time TTS but generation failed");
+      LOG_ERROR("BehaviorWallTimeCoordinator",
+                "Attempted to play time TTS but generation failed");
     }
   };
 
@@ -191,52 +185,54 @@ void BehaviorWallTimeCoordinator::TransitionToShowWallTime()
   _iConfig.showWallTime->SetOverrideDisplayTime(_dVars.time);
 
   ANKI_VERIFY(_iConfig.showWallTime->WantsToBeActivated(),
-              "BehaviorWallTimeCoordinator.TransitionToShowWallTime.BehaviorDoesntWantToBeActivated", "");
+              "BehaviorWallTimeCoordinator.TransitionToShowWallTime."
+              "BehaviorDoesntWantToBeActivated",
+              "");
   DelegateIfInControl(_iConfig.showWallTime.get());
   // annnnnd we're done (behaviorAlwaysDelegates = false)
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWallTimeCoordinator::StartTTSGeneration()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorWallTimeCoordinator::StartTTSGeneration() {
   const auto& settingsManager = GetBEI().GetSettingsManager();
-  const bool clockIs24Hour = settingsManager.GetRobotSettingAsBool(external_interface::RobotSetting::clock_24_hour);
+  const bool clockIs24Hour = settingsManager.GetRobotSettingAsBool(
+      external_interface::RobotSetting::clock_24_hour);
 
   auto textOfTime = GetTTSStringForTime(_dVars.time, clockIs24Hour);
 
   const UtteranceTriggerType triggerType = UtteranceTriggerType::Manual;
-  const AudioTtsProcessingStyle style = AudioTtsProcessingStyle::Default_Processed;
+  const AudioTtsProcessingStyle style =
+      AudioTtsProcessingStyle::Default_Processed;
 
-  auto callback = [this](const UtteranceState& utteranceState)
-  {
+  auto callback = [this](const UtteranceState& utteranceState) {
     _dVars.utteranceState = utteranceState;
   };
 
-  auto & ttsCoordinator = GetBEI().GetTextToSpeechCoordinator();
-  _dVars.utteranceID = ttsCoordinator.CreateUtterance(textOfTime, triggerType, style, callback);
+  auto& ttsCoordinator = GetBEI().GetTextToSpeechCoordinator();
+  _dVars.utteranceID =
+      ttsCoordinator.CreateUtterance(textOfTime, triggerType, style, callback);
 
-  // if we failed to create the tts, we need to let our behavior know since the callback is NOT called in this case
-  if (kInvalidUtteranceID == _dVars.utteranceID){
+  // if we failed to create the tts, we need to let our behavior know since the
+  // callback is NOT called in this case
+  if (kInvalidUtteranceID == _dVars.utteranceID) {
     _dVars.utteranceState = UtteranceState::Invalid;
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string BehaviorWallTimeCoordinator::GetTTSStringForTime(struct tm& localTime, const bool clockIs24Hour)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+std::string BehaviorWallTimeCoordinator::GetTTSStringForTime(
+    struct tm& localTime, const bool clockIs24Hour) {
   std::stringstream ss;
-  if( clockIs24Hour ) {
+  if (clockIs24Hour) {
     ss << std::put_time(&localTime, "%H:%M");
-  }
-  else {
+  } else {
     ss << std::put_time(&localTime, "%I:%M");
   }
 
   return ss.str();
 }
 
-
-
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki

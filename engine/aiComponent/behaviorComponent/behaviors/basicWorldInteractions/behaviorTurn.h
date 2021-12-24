@@ -17,24 +17,24 @@
 
 namespace Anki {
 namespace Vector {
-  
-class BehaviorTurn : public ICozmoBehavior
-{
-protected:  
+
+class BehaviorTurn : public ICozmoBehavior {
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorTurn(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
   virtual bool WantsToBeActivatedBehavior() const override;
-  
-  
-private:
+
+ private:
   struct InstanceConfig {
     InstanceConfig();
   };
@@ -44,12 +44,12 @@ private:
     float turnRad;
   };
 
-  InstanceConfig   _iConfig;
+  InstanceConfig _iConfig;
   DynamicVariables _dVars;
 
-}; // class __Cozmo_Basestation_Behaviors_BehaviorTurn_H__
+};  // class __Cozmo_Basestation_Behaviors_BehaviorTurn_H__
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

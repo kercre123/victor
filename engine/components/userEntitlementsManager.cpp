@@ -4,23 +4,21 @@
  * Author: Paul Terry
  * Created: 8/22/2018
  *
- * Description: Stores user entitlements on robot; accepts new user entitlements from app
- * or cloud; provides access to these for other components
+ * Description: Stores user entitlements on robot; accepts new user entitlements
+ *from app or cloud; provides access to these for other components
  *
  * Copyright: Anki, Inc. 2018
  *
  **/
 
-
 #include "engine/components/userEntitlementsManager.h"
 
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/components/jdocsManager.h"
 #include "engine/components/settingsCommManager.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
-
-#include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
 
 #define LOG_CHANNEL "UserEntitlementsManager"
@@ -28,42 +26,42 @@
 namespace Anki {
 namespace Vector {
 
-namespace
-{
-  static const char* kConfigDefaultValueKey = "defaultValue";
-  static const char* kConfigUpdateCloudOnChangeKey = "updateCloudOnChange";
-}
+namespace {
+static const char* kConfigDefaultValueKey = "defaultValue";
+static const char* kConfigUpdateCloudOnChangeKey = "updateCloudOnChange";
+}  // namespace
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
 UserEntitlementsManager::UserEntitlementsManager()
-: IDependencyManagedComponent(this, RobotComponentID::UserEntitlementsManager)
-{
-}
+    : IDependencyManagedComponent(this,
+                                  RobotComponentID::UserEntitlementsManager) {}
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void UserEntitlementsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComponents)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void UserEntitlementsManager::InitDependent(
+    Robot* robot, const RobotCompMap& dependentComponents) {
   _robot = robot;
   _jdocsManager = &robot->GetComponent<JdocsManager>();
 
-  _userEntitlementsConfig = &robot->GetContext()->GetDataLoader()->GetUserEntitlementsConfig();
+  _userEntitlementsConfig =
+      &robot->GetContext()->GetDataLoader()->GetUserEntitlementsConfig();
 
   // Call the JdocsManager to see if our user entitlements jdoc file exists
   bool userEntitlementsDirty = false;
-  const bool jdocNeedsCreation = _jdocsManager->JdocNeedsCreation(external_interface::JdocType::USER_ENTITLEMENTS);
+  const bool jdocNeedsCreation = _jdocsManager->JdocNeedsCreation(
+      external_interface::JdocType::USER_ENTITLEMENTS);
   _currentUserEntitlements.clear();
-  if (jdocNeedsCreation)
-  {
-    LOG_INFO("UserEntitlementsManager.InitDependent.NoUserEntitlementsJdocFile",
-             "User entitlements jdoc file not found; one will be created shortly");
-  }
-  else
-  {
-    _currentUserEntitlements = _jdocsManager->GetJdocBody(external_interface::JdocType::USER_ENTITLEMENTS);
+  if (jdocNeedsCreation) {
+    LOG_INFO(
+        "UserEntitlementsManager.InitDependent.NoUserEntitlementsJdocFile",
+        "User entitlements jdoc file not found; one will be created shortly");
+  } else {
+    _currentUserEntitlements = _jdocsManager->GetJdocBody(
+        external_interface::JdocType::USER_ENTITLEMENTS);
 
-    if (_jdocsManager->JdocNeedsMigration(external_interface::JdocType::USER_ENTITLEMENTS))
-    {
+    if (_jdocsManager->JdocNeedsMigration(
+            external_interface::JdocType::USER_ENTITLEMENTS)) {
       DoJdocFormatMigration();
       userEntitlementsDirty = true;
     }
@@ -71,89 +69,90 @@ void UserEntitlementsManager::InitDependent(Robot* robot, const RobotCompMap& de
 
   // Ensure current user entitlements has each of the defined user entitlements;
   // if not, initialize each missing user entitlement to default value
-  for (Json::ValueConstIterator it = _userEntitlementsConfig->begin(); it != _userEntitlementsConfig->end(); ++it)
-  {
-    if (!_currentUserEntitlements.isMember(it.name()))
-    {
+  for (Json::ValueConstIterator it = _userEntitlementsConfig->begin();
+       it != _userEntitlementsConfig->end(); ++it) {
+    if (!_currentUserEntitlements.isMember(it.name())) {
       const Json::Value& item = (*it);
       _currentUserEntitlements[it.name()] = item[kConfigDefaultValueKey];
       userEntitlementsDirty = true;
-      LOG_INFO("UserEntitlementsManager.InitDependent.AddDefaultItem", "Adding user entitlement with key %s and default value %s",
-               it.name().c_str(), item[kConfigDefaultValueKey].asString().c_str());
+      LOG_INFO("UserEntitlementsManager.InitDependent.AddDefaultItem",
+               "Adding user entitlement with key %s and default value %s",
+               it.name().c_str(),
+               item[kConfigDefaultValueKey].asString().c_str());
     }
   }
 
   // Now look through current user entitlements, and remove any item
   // that is no longer defined in the config
   std::vector<std::string> keysToRemove;
-  for (Json::ValueConstIterator it = _currentUserEntitlements.begin(); it != _currentUserEntitlements.end(); ++it)
-  {
-    if (!_userEntitlementsConfig->isMember(it.name()))
-    {
+  for (Json::ValueConstIterator it = _currentUserEntitlements.begin();
+       it != _currentUserEntitlements.end(); ++it) {
+    if (!_userEntitlementsConfig->isMember(it.name())) {
       keysToRemove.push_back(it.name());
     }
   }
-  for (const auto& key : keysToRemove)
-  {
+  for (const auto& key : keysToRemove) {
     LOG_INFO("UserEntitlementsManager.InitDependent.RemoveItem",
              "Removing user entitlement with key %s", key.c_str());
     _currentUserEntitlements.removeMember(key);
     userEntitlementsDirty = true;
   }
 
-  if (userEntitlementsDirty)
-  {
+  if (userEntitlementsDirty) {
     static const bool kSaveToCloudImmediately = false;
     static const bool kSetCloudDirtyIfNotImmediate = !jdocNeedsCreation;
-    UpdateUserEntitlementsJdoc(kSaveToCloudImmediately, kSetCloudDirtyIfNotImmediate);
+    UpdateUserEntitlementsJdoc(kSaveToCloudImmediately,
+                               kSetCloudDirtyIfNotImmediate);
   }
 
-  // Register the actual user entitlement application methods, for those user entitlements that want to execute code when changed:
-  _settingSetters[external_interface::UserEntitlement::KICKSTARTER_EYES] = { nullptr, &UserEntitlementsManager::ApplyUserEntitlementKickstarterEyes };
+  // Register the actual user entitlement application methods, for those user
+  // entitlements that want to execute code when changed:
+  _settingSetters[external_interface::UserEntitlement::KICKSTARTER_EYES] = {
+      nullptr, &UserEntitlementsManager::ApplyUserEntitlementKickstarterEyes};
 
-  _jdocsManager->RegisterOverwriteNotificationCallback(external_interface::JdocType::USER_ENTITLEMENTS, [this]() {
-    _currentUserEntitlements = _jdocsManager->GetJdocBody(external_interface::JdocType::USER_ENTITLEMENTS);
-    ApplyAllCurrentUserEntitlements();
-  });
+  _jdocsManager->RegisterOverwriteNotificationCallback(
+      external_interface::JdocType::USER_ENTITLEMENTS, [this]() {
+        _currentUserEntitlements = _jdocsManager->GetJdocBody(
+            external_interface::JdocType::USER_ENTITLEMENTS);
+        ApplyAllCurrentUserEntitlements();
+      });
 
-  _jdocsManager->RegisterFormatMigrationCallback(external_interface::JdocType::USER_ENTITLEMENTS, [this]() {
-    DoJdocFormatMigration();
-  });
+  _jdocsManager->RegisterFormatMigrationCallback(
+      external_interface::JdocType::USER_ENTITLEMENTS,
+      [this]() { DoJdocFormatMigration(); });
 
   // Finally, set a flag so we will apply all of the user entitlements
   // we just loaded and/or set, in the first update
   _applyUserEntitlementsNextTick = true;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void UserEntitlementsManager::UpdateDependent(const RobotCompMap& dependentComps)
-{
-  if (_applyUserEntitlementsNextTick)
-  {
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void UserEntitlementsManager::UpdateDependent(
+    const RobotCompMap& dependentComps) {
+  if (_applyUserEntitlementsNextTick) {
     _applyUserEntitlementsNextTick = false;
     ApplyAllCurrentUserEntitlements();
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool UserEntitlementsManager::SetUserEntitlement(const external_interface::UserEntitlement userEntitlement,
-                                                 const Json::Value& valueJson,
-                                                 const bool updateUserEntitlementsJdoc,
-                                                 bool& ignoredDueToNoChange)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool UserEntitlementsManager::SetUserEntitlement(
+    const external_interface::UserEntitlement userEntitlement,
+    const Json::Value& valueJson, const bool updateUserEntitlementsJdoc,
+    bool& ignoredDueToNoChange) {
   ignoredDueToNoChange = false;
 
   const std::string& key = UserEntitlement_Name(userEntitlement);
-  if (!_currentUserEntitlements.isMember(key))
-  {
-    LOG_ERROR("UserEntitlementsManager.SetUserEntitlement.InvalidKey", "Invalid key %s; ignoring", key.c_str());
+  if (!_currentUserEntitlements.isMember(key)) {
+    LOG_ERROR("UserEntitlementsManager.SetUserEntitlement.InvalidKey",
+              "Invalid key %s; ignoring", key.c_str());
     return false;
   }
 
   const Json::Value prevValue = _currentUserEntitlements[key];
-  if (prevValue == valueJson)
-  {
+  if (prevValue == valueJson) {
     // If the value is not actually changing, don't do anything.
     ignoredDueToNoChange = true;
     return false;
@@ -161,170 +160,170 @@ bool UserEntitlementsManager::SetUserEntitlement(const external_interface::UserE
   _currentUserEntitlements[key] = valueJson;
 
   bool success = ApplyUserEntitlement(userEntitlement);
-  if (!success)
-  {
+  if (!success) {
     _currentUserEntitlements[key] = prevValue;  // Restore previous good value
     return false;
   }
 
-  if (updateUserEntitlementsJdoc)
-  {
-    const bool saveToCloudImmediately = DoesUserEntitlementUpdateCloudImmediately(userEntitlement);
+  if (updateUserEntitlementsJdoc) {
+    const bool saveToCloudImmediately =
+        DoesUserEntitlementUpdateCloudImmediately(userEntitlement);
     const bool setCloudDirtyIfNotImmediate = saveToCloudImmediately;
     static const bool sendJdocsChangedMessage = true;
-    success = UpdateUserEntitlementsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate, sendJdocsChangedMessage);
+    success = UpdateUserEntitlementsJdoc(saveToCloudImmediately,
+                                         setCloudDirtyIfNotImmediate,
+                                         sendJdocsChangedMessage);
   }
 
   return success;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string UserEntitlementsManager::GetUserEntitlementAsString(const external_interface::UserEntitlement key) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+std::string UserEntitlementsManager::GetUserEntitlementAsString(
+    const external_interface::UserEntitlement key) const {
   const std::string& keyString = UserEntitlement_Name(key);
-  if (!_currentUserEntitlements.isMember(keyString))
-  {
-    LOG_ERROR("UserEntitlementsManager.GetUserEntitlementAsString.InvalidKey", "Invalid key %s", keyString.c_str());
+  if (!_currentUserEntitlements.isMember(keyString)) {
+    LOG_ERROR("UserEntitlementsManager.GetUserEntitlementAsString.InvalidKey",
+              "Invalid key %s", keyString.c_str());
     return "Invalid";
   }
 
   return _currentUserEntitlements[keyString].asString();
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool UserEntitlementsManager::GetUserEntitlementAsBool(const external_interface::UserEntitlement key) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool UserEntitlementsManager::GetUserEntitlementAsBool(
+    const external_interface::UserEntitlement key) const {
   const std::string& keyString = UserEntitlement_Name(key);
-  if (!_currentUserEntitlements.isMember(keyString))
-  {
-    LOG_ERROR("UserEntitlementsManager.GetUserEntitlementAsBool.InvalidKey", "Invalid key %s", keyString.c_str());
+  if (!_currentUserEntitlements.isMember(keyString)) {
+    LOG_ERROR("UserEntitlementsManager.GetUserEntitlementAsBool.InvalidKey",
+              "Invalid key %s", keyString.c_str());
     return false;
   }
 
   return _currentUserEntitlements[keyString].asBool();
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint32_t UserEntitlementsManager::GetUserEntitlementAsUInt(const external_interface::UserEntitlement key) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+uint32_t UserEntitlementsManager::GetUserEntitlementAsUInt(
+    const external_interface::UserEntitlement key) const {
   const std::string& keyString = UserEntitlement_Name(key);
-  if (!_currentUserEntitlements.isMember(keyString))
-  {
-    LOG_ERROR("UserEntitlementsManager.GetUserEntitlementAsUInt.InvalidKey", "Invalid key %s", keyString.c_str());
+  if (!_currentUserEntitlements.isMember(keyString)) {
+    LOG_ERROR("UserEntitlementsManager.GetUserEntitlementAsUInt.InvalidKey",
+              "Invalid key %s", keyString.c_str());
     return 0;
   }
 
   return _currentUserEntitlements[keyString].asUInt();
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool UserEntitlementsManager::DoesUserEntitlementUpdateCloudImmediately(const external_interface::UserEntitlement key) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool UserEntitlementsManager::DoesUserEntitlementUpdateCloudImmediately(
+    const external_interface::UserEntitlement key) const {
   const std::string& keyString = UserEntitlement_Name(key);
   const auto& config = (*_userEntitlementsConfig)[keyString];
-  const bool saveToCloudImmediately = config[kConfigUpdateCloudOnChangeKey].asBool();
+  const bool saveToCloudImmediately =
+      config[kConfigUpdateCloudOnChangeKey].asBool();
   return saveToCloudImmediately;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool UserEntitlementsManager::UpdateUserEntitlementsJdoc(const bool saveToCloudImmediately,
-                                                         const bool setCloudDirtyIfNotImmediate,
-                                                         const bool sendJdocsChangedMessage)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool UserEntitlementsManager::UpdateUserEntitlementsJdoc(
+    const bool saveToCloudImmediately, const bool setCloudDirtyIfNotImmediate,
+    const bool sendJdocsChangedMessage) {
   static const bool saveToDiskImmediately = true;
-  const bool success = _jdocsManager->UpdateJdoc(external_interface::JdocType::USER_ENTITLEMENTS,
-                                                 &_currentUserEntitlements,
-                                                 saveToDiskImmediately,
-                                                 saveToCloudImmediately,
-                                                 setCloudDirtyIfNotImmediate,
-                                                 sendJdocsChangedMessage);
+  const bool success = _jdocsManager->UpdateJdoc(
+      external_interface::JdocType::USER_ENTITLEMENTS,
+      &_currentUserEntitlements, saveToDiskImmediately, saveToCloudImmediately,
+      setCloudDirtyIfNotImmediate, sendJdocsChangedMessage);
   return success;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void UserEntitlementsManager::ApplyAllCurrentUserEntitlements()
-{
-  LOG_INFO("UserEntitlementsManager.ApplyAllCurrentUserEntitlements", "Applying all current user entitlements");
-  for (Json::ValueConstIterator it = _currentUserEntitlements.begin(); it != _currentUserEntitlements.end(); ++it)
-  {
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void UserEntitlementsManager::ApplyAllCurrentUserEntitlements() {
+  LOG_INFO("UserEntitlementsManager.ApplyAllCurrentUserEntitlements",
+           "Applying all current user entitlements");
+  for (Json::ValueConstIterator it = _currentUserEntitlements.begin();
+       it != _currentUserEntitlements.end(); ++it) {
     external_interface::UserEntitlement whichUserEntitlement;
     UserEntitlement_Parse(it.name(), &whichUserEntitlement);
     ApplyUserEntitlement(whichUserEntitlement);
   }
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool UserEntitlementsManager::ApplyUserEntitlement(const external_interface::UserEntitlement key)
-{
-  // Actually apply the user entitlement; note that some things don't need to be "applied"
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool UserEntitlementsManager::ApplyUserEntitlement(
+    const external_interface::UserEntitlement key) {
+  // Actually apply the user entitlement; note that some things don't need to be
+  // "applied"
   bool success = true;
   const auto it = _settingSetters.find(key);
-  if (it != _settingSetters.end())
-  {
+  if (it != _settingSetters.end()) {
     const auto validationFunc = it->second.validationFunction;
-    if (validationFunc != nullptr)
-    {
+    if (validationFunc != nullptr) {
       success = (this->*(validationFunc))();
-      if (!success)
-      {
-        LOG_ERROR("UserEntitlementsManager.ApplyUserEntitlement.ValidateFunctionFailed", "Error attempting to apply %s user entitlement",
-                  UserEntitlement_Name(key).c_str());
+      if (!success) {
+        LOG_ERROR(
+            "UserEntitlementsManager.ApplyUserEntitlement."
+            "ValidateFunctionFailed",
+            "Error attempting to apply %s user entitlement",
+            UserEntitlement_Name(key).c_str());
         return false;
       }
     }
 
     const auto applicationFunc = it->second.applicationFunction;
-    if (applicationFunc != nullptr)
-    {
-      LOG_DEBUG("UserEntitlementsManager.ApplyUserEntitlement", "Applying user entitlement '%s'",
+    if (applicationFunc != nullptr) {
+      LOG_DEBUG("UserEntitlementsManager.ApplyUserEntitlement",
+                "Applying user entitlement '%s'",
                 UserEntitlement_Name(key).c_str());
       success = (this->*(applicationFunc))();
 
-      if (!success)
-      {
-        LOG_ERROR("UserEntitlementsManager.ApplyUserEntitlement.ApplyFunctionFailed", "Error attempting to apply %s user entitlement",
-                  UserEntitlement_Name(key).c_str());
+      if (!success) {
+        LOG_ERROR(
+            "UserEntitlementsManager.ApplyUserEntitlement.ApplyFunctionFailed",
+            "Error attempting to apply %s user entitlement",
+            UserEntitlement_Name(key).c_str());
       }
     }
   }
   return success;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool UserEntitlementsManager::ApplyUserEntitlementKickstarterEyes()
-{
-  static const std::string& key = UserEntitlement_Name(external_interface::UserEntitlement::KICKSTARTER_EYES);
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool UserEntitlementsManager::ApplyUserEntitlementKickstarterEyes() {
+  static const std::string& key = UserEntitlement_Name(
+      external_interface::UserEntitlement::KICKSTARTER_EYES);
   const auto& value = _currentUserEntitlements[key].asBool();
   LOG_INFO("UserEntitlementsManager.ApplyUserEntitlementKickstarterEyes.Apply",
            "Setting kickstarter eyes flag to %s", value ? "true" : "false");
-  
+
   // TODO:  Can call whereever here
-  
+
   return true;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void UserEntitlementsManager::DoJdocFormatMigration()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void UserEntitlementsManager::DoJdocFormatMigration() {
   const auto jdocType = external_interface::JdocType::USER_ENTITLEMENTS;
   const auto docFormatVersion = _jdocsManager->GetJdocFmtVersion(jdocType);
   const auto curFormatVersion = _jdocsManager->GetCurFmtVersion(jdocType);
   LOG_INFO("UserEntitlementsManager.DoJdocFormatMigration",
            "Migrating user entitlements jdoc from format version %llu to %llu",
            docFormatVersion, curFormatVersion);
-  if (docFormatVersion > curFormatVersion)
-  {
+  if (docFormatVersion > curFormatVersion) {
     LOG_ERROR("UserEntitlementsManager.DoJdocFormatMigration.Error",
-              "Jdoc format version is newer than what victor code can handle; no migration possible");
+              "Jdoc format version is newer than what victor code can handle; "
+              "no migration possible");
     return;
   }
 
@@ -335,6 +334,5 @@ void UserEntitlementsManager::DoJdocFormatMigration()
   _jdocsManager->SetJdocFmtVersionToCurrent(jdocType);
 }
 
-
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki

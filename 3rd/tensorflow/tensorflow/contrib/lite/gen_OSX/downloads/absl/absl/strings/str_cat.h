@@ -65,9 +65,9 @@
 namespace absl {
 
 namespace strings_internal {
-// AlphaNumBuffer allows a way to pass a std::string to StrCat without having to do
-// memory allocation.  It is simply a pair of a fixed-size character array, and
-// a size.  Please don't use outside of absl, yet.
+// AlphaNumBuffer allows a way to pass a std::string to StrCat without having to
+// do memory allocation.  It is simply a pair of a fixed-size character array,
+// and a size.  Please don't use outside of absl, yet.
 template <size_t max_size>
 struct AlphaNumBuffer {
   std::array<char, max_size> data;
@@ -271,16 +271,16 @@ class AlphaNum {
 //
 // Merges given strings or numbers, using no delimiter(s).
 //
-// `StrCat()` is designed to be the fastest possible way to construct a std::string
-// out of a mix of raw C strings, string_views, strings, bool values,
-// and numeric values.
+// `StrCat()` is designed to be the fastest possible way to construct a
+// std::string out of a mix of raw C strings, string_views, strings, bool
+// values, and numeric values.
 //
 // Don't use `StrCat()` for user-visible strings. The localization process
 // works poorly on strings built up out of fragments.
 //
 // For clarity and performance, don't use `StrCat()` when appending to a
-// std::string. Use `StrAppend()` instead. In particular, avoid using any of these
-// (anti-)patterns:
+// std::string. Use `StrAppend()` instead. In particular, avoid using any of
+// these (anti-)patterns:
 //
 //   str.append(StrCat(...))
 //   str += StrCat(...)
@@ -309,16 +309,15 @@ ABSL_MUST_USE_RESULT inline std::string StrCat(const AlphaNum& a) {
 
 ABSL_MUST_USE_RESULT std::string StrCat(const AlphaNum& a, const AlphaNum& b);
 ABSL_MUST_USE_RESULT std::string StrCat(const AlphaNum& a, const AlphaNum& b,
-                                   const AlphaNum& c);
+                                        const AlphaNum& c);
 ABSL_MUST_USE_RESULT std::string StrCat(const AlphaNum& a, const AlphaNum& b,
-                                   const AlphaNum& c, const AlphaNum& d);
+                                        const AlphaNum& c, const AlphaNum& d);
 
 // Support 5 or more arguments
 template <typename... AV>
-ABSL_MUST_USE_RESULT inline std::string StrCat(const AlphaNum& a, const AlphaNum& b,
-                                          const AlphaNum& c, const AlphaNum& d,
-                                          const AlphaNum& e,
-                                          const AV&... args) {
+ABSL_MUST_USE_RESULT inline std::string StrCat(
+    const AlphaNum& a, const AlphaNum& b, const AlphaNum& c, const AlphaNum& d,
+    const AlphaNum& e, const AV&... args) {
   return strings_internal::CatPieces(
       {a.Piece(), b.Piece(), c.Piece(), d.Piece(), e.Piece(),
        static_cast<const AlphaNum&>(args).Piece()...});
@@ -328,8 +327,8 @@ ABSL_MUST_USE_RESULT inline std::string StrCat(const AlphaNum& a, const AlphaNum
 // StrAppend()
 // -----------------------------------------------------------------------------
 //
-// Appends a std::string or set of strings to an existing std::string, in a similar
-// fashion to `StrCat()`.
+// Appends a std::string or set of strings to an existing std::string, in a
+// similar fashion to `StrCat()`.
 //
 // WARNING: `StrAppend(&str, a, b, c, ...)` requires that none of the
 // a, b, c, parameters be a reference into str. For speed, `StrAppend()` does

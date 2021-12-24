@@ -10,11 +10,7 @@
  *
  **/
 
-
 #include "utilUnitTestShared.h"
 
-
-UtilUnitTestShared::TimingMode UtilUnitTestShared::sTimingMode = TimingMode::Default;
-
-
-
+UtilUnitTestShared::TimingMode UtilUnitTestShared::sTimingMode =
+    TimingMode::Default;

@@ -21,24 +21,23 @@
  * @ingroup GLP
  * @brief Glucose Profile Collector
  *
- * The GLPC is responsible for providing Glucose Profile Collector functionalities
- * to upper layer module or application. The device using this profile takes the role
- * of Glucose Profile Collector.
+ * The GLPC is responsible for providing Glucose Profile Collector
+ *functionalities to upper layer module or application. The device using this
+ *profile takes the role of Glucose Profile Collector.
  *
  * Glucose Profile Collector. (GLPC): A GLPC (e.g. PC, phone, etc)
- * is the term used by this profile to describe a device that can interpret Glucose
- * measurement in a way suitable to the user application.
+ * is the term used by this profile to describe a device that can interpret
+ *Glucose measurement in a way suitable to the user application.
  *
  * @{
  ****************************************************************************************
  */
 
-
 /// GLPC Glucose Profile Collector role
-#define BLE_GL_COLLECTOR            1
-#if !defined (BLE_CLIENT_PRF)
-    #define BLE_CLIENT_PRF          1
-#endif 
+#define BLE_GL_COLLECTOR 1
+#if !defined(BLE_CLIENT_PRF)
+#define BLE_CLIENT_PRF 1
+#endif
 
 /*
  * INCLUDE FILES
@@ -56,81 +55,76 @@
  */
 
 /// 30 seconds record access control point timer
-#define GLPC_RACP_TIMEOUT                  0x0BB8
+#define GLPC_RACP_TIMEOUT 0x0BB8
 
 /// Characteristics
-enum
-{
-    /// Glucose Measurement
-    GLPC_CHAR_MEAS,
-    /// Glucose Measurement Context
-    GLPC_CHAR_MEAS_CTX,
-    /// Glucose Sensor Feature
-    GLPC_CHAR_FEATURE,
-    /// Record Access control point
-    GLPC_CHAR_RACP,
+enum {
+  /// Glucose Measurement
+  GLPC_CHAR_MEAS,
+  /// Glucose Measurement Context
+  GLPC_CHAR_MEAS_CTX,
+  /// Glucose Sensor Feature
+  GLPC_CHAR_FEATURE,
+  /// Record Access control point
+  GLPC_CHAR_RACP,
 
-    GLPC_CHAR_MAX,
+  GLPC_CHAR_MAX,
 };
 
-
 /// Characteristic descriptors
-enum
-{
-    /// Glucose Measurement client config
-    GLPC_DESC_MEAS_CLI_CFG,
-    /// Glucose Measurement context client config
-    GLPC_DESC_MEAS_CTX_CLI_CFG,
-    /// Record Access control point client config
-    GLPC_DESC_RACP_CLI_CFG,
+enum {
+  /// Glucose Measurement client config
+  GLPC_DESC_MEAS_CLI_CFG,
+  /// Glucose Measurement context client config
+  GLPC_DESC_MEAS_CTX_CLI_CFG,
+  /// Record Access control point client config
+  GLPC_DESC_RACP_CLI_CFG,
 
-    GLPC_DESC_MAX,
+  GLPC_DESC_MAX,
 };
 
 /// Pointer to the connection clean-up function
-#define GLPC_CLEANUP_FNCT        (NULL)
+#define GLPC_CLEANUP_FNCT (NULL)
 /*
  * TYPE DEFINITIONS
  ****************************************************************************************
  */
 
-///Structure containing the characteristics handles, value handles and descriptors
-struct gls_content
-{
-    /// service info
-    struct prf_svc svc;
+/// Structure containing the characteristics handles, value handles and
+/// descriptors
+struct gls_content {
+  /// service info
+  struct prf_svc svc;
 
-    /// characteristic info:
-    ///  - Glucose Measurement
-    ///  - Glucose Measurement Context
-    ///  - Glucose Feature
-    ///  - Record Access Control Point
-    struct prf_char_inf chars[GLPC_CHAR_MAX];
+  /// characteristic info:
+  ///  - Glucose Measurement
+  ///  - Glucose Measurement Context
+  ///  - Glucose Feature
+  ///  - Record Access Control Point
+  struct prf_char_inf chars[GLPC_CHAR_MAX];
 
-    /// Descriptor handles:info:
-    ///  - Glucose Measurement client cfg
-    ///  - Glucose Measurement Context client cfg
-    ///  - Record Access Control Point client cfg
-    struct prf_char_desc_inf descs[GLPC_DESC_MAX];
+  /// Descriptor handles:info:
+  ///  - Glucose Measurement client cfg
+  ///  - Glucose Measurement Context client cfg
+  ///  - Record Access Control Point client cfg
+  struct prf_char_desc_inf descs[GLPC_DESC_MAX];
 };
 
 /// Glucose Profile Collector environment variable
-struct glpc_env_tag
-{
-    /// Profile Connection Info
-    struct prf_con_info con_info;
-    ///Last requested UUID(to keep track of the two services and char)
-    uint16_t last_uuid_req;
-    ///Last Char. for which a read request has been sent
-    uint8_t last_char_code;
+struct glpc_env_tag {
+  /// Profile Connection Info
+  struct prf_con_info con_info;
+  /// Last requested UUID(to keep track of the two services and char)
+  uint16_t last_uuid_req;
+  /// Last Char. for which a read request has been sent
+  uint8_t last_char_code;
 
-    /// counter used to check service uniqueness
-    uint8_t nb_svc;
+  /// counter used to check service uniqueness
+  uint8_t nb_svc;
 
-    ///HTS characteristics
-    struct gls_content gls;
+  /// HTS characteristics
+  struct gls_content gls;
 };
-
 
 /*
  * GLOBAL VARIABLE DEFINITIONS
@@ -156,7 +150,8 @@ void glpc_init(void);
  * @brief Send Glucose ATT DB discovery results to GLPC host.
  ****************************************************************************************
  */
-void glpc_enable_cfm_send(struct glpc_env_tag *glpc_env, struct prf_con_info *con_info, uint8_t status);
+void glpc_enable_cfm_send(struct glpc_env_tag *glpc_env,
+                          struct prf_con_info *con_info, uint8_t status);
 
 /**
  ****************************************************************************************
@@ -169,9 +164,8 @@ void glpc_enable_cfm_send(struct glpc_env_tag *glpc_env, struct prf_con_info *co
  * @return size of packed value
  ****************************************************************************************
  */
-uint8_t glpc_unpack_meas_value(uint8_t *packed_meas, struct glp_meas* meas_val,
-                              uint16_t* seq_num);
-
+uint8_t glpc_unpack_meas_value(uint8_t *packed_meas, struct glp_meas *meas_val,
+                               uint16_t *seq_num);
 
 /**
  ****************************************************************************************
@@ -185,10 +179,8 @@ uint8_t glpc_unpack_meas_value(uint8_t *packed_meas, struct glp_meas* meas_val,
  ****************************************************************************************
  */
 uint8_t glpc_unpack_meas_ctx_value(uint8_t *packed_meas_ctx,
-                                 struct glp_meas_ctx* meas_ctx_val,
-                                 uint16_t* seq_num);
-
-
+                                   struct glp_meas_ctx *meas_ctx_val,
+                                   uint16_t *seq_num);
 
 /**
  ****************************************************************************************
@@ -201,8 +193,7 @@ uint8_t glpc_unpack_meas_ctx_value(uint8_t *packed_meas_ctx,
  ****************************************************************************************
  */
 uint8_t glpc_pack_racp_req(uint8_t *packed_val,
-                               const struct glp_racp_req* racp_req);
-
+                           const struct glp_racp_req *racp_req);
 
 /**
  ****************************************************************************************
@@ -215,8 +206,7 @@ uint8_t glpc_pack_racp_req(uint8_t *packed_val,
  ****************************************************************************************
  */
 uint8_t glpc_unpack_racp_rsp(uint8_t *packed_val,
-                                      struct glp_racp_rsp* racp_rsp);
-
+                             struct glp_racp_rsp *racp_rsp);
 
 /**
  ****************************************************************************************
@@ -228,7 +218,8 @@ uint8_t glpc_unpack_racp_rsp(uint8_t *packed_val,
  * @return PRF_ERR_OK if request can be performed, error code else.
  ****************************************************************************************
  */
-uint8_t glpc_validate_request(struct glpc_env_tag *glpc_env, uint16_t conhdl, uint8_t char_code);
+uint8_t glpc_validate_request(struct glpc_env_tag *glpc_env, uint16_t conhdl,
+                              uint8_t char_code);
 
 #endif /* (BLE_GL_COLLECTOR) */
 

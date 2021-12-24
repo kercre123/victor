@@ -10,7 +10,6 @@
  *
  **/
 
-
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
@@ -18,9 +17,7 @@
 
 using namespace Anki::Vector;
 
-
-TEST(Action, CreateAndDestroy)
-{
+TEST(Action, CreateAndDestroy) {
   auto* action = new CompoundActionSequential();
   action->AddAction(new TurnInPlaceAction(0.0f, true));
 

@@ -7,7 +7,7 @@
 /*   transfer of this software is strictly prohibited.               */
 /*                                                                   */
 /*-------------------------------------------------------------------*/
-/* 
+/*
     Property Estimation Common Library API
 */
 
@@ -15,9 +15,9 @@
 #define OKAOPCAPI_H__
 
 #define OKAO_API
-#include    "OkaoDef.h"
+#include "OkaoDef.h"
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -25,11 +25,10 @@ extern "C" {
 /* Get Version                                            */
 /**********************************************************/
 /* Get Property Estimation Common Library API Version */
-OKAO_API INT32      OKAO_PC_GetVersion(UINT8 *pbyMajor, UINT8 *pbyMinor);
+OKAO_API INT32 OKAO_PC_GetVersion(UINT8 *pbyMajor, UINT8 *pbyMinor);
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
-
 
 #endif /* OKAOPCAPI_H__ */

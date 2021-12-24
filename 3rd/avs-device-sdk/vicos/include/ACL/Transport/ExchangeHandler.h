@@ -29,29 +29,31 @@ class HTTP2Transport;
  * Common base class for HTTP2 request / response exchanges with AVS.
  */
 class ExchangeHandler {
-public:
-    /**
-     * Constructor.
-     *
-     * @param context The context in which this HTTP2 request / reply exchange will be performed.
-     * @param authToken The authorization token to send in the request.
-     */
-    ExchangeHandler(std::shared_ptr<ExchangeHandlerContextInterface> context, const std::string& authToken);
+ public:
+  /**
+   * Constructor.
+   *
+   * @param context The context in which this HTTP2 request / reply exchange
+   * will be performed.
+   * @param authToken The authorization token to send in the request.
+   */
+  ExchangeHandler(std::shared_ptr<ExchangeHandlerContextInterface> context,
+                  const std::string& authToken);
 
-    /**
-     * Destructor
-     */
-    virtual ~ExchangeHandler() = default;
+  /**
+   * Destructor
+   */
+  virtual ~ExchangeHandler() = default;
 
-protected:
-    /// The @c HTTP2Transport instance for which this exchange is to be performed.
-    std::shared_ptr<ExchangeHandlerContextInterface> m_context;
+ protected:
+  /// The @c HTTP2Transport instance for which this exchange is to be performed.
+  std::shared_ptr<ExchangeHandlerContextInterface> m_context;
 
-    /// The auth token used to make the request.
-    const std::string m_authToken;
+  /// The auth token used to make the request.
+  const std::string m_authToken;
 
-    /// The AVS authorization header to send in the request.
-    const std::string m_authHeader;
+  /// The AVS authorization header to send in the request.
+  const std::string m_authHeader;
 };
 
 }  // namespace acl

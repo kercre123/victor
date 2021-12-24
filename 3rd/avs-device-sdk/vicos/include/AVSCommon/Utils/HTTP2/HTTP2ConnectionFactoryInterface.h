@@ -29,18 +29,19 @@ namespace http2 {
  * Interface for creating instances of @c HTTP2ConnectionInterface.
  */
 class HTTP2ConnectionFactoryInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~HTTP2ConnectionFactoryInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~HTTP2ConnectionFactoryInterface() = default;
 
-    /**
-     * Create an instance of HTTP2ConnectionInterface.
-     *
-     * @return An instance of HTTP2ConnectionInterface or nullptr if the operation failed.
-     */
-    virtual std::shared_ptr<HTTP2ConnectionInterface> createHTTP2Connection() = 0;
+  /**
+   * Create an instance of HTTP2ConnectionInterface.
+   *
+   * @return An instance of HTTP2ConnectionInterface or nullptr if the operation
+   * failed.
+   */
+  virtual std::shared_ptr<HTTP2ConnectionInterface> createHTTP2Connection() = 0;
 };
 
 }  // namespace http2

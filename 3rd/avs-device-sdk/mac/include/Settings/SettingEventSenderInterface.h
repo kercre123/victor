@@ -23,66 +23,72 @@ namespace alexaClientSDK {
 namespace settings {
 
 /*
- * A utility class used to send events to AVS in the goal of synchronizing the value of an associated @c
- * SettingInterface value.
+ * A utility class used to send events to AVS in the goal of synchronizing the
+ * value of an associated @c SettingInterface value.
  */
 class SettingEventSenderInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~SettingEventSenderInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~SettingEventSenderInterface() = default;
 
-    /**
-     * Sends a setting changed event to AVS.
-     * This event follows the format:
-     * @code{.json}
-     *   {
-     *    "event": {
-     *      "header": {
-     *        "namespace": "{eventNamespace}",
-     *        "name": "{eventChangedName}",
-     *        "messageId": "xxxxx"
-     *      },
-     *      "payload": {
-     *        "{settingName}": yyyyy
-     *      }
-     *    }
-     *  }
-     * @endcode
-     * The setting specific fields should be specified in a @c SettingEventMetadata passed as an argument on creation
-     * this object.
-     *
-     * @param value The value of the setting. It should be a valid JSON string value.
-     * @return A future expressing if the event has been guaranteed to be sent to AVS.
-     */
-    virtual std::shared_future<bool> sendChangedEvent(const std::string& value) = 0;
+  /**
+   * Sends a setting changed event to AVS.
+   * This event follows the format:
+   * @code{.json}
+   *   {
+   *    "event": {
+   *      "header": {
+   *        "namespace": "{eventNamespace}",
+   *        "name": "{eventChangedName}",
+   *        "messageId": "xxxxx"
+   *      },
+   *      "payload": {
+   *        "{settingName}": yyyyy
+   *      }
+   *    }
+   *  }
+   * @endcode
+   * The setting specific fields should be specified in a @c
+   * SettingEventMetadata passed as an argument on creation this object.
+   *
+   * @param value The value of the setting. It should be a valid JSON string
+   * value.
+   * @return A future expressing if the event has been guaranteed to be sent to
+   * AVS.
+   */
+  virtual std::shared_future<bool> sendChangedEvent(
+      const std::string& value) = 0;
 
-    /**
-     * Sends a report setting event to AVS.
-     *
-     * The setting report event follows the format:
-     * @code{.json}
-     *   {
-     *    "event": {
-     *      "header": {
-     *        "namespace": "{eventNamespace}",
-     *        "name": "{eventReportName}",
-     *        "messageId": "xxxxx"
-     *      },
-     *      "payload": {
-     *        "{settingName}": yyyyy
-     *      }
-     *    }
-     *  }
-     * @endcode
-     * The setting specific fields should be specified in a @c SettingEventMetadata passed as an argument on creation
-     * this object.
-     *
-     * @param value The value of the setting. It should be a valid JSON string value.
-     * @return A future expressing if the event has been guaranteed to be sent to AVS.
-     */
-    virtual std::shared_future<bool> sendReportEvent(const std::string& value) = 0;
+  /**
+   * Sends a report setting event to AVS.
+   *
+   * The setting report event follows the format:
+   * @code{.json}
+   *   {
+   *    "event": {
+   *      "header": {
+   *        "namespace": "{eventNamespace}",
+   *        "name": "{eventReportName}",
+   *        "messageId": "xxxxx"
+   *      },
+   *      "payload": {
+   *        "{settingName}": yyyyy
+   *      }
+   *    }
+   *  }
+   * @endcode
+   * The setting specific fields should be specified in a @c
+   * SettingEventMetadata passed as an argument on creation this object.
+   *
+   * @param value The value of the setting. It should be a valid JSON string
+   * value.
+   * @return A future expressing if the event has been guaranteed to be sent to
+   * AVS.
+   */
+  virtual std::shared_future<bool> sendReportEvent(
+      const std::string& value) = 0;
 };
 
 }  // namespace settings

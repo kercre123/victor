@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <string>
 #include <vector>
+
 #include "tensorflow/contrib/lite/toco/args.h"
 #include "tensorflow/contrib/lite/toco/toco_flags.pb.h"
 #include "tensorflow/contrib/lite/toco/types.pb.h"

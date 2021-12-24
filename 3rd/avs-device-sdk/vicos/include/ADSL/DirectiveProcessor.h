@@ -16,6 +16,9 @@
 #ifndef ALEXA_CLIENT_SDK_ADSL_INCLUDE_ADSL_DIRECTIVEPROCESSOR_H_
 #define ALEXA_CLIENT_SDK_ADSL_INCLUDE_ADSL_DIRECTIVEPROCESSOR_H_
 
+#include <AVSCommon/AVS/AVSDirective.h>
+#include <AVSCommon/SDKInterfaces/DirectiveHandlerInterface.h>
+
 #include <array>
 #include <condition_variable>
 #include <deque>
@@ -27,9 +30,6 @@
 #include <thread>
 #include <unordered_map>
 
-#include <AVSCommon/AVS/AVSDirective.h>
-#include <AVSCommon/SDKInterfaces/DirectiveHandlerInterface.h>
-
 #include "ADSL/DirectiveRouter.h"
 
 namespace alexaClientSDK {
@@ -38,298 +38,348 @@ namespace adsl {
 /**
  * Object to process @c AVSDirectives that have a non-empty @c dialogRequestId.
  * @par
- * @c DirectiveProcessor receives directives via its @c onDirective() method. The @c dialogRequestId property of
- * incoming directives is checked against the current @c dialogRequestId (which is set by @c setDialogRequestId()).
- * If the @c AVSDirective's value is not empty and does not match, the @c AVSDirective is dropped, and
- * @c onDirective() returns @c true to indicate that the @c AVSDirective has been consumed (in this case, because
- * it is not longer relevant).
+ * @c DirectiveProcessor receives directives via its @c onDirective() method.
+ * The @c dialogRequestId property of incoming directives is checked against the
+ * current @c dialogRequestId (which is set by @c setDialogRequestId()). If the
+ * @c AVSDirective's value is not empty and does not match, the @c AVSDirective
+ * is dropped, and
+ * @c onDirective() returns @c true to indicate that the @c AVSDirective has
+ * been consumed (in this case, because it is not longer relevant).
  * @par
- * After passing this hurdle, the @c AVSDirective is forwarded to the @c preHandleDirective() method of whichever
- * @c DirectiveHandler is registered to handle the @c AVSDirective. If no @c DirectiveHandler is registered, the
- * incoming directive is rejected and any directives with the same dialogRequestId that are already queued for
- * handling by the @c DirectiveProcessor are canceled (because an entire dialog is canceled when the handling of
- * any of its directives fails), and @c onDirective() returns @c false to indicate that the unhandled @c AVDirective
+ * After passing this hurdle, the @c AVSDirective is forwarded to the @c
+ * preHandleDirective() method of whichever
+ * @c DirectiveHandler is registered to handle the @c AVSDirective. If no @c
+ * DirectiveHandler is registered, the incoming directive is rejected and any
+ * directives with the same dialogRequestId that are already queued for handling
+ * by the @c DirectiveProcessor are canceled (because an entire dialog is
+ * canceled when the handling of any of its directives fails), and @c
+ * onDirective() returns @c false to indicate that the unhandled @c AVDirective
  * was rejected.
  * @par
- * Once an @c AVSDirective has been successfully forwarded for preHandling, it is enqueued awaiting its turn to be
- * handled. Handling is accomplished by forwarding the @c AVSDirective to the @c handleDirective() method of
- * whichever @c DirectiveHandler is registered to handle the @c AVSDirective. The handling of an @c AVSDirective can
- * be configured as @c BLOCKING or @c NON_BLOCKING. If the directive at the head of the handling queue is configured
- * for @c BLOCKING, the handling of subsequent @c AVSDirectives is held up until the @c DirectiveHandler for the
- * @c BLOCKING @c AVSDirective indicates that handling has completed or failed. Otherwise handleDirective() is
- * invoked, the @c AVSDirective is popped from the front of the queue, and processing of queued @c AVSDirective's
- * continues.
+ * Once an @c AVSDirective has been successfully forwarded for preHandling, it
+ * is enqueued awaiting its turn to be handled. Handling is accomplished by
+ * forwarding the @c AVSDirective to the @c handleDirective() method of
+ * whichever @c DirectiveHandler is registered to handle the @c AVSDirective.
+ * The handling of an @c AVSDirective can be configured as @c BLOCKING or @c
+ * NON_BLOCKING. If the directive at the head of the handling queue is
+ * configured for @c BLOCKING, the handling of subsequent @c AVSDirectives is
+ * held up until the @c DirectiveHandler for the
+ * @c BLOCKING @c AVSDirective indicates that handling has completed or failed.
+ * Otherwise handleDirective() is invoked, the @c AVSDirective is popped from
+ * the front of the queue, and processing of queued @c AVSDirective's continues.
  */
 class DirectiveProcessor {
-public:
+ public:
+  /**
+   * Constructor.
+   *
+   * @param directiveRouter An object used to route directives to their
+   * registered handler.
+   */
+  DirectiveProcessor(DirectiveRouter* directiveRouter);
+
+  /**
+   * Destructor.
+   */
+  ~DirectiveProcessor();
+
+  /**
+   * Set the current @c dialogRequestId. If a new value is specified any @c
+   * AVSDirective's whose pre-handling or handling is already in progress the
+   * directive will be cancelled.
+   *
+   * @param dialogRequestId The new value for the current @c dialogRequestId.
+   */
+  void setDialogRequestId(const std::string& dialogRequestId);
+
+  /**
+   * Queue an @c AVSDirective for handling by whatever @c DirectiveHandler was
+   * registered to handle it.
+   *
+   * @param directive The @c AVADirective to process.
+   * @return Whether the directive was consumed.
+   */
+  bool onDirective(std::shared_ptr<avsCommon::avs::AVSDirective> directive);
+
+  /**
+   * Shut down the DirectiveProcessor.  This queues all outstanding @c
+   * AVSDirectives for cancellation and blocks until the processing of all @c
+   * AVSDirectives has completed.
+   */
+  void shutdown();
+
+  /**
+   * Disable the DirectiveProcessor, queues all outstanding @c AVSDirectives for
+   * cancellation and blocks until the processing of all @c AVSDirectives has
+   * completed.
+   */
+  void disable();
+
+  /**
+   * Enable the DirectiveProcessor.
+   *
+   * @return Whether it succeeded to enable the directive processor.
+   */
+  bool enable();
+
+ private:
+  /**
+   * Handle used to identify @c DirectiveProcessor instances referenced by @c
+   * DirectiveHandlerResult.
+   *
+   * Handles are used instead of a pointers to decouple the lifecycle of @c
+   * DirectiveProcessors from the lifecycle of @c DirectiveHandlerInterface
+   * instances.  In the case that a DirectiveHandler outlives the
+   * @c DirectiveProcessor it may complete (or fail) the handling of a directive
+   * after (or during) the destruction of the @c DirectiveProcessor.  Using a
+   * handle instead of a pointer allows delivery of the completion / failure
+   * notification to be dropped gracefully if the @c DirectiveProcessor is no
+   * longer there to receive it.
+   *
+   * @c ProcessorHandle values are mapped to @c DirectiveProcessor instances by
+   * the static @c m_handleMap. The delivery of completion notifications by @c
+   * DirectiveHandlerResult and changes to @c m_handleMap are serialized with
+   * the static @c m_handleMapMutex.
+   */
+  using ProcessorHandle = unsigned int;
+
+  /// The type of the handling queue items.
+  using DirectiveAndPolicy =
+      std::pair<std::shared_ptr<avsCommon::avs::AVSDirective>,
+                avsCommon::avs::BlockingPolicy>;
+
+  /**
+   * Implementation of @c DirectiveHandlerResultInterface that forwards the
+   * completion / failure status to the @c DirectiveProcessor from which it
+   * originated.
+   */
+  class DirectiveHandlerResult
+      : public avsCommon::sdkInterfaces::DirectiveHandlerResultInterface {
+   public:
     /**
      * Constructor.
      *
-     * @param directiveRouter An object used to route directives to their registered handler.
+     * @param processorHandle handle of the @c DirectiveProcessor to forward to
+     * the result to.
+     * @param directive The @c AVSDirective whose handling result will be
+     * specified by this instance.
      */
-    DirectiveProcessor(DirectiveRouter* directiveRouter);
+    DirectiveHandlerResult(
+        ProcessorHandle processorHandle,
+        std::shared_ptr<avsCommon::avs::AVSDirective> directive);
 
-    /**
-     * Destructor.
-     */
-    ~DirectiveProcessor();
+    void setCompleted() override;
 
-    /**
-     * Set the current @c dialogRequestId. If a new value is specified any @c AVSDirective's whose pre-handling
-     * or handling is already in progress the directive will be cancelled.
-     *
-     * @param dialogRequestId The new value for the current @c dialogRequestId.
-     */
-    void setDialogRequestId(const std::string& dialogRequestId);
+    void setFailed(const std::string& description) override;
 
-    /**
-     * Queue an @c AVSDirective for handling by whatever @c DirectiveHandler was registered to handle it.
-     *
-     * @param directive The @c AVADirective to process.
-     * @return Whether the directive was consumed.
-     */
-    bool onDirective(std::shared_ptr<avsCommon::avs::AVSDirective> directive);
+   private:
+    /// Handle of the @c DirectiveProcessor to forward notifications to.
+    ProcessorHandle m_processorHandle;
 
-    /**
-     * Shut down the DirectiveProcessor.  This queues all outstanding @c AVSDirectives for cancellation and
-     * blocks until the processing of all @c AVSDirectives has completed.
-     */
-    void shutdown();
+    /// The @c AVSDirective whose handling result will be specified by this
+    /// instance.
+    std::shared_ptr<avsCommon::avs::AVSDirective> m_directive;
+  };
 
-    /**
-     * Disable the DirectiveProcessor, queues all outstanding @c AVSDirectives for cancellation and
-     * blocks until the processing of all @c AVSDirectives has completed.
-     */
-    void disable();
+  /**
+   * Receive notification that the handling of an @c AVSDirective has completed.
+   *
+   * @param directive The @c AVSDirective whose handling has completed.
+   */
+  void onHandlingCompleted(
+      std::shared_ptr<avsCommon::avs::AVSDirective> directive);
 
-    /**
-     * Enable the DirectiveProcessor.
-     *
-     * @return Whether it succeeded to enable the directive processor.
-     */
-    bool enable();
+  /**
+   * Receive notification that the handling of an @c AVSDirective has failed.
+   *
+   * @param directive The @c AVSDirective whose handling has failed.
+   * @param description A description (suitable for logging diagnostics) that
+   * indicates the nature of the failure.
+   */
+  void onHandlingFailed(std::shared_ptr<avsCommon::avs::AVSDirective> directive,
+                        const std::string& description);
 
-private:
-    /**
-     * Handle used to identify @c DirectiveProcessor instances referenced by @c DirectiveHandlerResult.
-     *
-     * Handles are used instead of a pointers to decouple the lifecycle of @c DirectiveProcessors from the lifecycle
-     * of @c DirectiveHandlerInterface instances.  In the case that a DirectiveHandler outlives the
-     * @c DirectiveProcessor it may complete (or fail) the handling of a directive after (or during) the destruction
-     * of the @c DirectiveProcessor.  Using a handle instead of a pointer allows delivery of the completion / failure
-     * notification to be dropped gracefully if the @c DirectiveProcessor is no longer there to receive it.
-     *
-     * @c ProcessorHandle values are mapped to @c DirectiveProcessor instances by the static @c m_handleMap.
-     * The delivery of completion notifications by @c DirectiveHandlerResult and changes to @c m_handleMap
-     * are serialized with the static @c m_handleMapMutex.
-     */
-    using ProcessorHandle = unsigned int;
+  /**
+   * Remove an @c AVSDirective from processing.
+   * @note This method must only be called by threads that have acquired @c
+   * m_mutex.
+   *
+   * @param directive The @c AVSDirective to remove from processing.
+   */
+  void removeDirectiveLocked(
+      std::shared_ptr<avsCommon::avs::AVSDirective> directive);
 
-    /// The type of the handling queue items.
-    using DirectiveAndPolicy = std::pair<std::shared_ptr<avsCommon::avs::AVSDirective>, avsCommon::avs::BlockingPolicy>;
+  /**
+   * Thread method for m_processingThread.
+   */
+  void processingLoop();
 
-    /**
-     * Implementation of @c DirectiveHandlerResultInterface that forwards the completion / failure status
-     * to the @c DirectiveProcessor from which it originated.
-     */
-    class DirectiveHandlerResult : public avsCommon::sdkInterfaces::DirectiveHandlerResultInterface {
-    public:
-        /**
-         * Constructor.
-         *
-         * @param processorHandle handle of the @c DirectiveProcessor to forward to the result to.
-         * @param directive The @c AVSDirective whose handling result will be specified by this instance.
-         */
-        DirectiveHandlerResult(
-            ProcessorHandle processorHandle,
-            std::shared_ptr<avsCommon::avs::AVSDirective> directive);
+  /**
+   * Process (cancel) all the items in @c m_cancelingQueue.
+   * @note This method must only be called by threads that have acquired @c
+   * m_mutex.
+   *
+   * @param lock A @c unique_lock on m_mutex from the callers context, allowing
+   * this method to release (and re-acquire) the lock around callbacks that need
+   * to be invoked.
+   * @return Whether the @c AVSDirectives in @c m_cancelingQueue were processed.
+   */
+  bool processCancelingQueueLocked(std::unique_lock<std::mutex>& lock);
 
-        void setCompleted() override;
+  /**
+   * Process (handle) all the items in @c m_handlingQueue which are not blocked.
+   * @note This method must only be called by threads that have acquired @c
+   * m_mutex.
+   *
+   * @param lock A @c unique_lock on m_mutex from the callers context, allowing
+   * this method to release (and re-acquire) the lock around callbacks that need
+   * to be invoked.
+   * @return  Whether an @c AVSDirective from m_handlingQueue was processed.
+   */
+  bool handleQueuedDirectivesLocked(std::unique_lock<std::mutex>& lock);
 
-        void setFailed(const std::string& description) override;
+  /**
+   * Set the current @c dialogRequestId. This cancels the processing of any @c
+   * AVSDirectives with a non-empty dialogRequestId.
+   * @note This method must only be called by threads that have acquired @c
+   * m_mutex.
+   *
+   * @param dialogRequestId The new value for the current @c dialogRequestId.
+   */
+  void setDialogRequestIdLocked(const std::string& dialogRequestId);
 
-    private:
-        /// Handle of the @c DirectiveProcessor to forward notifications to.
-        ProcessorHandle m_processorHandle;
+  /**
+   * Cancel the processing any @c AVSDirective with the specified
+   * dialogRequestId, and clear the m_dialogRequestID if it matches the
+   * specified dialogRequestId.
+   * @note This method must only be called by threads that have acquired @c
+   * m_mutex.
+   *
+   * @param dialogRequestId The dialogRequestId to scrub from processing.
+   */
+  void scrubDialogRequestIdLocked(const std::string& dialogRequestId);
 
-        /// The @c AVSDirective whose handling result will be specified by this instance.
-        std::shared_ptr<avsCommon::avs::AVSDirective> m_directive;
-    };
+  /**
+   * Move all the directives being handled or queued for handling to @c
+   * m_cancelingQueue. Also reset the current @c dialogRequestId.
+   * @note This method must only be called by threads that have acquired @c
+   * m_mutex.
+   */
+  void queueAllDirectivesForCancellationLocked();
 
-    /**
-     * Receive notification that the handling of an @c AVSDirective has completed.
-     *
-     * @param directive The @c AVSDirective whose handling has completed.
-     */
-    void onHandlingCompleted(std::shared_ptr<avsCommon::avs::AVSDirective> directive);
+  /**
+   * Save a pointer to the given directive as a directive which is being
+   * handled. A pointer to the directive is saved per @c BlockingPolicy::Channel
+   * used by the policy. This pointer can be used later to indicate which @c
+   * BlockingPolicy::Channel is blocked by which @c AVSDirective.
+   *
+   * @param directive The @c AVSDirective being handled.
+   * @param policy The @c BlockingPolicy assiciated with the given directive.
+   */
+  void setDirectiveBeingHandledLocked(
+      const std::shared_ptr<avsCommon::avs::AVSDirective>& directive,
+      const avsCommon::avs::BlockingPolicy policy);
 
-    /**
-     * Receive notification that the handling of an @c AVSDirective has failed.
-     *
-     * @param directive The @c AVSDirective whose handling has failed.
-     * @param description A description (suitable for logging diagnostics) that indicates the nature of the failure.
-     */
-    void onHandlingFailed(std::shared_ptr<avsCommon::avs::AVSDirective> directive, const std::string& description);
+  /**
+   * Clear the pointer to the directive being handled.
+   * @note See the above @c saveDirectiveBeingHandledLocked comment
+   * for further explanation.
+   *
+   * @param policy The @c BlockingPolicy with which the saved directive is
+   * associated.
+   */
+  void clearDirectiveBeingHandledLocked(
+      const avsCommon::avs::BlockingPolicy policy);
 
-    /**
-     * Remove an @c AVSDirective from processing.
-     * @note This method must only be called by threads that have acquired @c m_mutex.
-     *
-     * @param directive The @c AVSDirective to remove from processing.
-     */
-    void removeDirectiveLocked(std::shared_ptr<avsCommon::avs::AVSDirective> directive);
+  /**
+   * Clear the pointer to the directive being handled.
+   *
+   * @note See the above @c saveDirectiveBeingHandledLocked comment
+   * for further explanation.
+   * @param shouldClear Matcher to indicate which saved directive we should
+   * free.
+   *
+   * @return An @c std::set of the freed directives.
+   */
+  std::set<std::shared_ptr<avsCommon::avs::AVSDirective>>
+  clearDirectiveBeingHandledLocked(
+      std::function<bool(const std::shared_ptr<avsCommon::avs::AVSDirective>&)>
+          shouldClear);
 
-    /**
-     * Thread method for m_processingThread.
-     */
-    void processingLoop();
+  /**
+   * Get the next unblocked @c DirectiveAndPolicy form the handling queue.
+   *
+   * @return An @c std::iterator to the next unblocked @c DirectiveAndPolicy.
+   */
+  std::deque<DirectiveAndPolicy>::iterator getNextUnblockedDirectiveLocked();
 
-    /**
-     * Process (cancel) all the items in @c m_cancelingQueue.
-     * @note This method must only be called by threads that have acquired @c m_mutex.
-     *
-     * @param lock A @c unique_lock on m_mutex from the callers context, allowing this method to release
-     * (and re-acquire) the lock around callbacks that need to be invoked.
-     * @return Whether the @c AVSDirectives in @c m_cancelingQueue were processed.
-     */
-    bool processCancelingQueueLocked(std::unique_lock<std::mutex>& lock);
+  /// Handle value identifying this instance.
+  int m_handle;
 
-    /**
-     * Process (handle) all the items in @c m_handlingQueue which are not blocked.
-     * @note This method must only be called by threads that have acquired @c m_mutex.
-     *
-     * @param lock A @c unique_lock on m_mutex from the callers context, allowing this method to release
-     * (and re-acquire) the lock around callbacks that need to be invoked.
-     * @return  Whether an @c AVSDirective from m_handlingQueue was processed.
-     */
-    bool handleQueuedDirectivesLocked(std::unique_lock<std::mutex>& lock);
+  /// A mutex used to serialize @c DirectiveProcessor operations with operations
+  /// that occur in the creating context.
+  std::mutex m_mutex;
 
-    /**
-     * Set the current @c dialogRequestId. This cancels the processing of any @c AVSDirectives with a non-empty
-     * dialogRequestId.
-     * @note This method must only be called by threads that have acquired @c m_mutex.
-     *
-     * @param dialogRequestId The new value for the current @c dialogRequestId.
-     */
-    void setDialogRequestIdLocked(const std::string& dialogRequestId);
+  /// Object used to route directives to their assigned handler.
+  DirectiveRouter* m_directiveRouter;
 
-    /**
-     * Cancel the processing any @c AVSDirective with the specified dialogRequestId, and clear the m_dialogRequestID
-     * if it matches the specified dialogRequestId.
-     * @note This method must only be called by threads that have acquired @c m_mutex.
-     *
-     * @param dialogRequestId The dialogRequestId to scrub from processing.
-     */
-    void scrubDialogRequestIdLocked(const std::string& dialogRequestId);
+  /// Whether or not the @c DirectiveProcessor is shutting down.
+  bool m_isShuttingDown;
 
-    /**
-     * Move all the directives being handled or queued for handling to @c m_cancelingQueue. Also reset the
-     * current @c dialogRequestId.
-     * @note This method must only be called by threads that have acquired @c m_mutex.
-     */
-    void queueAllDirectivesForCancellationLocked();
+  /// Whether or not the @c DirectiveProcessor is enabled.
+  bool m_isEnabled;
 
-    /**
-     * Save a pointer to the given directive as a directive which is being handled.
-     * A pointer to the directive is saved per @c BlockingPolicy::Channel used by the policy.
-     * This pointer can be used later to indicate which @c BlockingPolicy::Channel
-     * is blocked by which @c AVSDirective.
-     *
-     * @param directive The @c AVSDirective being handled.
-     * @param policy The @c BlockingPolicy assiciated with the given directive.
-     */
-    void setDirectiveBeingHandledLocked(
-        const std::shared_ptr<avsCommon::avs::AVSDirective>& directive,
-        const avsCommon::avs::BlockingPolicy policy);
+  /// The current @c dialogRequestId
+  std::string m_dialogRequestId;
 
-    /**
-     * Clear the pointer to the directive being handled.
-     * @note See the above @c saveDirectiveBeingHandledLocked comment
-     * for further explanation.
-     *
-     * @param policy The @c BlockingPolicy with which the saved directive is associated.
-     */
-    void clearDirectiveBeingHandledLocked(const avsCommon::avs::BlockingPolicy policy);
+  /// Queue of @c AVSDirectives waiting to be canceled.
+  std::deque<std::shared_ptr<avsCommon::avs::AVSDirective>> m_cancelingQueue;
 
-    /**
-     * Clear the pointer to the directive being handled.
-     *
-     * @note See the above @c saveDirectiveBeingHandledLocked comment
-     * for further explanation.
-     * @param shouldClear Matcher to indicate which saved directive we should free.
-     *
-     * @return An @c std::set of the freed directives.
-     */
-    std::set<std::shared_ptr<avsCommon::avs::AVSDirective>> clearDirectiveBeingHandledLocked(
-        std::function<bool(const std::shared_ptr<avsCommon::avs::AVSDirective>&)> shouldClear);
+  /// The directive (if any) for which a preHandleDirective() call is in
+  /// progress.
+  std::shared_ptr<avsCommon::avs::AVSDirective> m_directiveBeingPreHandled;
 
-    /**
-     * Get the next unblocked @c DirectiveAndPolicy form the handling queue.
-     *
-     * @return An @c std::iterator to the next unblocked @c DirectiveAndPolicy.
-     */
-    std::deque<DirectiveAndPolicy>::iterator getNextUnblockedDirectiveLocked();
+  /**
+   * Queue of @c AVSDirectives waiting to be handled.
+   * @Note: A queue per channel would be more efficient, but as we don't expect
+   * more than few directives on the queue, we prefer simplicity.
+   */
+  std::deque<DirectiveAndPolicy> m_handlingQueue;
 
-    /// Handle value identifying this instance.
-    int m_handle;
+  /// Condition variable used to wake @c processingLoop() when it is waiting.
+  std::condition_variable m_wakeProcessingLoop;
 
-    /// A mutex used to serialize @c DirectiveProcessor operations with operations that occur in the creating context.
-    std::mutex m_mutex;
+  /// Thread processing elements on @c m_handlingQueue and @c m_cancelingQueue.
+  std::thread m_processingThread;
 
-    /// Object used to route directives to their assigned handler.
-    DirectiveRouter* m_directiveRouter;
+  /// Mutex serializing the body of @ onDirective() to make the method
+  /// thread-safe.
+  std::mutex m_onDirectiveMutex;
 
-    /// Whether or not the @c DirectiveProcessor is shutting down.
-    bool m_isShuttingDown;
+  /// Mutex to serialize access to @c m_handleMap;
+  static std::mutex m_handleMapMutex;
 
-    /// Whether or not the @c DirectiveProcessor is enabled.
-    bool m_isEnabled;
+  /**
+   * Map from @c ProcessorHandle value to @c DirectiveProcessor instance to
+   * allow for gracefully dropping a completion (or failure) notification
+   * forwarded to the @c DirectiveProcessor during or after its destruction.
+   */
+  static std::unordered_map<ProcessorHandle, DirectiveProcessor*> m_handleMap;
 
-    /// The current @c dialogRequestId
-    std::string m_dialogRequestId;
+  /// Next available @c ProcessorHandle value.
+  static ProcessorHandle m_nextProcessorHandle;
 
-    /// Queue of @c AVSDirectives waiting to be canceled.
-    std::deque<std::shared_ptr<avsCommon::avs::AVSDirective>> m_cancelingQueue;
-
-    /// The directive (if any) for which a preHandleDirective() call is in progress.
-    std::shared_ptr<avsCommon::avs::AVSDirective> m_directiveBeingPreHandled;
-
-    /**
-     * Queue of @c AVSDirectives waiting to be handled.
-     * @Note: A queue per channel would be more efficient, but as we don't expect more than few
-     * directives on the queue, we prefer simplicity.
-     */
-    std::deque<DirectiveAndPolicy> m_handlingQueue;
-
-    /// Condition variable used to wake @c processingLoop() when it is waiting.
-    std::condition_variable m_wakeProcessingLoop;
-
-    /// Thread processing elements on @c m_handlingQueue and @c m_cancelingQueue.
-    std::thread m_processingThread;
-
-    /// Mutex serializing the body of @ onDirective() to make the method thread-safe.
-    std::mutex m_onDirectiveMutex;
-
-    /// Mutex to serialize access to @c m_handleMap;
-    static std::mutex m_handleMapMutex;
-
-    /**
-     * Map from @c ProcessorHandle value to @c DirectiveProcessor instance to allow for gracefully dropping a
-     * completion (or failure) notification forwarded to the @c DirectiveProcessor during or after its destruction.
-     */
-    static std::unordered_map<ProcessorHandle, DirectiveProcessor*> m_handleMap;
-
-    /// Next available @c ProcessorHandle value.
-    static ProcessorHandle m_nextProcessorHandle;
-
-    /**
-     * The directives which are being handled on various channels. A directive is consider as 'being handled'
-     * while the @c handleDirective method of the directive handler is running, and, if the directive is blocking
-     * until directive handling has been completed. i.e. @c DirectiveHandlerResult::setCompleted
-     * or @c DirectiveHandlerResult::setFailed have been called.
-     */
-    std::array<std::shared_ptr<avsCommon::avs::AVSDirective>, avsCommon::avs::BlockingPolicy::Medium::COUNT>
-        m_directivesBeingHandled;
+  /**
+   * The directives which are being handled on various channels. A directive is
+   * consider as 'being handled' while the @c handleDirective method of the
+   * directive handler is running, and, if the directive is blocking until
+   * directive handling has been completed. i.e. @c
+   * DirectiveHandlerResult::setCompleted or @c
+   * DirectiveHandlerResult::setFailed have been called.
+   */
+  std::array<std::shared_ptr<avsCommon::avs::AVSDirective>,
+             avsCommon::avs::BlockingPolicy::Medium::COUNT>
+      m_directivesBeingHandled;
 };
 
 }  // namespace adsl

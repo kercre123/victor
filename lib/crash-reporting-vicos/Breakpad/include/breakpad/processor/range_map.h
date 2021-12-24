@@ -40,16 +40,15 @@
 #ifndef PROCESSOR_RANGE_MAP_H__
 #define PROCESSOR_RANGE_MAP_H__
 
-
 #include <map>
-
 
 namespace google_breakpad {
 
 // Forward declarations (for later friend declarations of specialized template).
-template<class, class> class RangeMapSerializer;
+template <class, class>
+class RangeMapSerializer;
 
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 class RangeMap {
  public:
   RangeMap() : enable_shrink_down_(false), map_() {}
@@ -154,8 +153,6 @@ class RangeMap {
   AddressToRangeMap map_;
 };
 
-
 }  // namespace google_breakpad
-
 
 #endif  // PROCESSOR_RANGE_MAP_H__

@@ -10,7 +10,6 @@
  *
  **/
 
-
 #ifndef __tof_userspace_vicos_h__
 #define __tof_userspace_vicos_h__
 
@@ -29,7 +28,8 @@ int setup(VL53L1_Dev_t* dev);
 int setup_roi_grid(VL53L1_Dev_t* dev, const int rows, const int cols);
 
 // Get current multizone ranging data
-int get_mz_data(VL53L1_Dev_t* dev, const int blocking, VL53L1_MultiRangingData_t *data);
+int get_mz_data(VL53L1_Dev_t* dev, const int blocking,
+                VL53L1_MultiRangingData_t* data);
 
 // Start ranging
 int start_ranging(VL53L1_Dev_t* dev);

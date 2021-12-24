@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-typedef uint16_t  big_num_cell_t;
-typedef int16_t   big_num_signed_cell_t;
-typedef uint32_t  big_num_double_cell_t;
+typedef uint16_t big_num_cell_t;
+typedef int16_t big_num_signed_cell_t;
+typedef uint32_t big_num_double_cell_t;
 
 // 2048-bit safe (RSA Pub)
 static const int CELL_SIZE = 257;
@@ -21,21 +21,21 @@ static const int CELL_BITS = (sizeof(big_num_cell_t) * 8);
 
 // This is just a clever way of creating memory efficient rom structures
 struct big_num_micro_t {
-  bool            negative;
-  int             used;
-  big_num_cell_t  digits[CELL_SIZE_MICRO];
+  bool negative;
+  int used;
+  big_num_cell_t digits[CELL_SIZE_MICRO];
 };
 
 struct big_num_short_t {
-  bool            negative;
-  int             used;
-  big_num_cell_t  digits[CELL_SIZE_SHORT];
+  bool negative;
+  int used;
+  big_num_cell_t digits[CELL_SIZE_SHORT];
 };
 
 struct big_num_t {
-  bool            negative;
-  int             used;
-  big_num_cell_t  digits[CELL_SIZE_LONG];
+  bool negative;
+  int used;
+  big_num_cell_t digits[CELL_SIZE_LONG];
 };
 
 // ---
@@ -93,7 +93,8 @@ bool big_shl(big_num_t& out, const big_num_t& a, const int bits);
 
 int big_compare(const big_num_t& a, const big_num_t& b);
 bool big_unsigned_add(big_num_t& out, const big_num_t& a, const big_num_t& b);
-bool big_unsigned_subtract(big_num_t& out, const big_num_t& a, const big_num_t& b);
+bool big_unsigned_subtract(big_num_t& out, const big_num_t& a,
+                           const big_num_t& b);
 bool big_add(big_num_t& out, const big_num_t& a, const big_num_t& b);
 bool big_subtract(big_num_t& out, const big_num_t& a, const big_num_t& b);
 
@@ -103,7 +104,8 @@ bool big_modulo(big_num_t& modulo, const big_num_t& a, const big_num_t& b);
 
 // modulo and a may be the same, remaining values are unsafe
 bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b);
-bool big_divide(big_num_t& result, big_num_t& modulo, const big_num_t& a, const big_num_t& b);
+bool big_divide(big_num_t& result, big_num_t& modulo, const big_num_t& a,
+                const big_num_t& b);
 
 // These may not be safe
 bool big_shl(big_num_t& out, const big_num_t& a, int bits);
@@ -112,7 +114,9 @@ bool big_shl(big_num_t& out, const big_num_t& a, int bits);
 bool mont_init(big_mont_t& mont, const big_num_t& modulo);
 bool mont_to(const big_mont_t& mont, big_num_t& out, const big_num_t& in);
 bool mont_from(const big_mont_t& mont, big_num_t& out, const big_num_t& in);
-bool mont_multiply(const big_mont_t& mont, big_num_t& out, const big_num_t& a, const big_num_t& b);
-bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in, const big_num_t& exp);
+bool mont_multiply(const big_mont_t& mont, big_num_t& out, const big_num_t& a,
+                   const big_num_t& b);
+bool mont_power(const big_mont_t& mont, big_num_t& out,
+                const big_num_t& base_in, const big_num_t& exp);
 
 #endif

@@ -19,9 +19,8 @@
 
 namespace DAS {
 
-class IDASPlatform
-{
-public:
+class IDASPlatform {
+ public:
   // app must specify this
   IDASPlatform(std::string appRunId) : _appRunId(std::move(appRunId)) {}
   virtual ~IDASPlatform() = default;
@@ -47,12 +46,12 @@ public:
   virtual const std::map<std::string, std::string>& GetMiscInfo() const = 0;
   virtual const std::map<std::string, std::string>& GetMiscGlobals() const = 0;
 
-private:
+ private:
   IDASPlatform(const IDASPlatform&) = delete;
   IDASPlatform& operator=(const IDASPlatform&) = delete;
   std::string _appRunId;
 };
 
-}
+}  // namespace DAS
 
 #endif

@@ -1,45 +1,39 @@
+#include "analog.h"
+
 #include <string.h>
 
 #include "common.h"
+#include "flash.h"
 #include "hardware.h"
-
 #include "messages.h"
-
-#include "analog.h"
+#include "motors.h"
 #include "power.h"
 #include "vectors.h"
-#include "flash.h"
-#include "motors.h"
 
-static const int SELECTED_CHANNELS = 0
-  | ADC_CHSELR_CHSEL2
-  | ADC_CHSELR_CHSEL3
-  | ADC_CHSELR_CHSEL4
-  | ADC_CHSELR_CHSEL6
-  | ADC_CHSELR_CHSEL16
-  | ADC_CHSELR_CHSEL17
-  ;
+static const int SELECTED_CHANNELS = 0 | ADC_CHSELR_CHSEL2 | ADC_CHSELR_CHSEL3 |
+                                     ADC_CHSELR_CHSEL4 | ADC_CHSELR_CHSEL6 |
+                                     ADC_CHSELR_CHSEL16 | ADC_CHSELR_CHSEL17;
 
 static const uint16_t BATTERY_FULL_VOLTAGE = ADC_VOLTS(4.2);
-static const int      CHARGE_FULL_TIME = 200 * 60 * 5;           // 5 minutes
+static const int CHARGE_FULL_TIME = 200 * 60 * 5;  // 5 minutes
 
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(3.50), ~0);
-static const int      MINIMUM_ON_CHARGER = 5;
+static const int MINIMUM_ON_CHARGER = 5;
 
-static const uint16_t*  TEMP30_CAL_ADDR = (uint16_t*)0x1FFFF7B8;
+static const uint16_t* TEMP30_CAL_ADDR = (uint16_t*)0x1FFFF7B8;
 static const uint16_t* VREFINT_CAL_ADDR = (uint16_t*)0x1FFFF7BA;
-static const int32_t    TEMP_VOLT_ADJ   = (int32_t)(0x10000 * (2.8 / 3.3));
-static const int32_t    TEMP_SCALE_ADJ  = (int32_t)(0x10000 * (1.000 / 5.336));
+static const int32_t TEMP_VOLT_ADJ = (int32_t)(0x10000 * (2.8 / 3.3));
+static const int32_t TEMP_SCALE_ADJ = (int32_t)(0x10000 * (1.000 / 5.336));
 
 // We allow for 4 hours of over-heat time (variable)
 static const int MAX_HEAT_COUNTDOWN = 200 * 60 * 60 * 4 * 5;
 static const int OVERHEAT_SHUTDOWN = 200 * 30;
 
-static const int POWER_DOWN_TIME = 200 * 5.5;               // Shutdown
-static const int POWER_WIPE_TIME = 200 * 12;                // Enter recovery mode
-static const int ON_CHARGER_RESET = 200 * 60;               // 1 Minute
-static const int TOP_OFF_TIME    = 200 * 60 * 60 * 24 * 90; // 90 Days
+static const int POWER_DOWN_TIME = 200 * 5.5;             // Shutdown
+static const int POWER_WIPE_TIME = 200 * 12;              // Enter recovery mode
+static const int ON_CHARGER_RESET = 200 * 60;             // 1 Minute
+static const int TOP_OFF_TIME = 200 * 60 * 60 * 24 * 90;  // 90 Days
 
 static const int BOUNCE_LENGTH = 3;
 static const int MINIMUM_RELEASE_UNSTUCK = 20;
@@ -72,18 +66,18 @@ static inline uint32_t EXACT_ADC(ADC_CHANNEL ch) {
   return (adc_values[ch] * adc_compensate) >> ADC_SCALE_BITS;
 }
 
-static void updateADCCompensate()
-{
+static void updateADCCompensate() {
   const int OVERSAMPLE = 32;
   static uint8_t count = 0;
   static uint32_t vref_avg = 0;
   vref_avg += adc_values[ADC_VREF];
 
-  if (++count == OVERSAMPLE)
-  {
-    // adc_compensate converts 3.3 calibration to 2.8 - making ADC values as if we had a perfect 2.8 VDDA
+  if (++count == OVERSAMPLE) {
+    // adc_compensate converts 3.3 calibration to 2.8 - making ADC values as if
+    // we had a perfect 2.8 VDDA
 
-    adc_compensate = *VREFINT_CAL_ADDR * ((OVERSAMPLE << ADC_SCALE_BITS) * 33 / 28) / vref_avg;
+    adc_compensate = *VREFINT_CAL_ADDR *
+                     ((OVERSAMPLE << ADC_SCALE_BITS) * 33 / 28) / vref_avg;
     count = vref_avg = 0;
   }
 }
@@ -93,42 +87,35 @@ void Analog::init(void) {
   if ((ADC1->CR & ADC_CR_ADEN) != 0) {
     ADC1->CR |= ADC_CR_ADDIS;
   }
-  while ((ADC1->CR & ADC_CR_ADEN) != 0) ;
+  while ((ADC1->CR & ADC_CR_ADEN) != 0)
+    ;
   ADC1->CFGR1 &= ~ADC_CFGR1_DMAEN;
   ADC1->CR |= ADC_CR_ADCAL;
-  while ((ADC1->CR & ADC_CR_ADCAL) != 0) ;
+  while ((ADC1->CR & ADC_CR_ADCAL) != 0)
+    ;
 
   // Setup the ADC for continuous mode
   ADC1->CHSELR = SELECTED_CHANNELS;
-  ADC1->CFGR1 = 0
-              | ADC_CFGR1_CONT
-              | ADC_CFGR1_DMAEN
-              | ADC_CFGR1_DMACFG
-              | ADC_CFGR1_AWDEN
-              | ADC_CFGR1_AWDSGL
-              | (ADC_CFGR1_AWDCH_0 * 4) // ADC Channel 4 (VMAIN)
-              ;
-  ADC1->CFGR2 = 0
-              | ADC_CFGR2_CKMODE_1
-              ;
-  ADC1->SMPR  = 0
-              | ADC_SMPR_SMP_0  // ~0.4us
-              //| ADC_SMPR_SMP_1
-              | ADC_SMPR_SMP_2
-              ;
+  ADC1->CFGR1 = 0 | ADC_CFGR1_CONT | ADC_CFGR1_DMAEN | ADC_CFGR1_DMACFG |
+                ADC_CFGR1_AWDEN | ADC_CFGR1_AWDSGL |
+                (ADC_CFGR1_AWDCH_0 * 4)  // ADC Channel 4 (VMAIN)
+      ;
+  ADC1->CFGR2 = 0 | ADC_CFGR2_CKMODE_1;
+  ADC1->SMPR = 0 |
+               ADC_SMPR_SMP_0  // ~0.4us
+               //| ADC_SMPR_SMP_1
+               | ADC_SMPR_SMP_2;
 
   ADC1->IER = ADC_IER_AWDIE;
   ADC1->TR = FALLING_EDGE;
 
-  ADC->CCR = 0
-           | ADC_CCR_VREFEN
-           | ADC_CCR_TSEN
-           ;
+  ADC->CCR = 0 | ADC_CCR_VREFEN | ADC_CCR_TSEN;
 
   // Enable ADC
   ADC1->ISR = ADC_ISR_ADRDY;
   ADC1->CR |= ADC_CR_ADEN;
-  while (~ADC1->ISR & ADC_ISR_ADRDY) ;
+  while (~ADC1->ISR & ADC_ISR_ADRDY)
+    ;
 
   // Start sampling
   ADC1->CR |= ADC_CR_ADSTART;
@@ -137,11 +124,8 @@ void Analog::init(void) {
   DMA1_Channel1->CPAR = (uint32_t)&ADC1->DR;
   DMA1_Channel1->CMAR = (uint32_t)&adc_values[0];
   DMA1_Channel1->CNDTR = ADC_CHANNELS;
-  DMA1_Channel1->CCR |= 0
-                     | DMA_CCR_MINC
-                     | DMA_CCR_MSIZE_0
-                     | DMA_CCR_PSIZE_0
-                     | DMA_CCR_CIRC;
+  DMA1_Channel1->CCR |=
+      0 | DMA_CCR_MINC | DMA_CCR_MSIZE_0 | DMA_CCR_PSIZE_0 | DMA_CCR_CIRC;
   DMA1_Channel1->CCR |= DMA_CCR_EN;
 
   allow_power = true;
@@ -159,25 +143,26 @@ void Analog::stop(void) {
 
   // Stop reading values
   ADC1->CR |= ADC_CR_ADSTP;
-  while ((ADC1->CR & ADC_CR_ADSTP) != 0) ;
+  while ((ADC1->CR & ADC_CR_ADSTP) != 0)
+    ;
 
   ADC1->CR |= ADC_CR_ADDIS;
-  while ((~ADC1->CR & ADC_CR_ADEN) != 0) ;
+  while ((~ADC1->CR & ADC_CR_ADEN) != 0)
+    ;
 }
 
 void Analog::transmit(BodyToHead* data) {
   data->battery.main_voltage = EXACT_ADC(ADC_VMAIN);
   data->battery.charger = EXACT_ADC(ADC_VEXT);
-  data->battery.temperature = (int16_t) temperature;
-  data->battery.flags = 0
-                      | (power_battery_shutdown ? POWER_BATTERY_SHUTDOWN : 0)
-                      | (power_low ? POWER_IS_TOO_LOW : 0)
-                      | (is_charging ? POWER_IS_CHARGING : 0)
-                      | (on_charger ? POWER_ON_CHARGER : 0)
-                      | (too_hot ? POWER_CHARGER_OVERHEAT : 0)
-                      | ((overheated > 0) ? POWER_IS_OVERHEATED : 0)
-                      | ((charge_cutoff && on_charger) ? POWER_BATTERY_DISCONNECTED : 0)
-                      ;
+  data->battery.temperature = (int16_t)temperature;
+  data->battery.flags =
+      0 | (power_battery_shutdown ? POWER_BATTERY_SHUTDOWN : 0) |
+      (power_low ? POWER_IS_TOO_LOW : 0) |
+      (is_charging ? POWER_IS_CHARGING : 0) |
+      (on_charger ? POWER_ON_CHARGER : 0) |
+      (too_hot ? POWER_CHARGER_OVERHEAT : 0) |
+      ((overheated > 0) ? POWER_IS_OVERHEATED : 0) |
+      ((charge_cutoff && on_charger) ? POWER_BATTERY_DISCONNECTED : 0);
 
   data->tempAlarm = temp_alarm;
   data->touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
@@ -192,9 +177,7 @@ void Analog::receive(HeadToBody* data) {
   }
 }
 
-void Analog::setPower(bool powered) {
-  allow_power = powered;
-}
+void Analog::setPower(bool powered) { allow_power = powered; }
 
 static void handleButton() {
   static bool bouncy_button = false;
@@ -212,7 +195,7 @@ static void handleButton() {
       total_release = 0;
     }
 
-    return ;
+    return;
   }
 
   // Debounce the button
@@ -226,7 +209,7 @@ static void handleButton() {
   // Button is not depressed
   if (!button_pressed) {
     hold_count = 0;
-    return ;
+    return;
   }
 
   // Button is held, handle appropriate cases
@@ -250,7 +233,7 @@ static void handleButton() {
 template <const TemperatureAlarm alert, const int increment>
 static inline bool alarmTimer(uint16_t temp, const int target) {
   if (temp < target) {
-    return false ;
+    return false;
   }
 
   temp_alarm = alert;
@@ -271,7 +254,7 @@ static void handleTemperature() {
     // We are running way too hot, have a bowl of boot loops.
     if (temp_now >= 70) {
       Power::setMode(POWER_STOP);
-      return ;
+      return;
     }
   }
 
@@ -291,11 +274,13 @@ static void handleTemperature() {
     if (heat_counter > 0) heat_counter--;
   } else {
     // Start processing our overheat alarms
-    bool disable_vmain = false
-      || alarmTimer<TEMP_ALARM_HOT, MAX_HEAT_COUNTDOWN>(temperature, 60) // Fire immediately
-      || alarmTimer<TEMP_ALARM_MID,                 10>(temperature, 50) // Fire in ~2H
-      || alarmTimer<TEMP_ALARM_LOW,                  5>(temperature, 47) // Fire in ~4H
-      ;
+    bool disable_vmain =
+        false ||
+        alarmTimer<TEMP_ALARM_HOT, MAX_HEAT_COUNTDOWN>(temperature,
+                                                       60)  // Fire immediately
+        || alarmTimer<TEMP_ALARM_MID, 10>(temperature, 50)  // Fire in ~2H
+        || alarmTimer<TEMP_ALARM_LOW, 5>(temperature, 47)   // Fire in ~4H
+        ;
 
     if (overheated == 0 && disable_vmain) {
       overheated = OVERHEAT_SHUTDOWN;
@@ -312,11 +297,12 @@ static void handleLowBattery() {
   // Levels
   static const uint32_t EMERGENCY_POWER_DOWN_POINT = ADC_VOLTS(3.4);
   static const uint32_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.62);
-  static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 45*200; // 45 seconds
-  static const int      EARLY_POWER_COUNT_TIME = 200; // 1 second
+  static const int LOW_VOLTAGE_POWER_DOWN_TIME = 45 * 200;  // 45 seconds
+  static const int EARLY_POWER_COUNT_TIME = 200;            // 1 second
 
-  static const int      POWER_DOWN_BATTERY_TIME = 10*200; // 10 seconds
-  static const int      POWER_DOWN_WARNING_TIME = 4*60*200 + POWER_DOWN_BATTERY_TIME; // 4 minutes
+  static const int POWER_DOWN_BATTERY_TIME = 10 * 200;  // 10 seconds
+  static const int POWER_DOWN_WARNING_TIME =
+      4 * 60 * 200 + POWER_DOWN_BATTERY_TIME;  // 4 minutes
 
   // Low voltage shutdown
   static int power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
@@ -330,7 +316,7 @@ static void handleLowBattery() {
     if (emergency_filter > 0 && --emergency_filter == 0) {
       Power::setMode(POWER_STOP);
     }
-    return ;
+    return;
   } else {
     emergency_filter = EARLY_POWER_COUNT_TIME;
   }
@@ -349,9 +335,9 @@ static void handleLowBattery() {
       power_low = false;
     }
   }
-  // On boot, if voltage is low immediately off charger, warn and shut down fast.
-  // Relying on rampost to show low battery icon and 
-  // relying on vic-robot to detect and shutdown right away.
+  // On boot, if voltage is low immediately off charger, warn and shut down
+  // fast. Relying on rampost to show low battery icon and relying on vic-robot
+  // to detect and shutdown right away.
   else if (low_power_count_up < EARLY_POWER_COUNT_TIME) {
     if (vmain < LOW_VOLTAGE_POWER_DOWN_POINT) {
       power_low = true;
@@ -377,7 +363,8 @@ static bool shouldPowerRobot() {
   static int disable_countdown = 0;
 
   if (allow_power) {
-    disable_countdown = 100; // 0.5 seconds before the robot will actually turn off
+    disable_countdown =
+        100;  // 0.5 seconds before the robot will actually turn off
   } else if (disable_countdown > 0) {
     disable_countdown--;
   }
@@ -421,8 +408,7 @@ void Analog::tick(void) {
     too_hot = false;
   }
 
-  bool prevent_charge = too_hot
-    || disable_charger;
+  bool prevent_charge = too_hot || disable_charger;
 
   if (on_charger) {
     // This holds the on_charger_time at zero if charging is disabled
@@ -496,8 +482,8 @@ void Analog::tick(void) {
       delay_disable = false;
     }
 
-    // As long as the timer hasn't expired (and we're not manually disabling charging)
-    // continue to report that we are charging.
+    // As long as the timer hasn't expired (and we're not manually disabling
+    // charging) continue to report that we are charging.
     is_charging = !max_charge_time_expired && !disable_charger;
   } else {
     // Battery connected, on charger (charging)

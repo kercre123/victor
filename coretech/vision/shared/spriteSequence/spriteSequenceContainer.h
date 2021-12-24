@@ -4,7 +4,8 @@
  * Author: Andrew Stein
  * Date:   7/7/2015
  *
- * Description: Defines container for managing available sequences for the robot's face display.
+ * Description: Defines container for managing available sequences for the
+ *robot's face display.
  *
  * Copyright: Anki, Inc. 2015
  **/
@@ -22,25 +23,25 @@
 namespace Anki {
 
 // forward decleration
-namespace Vision{
+namespace Vision {
 
-class SpriteSequenceContainer : private Util::noncopyable
-{
-public:
-  using SpriteSequenceMap = std::unordered_map<Vision::SpritePathMap::AssetID, const Vision::SpriteSequence>;
+class SpriteSequenceContainer : private Util::noncopyable {
+ public:
+  using SpriteSequenceMap = std::unordered_map<Vision::SpritePathMap::AssetID,
+                                               const Vision::SpriteSequence>;
   SpriteSequenceContainer(SpriteSequenceMap&& spriteSequences);
-  
-  bool IsValidSpriteSequenceID(const Vision::SpritePathMap::AssetID spriteSeqID) const;
-  const Vision::SpriteSequence* const GetSpriteSequence(const Vision::SpritePathMap::AssetID spriteSeqID) const;
 
-protected:  
+  bool IsValidSpriteSequenceID(
+      const Vision::SpritePathMap::AssetID spriteSeqID) const;
+  const Vision::SpriteSequence* const GetSpriteSequence(
+      const Vision::SpritePathMap::AssetID spriteSeqID) const;
+
+ protected:
   SpriteSequenceMap _spriteSequenceMap;
 
-}; // class SpriteSequenceContainer
+};  // class SpriteSequenceContainer
 
-} // namespace Vision
-} // namespace Anki
+}  // namespace Vision
+}  // namespace Anki
 
-
-#endif // __CannedAnimLib_SpriteSequences_SpriteSequenceContainer_H__
-
+#endif  // __CannedAnimLib_SpriteSequences_SpriteSequenceContainer_H__

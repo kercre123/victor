@@ -4,8 +4,9 @@
  * Author: Kevin M. Karol
  * Created: 2017-11-2
  *
- * Description: Simple behavior which takes a json-defined list of other behaviors
- * and dispatches to the behavior in the list that has the highest evaluated score
+ * Description: Simple behavior which takes a json-defined list of other
+ *behaviors and dispatches to the behavior in the list that has the highest
+ *evaluated score
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -22,41 +23,40 @@ namespace Vector {
 // forward Declaration
 class BehaviorScoringWrapper;
 
-class BehaviorDispatcherScoring : public IBehaviorDispatcher
-{
-public:
-  virtual ~BehaviorDispatcherScoring();  
+class BehaviorDispatcherScoring : public IBehaviorDispatcher {
+ public:
+  virtual ~BehaviorDispatcherScoring();
 
-protected:  
+ protected:
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;  
+  friend class BehaviorFactory;
   BehaviorDispatcherScoring(const Json::Value& config);
-  
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
   virtual ICozmoBehaviorPtr GetDesiredBehavior() override;
-  virtual void InitDispatcher() override;  
+  virtual void InitDispatcher() override;
   virtual void BehaviorDispatcher_OnDeactivated() override;
-  
-private:
+
+ private:
   struct InstanceConfig {
     InstanceConfig();
-    // indexes of scoringTracker correspond to the dispatchers stored in IBehaviorDispatcher
+    // indexes of scoringTracker correspond to the dispatchers stored in
+    // IBehaviorDispatcher
     std::vector<BehaviorScoringWrapper> scoringTracker;
   };
 
   struct DynamicVariables {
     DynamicVariables();
-    BehaviorScoringWrapper* currentScoringTracker;  
-    ICozmoBehaviorPtr       currentDispatch;
+    BehaviorScoringWrapper* currentScoringTracker;
+    ICozmoBehaviorPtr currentDispatch;
   };
 
-  InstanceConfig   _iConfig;
+  InstanceConfig _iConfig;
   DynamicVariables _dVars;
-
-
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_Dispatch_BehaviorDispatcherScoring_H__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_Dispatch_BehaviorDispatcherScoring_H__

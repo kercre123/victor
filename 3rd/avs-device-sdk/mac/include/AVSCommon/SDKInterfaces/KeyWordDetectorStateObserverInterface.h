@@ -21,34 +21,37 @@ namespace avsCommon {
 namespace sdkInterfaces {
 
 /**
- * A KeyWordDetectorStateObserverInterface is an interface class that clients can extend to be notified of the state
- * of the KeyWordDetector.
+ * A KeyWordDetectorStateObserverInterface is an interface class that clients
+ * can extend to be notified of the state of the KeyWordDetector.
  */
 class KeyWordDetectorStateObserverInterface {
-public:
-    /**
-     * An enum class used to specify the states that the KeyWordDetector can be in.
-     */
-    enum class KeyWordDetectorState {
-        /// Represents a healthy functioning KeyWordDetector.
-        ACTIVE,
+ public:
+  /**
+   * An enum class used to specify the states that the KeyWordDetector can be
+   * in.
+   */
+  enum class KeyWordDetectorState {
+    /// Represents a healthy functioning KeyWordDetector.
+    ACTIVE,
 
-        /// Represents when the stream that a KeyWordDetector is reading from has been closed.
-        STREAM_CLOSED,
+    /// Represents when the stream that a KeyWordDetector is reading from has
+    /// been closed.
+    STREAM_CLOSED,
 
-        /// Represents an unknown error.
-        ERROR
-    };
-    /**
-     * Destructor.
-     */
-    virtual ~KeyWordDetectorStateObserverInterface() = default;
+    /// Represents an unknown error.
+    ERROR
+  };
+  /**
+   * Destructor.
+   */
+  virtual ~KeyWordDetectorStateObserverInterface() = default;
 
-    /**
-     * Used to notify the observer of the KeyWordDetector of state changes and errors when reading from its stream in
-     * case the user needs to initialize a new stream.
-     */
-    virtual void onStateChanged(KeyWordDetectorState keyWordDetectorState) = 0;
+  /**
+   * Used to notify the observer of the KeyWordDetector of state changes and
+   * errors when reading from its stream in case the user needs to initialize a
+   * new stream.
+   */
+  virtual void onStateChanged(KeyWordDetectorState keyWordDetectorState) = 0;
 };
 
 }  // namespace sdkInterfaces

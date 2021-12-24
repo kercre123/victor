@@ -9,18 +9,15 @@
 #ifndef DASFilter_hpp
 #define DASFilter_hpp
 
-#include "DAS.h"
 #include <string>
 
-namespace Anki
-{
-namespace DAS
-{
+#include "DAS.h"
 
-class DASFilter
-{
+namespace Anki {
+namespace DAS {
 
-public:
+class DASFilter {
+ public:
   DASFilter();
   ~DASFilter();
 
@@ -29,15 +26,13 @@ public:
   void SetMinLogLevel(const std::string& loggerName, DASLogLevel level);
   DASLogLevel GetMinLogLevel(const std::string& loggerName) const;
 
-private:
+ private:
   class DasFilterImpl;
 
   DasFilterImpl* pimpl;
 };
 
-
-}
-}
-
+}  // namespace DAS
+}  // namespace Anki
 
 #endif /* DASFilter_hpp */

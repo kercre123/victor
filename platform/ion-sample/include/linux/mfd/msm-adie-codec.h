@@ -36,16 +36,22 @@
 #define ADIE_CODEC_LB 3
 #define ADIE_CODEC_MAX 4
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
-#define ADIE_CODEC_PACK_ENTRY(reg,mask,val) ((val) | (mask << 8) | (reg << 16))
-#define ADIE_CODEC_UNPACK_ENTRY(packed,reg,mask,val) do { ((reg) = ((packed >> 16) & (0xff))); ((mask) = ((packed >> 8) & (0xff))); ((val) = ((packed) & (0xff))); } while(0);
+#define ADIE_CODEC_PACK_ENTRY(reg, mask, val) \
+  ((val) | (mask << 8) | (reg << 16))
+#define ADIE_CODEC_UNPACK_ENTRY(packed, reg, mask, val) \
+  do {                                                  \
+    ((reg) = ((packed >> 16) & (0xff)));                \
+    ((mask) = ((packed >> 8) & (0xff)));                \
+    ((val) = ((packed) & (0xff)));                      \
+  } while (0);
 struct adie_codec_action_unit {
   u32 type;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   u32 action;
 };
 struct adie_codec_hwsetting_entry {
-  struct adie_codec_action_unit * actions;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  struct adie_codec_action_unit* actions;
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   u32 action_sz;
   u32 freq_plan;
   u32 osr;
@@ -54,42 +60,47 @@ struct adie_codec_hwsetting_entry {
 struct adie_codec_dev_profile {
   u32 path_type;
   u32 setting_sz;
-  struct adie_codec_hwsetting_entry * settings;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  struct adie_codec_hwsetting_entry* settings;
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 };
 struct adie_codec_register {
   u8 reg;
   u8 mask;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   u8 val;
 };
 struct adie_codec_register_image {
-  struct adie_codec_register * regs;
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  struct adie_codec_register* regs;
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   u32 img_sz;
 };
 struct adie_codec_path;
 struct adie_codec_anc_data {
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   u32 size;
   u32 writes[];
 };
 struct adie_codec_operations {
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
   int codec_id;
-  int(* codec_open) (struct adie_codec_dev_profile * profile, struct adie_codec_path * * path_pptr);
-  int(* codec_close) (struct adie_codec_path * path_ptr);
-  int(* codec_setpath) (struct adie_codec_path * path_ptr, u32 freq_plan, u32 osr);
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
-  int(* codec_proceed_stage) (struct adie_codec_path * path_ptr, u32 state);
-  u32(* codec_freq_supported) (struct adie_codec_dev_profile * profile, u32 requested_freq);
-  int(* codec_enable_sidetone) (struct adie_codec_path * rx_path_ptr, u32 enable);
-  int(* codec_enable_anc) (struct adie_codec_path * rx_path_ptr, u32 enable, struct adie_codec_anc_data * calibration_writes);
-/* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
-  int(* codec_set_device_digital_volume) (struct adie_codec_path * path_ptr, u32 num_channels, u32 vol_percentage);
-  int(* codec_set_device_analog_volume) (struct adie_codec_path * path_ptr, u32 num_channels, u32 volume);
-  int(* codec_set_master_mode) (struct adie_codec_path * path_ptr, u8 master);
+  int (*codec_open)(struct adie_codec_dev_profile* profile,
+                    struct adie_codec_path** path_pptr);
+  int (*codec_close)(struct adie_codec_path* path_ptr);
+  int (*codec_setpath)(struct adie_codec_path* path_ptr, u32 freq_plan,
+                       u32 osr);
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  int (*codec_proceed_stage)(struct adie_codec_path* path_ptr, u32 state);
+  u32 (*codec_freq_supported)(struct adie_codec_dev_profile* profile,
+                              u32 requested_freq);
+  int (*codec_enable_sidetone)(struct adie_codec_path* rx_path_ptr, u32 enable);
+  int (*codec_enable_anc)(struct adie_codec_path* rx_path_ptr, u32 enable,
+                          struct adie_codec_anc_data* calibration_writes);
+  /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+  int (*codec_set_device_digital_volume)(struct adie_codec_path* path_ptr,
+                                         u32 num_channels, u32 vol_percentage);
+  int (*codec_set_device_analog_volume)(struct adie_codec_path* path_ptr,
+                                        u32 num_channels, u32 volume);
+  int (*codec_set_master_mode)(struct adie_codec_path* path_ptr, u8 master);
 };
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 #endif
-

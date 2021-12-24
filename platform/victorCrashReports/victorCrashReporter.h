@@ -19,7 +19,7 @@ namespace Vector {
 // Install signal and exception handlers.
 // FilenamePrefix may not be null.
 //
-void InstallCrashReporter(const char * filenamePrefix);
+void InstallCrashReporter(const char* filenamePrefix);
 
 //
 // Uninstall signal and exception handlers.
@@ -33,23 +33,20 @@ void UninstallCrashReporter();
 //
 // Returns true on success, false on error.
 //
-bool WriteMinidump(const std::string & prefix, std::string & out_dump_path);
+bool WriteMinidump(const std::string& prefix, std::string& out_dump_path);
 
 //
 // Stub class to manage lifetime of crash report handlers
 // Handlers are automatically installed when object is constructed.
 // Handlers are automatically removed when object is destroyed.
 //
-class CrashReporter
-{
-public:
-  CrashReporter(const char * filenamePrefix);
+class CrashReporter {
+ public:
+  CrashReporter(const char* filenamePrefix);
   ~CrashReporter();
-
 };
 
-} // end namespace Vector
-} // end namespace Anki
+}  // end namespace Vector
+}  // end namespace Anki
 
-
-#endif // __victorCrashReporter_h
+#endif  // __victorCrashReporter_h

@@ -27,20 +27,20 @@ namespace http2 {
  * Type of request mde over an HTTP2Connection.
  */
 enum class HTTP2RequestType {
-    /// A HTTP2 GET request.
-    GET,
-    /// A HTTP2 POST request.
-    POST
+  /// A HTTP2 GET request.
+  GET,
+  /// A HTTP2 POST request.
+  POST
 };
 
 inline std::ostream& operator<<(std::ostream& stream, HTTP2RequestType type) {
-    switch (type) {
-        case HTTP2RequestType::GET:
-            return stream << "GET";
-        case HTTP2RequestType::POST:
-            return stream << "POST";
-    }
-    return stream << "UNKNOWN(" << static_cast<int>(type) << ")";
+  switch (type) {
+    case HTTP2RequestType::GET:
+      return stream << "GET";
+    case HTTP2RequestType::POST:
+      return stream << "POST";
+  }
+  return stream << "UNKNOWN(" << static_cast<int>(type) << ")";
 }
 
 }  // namespace http2

@@ -13,10 +13,8 @@
  *
  **/
 #ifndef __TaskExecutor_H__
-#define	__TaskExecutor_H__
+#define __TaskExecutor_H__
 
-#include "util/dispatchQueue/iTaskHandle.h"
-#include "util/threading/threadPriority.h"
 #include <atomic>
 #include <chrono>
 #include <memory>
@@ -24,13 +22,13 @@
 #include <thread>
 #include <vector>
 
-namespace Anki
-{
-namespace Util
-{
+#include "util/dispatchQueue/iTaskHandle.h"
+#include "util/threading/threadPriority.h"
+
+namespace Anki {
+namespace Util {
 
 typedef struct _TaskHolder {
-
   using HandlePulse = std::weak_ptr<void>;
 
   bool sync;
@@ -43,37 +41,41 @@ typedef struct _TaskHolder {
   std::string name;
   int id;
 
-
-  bool operator < (const _TaskHolder& th) const
-  {
-    return (when > th.when);
-  }
+  bool operator<(const _TaskHolder& th) const { return (when > th.when); }
 } TaskHolder;
 
 class TaskExecutor {
-public:
-  explicit TaskExecutor(const char* name = nullptr, ThreadPriority threadPriority=ThreadPriority::Default);
+ public:
+  explicit TaskExecutor(
+      const char* name = nullptr,
+      ThreadPriority threadPriority = ThreadPriority::Default);
   virtual ~TaskExecutor();
   void StopExecution();
   void Wake(std::function<void()> task, const char* name);
   void WakeSync(std::function<void()> task, const char* name);
-  void WakeAfter(std::function<void()> task, std::chrono::time_point<std::chrono::steady_clock> when, const char* name);
-  TaskHandle WakeAfterRepeat(std::function<void()> task, std::chrono::milliseconds period, const char* name);
-protected:
+  void WakeAfter(std::function<void()> task,
+                 std::chrono::time_point<std::chrono::steady_clock> when,
+                 const char* name);
+  TaskHandle WakeAfterRepeat(std::function<void()> task,
+                             std::chrono::milliseconds period,
+                             const char* name);
+
+ protected:
   TaskExecutor(const TaskExecutor&) = delete;
   TaskExecutor& operator=(const TaskExecutor&) = delete;
-  virtual void Wait(std::unique_lock<std::mutex> &lock,
-                    std::condition_variable &condition,
+  virtual void Wait(std::unique_lock<std::mutex>& lock,
+                    std::condition_variable& condition,
                     const std::vector<TaskHolder>* tasks) const;
-private:
+
+ private:
   void AddTaskHolder(TaskHolder taskHolder);
   void AddTaskHolderToDeferredQueue(TaskHolder taskHolder);
   void RemoveTaskFromDeferredQueue(int taskId);
   void Execute(std::string threadName);
   void ProcessDeferredQueue(std::string threadName);
-  void Run(std::unique_lock<std::mutex> &lock);
+  void Run(std::unique_lock<std::mutex>& lock);
 
-private:
+ private:
   std::thread _taskExecuteThread;
   std::mutex _taskQueueMutex;
   std::condition_variable _taskQueueCondition;
@@ -95,8 +97,7 @@ private:
   friend class TaskExecutorHandle;
 };
 
-} // namespace Das
-} // namespace Anki
+}  // namespace Util
+}  // namespace Anki
 
-#endif	/* __TaskExecutor_H__ */
-
+#endif /* __TaskExecutor_H__ */

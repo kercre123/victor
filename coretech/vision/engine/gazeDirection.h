@@ -7,7 +7,8 @@
  * Description: Class that determines where on the ground plane a persons gaze
  *              is directed. This only uses the head rotation computed from
  *              face parts at the moment, and no information from the eyes.
- *              Thus this is not a true estimation of gaze merely a rough approximation.
+ *              Thus this is not a true estimation of gaze merely a rough
+ *approximation.
  *
  *
  * Copyright: Anki, Inc. 2018
@@ -21,22 +22,18 @@
 namespace Anki {
 namespace Vision {
 
-struct GazeDirectionData
-{
+struct GazeDirectionData {
   constexpr static const float kDefaultDistance_mm = -100000.f;
   Point3f point;
   bool inlier;
   bool include;
 
   GazeDirectionData()
-    : point(kDefaultDistance_mm, kDefaultDistance_mm, kDefaultDistance_mm)
-      ,inlier(false)
-      ,include(false)
-      {
-      }
+      : point(kDefaultDistance_mm, kDefaultDistance_mm, kDefaultDistance_mm),
+        inlier(false),
+        include(false) {}
 
-  void Update(const Point3f& p, bool i)
-  {
+  void Update(const Point3f& p, bool i) {
     point = p;
     inlier = false;
     include = i;
@@ -71,13 +68,12 @@ struct GazeDirectionData
 
   As far as usage, the value returned from GetGazeDirectionAverage is only valid
   if IsStable returns true. ClearHistory is method that is intended to be called
-  when the robot moves, or if a new gaze point estimate should start immeadiately
-  instead of waiting for the points in the history to expire.
+  when the robot moves, or if a new gaze point estimate should start
+  immeadiately instead of waiting for the points in the history to expire.
 */
 
-class GazeDirection
-{
-public:
+class GazeDirection {
+ public:
   GazeDirection();
 
   void Update(const TrackedFace& headPose);
@@ -94,10 +90,11 @@ public:
 
   void ClearHistory();
 
-private:
+ private:
   int FindInliers(const Point3f& faceDirectionAverage);
 
-  bool GetPointFromHeadPose(const Pose3d& headPose, Point3f& faceDirectionPoint);
+  bool GetPointFromHeadPose(const Pose3d& headPose,
+                            Point3f& faceDirectionPoint);
   Point3f ComputeEntireGazeDirectionAverage();
   Point3f ComputeGazeDirectionAverage(const bool filterOutliers);
   Point3f RecomputeGazeDirectionAverage();
@@ -113,6 +110,6 @@ private:
   Point3f _gazeDirectionAverage;
 };
 
-}
-}
-#endif // __Anki_CoreTech_Vision_GazeDirection_H__
+}  // namespace Vision
+}  // namespace Anki
+#endif  // __Anki_CoreTech_Vision_GazeDirection_H__

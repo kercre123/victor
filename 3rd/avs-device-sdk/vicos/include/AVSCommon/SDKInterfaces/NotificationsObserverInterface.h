@@ -23,21 +23,23 @@ namespace avsCommon {
 namespace sdkInterfaces {
 
 /**
- * An interface to allow being notified of changes to the currently stored IndicatorState.
+ * An interface to allow being notified of changes to the currently stored
+ * IndicatorState.
  */
 class NotificationsObserverInterface {
-public:
-    /**
-     * Destructor
-     */
-    virtual ~NotificationsObserverInterface() = default;
+ public:
+  /**
+   * Destructor
+   */
+  virtual ~NotificationsObserverInterface() = default;
 
-    /**
-     * Notifies the observer that a SetIndicator directive has been processed
-     *
-     * @param state The value of the persistVisualIndicator field of the directive.
-     */
-    virtual void onSetIndicator(avsCommon::avs::IndicatorState state) = 0;
+  /**
+   * Notifies the observer that a SetIndicator directive has been processed
+   *
+   * @param state The value of the persistVisualIndicator field of the
+   * directive.
+   */
+  virtual void onSetIndicator(avsCommon::avs::IndicatorState state) = 0;
 };
 
 }  // namespace sdkInterfaces

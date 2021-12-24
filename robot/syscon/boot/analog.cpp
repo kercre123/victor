@@ -1,40 +1,36 @@
+#include "analog.h"
+
 #include <string.h>
 
 #include "common.h"
+#include "flash.h"
 #include "hardware.h"
-
 #include "messages.h"
-
-#include "analog.h"
 #include "power.h"
 #include "vectors.h"
-#include "flash.h"
 
 #ifndef BOOTLOADER
 #include "contacts.h"
 #endif
 
-static const int SELECTED_CHANNELS = 0
-  | ADC_CHSELR_CHSEL2
-  | ADC_CHSELR_CHSEL4
-  | ADC_CHSELR_CHSEL6
-  | ADC_CHSELR_CHSEL16
-  ;
+static const int SELECTED_CHANNELS = 0 | ADC_CHSELR_CHSEL2 | ADC_CHSELR_CHSEL4 |
+                                     ADC_CHSELR_CHSEL6 | ADC_CHSELR_CHSEL16;
 
 static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.4);
-static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 200;  // 1s
+static const int LOW_VOLTAGE_POWER_DOWN_TIME = 200;  // 1s
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(3.50), ~0);
 
-static const uint16_t*  TEMP30_CAL_ADDR = (uint16_t*)0x1FFFF7B8;
-static const int32_t    TEMP_VOLT_ADJ   = (int32_t)(0x100000 * (2.8 / 3.3));
-static const int32_t    TEMP_SCALE_ADJ  = (int32_t)(0x100000 * (1.000 / 5.336));
+static const uint16_t* TEMP30_CAL_ADDR = (uint16_t*)0x1FFFF7B8;
+static const int32_t TEMP_VOLT_ADJ = (int32_t)(0x100000 * (2.8 / 3.3));
+static const int32_t TEMP_SCALE_ADJ = (int32_t)(0x100000 * (1.000 / 5.336));
 
-static const int POWER_DOWN_TIME = 200 * 4.5;               // Shutdown
-static const int POWER_WIPE_TIME = 200 * 12;                // Enter recovery mode
-static const int MAX_CONTACT_TIME = 200 * 10;               // 10 seconds
-static const int MAX_CHARGE_TIME = 200 * 60 * 30;           // 30 minutes
-static const int MAX_CHARGE_TIME_WD = MAX_CHARGE_TIME + 5;  // 25ms past MAX_CHARGE_TIME
+static const int POWER_DOWN_TIME = 200 * 4.5;      // Shutdown
+static const int POWER_WIPE_TIME = 200 * 12;       // Enter recovery mode
+static const int MAX_CONTACT_TIME = 200 * 10;      // 10 seconds
+static const int MAX_CHARGE_TIME = 200 * 60 * 30;  // 30 minutes
+static const int MAX_CHARGE_TIME_WD =
+    MAX_CHARGE_TIME + 5;  // 25ms past MAX_CHARGE_TIME
 
 static const int BOUNCE_LENGTH = 3;
 static const int MINIMUM_RELEASE_UNSTUCK = 20;
@@ -66,15 +62,39 @@ bool Analog::button_pressed = false;
 static inline void leds_off(void) {
   // Shifing by 5 is enough to disable LEDs (WHISKEY ONLY)
   LED_DAT::reset();
-  __nop(); LED_CLK_WIS::set(); __nop(); LED_CLK_WIS::reset();
-  __nop(); LED_CLK_WIS::set(); __nop(); LED_CLK_WIS::reset();
-  __nop(); LED_CLK_WIS::set(); __nop(); LED_CLK_WIS::reset();
+  __nop();
+  LED_CLK_WIS::set();
+  __nop();
+  LED_CLK_WIS::reset();
+  __nop();
+  LED_CLK_WIS::set();
+  __nop();
+  LED_CLK_WIS::reset();
+  __nop();
+  LED_CLK_WIS::set();
+  __nop();
+  LED_CLK_WIS::reset();
   LED_DAT::set();
-  __nop(); LED_CLK_WIS::set(); __nop(); LED_CLK_WIS::reset();
-  __nop(); LED_CLK_WIS::set(); __nop(); LED_CLK_WIS::reset();
-  __nop(); LED_CLK_WIS::set(); __nop(); LED_CLK_WIS::reset();
-  __nop(); LED_CLK_WIS::set(); __nop(); LED_CLK_WIS::reset();
-  __nop(); LED_CLK_WIS::set(); __nop(); LED_CLK_WIS::reset();
+  __nop();
+  LED_CLK_WIS::set();
+  __nop();
+  LED_CLK_WIS::reset();
+  __nop();
+  LED_CLK_WIS::set();
+  __nop();
+  LED_CLK_WIS::reset();
+  __nop();
+  LED_CLK_WIS::set();
+  __nop();
+  LED_CLK_WIS::reset();
+  __nop();
+  LED_CLK_WIS::set();
+  __nop();
+  LED_CLK_WIS::reset();
+  __nop();
+  LED_CLK_WIS::set();
+  __nop();
+  LED_CLK_WIS::reset();
 }
 
 void Analog::init(void) {
@@ -82,40 +102,33 @@ void Analog::init(void) {
   if ((ADC1->CR & ADC_CR_ADEN) != 0) {
     ADC1->CR |= ADC_CR_ADDIS;
   }
-  while ((ADC1->CR & ADC_CR_ADEN) != 0) ;
+  while ((ADC1->CR & ADC_CR_ADEN) != 0)
+    ;
   ADC1->CFGR1 &= ~ADC_CFGR1_DMAEN;
   ADC1->CR |= ADC_CR_ADCAL;
-  while ((ADC1->CR & ADC_CR_ADCAL) != 0) ;
+  while ((ADC1->CR & ADC_CR_ADCAL) != 0)
+    ;
 
   // Setup the ADC for continuous mode
   ADC1->CHSELR = SELECTED_CHANNELS;
-  ADC1->CFGR1 = 0
-              | ADC_CFGR1_CONT
-              | ADC_CFGR1_DMAEN
-              | ADC_CFGR1_DMACFG
-              | ADC_CFGR1_AWDEN
-              | ADC_CFGR1_AWDSGL
-              | (ADC_CFGR1_AWDCH_0 * 4) // ADC Channel 4 (VMAIN)
-              ;
-  ADC1->CFGR2 = 0
-              | ADC_CFGR2_CKMODE_1
-              ;
-  ADC1->SMPR  = 0
-              | ADC_SMPR_SMP_0  // ~0.4us
-              | ADC_SMPR_SMP_2
-              ;
+  ADC1->CFGR1 = 0 | ADC_CFGR1_CONT | ADC_CFGR1_DMAEN | ADC_CFGR1_DMACFG |
+                ADC_CFGR1_AWDEN | ADC_CFGR1_AWDSGL |
+                (ADC_CFGR1_AWDCH_0 * 4)  // ADC Channel 4 (VMAIN)
+      ;
+  ADC1->CFGR2 = 0 | ADC_CFGR2_CKMODE_1;
+  ADC1->SMPR = 0 | ADC_SMPR_SMP_0  // ~0.4us
+               | ADC_SMPR_SMP_2;
 
   ADC1->IER = ADC_IER_AWDIE;
   ADC1->TR = FALLING_EDGE;
 
-  ADC->CCR = 0
-           | ADC_CCR_TSEN
-           ;
+  ADC->CCR = 0 | ADC_CCR_TSEN;
 
   // Enable ADC
   ADC1->ISR = ADC_ISR_ADRDY;
   ADC1->CR |= ADC_CR_ADEN;
-  while (~ADC1->ISR & ADC_ISR_ADRDY) ;
+  while (~ADC1->ISR & ADC_ISR_ADRDY)
+    ;
 
   // Start sampling
   ADC1->CR |= ADC_CR_ADSTART;
@@ -124,19 +137,16 @@ void Analog::init(void) {
   DMA1_Channel1->CPAR = (uint32_t)&ADC1->DR;
   DMA1_Channel1->CMAR = (uint32_t)&adc_values[0];
   DMA1_Channel1->CNDTR = ADC_CHANNELS;
-  DMA1_Channel1->CCR |= 0
-                     | DMA_CCR_MINC
-                     | DMA_CCR_MSIZE_0
-                     | DMA_CCR_PSIZE_0
-                     | DMA_CCR_CIRC;
+  DMA1_Channel1->CCR |=
+      0 | DMA_CCR_MINC | DMA_CCR_MSIZE_0 | DMA_CCR_PSIZE_0 | DMA_CCR_CIRC;
   DMA1_Channel1->CCR |= DMA_CCR_EN;
 
-  #ifdef BOOTLOADER
+#ifdef BOOTLOADER
   has_booted = DFU_ENTRY_POINT == DFU_FLAG;
   allow_power = has_booted;
-  #else
+#else
   allow_power = true;
-  #endif
+#endif
 
   NVIC_DisableIRQ(ADC1_IRQn);
   NVIC_SetPriority(ADC1_IRQn, PRIORITY_ADC);
@@ -161,27 +171,35 @@ void Analog::init(void) {
   VEXT_TX::mode(MODE_ALTERNATE);
 
   // Motor should be primed for reset
-  LN1::reset(); LN1::mode(MODE_OUTPUT);
-  LN2::reset(); LN2::mode(MODE_OUTPUT);
-  HN1::reset(); HN1::mode(MODE_OUTPUT);
-  HN2::reset(); HN2::mode(MODE_OUTPUT);
-  RTN1::reset(); RTN1::mode(MODE_OUTPUT);
-  RTN2::reset(); RTN2::mode(MODE_OUTPUT);
-  LTN1::reset(); LTN1::mode(MODE_OUTPUT);
-  LTN2::reset(); LTN2::mode(MODE_OUTPUT);
-  
-  // Configure P pins 
+  LN1::reset();
+  LN1::mode(MODE_OUTPUT);
+  LN2::reset();
+  LN2::mode(MODE_OUTPUT);
+  HN1::reset();
+  HN1::mode(MODE_OUTPUT);
+  HN2::reset();
+  HN2::mode(MODE_OUTPUT);
+  RTN1::reset();
+  RTN1::mode(MODE_OUTPUT);
+  RTN2::reset();
+  RTN2::mode(MODE_OUTPUT);
+  LTN1::reset();
+  LTN1::mode(MODE_OUTPUT);
+  LTN2::reset();
+  LTN2::mode(MODE_OUTPUT);
+
+  // Configure P pins
   LP1::reset();
-  LP1::type(TYPE_OPENDRAIN); 
+  LP1::type(TYPE_OPENDRAIN);
   LP1::mode(MODE_OUTPUT);
-  HP1::type(TYPE_OPENDRAIN); 
-  HP1::reset();   
+  HP1::type(TYPE_OPENDRAIN);
+  HP1::reset();
   HP1::mode(MODE_OUTPUT);
-  RTP1::type(TYPE_OPENDRAIN); 
-  RTP1::reset();  
+  RTP1::type(TYPE_OPENDRAIN);
+  RTP1::reset();
   RTP1::mode(MODE_OUTPUT);
-  LTP1::type(TYPE_OPENDRAIN); 
-  LTP1::reset();  
+  LTP1::type(TYPE_OPENDRAIN);
+  LTP1::reset();
   LTP1::mode(MODE_OUTPUT);
 
   // Encoders
@@ -198,7 +216,7 @@ void Analog::init(void) {
   CAPI::alternate(2);
   CAPI::mode(MODE_ALTERNATE);
 
-  #ifndef DEBUG
+#ifndef DEBUG
   // LEDs (WHISKEY ONLY)
   LED_DAT::type(TYPE_OPENDRAIN);
   LED_DAT::reset();
@@ -209,7 +227,7 @@ void Analog::init(void) {
   LED_CLK_WIS::mode(MODE_OUTPUT);
 
   leds_off();
-  #endif
+#endif
 
   POWER_EN::mode(MODE_INPUT);
   POWER_EN::pull(PULL_UP);
@@ -221,22 +239,22 @@ void Analog::stop(void) {
 
   // Stop reading values
   ADC1->CR |= ADC_CR_ADSTP;
-  while ((ADC1->CR & ADC_CR_ADSTP) != 0) ;
+  while ((ADC1->CR & ADC_CR_ADSTP) != 0)
+    ;
 
   ADC1->CR |= ADC_CR_ADDIS;
-  while ((~ADC1->CR & ADC_CR_ADEN) != 0) ;
+  while ((~ADC1->CR & ADC_CR_ADEN) != 0)
+    ;
 }
 
 void Analog::transmit(BodyToHead* data) {
   data->battery.main_voltage = adc_values[ADC_VMAIN];
   data->battery.charger = adc_values[ADC_VEXT];
-  data->battery.temperature = (int16_t) temperature;
-  data->battery.flags = 0
-                      | (is_charging ? POWER_IS_CHARGING : 0)
-                      | (on_charger ? POWER_ON_CHARGER : 0)
-                      | (charger_shorted ? POWER_CHARGER_SHORTED : 0 )
-                      | (CHARGE_CUTOFF ? POWER_BATTERY_DISCONNECTED : 0)
-                      ;
+  data->battery.temperature = (int16_t)temperature;
+  data->battery.flags = 0 | (is_charging ? POWER_IS_CHARGING : 0) |
+                        (on_charger ? POWER_ON_CHARGER : 0) |
+                        (charger_shorted ? POWER_CHARGER_SHORTED : 0) |
+                        (CHARGE_CUTOFF ? POWER_BATTERY_DISCONNECTED : 0);
 
   data->touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
 }
@@ -252,17 +270,15 @@ void Analog::receive(HeadToBody* data) {
 }
 
 void Analog::inhibitCharge(bool force) {
-  // UART may not take over if 
-  if (on_charger && !force) return ;
+  // UART may not take over if
+  if (on_charger && !force) return;
 
   vext_debounce = 0;
   disable_charger = true;
 }
 #endif
 
-void Analog::setPower(bool powered) {
-  allow_power = powered;
-}
+void Analog::setPower(bool powered) { allow_power = powered; }
 
 void Analog::tick(void) {
   static bool disable_vmain = false;
@@ -284,23 +300,26 @@ void Analog::tick(void) {
     last_vext = vext_now;
   }
 
-  #ifdef BOOTLOADER 
+#ifdef BOOTLOADER
   if (!has_booted && (button_now || on_charger)) {
     has_booted = true;
     Power::setMode(POWER_CALM);
   }
-  #endif
+#endif
 
-  temperature = *TEMP30_CAL_ADDR - ((adc_values[ADC_TEMP] * TEMP_VOLT_ADJ) >> 20);
+  temperature =
+      *TEMP30_CAL_ADDR - ((adc_values[ADC_TEMP] * TEMP_VOLT_ADJ) >> 20);
   temperature = ((temperature * TEMP_SCALE_ADJ) >> 20) + 30;
 
-  bool emergency_shutoff = temperature >= 70;    // Will immediately cause a reboot
+  bool emergency_shutoff =
+      temperature >= 70;  // Will immediately cause a reboot
   if (temperature >= 60) disable_vmain = true;
 
   static int disable_countdown = 0;
 
   if (allow_power) {
-    disable_countdown = 100; // 0.5 seconds before the robot will actually turn off
+    disable_countdown =
+        100;  // 0.5 seconds before the robot will actually turn off
   } else if (disable_countdown > 0) {
     disable_countdown--;
   }
@@ -336,11 +355,11 @@ void Analog::tick(void) {
     POWER_EN::mode(MODE_INPUT);
 
     is_charging = false;
-    #ifndef BOOTLOADER
+#ifndef BOOTLOADER
     if (!Contacts::dataQueued) {
       disable_charger = false;
     }
-    #endif
+#endif
 
     // Charge contact short sense
     static const int CHARGE_DELAY = 32;
@@ -386,10 +405,11 @@ void Analog::tick(void) {
   } else {
     // On charger, powered (charging)
     NVIC_DisableIRQ(ADC1_IRQn);
-   
-    // Charge circuit disable
-    #ifndef BOOTLOADER
-    // Prevent charge contacts from blocking charging entirely (you have 5 minutes, craig)
+
+// Charge circuit disable
+#ifndef BOOTLOADER
+    // Prevent charge contacts from blocking charging entirely (you have 5
+    // minutes, craig)
     if (vext_debounce >= MAX_CONTACT_TIME && disable_charger) {
       disable_charger = false;
       vext_debounce = 0;
@@ -402,10 +422,10 @@ void Analog::tick(void) {
       nCHG_PWR::reset();
       is_charging = true;
     }
-    #else
+#else
     nCHG_PWR::reset();
     is_charging = true;
-    #endif
+#endif
 
     POWER_EN::pull(PULL_UP);
     POWER_EN::mode(MODE_INPUT);
@@ -414,7 +434,7 @@ void Analog::tick(void) {
   // VMain / VBat trap
   if (disable_vmain) {
     Power::setMode(POWER_STOP);
-    return ;
+    return;
   }
 
   // Trap stuck down button
@@ -425,7 +445,7 @@ void Analog::tick(void) {
       total_release = 0;
     }
 
-    return ;
+    return;
   }
 
   // Debounce the button

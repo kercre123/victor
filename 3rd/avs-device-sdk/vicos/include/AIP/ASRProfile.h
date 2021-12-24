@@ -26,15 +26,16 @@ namespace aip {
 
 /**
  * Enumerates the different ASR profiles supported by AVS.
- * @see https://developer.amazon.com/public/solutions/alexa/alexa-voice-service/reference/speechrecognizer#profiles
+ * @see
+ * https://developer.amazon.com/public/solutions/alexa/alexa-voice-service/reference/speechrecognizer#profiles
  */
 enum class ASRProfile {
-    /// Client determines end of user speech (0 to 2.5 ft).
-    CLOSE_TALK,
-    /// Cloud determines end of user speech (0 to 5 ft).
-    NEAR_FIELD,
-    /// Cloud determines end of user speech (0 to 20+ ft).
-    FAR_FIELD
+  /// Client determines end of user speech (0 to 2.5 ft).
+  CLOSE_TALK,
+  /// Cloud determines end of user speech (0 to 5 ft).
+  NEAR_FIELD,
+  /// Cloud determines end of user speech (0 to 20+ ft).
+  FAR_FIELD
 };
 
 /**
@@ -45,36 +46,37 @@ enum class ASRProfile {
  * @return The @c ostream that was passed in and written to.
  */
 inline std::ostream& operator<<(std::ostream& stream, ASRProfile profile) {
-    switch (profile) {
-        case ASRProfile::CLOSE_TALK:
-            stream << "CLOSE_TALK";
-            break;
-        case ASRProfile::NEAR_FIELD:
-            stream << "NEAR_FIELD";
-            break;
-        case ASRProfile::FAR_FIELD:
-            stream << "FAR_FIELD";
-            break;
-    }
-    return stream;
+  switch (profile) {
+    case ASRProfile::CLOSE_TALK:
+      stream << "CLOSE_TALK";
+      break;
+    case ASRProfile::NEAR_FIELD:
+      stream << "NEAR_FIELD";
+      break;
+    case ASRProfile::FAR_FIELD:
+      stream << "FAR_FIELD";
+      break;
+  }
+  return stream;
 }
 
 /**
  * Convert the @c ASRProfile to an AVS-compliant string.
  *
  * @param profile The profile value to convert to a string.
- * @return String representing the profile value. If the profile given is not valid, an empty string will be returned.
+ * @return String representing the profile value. If the profile given is not
+ * valid, an empty string will be returned.
  */
 inline std::string asrProfileToString(ASRProfile profile) {
-    switch (profile) {
-        case ASRProfile::CLOSE_TALK:
-            return "CLOSE_TALK";
-        case ASRProfile::NEAR_FIELD:
-            return "NEAR_FIELD";
-        case ASRProfile::FAR_FIELD:
-            return "FAR_FIELD";
-    }
-    return "";
+  switch (profile) {
+    case ASRProfile::CLOSE_TALK:
+      return "CLOSE_TALK";
+    case ASRProfile::NEAR_FIELD:
+      return "NEAR_FIELD";
+    case ASRProfile::FAR_FIELD:
+      return "FAR_FIELD";
+  }
+  return "";
 }
 
 }  // namespace aip

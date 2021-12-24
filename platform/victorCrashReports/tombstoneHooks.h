@@ -19,7 +19,7 @@ void InstallTombstoneHooks();
 // Disable calls to debugger dump_tombstone
 void UninstallTombstoneHooks();
 
-} // end namespace Vector
-} // end namespace Anki
+}  // end namespace Vector
+}  // end namespace Anki
 
-#endif // __victorCrashReports_tombstoneHooks_h
+#endif  // __victorCrashReports_tombstoneHooks_h

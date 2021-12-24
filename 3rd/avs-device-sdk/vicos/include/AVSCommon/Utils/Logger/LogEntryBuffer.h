@@ -21,12 +21,14 @@
 #include <vector>
 
 /**
- * The size of @c LogEntryBuffer::m_smallBuffer.  Instances of @c LogEntryBuffer are expected to be allocated
- * on the stack in most use cases.  Rather than pick a value that would be large enough for almost any normal
- * log lines (e.g. 4096), a smaller value (128) that will handle the vast majority of typical log lines was
- * chosen to reduce the impact on the stack.
+ * The size of @c LogEntryBuffer::m_smallBuffer.  Instances of @c LogEntryBuffer
+ * are expected to be allocated on the stack in most use cases.  Rather than
+ * pick a value that would be large enough for almost any normal log lines (e.g.
+ * 4096), a smaller value (128) that will handle the vast majority of typical
+ * log lines was chosen to reduce the impact on the stack.
  *
- * #ifndef used here to allow overriding this value from the compiler command line.
+ * #ifndef used here to allow overriding this value from the compiler command
+ * line.
  */
 #ifndef ACSDK_LOG_ENTRY_BUFFER_SMALL_BUFFER_SIZE
 #define ACSDK_LOG_ENTRY_BUFFER_SMALL_BUFFER_SIZE 128
@@ -38,33 +40,40 @@ namespace utils {
 namespace logger {
 
 /**
- * A simple override of @c std::streambuf to accumulate the content of a stream into a contiguous buffer so that
- * the stream contents do not need to be copied to be accessed as a string. To avoid needless heap allocation
- * the initial put buffer is a member variable that should be large enough to accommodate most log entries.
+ * A simple override of @c std::streambuf to accumulate the content of a stream
+ * into a contiguous buffer so that the stream contents do not need to be copied
+ * to be accessed as a string. To avoid needless heap allocation the initial put
+ * buffer is a member variable that should be large enough to accommodate most
+ * log entries.
  */
 class LogEntryBuffer : public std::streambuf {
-public:
-    /// Construct an empty LogEntryBuffer.
-    LogEntryBuffer();
+ public:
+  /// Construct an empty LogEntryBuffer.
+  LogEntryBuffer();
 
-    int_type overflow(int_type ch) override;
+  int_type overflow(int_type ch) override;
 
-    /**
-     * Access the contents of the accumulated buffer as a string.
-     * @return The contents of the accumulated buffer as a string. The pointer returned is only guaranteed to be
-     * valid for the lifetime of this LogEntryBuffer, and only as long as no further modifications are made to it.
-     */
-    const char* c_str() const;
+  /**
+   * Access the contents of the accumulated buffer as a string.
+   * @return The contents of the accumulated buffer as a string. The pointer
+   * returned is only guaranteed to be valid for the lifetime of this
+   * LogEntryBuffer, and only as long as no further modifications are made to
+   * it.
+   */
+  const char* c_str() const;
 
-private:
-    /// A small embedded buffer used unless the data to be buffered grows beyond its capacity.
-    char m_smallBuffer[ACSDK_LOG_ENTRY_BUFFER_SMALL_BUFFER_SIZE];
+ private:
+  /// A small embedded buffer used unless the data to be buffered grows beyond
+  /// its capacity.
+  char m_smallBuffer[ACSDK_LOG_ENTRY_BUFFER_SMALL_BUFFER_SIZE];
 
-    /// Pointer to the start of whatever memory the buffered data has accumulated in.
-    char* m_base;
+  /// Pointer to the start of whatever memory the buffered data has accumulated
+  /// in.
+  char* m_base;
 
-    /// A resizable buffer used if and when the size of the data to buffer has exceeded SMALL_BUFFER_SIZE.
-    std::unique_ptr<std::vector<char>> m_largeBuffer;
+  /// A resizable buffer used if and when the size of the data to buffer has
+  /// exceeded SMALL_BUFFER_SIZE.
+  std::unique_ptr<std::vector<char>> m_largeBuffer;
 };
 
 }  // namespace logger

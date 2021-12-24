@@ -14,31 +14,28 @@
 #ifndef __Util_QuestEngine_MultiAction_H__
 #define __Util_QuestEngine_MultiAction_H__
 
-#include "util/questEngine/abstractAction.h"
 #include <string>
 #include <vector>
+
+#include "util/questEngine/abstractAction.h"
 
 namespace Anki {
 namespace Util {
 namespace QuestEngine {
-      
-class MultiAction : public AbstractAction
-{
-public:
-        
+
+class MultiAction : public AbstractAction {
+ public:
   explicit MultiAction(const std::vector<AbstractAction*>& actions);
   ~MultiAction();
-        
-  void PerformAction(QuestEngine& questEngine) override;
-        
-private:
-        
-  std::vector<AbstractAction*> _actions;
-        
-};
-      
-} // namespace QuestEngine
-} // namespace Util
-} // namsepace Anki
 
-#endif // __Util_QuestEngine_MultiAction_H__
+  void PerformAction(QuestEngine& questEngine) override;
+
+ private:
+  std::vector<AbstractAction*> _actions;
+};
+
+}  // namespace QuestEngine
+}  // namespace Util
+}  // namespace Anki
+
+#endif  // __Util_QuestEngine_MultiAction_H__

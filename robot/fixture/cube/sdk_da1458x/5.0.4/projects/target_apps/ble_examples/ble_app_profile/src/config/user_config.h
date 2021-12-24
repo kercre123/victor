@@ -6,9 +6,9 @@
  * @brief User configuration file.
  *
  * Copyright (C) 2015. Dialog Semiconductor Ltd, unpublished work. This computer
- * program includes Confidential, Proprietary Information and is a Trade Secret of
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited
- * unless authorized in writing. All Rights Reserved.
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -23,10 +23,10 @@
  ****************************************************************************************
  */
 
+#include "app_adv_data.h"
+#include "app_default_handlers.h"
 #include "app_user_config.h"
 #include "arch_api.h"
-#include "app_default_handlers.h"
-#include "app_adv_data.h"
 
 /*
  * VARIABLES
@@ -57,18 +57,20 @@ static const struct advertise_configuration user_adv_conf = {
     /// - GAPM_PROVIDED_RND_ADDR:   Provided random address
     /// - GAPM_GEN_STATIC_RND_ADDR: Generated static random address
     /// - GAPM_GEN_RSLV_ADDR:       Generated resolvable private random address
-    /// - GAPM_GEN_NON_RSLV_ADDR:   Generated non-resolvable private random address
-    /// - GAPM_PROVIDED_RECON_ADDR: Provided Reconnection address (only for GAPM_ADV_DIRECT)
+    /// - GAPM_GEN_NON_RSLV_ADDR:   Generated non-resolvable private random
+    /// address
+    /// - GAPM_PROVIDED_RECON_ADDR: Provided Reconnection address (only for
+    /// GAPM_ADV_DIRECT)
     .addr_src = GAPM_PUBLIC_ADDR,
 
     /// Duration of resolvable address before regenerate it.
     .renew_dur = 0,
 
     /// Minimum interval for advertising
-    .intv_min = 160,                    // 100ms (160*0.625ms)
+    .intv_min = 160,  // 100ms (160*0.625ms)
 
     /// Maximum interval for advertising
-    .intv_max = 160,                    // 100ms (160*0.625ms)
+    .intv_max = 160,  // 100ms (160*0.625ms)
 
     /// Advertising channel map
     .channel_map = 0x7,
@@ -78,7 +80,8 @@ static const struct advertise_configuration user_adv_conf = {
      *************************
      */
 
-    /// Host information advertising data (GAPM_ADV_NON_CONN and GAPM_ADV_UNDIRECT)
+    /// Host information advertising data (GAPM_ADV_NON_CONN and
+    /// GAPM_ADV_UNDIRECT)
     /// Advertising mode :
     /// - GAP_NON_DISCOVERABLE: Non discoverable mode
     /// - GAP_GEN_DISCOVERABLE: General discoverable mode
@@ -86,14 +89,19 @@ static const struct advertise_configuration user_adv_conf = {
     /// - GAP_BROADCASTER_MODE: Broadcaster mode
     .mode = GAP_GEN_DISCOVERABLE,
 
-    /// Host information advertising data (GAPM_ADV_NON_CONN and GAPM_ADV_UNDIRECT)
+    /// Host information advertising data (GAPM_ADV_NON_CONN and
+    /// GAPM_ADV_UNDIRECT)
     /// Advertising filter policy:
-    /// - ADV_ALLOW_SCAN_ANY_CON_ANY: Allow both scan and connection requests from anyone
-    /// - ADV_ALLOW_SCAN_WLST_CON_ANY: Allow both scan req from White List devices only and
+    /// - ADV_ALLOW_SCAN_ANY_CON_ANY: Allow both scan and connection requests
+    /// from anyone
+    /// - ADV_ALLOW_SCAN_WLST_CON_ANY: Allow both scan req from White List
+    /// devices only and
     ///   connection req from anyone
-    /// - ADV_ALLOW_SCAN_ANY_CON_WLST: Allow both scan req from anyone and connection req
+    /// - ADV_ALLOW_SCAN_ANY_CON_WLST: Allow both scan req from anyone and
+    /// connection req
     ///   from White List devices only
-    /// - ADV_ALLOW_SCAN_WLST_CON_WLST: Allow scan and connection requests from White List
+    /// - ADV_ALLOW_SCAN_WLST_CON_WLST: Allow scan and connection requests from
+    /// White List
     ///   devices only
     .adv_filt_policy = ADV_ALLOW_SCAN_ANY_CON_ANY,
 
@@ -113,8 +121,8 @@ static const struct advertise_configuration user_adv_conf = {
  *
  * Common advertising or scan response data for:
  *
- * - Nonconnectable undirected advertising event (ADV_NONCONN_IND). In this mode the scan
- *   response data are useless.
+ * - Nonconnectable undirected advertising event (ADV_NONCONN_IND). In this mode
+ *the scan response data are useless.
  *
  * - Connectable undirected advertising event (ADV_IND).
  *
@@ -122,27 +130,27 @@ static const struct advertise_configuration user_adv_conf = {
  */
 /// Advertising service data
 /// Advertising AD type flags, shall not be set in advertising data
-#define USER_ADVERTISE_DATA    ("\x03"\
-                                ADV_TYPE_COMPLETE_LIST_16BIT_SERVICE_IDS\
-                                ADV_UUID_DEVICE_INFORMATION_SERVICE\
-                                "\x11"\
-                                ADV_TYPE_COMPLETE_LIST_128BIT_SERVICE_IDS\
-                                "\x2F\x2A\x93\xA6\xBD\xD8\x41\x52\xAC\x0B\x10\x99\x2E\xC6\xFE\xED")
+#define USER_ADVERTISE_DATA                         \
+  ("\x03" ADV_TYPE_COMPLETE_LIST_16BIT_SERVICE_IDS  \
+       ADV_UUID_DEVICE_INFORMATION_SERVICE          \
+   "\x11" ADV_TYPE_COMPLETE_LIST_128BIT_SERVICE_IDS \
+   "\x2F\x2A\x93\xA6\xBD\xD8\x41\x52\xAC\x0B\x10\x99\x2E\xC6\xFE\xED")
 
 /// Advertising data length - maximum 28 bytes, 3 bytes are reserved to set
-#define USER_ADVERTISE_DATA_LEN (sizeof(USER_ADVERTISE_DATA)-1)
+#define USER_ADVERTISE_DATA_LEN (sizeof(USER_ADVERTISE_DATA) - 1)
 
 /// Scan response data
 #define USER_ADVERTISE_SCAN_RESPONSE_DATA ""
 
 /// Scan response data length- maximum 31 bytes
-#define USER_ADVERTISE_SCAN_RESPONSE_DATA_LEN (sizeof(USER_ADVERTISE_SCAN_RESPONSE_DATA)-1)
+#define USER_ADVERTISE_SCAN_RESPONSE_DATA_LEN \
+  (sizeof(USER_ADVERTISE_SCAN_RESPONSE_DATA) - 1)
 
 /// Device name to be placed in advertising or scan response data
-#define USER_DEVICE_NAME    ("DIALOG-PRFL")
+#define USER_DEVICE_NAME ("DIALOG-PRFL")
 
 /// Device name length
-#define USER_DEVICE_NAME_LEN (sizeof(USER_DEVICE_NAME)-1)
+#define USER_DEVICE_NAME_LEN (sizeof(USER_DEVICE_NAME) - 1)
 
 /*
  ****************************************************************************************
@@ -152,48 +160,59 @@ static const struct advertise_configuration user_adv_conf = {
  ****************************************************************************************
  */
 static const struct gapm_configuration user_gapm_conf = {
-     /// Device Role: Central, Peripheral, Observer or Broadcaster
+    /// Device Role: Central, Peripheral, Observer or Broadcaster
     .role = GAP_PERIPHERAL_SLV,
 
     /// Device IRK used for resolvable random BD address generation (LSB first)
-    .irk = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+    .irk = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00},
 
     /// Device Appearance (0x0000 - Unknown appearance)
-    //Fill in according to https://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.gap.appearance.xml
+    // Fill in according to
+    // https://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.gap.appearance.xml
     .appearance = 0,
 
-    /// Device Appearance write permission requirements for peer device (@see gapm_write_att_perm)
+    /// Device Appearance write permission requirements for peer device (@see
+    /// gapm_write_att_perm)
     .appearance_write_perm = GAPM_WRITE_DISABLE,
 
-    /// Device Name write permission requirements for peer device (@see gapm_write_att_perm)
+    /// Device Name write permission requirements for peer device (@see
+    /// gapm_write_att_perm)
     .name_write_perm = GAPM_WRITE_DISABLE,
 
     /// Maximal MTU
     .max_mtu = 23,
 
-    /// Peripheral only: *****************************************************************
-    /// Slave preferred Minimum of connection interval  measured in ble double slots (1.25ms)
-    /// use the macro MS_TO_DOUBLESLOTS to convert from milliseconds (ms) to double slots
+    /// Peripheral only:
+    /// *****************************************************************
+    /// Slave preferred Minimum of connection interval  measured in ble double
+    /// slots (1.25ms)
+    /// use the macro MS_TO_DOUBLESLOTS to convert from milliseconds (ms) to
+    /// double slots
     .con_intv_min = MS_TO_DOUBLESLOTS(10),
 
-    /// Slave preferred Maximum of connection interval  measured in ble double slots (1.25ms)
-    /// use the macro MS_TO_DOUBLESLOTS to convert from milliseconds (ms) to double slots
+    /// Slave preferred Maximum of connection interval  measured in ble double
+    /// slots (1.25ms)
+    /// use the macro MS_TO_DOUBLESLOTS to convert from milliseconds (ms) to
+    /// double slots
     .con_intv_max = MS_TO_DOUBLESLOTS(20),
 
-    /// Slave preferred Connection latency. It is measured in connection events skipped
+    /// Slave preferred Connection latency. It is measured in connection events
+    /// skipped
     .con_latency = 0,
 
     /// Slave preferred Link supervision timeout measured in timer units (10 ms)
-    /// use the macro MS_TO_TIMERUNITS to convert from milliseconds (ms) to timer units
+    /// use the macro MS_TO_TIMERUNITS to convert from milliseconds (ms) to
+    /// timer units
     .superv_to = MS_TO_TIMERUNITS(1000),
 
     /// Privacy settings bit field (0b1 = enabled, 0b0 = disabled)
     ///  - [bit 0]: Privacy Support
-    ///  - [bit 1]: Multiple Bond Support (Peripheral only); If enabled, privacy flag is
+    ///  - [bit 1]: Multiple Bond Support (Peripheral only); If enabled, privacy
+    ///  flag is
     ///             read only.
     ///  - [bit 2]: Reconnection address visible.
-    .flags = 0
-};
+    .flags = 0};
 
 /*
  ****************************************************************************************
@@ -202,29 +221,37 @@ static const struct gapm_configuration user_gapm_conf = {
  *
  ****************************************************************************************
  */
-static const struct connection_param_configuration user_connection_param_conf = {
-    /// Connection interval minimum measured in ble double slots (1.25ms)
-    /// use the macro MS_TO_DOUBLESLOTS to convert from milliseconds (ms) to double slots
-    .intv_min = MS_TO_DOUBLESLOTS(10),
+static const struct connection_param_configuration user_connection_param_conf =
+    {
+        /// Connection interval minimum measured in ble double slots (1.25ms)
+        /// use the macro MS_TO_DOUBLESLOTS to convert from milliseconds (ms) to
+        /// double slots
+        .intv_min = MS_TO_DOUBLESLOTS(10),
 
-    /// Connection interval maximum measured in ble double slots (1.25ms)
-    /// use the macro MS_TO_DOUBLESLOTS to convert from milliseconds (ms) to double slots
-    .intv_max = MS_TO_DOUBLESLOTS(20),
+        /// Connection interval maximum measured in ble double slots (1.25ms)
+        /// use the macro MS_TO_DOUBLESLOTS to convert from milliseconds (ms) to
+        /// double slots
+        .intv_max = MS_TO_DOUBLESLOTS(20),
 
-    /// Latency measured in connection events
-    .latency = 0,
+        /// Latency measured in connection events
+        .latency = 0,
 
-    /// Supervision timeout measured in timer units (10 ms)
-    /// use the macro MS_TO_TIMERUNITS to convert from milliseconds (ms) to timer units
-    .time_out = MS_TO_TIMERUNITS(1250),
+        /// Supervision timeout measured in timer units (10 ms)
+        /// use the macro MS_TO_TIMERUNITS to convert from milliseconds (ms) to
+        /// timer units
+        .time_out = MS_TO_TIMERUNITS(1250),
 
-    /// Minimum Connection Event Duration measured in ble double slots (1.25ms)
-    /// use the macro MS_TO_DOUBLESLOTS to convert from milliseconds (ms) to double slots
-    .ce_len_min = MS_TO_DOUBLESLOTS(0),
+        /// Minimum Connection Event Duration measured in ble double slots
+        /// (1.25ms)
+        /// use the macro MS_TO_DOUBLESLOTS to convert from milliseconds (ms) to
+        /// double slots
+        .ce_len_min = MS_TO_DOUBLESLOTS(0),
 
-    /// Maximum Connection Event Duration measured in ble double slots (1.25ms)
-    /// use the macro MS_TO_DOUBLESLOTS to convert from milliseconds (ms) to double slots
-    .ce_len_max = MS_TO_DOUBLESLOTS(0),
+        /// Maximum Connection Event Duration measured in ble double slots
+        /// (1.25ms)
+        /// use the macro MS_TO_DOUBLESLOTS to convert from milliseconds (ms) to
+        /// double slots
+        .ce_len_max = MS_TO_DOUBLESLOTS(0),
 };
 
 /*
@@ -234,22 +261,22 @@ static const struct connection_param_configuration user_connection_param_conf = 
  *
  ****************************************************************************************
  */
-static const struct default_handlers_configuration  user_default_hnd_conf = {
-    //Configure the advertise operation used by the default handlers
-    //Possible values:
+static const struct default_handlers_configuration user_default_hnd_conf = {
+    // Configure the advertise operation used by the default handlers
+    // Possible values:
     //  - DEF_ADV_FOREVER
     //  - DEF_ADV_WITH_TIMEOUT
     .adv_scenario = DEF_ADV_FOREVER,
 
-    //Configure the advertise period in case of DEF_ADV_WITH_TIMEOUT.
-    //It is measured in timer units (10ms). Use MS_TO_TIMERUNITS macro to convert
-    //from milliseconds (ms) to timer units.
+    // Configure the advertise period in case of DEF_ADV_WITH_TIMEOUT.
+    // It is measured in timer units (10ms). Use MS_TO_TIMERUNITS macro to
+    // convert
+    // from milliseconds (ms) to timer units.
     .advertise_period = MS_TO_TIMERUNITS(10000),
 
-    //Configure the security start operation of the default handlers
-    //if the security is enabled (CFG_APP_SECURITY)
-    .security_request_scenario = DEF_SEC_REQ_NEVER
-};
+    // Configure the security start operation of the default handlers
+    // if the security is enabled (CFG_APP_SECURITY)
+    .security_request_scenario = DEF_SEC_REQ_NEVER};
 
 /*
  ****************************************************************************************
@@ -263,7 +290,8 @@ static const struct central_configuration user_central_conf = {
     /// - GAPM_CONNECTION_DIRECT: Direct connection operation
     /// - GAPM_CONNECTION_AUTO: Automatic connection operation
     /// - GAPM_CONNECTION_SELECTIVE: Selective connection operation
-    /// - GAPM_CONNECTION_NAME_REQUEST: Name Request operation (requires to start a direct
+    /// - GAPM_CONNECTION_NAME_REQUEST: Name Request operation (requires to
+    /// start a direct
     ///   connection)
     .code = GAPM_CONNECTION_DIRECT,
 
@@ -272,8 +300,10 @@ static const struct central_configuration user_central_conf = {
     /// - GAPM_PROVIDED_RND_ADDR: Provided random address
     /// - GAPM_GEN_STATIC_RND_ADDR: Generated static random address
     /// - GAPM_GEN_RSLV_ADDR: Generated resolvable private random address
-    /// - GAPM_GEN_NON_RSLV_ADDR: Generated non-resolvable private random address
-    /// - GAPM_PROVIDED_RECON_ADDR: Provided Reconnection address (only for GAPM_ADV_DIRECT)
+    /// - GAPM_GEN_NON_RSLV_ADDR: Generated non-resolvable private random
+    /// address
+    /// - GAPM_PROVIDED_RECON_ADDR: Provided Reconnection address (only for
+    /// GAPM_ADV_DIRECT)
     .addr_src = GAPM_PUBLIC_ADDR,
 
     /// Duration of resolvable address before regenerate it.
@@ -285,7 +315,7 @@ static const struct central_configuration user_central_conf = {
     /// Scan window size
     .scan_window = 0x160,
 
-     /// Minimum of connection interval
+    /// Minimum of connection interval
     .con_intv_min = 100,
 
     /// Maximum of connection interval
@@ -297,7 +327,7 @@ static const struct central_configuration user_central_conf = {
     /// Link supervision timeout
     .superv_to = 0x1F4,
 
-     /// Minimum CE length
+    /// Minimum CE length
     .ce_len_min = 0,
 
     /// Maximum CE length
@@ -381,7 +411,7 @@ static const struct security_configuration user_security_conf = {
      *
      **************************************************************************************
      */
-    .iocap          = GAP_IO_CAP_NO_INPUT_NO_OUTPUT,
+    .iocap = GAP_IO_CAP_NO_INPUT_NO_OUTPUT,
 
     /**************************************************************************************
      * OOB information (@see gap_oob)
@@ -391,7 +421,7 @@ static const struct security_configuration user_security_conf = {
      *
      **************************************************************************************
      */
-    .oob            = GAP_OOB_AUTH_DATA_NOT_PRESENT,
+    .oob = GAP_OOB_AUTH_DATA_NOT_PRESENT,
 
     /**************************************************************************************
      * Authentication (@see gap_auth)
@@ -403,24 +433,28 @@ static const struct security_configuration user_security_conf = {
      *
      **************************************************************************************
      */
-    .auth           = GAP_AUTH_REQ_NO_MITM_BOND,
+    .auth = GAP_AUTH_REQ_NO_MITM_BOND,
 
     /**************************************************************************************
      * Device security requirements (minimum security level). (@see gap_sec_req)
      *
-     * - GAP_NO_SEC                       No security (no authentication and encryption)
-     * - GAP_SEC1_NOAUTH_PAIR_ENC         Unauthenticated pairing with encryption
+     * - GAP_NO_SEC                       No security (no authentication and
+     *encryption)
+     * - GAP_SEC1_NOAUTH_PAIR_ENC         Unauthenticated pairing with
+     *encryption
      * - GAP_SEC1_AUTH_PAIR_ENC           Authenticated pairing with encryption
-     * - GAP_SEC2_NOAUTH_DATA_SGN         Unauthenticated pairing with data signing
-     * - GAP_SEC2_AUTH_DATA_SGN           Authentication pairing with data signing
+     * - GAP_SEC2_NOAUTH_DATA_SGN         Unauthenticated pairing with data
+     *signing
+     * - GAP_SEC2_AUTH_DATA_SGN           Authentication pairing with data
+     *signing
      * - GAP_SEC_UNDEFINED                Unrecognized security
      *
      **************************************************************************************
      */
-    .sec_req        = GAP_NO_SEC,
+    .sec_req = GAP_NO_SEC,
 
-     /// Encryption key size (7 to 16) - LTK Key Size
-    .key_size       = KEY_LEN,
+    /// Encryption key size (7 to 16) - LTK Key Size
+    .key_size = KEY_LEN,
 
     /**************************************************************************************
      * Initiator key distribution (@see gap_kdist)
@@ -433,7 +467,7 @@ static const struct security_configuration user_security_conf = {
      *
      **************************************************************************************
      */
-    .ikey_dist      = GAP_KDIST_SIGNKEY,
+    .ikey_dist = GAP_KDIST_SIGNKEY,
 
     /**************************************************************************************
      * Responder key distribution (@see gap_kdist)
@@ -446,7 +480,7 @@ static const struct security_configuration user_security_conf = {
      *
      **************************************************************************************
      */
-    .rkey_dist      = GAP_KDIST_ENCKEY,
+    .rkey_dist = GAP_KDIST_ENCKEY,
 };
 
-#endif // _USER_CONFIG_H_
+#endif  // _USER_CONFIG_H_

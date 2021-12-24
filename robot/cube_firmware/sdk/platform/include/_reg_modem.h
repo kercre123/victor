@@ -5,6 +5,4 @@
 
 #define REG_MODEM_BASE_ADDR 0x00000000
 
-
-#endif // __REG_MODEM_H_
-
+#endif  // __REG_MODEM_H_

@@ -25,17 +25,15 @@
  ****************************************************************************************
  */
 
-#include "rwip_config.h"          // stack configuration
-#include "ke_msg.h"               // messaging definition
-
+#include "ke_msg.h"       // messaging definition
+#include "rwip_config.h"  // stack configuration
 
 /*
  * DEFINITIONS
  ****************************************************************************************
  */
 /// Timers can be set up to 300s in the future
-#define KE_TIMER_DELAY_MAX      30000
-
+#define KE_TIMER_DELAY_MAX 30000
 
 /*
  * TYPE DEFINITIONS
@@ -43,24 +41,21 @@
  */
 
 /// Timer Object
-struct ke_timer
-{
-    /// next ke timer
-    struct ke_timer *next;
-    /// message identifier
-    ke_msg_id_t     id;
-    /// task identifier
-    ke_task_id_t    task;
-    /// time value
-    uint32_t        time;
+struct ke_timer {
+  /// next ke timer
+  struct ke_timer *next;
+  /// message identifier
+  ke_msg_id_t id;
+  /// task identifier
+  ke_task_id_t task;
+  /// time value
+  uint32_t time;
 };
-
 
 /*
  * FUNCTION PROTOTYPES
  ****************************************************************************************
  */
-
 
 /**
  ****************************************************************************************
@@ -88,9 +83,11 @@ void ke_timer_init(void);
  ****************************************************************************************
  */
 #ifndef __DA14581
-void ke_timer_set(ke_msg_id_t const timer_id, ke_task_id_t const task, uint16_t const delay);
+void ke_timer_set(ke_msg_id_t const timer_id, ke_task_id_t const task,
+                  uint16_t const delay);
 #else
-void ke_timer_set(ke_msg_id_t const timer_id, ke_task_id_t const task, uint32_t delay);
+void ke_timer_set(ke_msg_id_t const timer_id, ke_task_id_t const task,
+                  uint32_t delay);
 #endif
 
 /**
@@ -110,26 +107,26 @@ void ke_timer_clear(ke_msg_id_t const timerid, ke_task_id_t const task);
  ****************************************************************************************
  * @brief Checks if a requested timer is active.
  *
- * This function pops the first timer from the timer queue and notifies the appropriate
- * task by sending a kernel message. If the timer is periodic, it is set again;
- * if it is one-shot, the timer is freed. The function checks also the next timers
- * and process them if they have expired or are about to expire.
+ * This function pops the first timer from the timer queue and notifies the
+ *appropriate task by sending a kernel message. If the timer is periodic, it is
+ *set again; if it is one-shot, the timer is freed. The function checks also the
+ *next timers and process them if they have expired or are about to expire.
  ****************************************************************************************
  */
 bool ke_timer_active(ke_msg_id_t const timer_id, ke_task_id_t const task_id);
-
 
 /**
  ****************************************************************************************
  * @brief Check if sleep mode is possible
  *
- * The function takes as argument the allowed sleep duration that must not be increased.
- * If a timer needs an earlier wake-up than initial duration, the allowed sleep duration
- * is updated.
- * If a timer needs a shorter duration than the wake-up delay, sleep is not possible and
- * the function returns a bad status.
+ * The function takes as argument the allowed sleep duration that must not be
+ *increased. If a timer needs an earlier wake-up than initial duration, the
+ *allowed sleep duration is updated. If a timer needs a shorter duration than
+ *the wake-up delay, sleep is not possible and the function returns a bad
+ *status.
  *
- * @param[in/out] sleep_duration   Initial allowed sleep duration (in slot of 625us)
+ * @param[in/out] sleep_duration   Initial allowed sleep duration (in slot of
+ *625us)
  * @param[in]     wakeup_delay     Delay for system wake-up (in slot of 625us)
  *
  * @return true if sleep is allowed, false otherwise
@@ -139,4 +136,4 @@ bool ke_timer_sleep_check(uint32_t *sleep_duration, uint32_t wakeup_delay);
 
 /// @} TIMER
 
-#endif // _KE_TIMER_H_
+#endif  // _KE_TIMER_H_

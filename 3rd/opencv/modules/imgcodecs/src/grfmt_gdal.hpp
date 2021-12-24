@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -13,23 +14,29 @@
 // Copyright (C) 2000, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of Intel Corporation may not be used to endorse or promote products
+//   * The name of Intel Corporation may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
-// This software is provided by the copyright holders and contributors "as is" and
+// This software is provided by the copyright holders and contributors "as is"
+and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -53,114 +60,101 @@
 
 /// Geospatial Data Abstraction Library
 #include <cpl_conv.h>
-#include <gdal_priv.h>
 #include <gdal.h>
-
+#include <gdal_priv.h>
 
 /// Start of CV Namespace
 namespace cv {
 
 /**
  * Convert GDAL Pixel Range to OpenCV Pixel Range
-*/
-double range_cast( const GDALDataType& gdalType,
-                   const int& cvDepth,
-                   const double& value );
+ */
+double range_cast(const GDALDataType& gdalType, const int& cvDepth,
+                  const double& value);
 
 /**
  * Convert GDAL Palette Interpretation to OpenCV Pixel Type
-*/
-int gdalPaletteInterpretation2OpenCV( GDALPaletteInterp const& paletteInterp,
-                                      GDALDataType const& gdalType );
+ */
+int gdalPaletteInterpretation2OpenCV(GDALPaletteInterp const& paletteInterp,
+                                     GDALDataType const& gdalType);
 
 /**
  * Convert a GDAL Raster Type to OpenCV Type
-*/
-int gdal2opencv( const GDALDataType& gdalType, const int& channels );
+ */
+int gdal2opencv(const GDALDataType& gdalType, const int& channels);
 
 /**
  * Write an image to pixel
-*/
-void write_pixel( const double& pixelValue,
-                  GDALDataType const& gdalType,
-                  const int& gdalChannels,
-                  Mat& image,
-                  const int& row,
-                  const int& col,
-                  const int& channel );
+ */
+void write_pixel(const double& pixelValue, GDALDataType const& gdalType,
+                 const int& gdalChannels, Mat& image, const int& row,
+                 const int& col, const int& channel);
 
 /**
  * Write a color table pixel to the image
-*/
-void write_ctable_pixel( const double& pixelValue,
-                         const GDALDataType& gdalType,
-                         const GDALColorTable* gdalColorTable,
-                         Mat& image,
-                         const int& y,
-                         const int& x,
-                         const int& c );
+ */
+void write_ctable_pixel(const double& pixelValue, const GDALDataType& gdalType,
+                        const GDALColorTable* gdalColorTable, Mat& image,
+                        const int& y, const int& x, const int& c);
 
 /**
  * Loader for GDAL
-*/
-class GdalDecoder : public BaseImageDecoder{
+ */
+class GdalDecoder : public BaseImageDecoder {
+ public:
+  /**
+   * Default Constructor
+   */
+  GdalDecoder();
 
-    public:
+  /**
+   * Destructor
+   */
+  ~GdalDecoder();
 
-        /**
-         * Default Constructor
-        */
-        GdalDecoder();
+  /**
+   * Read image data
+   */
+  bool readData(Mat& img);
 
-        /**
-         * Destructor
-        */
-        ~GdalDecoder();
+  /**
+   * Read the image header
+   */
+  bool readHeader();
 
-        /**
-         * Read image data
-        */
-        bool readData( Mat& img );
+  /**
+   * Close the module
+   */
+  void close();
 
-        /**
-         * Read the image header
-        */
-        bool readHeader();
+  /**
+   * Create a new decoder
+   */
+  ImageDecoder newDecoder() const;
 
-        /**
-         * Close the module
-        */
-        void close();
+  /**
+   * Test the file signature
+   *
+   * In general, this should be avoided as the user should specifically request
+   * GDAL. The reason is that GDAL tends to overlap with other image formats and
+   * it is probably safer to use other formats first.
+   */
+  virtual bool checkSignature(const String& signature) const;
 
-        /**
-         * Create a new decoder
-        */
-        ImageDecoder newDecoder() const;
+ protected:
+  /// GDAL Dataset
+  GDALDataset* m_dataset;
 
-        /**
-         * Test the file signature
-         *
-         * In general, this should be avoided as the user should specifically request GDAL.
-         * The reason is that GDAL tends to overlap with other image formats and it is probably
-         * safer to use other formats first.
-        */
-        virtual bool checkSignature( const String& signature ) const;
+  /// GDAL Driver
+  GDALDriver* m_driver;
 
-    protected:
+  /// Check if we are reading from a color table
+  bool hasColorTable;
 
-        /// GDAL Dataset
-        GDALDataset* m_dataset;
+};  /// End of GdalDecoder Class
 
-        /// GDAL Driver
-        GDALDriver* m_driver;
+}  // namespace cv
 
-        /// Check if we are reading from a color table
-        bool hasColorTable;
+#endif /*HAVE_GDAL*/
 
-}; /// End of GdalDecoder Class
-
-} /// End of Namespace cv
-
-#endif/*HAVE_GDAL*/
-
-#endif/*__GRFMT_GDAL_HPP__*/
+#endif /*__GRFMT_GDAL_HPP__*/

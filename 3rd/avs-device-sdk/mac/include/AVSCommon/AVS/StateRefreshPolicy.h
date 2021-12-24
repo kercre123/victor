@@ -21,28 +21,33 @@ namespace avsCommon {
 namespace avs {
 
 /**
- * An enum class used to specify the refresh policy for the state information provided by a @c stateProviderInterface.
- * The @c stateProviderInterface must specify the refresh policy when it updates its state via @c setState.
+ * An enum class used to specify the refresh policy for the state information
+ * provided by a @c stateProviderInterface. The @c stateProviderInterface must
+ * specify the refresh policy when it updates its state via @c setState.
  */
 enum class StateRefreshPolicy {
-    /**
-     * Indicates to the ContextManager that the state information need not be updated on a @c getContext request. The
-     * @c stateProviderInterface is responsible for updating its state manually.
-     */
-    NEVER,
+  /**
+   * Indicates to the ContextManager that the state information need not be
+   * updated on a @c getContext request. The
+   * @c stateProviderInterface is responsible for updating its state manually.
+   */
+  NEVER,
 
-    /**
-     * Indicates to the @c ContextManager that the stateProvider needs to be queried and the state refreshed every time
-     * it processes a @c getContext request.
-     */
-    ALWAYS,
+  /**
+   * Indicates to the @c ContextManager that the stateProvider needs to be
+   * queried and the state refreshed every time it processes a @c getContext
+   * request.
+   */
+  ALWAYS,
 
-    /**
-     * Indicates to the @c ContextManager that the stateProvider needs to be queried and the state refreshed every time
-     * it processes a @c getContext request.  The stateProvider may choose to not report context by supplying an empty
-     * @c jsonState via @c setState.
-     */
-    SOMETIMES
+  /**
+   * Indicates to the @c ContextManager that the stateProvider needs to be
+   * queried and the state refreshed every time it processes a @c getContext
+   * request.  The stateProvider may choose to not report context by supplying
+   * an empty
+   * @c jsonState via @c setState.
+   */
+  SOMETIMES
 };
 
 }  // namespace avs

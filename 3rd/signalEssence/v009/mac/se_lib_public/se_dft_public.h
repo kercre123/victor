@@ -21,24 +21,23 @@ extern "C" {
 #ifndef __se_dft_public_h
 #define __se_dft_public_h
 
-#include "se_types.h"
 #include "se_platform.h"
+#include "se_types.h"
 
 typedef enum {
-    SE_DFT_DEFAULT = 0,
-    SE_DFT_FFTPACK,
-    SE_DFT_FFTW,
-    SE_DFT_FXP,
-    SE_DFT_PFFFT,
-    SE_DFT_QF,
-    SE_DFT_LAST
+  SE_DFT_DEFAULT = 0,
+  SE_DFT_FFTPACK,
+  SE_DFT_FFTW,
+  SE_DFT_FXP,
+  SE_DFT_PFFFT,
+  SE_DFT_QF,
+  SE_DFT_LAST
 } SeDftLib_t;
 
 //
 // call this function to specify a DFT implementation,
 void SeDftSetApi(SeDftLib_t dftLib);
-#endif //ifndef
+#endif  // ifndef
 #ifdef __cplusplus
 }
 #endif
-

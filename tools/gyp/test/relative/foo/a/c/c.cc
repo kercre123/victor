@@ -4,6 +4,4 @@
  * found in the LICENSE file.
  */
 
-int func() {
-  return 0;
-}
+int func() { return 0; }

@@ -5,10 +5,10 @@
  *
  * @brief Complementary API to handle user defined messages.
  *
- * Copyright (C) 2015. Dialog Semiconductor Ltd, unpublished work. This computer 
- * program includes Confidential, Proprietary Information and is a Trade Secret of 
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
- * unless authorized in writing. All Rights Reserved.
+ * Copyright (C) 2015. Dialog Semiconductor Ltd, unpublished work. This computer
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -21,7 +21,7 @@
 /**
  ****************************************************************************************
  * @addtogroup APP
- * @ingroup 
+ * @ingroup
  *
  * @brief
  *
@@ -65,11 +65,8 @@ void app_msg_send_wakeup_ble(void *cmd);
  * @return void
  ****************************************************************************************
  */
-__INLINE void app_msg_send(void *cmd)
-{
-    ke_msg_send(cmd);
-}
+__INLINE void app_msg_send(void *cmd) { ke_msg_send(cmd); }
 
 /// @} APP
 
-#endif // _APP_MSG_UTILS_H_
+#endif  // _APP_MSG_UTILS_H_

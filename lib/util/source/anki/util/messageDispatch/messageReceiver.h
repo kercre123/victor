@@ -1,20 +1,20 @@
 /**
-* File: messageReceiver
-*
-* Author: damjan
-* Created: 7/24/14
-*
-* Description: Base class for receiving messages. To use either:
-*  - extend from this class
-*  - have an instance of this object in your class
-*  Once the dispatcher is set, you can subscribe for different
-*  message types by using multiple receiver methods. At descruction
-*  time there is automatic subscription removal.
-*
-*
-* Copyright: Anki, Inc. 2014
-*
-**/
+ * File: messageReceiver
+ *
+ * Author: damjan
+ * Created: 7/24/14
+ *
+ * Description: Base class for receiving messages. To use either:
+ *  - extend from this class
+ *  - have an instance of this object in your class
+ *  Once the dispatcher is set, you can subscribe for different
+ *  message types by using multiple receiver methods. At descruction
+ *  time there is automatic subscription removal.
+ *
+ *
+ * Copyright: Anki, Inc. 2014
+ *
+ **/
 
 #ifndef Util_MessageDispatch_MessageReceiver_H__
 #define Util_MessageDispatch_MessageReceiver_H__
@@ -24,58 +24,52 @@
 namespace Anki {
 namespace Util {
 
-template <typename MessageType, typename ...Args>
+template <typename MessageType, typename... Args>
 class MessageReceiver {
   friend class MessageDispatcher<MessageType, Args...>;
-  
-public:
+
+ public:
   using MessageType_t = MessageType;
   using MessageDispatcher_t = MessageDispatcher<MessageType, Args...>;
   using MessageResponder_t = MessageResponder<MessageType, Args...>;
   using MessageTag_t = typename MessageType::Tag;
   static_assert(std::is_enum<MessageTag_t>::value,
                 "Message Tag must be an enum type");
-  
-  MessageReceiver<MessageType, Args...>() : _dispatcher(nullptr) {};
-  virtual ~MessageReceiver<MessageType, Args...>()
-  {
+
+  MessageReceiver<MessageType, Args...>() : _dispatcher(nullptr){};
+  virtual ~MessageReceiver<MessageType, Args...>() {
     Unsubscribe();
     _dispatcher = nullptr;
   }
-  
-  void SetDispatcher(MessageDispatcher_t* dispatcher)
-  {
-    if (dispatcher != _dispatcher ) {
+
+  void SetDispatcher(MessageDispatcher_t* dispatcher) {
+    if (dispatcher != _dispatcher) {
       Unsubscribe();
       _dispatcher = dispatcher;
       SetDispatcherPrivate(_dispatcher);
     }
   }
-  
-  void Subscribe(MessageTag_t messageTag, const MessageResponder_t& responder)
-  {
+
+  void Subscribe(MessageTag_t messageTag, const MessageResponder_t& responder) {
     assert(nullptr != _dispatcher);
-    if(nullptr != _dispatcher) {
+    if (nullptr != _dispatcher) {
       _dispatcher->Subscribe(this, messageTag, responder);
     }
   }
 
-  void Unsubscribe(MessageTag_t messageTag)
-  {
-    if(nullptr != _dispatcher) {
+  void Unsubscribe(MessageTag_t messageTag) {
+    if (nullptr != _dispatcher) {
       _dispatcher->Unsubscribe(this, messageTag);
     }
   }
-  
-  void Unsubscribe()
-  {
+
+  void Unsubscribe() {
     if (nullptr != _dispatcher) {
       _dispatcher->Unsubscribe(this);
     }
   }
-  
-  void SendMessage(const MessageType_t* message, Args ... args)
-  {
+
+  void SendMessage(const MessageType_t* message, Args... args) {
     if (nullptr != _dispatcher) {
       _dispatcher->SendMessage(message, args...);
     }
@@ -102,7 +96,8 @@ public:
   // }
   //
   // void GameService::AddAI(CommanderDefinitionIdType commanderId,
-  //   VehicleConnectionUUID vehicleConnectionUUID); // the commander/vehicle typedefs resolve to uint32/uint64
+  //   VehicleConnectionUUID vehicleConnectionUUID); // the commander/vehicle
+  //   typedefs resolve to uint32/uint64
   //
   // SubscribeMember<ToEngineMessage::Tag::addAI>(&GameService::AddAI);
   //
@@ -120,10 +115,11 @@ public:
   // _externalInterfaceMessageReceiver.SubscribeMember<ToEngineMessage::Tag::requestConnectToPlayer>(
   //   &PlayerService::RequestConnectToPlayer, this);
   //
-  // This example has an extra parameter on the end of the SubscribeMember call ("this") to tell
-  // the message receiver what object the message handler function (PlayerService::RequestConnectToPlayer)
-  // should be invoked on, since PlayerService isn't calling this method on itself, but rather on an external
-  // message receiver.
+  // This example has an extra parameter on the end of the SubscribeMember call
+  // ("this") to tell the message receiver what object the message handler
+  // function (PlayerService::RequestConnectToPlayer) should be invoked on,
+  // since PlayerService isn't calling this method on itself, but rather on an
+  // external message receiver.
   //
   //////////////////////////////////
   // StoreService: RequestStore message
@@ -139,40 +135,36 @@ public:
   // SubscribeMember<ToEngineMessage::Tag::requestStore>(&StoreService::RequestStoreCatalog);
   //
   //////////////////////////////////////////////////////////
-protected:
+ protected:
   // Protected SubscribeMember functions allow for subscribing
   // member methods of derived classes
-  template <MessageTag_t Tag, typename Subscriber, typename ...MsgArgs>
-  void SubscribeMember(void (Subscriber::*handlerFunc)(MsgArgs...))
-  {
+  template <MessageTag_t Tag, typename Subscriber, typename... MsgArgs>
+  void SubscribeMember(void (Subscriber::*handlerFunc)(MsgArgs...)) {
     SubscribeMember<Tag>(handlerFunc, static_cast<Subscriber*>(this));
   }
 
-  template <MessageTag_t Tag, typename Subscriber, typename ...MsgArgs>
-  void SubscribeMember(void (Subscriber::*handlerFunc)(MsgArgs...) const)
-  {
+  template <MessageTag_t Tag, typename Subscriber, typename... MsgArgs>
+  void SubscribeMember(void (Subscriber::*handlerFunc)(MsgArgs...) const) {
     SubscribeMember<Tag>(handlerFunc, static_cast<Subscriber*>(this));
   }
 
-public:
+ public:
   // Public SubscribeMember functions allow for external objects
   // with access to a MessageReceiver to subscribe themselves to
   // a message by passing their instance pointer
-  template <MessageTag_t Tag, typename Subscriber, typename ...MsgArgs>
+  template <MessageTag_t Tag, typename Subscriber, typename... MsgArgs>
   void SubscribeMember(void (Subscriber::*handlerFunc)(MsgArgs...),
-                       Subscriber* subscriber)
-  {
-    auto boundHandler = [subscriber, handlerFunc] (MsgArgs... args) {
+                       Subscriber* subscriber) {
+    auto boundHandler = [subscriber, handlerFunc](MsgArgs... args) {
       (subscriber->*handlerFunc)(args...);
     };
     SubscribeCallable<Tag>(boundHandler);
   }
 
-  template <MessageTag_t Tag, typename Subscriber, typename ...MsgArgs>
+  template <MessageTag_t Tag, typename Subscriber, typename... MsgArgs>
   void SubscribeMember(void (Subscriber::*handlerFunc)(MsgArgs...) const,
-                       Subscriber* subscriber)
-  {
-    auto boundHandler = [subscriber, handlerFunc] (MsgArgs... args) {
+                       Subscriber* subscriber) {
+    auto boundHandler = [subscriber, handlerFunc](MsgArgs... args) {
       (subscriber->*handlerFunc)(args...);
     };
     SubscribeCallable<Tag>(boundHandler);
@@ -181,24 +173,21 @@ public:
   // SubscribeCallable allows for subscription of any callable object that
   // takes in the parameters contained by the given message type
   template <MessageTag_t Tag, typename Callable>
-  void SubscribeCallable(Callable&& messageHandler)
-  {
-    Subscribe(Tag, [messageHandler] (const MessageType& message, Args...) {
+  void SubscribeCallable(Callable&& messageHandler) {
+    Subscribe(Tag, [messageHandler](const MessageType& message, Args...) {
       message.template Get_<Tag>().Invoke(messageHandler);
     });
   }
 
-protected:
+ protected:
   MessageDispatcher_t* _dispatcher;
-  
-private:
+
+ private:
   void ClearDispatcher() { _dispatcher = nullptr; }
-  virtual void SetDispatcherPrivate(MessageDispatcher_t* dispatcher) {};
+  virtual void SetDispatcherPrivate(MessageDispatcher_t* dispatcher){};
 };
 
+}  // namespace Util
+}  // namespace Anki
 
-} // namespace Util
-} // namespace Anki
-
-
-#endif //Util_MessageDispatch_MessageReceiver_H__
+#endif  // Util_MessageDispatch_MessageReceiver_H__

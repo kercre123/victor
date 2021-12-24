@@ -21,7 +21,8 @@ template <typename Environment>
 class SimpleThreadPoolTempl : public ThreadPoolInterface {
  public:
   // Construct a pool that contains "num_threads" threads.
-  explicit SimpleThreadPoolTempl(int num_threads, Environment env = Environment())
+  explicit SimpleThreadPoolTempl(int num_threads,
+                                 Environment env = Environment())
       : env_(env), threads_(num_threads), waiters_(num_threads) {
     for (int i = 0; i < num_threads; i++) {
       threads_.push_back(env.CreateThread([this, i]() { WorkerLoop(i); }));
@@ -77,9 +78,7 @@ class SimpleThreadPoolTempl : public ThreadPoolInterface {
 #endif
   }
 
-  int NumThreads() const final {
-    return static_cast<int>(threads_.size());
-  }
+  int NumThreads() const final { return static_cast<int>(threads_.size()); }
 
   int CurrentThreadId() const final {
     const PerThread* pt = this->GetPerThread();
@@ -136,7 +135,7 @@ class SimpleThreadPoolTempl : public ThreadPoolInterface {
   };
 
   struct PerThread {
-    constexpr PerThread() : pool(NULL), thread_id(-1) { }
+    constexpr PerThread() : pool(NULL), thread_id(-1) {}
     SimpleThreadPoolTempl* pool;  // Parent pool, or null for normal threads.
     int thread_id;                // Worker thread index in pool.
   };

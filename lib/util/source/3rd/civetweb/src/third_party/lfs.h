@@ -7,10 +7,10 @@
 
 /* Define 'chdir' for systems that do not implement it */
 #ifdef NO_CHDIR
-#define chdir(p)	(-1)
-#define chdir_error	"Function 'chdir' not provided by system"
+#define chdir(p) (-1)
+#define chdir_error "Function 'chdir' not provided by system"
 #else
-#define chdir_error	strerror(errno)
+#define chdir_error strerror(errno)
 
 #endif
 
@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-int luaopen_lfs (lua_State *L);
+int luaopen_lfs(lua_State *L);
 
 #ifdef __cplusplus
 }

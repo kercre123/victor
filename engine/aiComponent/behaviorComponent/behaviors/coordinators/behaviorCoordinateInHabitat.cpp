@@ -12,91 +12,90 @@
  *
  **/
 
-
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateInHabitat.h"
-#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/components/habitatDetectorComponent.h"
+
 #include <iterator>
+
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/components/habitatDetectorComponent.h"
 
 namespace Anki {
 namespace Vector {
-  
-namespace
-{
-  // from PassThroughDispatcher base class
-  const char* kBehaviorIDConfigKey = "delegateID";
-  
-  const char* kSuppressedBehaviorsKey = "suppressedBehaviors";
-}
-  
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorCoordinateInHabitat::InstanceConfig::InstanceConfig()
-{
+namespace {
+// from PassThroughDispatcher base class
+const char* kBehaviorIDConfigKey = "delegateID";
+
+const char* kSuppressedBehaviorsKey = "suppressedBehaviors";
+}  // namespace
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorCoordinateInHabitat::InstanceConfig::InstanceConfig() {
   suppressedBehaviorNames.clear();
   behaviorsToSuppressInHabitat.clear();
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorCoordinateInHabitat::BehaviorCoordinateInHabitat(const Json::Value& config)
-: BehaviorDispatcherPassThrough(config)
-{
-  JsonTools::GetVectorOptional(config, kSuppressedBehaviorsKey, _iConfig.suppressedBehaviorNames);
-  if(_iConfig.suppressedBehaviorNames.size()==0) {
-    PRINT_NAMED_WARNING("BehaviorCoordinateInHabitat.EmptySuppressedBehaviorList","");
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorCoordinateInHabitat::BehaviorCoordinateInHabitat(
+    const Json::Value& config)
+    : BehaviorDispatcherPassThrough(config) {
+  JsonTools::GetVectorOptional(config, kSuppressedBehaviorsKey,
+                               _iConfig.suppressedBehaviorNames);
+  if (_iConfig.suppressedBehaviorNames.size() == 0) {
+    PRINT_NAMED_WARNING(
+        "BehaviorCoordinateInHabitat.EmptySuppressedBehaviorList", "");
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorCoordinateInHabitat::~BehaviorCoordinateInHabitat()
-{
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorCoordinateInHabitat::~BehaviorCoordinateInHabitat() {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateInHabitat::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorCoordinateInHabitat::GetBehaviorJsonKeys(
+    std::set<const char*>& expectedKeys) const {
   expectedKeys.insert(kBehaviorIDConfigKey);
   expectedKeys.insert(kSuppressedBehaviorsKey);
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateInHabitat::InitPassThrough()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorCoordinateInHabitat::InitPassThrough() {
   const auto& BC = GetBEI().GetBehaviorContainer();
-  for( const auto& name : _iConfig.suppressedBehaviorNames) {
+  for (const auto& name : _iConfig.suppressedBehaviorNames) {
     BehaviorID id = BehaviorTypesWrapper::BehaviorIDFromString(name);
-    _iConfig.behaviorsToSuppressInHabitat.push_back( BC.FindBehaviorByID(id) );
+    _iConfig.behaviorsToSuppressInHabitat.push_back(BC.FindBehaviorByID(id));
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateInHabitat::OnPassThroughActivated()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorCoordinateInHabitat::OnPassThroughActivated() {}
 
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateInHabitat::PassThroughUpdate()
-{
-  if(!IsActivated()){
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorCoordinateInHabitat::PassThroughUpdate() {
+  if (!IsActivated()) {
     return;
   }
-  
+
   auto& habitatDetector = GetBEI().GetHabitatDetectorComponent();
-  if(habitatDetector.GetHabitatBeliefState() == HabitatBeliefState::InHabitat) {
-    for( const auto& beh : _iConfig.behaviorsToSuppressInHabitat ) {
+  if (habitatDetector.GetHabitatBeliefState() ==
+      HabitatBeliefState::InHabitat) {
+    for (const auto& beh : _iConfig.behaviorsToSuppressInHabitat) {
       beh->SetDontActivateThisTick(GetDebugLabel());
     }
   }
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateInHabitat::OnPassThroughDeactivated()
-{
 
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorCoordinateInHabitat::OnPassThroughDeactivated() {}
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki

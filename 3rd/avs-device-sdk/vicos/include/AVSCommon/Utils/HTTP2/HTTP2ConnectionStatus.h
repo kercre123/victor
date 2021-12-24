@@ -25,12 +25,12 @@ namespace http2 {
  * The status of an HTTP2Connection.
  */
 enum class HTTP2ConnectionStatus {
-    /// Establishing a connection to an endpoint.
-    CONNECTING,
-    /// Connected to an endpoint.
-    CONNECTED,
-    /// Not CONNECTING or CONNECTED to an endpoint.
-    DISCONNECTED
+  /// Establishing a connection to an endpoint.
+  CONNECTING,
+  /// Connected to an endpoint.
+  CONNECTED,
+  /// Not CONNECTING or CONNECTED to an endpoint.
+  DISCONNECTED
 };
 
 }  // namespace http2

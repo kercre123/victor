@@ -25,18 +25,19 @@ namespace sdkInterfaces {
  * The interface for observer of a single setting.
  */
 class SingleSettingObserverInterface {
-public:
-    /**
-     * Destructor
-     */
-    virtual ~SingleSettingObserverInterface() = default;
+ public:
+  /**
+   * Destructor
+   */
+  virtual ~SingleSettingObserverInterface() = default;
 
-    /**
-     * The callback executed when a setting is changed.
-     * @param key The name of the Setting.
-     * @param value The value to which the setting has to be changed.
-     */
-    virtual void onSettingChanged(const std::string& key, const std::string& value) = 0;
+  /**
+   * The callback executed when a setting is changed.
+   * @param key The name of the Setting.
+   * @param value The value to which the setting has to be changed.
+   */
+  virtual void onSettingChanged(const std::string& key,
+                                const std::string& value) = 0;
 };
 
 }  // namespace sdkInterfaces

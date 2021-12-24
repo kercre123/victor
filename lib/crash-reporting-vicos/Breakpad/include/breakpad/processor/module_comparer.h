@@ -52,8 +52,9 @@ namespace google_breakpad {
 
 class ModuleComparer {
  public:
-  ModuleComparer(): fast_resolver_(new FastSourceLineResolver),
-                   basic_resolver_(new BasicSourceLineResolver) { }
+  ModuleComparer()
+      : fast_resolver_(new FastSourceLineResolver),
+        basic_resolver_(new BasicSourceLineResolver) {}
   ~ModuleComparer() {
     delete fast_resolver_;
     delete basic_resolver_;
@@ -81,12 +82,12 @@ class ModuleComparer {
                      const FastModule *newmodule) const;
   bool CompareFunction(const BasicFunc *oldfunc, const FastFunc *newfunc) const;
   bool CompareLine(const BasicLine *oldline, const FastLine *newline) const;
-  bool ComparePubSymbol(const BasicPubSymbol*, const FastPubSymbol*) const;
-  bool CompareWFI(const WindowsFrameInfo&, const WindowsFrameInfo&) const;
+  bool ComparePubSymbol(const BasicPubSymbol *, const FastPubSymbol *) const;
+  bool CompareWFI(const WindowsFrameInfo &, const WindowsFrameInfo &) const;
 
   // Compare ContainedRangeMap
-  bool CompareCRM(const ContainedRangeMap<MemAddr, linked_ptr<WFI> >*,
-                  const StaticContainedRangeMap<MemAddr, char>*) const;
+  bool CompareCRM(const ContainedRangeMap<MemAddr, linked_ptr<WFI> > *,
+                  const StaticContainedRangeMap<MemAddr, char> *) const;
 
   FastSourceLineResolver *fast_resolver_;
   BasicSourceLineResolver *basic_resolver_;

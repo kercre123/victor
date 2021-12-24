@@ -16,36 +16,32 @@
 #include "webServerProcess/src/webService.h"
 
 #if !defined(ANKI_NO_WEBSERVER_ENABLED)
-  #define ANKI_NO_WEBSERVER_ENABLED 0
+#define ANKI_NO_WEBSERVER_ENABLED 0
 #endif
 
 namespace Anki {
 namespace Vector {
 namespace WebService {
 
-WebVizSender::WebVizSender(const std::string& moduleName, WebService* webService)
-  : _module(moduleName)
-  , _webService(webService)
-{
+WebVizSender::WebVizSender(const std::string& moduleName,
+                           WebService* webService)
+    : _module(moduleName), _webService(webService) {
   DEV_ASSERT(_webService != nullptr, "WebVizSender.Ctor.NullWebService");
 }
 
-WebVizSender::~WebVizSender()
-{
+WebVizSender::~WebVizSender() {
 #if !ANKI_NO_WEBSERVER_ENABLED
   DEV_ASSERT(_webService != nullptr, "WebVizSender.Dtor.NullWebService");
-  if( !_data.empty() ) {
+  if (!_data.empty()) {
     _webService->SendToWebViz(_module, _data);
   }
 #endif
 }
 
-std::shared_ptr<WebVizSender> WebVizSender::CreateWebVizSender(const std::string& moduleName, WebService* webService)
-{
-
+std::shared_ptr<WebVizSender> WebVizSender::CreateWebVizSender(
+    const std::string& moduleName, WebService* webService) {
 #if !ANKI_NO_WEBSERVER_ENABLED
-  if( webService &&
-      webService->IsWebVizClientSubscribed(moduleName) ) {
+  if (webService && webService->IsWebVizClientSubscribed(moduleName)) {
     return std::make_shared<WebVizSender>(moduleName, webService);
   }
 #endif
@@ -53,7 +49,6 @@ std::shared_ptr<WebVizSender> WebVizSender::CreateWebVizSender(const std::string
   return {};
 }
 
-
-}
-}
-}
+}  // namespace WebService
+}  // namespace Vector
+}  // namespace Anki

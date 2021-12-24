@@ -12,8 +12,9 @@
 /*=============================================================================
                         Edit History
 
-$Header: //source/qcom/qct/platform/uefi/workspaces/pweber/apps/8x26_emmcdl/emmcdl/main/latest/inc/emmcdl.h#3 $
-$DateTime: 2014/06/11 17:27:14 $ $Author: pweber $
+$Header:
+//source/qcom/qct/platform/uefi/workspaces/pweber/apps/8x26_emmcdl/emmcdl/main/latest/inc/emmcdl.h#3
+$ $DateTime: 2014/06/11 17:27:14 $ $Author: pweber $
 
 when       who     what, where, why
 -------------------------------------------------------------------------------
@@ -21,8 +22,8 @@ when       who     what, where, why
 =============================================================================*/
 #pragma once
 
-#define STREAMING_PROTOCOL  1
-#define FIREHOSE_PROTOCOL   2
+#define STREAMING_PROTOCOL 1
+#define FIREHOSE_PROTOCOL 2
 
 enum emmc_cmd_e {
   EMMC_CMD_NONE,

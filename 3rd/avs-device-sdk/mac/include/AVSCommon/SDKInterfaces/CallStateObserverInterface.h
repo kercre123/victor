@@ -26,32 +26,32 @@ namespace sdkInterfaces {
  * An interface to allow being notified of changes to the state of a call.
  */
 class CallStateObserverInterface {
-public:
-    /// An enumeration representing the state of a call.
-    enum class CallState {
-        /// The call is connecting.
-        CONNECTING,
-        /// An incoming call is causing a ringtone to be played.
-        INBOUND_RINGING,
-        /// The call has successfully connected.
-        CALL_CONNECTED,
-        /// The call has ended.
-        CALL_DISCONNECTED,
-        /// No current call state to be relayed to the user.
-        NONE
-    };
+ public:
+  /// An enumeration representing the state of a call.
+  enum class CallState {
+    /// The call is connecting.
+    CONNECTING,
+    /// An incoming call is causing a ringtone to be played.
+    INBOUND_RINGING,
+    /// The call has successfully connected.
+    CALL_CONNECTED,
+    /// The call has ended.
+    CALL_DISCONNECTED,
+    /// No current call state to be relayed to the user.
+    NONE
+  };
 
-    /**
-     * Destructor
-     */
-    virtual ~CallStateObserverInterface() = default;
+  /**
+   * Destructor
+   */
+  virtual ~CallStateObserverInterface() = default;
 
-    /**
-     * Allows the observer to react to a change in call state.
-     *
-     * @param state The new CallState.
-     */
-    virtual void onCallStateChange(CallState state) = 0;
+  /**
+   * Allows the observer to react to a change in call state.
+   *
+   * @param state The new CallState.
+   */
+  virtual void onCallStateChange(CallState state) = 0;
 };
 
 /**
@@ -61,25 +61,26 @@ public:
  * @param state The @c CallState value to write to the @c ostream as a string.
  * @return The @c ostream that was passed in and written to.
  */
-inline std::ostream& operator<<(std::ostream& stream, const CallStateObserverInterface::CallState& state) {
-    switch (state) {
-        case CallStateObserverInterface::CallState::CONNECTING:
-            stream << "CONNECTING";
-            return stream;
-        case CallStateObserverInterface::CallState::INBOUND_RINGING:
-            stream << "INBOUND_RINGING";
-            return stream;
-        case CallStateObserverInterface::CallState::CALL_CONNECTED:
-            stream << "CALL_CONNECTED";
-            return stream;
-        case CallStateObserverInterface::CallState::CALL_DISCONNECTED:
-            stream << "CALL_DISCONNECTED";
-            return stream;
-        case CallStateObserverInterface::CallState::NONE:
-            stream << "NONE";
-            return stream;
-    }
-    return stream << "UNKNOWN STATE";
+inline std::ostream& operator<<(
+    std::ostream& stream, const CallStateObserverInterface::CallState& state) {
+  switch (state) {
+    case CallStateObserverInterface::CallState::CONNECTING:
+      stream << "CONNECTING";
+      return stream;
+    case CallStateObserverInterface::CallState::INBOUND_RINGING:
+      stream << "INBOUND_RINGING";
+      return stream;
+    case CallStateObserverInterface::CallState::CALL_CONNECTED:
+      stream << "CALL_CONNECTED";
+      return stream;
+    case CallStateObserverInterface::CallState::CALL_DISCONNECTED:
+      stream << "CALL_DISCONNECTED";
+      return stream;
+    case CallStateObserverInterface::CallState::NONE:
+      stream << "NONE";
+      return stream;
+  }
+  return stream << "UNKNOWN STATE";
 }
 
 }  // namespace sdkInterfaces

@@ -46,8 +46,8 @@
 #include <string>
 #include <vector>
 
-#include "common/module.h"
 #include "common/dwarf/dwarf2reader.h"
+#include "common/module.h"
 #include "common/using_std_string.h"
 
 namespace google_breakpad {
@@ -60,9 +60,8 @@ using std::vector;
 // A class that accepts parsed call frame information from the DWARF
 // CFI parser and populates a google_breakpad::Module object with the
 // contents.
-class DwarfCFIToModule: public CallFrameInfo::Handler {
+class DwarfCFIToModule : public CallFrameInfo::Handler {
  public:
-
   // DwarfCFIToModule uses an instance of this class to report errors
   // detected while converting DWARF CFI to Breakpad STACK CFI records.
   class Reporter {
@@ -72,8 +71,8 @@ class DwarfCFIToModule: public CallFrameInfo::Handler {
     // SECTION is the name of the section within that file that we're
     // looking at (.debug_frame, .eh_frame, etc.).
     Reporter(const string &file, const string &section)
-      : file_(file), section_(section) { }
-    virtual ~Reporter() { }
+        : file_(file), section_(section) {}
+    virtual ~Reporter() {}
 
     // The DWARF CFI entry at OFFSET cites register REG, but REG is not
     // covered by the vector of register names passed to the
@@ -91,7 +90,7 @@ class DwarfCFIToModule: public CallFrameInfo::Handler {
     // expressions.
     virtual void ExpressionsNotSupported(size_t offset, const string &reg);
 
-  protected:
+   protected:
     string file_, section_;
   };
 
@@ -118,7 +117,7 @@ class DwarfCFIToModule: public CallFrameInfo::Handler {
    private:
     // Given STRINGS, an array of C strings with SIZE elements, return an
     // equivalent vector<string>.
-    static vector<string> MakeVector(const char * const *strings, size_t size);
+    static vector<string> MakeVector(const char *const *strings, size_t size);
   };
 
   // Create a handler for the dwarf2reader::CallFrameInfo parser that
@@ -132,9 +131,13 @@ class DwarfCFIToModule: public CallFrameInfo::Handler {
   // process.
   DwarfCFIToModule(Module *module, const vector<string> &register_names,
                    Reporter *reporter)
-      : module_(module), register_names_(register_names), reporter_(reporter),
-        entry_(NULL), return_address_(-1), cfa_name_(".cfa"), ra_name_(".ra") {
-  }
+      : module_(module),
+        register_names_(register_names),
+        reporter_(reporter),
+        entry_(NULL),
+        return_address_(-1),
+        cfa_name_(".cfa"),
+        ra_name_(".ra") {}
   virtual ~DwarfCFIToModule() { delete entry_; }
 
   virtual bool Entry(size_t offset, uint64 address, uint64 length,
@@ -142,10 +145,10 @@ class DwarfCFIToModule: public CallFrameInfo::Handler {
                      unsigned return_address);
   virtual bool UndefinedRule(uint64 address, int reg);
   virtual bool SameValueRule(uint64 address, int reg);
-  virtual bool OffsetRule(uint64 address, int reg,
-                          int base_register, long offset);
-  virtual bool ValOffsetRule(uint64 address, int reg,
-                             int base_register, long offset);
+  virtual bool OffsetRule(uint64 address, int reg, int base_register,
+                          long offset);
+  virtual bool ValOffsetRule(uint64 address, int reg, int base_register,
+                             long offset);
   virtual bool RegisterRule(uint64 address, int reg, int base_register);
   virtual bool ExpressionRule(uint64 address, int reg,
                               const string &expression);
@@ -197,6 +200,6 @@ class DwarfCFIToModule: public CallFrameInfo::Handler {
   set<string> common_strings_;
 };
 
-} // namespace google_breakpad
+}  // namespace google_breakpad
 
-#endif // COMMON_LINUX_DWARF_CFI_TO_MODULE_H
+#endif  // COMMON_LINUX_DWARF_CFI_TO_MODULE_H

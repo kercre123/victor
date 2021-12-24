@@ -4,7 +4,8 @@
  * Author: Sam Russell
  * Created: 2018-08-10
  *
- * Description: Search for a cube(if not known), go get it, bring it to the face who sent you
+ * Description: Search for a cube(if not known), go get it, bring it to the face
+ *who sent you
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -14,10 +15,9 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorFetchCube__
 #pragma once
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-
-#include "engine/smartFaceId.h"
 #include "coretech/common/engine/robotTimeStamp.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/smartFaceId.h"
 
 namespace Anki {
 namespace Vector {
@@ -30,29 +30,28 @@ class BehaviorPlaceCubeByCharger;
 class BehaviorPutDownBlockAtPose;
 class BlockWorldFilter;
 
-class BehaviorFetchCube : public ICozmoBehavior
-{
-public: 
+class BehaviorFetchCube : public ICozmoBehavior {
+ public:
   virtual ~BehaviorFetchCube();
   virtual bool WantsToBeActivatedBehavior() const override;
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorFetchCube(const Json::Value& config);  
+  explicit BehaviorFetchCube(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
 
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-
-  enum class FetchState{
+ private:
+  enum class FetchState {
     GetIn,
     DriveOffCharger,
     LookForUser,
@@ -67,30 +66,30 @@ private:
 
   struct InstanceConfig {
     InstanceConfig();
-    std::unique_ptr<BlockWorldFilter>           cubesFilter;
-    std::unique_ptr<BlockWorldFilter>           chargerFilter;
+    std::unique_ptr<BlockWorldFilter> cubesFilter;
+    std::unique_ptr<BlockWorldFilter> chargerFilter;
 
-    std::shared_ptr<BehaviorFindFaceAndThen>    lookForUserBehavior;
-    std::shared_ptr<BehaviorFindCube>           findCubeBehavior;
-    std::shared_ptr<BehaviorPickUpCube>         pickUpCubeBehavior;
+    std::shared_ptr<BehaviorFindFaceAndThen> lookForUserBehavior;
+    std::shared_ptr<BehaviorFindCube> findCubeBehavior;
+    std::shared_ptr<BehaviorPickUpCube> pickUpCubeBehavior;
     std::shared_ptr<BehaviorPutDownBlockAtPose> putCubeSomewhereBehavior;
 
-    ICozmoBehaviorPtr                           driveOffChargerBehavior;
-    ICozmoBehaviorPtr                           reactToCliffBehavior;
-    ICozmoBehaviorPtr                           connectToCubeBehavior;
-    ICozmoBehaviorPtr                           putCubeByChargerBehavior;
-    bool                                        skipConnectToCubeBehavior;
+    ICozmoBehaviorPtr driveOffChargerBehavior;
+    ICozmoBehaviorPtr reactToCliffBehavior;
+    ICozmoBehaviorPtr connectToCubeBehavior;
+    ICozmoBehaviorPtr putCubeByChargerBehavior;
+    bool skipConnectToCubeBehavior;
   };
 
   struct DynamicVariables {
     DynamicVariables();
-    FetchState   state;
-    ObjectID     cubeID;
-    SmartFaceID  targetFace;
-    Pose3d       poseAtStartOfBehavior;
-    Pose3d       destination;
-    int          attemptsAtCurrentAction;
-    bool         startedOnCharger;
+    FetchState state;
+    ObjectID cubeID;
+    SmartFaceID targetFace;
+    Pose3d poseAtStartOfBehavior;
+    Pose3d destination;
+    int attemptsAtCurrentAction;
+    bool startedOnCharger;
   };
 
   InstanceConfig _iConfig;
@@ -103,7 +102,7 @@ private:
 
   void TransitionToPickUpCube();
   void AttemptToPickUpCube();
-  
+
   void TransitionToTakeCubeSomewhere();
   void TransitionToPutCubeDownHere();
 
@@ -112,11 +111,12 @@ private:
 
   bool ComputeFaceBasedTargetPose();
 
-  // Returns a pointer to the object belonging with ID == _dVars.cubeID, nullptr if none is found
+  // Returns a pointer to the object belonging with ID == _dVars.cubeID, nullptr
+  // if none is found
   ObservableObject* GetTargetCube();
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorFetchCube__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorFetchCube__

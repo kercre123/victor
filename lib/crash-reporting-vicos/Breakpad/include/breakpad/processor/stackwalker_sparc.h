@@ -34,10 +34,8 @@
 //
 // Author: Michael Shang
 
-
 #ifndef PROCESSOR_STACKWALKER_SPARC_H__
 #define PROCESSOR_STACKWALKER_SPARC_H__
-
 
 #include "google_breakpad/common/breakpad_types.h"
 #include "google_breakpad/common/minidump_format.h"
@@ -54,8 +52,7 @@ class StackwalkerSPARC : public Stackwalker {
   // included in the stack.  The other arguments are passed directly through
   // to the base Stackwalker constructor.
   StackwalkerSPARC(const SystemInfo* system_info,
-                   const MDRawContextSPARC* context,
-                   MemoryRegion* memory,
+                   const MDRawContextSPARC* context, MemoryRegion* memory,
                    const CodeModules* modules,
                    StackFrameSymbolizer* frame_symbolizer);
 
@@ -71,8 +68,6 @@ class StackwalkerSPARC : public Stackwalker {
   const MDRawContextSPARC* context_;
 };
 
-
 }  // namespace google_breakpad
-
 
 #endif  // PROCESSOR_STACKWALKER_SPARC_H__

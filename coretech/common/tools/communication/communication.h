@@ -6,7 +6,8 @@ Created: 2013
 Simple serial and socket connection routines
 
 Copyright Anki, Inc. 2013
-For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+For internal use only. No part of this code may be used without a signed
+non-disclosure agreement with Anki, inc.
 **/
 
 #ifndef _SERIAL_H_
@@ -18,11 +19,11 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <windows.h>
 #include <winsock.h>
 #else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <netinet/in.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #endif
 
 #include "anki/common/robot/config.h"
@@ -30,26 +31,18 @@ For internal use only. No part of this code may be used without a signed non-dis
 using namespace Anki;
 
 // Serial is only supported on Windows
-class Serial
-{
-public:
+class Serial {
+ public:
   Serial();
 
-  Result Open(
-    s32 comPort,
-    s32 baudRate,
-    char parity = 'N',
-    s32 dataBits = 8,
-    s32 stopBits = 1);
+  Result Open(s32 comPort, s32 baudRate, char parity = 'N', s32 dataBits = 8,
+              s32 stopBits = 1);
 
   Result Close();
 
-  Result Read(
-    void * buffer,
-    s32 bufferLength,
-    s32 &bytesRead);
+  Result Read(void *buffer, s32 bufferLength, s32 &bytesRead);
 
-protected:
+ protected:
   bool isOpen;
 
 #ifdef _MSC_VER
@@ -60,26 +53,20 @@ protected:
 #else
   // Only MSCV supported
 #endif
-}; // class Serial
+};  // class Serial
 
 // Socket is supported on Windows, Mac, and probably most Posix
-class Socket
-{
-public:
+class Socket {
+ public:
   Socket();
 
-  Result Open(
-    const char * ipAddress,
-    const s32 port);
+  Result Open(const char *ipAddress, const s32 port);
 
   Result Close();
 
-  Result Read(
-    void * buffer,
-    s32 bufferLength,
-    s32 &bytesRead);
+  Result Read(void *buffer, s32 bufferLength, s32 &bytesRead);
 
-protected:
+ protected:
   bool isOpen;
 
 #ifdef _MSC_VER
@@ -87,6 +74,6 @@ protected:
 #else
   int socketHandle;
 #endif
-}; // class Socket
+};  // class Socket
 
-#endif // #ifndef _SERIAL_H_
+#endif  // #ifndef _SERIAL_H_

@@ -20,17 +20,17 @@
 namespace Anki {
 namespace Vector {
 
-class ConditionHighTemperature : public IBEICondition
-{
-public:
+class ConditionHighTemperature : public IBEICondition {
+ public:
   explicit ConditionHighTemperature(const Json::Value& config);
 
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& bei) const override;
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& bei) const override;
 
-private:
+ private:
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

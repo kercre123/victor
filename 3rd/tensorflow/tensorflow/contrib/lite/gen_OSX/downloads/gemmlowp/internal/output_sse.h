@@ -17,9 +17,9 @@
 #ifndef GEMMLOWP_INTERNAL_OUTPUT_SSE_H_
 #define GEMMLOWP_INTERNAL_OUTPUT_SSE_H_
 
-#include "output.h"
-
 #include <smmintrin.h>
+
+#include "output.h"
 
 namespace gemmlowp {
 

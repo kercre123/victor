@@ -4,7 +4,8 @@
  * Author: Matt Michini
  * Created: 2018-01-11
  *
- * Description:  a sequence of animations after turning to an object (if possible)
+ * Description:  a sequence of animations after turning to an object (if
+ *possible)
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -13,29 +14,29 @@
 #ifndef __Engine_Behaviors_BehaviorAnimSequenceWithObject_H__
 #define __Engine_Behaviors_BehaviorAnimSequenceWithObject_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequence.h"
-
 #include "clad/types/objectTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequence.h"
 
 namespace Anki {
 namespace Vector {
 
-class BehaviorAnimSequenceWithObject : public BehaviorAnimSequence
-{
-using BaseClass = BehaviorAnimSequence;
-protected:
+class BehaviorAnimSequenceWithObject : public BehaviorAnimSequence {
+  using BaseClass = BehaviorAnimSequence;
+
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorAnimSequenceWithObject(const Json::Value& config);
   virtual void OnBehaviorActivated() override;
-  
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
-public:
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
+ public:
   virtual bool WantsToBeActivatedBehavior() const override;
   const ObservableObject* GetLocatedObject() const;
-  
-private:
+
+ private:
   struct InstanceConfig {
     InstanceConfig();
     // The ObjectType to look for
@@ -46,11 +47,11 @@ private:
     DynamicVariables();
   };
 
-  InstanceConfig   _iConfig;
+  InstanceConfig _iConfig;
   DynamicVariables _dVars;
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_Behaviors_BehaviorAnimSequenceWithObject_H__
+#endif  // __Engine_Behaviors_BehaviorAnimSequenceWithObject_H__

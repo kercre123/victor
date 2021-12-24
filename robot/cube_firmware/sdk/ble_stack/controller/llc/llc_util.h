@@ -24,19 +24,18 @@
  ****************************************************************************************
  */
 
-
 /*
  * INCLUDE FILES
  ****************************************************************************************
  */
 #include <stdint.h>
 
-#include "compiler.h"
 #include "co_buf.h"
-#include "llc_task.h"
-#include "reg_ble_em_rx.h"
-#include "reg_ble_em_cs.h"
+#include "compiler.h"
 #include "llc.h"
+#include "llc_task.h"
+#include "reg_ble_em_cs.h"
+#include "reg_ble_em_rx.h"
 #if (BLE_PERIPHERAL || BLE_CENTRAL)
 /*
  * FUNCTION DEFINITIONS
@@ -56,13 +55,13 @@
  */
 uint8_t llc_util_get_free_conhdl(uint16_t *conhdl);
 
-
 /**
  ****************************************************************************************
  * @brief Process the disconnection
  *
- * This function request to the Link Layer to stop sending any further packets, frees the
- * LLC conhdl and LLC task associated, notifies the host of the loss of connection.
+ * This function request to the Link Layer to stop sending any further packets,
+ *frees the LLC conhdl and LLC task associated, notifies the host of the loss of
+ *connection.
  *
  * @param[in] conhdl         Connection handle disconnected.
  * @param[in] reason         reason of the disconnection.
@@ -75,7 +74,8 @@ void llc_util_dicon_procedure(uint16_t conhdl, uint8_t reason);
  ****************************************************************************************
  * @brief generates the  SKDm or SKDs
  *
- * The SKDx is generated from the Random Number and Init Vectors passed as parameter
+ * The SKDx is generated from the Random Number and Init Vectors passed as
+ *parameter
  *
  * @param[out] skdx     Pointer to the SDKx to be generated
  * @param[in]  nb       Pointer to the Random Number
@@ -83,10 +83,9 @@ void llc_util_dicon_procedure(uint16_t conhdl, uint8_t reason);
  *
  ****************************************************************************************
  */
-void llc_util_gen_skdx(struct sess_k_div_x *skdx,
-                       struct rand_nb const *nb,
-                       struct init_vect  const *ivx);
-#endif //(BLE_PERIPHERAL || BLE_CENTRAL)
+void llc_util_gen_skdx(struct sess_k_div_x *skdx, struct rand_nb const *nb,
+                       struct init_vect const *ivx);
+#endif  //(BLE_PERIPHERAL || BLE_CENTRAL)
 /**
  ****************************************************************************************
  * @brief Gets the size of the packet received.
@@ -99,10 +98,9 @@ void llc_util_gen_skdx(struct sess_k_div_x *skdx,
  *
  ****************************************************************************************
  */
-__INLINE uint8_t llc_util_rxlen_getf(struct co_buf_rx_desc *rxdesc)
-{
-    uint16_t localVal =  rxdesc->rxheader;
-    return ((localVal & BLE_RXLEN_MASK) >> BLE_RXLEN_LSB);
+__INLINE uint8_t llc_util_rxlen_getf(struct co_buf_rx_desc *rxdesc) {
+  uint16_t localVal = rxdesc->rxheader;
+  return ((localVal & BLE_RXLEN_MASK) >> BLE_RXLEN_LSB);
 }
 
 /**
@@ -117,12 +115,10 @@ __INLINE uint8_t llc_util_rxlen_getf(struct co_buf_rx_desc *rxdesc)
  *
  ****************************************************************************************
  */
-__INLINE uint8_t llc_util_rxllid_getf(struct co_buf_rx_desc *rxdesc)
-{
-    uint16_t localVal =  rxdesc->rxheader;
-    return ((localVal & BLE_RXLLID_MASK) >> BLE_RXLLID_LSB);
+__INLINE uint8_t llc_util_rxllid_getf(struct co_buf_rx_desc *rxdesc) {
+  uint16_t localVal = rxdesc->rxheader;
+  return ((localVal & BLE_RXLLID_MASK) >> BLE_RXLLID_LSB);
 }
-
 
 /**
  ****************************************************************************************
@@ -136,10 +132,9 @@ __INLINE uint8_t llc_util_rxllid_getf(struct co_buf_rx_desc *rxdesc)
  *
  ****************************************************************************************
  */
-__INLINE uint8_t llc_util_rxrssi_getf(struct co_buf_rx_desc *rxdesc)
-{
-    uint16_t localVal = rxdesc->rxchass;
-    return ((localVal & BLE_RSSI_MASK) >> BLE_RSSI_LSB);
+__INLINE uint8_t llc_util_rxrssi_getf(struct co_buf_rx_desc *rxdesc) {
+  uint16_t localVal = rxdesc->rxchass;
+  return ((localVal & BLE_RSSI_MASK) >> BLE_RSSI_LSB);
 }
 
 /**
@@ -154,10 +149,9 @@ __INLINE uint8_t llc_util_rxrssi_getf(struct co_buf_rx_desc *rxdesc)
  *
  ****************************************************************************************
  */
-__INLINE uint8_t llc_util_used_ch_idx_getf(struct co_buf_rx_desc *rxdesc)
-{
-    uint16_t localVal = rxdesc->rxchass;
-    return ((localVal & BLE_USED_CH_IDX_MASK) >> BLE_USED_CH_IDX_LSB);
+__INLINE uint8_t llc_util_used_ch_idx_getf(struct co_buf_rx_desc *rxdesc) {
+  uint16_t localVal = rxdesc->rxchass;
+  return ((localVal & BLE_USED_CH_IDX_MASK) >> BLE_USED_CH_IDX_LSB);
 }
 
 /**
@@ -172,10 +166,9 @@ __INLINE uint8_t llc_util_used_ch_idx_getf(struct co_buf_rx_desc *rxdesc)
  *
  ****************************************************************************************
  */
-__INLINE uint8_t llc_util_rxerr_getf(struct co_buf_rx_desc *rxdesc)
-{
-    uint16_t localVal =  rxdesc->rxstatus;
-    return ((localVal & 0x7F) >> 0);
+__INLINE uint8_t llc_util_rxerr_getf(struct co_buf_rx_desc *rxdesc) {
+  uint16_t localVal = rxdesc->rxstatus;
+  return ((localVal & 0x7F) >> 0);
 }
 
 #if (BLE_PERIPHERAL || BLE_CENTRAL)
@@ -189,22 +182,19 @@ __INLINE uint8_t llc_util_rxerr_getf(struct co_buf_rx_desc *rxdesc)
  *
  ****************************************************************************************
  */
-__INLINE uint8_t llc_util_get_active_conhdl(void)
-{
-    uint8_t idx;
-    uint8_t cpt_active=0;
-    ke_task_id_t llc_free;
-    for(idx = 0; idx <  jump_table_struct[nb_links_user]; idx++)
-    {
-        // build a task ID dedicated to the conhdl
-        llc_free = KE_BUILD_ID(TASK_LLC, idx);
-        // gets the state
-        if(ke_state_get(llc_free)!= LLC_FREE)
-        {
-            cpt_active++;
-        }
+__INLINE uint8_t llc_util_get_active_conhdl(void) {
+  uint8_t idx;
+  uint8_t cpt_active = 0;
+  ke_task_id_t llc_free;
+  for (idx = 0; idx < jump_table_struct[nb_links_user]; idx++) {
+    // build a task ID dedicated to the conhdl
+    llc_free = KE_BUILD_ID(TASK_LLC, idx);
+    // gets the state
+    if (ke_state_get(llc_free) != LLC_FREE) {
+      cpt_active++;
     }
-    return cpt_active;
+  }
+  return cpt_active;
 }
 
 /**
@@ -219,22 +209,19 @@ __INLINE uint8_t llc_util_get_active_conhdl(void)
  *
  ****************************************************************************************
  */
-__INLINE bool llc_util_event_enabled(uint8_t meta_event)
-{
-    uint8_t idx;
-    uint8_t cpt_active=0;
-    ke_task_id_t llc_free;
-    for(idx = 0; idx <  jump_table_struct[nb_links_user]; idx++)
-    {
-        // build a task ID dedicated to the conhdl
-        llc_free = KE_BUILD_ID(TASK_LLC, idx);
-        // gets the state
-        if(ke_state_get(llc_free)!= LLC_FREE)
-        {
-            cpt_active++;
-        }
+__INLINE bool llc_util_event_enabled(uint8_t meta_event) {
+  uint8_t idx;
+  uint8_t cpt_active = 0;
+  ke_task_id_t llc_free;
+  for (idx = 0; idx < jump_table_struct[nb_links_user]; idx++) {
+    // build a task ID dedicated to the conhdl
+    llc_free = KE_BUILD_ID(TASK_LLC, idx);
+    // gets the state
+    if (ke_state_get(llc_free) != LLC_FREE) {
+      cpt_active++;
     }
-    return cpt_active;
+  }
+  return cpt_active;
 }
 
 /**
@@ -249,11 +236,10 @@ __INLINE bool llc_util_event_enabled(uint8_t meta_event)
  *
  ****************************************************************************************
  */
-__INLINE uint16_t llc_util_rxl2clen_getf(uint8_t *data)
-{
-    uint16_t localVal =  *data++ & 0x00FF; //gets the lsb first
-    localVal |= (uint16_t) (*data << 8) & 0xFF00;
-    return (localVal);
+__INLINE uint16_t llc_util_rxl2clen_getf(uint8_t *data) {
+  uint16_t localVal = *data++ & 0x00FF;  // gets the lsb first
+  localVal |= (uint16_t)(*data << 8) & 0xFF00;
+  return (localVal);
 }
 
 /**
@@ -265,13 +251,11 @@ __INLINE uint16_t llc_util_rxl2clen_getf(uint8_t *data)
  *
  ****************************************************************************************
  */
-__INLINE void llc_util_ivm_set(uint16_t conhdl, uint8_t const *ivm)
-{
-    for (int i = 0; i < 2; i++)
-    {
-        // Sets the lower part of the IV with the IVm
-        ble_iv_setf(conhdl, i , co_read16p(&ivm[2*i]));
-    }
+__INLINE void llc_util_ivm_set(uint16_t conhdl, uint8_t const *ivm) {
+  for (int i = 0; i < 2; i++) {
+    // Sets the lower part of the IV with the IVm
+    ble_iv_setf(conhdl, i, co_read16p(&ivm[2 * i]));
+  }
 }
 
 /**
@@ -283,13 +267,11 @@ __INLINE void llc_util_ivm_set(uint16_t conhdl, uint8_t const *ivm)
  *
  ****************************************************************************************
  */
-__INLINE void llc_util_ivs_set(uint16_t conhdl, uint8_t const *ivs)
-{
-    for (int i = 0; i < 2; i++)
-    {
-        // Sets the upper part of the IV with the IVs
-        ble_iv_setf(conhdl, i + 2 , co_read16p(&ivs[2*i]));
-    }
+__INLINE void llc_util_ivs_set(uint16_t conhdl, uint8_t const *ivs) {
+  for (int i = 0; i < 2; i++) {
+    // Sets the upper part of the IV with the IVs
+    ble_iv_setf(conhdl, i + 2, co_read16p(&ivs[2 * i]));
+  }
 }
 
 /**
@@ -321,24 +303,21 @@ void llc_util_set_llcp_discard_enable(uint16_t conhdl, bool enable);
  * @return reason accepted or rejected
  ****************************************************************************************
  */
-__INLINE bool llc_util_disc_reason_ok(uint8_t reason)
-{
-    // disconnection reason range
-    uint8_t valid_r[7] = {
-            CO_ERROR_AUTH_FAILURE,
-            CO_ERROR_REMOTE_USER_TERM_CON,
-            CO_ERROR_REMOTE_DEV_TERM_LOW_RESOURCES,
-            CO_ERROR_REMOTE_DEV_POWER_OFF,
-            CO_ERROR_UNSUPPORTED_REMOTE_FEATURE,
-            CO_ERROR_PAIRING_WITH_UNIT_KEY_NOT_SUP,
-            CO_ERROR_UNACCEPTABLE_CONN_INT
-    };
+__INLINE bool llc_util_disc_reason_ok(uint8_t reason) {
+  // disconnection reason range
+  uint8_t valid_r[7] = {CO_ERROR_AUTH_FAILURE,
+                        CO_ERROR_REMOTE_USER_TERM_CON,
+                        CO_ERROR_REMOTE_DEV_TERM_LOW_RESOURCES,
+                        CO_ERROR_REMOTE_DEV_POWER_OFF,
+                        CO_ERROR_UNSUPPORTED_REMOTE_FEATURE,
+                        CO_ERROR_PAIRING_WITH_UNIT_KEY_NOT_SUP,
+                        CO_ERROR_UNACCEPTABLE_CONN_INT};
 
-    for (uint8_t i = 0; i < 7; i++)
-        if (reason == valid_r[i]) return (true);
+  for (uint8_t i = 0; i < 7; i++)
+    if (reason == valid_r[i]) return (true);
 
-    return (false);
+  return (false);
 }
-#endif // #if (BLE_PERIPHERAL || BLE_CENTRAL)
+#endif  // #if (BLE_PERIPHERAL || BLE_CENTRAL)
 /// @} LLCUTIL
-#endif // LLC_UTIL_H_
+#endif  // LLC_UTIL_H_

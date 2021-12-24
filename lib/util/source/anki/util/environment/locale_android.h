@@ -22,7 +22,7 @@ Locale GetCurrentLocaleAndroid();
 
 Locale GetCurrentLocaleAndroid(void *jniEnv);
 
-} // namespace Util
-} // namespace Anki
+}  // namespace Util
+}  // namespace Anki
 
-#endif // __util_environment_locale_android_H__
+#endif  // __util_environment_locale_android_H__

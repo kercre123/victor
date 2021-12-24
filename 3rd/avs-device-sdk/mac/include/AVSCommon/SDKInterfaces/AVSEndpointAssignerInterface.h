@@ -26,16 +26,16 @@ namespace sdkInterfaces {
  * An interface for setting AVS endpoint.
  */
 class AVSEndpointAssignerInterface {
-public:
-    /// Destructor.
-    virtual ~AVSEndpointAssignerInterface() = default;
+ public:
+  /// Destructor.
+  virtual ~AVSEndpointAssignerInterface() = default;
 
-    /**
-     * Set AVS Endpoint as the given parameter
-     *
-     * @param avsEndpoint AVS endpoint to set.
-     */
-    virtual void setAVSEndpoint(const std::string& avsEndpoint) = 0;
+  /**
+   * Set AVS Endpoint as the given parameter
+   *
+   * @param avsEndpoint AVS endpoint to set.
+   */
+  virtual void setAVSEndpoint(const std::string& avsEndpoint) = 0;
 };
 
 }  // namespace sdkInterfaces

@@ -16,41 +16,45 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_AUDIOPLAYEROBSERVERINTERFACE_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_AUDIOPLAYEROBSERVERINTERFACE_H_
 
+#include <AVSCommon/AVS/PlayerActivity.h>
+
 #include <chrono>
 #include <string>
-
-#include <AVSCommon/AVS/PlayerActivity.h>
 
 namespace alexaClientSDK {
 namespace avsCommon {
 namespace sdkInterfaces {
 
 /**
- * This class allows any observers of the @c AudioPlayer to be notified of changes in the @c AudioPlayer audio state.
+ * This class allows any observers of the @c AudioPlayer to be notified of
+ * changes in the @c AudioPlayer audio state.
  */
 class AudioPlayerObserverInterface {
-public:
-    /**
-     * Destructor
-     */
-    virtual ~AudioPlayerObserverInterface() = default;
+ public:
+  /**
+   * Destructor
+   */
+  virtual ~AudioPlayerObserverInterface() = default;
 
-    /// The context of the AudioPlayer when the observer is notified of the @c PlayerActivity state change.
-    struct Context {
-        /// The ID of the @c AudioItem that the @ AudioPlayer is handling.
-        std::string audioItemId;
+  /// The context of the AudioPlayer when the observer is notified of the @c
+  /// PlayerActivity state change.
+  struct Context {
+    /// The ID of the @c AudioItem that the @ AudioPlayer is handling.
+    std::string audioItemId;
 
-        /// The offset in millisecond from the start of the @c AudioItem.
-        std::chrono::milliseconds offset;
-    };
+    /// The offset in millisecond from the start of the @c AudioItem.
+    std::chrono::milliseconds offset;
+  };
 
-    /**
-     * Used to notify the observer when the @c AudioPlayer has a change in @c PlayerActivity.
-     *
-     * @param state The @c PlayerActivity of the @c AudioPlayer.
-     * @param context The @c Context of the @c AudioPlayer.
-     */
-    virtual void onPlayerActivityChanged(avsCommon::avs::PlayerActivity state, const Context& context) = 0;
+  /**
+   * Used to notify the observer when the @c AudioPlayer has a change in @c
+   * PlayerActivity.
+   *
+   * @param state The @c PlayerActivity of the @c AudioPlayer.
+   * @param context The @c Context of the @c AudioPlayer.
+   */
+  virtual void onPlayerActivityChanged(avsCommon::avs::PlayerActivity state,
+                                       const Context& context) = 0;
 };
 
 }  // namespace sdkInterfaces

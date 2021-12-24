@@ -90,7 +90,7 @@ class TestNamePrinter : public EmptyTestEventListener {
 
 }  // namespace
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   InitGoogleTest(&argc, argv);
 
   // Replaces the default printer with TestNamePrinter, which prints

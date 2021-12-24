@@ -6,9 +6,9 @@
  * @brief Application default handlers header file.
  *
  * Copyright (C) 2015. Dialog Semiconductor Ltd, unpublished work. This computer
- * program includes Confidential, Proprietary Information and is a Trade Secret of
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited
- * unless authorized in writing. All Rights Reserved.
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -35,6 +35,7 @@
  */
 
 #include <stdio.h>
+
 #include "app_callback.h"
 #include "gapc_task.h"
 
@@ -43,45 +44,42 @@
  * @brief Possible advertise scenarios.
  ****************************************************************************************
  */
-enum default_advertise_scenario{
-    DEF_ADV_FOREVER,
-    DEF_ADV_WITH_TIMEOUT};
+enum default_advertise_scenario { DEF_ADV_FOREVER, DEF_ADV_WITH_TIMEOUT };
 
 /**
  ****************************************************************************************
  * @brief Possible security request scenarios.
  ****************************************************************************************
- */    
-enum default_security_request_scenario{
-    DEF_SEC_REQ_NEVER,
-    DEF_SEC_REQ_ON_CONNECT};
+ */
+enum default_security_request_scenario {
+  DEF_SEC_REQ_NEVER,
+  DEF_SEC_REQ_ON_CONNECT
+};
 
 /**
  ****************************************************************************************
  * @brief Configuration options for the default_handlers.
  ****************************************************************************************
- */    
-struct default_handlers_configuration
-{
-	//Configure the advertise operation used by the default handlers
-	enum default_advertise_scenario adv_scenario;
+ */
+struct default_handlers_configuration {
+  // Configure the advertise operation used by the default handlers
+  enum default_advertise_scenario adv_scenario;
 
-	//Configure the advertise period in case of DEF_ADV_WITH_TIMEOUT.
-	//It is measured in timer units (10ms). Use MS_TO_TIMERUNITS macro to convert
-	//from milliseconds (ms) to timer units.
-	int16_t advertise_period;
+  // Configure the advertise period in case of DEF_ADV_WITH_TIMEOUT.
+  // It is measured in timer units (10ms). Use MS_TO_TIMERUNITS macro to convert
+  // from milliseconds (ms) to timer units.
+  int16_t advertise_period;
 
-	//Configure the security start operation of the default handlers
-	//if the security is enabled (CFG_APP_SECURITY)
-	enum default_security_request_scenario security_request_scenario;
+  // Configure the security start operation of the default handlers
+  // if the security is enabled (CFG_APP_SECURITY)
+  enum default_security_request_scenario security_request_scenario;
 };
 
-    
 /*
  * FUNCTION DECLARATIONS
  ****************************************************************************************
  */
-    
+
 /**
  ****************************************************************************************
  * @brief Default function called on initialization event.
@@ -98,7 +96,8 @@ void default_app_on_init(void);
  * @return void
  ****************************************************************************************
  */
-void default_app_on_connection(uint8_t connection_idx, struct gapc_connection_req_ind const *param);
+void default_app_on_connection(uint8_t connection_idx,
+                               struct gapc_connection_req_ind const *param);
 
 /**
  ****************************************************************************************
@@ -133,7 +132,8 @@ void default_app_on_db_init_complete(void);
  * @return void
  ****************************************************************************************
  */
-void default_app_on_pairing_request(uint8_t connection_idx, struct gapc_bond_req_ind const *param);
+void default_app_on_pairing_request(uint8_t connection_idx,
+                                    struct gapc_bond_req_ind const *param);
 
 /**
  ****************************************************************************************
@@ -143,7 +143,8 @@ void default_app_on_pairing_request(uint8_t connection_idx, struct gapc_bond_req
  * @return void
  ****************************************************************************************
  */
-void default_app_on_tk_exch_nomitm(uint8_t connection_idx, struct gapc_bond_req_ind const *param);
+void default_app_on_tk_exch_nomitm(uint8_t connection_idx,
+                                   struct gapc_bond_req_ind const *param);
 
 /**
  ****************************************************************************************
@@ -153,7 +154,8 @@ void default_app_on_tk_exch_nomitm(uint8_t connection_idx, struct gapc_bond_req_
  * @return void
  ****************************************************************************************
  */
-void default_app_on_csrk_exch(uint8_t connection_idx, struct gapc_bond_req_ind const *param);
+void default_app_on_csrk_exch(uint8_t connection_idx,
+                              struct gapc_bond_req_ind const *param);
 
 /**
  ****************************************************************************************
@@ -163,7 +165,8 @@ void default_app_on_csrk_exch(uint8_t connection_idx, struct gapc_bond_req_ind c
  * @return void
  ****************************************************************************************
  */
-void default_app_on_ltk_exch(uint8_t connection_idx, struct gapc_bond_req_ind const *param);
+void default_app_on_ltk_exch(uint8_t connection_idx,
+                             struct gapc_bond_req_ind const *param);
 
 /**
  ****************************************************************************************
@@ -173,7 +176,8 @@ void default_app_on_ltk_exch(uint8_t connection_idx, struct gapc_bond_req_ind co
  * @return void
  ****************************************************************************************
  */
-void default_app_on_encrypt_req_ind(uint8_t connection_idx, struct gapc_encrypt_req_ind const *param);
+void default_app_on_encrypt_req_ind(uint8_t connection_idx,
+                                    struct gapc_encrypt_req_ind const *param);
 
 /**
  ****************************************************************************************
@@ -190,7 +194,7 @@ void default_advertise_operation(void);
  ****************************************************************************************
  */
 struct default_app_operations {
-    void (*default_operation_adv)(void);
+  void (*default_operation_adv)(void);
 };
 
 /**
@@ -199,10 +203,12 @@ struct default_app_operations {
  * @param[in] the void operation to execute
  ****************************************************************************************
  */
-#define EXECUTE_DEFAULT_OPERATION_VOID(func)     {if (user_default_app_operations.func!=NULL)\
-                    user_default_app_operations.func();\
-    }
+#define EXECUTE_DEFAULT_OPERATION_VOID(func)      \
+  {                                               \
+    if (user_default_app_operations.func != NULL) \
+      user_default_app_operations.func();         \
+  }
 
 /// @} APP
 
-#endif // _APP_DEFAULT_HANDLERS_H_
+#endif  // _APP_DEFAULT_HANDLERS_H_

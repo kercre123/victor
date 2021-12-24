@@ -3,6 +3,6 @@
 // found in the LICENSE file.
 
 int main() {
-  int export; // Cause a level 1 warning (C4237).
+  int export;  // Cause a level 1 warning (C4237).
   return 0;
 }

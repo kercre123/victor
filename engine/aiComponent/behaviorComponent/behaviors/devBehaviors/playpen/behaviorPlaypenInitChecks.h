@@ -4,8 +4,8 @@
  * Author: Al Chaussee
  * Created: 08/09/17
  *
- * Description: Quick check of initial robot state for playpen. Checks things like firmware version,
- *              battery voltage, cliff sensors, etc
+ * Description: Quick check of initial robot state for playpen. Checks things
+ *like firmware version, battery voltage, cliff sensors, etc
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -19,23 +19,21 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorPlaypenInitChecks : public IBehaviorPlaypen
-{
-protected:
-  
+class BehaviorPlaypenInitChecks : public IBehaviorPlaypen {
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorPlaypenInitChecks(const Json::Value& config);
-  
-protected:
-  virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
+
+ protected:
+  virtual void GetBehaviorOperationModifiersInternal(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOnCharger = true;
-  }  
+  }
   virtual Result OnBehaviorActivatedInternal() override;
-  
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorPlaypenInitChecks_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorPlaypenInitChecks_H__

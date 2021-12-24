@@ -17,9 +17,9 @@
 #ifndef __CUTILS_PROPERTIES_H
 #define __CUTILS_PROPERTIES_H
 
-#include <sys/cdefs.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/cdefs.h>
 
 #include "sys/system_properties.h"
 
@@ -34,8 +34,8 @@ extern "C" {
 ** WARNING: system/bionic/include/sys/system_properties.h also defines
 **          these, but with different names.  (TODO: fix that)
 */
-#define PROPERTY_KEY_MAX   PROP_NAME_MAX
-#define PROPERTY_VALUE_MAX  PROP_VALUE_MAX
+#define PROPERTY_KEY_MAX PROP_NAME_MAX
+#define PROPERTY_VALUE_MAX PROP_VALUE_MAX
 
 /* property_get: returns the length of the value which will never be
 ** greater than PROPERTY_VALUE_MAX - 1 and will always be zero terminated.
@@ -105,24 +105,28 @@ int64_t property_get_int64(const char *key, int64_t default_value);
 int32_t property_get_int32(const char *key, int32_t default_value);
 
 /* property_set: returns 0 on success, < 0 on failure
-*/
+ */
 int property_set(const char *key, const char *value);
-    
-int property_list(void (*propfn)(const char *key, const char *value, void *cookie), void *cookie);    
+
+int property_list(void (*propfn)(const char *key, const char *value,
+                                 void *cookie),
+                  void *cookie);
 
 #if defined(__BIONIC_FORTIFY)
 
-extern int __property_get_real(const char *, char *, const char *)
-    __asm__(__USER_LABEL_PREFIX__ "property_get");
-__errordecl(__property_get_too_small_error, "property_get() called with too small of a buffer");
+extern int __property_get_real(const char *, char *,
+                               const char *) __asm__(__USER_LABEL_PREFIX__
+                                                     "property_get");
+__errordecl(__property_get_too_small_error,
+            "property_get() called with too small of a buffer");
 
 __BIONIC_FORTIFY_INLINE
 int property_get(const char *key, char *value, const char *default_value) {
-    size_t bos = __bos(value);
-    if (bos < PROPERTY_VALUE_MAX) {
-        __property_get_too_small_error();
-    }
-    return __property_get_real(key, value, default_value);
+  size_t bos = __bos(value);
+  if (bos < PROPERTY_VALUE_MAX) {
+    __property_get_too_small_error();
+  }
+  return __property_get_real(key, value, default_value);
 }
 
 #endif

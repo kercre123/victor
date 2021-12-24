@@ -25,10 +25,10 @@
  */
 
 /// ANPC Alert Notification Profile Client
-#define BLE_AN_CLIENT               1
-#if !defined (BLE_CLIENT_PRF)
-    #define BLE_CLIENT_PRF          1
-#endif 
+#define BLE_AN_CLIENT 1
+#if !defined(BLE_CLIENT_PRF)
+#define BLE_CLIENT_PRF 1
+#endif
 
 /*
  * INCLUDE FILES
@@ -48,115 +48,110 @@
  */
 
 /// Alert Notification Service Characteristics
-enum anpc_ans_chars
-{
-    /// Supported New Alert Category
-    ANPC_CHAR_SUP_NEW_ALERT_CAT,
-    /// New Alert
-    ANPC_CHAR_NEW_ALERT,
-    /// Supported Unread Alert Category
-    ANPC_CHAR_SUP_UNREAD_ALERT_CAT,
-    /// Unread Alert Status
-    ANPC_CHAR_UNREAD_ALERT_STATUS,
-    /// Alert Notification Control Point
-    ANPC_CHAR_ALERT_NTF_CTNL_PT,
+enum anpc_ans_chars {
+  /// Supported New Alert Category
+  ANPC_CHAR_SUP_NEW_ALERT_CAT,
+  /// New Alert
+  ANPC_CHAR_NEW_ALERT,
+  /// Supported Unread Alert Category
+  ANPC_CHAR_SUP_UNREAD_ALERT_CAT,
+  /// Unread Alert Status
+  ANPC_CHAR_UNREAD_ALERT_STATUS,
+  /// Alert Notification Control Point
+  ANPC_CHAR_ALERT_NTF_CTNL_PT,
 
-    ANPC_CHAR_MAX,
+  ANPC_CHAR_MAX,
 };
 
 /// Alert Notification Service Characteristic Descriptors
-enum anpc_ans_descs
-{
-    /// New Alert Char. - Client Characteristic Configuration
-    ANPC_DESC_NEW_ALERT_CL_CFG,
-    /// Unread Alert Status Char. - Client Characteristic Configuration
-    ANPC_DESC_UNREAD_ALERT_STATUS_CL_CFG,
+enum anpc_ans_descs {
+  /// New Alert Char. - Client Characteristic Configuration
+  ANPC_DESC_NEW_ALERT_CL_CFG,
+  /// Unread Alert Status Char. - Client Characteristic Configuration
+  ANPC_DESC_UNREAD_ALERT_STATUS_CL_CFG,
 
-    ANPC_DESC_MAX,
+  ANPC_DESC_MAX,
 
-    ANPC_DESC_MASK = 0x10,
+  ANPC_DESC_MASK = 0x10,
 };
 
 /// Codes for reading/writing a ANS characteristic with one single request
-enum anpc_rd_wr_ntf_codes
-{
-    /// Read ANS Supported New Alert Category
-    ANPC_RD_SUP_NEW_ALERT_CAT           = ANPC_CHAR_SUP_NEW_ALERT_CAT,
-    /// NTF New Alert
-    ANPC_NTF_NEW_ALERT                  = ANPC_CHAR_NEW_ALERT,
-    /// Read ANS Supported Unread Alert Category
-    ANPC_RD_SUP_UNREAD_ALERT_CAT        = ANPC_CHAR_SUP_UNREAD_ALERT_CAT,
-    /// NTF Unread Alert Categories
-    ANPC_NTF_UNREAD_ALERT               = ANPC_CHAR_UNREAD_ALERT_STATUS,
-    /// Write ANS Alert Notification Control Point
-    ANPC_WR_ALERT_NTF_CTNL_PT           = ANPC_CHAR_ALERT_NTF_CTNL_PT,
+enum anpc_rd_wr_ntf_codes {
+  /// Read ANS Supported New Alert Category
+  ANPC_RD_SUP_NEW_ALERT_CAT = ANPC_CHAR_SUP_NEW_ALERT_CAT,
+  /// NTF New Alert
+  ANPC_NTF_NEW_ALERT = ANPC_CHAR_NEW_ALERT,
+  /// Read ANS Supported Unread Alert Category
+  ANPC_RD_SUP_UNREAD_ALERT_CAT = ANPC_CHAR_SUP_UNREAD_ALERT_CAT,
+  /// NTF Unread Alert Categories
+  ANPC_NTF_UNREAD_ALERT = ANPC_CHAR_UNREAD_ALERT_STATUS,
+  /// Write ANS Alert Notification Control Point
+  ANPC_WR_ALERT_NTF_CTNL_PT = ANPC_CHAR_ALERT_NTF_CTNL_PT,
 
-    /// Read/Write ANS New Alert Client Characteristic Configuration Descriptor
-    ANPC_RD_WR_NEW_ALERT_CFG            = (ANPC_DESC_NEW_ALERT_CL_CFG | ANPC_DESC_MASK),
-    /// Read ANS Unread Alert Status Client Characteristic Configuration Descriptor
-    ANPC_RD_WR_UNREAD_ALERT_STATUS_CFG  = (ANPC_DESC_UNREAD_ALERT_STATUS_CL_CFG | ANPC_DESC_MASK),
+  /// Read/Write ANS New Alert Client Characteristic Configuration Descriptor
+  ANPC_RD_WR_NEW_ALERT_CFG = (ANPC_DESC_NEW_ALERT_CL_CFG | ANPC_DESC_MASK),
+  /// Read ANS Unread Alert Status Client Characteristic Configuration
+  /// Descriptor
+  ANPC_RD_WR_UNREAD_ALERT_STATUS_CFG =
+      (ANPC_DESC_UNREAD_ALERT_STATUS_CL_CFG | ANPC_DESC_MASK),
 };
 
 /// Pointer to the connection clean-up function
-#define ANPC_CLEANUP_FNCT        (anpc_cleanup)
+#define ANPC_CLEANUP_FNCT (anpc_cleanup)
 /*
  * STRUCTURES
  ****************************************************************************************
  */
 
 /**
- * Structure containing the characteristics handles, value handles and descriptors for
- * the Alert Notification Service
+ * Structure containing the characteristics handles, value handles and
+ * descriptors for the Alert Notification Service
  */
-struct anpc_ans_content
-{
-    /// Service info
-    struct prf_svc svc;
+struct anpc_ans_content {
+  /// Service info
+  struct prf_svc svc;
 
-    /// Characteristic info:
-    ///  - Supported New Alert Category
-    ///  - New Alert
-    ///  - Supported Unread Alert Category
-    ///  - Unread Alert Status
-    ///  - Alert Notification Control Point
-    struct prf_char_inf chars[ANPC_CHAR_MAX];
+  /// Characteristic info:
+  ///  - Supported New Alert Category
+  ///  - New Alert
+  ///  - Supported Unread Alert Category
+  ///  - Unread Alert Status
+  ///  - Alert Notification Control Point
+  struct prf_char_inf chars[ANPC_CHAR_MAX];
 
-    /// Descriptor handles:
-    ///  - New Alert Client Cfg
-    ///  - Unread Alert Status Client Cfg
-    struct prf_char_desc_inf descs[ANPC_DESC_MAX];
+  /// Descriptor handles:
+  ///  - New Alert Client Cfg
+  ///  - Unread Alert Status Client Cfg
+  struct prf_char_desc_inf descs[ANPC_DESC_MAX];
 };
 
-
 /// Alert Notification Profile Client environment variable
-struct anpc_env_tag
-{
-    /// Profile Connection Info
-    struct prf_con_info con_info;
+struct anpc_env_tag {
+  /// Profile Connection Info
+  struct prf_con_info con_info;
 
-    /// Current Operation
-    void *operation;
+  /// Current Operation
+  void *operation;
 
-    /// Provide an indication about the last operation
-    uint16_t last_req;
-    /// Last characteristic code discovered
-    uint8_t last_char_code;
-    /// Counter used to check service uniqueness
-    uint8_t nb_svc;
+  /// Provide an indication about the last operation
+  uint16_t last_req;
+  /// Last characteristic code discovered
+  uint8_t last_char_code;
+  /// Counter used to check service uniqueness
+  uint8_t nb_svc;
 
-    ///Alert Notification Service Characteristics
-    struct anpc_ans_content ans;
+  /// Alert Notification Service Characteristics
+  struct anpc_ans_content ans;
 };
 
 /// Command Message Basic Structure
-struct anpc_cmd
-{
-    /// Connection Handle
-    uint16_t conhdl;
-    /// Operation Code
-    uint8_t operation;
+struct anpc_cmd {
+  /// Connection Handle
+  uint16_t conhdl;
+  /// Operation Code
+  uint8_t operation;
 
-    /// MORE DATA
+  /// MORE DATA
 };
 
 /*
@@ -179,7 +174,6 @@ extern struct anpc_env_tag **anpc_envs;
  ****************************************************************************************
  */
 void anpc_init(void);
-
 
 /**
  ****************************************************************************************
@@ -205,24 +199,27 @@ bool anpc_found_next_alert_cat(struct anpc_env_tag *idx_env,
  * This function performs all the initializations of the ANPC module.
  ****************************************************************************************
  */
-void anpc_write_alert_ntf_ctnl_pt(struct anpc_env_tag *idx_env, uint8_t cmd_id, uint8_t cat_id);
+void anpc_write_alert_ntf_ctnl_pt(struct anpc_env_tag *idx_env, uint8_t cmd_id,
+                                  uint8_t cat_id);
 
 /**
  ****************************************************************************************
  * @brief Send a ANPC_CMP_EVT message to the task which enabled the profile
  ****************************************************************************************
  */
-void anpc_send_no_conn_cmp_evt(uint8_t src_id, uint8_t dest_id, uint16_t conhdl, uint8_t operation);
+void anpc_send_no_conn_cmp_evt(uint8_t src_id, uint8_t dest_id, uint16_t conhdl,
+                               uint8_t operation);
 
 /**
  ****************************************************************************************
  * @brief Send a ANPC_CMP_EVT message to the task which enabled the profile
  ****************************************************************************************
  */
-void anpc_send_cmp_evt(struct anpc_env_tag *anpc_env, uint8_t operation, uint8_t status);
+void anpc_send_cmp_evt(struct anpc_env_tag *anpc_env, uint8_t operation,
+                       uint8_t status);
 
-#endif //(BLE_AN_CLIENT)
+#endif  //(BLE_AN_CLIENT)
 
 /// @} ANPC
 
-#endif //(_ANPC_H_)
+#endif  //(_ANPC_H_)

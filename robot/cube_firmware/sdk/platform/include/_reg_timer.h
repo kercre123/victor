@@ -5,6 +5,4 @@
 
 //#define REG_TIMER_BASE_ADDR 0x10003000
 
-
-#endif // __REG_TIMER_H_
-
+#endif  // __REG_TIMER_H_

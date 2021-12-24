@@ -21,20 +21,19 @@ namespace Anki {
 namespace Vector {
 
 ConditionBatteryLevel::ConditionBatteryLevel(const Json::Value& config)
-  : IBEICondition(config)
-{
-  const std::string& targetLevelStr = JsonTools::ParseString(config, "targetBatteryLevel", "ConditionBatteryLevel.Config");
+    : IBEICondition(config) {
+  const std::string& targetLevelStr = JsonTools::ParseString(
+      config, "targetBatteryLevel", "ConditionBatteryLevel.Config");
   ANKI_VERIFY(BatteryLevelFromString(targetLevelStr, _targetBatteryLevel),
               "ConditionBatteryLevel.Config.IncorrectString",
-              "%s is not a valid BatteryLevel",
-              targetLevelStr.c_str());
+              "%s is not a valid BatteryLevel", targetLevelStr.c_str());
 }
 
-bool ConditionBatteryLevel::AreConditionsMetInternal(BehaviorExternalInterface& bei) const
-{
+bool ConditionBatteryLevel::AreConditionsMetInternal(
+    BehaviorExternalInterface& bei) const {
   const auto currBatteryLevel = bei.GetRobotInfo().GetBatteryLevel();
   return (currBatteryLevel == _targetBatteryLevel);
 }
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki

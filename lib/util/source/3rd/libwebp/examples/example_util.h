@@ -36,7 +36,7 @@ float ExUtilGetFloat(const char* const v, int* const error);
 int ExUtilGetInts(const char* v, int base, int max_output, int output[]);
 
 #ifdef __cplusplus
-}    // extern "C"
+}  // extern "C"
 #endif
 
 #endif  // WEBP_EXAMPLES_EXAMPLE_UTIL_H_

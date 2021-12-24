@@ -1,14 +1,14 @@
 /**
-*  componentWrapper.h
-*
-*  Created by Kevin M. Karol on 12/1/17
-*  Copyright (c) 2017 Anki, Inc. All rights reserved.
-*
-*  Class which wraps a named component so that different types can be referenced
-*  by the same entity
-*  Wrapper can either manage its own memory or just maintain a reference
-*  
-**/
+ *  componentWrapper.h
+ *
+ *  Created by Kevin M. Karol on 12/1/17
+ *  Copyright (c) 2017 Anki, Inc. All rights reserved.
+ *
+ *  Class which wraps a named component so that different types can be
+ *referenced by the same entity Wrapper can either manage its own memory or just
+ *maintain a reference
+ *
+ **/
 
 #ifndef __Util_EntityComponent_ComponentWrapper_H__
 #define __Util_EntityComponent_ComponentWrapper_H__
@@ -18,50 +18,54 @@
 
 namespace Anki {
 
-class ComponentWrapper{
-public:
-  template<typename T>
-  ComponentWrapper(T* componentPtr)
-  : _componentPtr(componentPtr){}
+class ComponentWrapper {
+ public:
+  template <typename T>
+  ComponentWrapper(T* componentPtr) : _componentPtr(componentPtr) {}
 
-  template<typename T>
+  template <typename T>
   ComponentWrapper(T*& componentPtr, const bool shouldManage)
-  : _componentPtr(componentPtr){
-    if(shouldManage){
-      _IManageableComponent.reset(static_cast<IManageableComponent*>(componentPtr));
+      : _componentPtr(componentPtr) {
+    if (shouldManage) {
+      _IManageableComponent.reset(
+          static_cast<IManageableComponent*>(componentPtr));
       componentPtr = nullptr;
-    }else{
+    } else {
       ANKI_VERIFY(false,
-                  "ComponentWrapper.ManagedConstructor.UsedWrongConstructor","");
+                  "ComponentWrapper.ManagedConstructor.UsedWrongConstructor",
+                  "");
     }
   }
 
-  ~ComponentWrapper(){
+  ~ComponentWrapper() {}
+
+  bool IsComponentValid() const {
+    return (_componentPtr != nullptr) && IsComponentValidInternal();
   }
+  virtual bool IsComponentValidInternal() const { return true; }
 
-  bool IsComponentValid() const {return (_componentPtr != nullptr) && IsComponentValidInternal(); }
-  virtual bool IsComponentValidInternal() const {return true;}
-
-  template<typename T>
-  T& GetComponent() const { 
-    ANKI_VERIFY(IsComponentValid(),"ComponentWrapper.GetComponent.ValueIsNotValid",""); 
-    auto castPtr = static_cast<T*>(_componentPtr); 
+  template <typename T>
+  T& GetComponent() const {
+    ANKI_VERIFY(IsComponentValid(),
+                "ComponentWrapper.GetComponent.ValueIsNotValid", "");
+    auto castPtr = static_cast<T*>(_componentPtr);
     return *castPtr;
   }
 
-  template<typename T>
-  T* GetComponentPtr() const { 
-    ANKI_VERIFY(IsComponentValid(),"ComponentWrapper.GetComponent.ValueIsNotValid",""); 
-    auto castPtr = static_cast<T*>(_componentPtr); 
+  template <typename T>
+  T* GetComponentPtr() const {
+    ANKI_VERIFY(IsComponentValid(),
+                "ComponentWrapper.GetComponent.ValueIsNotValid", "");
+    auto castPtr = static_cast<T*>(_componentPtr);
     return castPtr;
   }
 
-protected:
+ protected:
   void* _componentPtr = nullptr;
 
   std::shared_ptr<IManageableComponent> _IManageableComponent;
-}; // ComponentWrapper
+};  // ComponentWrapper
 
-} // namespace Anki
+}  // namespace Anki
 
-#endif // __Util_EntityComponent_ComponentWrapper_H__
+#endif  // __Util_EntityComponent_ComponentWrapper_H__

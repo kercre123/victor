@@ -5,6 +5,4 @@
 
 //#define REG_EMI0_BASE_ADDR 0x1000B000
 
-
-#endif // __REG_EMI0_H_
-
+#endif  // __REG_EMI0_H_

@@ -26,24 +26,26 @@ namespace cblAuthDelegate {
  * Interface for receiving requests for authorization from a CBLAuthDelegate.
  */
 class CBLAuthRequesterInterface {
-public:
-    /**
-     * Notification of a request for authorization.
-     *
-     * @param url The URL that the user needs to navigate to.
-     * @param code The code that the user needs to enter once authorized.
-     */
-    virtual void onRequestAuthorization(const std::string& url, const std::string& code) = 0;
+ public:
+  /**
+   * Notification of a request for authorization.
+   *
+   * @param url The URL that the user needs to navigate to.
+   * @param code The code that the user needs to enter once authorized.
+   */
+  virtual void onRequestAuthorization(const std::string& url,
+                                      const std::string& code) = 0;
 
-    /**
-     * Notification that we are polling @c LWA to see if the client has been authorized.
-     */
-    virtual void onCheckingForAuthorization() = 0;
+  /**
+   * Notification that we are polling @c LWA to see if the client has been
+   * authorized.
+   */
+  virtual void onCheckingForAuthorization() = 0;
 
-    /**
-     * Destructor.
-     */
-    virtual ~CBLAuthRequesterInterface() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~CBLAuthRequesterInterface() = default;
 };
 
 }  // namespace cblAuthDelegate

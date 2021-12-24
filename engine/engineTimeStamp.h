@@ -4,7 +4,8 @@
  * Author: ross
  * Date:   Jun 9 2018
  *
- * Description: Type definition for engine timestamps (a strongly typed TimeStamp_t)
+ * Description: Type definition for engine timestamps (a strongly typed
+ *TimeStamp_t)
  *
  * Copyright: Anki, Inc. 2018
  **/
@@ -19,9 +20,10 @@
 namespace Anki {
 namespace Vector {
 
-typedef Util::StronglyTyped<TimeStamp_t, struct EngineTimeStampID> EngineTimeStamp_t;
+typedef Util::StronglyTyped<TimeStamp_t, struct EngineTimeStampID>
+    EngineTimeStamp_t;
 
-} // namespace
-} // namespace
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_EngineTimeStamp_H__
+#endif  // __Engine_EngineTimeStamp_H__

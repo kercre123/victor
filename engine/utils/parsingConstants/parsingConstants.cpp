@@ -15,13 +15,12 @@
 #error "STRING_NAMED_CONST already defined. Please fix."
 #endif
 
-namespace AnkiUtil
-{
+namespace AnkiUtil {
 
 //#include <string>
 //#define STRING_NAMED_CONST(name, value) const std::string name(value);
-#define STRING_NAMED_CONST(name, value) const char * const name = value;
+#define STRING_NAMED_CONST(name, value) const char* const name = value;
 #include "engine/utils/parsingConstants/parsingConstants.def"
 #undef STRING_NAMED_CONST
 
-}
+}  // namespace AnkiUtil

@@ -54,9 +54,9 @@ bool IsPrime(int n) {
   // Now, we have that n is odd and n >= 3.
 
   // Try to divide n by every odd number i, starting from 3
-  for (int i = 3; ; i += 2) {
+  for (int i = 3;; i += 2) {
     // We only have to try i up to the squre root of n
-    if (i > n/i) break;
+    if (i > n / i) break;
 
     // Now, we have i <= n/i < n.
     // If n is divisible by i, n is not prime.

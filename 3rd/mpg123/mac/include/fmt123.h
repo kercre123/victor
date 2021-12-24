@@ -1,12 +1,12 @@
 /*
-	libmpg123: MPEG Audio Decoder library
+        libmpg123: MPEG Audio Decoder library
 
-	separate header just for audio format definitions not tied to
-	library code
+        separate header just for audio format definitions not tied to
+        library code
 
-	copyright 1995-2015 by the mpg123 project
-	free software under the terms of the LGPL 2.1
-	see COPYING and AUTHORS files in distribution or http://mpg123.org
+        copyright 1995-2015 by the mpg123 project
+        free software under the terms of the LGPL 2.1
+        see COPYING and AUTHORS files in distribution or http://mpg123.org
 */
 
 #ifndef MPG123_ENC_H
@@ -40,51 +40,67 @@
  *  can simply postprocess the output buffers (libmpg123 wouldn't do anything
  * else). The macro MPG123_SAMPLESIZE() can be helpful there.
  */
-enum mpg123_enc_enum
-{
-/* 0000 0000 0000 1111 Some 8 bit  integer encoding. */
-	MPG123_ENC_8      = 0x00f
-/* 0000 0000 0100 0000 Some 16 bit integer encoding. */
-,	MPG123_ENC_16     = 0x040
-/* 0100 0000 0000 0000 Some 24 bit integer encoding. */
-,	MPG123_ENC_24     = 0x4000 
-/* 0000 0001 0000 0000 Some 32 bit integer encoding. */
-,	MPG123_ENC_32     = 0x100  
-/* 0000 0000 1000 0000 Some signed integer encoding. */
-,	MPG123_ENC_SIGNED = 0x080  
-/* 0000 1110 0000 0000 Some float encoding. */
-,	MPG123_ENC_FLOAT  = 0xe00  
-/* 0000 0000 1101 0000 signed 16 bit */
-,	MPG123_ENC_SIGNED_16   = (MPG123_ENC_16|MPG123_ENC_SIGNED|0x10)
-/* 0000 0000 0110 0000 unsigned 16 bit */
-,	MPG123_ENC_UNSIGNED_16 = (MPG123_ENC_16|0x20)
-/* 0000 0000 0000 0001 unsigned 8 bit */
-,	MPG123_ENC_UNSIGNED_8  = 0x01
-/* 0000 0000 1000 0010 signed 8 bit */
-,	MPG123_ENC_SIGNED_8    = (MPG123_ENC_SIGNED|0x02)
-/* 0000 0000 0000 0100 ulaw 8 bit */
-,	MPG123_ENC_ULAW_8      = 0x04
-/* 0000 0000 0000 1000 alaw 8 bit */
-,	MPG123_ENC_ALAW_8      = 0x08
-/* 0001 0001 1000 0000 signed 32 bit */
-,	MPG123_ENC_SIGNED_32   = MPG123_ENC_32|MPG123_ENC_SIGNED|0x1000
-/* 0010 0001 0000 0000 unsigned 32 bit */
-,	MPG123_ENC_UNSIGNED_32 = MPG123_ENC_32|0x2000
-/* 0101 0000 1000 0000 signed 24 bit */
-,	MPG123_ENC_SIGNED_24   = MPG123_ENC_24|MPG123_ENC_SIGNED|0x1000
-/* 0110 0000 0000 0000 unsigned 24 bit */
-,	MPG123_ENC_UNSIGNED_24 = MPG123_ENC_24|0x2000
-/* 0000 0010 0000 0000 32bit float */
-,	MPG123_ENC_FLOAT_32    = 0x200
-/* 0000 0100 0000 0000 64bit float */
-,	MPG123_ENC_FLOAT_64    = 0x400
-/* Any possibly known encoding from the list above. */
-,	MPG123_ENC_ANY = ( MPG123_ENC_SIGNED_16  | MPG123_ENC_UNSIGNED_16
-	                 | MPG123_ENC_UNSIGNED_8 | MPG123_ENC_SIGNED_8
-	                 | MPG123_ENC_ULAW_8     | MPG123_ENC_ALAW_8
-	                 | MPG123_ENC_SIGNED_32  | MPG123_ENC_UNSIGNED_32
-	                 | MPG123_ENC_SIGNED_24  | MPG123_ENC_UNSIGNED_24
-	                 | MPG123_ENC_FLOAT_32   | MPG123_ENC_FLOAT_64    )
+enum mpg123_enc_enum {
+  /* 0000 0000 0000 1111 Some 8 bit  integer encoding. */
+  MPG123_ENC_8 = 0x00f
+  /* 0000 0000 0100 0000 Some 16 bit integer encoding. */
+  ,
+  MPG123_ENC_16 = 0x040
+  /* 0100 0000 0000 0000 Some 24 bit integer encoding. */
+  ,
+  MPG123_ENC_24 = 0x4000
+  /* 0000 0001 0000 0000 Some 32 bit integer encoding. */
+  ,
+  MPG123_ENC_32 = 0x100
+  /* 0000 0000 1000 0000 Some signed integer encoding. */
+  ,
+  MPG123_ENC_SIGNED = 0x080
+  /* 0000 1110 0000 0000 Some float encoding. */
+  ,
+  MPG123_ENC_FLOAT = 0xe00
+  /* 0000 0000 1101 0000 signed 16 bit */
+  ,
+  MPG123_ENC_SIGNED_16 = (MPG123_ENC_16 | MPG123_ENC_SIGNED | 0x10)
+  /* 0000 0000 0110 0000 unsigned 16 bit */
+  ,
+  MPG123_ENC_UNSIGNED_16 = (MPG123_ENC_16 | 0x20)
+  /* 0000 0000 0000 0001 unsigned 8 bit */
+  ,
+  MPG123_ENC_UNSIGNED_8 = 0x01
+  /* 0000 0000 1000 0010 signed 8 bit */
+  ,
+  MPG123_ENC_SIGNED_8 = (MPG123_ENC_SIGNED | 0x02)
+  /* 0000 0000 0000 0100 ulaw 8 bit */
+  ,
+  MPG123_ENC_ULAW_8 = 0x04
+  /* 0000 0000 0000 1000 alaw 8 bit */
+  ,
+  MPG123_ENC_ALAW_8 = 0x08
+  /* 0001 0001 1000 0000 signed 32 bit */
+  ,
+  MPG123_ENC_SIGNED_32 = MPG123_ENC_32 | MPG123_ENC_SIGNED | 0x1000
+  /* 0010 0001 0000 0000 unsigned 32 bit */
+  ,
+  MPG123_ENC_UNSIGNED_32 = MPG123_ENC_32 | 0x2000
+  /* 0101 0000 1000 0000 signed 24 bit */
+  ,
+  MPG123_ENC_SIGNED_24 = MPG123_ENC_24 | MPG123_ENC_SIGNED | 0x1000
+  /* 0110 0000 0000 0000 unsigned 24 bit */
+  ,
+  MPG123_ENC_UNSIGNED_24 = MPG123_ENC_24 | 0x2000
+  /* 0000 0010 0000 0000 32bit float */
+  ,
+  MPG123_ENC_FLOAT_32 = 0x200
+  /* 0000 0100 0000 0000 64bit float */
+  ,
+  MPG123_ENC_FLOAT_64 = 0x400
+  /* Any possibly known encoding from the list above. */
+  ,
+  MPG123_ENC_ANY =
+      (MPG123_ENC_SIGNED_16 | MPG123_ENC_UNSIGNED_16 | MPG123_ENC_UNSIGNED_8 |
+       MPG123_ENC_SIGNED_8 | MPG123_ENC_ULAW_8 | MPG123_ENC_ALAW_8 |
+       MPG123_ENC_SIGNED_32 | MPG123_ENC_UNSIGNED_32 | MPG123_ENC_SIGNED_24 |
+       MPG123_ENC_UNSIGNED_24 | MPG123_ENC_FLOAT_32 | MPG123_ENC_FLOAT_64)
 };
 
 /** Get size of one PCM sample with given encoding.
@@ -98,20 +114,16 @@ enum mpg123_enc_enum
  * \param enc the encoding (mpg123_enc_enum value)
  * \return size of one sample in bytes
  */
-#define MPG123_SAMPLESIZE(enc) ( \
-	(enc) & MPG123_ENC_8 \
-	?	1 \
-	:	( (enc) & MPG123_ENC_16 \
-		?	2 \
-		:	( (enc) & MPG123_ENC_24 \
-			?	3 \
-			:	( (  (enc) & MPG123_ENC_32 \
-				  || (enc) == MPG123_ENC_FLOAT_32 ) \
-				?	4 \
-				:	( (enc) == MPG123_ENC_FLOAT_64 \
-					?	8 \
-					:	0 \
-)	)	)	)	)
+#define MPG123_SAMPLESIZE(enc)                                                \
+  ((enc)&MPG123_ENC_8                                                         \
+       ? 1                                                                    \
+       : ((enc)&MPG123_ENC_16                                                 \
+              ? 2                                                             \
+              : ((enc)&MPG123_ENC_24                                          \
+                     ? 3                                                      \
+                     : (((enc)&MPG123_ENC_32 || (enc) == MPG123_ENC_FLOAT_32) \
+                            ? 4                                               \
+                            : ((enc) == MPG123_ENC_FLOAT_64 ? 8 : 0)))))
 
 /** Structure defining an audio format.
  *  Providing the members as individual function arguments to define a certain
@@ -120,16 +132,14 @@ enum mpg123_enc_enum
  *  Negative values for the members might be used to communicate use of default
  *  values.
  */
-struct mpg123_fmt
-{
-	long rate;    /**< sampling rate in Hz  */
-	int channels; /**< channel count */
-	/** encoding code, can be single value or bitwise or of members of
-	 *  mpg123_enc_enum */
-	int encoding;
+struct mpg123_fmt {
+  long rate;    /**< sampling rate in Hz  */
+  int channels; /**< channel count */
+  /** encoding code, can be single value or bitwise or of members of
+   *  mpg123_enc_enum */
+  int encoding;
 };
 
 /* @} */
 
 #endif
-

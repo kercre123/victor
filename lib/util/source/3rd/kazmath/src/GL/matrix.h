@@ -38,10 +38,10 @@ typedef unsigned int kmGLEnum;
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 /* Added by Tobias Lensing for icedcoffee-framework.org*/
-void kmGLSetCurrentContext(void *contextRef);
-void *kmGLGetCurrentContext();
+void kmGLSetCurrentContext(void* contextRef);
+void* kmGLGetCurrentContext();
 void kmGLClearCurrentContext();
 void kmGLClearAllContexts();
 

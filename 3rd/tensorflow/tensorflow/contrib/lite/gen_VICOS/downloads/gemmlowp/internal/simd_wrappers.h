@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <type_traits>
+
 #include "../fixedpoint/fixedpoint.h"
 
 namespace gemmlowp {

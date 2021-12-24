@@ -3,9 +3,9 @@
  *
  * Author: raul
  * Created: 5/8/14
- * 
+ *
  * Description: Check class description below.
- * 
+ *
  * Copyright: Anki, Inc. 2014
  *
  **/
@@ -13,12 +13,14 @@
 #ifndef UTIL_PTREETRAVERSER_H_
 #define UTIL_PTREETRAVERSER_H_
 
-#include <stack>
 #include <boost/property_tree/ptree_fwd.hpp>
-#include "util/ptree/ptreeKey.h"
-#include "util/ptree/includePtree.h"
+#include <stack>
 
-namespace Anki{ namespace Util {
+#include "util/ptree/includePtree.h"
+#include "util/ptree/ptreeKey.h"
+
+namespace Anki {
+namespace Util {
 namespace PtreeTools {
 
 /**
@@ -30,8 +32,7 @@ namespace PtreeTools {
  * @author brad
  */
 class PtreeTraverser {
-public:
-
+ public:
   // Constructs the traverser and sets top to be the first node.
   PtreeTraverser(const boost::property_tree::ptree& tree);
 
@@ -44,14 +45,13 @@ public:
   const boost::property_tree::ptree& topTree() const;
   const PtreeKey& topKey() const;
 
-private:
-
+ private:
   std::stack<boost::property_tree::ptree> sVals_;
   std::stack<PtreeKey> sKeys_;
 };
 
-} // namespace
-} // namespace
-} // namespace
+}  // namespace PtreeTools
+}  // namespace Util
+}  // namespace Anki
 
 #endif

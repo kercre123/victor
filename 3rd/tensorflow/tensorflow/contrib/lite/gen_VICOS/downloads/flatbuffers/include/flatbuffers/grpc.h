@@ -36,7 +36,7 @@ class Message {
   Message() : slice_(grpc_empty_slice()) {}
 
   Message(grpc_slice slice, bool add_ref)
-    : slice_(add_ref ? grpc_slice_ref(slice) : slice) {}
+      : slice_(add_ref ? grpc_slice_ref(slice) : slice) {}
 
   Message &operator=(const Message &other) = delete;
 
@@ -137,7 +137,7 @@ namespace detail {
 struct SliceAllocatorMember {
   SliceAllocator slice_allocator_;
 };
-}
+}  // namespace detail
 
 // MessageBuilder is a gRPC-specific FlatBufferBuilder that uses SliceAllocator
 // to allocate gRPC buffers.
@@ -145,7 +145,7 @@ class MessageBuilder : private detail::SliceAllocatorMember,
                        public FlatBufferBuilder {
  public:
   explicit MessageBuilder(uoffset_t initial_size = 1024)
-    : FlatBufferBuilder(initial_size, &slice_allocator_, false) {}
+      : FlatBufferBuilder(initial_size, &slice_allocator_, false) {}
 
   MessageBuilder(const MessageBuilder &other) = delete;
   MessageBuilder &operator=(const MessageBuilder &other) = delete;
@@ -237,19 +237,19 @@ class SerializationTraits<flatbuffers::grpc::Message<T>> {
       *msg = flatbuffers::grpc::Message<T>(slice, false);
     }
     grpc_byte_buffer_destroy(buffer);
-    #if FLATBUFFERS_GRPC_DISABLE_AUTO_VERIFICATION
+#if FLATBUFFERS_GRPC_DISABLE_AUTO_VERIFICATION
     return ::grpc::Status::OK;
-    #else
+#else
     if (msg->Verify()) {
       return ::grpc::Status::OK;
     } else {
       return ::grpc::Status(::grpc::StatusCode::INTERNAL,
                             "Message verification failed");
     }
-    #endif
+#endif
   }
 };
 
-}  // namespace grpc;
+}  // namespace grpc
 
 #endif  // FLATBUFFERS_GRPC_H_

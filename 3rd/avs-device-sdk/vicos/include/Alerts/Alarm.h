@@ -23,22 +23,22 @@ namespace capabilityAgents {
 namespace alerts {
 
 /**
- * An Alarm class.  This represents an alert which the user wishes to activate at a specific point in time,
- * which they specify as that absolute time point, rather than an offset from the current time.
+ * An Alarm class.  This represents an alert which the user wishes to activate
+ * at a specific point in time, which they specify as that absolute time point,
+ * rather than an offset from the current time.
  *
- * There is no expected special behavior for this type of alert - it will render a simple audio asset on the device
- * when activated.
+ * There is no expected special behavior for this type of alert - it will render
+ * a simple audio asset on the device when activated.
  */
 class Alarm : public Alert {
-public:
-    /// String representation of this type.
-    static const std::string TYPE_NAME;
+ public:
+  /// String representation of this type.
+  static const std::string TYPE_NAME;
 
-    Alarm(
-        std::function<std::unique_ptr<std::istream>()> defaultAudioFactory,
+  Alarm(std::function<std::unique_ptr<std::istream>()> defaultAudioFactory,
         std::function<std::unique_ptr<std::istream>()> shortAudioFactory);
 
-    std::string getTypeName() const override;
+  std::string getTypeName() const override;
 };
 
 }  // namespace alerts

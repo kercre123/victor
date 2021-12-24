@@ -18,20 +18,20 @@
 namespace Anki {
 namespace Vector {
 
-class ConditionAnyUserIntent : public IBEICondition
-{
-public:
+class ConditionAnyUserIntent : public IBEICondition {
+ public:
   explicit ConditionAnyUserIntent(const Json::Value& config);
 
   virtual ~ConditionAnyUserIntent();
 
-protected:
-  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {}
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+ protected:
+  virtual void InitInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) override {}
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) const override;
 };
 
-
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

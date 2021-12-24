@@ -13,20 +13,19 @@
 #ifndef __AnimProcess_CozmoAnim_AudioPlaybackSystem_H__
 #define __AnimProcess_CozmoAnim_AudioPlaybackSystem_H__
 
+#include <queue>
+
 #include "audioUtil/audioDataTypes.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "coretech/common/shared/types.h"
 
-#include <queue>
-
-
 namespace Anki {
 namespace Vector {
 namespace Anim {
-  class AnimContext;
+class AnimContext;
 }
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 namespace Anki {
 namespace Vector {
@@ -34,52 +33,51 @@ namespace Audio {
 
 class AudioPlaybackJob;
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class AudioPlaybackSystem
-{
-public:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  AudioPlaybackSystem( const Anim::AnimContext* context );
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+class AudioPlaybackSystem {
+ public:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
+  AudioPlaybackSystem(const Anim::AnimContext* context);
   ~AudioPlaybackSystem();
 
   AudioPlaybackSystem() = delete;
-  AudioPlaybackSystem( const AudioPlaybackSystem& other ) = delete;
-  AudioPlaybackSystem& operator=( const AudioPlaybackSystem& other ) = delete;
+  AudioPlaybackSystem(const AudioPlaybackSystem& other) = delete;
+  AudioPlaybackSystem& operator=(const AudioPlaybackSystem& other) = delete;
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
 
-  void Update( BaseStationTime_t currTime_nanosec );
-  void PlaybackAudio( const std::string& path );
+  void Update(BaseStationTime_t currTime_nanosec);
+  void PlaybackAudio(const std::string& path);
 
-
-private:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool IsValidFile( const std::string& path ) const;
+ private:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
+  bool IsValidFile(const std::string& path) const;
 
   // audio loading jobs
   void StartNextJobInQueue();
-  static void LoadAudioPlaybackData( std::shared_ptr<AudioPlaybackJob> audiojob );
+  static void LoadAudioPlaybackData(std::shared_ptr<AudioPlaybackJob> audiojob);
 
   // audio playback
   void BeginAudioPlayback();
   void OnAudioPlaybackBegin();
   void OnAudioPlaybackEnd();
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Member Data
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Member Data
+  const Anim::AnimContext* _animContext;
 
-  const Anim::AnimContext*            _animContext;
-
-  std::shared_ptr<AudioPlaybackJob>   _currentJob;
-  std::queue<AudioPlaybackJob*>       _jobQueue;
-  bool                                _isJobLoading;
+  std::shared_ptr<AudioPlaybackJob> _currentJob;
+  std::queue<AudioPlaybackJob*> _jobQueue;
+  bool _isJobLoading;
 };
 
-} //  namespace Audio
-} // namespace Vector
-} // namespace Anki
+}  //  namespace Audio
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __AnimProcess_CozmoAnim_AudioPlaybackSystem_H__
+#endif  // __AnimProcess_CozmoAnim_AudioPlaybackSystem_H__

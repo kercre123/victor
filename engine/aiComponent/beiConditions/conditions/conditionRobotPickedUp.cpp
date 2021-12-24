@@ -19,16 +19,13 @@ namespace Anki {
 namespace Vector {
 
 ConditionRobotPickedUp::ConditionRobotPickedUp(const Json::Value& config)
-: IBEICondition(config) 
-{
-}
+    : IBEICondition(config) {}
 
-bool ConditionRobotPickedUp::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
+bool ConditionRobotPickedUp::AreConditionsMetInternal(
+    BehaviorExternalInterface& behaviorExternalInterface) const {
   auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   return robotInfo.IsPickedUp();
 }
 
-
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki

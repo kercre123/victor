@@ -73,7 +73,7 @@
 #define GOOGLE_BREAKPAD_COMMON_MINIDUMP_CPU_X86_H__
 
 #define MD_FLOATINGSAVEAREA_X86_REGISTERAREA_SIZE 80
-     /* SIZE_OF_80387_REGISTERS */
+/* SIZE_OF_80387_REGISTERS */
 
 typedef struct {
   uint32_t control_word;
@@ -86,89 +86,85 @@ typedef struct {
 
   /* register_area contains eight 80-bit (x87 "long double") quantities for
    * floating-point registers %st0 (%mm0) through %st7 (%mm7). */
-  uint8_t  register_area[MD_FLOATINGSAVEAREA_X86_REGISTERAREA_SIZE];
+  uint8_t register_area[MD_FLOATINGSAVEAREA_X86_REGISTERAREA_SIZE];
   uint32_t cr0_npx_state;
-} MDFloatingSaveAreaX86;  /* FLOATING_SAVE_AREA */
-
+} MDFloatingSaveAreaX86; /* FLOATING_SAVE_AREA */
 
 #define MD_CONTEXT_X86_EXTENDED_REGISTERS_SIZE 512
-     /* MAXIMUM_SUPPORTED_EXTENSION */
+/* MAXIMUM_SUPPORTED_EXTENSION */
 
 typedef struct {
   /* The next field determines the layout of the structure, and which parts
    * of it are populated */
-  uint32_t             context_flags;
+  uint32_t context_flags;
 
   /* The next 6 registers are included with MD_CONTEXT_X86_DEBUG_REGISTERS */
-  uint32_t             dr0;
-  uint32_t             dr1;
-  uint32_t             dr2;
-  uint32_t             dr3;
-  uint32_t             dr6;
-  uint32_t             dr7;
+  uint32_t dr0;
+  uint32_t dr1;
+  uint32_t dr2;
+  uint32_t dr3;
+  uint32_t dr6;
+  uint32_t dr7;
 
   /* The next field is included with MD_CONTEXT_X86_FLOATING_POINT */
   MDFloatingSaveAreaX86 float_save;
 
   /* The next 4 registers are included with MD_CONTEXT_X86_SEGMENTS */
-  uint32_t             gs; 
-  uint32_t             fs;
-  uint32_t             es;
-  uint32_t             ds;
+  uint32_t gs;
+  uint32_t fs;
+  uint32_t es;
+  uint32_t ds;
   /* The next 6 registers are included with MD_CONTEXT_X86_INTEGER */
-  uint32_t             edi;
-  uint32_t             esi;
-  uint32_t             ebx;
-  uint32_t             edx;
-  uint32_t             ecx;
-  uint32_t             eax;
+  uint32_t edi;
+  uint32_t esi;
+  uint32_t ebx;
+  uint32_t edx;
+  uint32_t ecx;
+  uint32_t eax;
 
   /* The next 6 registers are included with MD_CONTEXT_X86_CONTROL */
-  uint32_t             ebp;
-  uint32_t             eip;
-  uint32_t             cs;      /* WinNT.h says "must be sanitized" */
-  uint32_t             eflags;  /* WinNT.h says "must be sanitized" */
-  uint32_t             esp;
-  uint32_t             ss;
+  uint32_t ebp;
+  uint32_t eip;
+  uint32_t cs;     /* WinNT.h says "must be sanitized" */
+  uint32_t eflags; /* WinNT.h says "must be sanitized" */
+  uint32_t esp;
+  uint32_t ss;
 
   /* The next field is included with MD_CONTEXT_X86_EXTENDED_REGISTERS.
    * It contains vector (MMX/SSE) registers.  It it laid out in the
    * format used by the fxsave and fsrstor instructions, so it includes
    * a copy of the x87 floating-point registers as well.  See FXSAVE in
    * "Intel Architecture Software Developer's Manual, Volume 2." */
-  uint8_t              extended_registers[
-                         MD_CONTEXT_X86_EXTENDED_REGISTERS_SIZE];
-} MDRawContextX86;  /* CONTEXT */
+  uint8_t extended_registers[MD_CONTEXT_X86_EXTENDED_REGISTERS_SIZE];
+} MDRawContextX86; /* CONTEXT */
 
 /* For (MDRawContextX86).context_flags.  These values indicate the type of
  * context stored in the structure.  The high 24 bits identify the CPU, the
  * low 8 bits identify the type of context saved. */
-#define MD_CONTEXT_X86                    0x00010000
-     /* CONTEXT_i386, CONTEXT_i486: identifies CPU */
-#define MD_CONTEXT_X86_CONTROL            (MD_CONTEXT_X86 | 0x00000001)
-     /* CONTEXT_CONTROL */
-#define MD_CONTEXT_X86_INTEGER            (MD_CONTEXT_X86 | 0x00000002)
-     /* CONTEXT_INTEGER */
-#define MD_CONTEXT_X86_SEGMENTS           (MD_CONTEXT_X86 | 0x00000004)
-     /* CONTEXT_SEGMENTS */
-#define MD_CONTEXT_X86_FLOATING_POINT     (MD_CONTEXT_X86 | 0x00000008)
-     /* CONTEXT_FLOATING_POINT */
-#define MD_CONTEXT_X86_DEBUG_REGISTERS    (MD_CONTEXT_X86 | 0x00000010)
-     /* CONTEXT_DEBUG_REGISTERS */
+#define MD_CONTEXT_X86 0x00010000
+/* CONTEXT_i386, CONTEXT_i486: identifies CPU */
+#define MD_CONTEXT_X86_CONTROL (MD_CONTEXT_X86 | 0x00000001)
+/* CONTEXT_CONTROL */
+#define MD_CONTEXT_X86_INTEGER (MD_CONTEXT_X86 | 0x00000002)
+/* CONTEXT_INTEGER */
+#define MD_CONTEXT_X86_SEGMENTS (MD_CONTEXT_X86 | 0x00000004)
+/* CONTEXT_SEGMENTS */
+#define MD_CONTEXT_X86_FLOATING_POINT (MD_CONTEXT_X86 | 0x00000008)
+/* CONTEXT_FLOATING_POINT */
+#define MD_CONTEXT_X86_DEBUG_REGISTERS (MD_CONTEXT_X86 | 0x00000010)
+/* CONTEXT_DEBUG_REGISTERS */
 #define MD_CONTEXT_X86_EXTENDED_REGISTERS (MD_CONTEXT_X86 | 0x00000020)
-     /* CONTEXT_EXTENDED_REGISTERS */
-#define MD_CONTEXT_X86_XSTATE             (MD_CONTEXT_X86 | 0x00000040)
-     /* CONTEXT_XSTATE */
+/* CONTEXT_EXTENDED_REGISTERS */
+#define MD_CONTEXT_X86_XSTATE (MD_CONTEXT_X86 | 0x00000040)
+/* CONTEXT_XSTATE */
 
-#define MD_CONTEXT_X86_FULL              (MD_CONTEXT_X86_CONTROL | \
-                                          MD_CONTEXT_X86_INTEGER | \
-                                          MD_CONTEXT_X86_SEGMENTS)
-     /* CONTEXT_FULL */
+#define MD_CONTEXT_X86_FULL \
+  (MD_CONTEXT_X86_CONTROL | MD_CONTEXT_X86_INTEGER | MD_CONTEXT_X86_SEGMENTS)
+/* CONTEXT_FULL */
 
-#define MD_CONTEXT_X86_ALL               (MD_CONTEXT_X86_FULL | \
-                                          MD_CONTEXT_X86_FLOATING_POINT | \
-                                          MD_CONTEXT_X86_DEBUG_REGISTERS | \
-                                          MD_CONTEXT_X86_EXTENDED_REGISTERS)
-     /* CONTEXT_ALL */
+#define MD_CONTEXT_X86_ALL                               \
+  (MD_CONTEXT_X86_FULL | MD_CONTEXT_X86_FLOATING_POINT | \
+   MD_CONTEXT_X86_DEBUG_REGISTERS | MD_CONTEXT_X86_EXTENDED_REGISTERS)
+/* CONTEXT_ALL */
 
 #endif /* GOOGLE_BREAKPAD_COMMON_MINIDUMP_CPU_X86_H__ */

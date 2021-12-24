@@ -12,7 +12,9 @@
 
 #pragma once
 
-#include "taskExecutor.h"
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/un.h>
 
 #include <deque>
 #include <map>
@@ -20,16 +22,14 @@
 #include <string>
 #include <vector>
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
+#include "taskExecutor.h"
 
 // Forward declarations for libev
 struct ev_loop;
 namespace ev {
 struct io;
 struct timer;
-} // namespace ev
+}  // namespace ev
 
 namespace Anki {
 namespace BluetoothDaemon {
@@ -49,38 +49,38 @@ const size_t kIPCMessageMaxLength = kIPCMessageMaxSize - 12;
 
 enum class IPCMessageType {
   Invalid = 0,
-    Ping,
-    OnPingResponse,
-    SendMessage,
-    OnInboundConnectionChange,
-    OnReceiveMessage,
-    Disconnect,
-    StartAdvertising,
-    StopAdvertising,
-    OnPeripheralStateUpdate,
-    StartScan,
-    StopScan,
-    OnScanResults,
-    ConnectToPeripheral,
-    OnOutboundConnectionChange,
-    CharacteristicReadRequest,
-    OnCharacteristicReadResult,
-    DescriptorReadRequest,
-    OnDescriptorReadResult,
-    RequestConnectionParameterUpdate,
-    OnRequestConnectionParameterUpdateResult,
-    SetAdapterName,
-    DisconnectByAddress
+  Ping,
+  OnPingResponse,
+  SendMessage,
+  OnInboundConnectionChange,
+  OnReceiveMessage,
+  Disconnect,
+  StartAdvertising,
+  StopAdvertising,
+  OnPeripheralStateUpdate,
+  StartScan,
+  StopScan,
+  OnScanResults,
+  ConnectToPeripheral,
+  OnOutboundConnectionChange,
+  CharacteristicReadRequest,
+  OnCharacteristicReadResult,
+  DescriptorReadRequest,
+  OnDescriptorReadResult,
+  RequestConnectionParameterUpdate,
+  OnRequestConnectionParameterUpdateResult,
+  SetAdapterName,
+  DisconnectByAddress
 };
 
-typedef struct __attribute__ ((__packed__)) IPCMessage {
+typedef struct __attribute__((__packed__)) IPCMessage {
   char magic[4];
   uint32_t version;
   IPCMessageType type;
   uint32_t length;
 } IPCMessage;
 
-typedef struct __attribute__ ((__packed__)) SendMessageArgs {
+typedef struct __attribute__((__packed__)) SendMessageArgs {
   int connection_id;
   char characteristic_uuid[k128BitUUIDSize];
   bool reliable;
@@ -88,30 +88,30 @@ typedef struct __attribute__ ((__packed__)) SendMessageArgs {
   uint8_t value[];
 } SendMessageArgs;
 
-typedef struct __attribute__ ((__packed__)) CharacteristicReadRequestArgs {
+typedef struct __attribute__((__packed__)) CharacteristicReadRequestArgs {
   int connection_id;
   char characteristic_uuid[k128BitUUIDSize];
 } CharacteristicReadRequestArgs;
 
-typedef struct __attribute__ ((__packed__)) DescriptorReadRequestArgs {
+typedef struct __attribute__((__packed__)) DescriptorReadRequestArgs {
   int connection_id;
   char characteristic_uuid[k128BitUUIDSize];
   char descriptor_uuid[k128BitUUIDSize];
 } DescriptorReadRequestArgs;
 
-typedef struct __attribute__ ((__packed__)) OnInboundConnectionChangeArgs {
+typedef struct __attribute__((__packed__)) OnInboundConnectionChangeArgs {
   int connection_id;
   int connected;
 } OnInboundConnectionChangeArgs;
 
-typedef struct __attribute__ ((__packed__)) OnReceiveMessageArgs {
+typedef struct __attribute__((__packed__)) OnReceiveMessageArgs {
   int connection_id;
   char characteristic_uuid[k128BitUUIDSize];
   uint32_t length;
   uint8_t value[];
 } OnReceiveMessageArgs;
 
-typedef struct __attribute__ ((__packed__)) OnCharacteristicReadResultArgs {
+typedef struct __attribute__((__packed__)) OnCharacteristicReadResultArgs {
   int connection_id;
   char characteristic_uuid[k128BitUUIDSize];
   int error;
@@ -119,7 +119,7 @@ typedef struct __attribute__ ((__packed__)) OnCharacteristicReadResultArgs {
   uint8_t value[];
 } OnCharacteristicReadResultArgs;
 
-typedef struct __attribute__ ((__packed__)) OnDescriptorReadResultArgs {
+typedef struct __attribute__((__packed__)) OnDescriptorReadResultArgs {
   int connection_id;
   char characteristic_uuid[k128BitUUIDSize];
   char descriptor_uuid[k128BitUUIDSize];
@@ -128,11 +128,11 @@ typedef struct __attribute__ ((__packed__)) OnDescriptorReadResultArgs {
   uint8_t value[];
 } OnDescriptorReadResultArgs;
 
-typedef struct __attribute__ ((__packed__)) DisconnectArgs {
+typedef struct __attribute__((__packed__)) DisconnectArgs {
   int connection_id;
 } DisconnectArgs;
 
-typedef struct __attribute__ ((__packed__)) AdvertisingData {
+typedef struct __attribute__((__packed__)) AdvertisingData {
   bool include_device_name;
   bool include_tx_power_level;
   int manufacturer_data_len;
@@ -145,24 +145,24 @@ typedef struct __attribute__ ((__packed__)) AdvertisingData {
   int max_interval;
 } AdvertisingData;
 
-typedef struct __attribute__ ((__packed__)) StartAdvertisingArgs {
+typedef struct __attribute__((__packed__)) StartAdvertisingArgs {
   int appearance;
   AdvertisingData advertisement;
   AdvertisingData scan_response;
 } StartAdvertisingArgs;
 
-typedef struct __attribute__ ((__packed__)) OnPeripheralStateUpdateArgs {
+typedef struct __attribute__((__packed__)) OnPeripheralStateUpdateArgs {
   bool advertising;
   int connection_id;
   int connected;
   bool congested;
 } OnPeripheralStateUpdateArgs;
 
-typedef struct __attribute__ ((__packed__)) StartScanArgs {
+typedef struct __attribute__((__packed__)) StartScanArgs {
   char service_uuid[k128BitUUIDSize];
 } StartScanArgs;
 
-typedef struct __attribute__ ((__packed__)) ScanResultRecord {
+typedef struct __attribute__((__packed__)) ScanResultRecord {
   char address[kAddressSize] = {0};
   int rssi = 0;
   int num_service_uuids = 0;
@@ -173,30 +173,24 @@ typedef struct __attribute__ ((__packed__)) ScanResultRecord {
   int advertisement_length = 0;
   uint8_t advertisement_data[kMaxAdvertisingLength] = {0};
   ScanResultRecord() {}
-  ScanResultRecord(const std::string& address,
-                   const int rssi,
+  ScanResultRecord(const std::string& address, const int rssi,
                    const std::vector<uint8_t>& adv_data);
   bool HasServiceUUID(const std::string& uuid);
 } ScanResultRecord;
 
-typedef struct __attribute__ ((__packed__)) OnScanResultsArgs {
+typedef struct __attribute__((__packed__)) OnScanResultsArgs {
   int error;
   int record_count;
   ScanResultRecord records[];
 } OnScanResultsArgs;
 
-typedef struct __attribute__ ((__packed__)) ConnectToPeripheralArgs {
+typedef struct __attribute__((__packed__)) ConnectToPeripheralArgs {
   char address[kAddressSize];
 } ConnectToPeripheralArgs;
 
+enum class GattDbRecordType { Service, Characteristic, Descriptor };
 
-enum class GattDbRecordType {
-  Service,
-  Characteristic,
-  Descriptor
-};
-
-typedef struct __attribute__ ((__packed__)) GattDbRecord {
+typedef struct __attribute__((__packed__)) GattDbRecord {
   char uuid[k128BitUUIDSize];
   GattDbRecordType type;
   uint16_t handle;
@@ -205,7 +199,7 @@ typedef struct __attribute__ ((__packed__)) GattDbRecord {
   int properties;
 } GattDbRecord;
 
-typedef struct __attribute__ ((__packed__)) OnOutboundConnectionChangeArgs {
+typedef struct __attribute__((__packed__)) OnOutboundConnectionChangeArgs {
   char address[kAddressSize];
   int connected;
   int connection_id;
@@ -213,7 +207,8 @@ typedef struct __attribute__ ((__packed__)) OnOutboundConnectionChangeArgs {
   GattDbRecord records[];
 } OnOutboundConnectionChangeArgs;
 
-typedef struct __attribute__ ((__packed__)) RequestConnectionParameterUpdateArgs {
+typedef struct __attribute__((__packed__))
+RequestConnectionParameterUpdateArgs {
   char address[kAddressSize];
   int min_interval;
   int max_interval;
@@ -221,16 +216,17 @@ typedef struct __attribute__ ((__packed__)) RequestConnectionParameterUpdateArgs
   int timeout;
 } RequestConnectionParameterUpdateArgs;
 
-typedef struct __attribute__ ((__packed__)) OnRequestConnectionParameterUpdateResultArgs {
+typedef struct __attribute__((__packed__))
+OnRequestConnectionParameterUpdateResultArgs {
   char address[kAddressSize];
   int status;
 } OnRequestConnectionParameterUpdateResultArgs;
 
-typedef struct __attribute__ ((__packed__)) SetAdapterNameArgs {
+typedef struct __attribute__((__packed__)) SetAdapterNameArgs {
   char name[kAdapterNameSize];
 } SetAdapterNameArgs;
 
-typedef struct __attribute__ ((__packed__)) DisconnectByAddressArgs {
+typedef struct __attribute__((__packed__)) DisconnectByAddressArgs {
   char address[kAddressSize];
 } DisconnectByAddressArgs;
 
@@ -239,26 +235,21 @@ class IPCEndpoint {
   IPCEndpoint(struct ev_loop* loop);
   ~IPCEndpoint();
   bool IsSocketValid() const { return (sockfd_ != -1); }
-  bool SendMessageToAllPeers(const IPCMessageType type,
-                             uint32_t length,
+  bool SendMessageToAllPeers(const IPCMessageType type, uint32_t length,
                              uint8_t* val);
-  bool SendMessageToPeer(const IPCMessageType type,
-                         uint32_t length,
-                         uint8_t* val)
-  {
+  bool SendMessageToPeer(const IPCMessageType type, uint32_t length,
+                         uint8_t* val) {
     return SendMessageToPeer(sockfd_, type, length, val);
   }
-  bool SendMessageToPeer(const int fd,
-                         const IPCMessageType type,
-                         uint32_t length,
-                         uint8_t* val);
+  bool SendMessageToPeer(const int fd, const IPCMessageType type,
+                         uint32_t length, uint8_t* val);
 
  protected:
   class PeerState {
    public:
     PeerState(ev::io* read_write_watcher, TaskExecutor* task_executor)
-        : read_write_watcher_(read_write_watcher)
-        , task_executor_(task_executor) { }
+        : read_write_watcher_(read_write_watcher),
+          task_executor_(task_executor) {}
     ~PeerState();
     int GetFD() const;
     bool IsQueueEmpty();
@@ -266,6 +257,7 @@ class IPCEndpoint {
     std::vector<uint8_t> GetMessageAtFrontOfQueue();
     void EraseMessageFromFrontOfQueue();
     std::vector<uint8_t>& GetIncomingDataVector() { return incoming_data_; }
+
    private:
     std::mutex mutex_;
     ev::io* read_write_watcher_;
@@ -280,8 +272,7 @@ class IPCEndpoint {
   void ReceiveMessage(PeerState* p);
   void SendQueuedMessagesToPeer(const int sockfd);
   virtual void OnPeerClose(const int sockfd);
-  virtual void OnReceiveIPCMessage(const int sockfd,
-                                   const IPCMessageType type,
+  virtual void OnReceiveIPCMessage(const int sockfd, const IPCMessageType type,
                                    const std::vector<uint8_t>& data) {}
   void ReadWriteWatcherCallback(ev::io& w, int revents);
 
@@ -289,9 +280,8 @@ class IPCEndpoint {
   TaskExecutor* task_executor_;
   int sockfd_;
   struct sockaddr_un addr_;
-  std::map<int,PeerState*> peers_;
+  std::map<int, PeerState*> peers_;
 };
 
-} // namespace BluetoothDaemon
-} // namespace Anki
-
+}  // namespace BluetoothDaemon
+}  // namespace Anki

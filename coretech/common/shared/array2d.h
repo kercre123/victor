@@ -22,80 +22,65 @@
 #ifndef _ANKICORETECH_COMMON_ARRAY2D_IMPL_H_
 #define _ANKICORETECH_COMMON_ARRAY2D_IMPL_H_
 
-#include "coretech/common/shared/array2d_fwd.h"
-#include "coretech/common/shared/math/rect.h"
-#include "coretech/common/shared/types.h"
-
-#include "util/logging/logging.h"
-
-#include <iostream>
 #include <assert.h>
 #include <limits.h>
 
+#include <iostream>
+
+#include "coretech/common/shared/array2d_fwd.h"
+#include "coretech/common/shared/math/rect.h"
+#include "coretech/common/shared/types.h"
+#include "util/logging/logging.h"
+
 namespace Anki {
-  
-template<typename T>
-Array2d<T>::Array2d(void)
-  : cv::Mat_<T>()
-{
-} // Constructor: Array2d()
 
-template<typename T>
+template <typename T>
+Array2d<T>::Array2d(void) : cv::Mat_<T>() {}  // Constructor: Array2d()
+
+template <typename T>
 Array2d<T>::Array2d(s32 numRows, s32 numCols)
-  : cv::Mat_<T>(numRows, numCols)
-{
-} // Constructor: Array2d(rows,cols)
+    : cv::Mat_<T>(numRows, numCols) {}  // Constructor: Array2d(rows,cols)
 
-template<typename T>
-Array2d<T>::Array2d(s32 numRows, s32 numCols, T *data)
-  : cv::Mat_<T>(numRows, numCols, data)
-{
-} // Constructor: Array2d(rows, cols, *data)
+template <typename T>
+Array2d<T>::Array2d(s32 numRows, s32 numCols, T* data)
+    : cv::Mat_<T>(numRows, numCols, data) {
+}  // Constructor: Array2d(rows, cols, *data)
 
-template<typename T>
-Array2d<T>::Array2d(s32 numRows, s32 numCols, std::vector<T> &data)
-: cv::Mat_<T>(numRows, numCols, &(data[0]))
-{
-} // Constructor: Array2d(rows, cols, *data)
+template <typename T>
+Array2d<T>::Array2d(s32 numRows, s32 numCols, std::vector<T>& data)
+    : cv::Mat_<T>(numRows, numCols, &(data[0])) {
+}  // Constructor: Array2d(rows, cols, *data)
 
-template<typename T>
-Array2d<T>::Array2d(s32 numRows, s32 numCols, const T &data)
-: cv::Mat_<T>(numRows, numCols, data)
-{
-} // Constructor: Array2d(rows, cols, &data)
+template <typename T>
+Array2d<T>::Array2d(s32 numRows, s32 numCols, const T& data)
+    : cv::Mat_<T>(numRows, numCols, data) {
+}  // Constructor: Array2d(rows, cols, &data)
 
-template<typename T>
-void Array2d<T>::Allocate(s32 numRows, s32 numCols)
-{
+template <typename T>
+void Array2d<T>::Allocate(s32 numRows, s32 numCols) {
   cv::Mat_<T>::create(numRows, numCols);
 }
 
-template<typename T>
-template<typename Trect>
-const Array2d<T> Array2d<T>::GetROI(Rectangle<Trect>& roiRect) const
-{
-  roiRect = roiRect.Intersect(Rectangle<Trect>(0,0,GetNumCols(),GetNumRows()));
-  if((size_t)roiRect.Area() > 0)
-  {
-    try
-    {
+template <typename T>
+template <typename Trect>
+const Array2d<T> Array2d<T>::GetROI(Rectangle<Trect>& roiRect) const {
+  roiRect =
+      roiRect.Intersect(Rectangle<Trect>(0, 0, GetNumCols(), GetNumRows()));
+  if ((size_t)roiRect.Area() > 0) {
+    try {
       return Array2d<T>(this->get_CvMat_()(roiRect.get_CvRect_()));
+    } catch (...) {
+      // Not sure why OpenCV would fail since we've already intersected the
+      // rectangle with image borders and checked for zero area by now, but just
+      // to avoid a total crash, catch and log it:
+      PRINT_NAMED_WARNING(
+          "Array2d.GetROI.OpenCVFail",
+          "Returning empty ROI for rectangle: x:%f y%f width:%f height%f "
+          "(Array is %dx%d)",
+          (f32)roiRect.GetX(), (f32)roiRect.GetY(), (f32)roiRect.GetWidth(),
+          (f32)roiRect.GetHeight(), GetNumCols(), GetNumRows());
     }
-    catch(...)
-    {
-      // Not sure why OpenCV would fail since we've already intersected the rectangle
-      // with image borders and checked for zero area by now, but just to avoid
-      // a total crash, catch and log it:
-      PRINT_NAMED_WARNING("Array2d.GetROI.OpenCVFail",
-                          "Returning empty ROI for rectangle: x:%f y%f width:%f height%f "
-                          "(Array is %dx%d)",
-                          (f32)roiRect.GetX(), (f32)roiRect.GetY(),
-                          (f32)roiRect.GetWidth(), (f32)roiRect.GetHeight(),
-                          GetNumCols(), GetNumRows());
-    }
-  }
-  else
-  {
+  } else {
     // Empty ROI rectangle: return empty image
     // (OpenCV call would crash in this case)
     PRINT_NAMED_WARNING("Array2d.GetROI.EmptyRect",
@@ -105,170 +90,148 @@ const Array2d<T> Array2d<T>::GetROI(Rectangle<Trect>& roiRect) const
                         (f32)roiRect.GetWidth(), (f32)roiRect.GetHeight(),
                         GetNumCols(), GetNumRows());
   }
-  
+
   // Return empty ROI array
   return Array2d<T>();
 }
 
-template<typename T>
-template<typename Trect>
-Array2d<T> Array2d<T>::GetROI(Rectangle<Trect>& roiRect)
-{
-  roiRect = roiRect.Intersect(Rectangle<Trect>(0,0,GetNumCols(),GetNumRows()));
+template <typename T>
+template <typename Trect>
+Array2d<T> Array2d<T>::GetROI(Rectangle<Trect>& roiRect) {
+  roiRect =
+      roiRect.Intersect(Rectangle<Trect>(0, 0, GetNumCols(), GetNumRows()));
   return Array2d<T>(this->get_CvMat_()(roiRect.get_CvRect_()));
 }
 
-
-template<typename T>
-void Array2d<T>::CopyTo(Array2d<T> &other) const
-{
+template <typename T>
+void Array2d<T>::CopyTo(Array2d<T>& other) const {
   this->copyTo(other);
 }
 
-template<typename T>
-Array2d<T>::Array2d(const cv::Mat_<T> &other)
-  : cv::Mat_<T>(other)
-{
-} // Constructor: Array2d( cv::Mat_<T> )
+template <typename T>
+Array2d<T>::Array2d(const cv::Mat_<T>& other)
+    : cv::Mat_<T>(other) {}  // Constructor: Array2d( cv::Mat_<T> )
 
-template<typename T>
-Array2d<T>& Array2d<T>::operator= (const cv::Mat_<T> &other)
-{
+template <typename T>
+Array2d<T>& Array2d<T>::operator=(const cv::Mat_<T>& other) {
   cv::Mat_<T>::operator=(other);
   return *this;
 }
 
-template<typename T>
-T* Array2d<T>::GetRow(s32 row)
-{
+template <typename T>
+T* Array2d<T>::GetRow(s32 row) {
   return this->operator[](row);
 }
 
-template<typename T>
-const T* Array2d<T>::GetRow(s32 row) const
-{
+template <typename T>
+const T* Array2d<T>::GetRow(s32 row) const {
   return this->operator[](row);
 }
 
-template<typename T>
-const T* Array2d<T>::GetDataPointer(void) const
-{
+template <typename T>
+const T* Array2d<T>::GetDataPointer(void) const {
   return this->template ptr<T>(0);
 }
 
-template<typename T>
-T* Array2d<T>::GetDataPointer(void)
-{
+template <typename T>
+T* Array2d<T>::GetDataPointer(void) {
   return this->template ptr<T>(0);
 }
 
-template<typename T>
-Array2d<T>& Array2d<T>::operator=(const Array2d<T> &other)
-{
+template <typename T>
+Array2d<T>& Array2d<T>::operator=(const Array2d<T>& other) {
   // Provide thin wrapper to OpenCV's handy reference-counting assignment:
   cv::Mat_<T>::operator=(other);
   return *this;
 }
 
-template<typename T>
-T  Array2d<T>::operator() (const int row, const int col) const
-{
-  DEV_ASSERT(row < GetNumRows() && col < GetNumCols(), "Array2d.GetElement.OutOfBounds");
-  
+template <typename T>
+T Array2d<T>::operator()(const int row, const int col) const {
+  DEV_ASSERT(row < GetNumRows() && col < GetNumCols(),
+             "Array2d.GetElement.OutOfBounds");
+
   // Provide thin wrapper to OpenCV's (row,col) access:
-  return cv::Mat_<T>::operator()(row,col);
+  return cv::Mat_<T>::operator()(row, col);
 }
 
-template<typename T>
-T& Array2d<T>::operator() (const int row, const int col)
-{
-  DEV_ASSERT(row < GetNumRows() && col < GetNumCols(), "Array2d.GetElement.OutOfBounds");
-  
+template <typename T>
+T& Array2d<T>::operator()(const int row, const int col) {
+  DEV_ASSERT(row < GetNumRows() && col < GetNumCols(),
+             "Array2d.GetElement.OutOfBounds");
+
   // Provide thin wrapper to OpenCV's (row,col) access:
-  return cv::Mat_<T>::operator()(row,col);
+  return cv::Mat_<T>::operator()(row, col);
 }
 
-template<typename T>
-cv::Mat_<T>& Array2d<T>::get_CvMat_()
-{
-  return *this; //static_cast<cv::Mat_<T> >(*this);
+template <typename T>
+cv::Mat_<T>& Array2d<T>::get_CvMat_() {
+  return *this;  // static_cast<cv::Mat_<T> >(*this);
 }
 
-template<typename T>
-const cv::Mat_<T>& Array2d<T>::get_CvMat_() const
-{
-  return *this; // static_cast<cv::Mat_<T> >(*this);
+template <typename T>
+const cv::Mat_<T>& Array2d<T>::get_CvMat_() const {
+  return *this;  // static_cast<cv::Mat_<T> >(*this);
 }
 
-template<typename T>
-s32 Array2d<T>::GetNumRows(void) const
-{
+template <typename T>
+s32 Array2d<T>::GetNumRows(void) const {
   return s32(this->rows);
 }
 
-template<typename T>
-s32 Array2d<T>::GetNumCols(void) const
-{
+template <typename T>
+s32 Array2d<T>::GetNumCols(void) const {
   return s32(this->cols);
 }
 
-template<typename T>
-s32 Array2d<T>::GetNumElements(void) const
-{
-  return this->GetNumRows()*this->GetNumCols();
+template <typename T>
+s32 Array2d<T>::GetNumElements(void) const {
+  return this->GetNumRows() * this->GetNumCols();
 }
 
-template<typename T>
-inline bool Array2d<T>::IsEmpty() const
-{
+template <typename T>
+inline bool Array2d<T>::IsEmpty() const {
   return this->empty();
 }
 
-template<typename T>
-bool operator==(const Array2d<T> &array1, const Array2d<T> &array2)
-{
+template <typename T>
+bool operator==(const Array2d<T>& array1, const Array2d<T>& array2) {
   bool equal = (array1.GetNumRows() == array2.GetNumRows() &&
                 array1.GetNumCols() == array2.GetNumCols());
-  
+
   const T* data1 = array1.GetDataPointer();
   const T* data2 = array2.GetDataPointer();
-  
-  s32 i=0;
-  while(equal && i < array1.GetNumElements())
-  {
+
+  s32 i = 0;
+  while (equal && i < array1.GetNumElements()) {
     equal = data1[i] == data2[i];
     ++i;
   }
-  
-  return equal;
-} // operator==
 
-template<typename T>
-bool IsNearlyEqual(const Array2d<T> &array1, const Array2d<T> &array2,
-                 const T eps)
-{
+  return equal;
+}  // operator==
+
+template <typename T>
+bool IsNearlyEqual(const Array2d<T>& array1, const Array2d<T>& array2,
+                   const T eps) {
   bool equal = (array1.GetNumRows() == array2.GetNumRows() &&
                 array1.GetNumCols() == array2.GetNumCols());
-  
+
   const T* data1 = array1.GetDataPointer();
   const T* data2 = array2.GetDataPointer();
-  
-  s32 i=0;
-  while(equal && i < array1.GetNumElements())
-  {
+
+  s32 i = 0;
+  while (equal && i < array1.GetNumElements()) {
     equal = NEAR(data1[i], data2[i], eps);
     ++i;
   }
-  
+
   return equal;
-  
-} // nearlyEqual()
 
+}  // nearlyEqual()
 
-template<typename T>
-//void Array2d<T>::ApplyScalarFunction(T (*fcn)(T))
-void Array2d<T>::ApplyScalarFunction(std::function<T(T)>fcn)
-{
+template <typename T>
+// void Array2d<T>::ApplyScalarFunction(T (*fcn)(T))
+void Array2d<T>::ApplyScalarFunction(std::function<T(T)> fcn) {
   s32 nrows = this->GetNumRows();
   s32 ncols = this->GetNumCols();
 
@@ -277,157 +240,139 @@ void Array2d<T>::ApplyScalarFunction(std::function<T(T)>fcn)
     nrows = 1;
   }
 
-  for(s32 i=0; i<nrows; ++i)
-  {
-    T *data_i = this->GetRow(i);
-    
-    for (s32 j=0; j<ncols; ++j)
-    {
+  for (s32 i = 0; i < nrows; ++i) {
+    T* data_i = this->GetRow(i);
+
+    for (s32 j = 0; j < ncols; ++j) {
       data_i[j] = fcn(data_i[j]);
     }
   }
-} // applyScalarFunction() in place
+}  // applyScalarFunction() in place
 
-template<typename T>
-template<typename Tresult>
-//void Array2d<T>::ApplyScalarFunction(void(*fcn)(const T&, Tresult&),
-void Array2d<T>::ApplyScalarFunction(std::function<Tresult(const T&)>fcn,
-                                     Array2d<Tresult> &result) const
-{
+template <typename T>
+template <typename Tresult>
+// void Array2d<T>::ApplyScalarFunction(void(*fcn)(const T&, Tresult&),
+void Array2d<T>::ApplyScalarFunction(std::function<Tresult(const T&)> fcn,
+                                     Array2d<Tresult>& result) const {
   s32 nrows = this->GetNumRows();
   s32 ncols = this->GetNumCols();
 
   DEV_ASSERT(result.GetNumRows() == this->GetNumRows() &&
-             result.GetNumCols() == this->GetNumCols(),
+                 result.GetNumCols() == this->GetNumCols(),
              "Array2d.ApplyScalarFunctionOneArg.ResultArraySizeMismatch");
-  
-  if (this->IsContinuous() && result.IsContinuous() ) {
+
+  if (this->IsContinuous() && result.IsContinuous()) {
     ncols *= nrows;
     nrows = 1;
   }
 
-  for(s32 i=0; i<nrows; ++i)
-  {
-    const T *data_i = this->GetRow(i);
-    Tresult *result_i = result.GetRow(i);
+  for (s32 i = 0; i < nrows; ++i) {
+    const T* data_i = this->GetRow(i);
+    Tresult* result_i = result.GetRow(i);
 
-    for (s32 j=0; j<ncols; ++j)
-    {
+    for (s32 j = 0; j < ncols; ++j) {
       result_i[j] = fcn(data_i[j]);
     }
   }
-} // applyScalarFunction() to separate result
+}  // applyScalarFunction() to separate result
 
-template<typename T>
-template<class Tother, class Tresult>
-void Array2d<T>::ApplyScalarFunction(std::function<Tresult(const T& thisElem, const Tother& otherElem)>fcn,
-                                     const Array2d<Tother>& otherArray,
-                                     Array2d<Tresult>& result) const
-{
+template <typename T>
+template <class Tother, class Tresult>
+void Array2d<T>::ApplyScalarFunction(
+    std::function<Tresult(const T& thisElem, const Tother& otherElem)> fcn,
+    const Array2d<Tother>& otherArray, Array2d<Tresult>& result) const {
   s32 nrows = this->GetNumRows();
   s32 ncols = this->GetNumCols();
 
   DEV_ASSERT(otherArray.GetNumRows() == this->GetNumRows() &&
-             otherArray.GetNumCols() == this->GetNumCols(),
+                 otherArray.GetNumCols() == this->GetNumCols(),
              "Array2d.ApplyScalarFunction.OtherArraySizeMismatch");
-  
+
   DEV_ASSERT(result.GetNumRows() == this->GetNumRows() &&
-             result.GetNumCols() == this->GetNumCols(),
+                 result.GetNumCols() == this->GetNumCols(),
              "Array2d.ApplyScalarFunctionTwoArg.ResultArraySizeMismatch");
 
-  if (this->IsContinuous() && otherArray.IsContinuous() && result.IsContinuous() ) {
+  if (this->IsContinuous() && otherArray.IsContinuous() &&
+      result.IsContinuous()) {
     ncols *= nrows;
     nrows = 1;
   }
-  
-  for(s32 i=0; i<nrows; ++i)
-  {
-    const T *dataThis_i  = this->GetRow(i);
-    const Tother *dataOther_i = otherArray.GetRow(i);
-    Tresult *result_i = result.GetRow(i);
-    
-    for (s32 j=0; j<ncols; ++j) {
+
+  for (s32 i = 0; i < nrows; ++i) {
+    const T* dataThis_i = this->GetRow(i);
+    const Tother* dataOther_i = otherArray.GetRow(i);
+    Tresult* result_i = result.GetRow(i);
+
+    for (s32 j = 0; j < ncols; ++j) {
       result_i[j] = fcn(dataThis_i[j], dataOther_i[j]);
     }
   }
 }
 
-template<typename T>
-Array2d<T>& Array2d<T>::operator+=(const Array2d<T>& other)
-{
+template <typename T>
+Array2d<T>& Array2d<T>::operator+=(const Array2d<T>& other) {
   this->get_CvMat_() += other.get_CvMat_();
   return *this;
 }
 
-template<typename T>
-Array2d<T>& Array2d<T>::operator-=(const Array2d<T>& other)
-{
+template <typename T>
+Array2d<T>& Array2d<T>::operator-=(const Array2d<T>& other) {
   this->get_CvMat_() -= other.get_CvMat_();
   return *this;
 }
 
-template<typename T>
-Array2d<T>& Array2d<T>::operator*=(const Array2d<T>& other)
-{
+template <typename T>
+Array2d<T>& Array2d<T>::operator*=(const Array2d<T>& other) {
   this->get_CvMat_() = this->mul(other.get_CvMat_());
   return *this;
 }
 
-template<typename T>
-Array2d<T>& Array2d<T>::operator/=(const Array2d<T>& other)
-{
+template <typename T>
+Array2d<T>& Array2d<T>::operator/=(const Array2d<T>& other) {
   this->get_CvMat_() /= other.get_CvMat_();
   return *this;
 }
 
-template<typename T>
-Array2d<T>& Array2d<T>::operator+=(const T& scalarValue)
-{
+template <typename T>
+Array2d<T>& Array2d<T>::operator+=(const T& scalarValue) {
   this->get_CvMat_() += scalarValue;
   return *this;
 }
 
-template<typename T>
-Array2d<T>& Array2d<T>::operator-=(const T& scalarValue)
-{
+template <typename T>
+Array2d<T>& Array2d<T>::operator-=(const T& scalarValue) {
   this->get_CvMat_() -= scalarValue;
   return *this;
 }
 
-template<typename T>
-Array2d<T>& Array2d<T>::operator*=(const T& scalarValue)
-{
+template <typename T>
+Array2d<T>& Array2d<T>::operator*=(const T& scalarValue) {
   this->get_CvMat_() *= scalarValue;
   return *this;
 }
 
-template<typename T>
-Array2d<T>& Array2d<T>::operator/=(const T& scalarValue)
-{
+template <typename T>
+Array2d<T>& Array2d<T>::operator/=(const T& scalarValue) {
   this->get_CvMat_() /= scalarValue;
   return *this;
 }
 
-template<typename T>
-Array2d<T>& Array2d<T>::Abs()
-{
+template <typename T>
+Array2d<T>& Array2d<T>::Abs() {
   *this = cv::abs(*this);
   return *this;
 }
 
-template<typename T>
-void Array2d<T>::FillWith(T value)
-{
+template <typename T>
+void Array2d<T>::FillWith(T value) {
   this->setTo(value);
 }
 
-template<typename T>
-void Array2d<T>::SetMaskTo(const Array2d<u8>& mask, T value)
-{
+template <typename T>
+void Array2d<T>::SetMaskTo(const Array2d<u8>& mask, T value) {
   this->setTo(value, mask.get_CvMat_());
 }
 
-} //namespace Anki
+}  // namespace Anki
 
-
-#endif // _ANKICORETECH_COMMON_ARRAY2D_IMPL_H_
+#endif  // _ANKICORETECH_COMMON_ARRAY2D_IMPL_H_

@@ -20,17 +20,18 @@ namespace alexaClientSDK {
 namespace acl {
 
 /*
- * An interface class which allows a derived class to observe a PostConnect implementation.
+ * An interface class which allows a derived class to observe a PostConnect
+ * implementation.
  */
 class PostConnectObserverInterface {
-public:
-    virtual ~PostConnectObserverInterface() = default;
+ public:
+  virtual ~PostConnectObserverInterface() = default;
 
-    /*
-     * Called when a PostConnect object has successfully completed its
-     * post-connect processing.
-     */
-    virtual void onPostConnected() = 0;
+  /*
+   * Called when a PostConnect object has successfully completed its
+   * post-connect processing.
+   */
+  virtual void onPostConnected() = 0;
 };
 
 }  // namespace acl

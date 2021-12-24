@@ -8,6 +8,4 @@
                 "processorArchitecture='X86' "                           \
                 "publicKeyToken='0000000000000000' language='*'\"")
 
-int main() {
-  return 0;
-}
+int main() { return 0; }

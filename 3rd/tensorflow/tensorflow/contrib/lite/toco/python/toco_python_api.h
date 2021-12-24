@@ -16,6 +16,7 @@ limitations under the License.
 #define _THIRD_PARTY_TENSORFLOW_CONTRIB_LITE_TOCO_PYTHON_TOCO_PYTHON_API_H_
 
 #include <Python.h>
+
 #include <string>
 
 namespace toco {

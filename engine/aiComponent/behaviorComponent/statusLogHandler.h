@@ -23,32 +23,31 @@ namespace Vector {
 
 class CozmoContext;
 namespace external_interface {
-  class Status;
-  class TimeStampedStatus;
-}
+class Status;
+class TimeStampedStatus;
+}  // namespace external_interface
 
-class StatusLogHandler : private Util::noncopyable
-{
-public:
-  explicit StatusLogHandler( const CozmoContext* context );
-  
-  void SetFeature( const std::string& featureName, const std::string& source );
-  
-private:
-  
-  void SaveStatusHistory( const external_interface::TimeStampedStatus& status );
+class StatusLogHandler : private Util::noncopyable {
+ public:
+  explicit StatusLogHandler(const CozmoContext* context);
+
+  void SetFeature(const std::string& featureName, const std::string& source);
+
+ private:
+  void SaveStatusHistory(const external_interface::TimeStampedStatus& status);
 
   void SendStatusHistory();
-  
+
   const CozmoContext* _context = nullptr;
 
-  using StatusHistory = Util::CircularBuffer<external_interface::TimeStampedStatus>;
+  using StatusHistory =
+      Util::CircularBuffer<external_interface::TimeStampedStatus>;
   std::unique_ptr<StatusHistory> _statusHistory;
 
   std::vector<Signal::SmartHandle> _signalHandles;
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

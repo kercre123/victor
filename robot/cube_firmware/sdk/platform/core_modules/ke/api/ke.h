@@ -29,10 +29,10 @@
  ****************************************************************************************
  */
 
-#include "rwip_config.h"          // stack configuration
+#include <stdbool.h>  // standard boolean definitions
+#include <stdint.h>   // standard integer definitions
 
-#include <stdbool.h>              // standard boolean definitions
-#include <stdint.h>               // standard integer definitions
+#include "rwip_config.h"  // stack configuration
 
 /*
  * ENUMERATION
@@ -40,12 +40,10 @@
  */
 
 /// Kernel Error Status
-enum KE_STATUS
-{
-    KE_SUCCESS = 0,
-    KE_FAIL,
+enum KE_STATUS {
+  KE_SUCCESS = 0,
+  KE_FAIL,
 };
-
 
 /*
  * FUNCTION DECLARATIONS
@@ -56,8 +54,8 @@ enum KE_STATUS
  ****************************************************************************************
  * @brief This function performs all the initializations of the kernel.
  *
- * It initializes first the heap, then the message queues and the events. Then if required
- * it initializes the trace.
+ * It initializes first the heap, then the message queues and the events. Then
+ *if required it initializes the trace.
  *
  ****************************************************************************************
  */
@@ -65,8 +63,8 @@ void ke_init(void);
 
 /**
  ****************************************************************************************
- * @brief This function flushes all messages, timers and events currently pending in the
- * kernel.
+ * @brief This function flushes all messages, timers and events currently
+ *pending in the kernel.
  *
  ****************************************************************************************
  */
@@ -92,12 +90,10 @@ bool ke_sleep_check(void);
  * @param[out]   max_heap_used     Max heap used
  ****************************************************************************************
  */
-enum KE_STATUS ke_stats_get(uint8_t* max_msg_sent,
-                uint8_t* max_msg_saved,
-                uint8_t* max_timer_used,
-                uint16_t* max_heap_used);
-#endif //KE_PROFILING
+enum KE_STATUS ke_stats_get(uint8_t* max_msg_sent, uint8_t* max_msg_saved,
+                            uint8_t* max_timer_used, uint16_t* max_heap_used);
+#endif  // KE_PROFILING
 
 /// @} KE
 
-#endif // _KE_H_
+#endif  // _KE_H_

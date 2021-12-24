@@ -55,7 +55,8 @@ struct OperatorKey {
   const int version;
 
   bool operator<(const OperatorKey& other) const {
-    if (type < other.type) return true;
+    if (type < other.type)
+      return true;
     else if (type > other.type)
       return false;
     else if (custom_code < other.custom_code)

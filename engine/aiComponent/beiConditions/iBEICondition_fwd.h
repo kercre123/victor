@@ -4,7 +4,8 @@
  * Author: Brad Neuman
  * Created: 2017-11-29
  *
- * Description: Forward declarations and common defines for state concept strategies
+ * Description: Forward declarations and common defines for state concept
+ *strategies
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -24,11 +25,11 @@ using IBEIConditionPtr = std::shared_ptr<IBEICondition>;
 
 class CustomBEIConditionHandleInternal;
 
-using CustomBEIConditionHandle = std::shared_ptr<CustomBEIConditionHandleInternal>;
+using CustomBEIConditionHandle =
+    std::shared_ptr<CustomBEIConditionHandleInternal>;
 using CustomBEIConditionHandleList = std::vector<CustomBEIConditionHandle>;
 
-}
-}
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

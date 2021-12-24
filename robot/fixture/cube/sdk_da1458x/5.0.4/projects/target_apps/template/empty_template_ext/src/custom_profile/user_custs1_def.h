@@ -6,9 +6,9 @@
  * @brief Custom1 Server (CUSTS1) profile database declarations.
  *
  * Copyright (C) 2016. Dialog Semiconductor Ltd, unpublished work. This computer
- * program includes Confidential, Proprietary Information and is a Trade Secret of
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited
- * unless authorized in writing. All Rights Reserved.
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -41,11 +41,10 @@
  */
 
 /// Custom1 Service Data Base Characteristic enum
-enum
-{
-    CUST1_IDX_SVC = 0,
+enum {
+  CUST1_IDX_SVC = 0,
 
-    CUST1_IDX_NB
+  CUST1_IDX_NB
 };
 
 /*
@@ -57,4 +56,4 @@ extern struct attm_desc_128 custs1_att_db[CUST1_IDX_NB];
 
 /// @} USER_CONFIG
 
-#endif // _USER_CUSTS1_DEF_H_
+#endif  // _USER_CUSTS1_DEF_H_

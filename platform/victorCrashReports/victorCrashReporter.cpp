@@ -20,48 +20,39 @@
 namespace Anki {
 namespace Vector {
 
-void InstallCrashReporter(const char * filenamePrefix)
-{
-  #ifdef USE_TOMBSTONE_HOOKS
+void InstallCrashReporter(const char* filenamePrefix) {
+#ifdef USE_TOMBSTONE_HOOKS
   InstallTombstoneHooks();
-  #endif
+#endif
 
-  #ifdef USE_GOOGLE_BREAKPAD
+#ifdef USE_GOOGLE_BREAKPAD
   GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
-  #endif
-
+#endif
 }
 
-void UninstallCrashReporter()
-{
-  #ifdef USE_GOOGLE_BREAKPAD
+void UninstallCrashReporter() {
+#ifdef USE_GOOGLE_BREAKPAD
   GoogleBreakpad::UnInstallGoogleBreakpad();
-  #endif
+#endif
 
-  #ifdef USE_TOMBSTONE_HOOKS
+#ifdef USE_TOMBSTONE_HOOKS
   UninstallTombstoneHooks();
-  #endif
-
+#endif
 }
 
-bool WriteMinidump(const std::string & prefix, std::string & out_dump_path)
-{
-  #ifdef USE_GOOGLE_BREAKPAD
+bool WriteMinidump(const std::string& prefix, std::string& out_dump_path) {
+#ifdef USE_GOOGLE_BREAKPAD
   return GoogleBreakpad::WriteMinidump(prefix, out_dump_path);
-  #else
+#else
   return false;
-  #endif
+#endif
 }
 
-CrashReporter::CrashReporter(const char * filenamePrefix)
-{
+CrashReporter::CrashReporter(const char* filenamePrefix) {
   InstallCrashReporter(filenamePrefix);
 }
 
-CrashReporter::~CrashReporter()
-{
-  UninstallCrashReporter();
-}
+CrashReporter::~CrashReporter() { UninstallCrashReporter(); }
 
-} // end namespace Vector
-} // end namespace Anki
+}  // end namespace Vector
+}  // end namespace Anki

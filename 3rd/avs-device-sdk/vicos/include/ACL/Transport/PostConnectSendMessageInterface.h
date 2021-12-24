@@ -26,24 +26,26 @@ namespace acl {
  * is not fully established.
  */
 class PostConnectSendMessageInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~PostConnectSendMessageInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~PostConnectSendMessageInterface() = default;
 
-    /**
-     * Send a message even when the transport is not connected.
-     * This function must operate asynchronously, internally queuing the
-     * message to be sent until the connection is able to process it.
-     * The onSendCompleted callback method of the MessageRequest object is invoked as follows:
-     *
-     * The object attempts to send the message, and once this has either
-     * succeeded or failed, the callback value is set appropriately.
-     *
-     * @param request MessageRequest to send a post connect message.
-     */
-    virtual void sendPostConnectMessage(std::shared_ptr<avsCommon::avs::MessageRequest> request) = 0;
+  /**
+   * Send a message even when the transport is not connected.
+   * This function must operate asynchronously, internally queuing the
+   * message to be sent until the connection is able to process it.
+   * The onSendCompleted callback method of the MessageRequest object is invoked
+   * as follows:
+   *
+   * The object attempts to send the message, and once this has either
+   * succeeded or failed, the callback value is set appropriately.
+   *
+   * @param request MessageRequest to send a post connect message.
+   */
+  virtual void sendPostConnectMessage(
+      std::shared_ptr<avsCommon::avs::MessageRequest> request) = 0;
 };
 
 }  // namespace acl

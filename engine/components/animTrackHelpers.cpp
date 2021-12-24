@@ -11,32 +11,31 @@
  **/
 
 #include "engine/components/animTrackHelpers.h"
-#include "clad/types/animationTypes.h"
-#include "util/math/numericCast.h"
 
 #include <sstream>
 
+#include "clad/types/animationTypes.h"
+#include "util/math/numericCast.h"
+
 namespace Anki {
 namespace Vector {
-  
-std::string AnimTrackHelpers::AnimTrackFlagsToString(uint8_t tracks)
-{
+
+std::string AnimTrackHelpers::AnimTrackFlagsToString(uint8_t tracks) {
   // Special case of 0x00?
   if (AnimTrackFlag::NO_TRACKS == static_cast<AnimTrackFlag>(tracks)) {
     return EnumToString(AnimTrackFlag::NO_TRACKS);
   }
-  
+
   // Special case of 0xff?
   if (AnimTrackFlag::ALL_TRACKS == static_cast<AnimTrackFlag>(tracks)) {
     return EnumToString(AnimTrackFlag::ALL_TRACKS);
   }
-  
+
   // General case of one or more tracks
   std::stringstream ss;
   bool first = true;
-  
-  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
-  {
+
+  for (int i = 0; i < (int)AnimConstants::NUM_TRACKS; i++) {
     uint8_t currTrack = Util::numeric_cast<uint8_t>(1 << i);
     if (tracks & currTrack) {
       if (first) {
@@ -47,10 +46,9 @@ std::string AnimTrackHelpers::AnimTrackFlagsToString(uint8_t tracks)
       ss << EnumToString(static_cast<AnimTrackFlag>(currTrack));
     }
   }
-  
+
   return ss.str();
 }
 
-  
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki

@@ -18,34 +18,31 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorSelfTestButton : public IBehaviorSelfTest
-{
-protected:
-  
+class BehaviorSelfTestButton : public IBehaviorSelfTest {
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorSelfTestButton(const Json::Value& config);
-  
-protected:
-  virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
+
+ protected:
+  virtual void GetBehaviorOperationModifiersInternal(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
-  
-  virtual Result        OnBehaviorActivatedInternal() override;
+
+  virtual Result OnBehaviorActivatedInternal() override;
   virtual SelfTestStatus SelfTestUpdateInternal() override;
-  virtual void          OnBehaviorDeactivated() override;
+  virtual void OnBehaviorDeactivated() override;
 
-private:
-
+ private:
   void WaitToBeOnTreads();
-  
+
   bool _buttonStartedPressed = false;
   bool _buttonPressed = false;
-
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorSelfTestButton_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorSelfTestButton_H__

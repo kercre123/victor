@@ -2,7 +2,7 @@
 #define __PROTOCOL_H
 
 #ifdef __ARMCC_VERSION
-  #pragma anon_unions
+#pragma anon_unions
 #endif
 
 #define MAX_KEYFRAMES 256
@@ -35,12 +35,12 @@ typedef struct {
 
 typedef struct {
   CubeCommand command;
-  uint8_t   flags;
-  int16_t   axis[3];
-  int16_t   tap_pos;
-  int16_t   tap_neg;
-  uint8_t   tap_count;
-  uint8_t   tap_time;
+  uint8_t flags;
+  int16_t axis[3];
+  int16_t tap_pos;
+  int16_t tap_neg;
+  uint8_t tap_count;
+  uint8_t tap_time;
 } TapCommand;
 
 typedef struct {

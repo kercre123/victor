@@ -15,7 +15,6 @@
  * permissions and limitations under the License.
  */
 
-
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_SDKVERSION_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_SDKVERSION_H_
 
@@ -25,27 +24,18 @@ namespace alexaClientSDK {
 namespace avsCommon {
 namespace utils {
 
-/// These functions are responsible for providing access to the current SDK version.
-/// NOTE: To make changes to this file you *MUST* do so via SDKVersion.h.in.
-namespace sdkVersion{
+/// These functions are responsible for providing access to the current SDK
+/// version. NOTE: To make changes to this file you *MUST* do so via
+/// SDKVersion.h.in.
+namespace sdkVersion {
 
-inline static std::string getCurrentVersion(){
-	return "1.11.0";
-}
+inline static std::string getCurrentVersion() { return "1.11.0"; }
 
-inline static int getMajorVersion(){
-	return 1;
-}
+inline static int getMajorVersion() { return 1; }
 
-inline static int getMinorVersion(){
-	return 11;
-}
+inline static int getMinorVersion() { return 11; }
 
-inline static int getPatchVersion(){
-	return 0;
-}
-
-
+inline static int getPatchVersion() { return 0; }
 
 }  // namespace sdkVersion
 }  // namespace utils

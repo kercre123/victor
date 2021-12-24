@@ -61,19 +61,15 @@ static void initializeDeviceProp() {
       cudaError_t status = cudaGetDeviceCount(&num_devices);
       if (status != cudaSuccess) {
         std::cerr << "Failed to get the number of CUDA devices: "
-                  << cudaGetErrorString(status)
-                  << std::endl;
+                  << cudaGetErrorString(status) << std::endl;
         assert(status == cudaSuccess);
       }
       m_deviceProperties = new cudaDeviceProp[num_devices];
       for (int i = 0; i < num_devices; ++i) {
         status = cudaGetDeviceProperties(&m_deviceProperties[i], i);
         if (status != cudaSuccess) {
-          std::cerr << "Failed to initialize CUDA device #"
-                    << i
-                    << ": "
-                    << cudaGetErrorString(status)
-                    << std::endl;
+          std::cerr << "Failed to initialize CUDA device #" << i << ": "
+                    << cudaGetErrorString(status) << std::endl;
           assert(status == cudaSuccess);
         }
       }
@@ -99,12 +95,17 @@ static const cudaStream_t default_stream = cudaStreamDefault;
 class CudaStreamDevice : public StreamInterface {
  public:
   // Use the default stream on the current device
-  CudaStreamDevice() : stream_(&default_stream), scratch_(NULL), semaphore_(NULL) {
+  CudaStreamDevice()
+      : stream_(&default_stream), scratch_(NULL), semaphore_(NULL) {
     cudaGetDevice(&device_);
     initializeDeviceProp();
   }
   // Use the default stream on the specified device
-  CudaStreamDevice(int device) : stream_(&default_stream), device_(device), scratch_(NULL), semaphore_(NULL) {
+  CudaStreamDevice(int device)
+      : stream_(&default_stream),
+        device_(device),
+        scratch_(NULL),
+        semaphore_(NULL) {
     initializeDeviceProp();
   }
   // Use the specified stream. Note that it's the
@@ -166,7 +167,8 @@ class CudaStreamDevice : public StreamInterface {
     if (semaphore_ == NULL) {
       char* scratch = static_cast<char*>(scratchpad()) + kCudaScratchSize;
       semaphore_ = reinterpret_cast<unsigned int*>(scratch);
-      cudaError_t err = cudaMemsetAsync(semaphore_, 0, sizeof(unsigned int), *stream_);
+      cudaError_t err =
+          cudaMemsetAsync(semaphore_, 0, sizeof(unsigned int), *stream_);
       EIGEN_UNUSED_VARIABLE(err)
       assert(err == cudaSuccess);
     }
@@ -183,10 +185,12 @@ class CudaStreamDevice : public StreamInterface {
 struct GpuDevice {
   // The StreamInterface is not owned: the caller is
   // responsible for its initialization and eventual destruction.
-  explicit GpuDevice(const StreamInterface* stream) : stream_(stream), max_blocks_(INT_MAX) {
+  explicit GpuDevice(const StreamInterface* stream)
+      : stream_(stream), max_blocks_(INT_MAX) {
     eigen_assert(stream);
   }
-  explicit GpuDevice(const StreamInterface* stream, int num_blocks) : stream_(stream), max_blocks_(num_blocks) {
+  explicit GpuDevice(const StreamInterface* stream, int num_blocks)
+      : stream_(stream), max_blocks_(num_blocks) {
     eigen_assert(stream);
   }
   // TODO(bsteiner): This is an internal API, we should not expose it.
@@ -202,15 +206,14 @@ struct GpuDevice {
     stream_->deallocate(buffer);
   }
 
-  EIGEN_STRONG_INLINE void* scratchpad() const {
-    return stream_->scratchpad();
-  }
+  EIGEN_STRONG_INLINE void* scratchpad() const { return stream_->scratchpad(); }
 
   EIGEN_STRONG_INLINE unsigned int* semaphore() const {
     return stream_->semaphore();
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpy(void* dst, const void* src, size_t n) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpy(void* dst, const void* src,
+                                                    size_t n) const {
 #ifndef EIGEN_CUDA_ARCH
     cudaError_t err = cudaMemcpyAsync(dst, src, n, cudaMemcpyDeviceToDevice,
                                       stream_->stream());
@@ -220,31 +223,38 @@ struct GpuDevice {
     EIGEN_UNUSED_VARIABLE(dst);
     EIGEN_UNUSED_VARIABLE(src);
     EIGEN_UNUSED_VARIABLE(n);
-    eigen_assert(false && "The default device should be used instead to generate kernel code");
+    eigen_assert(
+        false &&
+        "The default device should be used instead to generate kernel code");
 #endif
   }
 
-  EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* src, size_t n) const {
+  EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* src,
+                                              size_t n) const {
     cudaError_t err =
         cudaMemcpyAsync(dst, src, n, cudaMemcpyHostToDevice, stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
     assert(err == cudaSuccess);
   }
 
-  EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* src, size_t n) const {
+  EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* src,
+                                              size_t n) const {
     cudaError_t err =
         cudaMemcpyAsync(dst, src, n, cudaMemcpyDeviceToHost, stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
     assert(err == cudaSuccess);
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memset(void* buffer, int c, size_t n) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memset(void* buffer, int c,
+                                                    size_t n) const {
 #ifndef EIGEN_CUDA_ARCH
     cudaError_t err = cudaMemsetAsync(buffer, c, n, stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
     assert(err == cudaSuccess);
 #else
-  eigen_assert(false && "The default device should be used instead to generate kernel code");
+    eigen_assert(
+        false &&
+        "The default device should be used instead to generate kernel code");
 #endif
   }
 
@@ -255,7 +265,7 @@ struct GpuDevice {
 
   EIGEN_STRONG_INLINE size_t firstLevelCacheSize() const {
     // FIXME
-    return 48*1024;
+    return 48 * 1024;
   }
 
   EIGEN_STRONG_INLINE size_t lastLevelCacheSize() const {
@@ -268,13 +278,13 @@ struct GpuDevice {
 #if defined(EIGEN_CUDACC) && !defined(EIGEN_CUDA_ARCH)
     cudaError_t err = cudaStreamSynchronize(stream_->stream());
     if (err != cudaSuccess) {
-      std::cerr << "Error detected in CUDA stream: "
-                << cudaGetErrorString(err)
+      std::cerr << "Error detected in CUDA stream: " << cudaGetErrorString(err)
                 << std::endl;
       assert(err == cudaSuccess);
     }
 #else
-    assert(false && "The default device should be used instead to generate kernel code");
+    assert(false &&
+           "The default device should be used instead to generate kernel code");
 #endif
   }
 
@@ -297,9 +307,7 @@ struct GpuDevice {
     return stream_->deviceProperties().minor;
   }
 
-  EIGEN_STRONG_INLINE int maxBlocks() const {
-    return max_blocks_;
-  }
+  EIGEN_STRONG_INLINE int maxBlocks() const { return max_blocks_; }
 
   // This function checks if the CUDA runtime recorded an error for the
   // underlying stream device.
@@ -317,14 +325,16 @@ struct GpuDevice {
   int max_blocks_;
 };
 
-#define LAUNCH_CUDA_KERNEL(kernel, gridsize, blocksize, sharedmem, device, ...)             \
-  (kernel) <<< (gridsize), (blocksize), (sharedmem), (device).stream() >>> (__VA_ARGS__);   \
+#define LAUNCH_CUDA_KERNEL(kernel, gridsize, blocksize, sharedmem, device, \
+                           ...)                                            \
+  (kernel)<<<(gridsize), (blocksize), (sharedmem), (device).stream()>>>(   \
+      __VA_ARGS__);                                                        \
   assert(cudaGetLastError() == cudaSuccess);
-
 
 // FIXME: Should be device and kernel specific.
 #ifdef EIGEN_CUDACC
-static EIGEN_DEVICE_FUNC inline void setCudaSharedMemConfig(cudaSharedMemConfig config) {
+static EIGEN_DEVICE_FUNC inline void setCudaSharedMemConfig(
+    cudaSharedMemConfig config) {
 #ifndef EIGEN_CUDA_ARCH
   cudaError_t status = cudaDeviceSetSharedMemConfig(config);
   EIGEN_UNUSED_VARIABLE(status)

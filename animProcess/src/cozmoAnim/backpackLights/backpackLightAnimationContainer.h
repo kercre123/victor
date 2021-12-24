@@ -13,28 +13,29 @@
 #ifndef __Anki_Cozmo_Backpack_Light_Animation_Container_H__
 #define __Anki_Cozmo_Backpack_Light_Animation_Container_H__
 
-#include "cozmoAnim/backpackLights/animBackpackLightAnimation.h"
 #include <unordered_map>
+
+#include "cozmoAnim/backpackLights/animBackpackLightAnimation.h"
 
 namespace Anki {
 namespace Vector {
 namespace Anim {
-class BackpackLightAnimationContainer
-{
-public:
+class BackpackLightAnimationContainer {
+ public:
   using InitMap = std::unordered_map<std::string, const Json::Value>;
   BackpackLightAnimationContainer(const InitMap& initializationMap);
-  const BackpackLightAnimation::BackpackAnimation* GetAnimation(const std::string& name) const;
-  
-  
-private:
-  void AddAnimation(const std::string& animationName, const BackpackLightAnimation::BackpackAnimation&& anim);  
-  std::unordered_map<std::string, BackpackLightAnimation::BackpackAnimation> _animations;
+  const BackpackLightAnimation::BackpackAnimation* GetAnimation(
+      const std::string& name) const;
+
+ private:
+  void AddAnimation(const std::string& animationName,
+                    const BackpackLightAnimation::BackpackAnimation&& anim);
+  std::unordered_map<std::string, BackpackLightAnimation::BackpackAnimation>
+      _animations;
 };
 
-} // namespace Anim
-} // namespace Vector
-} // namespace Anki
+}  // namespace Anim
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Anki_Cozmo_Backpack_Light_Animation_Container_H__
-
+#endif  // __Anki_Cozmo_Backpack_Light_Animation_Container_H__

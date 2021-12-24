@@ -16,10 +16,10 @@
 #ifndef ALEXA_CLIENT_SDK_CAPABILITYAGENTS_AUDIOPLAYER_INCLUDE_AUDIOPLAYER_STREAMFORMAT_H_
 #define ALEXA_CLIENT_SDK_CAPABILITYAGENTS_AUDIOPLAYER_INCLUDE_AUDIOPLAYER_STREAMFORMAT_H_
 
-#include <ostream>
-
 #include <AVSCommon/SDKInterfaces/DialogUXStateObserverInterface.h>
 #include <AVSCommon/Utils/JSON/JSONUtils.h>
+
+#include <ostream>
 
 namespace alexaClientSDK {
 namespace capabilityAgents {
@@ -27,10 +27,10 @@ namespace audioPlayer {
 
 /// Specifies the format of a binary audio attachment in a @c Play directive.
 enum class StreamFormat {
-    /// Audio is in mpeg format.
-    AUDIO_MPEG,
-    /// Audio is an unknown/unsupported format.
-    UNKNOWN
+  /// Audio is in mpeg format.
+  AUDIO_MPEG,
+  /// Audio is an unknown/unsupported format.
+  UNKNOWN
 };
 
 /**
@@ -40,13 +40,13 @@ enum class StreamFormat {
  * @return The AVS-compliant string representation of @c streamFormat.
  */
 inline std::string streamFormatToString(StreamFormat streamFormat) {
-    switch (streamFormat) {
-        case StreamFormat::AUDIO_MPEG:
-            return "AUDIO_MPEG";
-        case StreamFormat::UNKNOWN:
-            break;
-    }
-    return "unknown StreamFormat";
+  switch (streamFormat) {
+    case StreamFormat::AUDIO_MPEG:
+      return "AUDIO_MPEG";
+    case StreamFormat::UNKNOWN:
+      break;
+  }
+  return "unknown StreamFormat";
 }
 
 /**
@@ -56,25 +56,28 @@ inline std::string streamFormatToString(StreamFormat streamFormat) {
  * @param[out] streamFormat The converted @c StreamFormat.
  * @return @c true if the string converted succesfully, else @c false.
  */
-inline bool stringToStreamFormat(const std::string& text, StreamFormat* streamFormat) {
-    if (nullptr == streamFormat) {
-        return false;
-    } else if (text == streamFormatToString(StreamFormat::AUDIO_MPEG)) {
-        *streamFormat = StreamFormat::AUDIO_MPEG;
-        return true;
-    }
+inline bool stringToStreamFormat(const std::string& text,
+                                 StreamFormat* streamFormat) {
+  if (nullptr == streamFormat) {
     return false;
+  } else if (text == streamFormatToString(StreamFormat::AUDIO_MPEG)) {
+    *streamFormat = StreamFormat::AUDIO_MPEG;
+    return true;
+  }
+  return false;
 }
 
 /**
  * Write a @c StreamFormat value to an @c ostream.
  *
  * @param stream The stream to write the value to.
- * @param streamFormat The @c StreamFormat value to write to the @c ostream as a string.
+ * @param streamFormat The @c StreamFormat value to write to the @c ostream as a
+ * string.
  * @return The @c ostream that was passed in and written to.
  */
-inline std::ostream& operator<<(std::ostream& stream, const StreamFormat& streamFormat) {
-    return stream << streamFormatToString(streamFormat);
+inline std::ostream& operator<<(std::ostream& stream,
+                                const StreamFormat& streamFormat) {
+  return stream << streamFormatToString(streamFormat);
 }
 
 /**
@@ -84,12 +87,13 @@ inline std::ostream& operator<<(std::ostream& stream, const StreamFormat& stream
  * @param streamFormat The @c StreamFormat to convert.
  * @return @c true if conversion is successful, else @c false.
  */
-inline bool convertToValue(const rapidjson::Value& documentNode, StreamFormat* streamFormat) {
-    std::string text;
-    if (!avsCommon::utils::json::jsonUtils::convertToValue(documentNode, &text)) {
-        return false;
-    }
-    return stringToStreamFormat(text, streamFormat);
+inline bool convertToValue(const rapidjson::Value& documentNode,
+                           StreamFormat* streamFormat) {
+  std::string text;
+  if (!avsCommon::utils::json::jsonUtils::convertToValue(documentNode, &text)) {
+    return false;
+  }
+  return stringToStreamFormat(text, streamFormat);
 }
 
 }  // namespace audioPlayer

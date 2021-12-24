@@ -11,12 +11,12 @@
 #ifndef __Util_Http_IHttpAdapter_H__
 #define __Util_Http_IHttpAdapter_H__
 
-#include "util/http/httpRequest.h"
-
 #include <functional>
-#include <string>
 #include <map>
+#include <string>
 #include <vector>
+
+#include "util/http/httpRequest.h"
 
 namespace Anki {
 namespace Util {
@@ -25,49 +25,42 @@ namespace Dispatch {
 class Queue;
 }
 
-using HttpRequestCallback =
-  std::function<void (const HttpRequest& request,
-                      const int responseCode,
-                      const std::map<std::string, std::string>& responseHeaders,
-                      const std::vector<uint8_t>& responseBody)>;
-using HttpRequestDownloadProgressCallback =
-  std::function<void (const HttpRequest& request,
-                      const int64_t bytesWritten,
-                      const int64_t totalBytesWritten,
-                      const int64_t totalBytesExpectedToWrite)>;
+using HttpRequestCallback = std::function<void(
+    const HttpRequest& request, const int responseCode,
+    const std::map<std::string, std::string>& responseHeaders,
+    const std::vector<uint8_t>& responseBody)>;
+using HttpRequestDownloadProgressCallback = std::function<void(
+    const HttpRequest& request, const int64_t bytesWritten,
+    const int64_t totalBytesWritten, const int64_t totalBytesExpectedToWrite)>;
 static constexpr const int kHttpRequestCallbackTookTooLongMilliseconds = 250;
 
 // Abstract base class
-class IHttpAdapter
-{
-public:
+class IHttpAdapter {
+ public:
   virtual ~IHttpAdapter() {}
 
-  enum class AdapterState {DOWN, UP};
+  enum class AdapterState { DOWN, UP };
 
   virtual void ShutdownAdapter() = 0;
 
   virtual bool IsAdapterUp() = 0;
 
-  virtual void StartRequest(HttpRequest request,
-                            Dispatch::Queue* queue,
-                            HttpRequestCallback callback,
-                            HttpRequestDownloadProgressCallback progressCallback = nullptr) = 0;
+  virtual void StartRequest(
+      HttpRequest request, Dispatch::Queue* queue, HttpRequestCallback callback,
+      HttpRequestDownloadProgressCallback progressCallback = nullptr) = 0;
 
-  virtual void ExecuteCallback(const uint64_t hash,
-                               const int responseCode,
-                               std::map<std::string,std::string>& responseHeaders,
-                               std::vector<uint8_t>& responseBody) = 0;
+  virtual void ExecuteCallback(
+      const uint64_t hash, const int responseCode,
+      std::map<std::string, std::string>& responseHeaders,
+      std::vector<uint8_t>& responseBody) = 0;
 
-  virtual void ExecuteDownloadProgressCallback(const uint64_t hash,
-                                               const int64_t bytesWritten,
-                                               const int64_t totalBytesWritten,
-                                               const int64_t totalBytesExpectedToWrite) = 0;
-
-  
+  virtual void ExecuteDownloadProgressCallback(
+      const uint64_t hash, const int64_t bytesWritten,
+      const int64_t totalBytesWritten,
+      const int64_t totalBytesExpectedToWrite) = 0;
 };
 
-} // namespace Util
-} // namespace Anki
+}  // namespace Util
+}  // namespace Anki
 
 #endif

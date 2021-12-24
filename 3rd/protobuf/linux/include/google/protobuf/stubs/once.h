@@ -87,7 +87,7 @@ namespace internal {
 
 using once_flag = std::once_flag;
 template <typename... Args>
-void call_once(Args&&... args ) {
+void call_once(Args&&... args) {
   std::call_once(std::forward<Args>(args)...);
 }
 
@@ -112,10 +112,11 @@ class GoogleOnceDynamic {
   // execute (*func_with_arg)(arg) then return.
   // Otherwise, wait until that prior invocation has finished
   // executing its function, then return.
-  template<typename T>
+  template <typename T>
   void Init(void (*func_with_arg)(T*), T* arg) {
     GoogleOnceInitArg<T>(&this->state_, func_with_arg, arg);
   }
+
  private:
   ProtobufOnceType state_;
 };

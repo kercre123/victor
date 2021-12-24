@@ -31,24 +31,26 @@ namespace http2 {
  * Interface for managing an HTTP2 connection.
  */
 class HTTP2ConnectionInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~HTTP2ConnectionInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~HTTP2ConnectionInterface() = default;
 
-    /**
-     * Create an HTTP2 request.  Send it immediately.
-     *
-     * @param config The configuration object which defines the request.
-     * @return A new HTTP2GetRequest instance.
-     */
-    virtual std::shared_ptr<HTTP2RequestInterface> createAndSendRequest(const HTTP2RequestConfig& config) = 0;
+  /**
+   * Create an HTTP2 request.  Send it immediately.
+   *
+   * @param config The configuration object which defines the request.
+   * @return A new HTTP2GetRequest instance.
+   */
+  virtual std::shared_ptr<HTTP2RequestInterface> createAndSendRequest(
+      const HTTP2RequestConfig& config) = 0;
 
-    /**
-     * Terminate the HTTP2 connection, forcing immediate termination of any active requests.
-     */
-    virtual void disconnect() = 0;
+  /**
+   * Terminate the HTTP2 connection, forcing immediate termination of any active
+   * requests.
+   */
+  virtual void disconnect() = 0;
 };
 
 }  // namespace http2

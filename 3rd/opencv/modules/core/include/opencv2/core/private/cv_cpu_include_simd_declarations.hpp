@@ -9,7 +9,7 @@
 
 #ifndef CV_DISABLE_OPTIMIZATION
 #ifdef _MSC_VER
-#pragma warning(disable: 4702) // unreachable code
+#pragma warning(disable : 4702)  // unreachable code
 #endif
 #endif
 
@@ -20,7 +20,8 @@
 #undef CV_CPU_OPTIMIZATION_NAMESPACE_BEGIN
 #undef CV_CPU_OPTIMIZATION_NAMESPACE_END
 
-#define CV_CPU_OPTIMIZATION_NAMESPACE_BEGIN namespace __CV_CAT(opt_, CV_CPU_DISPATCH_MODE) {
+#define CV_CPU_OPTIMIZATION_NAMESPACE_BEGIN \
+  namespace __CV_CAT(opt_, CV_CPU_DISPATCH_MODE) {
 #define CV_CPU_OPTIMIZATION_NAMESPACE_END }
 
 #include CV_CPU_SIMD_FILENAME

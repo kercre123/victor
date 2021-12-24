@@ -7,51 +7,51 @@
  *
  *  Description
  *  + an audio job is tasked with loading audio data from file
- *  + it then converts and hands over said audio data to the audio engine for playback
+ *  + it then converts and hands over said audio data to the audio engine for
+ *playback
  *
  **********************************************************************************************************************/
 
 #ifndef __AnimProcess_CozmoAnim_AudioPlaybackJob_H__
 #define __AnimProcess_CozmoAnim_AudioPlaybackJob_H__
 
-#include "coretech/common/shared/types.h"
-
 #include <atomic>
 #include <functional>
 #include <string>
 
+#include "coretech/common/shared/types.h"
 
 namespace Anki {
-  namespace AudioEngine {
-    struct StandardWaveDataContainer;
-  }
-
-  namespace Vector {
-    namespace Audio {
-      class CozmoAudioController;
-    }
-  }
+namespace AudioEngine {
+struct StandardWaveDataContainer;
 }
+
+namespace Vector {
+namespace Audio {
+class CozmoAudioController;
+}
+}  // namespace Vector
+}  // namespace Anki
 
 namespace Anki {
 namespace Vector {
 namespace Audio {
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class AudioPlaybackJob
-{
-public:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  AudioPlaybackJob( const std::string& filename );
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+class AudioPlaybackJob {
+ public:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
+  AudioPlaybackJob(const std::string& filename);
   ~AudioPlaybackJob();
 
   AudioPlaybackJob() = delete;
-  AudioPlaybackJob( const AudioPlaybackJob& other ) = delete;
-  AudioPlaybackJob& operator=( const AudioPlaybackJob& other ) = delete;
+  AudioPlaybackJob(const AudioPlaybackJob& other) = delete;
+  AudioPlaybackJob& operator=(const AudioPlaybackJob& other) = delete;
 
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
 
   // only call from loading thread
   void LoadAudioData();
@@ -59,32 +59,30 @@ public:
   // thread safe
   bool IsComplete() const;
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Access
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Access
-  
-  const std::string&                        GetFilename() const { return _filename; }
-  AudioEngine::StandardWaveDataContainer*   GetAudioData() const { return _data; }
+  const std::string& GetFilename() const { return _filename; }
+  AudioEngine::StandardWaveDataContainer* GetAudioData() const { return _data; }
 
+ private:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
 
-private:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  bool IsDataLoaded() const { return ( nullptr != _data ); }
+  bool IsDataLoaded() const { return (nullptr != _data); }
   void SetComplete();
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  std::string _filename;
+  AudioEngine::StandardWaveDataContainer* _data;
 
-  std::string                               _filename;
-  AudioEngine::StandardWaveDataContainer*   _data;
-
-  std::atomic<bool>                         _isComplete;
+  std::atomic<bool> _isComplete;
 };
 
-} //  namespace Audio
-} // namespace Vector
-} // namespace Anki
+}  //  namespace Audio
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __AnimProcess_CozmoAnim_AudioPlaybackJob_H__
+#endif  // __AnimProcess_CozmoAnim_AudioPlaybackJob_H__

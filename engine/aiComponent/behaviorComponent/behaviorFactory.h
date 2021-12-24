@@ -14,25 +14,21 @@
 #define __Engine_AiComponent_BehaviorComponent_BehaviorFactory_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
-
+#include "json/json-forwards.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
-
-#include "json/json-forwards.h"
 
 namespace Anki {
 namespace Vector {
 
-class BehaviorFactory : private Util::noncopyable
-{
-public:
-
-  // Create and return a pointer to a behavior specified by the given json. The caller must take ownership of
-  // this pointer
+class BehaviorFactory : private Util::noncopyable {
+ public:
+  // Create and return a pointer to a behavior specified by the given json. The
+  // caller must take ownership of this pointer
   static ICozmoBehaviorPtr CreateBehavior(const Json::Value& config);
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

@@ -10,7 +10,6 @@
  *
  **/
 
-
 #include "engine/aiComponent/beiConditions/conditions/conditionOnChargerPlatform.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -19,16 +18,15 @@
 namespace Anki {
 namespace Vector {
 
-ConditionOnChargerPlatform::ConditionOnChargerPlatform(const Json::Value& config)
-  : IBEICondition(config)
-{
-}
+ConditionOnChargerPlatform::ConditionOnChargerPlatform(
+    const Json::Value& config)
+    : IBEICondition(config) {}
 
-bool ConditionOnChargerPlatform::AreConditionsMetInternal(BehaviorExternalInterface& bei) const
-{
+bool ConditionOnChargerPlatform::AreConditionsMetInternal(
+    BehaviorExternalInterface& bei) const {
   const bool onCharger = bei.GetRobotInfo().IsOnChargerPlatform();
   return onCharger;
 }
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki

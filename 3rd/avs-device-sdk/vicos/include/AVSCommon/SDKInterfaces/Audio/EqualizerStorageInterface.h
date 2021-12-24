@@ -16,9 +16,9 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_AUDIO_EQUALIZERSTORAGEINTERFACE_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_AUDIO_EQUALIZERSTORAGEINTERFACE_H_
 
-#include <memory>
-
 #include <AVSCommon/Utils/Error/SuccessResult.h>
+
+#include <memory>
 
 #include "EqualizerTypes.h"
 
@@ -31,31 +31,34 @@ namespace audio {
  * Interface to persist the last set to @c EqualizerController.
  */
 class EqualizerStorageInterface {
-public:
-    /**
-     *  Destructor.
-     */
-    virtual ~EqualizerStorageInterface() = default;
+ public:
+  /**
+   *  Destructor.
+   */
+  virtual ~EqualizerStorageInterface() = default;
 
-    /**
-     * Saves equalizer state to the storage.
-     *
-     * @param state @c EqualizerState to store.
-     */
-    virtual void saveState(const EqualizerState& state) = 0;
+  /**
+   * Saves equalizer state to the storage.
+   *
+   * @param state @c EqualizerState to store.
+   */
+  virtual void saveState(const EqualizerState& state) = 0;
 
-    /**
-     * Loads a stored equalizer state from the storage.
-     *
-     * @return State retrieved from the storage or @c nullptr if no state is stored.
-     */
-    virtual avsCommon::utils::error::SuccessResult<EqualizerState> loadState() = 0;
+  /**
+   * Loads a stored equalizer state from the storage.
+   *
+   * @return State retrieved from the storage or @c nullptr if no state is
+   * stored.
+   */
+  virtual avsCommon::utils::error::SuccessResult<EqualizerState>
+  loadState() = 0;
 
-    /**
-     * Clears all the EQ settings from the storage. The next call to @c loadState() must return no state unless another
-     * state is saved between @c clear() and @c loadState().
-     */
-    virtual void clear() = 0;
+  /**
+   * Clears all the EQ settings from the storage. The next call to @c
+   * loadState() must return no state unless another state is saved between @c
+   * clear() and @c loadState().
+   */
+  virtual void clear() = 0;
 };
 
 }  // namespace audio

@@ -10,12 +10,13 @@
  */
 
 #include <stddef.h>
+
 #include "export.h"
 
 #ifdef __cplusplus
-# ifdef __GNUC__
-#  pragma GCC diagnostic ignored "-Wlong-long"
-# endif
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wlong-long"
+#endif
 extern "C" {
 #endif
 
@@ -41,7 +42,8 @@ int crypto_stream_salsa2012_xor(unsigned char *c, const unsigned char *m,
                                 const unsigned char *k);
 
 SODIUM_EXPORT
-void crypto_stream_salsa2012_keygen(unsigned char k[crypto_stream_salsa2012_KEYBYTES]);
+void crypto_stream_salsa2012_keygen(
+    unsigned char k[crypto_stream_salsa2012_KEYBYTES]);
 
 #ifdef __cplusplus
 }

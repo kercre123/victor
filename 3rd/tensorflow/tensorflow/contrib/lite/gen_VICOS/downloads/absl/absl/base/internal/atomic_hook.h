@@ -75,9 +75,7 @@ class AtomicHook<ReturnType (*)(Args...)> {
   }
 
  private:
-  static ReturnType DummyFunction(Args...) {
-    return ReturnType();
-  }
+  static ReturnType DummyFunction(Args...) { return ReturnType(); }
 
   // Current versions of MSVC (as of September 2017) have a broken
   // implementation of std::atomic<T*>:  Its constructor attempts to do the

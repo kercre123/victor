@@ -21,36 +21,41 @@ namespace avsCommon {
 namespace sdkInterfaces {
 
 /**
- * This interface provides a callback that signals state has been synchronized successfully. Since @c SynchronizeState
- * event should be the first message sent to AVS upon connection, if a component is sending a message, then it needs to
- * know the state of @c StateSynchronizer in order to start sending, and therefore contain an implementation of this
- * interface. Moreover, said component or implementation should add themselves to @c StateSynchronizer to receive the
- * callback.
+ * This interface provides a callback that signals state has been synchronized
+ * successfully. Since @c SynchronizeState event should be the first message
+ * sent to AVS upon connection, if a component is sending a message, then it
+ * needs to know the state of @c StateSynchronizer in order to start sending,
+ * and therefore contain an implementation of this interface. Moreover, said
+ * component or implementation should add themselves to @c StateSynchronizer to
+ * receive the callback.
  */
 class StateSynchronizerObserverInterface {
-public:
-    /**
-     * This enum provides the state of the @c StateSynchronizer.
-     */
-    enum class State {
-        /// The state in which @c StateSynchronizer has not send @c SynchronizeState event.
-        NOT_SYNCHRONIZED,
-        /// The state in which the state has been synchronized.
-        SYNCHRONIZED
-    };
+ public:
+  /**
+   * This enum provides the state of the @c StateSynchronizer.
+   */
+  enum class State {
+    /// The state in which @c StateSynchronizer has not send @c SynchronizeState
+    /// event.
+    NOT_SYNCHRONIZED,
+    /// The state in which the state has been synchronized.
+    SYNCHRONIZED
+  };
 
-    /**
-     * Destructor.
-     */
-    virtual ~StateSynchronizerObserverInterface() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~StateSynchronizerObserverInterface() = default;
 
-    /**
-     * Get the notification that the state has been synchronized.
-     *
-     * @param newState The state to which the @c StateSynchronizer has transitioned.
-     * @note The implementation of this function should return fast in order not to block the component that calls it.
-     */
-    virtual void onStateChanged(State newState) = 0;
+  /**
+   * Get the notification that the state has been synchronized.
+   *
+   * @param newState The state to which the @c StateSynchronizer has
+   * transitioned.
+   * @note The implementation of this function should return fast in order not
+   * to block the component that calls it.
+   */
+  virtual void onStateChanged(State newState) = 0;
 };
 
 }  // namespace sdkInterfaces

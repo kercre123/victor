@@ -30,33 +30,37 @@ static const std::string CAPABILITY_INTERFACE_NAME_KEY = "interface";
 /// Key for interface version in the @c CapabilityConfiguration map
 static const std::string CAPABILITY_INTERFACE_VERSION_KEY = "version";
 /// Key for interface configurations in the @c CapabilityConfiguration map
-static const std::string CAPABILITY_INTERFACE_CONFIGURATIONS_KEY = "configurations";
+static const std::string CAPABILITY_INTERFACE_CONFIGURATIONS_KEY =
+    "configurations";
 
 /**
- * Class to encapsulate the capability configuration implemented by a capability agent.
- * This is entered as a key/value pair in the map.
- * key: CAPABILITY_INTERFACE_TYPE_KEY, value: The interface type being implemented.
- * key: CAPABILITY_INTERFACE_NAME_KEY, value: The name of the interface being implemented.
- * key: CAPABILITY_INTERFACE_VERSION_KEY, value: The version of the interface being implemented.
- * key: CAPABILITY_INTERFACE_CONFIGURATIONS_KEY, value: A json of the configuration values for the interface being
+ * Class to encapsulate the capability configuration implemented by a capability
+ * agent. This is entered as a key/value pair in the map. key:
+ * CAPABILITY_INTERFACE_TYPE_KEY, value: The interface type being implemented.
+ * key: CAPABILITY_INTERFACE_NAME_KEY, value: The name of the interface being
+ * implemented. key: CAPABILITY_INTERFACE_VERSION_KEY, value: The version of the
+ * interface being implemented. key: CAPABILITY_INTERFACE_CONFIGURATIONS_KEY,
+ * value: A json of the configuration values for the interface being
  * implemented.
  */
 class CapabilityConfiguration {
-public:
-    /**
-     * Deleted default constructor.
-     */
-    CapabilityConfiguration() = delete;
+ public:
+  /**
+   * Deleted default constructor.
+   */
+  CapabilityConfiguration() = delete;
 
-    /**
-     * Constructor to initialize with specific values.
-     *
-     * @param capabilityConfigIn The @c CapabilityConfiguration value for this instance.
-     */
-    CapabilityConfiguration(const std::unordered_map<std::string, std::string>& capabilityConfigurationIn);
+  /**
+   * Constructor to initialize with specific values.
+   *
+   * @param capabilityConfigIn The @c CapabilityConfiguration value for this
+   * instance.
+   */
+  CapabilityConfiguration(const std::unordered_map<std::string, std::string>&
+                              capabilityConfigurationIn);
 
-    /// The @c CapabilityConfiguration value of this instance.
-    const std::unordered_map<std::string, std::string> capabilityConfiguration;
+  /// The @c CapabilityConfiguration value of this instance.
+  const std::unordered_map<std::string, std::string> capabilityConfiguration;
 };
 
 /**
@@ -66,7 +70,8 @@ public:
  * @param rhs The right hand side of the == operation.
  * @return Whether or not this instance and @c rhs are equivalent.
  */
-bool operator==(const CapabilityConfiguration& lhs, const CapabilityConfiguration& rhs);
+bool operator==(const CapabilityConfiguration& lhs,
+                const CapabilityConfiguration& rhs);
 
 /**
  * Operator != for @c CapabilityConfiguration
@@ -75,7 +80,8 @@ bool operator==(const CapabilityConfiguration& lhs, const CapabilityConfiguratio
  * @param rhs The right hand side of the != operation.
  * @return Whether or not this instance and @c rhs are not equivalent.
  */
-bool operator!=(const CapabilityConfiguration& lhs, const CapabilityConfiguration& rhs);
+bool operator!=(const CapabilityConfiguration& lhs,
+                const CapabilityConfiguration& rhs);
 
 }  // namespace avs
 }  // namespace avsCommon
@@ -88,7 +94,8 @@ namespace std {
  */
 template <>
 struct hash<alexaClientSDK::avsCommon::avs::CapabilityConfiguration> {
-    size_t operator()(const alexaClientSDK::avsCommon::avs::CapabilityConfiguration& in) const;
+  size_t operator()(
+      const alexaClientSDK::avsCommon::avs::CapabilityConfiguration& in) const;
 };
 
 }  // namespace std

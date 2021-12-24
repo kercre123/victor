@@ -12,7 +12,6 @@
 #include "engine/util/http/createHttpAdapter.h"
 #include "util/http/httpAdapter_vicos.h"
 
-Anki::Util::IHttpAdapter* CreateHttpAdapter()
-{
+Anki::Util::IHttpAdapter* CreateHttpAdapter() {
   return new Anki::Util::HttpAdapter();
 }

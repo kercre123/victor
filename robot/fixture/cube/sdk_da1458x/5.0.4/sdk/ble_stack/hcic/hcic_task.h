@@ -3,7 +3,8 @@
  *
  * @file hci_task.h
  *
- * @brief This file contains definitions related to the Host Controller interface
+ * @brief This file contains definitions related to the Host Controller
+ *interface
  *
  * Copyright (C) RivieraWaves 2009-2013
  *
@@ -21,17 +22,16 @@
  ****************************************************************************************
  */
 
-
 /*
  * INCLUDE FILES
  ****************************************************************************************
  */
 
-#include "rwip_config.h"     // SW configuration
+#include "rwip_config.h"  // SW configuration
 
 #if (BLE_HCIC_ITF)
 
-#include "ke_task.h"         // kernel task
+#include "ke_task.h"  // kernel task
 
 /*
  * INSTANCES
@@ -45,12 +45,11 @@
  ****************************************************************************************
  */
 /// Possible states of the HCI task
-enum HCI_STATE
-{
-    /// IDLE state
-    HCI_IDLE,
-    /// Number of states.
-    HCI_STATE_MAX
+enum HCI_STATE {
+  /// IDLE state
+  HCI_IDLE,
+  /// Number of states.
+  HCI_STATE_MAX
 };
 
 /*
@@ -58,16 +57,15 @@ enum HCI_STATE
  ****************************************************************************************
  */
 /// Message API of the HCI task
-enum HCI_MSG
-{
-    HCI_MSG_ID_FIRST = KE_FIRST_MSG(TASK_HCI),
+enum HCI_MSG {
+  HCI_MSG_ID_FIRST = KE_FIRST_MSG(TASK_HCI),
 
-    #if (DEEP_SLEEP)
-    /// to maintain device woken-up during some time
-    HCI_POLLING_TO,
-    #endif // DEEP_SLEEP
+#if (DEEP_SLEEP)
+  /// to maintain device woken-up during some time
+  HCI_POLLING_TO,
+#endif  // DEEP_SLEEP
 
-    HCI_MSG_ID_LAST
+  HCI_MSG_ID_LAST
 };
 
 /*
@@ -77,9 +75,8 @@ enum HCI_MSG
 extern const struct ke_state_handler hci_default_handler;
 extern ke_state_t hci_state[HCI_IDX_MAX];
 
-#endif //BLE_HCIC_ITF
+#endif  // BLE_HCIC_ITF
 
 /// @} HCI
 
-#endif // HCIC_TASK_H_
-
+#endif  // HCIC_TASK_H_

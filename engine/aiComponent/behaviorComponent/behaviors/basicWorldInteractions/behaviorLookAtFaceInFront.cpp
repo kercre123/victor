@@ -4,12 +4,12 @@
  * Author: Kevin M. Karol
  * Created: 2018-06-24
  *
- * Description: Robot looks up to see if there's a face in front of it, and centers on a face if found
+ * Description: Robot looks up to see if there's a face in front of it, and
+ *centers on a face if found
  *
  * Copyright: Anki, Inc. 2018
  *
  **/
-
 
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorLookAtFaceInFront.h"
 
@@ -23,66 +23,63 @@
 namespace Anki {
 namespace Vector {
 
-namespace{
+namespace {
 const TimeStamp_t kSeenFaceWindow_ms = 5000;
 const int kNumFramesToWait = 25;
 const char* const kConfirmFaceKey = "confirmFace";
-}  
+}  // namespace
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorLookAtFaceInFront::InstanceConfig::InstanceConfig()
-{
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorLookAtFaceInFront::InstanceConfig::InstanceConfig() {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorLookAtFaceInFront::DynamicVariables::DynamicVariables()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorLookAtFaceInFront::DynamicVariables::DynamicVariables() {
   waitingForFaces = false;
   robotTimeStampAtActivation = 0;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
 BehaviorLookAtFaceInFront::BehaviorLookAtFaceInFront(const Json::Value& config)
- : ICozmoBehavior(config)
-{
-  _iConfig.confirmFace = config.get( kConfirmFaceKey, true ).asBool();
+    : ICozmoBehavior(config) {
+  _iConfig.confirmFace = config.get(kConfirmFaceKey, true).asBool();
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorLookAtFaceInFront::~BehaviorLookAtFaceInFront()
-{
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorLookAtFaceInFront::~BehaviorLookAtFaceInFront() {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorLookAtFaceInFront::WantsToBeActivatedBehavior() const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool BehaviorLookAtFaceInFront::WantsToBeActivatedBehavior() const {
   return true;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAtFaceInFront::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookAtFaceInFront::GetBehaviorOperationModifiers(
+    BehaviorOperationModifiers& modifiers) const {}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookAtFaceInFront::GetAllDelegates(
+    std::set<IBehavior*>& delegates) const {}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookAtFaceInFront::GetBehaviorJsonKeys(
+    std::set<const char*>& expectedKeys) const {
+  expectedKeys.insert(kConfirmFaceKey);
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAtFaceInFront::GetAllDelegates(std::set<IBehavior*>& delegates) const
-{
-
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAtFaceInFront::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
-{
-  expectedKeys.insert( kConfirmFaceKey );
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAtFaceInFront::BehaviorUpdate()
-{
-  if( _dVars.waitingForFaces ) {
-    
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookAtFaceInFront::BehaviorUpdate() {
+  if (_dVars.waitingForFaces) {
     SmartFaceID smartID;
-    if(GetFaceIDToLookAt(smartID)){
+    if (GetFaceIDToLookAt(smartID)) {
       CancelDelegates(false);
       _dVars.waitingForFaces = false;
       TransitionToLookAtFace(smartID);
@@ -90,65 +87,68 @@ void BehaviorLookAtFaceInFront::BehaviorUpdate()
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAtFaceInFront::OnBehaviorActivated() 
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookAtFaceInFront::OnBehaviorActivated() {
   // reset dynamic variables
   _dVars = DynamicVariables();
-  
-  _dVars.robotTimeStampAtActivation = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
-  
+
+  _dVars.robotTimeStampAtActivation =
+      GetBEI().GetRobotInfo().GetLastMsgTimestamp();
+
   SmartFaceID smartID;
-  if(GetFaceIDToLookAt(smartID)){
+  if (GetFaceIDToLookAt(smartID)) {
     TransitionToLookAtFace(smartID);
-  }else{
+  } else {
     TransitionToLookUp();
   }
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorLookAtFaceInFront::GetFaceIDToLookAt(SmartFaceID& smartID) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool BehaviorLookAtFaceInFront::GetFaceIDToLookAt(SmartFaceID& smartID) const {
   auto& selectionComp = GetAIComp<FaceSelectionComponent>();
 
-  const RobotTimeStamp_t currentTime_ms = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
-  const RobotTimeStamp_t earliestTime = std::max( currentTime_ms - kSeenFaceWindow_ms, _dVars.robotTimeStampAtActivation );
+  const RobotTimeStamp_t currentTime_ms =
+      GetBEI().GetRobotInfo().GetLastMsgTimestamp();
+  const RobotTimeStamp_t earliestTime = std::max(
+      currentTime_ms - kSeenFaceWindow_ms, _dVars.robotTimeStampAtActivation);
   const bool includeRecognizableOnly = false;
   std::vector<SmartFaceID> ids;
-  const bool res = selectionComp.AreFacesInFrontOfRobot(ids, earliestTime, includeRecognizableOnly);
+  const bool res = selectionComp.AreFacesInFrontOfRobot(
+      ids, earliestTime, includeRecognizableOnly);
 
-  if(res){
+  if (res) {
     smartID = ids[0];
   }
 
   return res;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAtFaceInFront::TransitionToLookUp()
-{
-  // wait for a few frames after turning to give the robot a chance to see the face
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookAtFaceInFront::TransitionToLookUp() {
+  // wait for a few frames after turning to give the robot a chance to see the
+  // face
   auto* action = new CompoundActionSequential;
   action->AddAction(new MoveHeadToAngleAction(MAX_HEAD_ANGLE));
   // todo: use WaitToSeeFaceAction (VIC-4789)
-  action->AddAction(new WaitForImagesAction(kNumFramesToWait,
-                                            VisionMode::Faces));
-  
+  action->AddAction(
+      new WaitForImagesAction(kNumFramesToWait, VisionMode::Faces));
+
   _dVars.waitingForFaces = true;
-  DelegateIfInControl(action); // either BehaviorUpdate will break out of this, or the behavior ends
+  DelegateIfInControl(action);  // either BehaviorUpdate will break out of this,
+                                // or the behavior ends
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAtFaceInFront::TransitionToLookAtFace(const SmartFaceID& smartID)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookAtFaceInFront::TransitionToLookAtFace(
+    const SmartFaceID& smartID) {
   auto* action = new TurnTowardsFaceAction(smartID);
-  action->SetRequireFaceConfirmation( _iConfig.confirmFace );
+  action->SetRequireFaceConfirmation(_iConfig.confirmFace);
   DelegateIfInControl(action);
 }
 
-
-}
-}
+}  // namespace Vector
+}  // namespace Anki

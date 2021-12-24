@@ -15,11 +15,8 @@
 #define IOS_MAIN 1
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# if !IOS_MAIN
+#if !IOS_MAIN
 #include "switchboard.h"
 
-int main() {
-  Anki::SwitchboardDaemon::Start();
-}
-# endif
-
+int main() { Anki::SwitchboardDaemon::Start(); }
+#endif

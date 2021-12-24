@@ -19,9 +19,9 @@
 //
 // This file contains functions for splitting strings. It defines the main
 // `StrSplit()` function, several delimiters for determining the boundaries on
-// which to split the std::string, and predicates for filtering delimited results.
-// `StrSplit()` adapts the returned collection to the type specified by the
-// caller.
+// which to split the std::string, and predicates for filtering delimited
+// results. `StrSplit()` adapts the returned collection to the type specified by
+// the caller.
 //
 // Example:
 //
@@ -76,15 +76,15 @@ namespace absl {
 // be split and the position to begin searching for the next delimiter in the
 // input text. The returned absl::string_view should refer to the next
 // occurrence (after pos) of the represented delimiter; this returned
-// absl::string_view represents the next location where the input std::string should
-// be broken. The returned absl::string_view may be zero-length if the Delimiter
-// does not represent a part of the std::string (e.g., a fixed-length delimiter). If
-// no delimiter is found in the given text, a zero-length absl::string_view
-// referring to text.end() should be returned (e.g.,
+// absl::string_view represents the next location where the input std::string
+// should be broken. The returned absl::string_view may be zero-length if the
+// Delimiter does not represent a part of the std::string (e.g., a fixed-length
+// delimiter). If no delimiter is found in the given text, a zero-length
+// absl::string_view referring to text.end() should be returned (e.g.,
 // absl::string_view(text.end(), 0)). It is important that the returned
 // absl::string_view always be within the bounds of input text given as an
-// argument--it must not refer to a std::string that is physically located outside of
-// the given std::string.
+// argument--it must not refer to a std::string that is physically located
+// outside of the given std::string.
 //
 // The following example is a simple Delimiter object that is created with a
 // single char and will look for that char in the text passed to the Find()
@@ -104,8 +104,8 @@ namespace absl {
 
 // ByString
 //
-// A sub-std::string delimiter. If `StrSplit()` is passed a std::string in place of a
-// `Delimiter` object, the std::string will be implicitly converted into a
+// A sub-std::string delimiter. If `StrSplit()` is passed a std::string in place
+// of a `Delimiter` object, the std::string will be implicitly converted into a
 // `ByString` delimiter.
 //
 // Example:
@@ -166,8 +166,8 @@ class ByChar {
 // A delimiter that will match any of the given byte-sized characters within
 // its provided std::string.
 //
-// Note: this delimiter works with single-byte std::string data, but does not work
-// with variable-width encodings, such as UTF-8.
+// Note: this delimiter works with single-byte std::string data, but does not
+// work with variable-width encodings, such as UTF-8.
 //
 // Example:
 //
@@ -192,8 +192,8 @@ class ByAnyChar {
 // A delimiter for splitting into equal-length strings. The length argument to
 // the constructor must be greater than 0.
 //
-// Note: this delimiter works with single-byte std::string data, but does not work
-// with variable-width encodings, such as UTF-8.
+// Note: this delimiter works with single-byte std::string data, but does not
+// work with variable-width encodings, such as UTF-8.
 //
 // Example:
 //
@@ -339,9 +339,9 @@ struct AllowEmpty {
 //
 //   // v[0] == "a", v[1] == "b"
 //
-// Note: `SkipEmpty()` does not consider a std::string containing only whitespace
-// to be empty. To skip such whitespace as well, use the `SkipWhitespace()`
-// predicate.
+// Note: `SkipEmpty()` does not consider a std::string containing only
+// whitespace to be empty. To skip such whitespace as well, use the
+// `SkipWhitespace()` predicate.
 struct SkipEmpty {
   bool operator()(absl::string_view sp) const { return !sp.empty(); }
 };
@@ -412,10 +412,10 @@ struct SkipWhitespace {
 //
 // The `StrSplit()` function adapts the returned collection to the collection
 // specified by the caller (e.g. `std::vector` above). The returned collections
-// may contain `string`, `absl::string_view` (in which case the original std::string
-// being split must ensure that it outlives the collection), or any object that
-// can be explicitly created from an `absl::string_view`. This behavior works
-// for:
+// may contain `string`, `absl::string_view` (in which case the original
+// std::string being split must ensure that it outlives the collection), or any
+// object that can be explicitly created from an `absl::string_view`. This
+// behavior works for:
 //
 // 1) All standard STL containers including `std::vector`, `std::list`,
 //    `std::deque`, `std::set`,`std::multiset`, 'std::map`, and `std::multimap`

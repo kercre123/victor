@@ -57,10 +57,10 @@ inline void Stream<uint8_t, 1, 8, 0, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "d0", "d2", "d3", "d16", "d17", "cc", "memory");
 }
 
@@ -110,10 +110,10 @@ inline void Stream<uint8_t, 1, 8, 1, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "d0", "d2", "d3", "d16", "d17", "cc", "memory");
 }
 
@@ -163,10 +163,10 @@ inline void Stream<uint8_t, 1, 8, 2, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "d0", "d2", "d3", "d16", "d17", "cc", "memory");
 }
 
@@ -217,10 +217,10 @@ inline void Stream<uint8_t, 1, 8, 3, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "d0", "d2", "d3", "d16", "d17", "cc", "memory");
 }
 
@@ -270,10 +270,10 @@ inline void Stream<uint8_t, 1, 8, 4, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "d0", "d2", "d3", "d16", "d17", "cc", "memory");
 }
 
@@ -324,10 +324,10 @@ inline void Stream<uint8_t, 1, 8, 5, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "d0", "d2", "d3", "d16", "d17", "cc", "memory");
 }
 
@@ -378,10 +378,10 @@ inline void Stream<uint8_t, 1, 8, 6, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "d0", "d2", "d3", "d16", "d17", "cc", "memory");
 }
 
@@ -433,10 +433,10 @@ inline void Stream<uint8_t, 1, 8, 7, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "d0", "d2", "d3", "d16", "d17", "cc", "memory");
 }
 
@@ -480,10 +480,10 @@ inline void Stream<uint8_t, 2, 8, 0, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "cc",
         "memory");
 }
@@ -543,10 +543,10 @@ inline void Stream<uint8_t, 2, 8, 1, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "cc",
         "memory");
 }
@@ -606,10 +606,10 @@ inline void Stream<uint8_t, 2, 8, 2, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "cc",
         "memory");
 }
@@ -671,10 +671,10 @@ inline void Stream<uint8_t, 2, 8, 3, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "cc",
         "memory");
 }
@@ -734,10 +734,10 @@ inline void Stream<uint8_t, 2, 8, 4, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "cc",
         "memory");
 }
@@ -799,10 +799,10 @@ inline void Stream<uint8_t, 2, 8, 5, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "cc",
         "memory");
 }
@@ -864,10 +864,10 @@ inline void Stream<uint8_t, 2, 8, 6, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "cc",
         "memory");
 }
@@ -931,10 +931,10 @@ inline void Stream<uint8_t, 2, 8, 7, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "cc",
         "memory");
 }
@@ -986,10 +986,10 @@ inline void Stream<uint8_t, 3, 8, 0, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20",
         "d21", "cc", "memory");
 }
@@ -1059,10 +1059,10 @@ inline void Stream<uint8_t, 3, 8, 1, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20",
         "d21", "cc", "memory");
 }
@@ -1132,10 +1132,10 @@ inline void Stream<uint8_t, 3, 8, 2, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20",
         "d21", "cc", "memory");
 }
@@ -1208,10 +1208,10 @@ inline void Stream<uint8_t, 3, 8, 3, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20",
         "d21", "cc", "memory");
 }
@@ -1281,10 +1281,10 @@ inline void Stream<uint8_t, 3, 8, 4, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20",
         "d21", "cc", "memory");
 }
@@ -1357,10 +1357,10 @@ inline void Stream<uint8_t, 3, 8, 5, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20",
         "d21", "cc", "memory");
 }
@@ -1433,10 +1433,10 @@ inline void Stream<uint8_t, 3, 8, 6, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20",
         "d21", "cc", "memory");
 }
@@ -1512,10 +1512,10 @@ inline void Stream<uint8_t, 3, 8, 7, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20",
         "d21", "cc", "memory");
 }
@@ -1573,10 +1573,10 @@ inline void Stream<uint8_t, 4, 8, 0, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "cc", "memory");
 }
@@ -1655,10 +1655,10 @@ inline void Stream<uint8_t, 4, 8, 1, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "cc", "memory");
 }
@@ -1737,10 +1737,10 @@ inline void Stream<uint8_t, 4, 8, 2, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "cc", "memory");
 }
@@ -1823,10 +1823,10 @@ inline void Stream<uint8_t, 4, 8, 3, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "cc", "memory");
 }
@@ -1905,10 +1905,10 @@ inline void Stream<uint8_t, 4, 8, 4, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "cc", "memory");
 }
@@ -1991,10 +1991,10 @@ inline void Stream<uint8_t, 4, 8, 5, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "cc", "memory");
 }
@@ -2077,10 +2077,10 @@ inline void Stream<uint8_t, 4, 8, 6, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "cc", "memory");
 }
@@ -2167,10 +2167,10 @@ inline void Stream<uint8_t, 4, 8, 7, RowMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "cc", "memory");
 }
@@ -2238,10 +2238,10 @@ inline void Stream<uint8_t, 5, 8, 0, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "d0", "d1", "d2", "d3", "d4", "d16", "d17",
         "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "cc", "memory");
 }
@@ -2334,10 +2334,10 @@ inline void Stream<uint8_t, 5, 8, 1, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "d0", "d1", "d2", "d3", "d4", "d16", "d17",
         "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "cc", "memory");
 }
@@ -2430,10 +2430,10 @@ inline void Stream<uint8_t, 5, 8, 2, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "d0", "d1", "d2", "d3", "d4", "d16", "d17",
         "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "cc", "memory");
 }
@@ -2531,10 +2531,10 @@ inline void Stream<uint8_t, 5, 8, 3, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "d0", "d1", "d2", "d3", "d4", "d16", "d17",
         "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "cc", "memory");
 }
@@ -2627,10 +2627,10 @@ inline void Stream<uint8_t, 5, 8, 4, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "d0", "d1", "d2", "d3", "d4", "d16", "d17",
         "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "cc", "memory");
 }
@@ -2728,10 +2728,10 @@ inline void Stream<uint8_t, 5, 8, 5, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "d0", "d1", "d2", "d3", "d4", "d16", "d17",
         "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "cc", "memory");
 }
@@ -2829,10 +2829,10 @@ inline void Stream<uint8_t, 5, 8, 6, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "d0", "d1", "d2", "d3", "d4", "d16", "d17",
         "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "cc", "memory");
 }
@@ -2935,10 +2935,10 @@ inline void Stream<uint8_t, 5, 8, 7, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "d0", "d1", "d2", "d3", "d4", "d16", "d17",
         "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "cc", "memory");
 }
@@ -3012,10 +3012,10 @@ inline void Stream<uint8_t, 6, 8, 0, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "d0", "d1", "d2", "d3", "d4", "d5", "d16",
         "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26",
         "d27", "cc", "memory");
@@ -3118,10 +3118,10 @@ inline void Stream<uint8_t, 6, 8, 1, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "d0", "d1", "d2", "d3", "d4", "d5", "d16",
         "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26",
         "d27", "cc", "memory");
@@ -3224,10 +3224,10 @@ inline void Stream<uint8_t, 6, 8, 2, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "d0", "d1", "d2", "d3", "d4", "d5", "d16",
         "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26",
         "d27", "cc", "memory");
@@ -3336,10 +3336,10 @@ inline void Stream<uint8_t, 6, 8, 3, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "d0", "d1", "d2", "d3", "d4", "d5", "d16",
         "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26",
         "d27", "cc", "memory");
@@ -3442,10 +3442,10 @@ inline void Stream<uint8_t, 6, 8, 4, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "d0", "d1", "d2", "d3", "d4", "d5", "d16",
         "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26",
         "d27", "cc", "memory");
@@ -3554,10 +3554,10 @@ inline void Stream<uint8_t, 6, 8, 5, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "d0", "d1", "d2", "d3", "d4", "d5", "d16",
         "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26",
         "d27", "cc", "memory");
@@ -3666,10 +3666,10 @@ inline void Stream<uint8_t, 6, 8, 6, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "d0", "d1", "d2", "d3", "d4", "d5", "d16",
         "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26",
         "d27", "cc", "memory");
@@ -3784,10 +3784,10 @@ inline void Stream<uint8_t, 6, 8, 7, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "r"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "r"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "d0", "d1", "d2", "d3", "d4", "d5", "d16",
         "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26",
         "d27", "cc", "memory");
@@ -3871,10 +3871,10 @@ inline void Stream<uint8_t, 7, 8, 0, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "m"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "m"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "m"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "m"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "r5", "d0", "d1", "d2", "d3", "d4", "d5",
         "d6", "d16", "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24",
         "d25", "d26", "d27", "d28", "d29", "cc", "memory");
@@ -3989,10 +3989,10 @@ inline void Stream<uint8_t, 7, 8, 1, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "m"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "m"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "m"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "m"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "r5", "d0", "d1", "d2", "d3", "d4", "d5",
         "d6", "d16", "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24",
         "d25", "d26", "d27", "d28", "d29", "cc", "memory");
@@ -4107,10 +4107,10 @@ inline void Stream<uint8_t, 7, 8, 2, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "m"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "m"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "m"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "m"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "r5", "d0", "d1", "d2", "d3", "d4", "d5",
         "d6", "d16", "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24",
         "d25", "d26", "d27", "d28", "d29", "cc", "memory");
@@ -4232,10 +4232,10 @@ inline void Stream<uint8_t, 7, 8, 3, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "m"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "m"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "m"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "m"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "r5", "d0", "d1", "d2", "d3", "d4", "d5",
         "d6", "d16", "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24",
         "d25", "d26", "d27", "d28", "d29", "cc", "memory");
@@ -4350,10 +4350,10 @@ inline void Stream<uint8_t, 7, 8, 4, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "m"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "m"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "m"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "m"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "r5", "d0", "d1", "d2", "d3", "d4", "d5",
         "d6", "d16", "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24",
         "d25", "d26", "d27", "d28", "d29", "cc", "memory");
@@ -4475,10 +4475,10 @@ inline void Stream<uint8_t, 7, 8, 5, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "m"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "m"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "m"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "m"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "r5", "d0", "d1", "d2", "d3", "d4", "d5",
         "d6", "d16", "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24",
         "d25", "d26", "d27", "d28", "d29", "cc", "memory");
@@ -4600,10 +4600,10 @@ inline void Stream<uint8_t, 7, 8, 6, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "m"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "m"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "m"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "m"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "r5", "d0", "d1", "d2", "d3", "d4", "d5",
         "d6", "d16", "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24",
         "d25", "d26", "d27", "d28", "d29", "cc", "memory");
@@ -4732,10 +4732,10 @@ inline void Stream<uint8_t, 7, 8, 7, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "m"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "m"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "m"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "m"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "r5", "d0", "d1", "d2", "d3", "d4", "d5",
         "d6", "d16", "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24",
         "d25", "d26", "d27", "d28", "d29", "cc", "memory");
@@ -4825,10 +4825,10 @@ inline void Stream<uint8_t, 8, 8, 0, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:256]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "m"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "m"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "m"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "m"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "r5", "r6", "d0", "d1", "d2", "d3", "d4",
         "d5", "d6", "d7", "d16", "d17", "d18", "d19", "d20", "d21", "d22",
         "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31", "cc",
@@ -4953,10 +4953,10 @@ inline void Stream<uint8_t, 8, 8, 1, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:256]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "m"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "m"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "m"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "m"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "r5", "r6", "d0", "d1", "d2", "d3", "d4",
         "d5", "d6", "d7", "d16", "d17", "d18", "d19", "d20", "d21", "d22",
         "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31", "cc",
@@ -5081,10 +5081,10 @@ inline void Stream<uint8_t, 8, 8, 2, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:256]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "m"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "m"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "m"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "m"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "r5", "r6", "d0", "d1", "d2", "d3", "d4",
         "d5", "d6", "d7", "d16", "d17", "d18", "d19", "d20", "d21", "d22",
         "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31", "cc",
@@ -5217,10 +5217,10 @@ inline void Stream<uint8_t, 8, 8, 3, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:256]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "m"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "m"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "m"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "m"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "r5", "r6", "d0", "d1", "d2", "d3", "d4",
         "d5", "d6", "d7", "d16", "d17", "d18", "d19", "d20", "d21", "d22",
         "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31", "cc",
@@ -5345,10 +5345,10 @@ inline void Stream<uint8_t, 8, 8, 4, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:256]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "m"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "m"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "m"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "m"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "r5", "r6", "d0", "d1", "d2", "d3", "d4",
         "d5", "d6", "d7", "d16", "d17", "d18", "d19", "d20", "d21", "d22",
         "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31", "cc",
@@ -5481,10 +5481,10 @@ inline void Stream<uint8_t, 8, 8, 5, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:256]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "m"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "m"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "m"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "m"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "r5", "r6", "d0", "d1", "d2", "d3", "d4",
         "d5", "d6", "d7", "d16", "d17", "d18", "d19", "d20", "d21", "d22",
         "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31", "cc",
@@ -5617,10 +5617,10 @@ inline void Stream<uint8_t, 8, 8, 6, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:256]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "m"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "m"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "m"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "m"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "r5", "r6", "d0", "d1", "d2", "d3", "d4",
         "d5", "d6", "d7", "d16", "d17", "d18", "d19", "d20", "d21", "d22",
         "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31", "cc",
@@ -5761,10 +5761,10 @@ inline void Stream<uint8_t, 8, 8, 7, RowMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:256]\n"
-      : [count] "+r"(params_count_copy), [in] "+r"(in), [out] "+r"(out)
-      : [stride] "r"(params.stride),
-        [multiplicative_sum_offset] "m"(params.multiplicative_sum_offset),
-        [additive_sum_offset] "m"(params.additive_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ in ] "+r"(in), [ out ] "+r"(out)
+      : [ stride ] "r"(params.stride),
+        [ multiplicative_sum_offset ] "m"(params.multiplicative_sum_offset),
+        [ additive_sum_offset ] "m"(params.additive_sum_offset)
       : "r0", "r1", "r2", "r3", "r4", "r5", "r6", "d0", "d1", "d2", "d3", "d4",
         "d5", "d6", "d7", "d16", "d17", "d18", "d19", "d20", "d21", "d22",
         "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31", "cc",
@@ -5815,10 +5815,10 @@ inline void Stream<uint8_t, 1, 8, 0, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d2", "d3", "d16", "d17", "cc", "memory");
 }
 
@@ -5879,10 +5879,10 @@ inline void Stream<uint8_t, 1, 8, 1, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d2", "d3", "d16", "d17", "cc", "memory");
 }
 
@@ -5944,10 +5944,10 @@ inline void Stream<uint8_t, 1, 8, 2, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d2", "d3", "d16", "d17", "cc", "memory");
 }
 
@@ -6010,10 +6010,10 @@ inline void Stream<uint8_t, 1, 8, 3, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d2", "d3", "d16", "d17", "cc", "memory");
 }
 
@@ -6077,10 +6077,10 @@ inline void Stream<uint8_t, 1, 8, 4, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d2", "d3", "d16", "d17", "cc", "memory");
 }
 
@@ -6145,10 +6145,10 @@ inline void Stream<uint8_t, 1, 8, 5, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d2", "d3", "d16", "d17", "cc", "memory");
 }
 
@@ -6214,10 +6214,10 @@ inline void Stream<uint8_t, 1, 8, 6, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d2", "d3", "d16", "d17", "cc", "memory");
 }
 
@@ -6284,10 +6284,10 @@ inline void Stream<uint8_t, 1, 8, 7, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d2", "d3", "d16", "d17", "cc", "memory");
 }
 
@@ -6340,10 +6340,10 @@ inline void Stream<uint8_t, 2, 8, 0, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "cc", "memory");
 }
 
@@ -6412,10 +6412,10 @@ inline void Stream<uint8_t, 2, 8, 1, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "cc", "memory");
 }
 
@@ -6485,10 +6485,10 @@ inline void Stream<uint8_t, 2, 8, 2, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "cc", "memory");
 }
 
@@ -6559,10 +6559,10 @@ inline void Stream<uint8_t, 2, 8, 3, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "cc", "memory");
 }
 
@@ -6634,10 +6634,10 @@ inline void Stream<uint8_t, 2, 8, 4, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "cc", "memory");
 }
 
@@ -6710,10 +6710,10 @@ inline void Stream<uint8_t, 2, 8, 5, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "cc", "memory");
 }
 
@@ -6787,10 +6787,10 @@ inline void Stream<uint8_t, 2, 8, 6, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "cc", "memory");
 }
 
@@ -6865,10 +6865,10 @@ inline void Stream<uint8_t, 2, 8, 7, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "cc", "memory");
 }
 
@@ -6924,10 +6924,10 @@ inline void Stream<uint8_t, 3, 8, 0, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20", "d21", "cc",
         "memory");
 }
@@ -7000,10 +7000,10 @@ inline void Stream<uint8_t, 3, 8, 1, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20", "d21", "cc",
         "memory");
 }
@@ -7077,10 +7077,10 @@ inline void Stream<uint8_t, 3, 8, 2, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20", "d21", "cc",
         "memory");
 }
@@ -7155,10 +7155,10 @@ inline void Stream<uint8_t, 3, 8, 3, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20", "d21", "cc",
         "memory");
 }
@@ -7234,10 +7234,10 @@ inline void Stream<uint8_t, 3, 8, 4, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20", "d21", "cc",
         "memory");
 }
@@ -7314,10 +7314,10 @@ inline void Stream<uint8_t, 3, 8, 5, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20", "d21", "cc",
         "memory");
 }
@@ -7395,10 +7395,10 @@ inline void Stream<uint8_t, 3, 8, 6, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20", "d21", "cc",
         "memory");
 }
@@ -7477,10 +7477,10 @@ inline void Stream<uint8_t, 3, 8, 7, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20", "d21", "cc",
         "memory");
 }
@@ -7546,10 +7546,10 @@ inline void Stream<uint8_t, 4, 8, 0, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20", "d21", "d22",
         "d23", "cc", "memory");
 }
@@ -7638,10 +7638,10 @@ inline void Stream<uint8_t, 4, 8, 1, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20", "d21", "d22",
         "d23", "cc", "memory");
 }
@@ -7731,10 +7731,10 @@ inline void Stream<uint8_t, 4, 8, 2, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20", "d21", "d22",
         "d23", "cc", "memory");
 }
@@ -7825,10 +7825,10 @@ inline void Stream<uint8_t, 4, 8, 3, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20", "d21", "d22",
         "d23", "cc", "memory");
 }
@@ -7920,10 +7920,10 @@ inline void Stream<uint8_t, 4, 8, 4, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20", "d21", "d22",
         "d23", "cc", "memory");
 }
@@ -8016,10 +8016,10 @@ inline void Stream<uint8_t, 4, 8, 5, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20", "d21", "d22",
         "d23", "cc", "memory");
 }
@@ -8113,10 +8113,10 @@ inline void Stream<uint8_t, 4, 8, 6, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20", "d21", "d22",
         "d23", "cc", "memory");
 }
@@ -8211,10 +8211,10 @@ inline void Stream<uint8_t, 4, 8, 7, ColumnMajorWithSum>::Pack(
       "vmul.i32 q8, q8, d0[0]\n"
       "vadd.i32 q8, q8, q1\n"
       "vst1.32 {d16, d17}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d16", "d17", "d18", "d19", "d20", "d21", "d22",
         "d23", "cc", "memory");
 }
@@ -8297,10 +8297,10 @@ inline void Stream<uint8_t, 5, 8, 0, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d16", "d17", "d18", "d19", "d20", "d21",
         "d22", "d23", "d24", "d25", "cc", "memory");
 }
@@ -8410,10 +8410,10 @@ inline void Stream<uint8_t, 5, 8, 1, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d16", "d17", "d18", "d19", "d20", "d21",
         "d22", "d23", "d24", "d25", "cc", "memory");
 }
@@ -8525,10 +8525,10 @@ inline void Stream<uint8_t, 5, 8, 2, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d16", "d17", "d18", "d19", "d20", "d21",
         "d22", "d23", "d24", "d25", "cc", "memory");
 }
@@ -8642,10 +8642,10 @@ inline void Stream<uint8_t, 5, 8, 3, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d16", "d17", "d18", "d19", "d20", "d21",
         "d22", "d23", "d24", "d25", "cc", "memory");
 }
@@ -8761,10 +8761,10 @@ inline void Stream<uint8_t, 5, 8, 4, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d16", "d17", "d18", "d19", "d20", "d21",
         "d22", "d23", "d24", "d25", "cc", "memory");
 }
@@ -8882,10 +8882,10 @@ inline void Stream<uint8_t, 5, 8, 5, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d16", "d17", "d18", "d19", "d20", "d21",
         "d22", "d23", "d24", "d25", "cc", "memory");
 }
@@ -9005,10 +9005,10 @@ inline void Stream<uint8_t, 5, 8, 6, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d16", "d17", "d18", "d19", "d20", "d21",
         "d22", "d23", "d24", "d25", "cc", "memory");
 }
@@ -9130,10 +9130,10 @@ inline void Stream<uint8_t, 5, 8, 7, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d16", "d17", "d18", "d19", "d20", "d21",
         "d22", "d23", "d24", "d25", "cc", "memory");
 }
@@ -9221,10 +9221,10 @@ inline void Stream<uint8_t, 6, 8, 0, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "cc", "memory");
 }
@@ -9342,10 +9342,10 @@ inline void Stream<uint8_t, 6, 8, 1, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "cc", "memory");
 }
@@ -9465,10 +9465,10 @@ inline void Stream<uint8_t, 6, 8, 2, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "cc", "memory");
 }
@@ -9590,10 +9590,10 @@ inline void Stream<uint8_t, 6, 8, 3, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "cc", "memory");
 }
@@ -9717,10 +9717,10 @@ inline void Stream<uint8_t, 6, 8, 4, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "cc", "memory");
 }
@@ -9846,10 +9846,10 @@ inline void Stream<uint8_t, 6, 8, 5, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "cc", "memory");
 }
@@ -9977,10 +9977,10 @@ inline void Stream<uint8_t, 6, 8, 6, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "cc", "memory");
 }
@@ -10110,10 +10110,10 @@ inline void Stream<uint8_t, 6, 8, 7, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:128]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "cc", "memory");
 }
@@ -10205,10 +10205,10 @@ inline void Stream<uint8_t, 7, 8, 0, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
         "cc", "memory");
@@ -10332,10 +10332,10 @@ inline void Stream<uint8_t, 7, 8, 1, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
         "cc", "memory");
@@ -10461,10 +10461,10 @@ inline void Stream<uint8_t, 7, 8, 2, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
         "cc", "memory");
@@ -10592,10 +10592,10 @@ inline void Stream<uint8_t, 7, 8, 3, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
         "cc", "memory");
@@ -10725,10 +10725,10 @@ inline void Stream<uint8_t, 7, 8, 4, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
         "cc", "memory");
@@ -10860,10 +10860,10 @@ inline void Stream<uint8_t, 7, 8, 5, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
         "cc", "memory");
@@ -10997,10 +10997,10 @@ inline void Stream<uint8_t, 7, 8, 6, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
         "cc", "memory");
@@ -11136,10 +11136,10 @@ inline void Stream<uint8_t, 7, 8, 7, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:64]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
         "cc", "memory");
@@ -11235,10 +11235,10 @@ inline void Stream<uint8_t, 8, 8, 0, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:256]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d16", "d17", "d18",
         "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28",
         "d29", "d30", "d31", "cc", "memory");
@@ -11374,10 +11374,10 @@ inline void Stream<uint8_t, 8, 8, 1, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:256]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d16", "d17", "d18",
         "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28",
         "d29", "d30", "d31", "cc", "memory");
@@ -11514,10 +11514,10 @@ inline void Stream<uint8_t, 8, 8, 2, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:256]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d16", "d17", "d18",
         "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28",
         "d29", "d30", "d31", "cc", "memory");
@@ -11655,10 +11655,10 @@ inline void Stream<uint8_t, 8, 8, 3, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:256]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d16", "d17", "d18",
         "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28",
         "d29", "d30", "d31", "cc", "memory");
@@ -11797,10 +11797,10 @@ inline void Stream<uint8_t, 8, 8, 4, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:256]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d16", "d17", "d18",
         "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28",
         "d29", "d30", "d31", "cc", "memory");
@@ -11940,10 +11940,10 @@ inline void Stream<uint8_t, 8, 8, 5, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:256]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d16", "d17", "d18",
         "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28",
         "d29", "d30", "d31", "cc", "memory");
@@ -12084,10 +12084,10 @@ inline void Stream<uint8_t, 8, 8, 6, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:256]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d16", "d17", "d18",
         "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28",
         "d29", "d30", "d31", "cc", "memory");
@@ -12229,10 +12229,10 @@ inline void Stream<uint8_t, 8, 8, 7, ColumnMajorWithSum>::Pack(
       "vadd.i32 q8, q8, q1\n"
       "vadd.i32 q9, q9, q1\n"
       "vst1.32 {d16, d17, d18, d19}, [%[out]:256]\n"
-      : [count] "+r"(params_count_copy), [stride] "+r"(params_stride_copy),
-        [out] "+r"(out), [in] "+r"(in)
-      : [additive_sum_offset] "r"(params.additive_sum_offset),
-        [multiplicative_sum_offset] "r"(params.multiplicative_sum_offset)
+      : [ count ] "+r"(params_count_copy), [ stride ] "+r"(params_stride_copy),
+        [ out ] "+r"(out), [ in ] "+r"(in)
+      : [ additive_sum_offset ] "r"(params.additive_sum_offset),
+        [ multiplicative_sum_offset ] "r"(params.multiplicative_sum_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d16", "d17", "d18",
         "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28",
         "d29", "d30", "d31", "cc", "memory");

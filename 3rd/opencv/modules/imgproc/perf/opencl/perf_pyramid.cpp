@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -18,23 +19,28 @@
 //    Fangfang Bai, fangfang@multicorewareinc.com
 //    Jin Ma,       jin@multicorewareinc.com
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors as is and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -57,23 +63,22 @@ namespace ocl {
 typedef Size_MatType PyrDownFixture;
 
 OCL_PERF_TEST_P(PyrDownFixture, PyrDown,
-            ::testing::Combine(OCL_TEST_SIZES, OCL_TEST_TYPES_134))
-{
-    const Size_MatType_t params = GetParam();
-    const Size srcSize = get<0>(params);
-    const int type = get<1>(params);
-    const Size dstSize((srcSize.height + 1) >> 1, (srcSize.width + 1) >> 1);
-    const double eps = CV_MAT_DEPTH(type) <= CV_32S ? 1 : 1e-5;
+                ::testing::Combine(OCL_TEST_SIZES, OCL_TEST_TYPES_134)) {
+  const Size_MatType_t params = GetParam();
+  const Size srcSize = get<0>(params);
+  const int type = get<1>(params);
+  const Size dstSize((srcSize.height + 1) >> 1, (srcSize.width + 1) >> 1);
+  const double eps = CV_MAT_DEPTH(type) <= CV_32S ? 1 : 1e-5;
 
-    checkDeviceMaxMemoryAllocSize(srcSize, type);
-    checkDeviceMaxMemoryAllocSize(dstSize, type);
+  checkDeviceMaxMemoryAllocSize(srcSize, type);
+  checkDeviceMaxMemoryAllocSize(dstSize, type);
 
-    UMat src(srcSize, type), dst(dstSize, type);
-    declare.in(src, WARMUP_RNG).out(dst);
+  UMat src(srcSize, type), dst(dstSize, type);
+  declare.in(src, WARMUP_RNG).out(dst);
 
-    OCL_TEST_CYCLE() cv::pyrDown(src, dst);
+  OCL_TEST_CYCLE() cv::pyrDown(src, dst);
 
-    SANITY_CHECK(dst, eps);
+  SANITY_CHECK(dst, eps);
 }
 
 ///////////// PyrUp ////////////////////////
@@ -81,23 +86,22 @@ OCL_PERF_TEST_P(PyrDownFixture, PyrDown,
 typedef Size_MatType PyrUpFixture;
 
 OCL_PERF_TEST_P(PyrUpFixture, PyrUp,
-            ::testing::Combine(OCL_TEST_SIZES, OCL_TEST_TYPES_134))
-{
-    const Size_MatType_t params = GetParam();
-    const Size srcSize = get<0>(params);
-    const int type = get<1>(params);
-    const Size dstSize(srcSize.height << 1, srcSize.width << 1);
-    const double eps = CV_MAT_DEPTH(type) <= CV_32S ? 1 : 1e-5;
+                ::testing::Combine(OCL_TEST_SIZES, OCL_TEST_TYPES_134)) {
+  const Size_MatType_t params = GetParam();
+  const Size srcSize = get<0>(params);
+  const int type = get<1>(params);
+  const Size dstSize(srcSize.height << 1, srcSize.width << 1);
+  const double eps = CV_MAT_DEPTH(type) <= CV_32S ? 1 : 1e-5;
 
-    checkDeviceMaxMemoryAllocSize(srcSize, type);
-    checkDeviceMaxMemoryAllocSize(dstSize, type);
+  checkDeviceMaxMemoryAllocSize(srcSize, type);
+  checkDeviceMaxMemoryAllocSize(dstSize, type);
 
-    UMat src(srcSize, type), dst(dstSize, type);
-    declare.in(src, WARMUP_RNG).out(dst);
+  UMat src(srcSize, type), dst(dstSize, type);
+  declare.in(src, WARMUP_RNG).out(dst);
 
-    OCL_TEST_CYCLE() cv::pyrUp(src, dst);
+  OCL_TEST_CYCLE() cv::pyrUp(src, dst);
 
-    SANITY_CHECK(dst, eps);
+  SANITY_CHECK(dst, eps);
 }
 
 ///////////// buildPyramid ////////////////////////
@@ -105,30 +109,31 @@ OCL_PERF_TEST_P(PyrUpFixture, PyrUp,
 typedef Size_MatType BuildPyramidFixture;
 
 OCL_PERF_TEST_P(BuildPyramidFixture, BuildPyramid,
-                ::testing::Combine(OCL_TEST_SIZES, OCL_TEST_TYPES_134))
-{
-    const Size_MatType_t params = GetParam();
-    const Size srcSize = get<0>(params);
-    const int type = get<1>(params), maxLevel = 5;
-    const double eps = CV_MAT_DEPTH(type) <= CV_32S ? 1 : 1e-5;
+                ::testing::Combine(OCL_TEST_SIZES, OCL_TEST_TYPES_134)) {
+  const Size_MatType_t params = GetParam();
+  const Size srcSize = get<0>(params);
+  const int type = get<1>(params), maxLevel = 5;
+  const double eps = CV_MAT_DEPTH(type) <= CV_32S ? 1 : 1e-5;
 
-    checkDeviceMaxMemoryAllocSize(srcSize, type);
+  checkDeviceMaxMemoryAllocSize(srcSize, type);
 
-    std::vector<UMat> dst(maxLevel);
-    UMat src(srcSize, type);
-    declare.in(src, WARMUP_RNG);
+  std::vector<UMat> dst(maxLevel);
+  UMat src(srcSize, type);
+  declare.in(src, WARMUP_RNG);
 
-    OCL_TEST_CYCLE() cv::buildPyramid(src, dst, maxLevel);
+  OCL_TEST_CYCLE() cv::buildPyramid(src, dst, maxLevel);
 
-    UMat dst0 = dst[0], dst1 = dst[1], dst2 = dst[2], dst3 = dst[3], dst4 = dst[4];
+  UMat dst0 = dst[0], dst1 = dst[1], dst2 = dst[2], dst3 = dst[3],
+       dst4 = dst[4];
 
-    SANITY_CHECK(dst0, eps);
-    SANITY_CHECK(dst1, eps);
-    SANITY_CHECK(dst2, eps);
-    SANITY_CHECK(dst3, eps);
-    SANITY_CHECK(dst4, eps);
+  SANITY_CHECK(dst0, eps);
+  SANITY_CHECK(dst1, eps);
+  SANITY_CHECK(dst2, eps);
+  SANITY_CHECK(dst3, eps);
+  SANITY_CHECK(dst4, eps);
 }
 
-} } // namespace cvtest::ocl
+}  // namespace ocl
+}  // namespace cvtest
 
-#endif // HAVE_OPENCL
+#endif  // HAVE_OPENCL

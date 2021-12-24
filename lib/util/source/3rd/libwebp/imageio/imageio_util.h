@@ -14,6 +14,7 @@
 #define WEBP_IMAGEIO_IMAGEIO_UTIL_H_
 
 #include <stdio.h>
+
 #include "webp/types.h"
 
 #ifdef __cplusplus
@@ -32,22 +33,22 @@ FILE* ImgIoUtilSetBinaryMode(FILE* file);
 // be deleted using free().
 // If 'file_name' is NULL or equal to "-", input is read from stdin by calling
 // the function ImgIoUtilReadFromStdin().
-int ImgIoUtilReadFile(const char* const file_name,
-                      const uint8_t** data, size_t* data_size);
+int ImgIoUtilReadFile(const char* const file_name, const uint8_t** data,
+                      size_t* data_size);
 
 // Same as ImgIoUtilReadFile(), but reads until EOF from stdin instead.
 int ImgIoUtilReadFromStdin(const uint8_t** data, size_t* data_size);
 
 // Write a data segment into a file named 'file_name'. Returns true if ok.
 // If 'file_name' is NULL or equal to "-", output is written to stdout.
-int ImgIoUtilWriteFile(const char* const file_name,
-                       const uint8_t* data, size_t data_size);
+int ImgIoUtilWriteFile(const char* const file_name, const uint8_t* data,
+                       size_t data_size);
 
 //------------------------------------------------------------------------------
 
 // Copy width x height pixels from 'src' to 'dst' honoring the strides.
-void ImgIoUtilCopyPlane(const uint8_t* src, int src_stride,
-                        uint8_t* dst, int dst_stride, int width, int height);
+void ImgIoUtilCopyPlane(const uint8_t* src, int src_stride, uint8_t* dst,
+                        int dst_stride, int width, int height);
 
 //------------------------------------------------------------------------------
 
@@ -55,7 +56,7 @@ void ImgIoUtilCopyPlane(const uint8_t* src, int src_stride,
 int ImgIoUtilCheckSizeArgumentsOverflow(uint64_t nmemb, size_t size);
 
 #ifdef __cplusplus
-}    // extern "C"
+}  // extern "C"
 #endif
 
 #endif  // WEBP_IMAGEIO_IMAGEIO_UTIL_H_

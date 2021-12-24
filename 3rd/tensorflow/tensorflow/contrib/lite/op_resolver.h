@@ -16,6 +16,7 @@ limitations under the License.
 #define TENSORFLOW_CONTRIB_LITE_OP_RESOLVER_H_
 
 #include <unordered_map>
+
 #include "tensorflow/contrib/lite/context.h"
 #include "tensorflow/contrib/lite/schema/schema_generated.h"
 #include "tensorflow/contrib/lite/util.h"

@@ -40,18 +40,16 @@
 #include <map>
 #include <string>
 
-#include "processor/map_serializers.h"
-#include "processor/simple_serializer.h"
-
 #include "processor/address_map-inl.h"
-#include "processor/range_map-inl.h"
 #include "processor/contained_range_map-inl.h"
-
 #include "processor/logging.h"
+#include "processor/map_serializers.h"
+#include "processor/range_map-inl.h"
+#include "processor/simple_serializer.h"
 
 namespace google_breakpad {
 
-template<typename Key, typename Value>
+template <typename Key, typename Value>
 size_t StdMapSerializer<Key, Value>::SizeOf(
     const std::map<Key, Value> &m) const {
   size_t size = 0;
@@ -66,7 +64,7 @@ size_t StdMapSerializer<Key, Value>::SizeOf(
   return size;
 }
 
-template<typename Key, typename Value>
+template <typename Key, typename Value>
 char *StdMapSerializer<Key, Value>::Write(const std::map<Key, Value> &m,
                                           char *dest) const {
   if (!dest) {
@@ -79,7 +77,7 @@ char *StdMapSerializer<Key, Value>::Write(const std::map<Key, Value> &m,
   // Number of nodes.
   dest = SimpleSerializer<uint32_t>::Write(m.size(), dest);
   // Nodes offsets.
-  uint32_t *offsets = reinterpret_cast<uint32_t*>(dest);
+  uint32_t *offsets = reinterpret_cast<uint32_t *>(dest);
   dest += sizeof(uint32_t) * m.size();
 
   char *key_address = dest;
@@ -96,9 +94,9 @@ char *StdMapSerializer<Key, Value>::Write(const std::map<Key, Value> &m,
   return dest;
 }
 
-template<typename Key, typename Value>
-char *StdMapSerializer<Key, Value>::Serialize(
-    const std::map<Key, Value> &m, unsigned int *size) const {
+template <typename Key, typename Value>
+char *StdMapSerializer<Key, Value>::Serialize(const std::map<Key, Value> &m,
+                                              unsigned int *size) const {
   // Compute size of memory to be allocated.
   unsigned int size_to_alloc = SizeOf(m);
   // Allocate memory.
@@ -115,7 +113,7 @@ char *StdMapSerializer<Key, Value>::Serialize(
   return serialized_data;
 }
 
-template<typename Address, typename Entry>
+template <typename Address, typename Entry>
 size_t RangeMapSerializer<Address, Entry>::SizeOf(
     const RangeMap<Address, Entry> &m) const {
   size_t size = 0;
@@ -134,7 +132,7 @@ size_t RangeMapSerializer<Address, Entry>::SizeOf(
   return size;
 }
 
-template<typename Address, typename Entry>
+template <typename Address, typename Entry>
 char *RangeMapSerializer<Address, Entry>::Write(
     const RangeMap<Address, Entry> &m, char *dest) const {
   if (!dest) {
@@ -147,7 +145,7 @@ char *RangeMapSerializer<Address, Entry>::Write(
   // Number of nodes.
   dest = SimpleSerializer<uint32_t>::Write(m.map_.size(), dest);
   // Nodes offsets.
-  uint32_t *offsets = reinterpret_cast<uint32_t*>(dest);
+  uint32_t *offsets = reinterpret_cast<uint32_t *>(dest);
   dest += sizeof(uint32_t) * m.map_.size();
 
   char *key_address = dest;
@@ -165,7 +163,7 @@ char *RangeMapSerializer<Address, Entry>::Write(
   return dest;
 }
 
-template<typename Address, typename Entry>
+template <typename Address, typename Entry>
 char *RangeMapSerializer<Address, Entry>::Serialize(
     const RangeMap<Address, Entry> &m, unsigned int *size) const {
   // Compute size of memory to be allocated.
@@ -185,14 +183,12 @@ char *RangeMapSerializer<Address, Entry>::Serialize(
   return serialized_data;
 }
 
-
-template<class AddrType, class EntryType>
+template <class AddrType, class EntryType>
 size_t ContainedRangeMapSerializer<AddrType, EntryType>::SizeOf(
     const ContainedRangeMap<AddrType, EntryType> *m) const {
   size_t size = 0;
-  size_t header_size = addr_serializer_.SizeOf(m->base_)
-                       + entry_serializer_.SizeOf(m->entry_)
-                       + sizeof(uint32_t);
+  size_t header_size = addr_serializer_.SizeOf(m->base_) +
+                       entry_serializer_.SizeOf(m->entry_) + sizeof(uint32_t);
   size += header_size;
   // In case m.map_ == NULL, we treat it as an empty map:
   size += sizeof(uint32_t);
@@ -208,7 +204,7 @@ size_t ContainedRangeMapSerializer<AddrType, EntryType>::SizeOf(
   return size;
 }
 
-template<class AddrType, class EntryType>
+template <class AddrType, class EntryType>
 char *ContainedRangeMapSerializer<AddrType, EntryType>::Write(
     const ContainedRangeMap<AddrType, EntryType> *m, char *dest) const {
   if (!dest) {
@@ -217,7 +213,7 @@ char *ContainedRangeMapSerializer<AddrType, EntryType>::Write(
   }
   dest = addr_serializer_.Write(m->base_, dest);
   dest = SimpleSerializer<uint32_t>::Write(entry_serializer_.SizeOf(m->entry_),
-                                            dest);
+                                           dest);
   dest = entry_serializer_.Write(m->entry_, dest);
 
   // Write map<<AddrType, ContainedRangeMap*>:
@@ -226,7 +222,7 @@ char *ContainedRangeMapSerializer<AddrType, EntryType>::Write(
     dest = SimpleSerializer<uint32_t>::Write(0, dest);
   } else {
     dest = SimpleSerializer<uint32_t>::Write(m->map_->size(), dest);
-    uint32_t *offsets = reinterpret_cast<uint32_t*>(dest);
+    uint32_t *offsets = reinterpret_cast<uint32_t *>(dest);
     dest += sizeof(uint32_t) * m->map_->size();
 
     char *key_address = dest;
@@ -245,7 +241,7 @@ char *ContainedRangeMapSerializer<AddrType, EntryType>::Write(
   return dest;
 }
 
-template<class AddrType, class EntryType>
+template <class AddrType, class EntryType>
 char *ContainedRangeMapSerializer<AddrType, EntryType>::Serialize(
     const ContainedRangeMap<AddrType, EntryType> *m, unsigned int *size) const {
   unsigned int size_to_alloc = SizeOf(m);

@@ -86,13 +86,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 0>::Transform(
       "prfm pldl1keep, [%x[output]]\n"
 
       "bne 1b\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "cc", "memory");
 }
 
@@ -181,13 +181,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 1>::Transform(
 
       "st1 {v0.b}[0], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "cc", "memory");
 }
 
@@ -276,13 +276,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 2>::Transform(
 
       "st1 {v0.h}[0], [%x[output]], #2\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "cc", "memory");
 }
 
@@ -373,13 +373,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 3>::Transform(
       "st1 {v0.h}[0], [%x[output]], #2\n"
       "st1 {v0.b}[2], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "cc", "memory");
 }
 
@@ -468,13 +468,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 4>::Transform(
 
       "st1 {v0.s}[0], [%x[output]], #4\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "cc", "memory");
 }
 
@@ -572,13 +572,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 5>::Transform(
       "st1 {v0.s}[0], [%x[output]], #4\n"
       "st1 {v0.b}[4], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "cc", "memory");
 }
 
@@ -676,13 +676,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 6>::Transform(
       "st1 {v0.s}[0], [%x[output]], #4\n"
       "st1 {v0.h}[2], [%x[output]], #2\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "cc", "memory");
 }
 
@@ -782,13 +782,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 7>::Transform(
       "st1 {v0.h}[2], [%x[output]], #2\n"
       "st1 {v0.b}[6], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "cc", "memory");
 }
 
@@ -884,13 +884,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 8>::Transform(
 
       "st1 {v0.2s}, [%x[output]], #8\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "cc", "memory");
 }
 
@@ -996,13 +996,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 9>::Transform(
       "st1 {v0.2s}, [%x[output]], #8\n"
       "st1 {v0.b}[8], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "cc", "memory");
 }
 
@@ -1108,13 +1108,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 10>::Transform(
       "st1 {v0.2s}, [%x[output]], #8\n"
       "st1 {v0.h}[4], [%x[output]], #2\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "cc", "memory");
 }
 
@@ -1222,13 +1222,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 11>::Transform(
       "st1 {v0.h}[4], [%x[output]], #2\n"
       "st1 {v0.b}[10], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "cc", "memory");
 }
 
@@ -1333,13 +1333,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 12>::Transform(
       "st1 {v0.2s}, [%x[output]], #8\n"
       "st1 {v0.s}[2], [%x[output]], #4\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "cc", "memory");
 }
 
@@ -1453,13 +1453,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 13>::Transform(
       "st1 {v0.s}[2], [%x[output]], #4\n"
       "st1 {v0.b}[12], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "cc", "memory");
 }
 
@@ -1573,13 +1573,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 14>::Transform(
       "st1 {v0.s}[2], [%x[output]], #4\n"
       "st1 {v0.h}[6], [%x[output]], #2\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "cc", "memory");
 }
 
@@ -1695,13 +1695,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 15>::Transform(
       "st1 {v0.h}[6], [%x[output]], #2\n"
       "st1 {v0.b}[14], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "cc", "memory");
 }
 
@@ -1757,10 +1757,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 0>::Transform(
       "prfm pldl1keep, [%x[output]]\n"
 
       "bne 1b\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -1836,10 +1837,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 1>::Transform(
 
       "st1 {v0.b}[0], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -1915,10 +1917,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 2>::Transform(
 
       "st1 {v0.h}[0], [%x[output]], #2\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -1996,10 +1999,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 3>::Transform(
       "st1 {v0.h}[0], [%x[output]], #2\n"
       "st1 {v0.b}[2], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -2075,10 +2079,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 4>::Transform(
 
       "st1 {v0.s}[0], [%x[output]], #4\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -2161,10 +2166,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 5>::Transform(
       "st1 {v0.s}[0], [%x[output]], #4\n"
       "st1 {v0.b}[4], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -2247,10 +2253,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 6>::Transform(
       "st1 {v0.s}[0], [%x[output]], #4\n"
       "st1 {v0.h}[2], [%x[output]], #2\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -2335,10 +2342,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 7>::Transform(
       "st1 {v0.h}[2], [%x[output]], #2\n"
       "st1 {v0.b}[6], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -2419,10 +2427,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 8>::Transform(
 
       "st1 {v0.2s}, [%x[output]], #8\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -2511,10 +2520,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 9>::Transform(
       "st1 {v0.2s}, [%x[output]], #8\n"
       "st1 {v0.b}[8], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -2603,10 +2613,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 10>::Transform(
       "st1 {v0.2s}, [%x[output]], #8\n"
       "st1 {v0.h}[4], [%x[output]], #2\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -2697,10 +2708,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 11>::Transform(
       "st1 {v0.h}[4], [%x[output]], #2\n"
       "st1 {v0.b}[10], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -2788,10 +2800,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 12>::Transform(
       "st1 {v0.2s}, [%x[output]], #8\n"
       "st1 {v0.s}[2], [%x[output]], #4\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -2886,10 +2899,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 13>::Transform(
       "st1 {v0.s}[2], [%x[output]], #4\n"
       "st1 {v0.b}[12], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -2984,10 +2998,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 14>::Transform(
       "st1 {v0.s}[2], [%x[output]], #4\n"
       "st1 {v0.h}[6], [%x[output]], #2\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -3084,10 +3099,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 15>::Transform(
       "st1 {v0.h}[6], [%x[output]], #2\n"
       "st1 {v0.b}[14], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -3143,10 +3159,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 0>::Transform(
       "prfm pldl1keep, [%x[output]]\n"
 
       "bne 1b\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -3222,10 +3239,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 1>::Transform(
 
       "st1 {v0.s}[0], [%x[output]], #4\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -3301,10 +3319,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 2>::Transform(
 
       "st1 {v0.2s}, [%x[output]], #8\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -3382,10 +3401,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 3>::Transform(
       "st1 {v0.2s}, [%x[output]], #8\n"
       "st1 {v0.s}[2], [%x[output]], #4\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -3461,10 +3481,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 4>::Transform(
 
       "st1 {v0.4s}, [%x[output]], #16\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -3547,10 +3568,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 5>::Transform(
       "st1 {v0.4s}, [%x[output]], #16\n"
       "st1 {v1.s}[0], [%x[output]], #4\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -3633,10 +3655,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 6>::Transform(
       "st1 {v0.4s}, [%x[output]], #16\n"
       "st1 {v1.2s}, [%x[output]], #8\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -3721,10 +3744,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 7>::Transform(
       "st1 {v1.2s}, [%x[output]], #8\n"
       "st1 {v1.s}[2], [%x[output]], #4\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -3805,10 +3829,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 8>::Transform(
 
       "st1 {v0.4s, v1.4s}, [%x[output]], #32\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -3897,10 +3922,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 9>::Transform(
       "st1 {v0.4s, v1.4s}, [%x[output]], #32\n"
       "st1 {v2.s}[0], [%x[output]], #4\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -3989,10 +4015,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 10>::Transform(
       "st1 {v0.4s, v1.4s}, [%x[output]], #32\n"
       "st1 {v2.2s}, [%x[output]], #8\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -4083,10 +4110,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 11>::Transform(
       "st1 {v2.2s}, [%x[output]], #8\n"
       "st1 {v2.s}[2], [%x[output]], #4\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -4174,10 +4202,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 12>::Transform(
 
       "st1 {v0.4s, v1.4s, v2.4s}, [%x[output]], #48\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -4272,10 +4301,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 13>::Transform(
       "st1 {v0.4s, v1.4s, v2.4s}, [%x[output]], #48\n"
       "st1 {v3.s}[0], [%x[output]], #4\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -4370,10 +4400,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 14>::Transform(
       "st1 {v0.4s, v1.4s, v2.4s}, [%x[output]], #48\n"
       "st1 {v3.2s}, [%x[output]], #8\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -4470,10 +4501,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 15>::Transform(
       "st1 {v3.2s}, [%x[output]], #8\n"
       "st1 {v3.s}[2], [%x[output]], #4\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "cc", "memory");
 }
 
@@ -4511,9 +4543,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "prfm pldl1keep, [%x[output]]\n"
 
       "bne 1b\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "v0", "v4", "v5", "cc", "memory");
 }
 
@@ -4567,9 +4599,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
 
       "st1 {v0.b}[0], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "v0", "v4", "v5", "cc", "memory");
 }
 
@@ -4623,9 +4655,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
 
       "st1 {v0.h}[0], [%x[output]], #2\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "v0", "v4", "v5", "cc", "memory");
 }
 
@@ -4681,9 +4713,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "st1 {v0.h}[0], [%x[output]], #2\n"
       "st1 {v0.b}[2], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "v0", "v4", "v5", "cc", "memory");
 }
 
@@ -4737,9 +4769,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
 
       "st1 {v0.s}[0], [%x[output]], #4\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "v0", "v4", "v5", "cc", "memory");
 }
 
@@ -4795,9 +4827,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "st1 {v0.s}[0], [%x[output]], #4\n"
       "st1 {v0.b}[4], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "v0", "v4", "v5", "cc", "memory");
 }
 
@@ -4853,9 +4885,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "st1 {v0.s}[0], [%x[output]], #4\n"
       "st1 {v0.h}[2], [%x[output]], #2\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "v0", "v4", "v5", "cc", "memory");
 }
 
@@ -4913,9 +4945,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "st1 {v0.h}[2], [%x[output]], #2\n"
       "st1 {v0.b}[6], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "v0", "v4", "v5", "cc", "memory");
 }
 
@@ -4969,9 +5001,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
 
       "st1 {v0.2s}, [%x[output]], #8\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "v0", "v4", "v5", "cc", "memory");
 }
 
@@ -5027,9 +5059,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "st1 {v0.2s}, [%x[output]], #8\n"
       "st1 {v0.b}[8], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "v0", "v4", "v5", "cc", "memory");
 }
 
@@ -5085,9 +5117,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "st1 {v0.2s}, [%x[output]], #8\n"
       "st1 {v0.h}[4], [%x[output]], #2\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "v0", "v4", "v5", "cc", "memory");
 }
 
@@ -5145,9 +5177,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "st1 {v0.h}[4], [%x[output]], #2\n"
       "st1 {v0.b}[10], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "v0", "v4", "v5", "cc", "memory");
 }
 
@@ -5203,9 +5235,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "st1 {v0.2s}, [%x[output]], #8\n"
       "st1 {v0.s}[2], [%x[output]], #4\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "v0", "v4", "v5", "cc", "memory");
 }
 
@@ -5263,9 +5295,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "st1 {v0.s}[2], [%x[output]], #4\n"
       "st1 {v0.b}[12], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "v0", "v4", "v5", "cc", "memory");
 }
 
@@ -5323,9 +5355,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "st1 {v0.s}[2], [%x[output]], #4\n"
       "st1 {v0.h}[6], [%x[output]], #2\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "v0", "v4", "v5", "cc", "memory");
 }
 
@@ -5385,9 +5417,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "st1 {v0.h}[6], [%x[output]], #2\n"
       "st1 {v0.b}[14], [%x[output]], #1\n"
       "prfm pldl1keep, [%x[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "v0", "v4", "v5", "cc", "memory");
 }
 
@@ -5493,15 +5525,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "bne 2b\n"
       "subs %x[rows], %x[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
         "v10", "v11", "v12", "v13", "v14", "cc", "memory");
 }
@@ -5634,15 +5667,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "prfm pldl1keep, [%x[output]]\n"
       "subs %x[rows], %x[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
         "v10", "v11", "v12", "v13", "v14", "cc", "memory");
 }
@@ -5775,15 +5809,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "prfm pldl1keep, [%x[output]]\n"
       "subs %x[rows], %x[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
         "v10", "v11", "v12", "v13", "v14", "cc", "memory");
 }
@@ -5919,15 +5954,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "prfm pldl1keep, [%x[output]]\n"
       "subs %x[rows], %x[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
         "v10", "v11", "v12", "v13", "v14", "cc", "memory");
 }
@@ -6060,15 +6096,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "prfm pldl1keep, [%x[output]]\n"
       "subs %x[rows], %x[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
         "v10", "v11", "v12", "v13", "v14", "cc", "memory");
 }
@@ -6217,15 +6254,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "prfm pldl1keep, [%x[output]]\n"
       "subs %x[rows], %x[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
         "v10", "v11", "v12", "v13", "v14", "cc", "memory");
 }
@@ -6374,15 +6412,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "prfm pldl1keep, [%x[output]]\n"
       "subs %x[rows], %x[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
         "v10", "v11", "v12", "v13", "v14", "cc", "memory");
 }
@@ -6534,15 +6573,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "prfm pldl1keep, [%x[output]]\n"
       "subs %x[rows], %x[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
         "v10", "v11", "v12", "v13", "v14", "cc", "memory");
 }
@@ -6688,15 +6728,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "prfm pldl1keep, [%x[output]]\n"
       "subs %x[rows], %x[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
         "v10", "v11", "v12", "v13", "v14", "cc", "memory");
 }
@@ -6860,15 +6901,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "prfm pldl1keep, [%x[output]]\n"
       "subs %x[rows], %x[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
         "v10", "v11", "v12", "v13", "v14", "cc", "memory");
 }
@@ -7032,15 +7074,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "prfm pldl1keep, [%x[output]]\n"
       "subs %x[rows], %x[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
         "v10", "v11", "v12", "v13", "v14", "cc", "memory");
 }
@@ -7207,15 +7250,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "prfm pldl1keep, [%x[output]]\n"
       "subs %x[rows], %x[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
         "v10", "v11", "v12", "v13", "v14", "cc", "memory");
 }
@@ -7378,15 +7422,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "prfm pldl1keep, [%x[output]]\n"
       "subs %x[rows], %x[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
         "v10", "v11", "v12", "v13", "v14", "cc", "memory");
 }
@@ -7565,15 +7610,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "prfm pldl1keep, [%x[output]]\n"
       "subs %x[rows], %x[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
         "v10", "v11", "v12", "v13", "v14", "cc", "memory");
 }
@@ -7752,15 +7798,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "prfm pldl1keep, [%x[output]]\n"
       "subs %x[rows], %x[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
         "v10", "v11", "v12", "v13", "v14", "cc", "memory");
 }
@@ -7942,15 +7989,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "prfm pldl1keep, [%x[output]]\n"
       "subs %x[rows], %x[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
         "v10", "v11", "v12", "v13", "v14", "cc", "memory");
 }

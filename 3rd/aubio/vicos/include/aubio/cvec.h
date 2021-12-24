@@ -61,9 +61,9 @@ extern "C" {
 
  */
 typedef struct {
-  uint_t length;  /**< length of buffer = (requested length)/2 + 1 */
-  smpl_t *norm;   /**< norm array of size ::cvec_t.length */
-  smpl_t *phas;   /**< phase array of size ::cvec_t.length */
+  uint_t length; /**< length of buffer = (requested length)/2 + 1 */
+  smpl_t *norm;  /**< norm array of size ::cvec_t.length */
+  smpl_t *phas;  /**< phase array of size ::cvec_t.length */
 } cvec_t;
 
 /** cvec_t buffer creation function
@@ -77,7 +77,7 @@ typedef struct {
   \param length the length of the buffer to create
 
 */
-cvec_t * new_cvec(uint_t length);
+cvec_t *new_cvec(uint_t length);
 
 /** cvec_t buffer deletion function
 
@@ -98,7 +98,7 @@ void del_cvec(cvec_t *s);
   \param position sample position to write to
 
 */
-void cvec_norm_set_sample (cvec_t *s, smpl_t val, uint_t position);
+void cvec_norm_set_sample(cvec_t *s, smpl_t val, uint_t position);
 
 /** write phase value in a complex buffer
 
@@ -112,7 +112,7 @@ void cvec_norm_set_sample (cvec_t *s, smpl_t val, uint_t position);
   \param position sample position to write to
 
 */
-void cvec_phas_set_sample (cvec_t *s, smpl_t val, uint_t position);
+void cvec_phas_set_sample(cvec_t *s, smpl_t val, uint_t position);
 
 /** read norm value from a complex buffer
 
@@ -125,7 +125,7 @@ void cvec_phas_set_sample (cvec_t *s, smpl_t val, uint_t position);
   \param position sample position to read from
 
 */
-smpl_t cvec_norm_get_sample (cvec_t *s, uint_t position);
+smpl_t cvec_norm_get_sample(cvec_t *s, uint_t position);
 
 /** read phase value from a complex buffer
 
@@ -139,7 +139,7 @@ smpl_t cvec_norm_get_sample (cvec_t *s, uint_t position);
   \returns the value of the sample at position
 
 */
-smpl_t cvec_phas_get_sample (cvec_t *s, uint_t position);
+smpl_t cvec_phas_get_sample(cvec_t *s, uint_t position);
 
 /** read norm data from a complex buffer
 
@@ -150,7 +150,7 @@ smpl_t cvec_phas_get_sample (cvec_t *s, uint_t position);
   \param s vector to read from
 
 */
-smpl_t * cvec_norm_get_data (const cvec_t *s);
+smpl_t *cvec_norm_get_data(const cvec_t *s);
 
 /** read phase data from a complex buffer
 
@@ -162,7 +162,7 @@ smpl_t * cvec_norm_get_data (const cvec_t *s);
   \param s vector to read from
 
 */
-smpl_t * cvec_phas_get_data (const cvec_t *s);
+smpl_t *cvec_phas_get_data(const cvec_t *s);
 
 /** print out cvec data
 
@@ -185,7 +185,7 @@ void cvec_copy(const cvec_t *s, cvec_t *t);
   \param val value to set elements to
 
 */
-void cvec_norm_set_all (cvec_t *s, smpl_t val);
+void cvec_norm_set_all(cvec_t *s, smpl_t val);
 
 /** set all norm elements to zero
 
@@ -207,7 +207,7 @@ void cvec_norm_ones(cvec_t *s);
   \param val value to set elements to
 
 */
-void cvec_phas_set_all (cvec_t *s, smpl_t val);
+void cvec_phas_set_all(cvec_t *s, smpl_t val);
 
 /** set all phase elements to zero
 

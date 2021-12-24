@@ -1,4 +1,4 @@
-/* 
+/*
    base64.cpp and base64.h
 
    Copyright (C) 2004-2008 René Nyffenegger
@@ -33,6 +33,5 @@ namespace Util {
 std::string base64_encode(unsigned char const* bytes_to_encode, size_t len);
 std::string base64_decode(std::string const& s);
 
-}
-}
-
+}  // namespace Util
+}  // namespace Anki

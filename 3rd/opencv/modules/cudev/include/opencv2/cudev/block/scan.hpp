@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -15,23 +16,29 @@
 // Copyright (C) 2013, OpenCV Foundation, all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
-// This software is provided by the copyright holders and contributors "as is" and
+// This software is provided by the copyright holders and contributors "as is"
+and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -49,58 +56,55 @@
 #include "../common.hpp"
 #include "../warp/scan.hpp"
 
-namespace cv { namespace cudev {
+namespace cv {
+namespace cudev {
 
 //! @addtogroup cudev
 //! @{
 
 template <int THREADS_NUM, typename T>
-__device__ T blockScanInclusive(T data, volatile T* smem, uint tid)
-{
-    if (THREADS_NUM > WARP_SIZE)
-    {
-        // bottom-level inclusive warp scan
-        T warpResult = warpScanInclusive(data, smem, tid);
+__device__ T blockScanInclusive(T data, volatile T* smem, uint tid) {
+  if (THREADS_NUM > WARP_SIZE) {
+    // bottom-level inclusive warp scan
+    T warpResult = warpScanInclusive(data, smem, tid);
 
-        __syncthreads();
+    __syncthreads();
 
-        // save top elements of each warp for exclusive warp scan
-        // sync to wait for warp scans to complete (because s_Data is being overwritten)
-        if ((tid & (WARP_SIZE - 1)) == (WARP_SIZE - 1))
-        {
-            smem[tid >> LOG_WARP_SIZE] = warpResult;
-        }
-
-        __syncthreads();
-
-        if (tid < (THREADS_NUM / WARP_SIZE))
-        {
-            // grab top warp elements
-            T val = smem[tid];
-
-            // calculate exclusive scan and write back to shared memory
-            smem[tid] = warpScanExclusive(val, smem, tid);
-        }
-
-        __syncthreads();
-
-        // return updated warp scans with exclusive scan results
-        return warpResult + smem[tid >> LOG_WARP_SIZE];
+    // save top elements of each warp for exclusive warp scan
+    // sync to wait for warp scans to complete (because s_Data is being
+    // overwritten)
+    if ((tid & (WARP_SIZE - 1)) == (WARP_SIZE - 1)) {
+      smem[tid >> LOG_WARP_SIZE] = warpResult;
     }
-    else
-    {
-        return warpScanInclusive(data, smem, tid);
+
+    __syncthreads();
+
+    if (tid < (THREADS_NUM / WARP_SIZE)) {
+      // grab top warp elements
+      T val = smem[tid];
+
+      // calculate exclusive scan and write back to shared memory
+      smem[tid] = warpScanExclusive(val, smem, tid);
     }
+
+    __syncthreads();
+
+    // return updated warp scans with exclusive scan results
+    return warpResult + smem[tid >> LOG_WARP_SIZE];
+  } else {
+    return warpScanInclusive(data, smem, tid);
+  }
 }
 
 template <int THREADS_NUM, typename T>
-__device__ __forceinline__ T blockScanExclusive(T data, volatile T* smem, uint tid)
-{
-    return blockScanInclusive<THREADS_NUM>(data, smem, tid) - data;
+__device__ __forceinline__ T blockScanExclusive(T data, volatile T* smem,
+                                                uint tid) {
+  return blockScanInclusive<THREADS_NUM>(data, smem, tid) - data;
 }
 
 //! @}
 
-}}
+}  // namespace cudev
+}  // namespace cv
 
 #endif

@@ -4,8 +4,8 @@
  * Author: Brad Neuman
  * Created: 2018-03-28
  *
- * Description: Component which uses the "Stimulated" mood to modify the robot's face (current design is to
- *              modify saturation level)
+ * Description: Component which uses the "Stimulated" mood to modify the robot's
+ *face (current design is to modify saturation level)
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -26,31 +26,33 @@ class GraphEvaluator2d;
 
 namespace Vector {
 
-class StimulationFaceDisplay : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
-{
-public:
-
+class StimulationFaceDisplay
+    : public IDependencyManagedComponent<RobotComponentID>,
+      private Util::noncopyable {
+ public:
   StimulationFaceDisplay();
   ~StimulationFaceDisplay();
 
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
-  virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override {
-  };
-  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
+  virtual void InitDependent(Vector::Robot* robot,
+                             const RobotCompMap& dependentComps) override;
+  virtual void AdditionalInitAccessibleComponents(
+      RobotCompIDSet& components) const override{};
+  virtual void GetUpdateDependencies(
+      RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::MoodManager);
   }
-  virtual void AdditionalUpdateAccessibleComponents(RobotCompIDSet& components) const override {
+  virtual void AdditionalUpdateAccessibleComponents(
+      RobotCompIDSet& components) const override {
     components.insert(RobotComponentID::Animation);
     components.insert(RobotComponentID::CozmoContextWrapper);
   }
 
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
 
-private:
-
+ private:
   float _lastSentSatLevel = -1.0f;
 
   // for tracking the exponential moving average
@@ -58,11 +60,9 @@ private:
 
   // mapping to turn ema value into display value
   std::unique_ptr<Util::GraphEvaluator2d> _saturationMap;
-  
 };
 
-}
-}
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

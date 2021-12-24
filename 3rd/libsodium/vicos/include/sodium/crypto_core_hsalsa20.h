@@ -2,6 +2,7 @@
 #define crypto_core_hsalsa20_H
 
 #include <stddef.h>
+
 #include "export.h"
 
 #ifdef __cplusplus

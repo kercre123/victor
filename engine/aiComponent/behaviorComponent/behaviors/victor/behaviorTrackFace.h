@@ -18,27 +18,26 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorTrackFace : public ICozmoBehavior
-{
-public: 
+class BehaviorTrackFace : public ICozmoBehavior {
+ public:
   virtual ~BehaviorTrackFace();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorTrackFace(const Json::Value& config);  
+  explicit BehaviorTrackFace(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-
+ private:
   struct InstanceConfig;
   std::unique_ptr<InstanceConfig> _iConfig;
 
@@ -46,11 +45,9 @@ private:
   std::unique_ptr<DynamicVariables> _dVars;
 
   void BeginTracking();
-
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTrackFace__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTrackFace__

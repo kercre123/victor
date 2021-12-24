@@ -12,48 +12,46 @@
 
 #pragma once
 
-#include "switchboardd/IRtsHandler.h"
-#include "switchboardd/tokenClient.h"
-#include "switchboardd/connectionIdManager.h"
-#include "switchboardd/INetworkStream.h"
-#include "switchboardd/ISwitchboardCommandClient.h"
-#include "switchboardd/wifiWatcher.h"
-#include "switchboardd/taskExecutor.h"
-#include "switchboardd/gatewayMessagingServer.h"
-#include "switchboardd/externalCommsCladHandlerV5.h"
-#include "anki-wifi/wifi.h"
-
 #include <unordered_map>
+
+#include "anki-wifi/wifi.h"
+#include "switchboardd/INetworkStream.h"
+#include "switchboardd/IRtsHandler.h"
+#include "switchboardd/ISwitchboardCommandClient.h"
+#include "switchboardd/connectionIdManager.h"
+#include "switchboardd/externalCommsCladHandlerV5.h"
+#include "switchboardd/gatewayMessagingServer.h"
+#include "switchboardd/taskExecutor.h"
+#include "switchboardd/tokenClient.h"
+#include "switchboardd/wifiWatcher.h"
 
 namespace Anki {
 namespace Switchboard {
 
 class RtsHandlerV5 : public IRtsHandler {
-public:
-  RtsHandlerV5(INetworkStream* stream, 
-    struct ev_loop* evloop,
-    std::shared_ptr<ISwitchboardCommandClient> engineClient,
-    std::shared_ptr<TokenClient> tokenClient,
-    std::shared_ptr<GatewayMessagingServer> gatewayServer,
-    std::shared_ptr<ConnectionIdManager> connectionIdManager,
-    std::shared_ptr<TaskExecutor> taskExecutor,
-    std::shared_ptr<WifiWatcher> wifiWatcher,
-    bool isPairing,
-    bool isOtaUpdating,
-    bool hasOwner);
+ public:
+  RtsHandlerV5(INetworkStream* stream, struct ev_loop* evloop,
+               std::shared_ptr<ISwitchboardCommandClient> engineClient,
+               std::shared_ptr<TokenClient> tokenClient,
+               std::shared_ptr<GatewayMessagingServer> gatewayServer,
+               std::shared_ptr<ConnectionIdManager> connectionIdManager,
+               std::shared_ptr<TaskExecutor> taskExecutor,
+               std::shared_ptr<WifiWatcher> wifiWatcher, bool isPairing,
+               bool isOtaUpdating, bool hasOwner);
 
   ~RtsHandlerV5();
 
   bool StartRts() override;
   void StopPairing() override;
-  void SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal) override;
+  void SendOtaProgress(int status, uint64_t progress,
+                       uint64_t expectedTotal) override;
   void HandleTimeout() override;
   void ForceDisconnect() override;
 
   // Types
-  using StringSignal = Signal::Signal<void (std::string)>;
-  using BoolSignal = Signal::Signal<void (bool)>;
-  using VoidSignal = Signal::Signal<void ()>;
+  using StringSignal = Signal::Signal<void(std::string)>;
+  using BoolSignal = Signal::Signal<void(bool)>;
+  using VoidSignal = Signal::Signal<void()>;
 
   // Events
   StringSignal& OnUpdatedPinEvent() { return _updatedPinSignal; }
@@ -62,12 +60,13 @@ public:
   VoidSignal& OnCompletedPairingEvent() { return _completedPairingSignal; }
   BoolSignal& OnResetEvent() { return _resetSignal; }
 
-private:
+ private:
   // Statics
   static long long sTimeStarted;
-  static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
+  static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w,
+                              int revents);
 
-  void Reset(bool forced=false);
+  void Reset(bool forced = false);
   void SaveSessionKeys();
   bool IsAuthenticated();
 
@@ -78,7 +77,8 @@ private:
   void SendChallengeSuccess();
   void SendWifiScanResult();
   void SendWifiConnectResult(Wifi::ConnectWifiResult result);
-  void SendWifiAccessPointResponse(bool success, std::string ssid, std::string pw);
+  void SendWifiAccessPointResponse(bool success, std::string ssid,
+                                   std::string pw);
   void SendStatusResponse();
   void SendFile(uint32_t fileId, std::vector<uint8_t> fileBytes);
 
@@ -90,9 +90,13 @@ private:
   void HandleInternetTimerTick();
   void HandleOtaRequest();
   void HandleChallengeResponse(uint8_t* bytes, uint32_t length);
-  void HandleCloudSessionAuthResponse(Anki::Vector::TokenError error, std::string appToken, std::string jwtToken);
+  void HandleCloudSessionAuthResponse(Anki::Vector::TokenError error,
+                                      std::string appToken,
+                                      std::string jwtToken);
 
-  void ProcessCloudAuthResponse(bool isPrimary, Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken);
+  void ProcessCloudAuthResponse(bool isPrimary,
+                                Anki::Vector::TokenError authError,
+                                std::string appToken, std::string authJwtToken);
 
   void IncrementAbnormalityCount();
   void IncrementChallengeCount();
@@ -119,7 +123,7 @@ private:
   const uint8_t kWifiConnectInterval_s = 1;
   const uint8_t kMinMessageSize = 2;
   const uint8_t kSdkRequestIdSize = 32;
-  
+
   std::string _pin;
   uint8_t _challengeAttempts;
   uint8_t _numPinDigits;
@@ -160,34 +164,44 @@ private:
   void HandleRtsConnResponse(const Vector::ExternalComms::RtsConnection_5& msg);
 
   Signal::SmartHandle _rtsChallengeMessageHandle;
-  void HandleRtsChallengeMessage(const Vector::ExternalComms::RtsConnection_5& msg);
+  void HandleRtsChallengeMessage(
+      const Vector::ExternalComms::RtsConnection_5& msg);
 
   Signal::SmartHandle _rtsWifiConnectRequestHandle;
-  void HandleRtsWifiConnectRequest(const Vector::ExternalComms::RtsConnection_5& msg);
+  void HandleRtsWifiConnectRequest(
+      const Vector::ExternalComms::RtsConnection_5& msg);
 
   Signal::SmartHandle _rtsWifiIpRequestHandle;
-  void HandleRtsWifiIpRequest(const Vector::ExternalComms::RtsConnection_5& msg);
+  void HandleRtsWifiIpRequest(
+      const Vector::ExternalComms::RtsConnection_5& msg);
 
   Signal::SmartHandle _rtsRtsStatusRequestHandle;
-  void HandleRtsStatusRequest(const Vector::ExternalComms::RtsConnection_5& msg);
+  void HandleRtsStatusRequest(
+      const Vector::ExternalComms::RtsConnection_5& msg);
 
   Signal::SmartHandle _rtsWifiScanRequestHandle;
-  void HandleRtsWifiScanRequest(const Vector::ExternalComms::RtsConnection_5& msg);
+  void HandleRtsWifiScanRequest(
+      const Vector::ExternalComms::RtsConnection_5& msg);
 
   Signal::SmartHandle _rtsWifiForgetRequestHandle;
-  void HandleRtsWifiForgetRequest(const Vector::ExternalComms::RtsConnection_5& msg);
+  void HandleRtsWifiForgetRequest(
+      const Vector::ExternalComms::RtsConnection_5& msg);
 
   Signal::SmartHandle _rtsOtaUpdateRequestHandle;
-  void HandleRtsOtaUpdateRequest(const Vector::ExternalComms::RtsConnection_5& msg);
+  void HandleRtsOtaUpdateRequest(
+      const Vector::ExternalComms::RtsConnection_5& msg);
 
   Signal::SmartHandle _rtsOtaCancelRequestHandle;
-  void HandleRtsOtaCancelRequest(const Vector::ExternalComms::RtsConnection_5& msg);
+  void HandleRtsOtaCancelRequest(
+      const Vector::ExternalComms::RtsConnection_5& msg);
 
   Signal::SmartHandle _rtsWifiAccessPointRequestHandle;
-  void HandleRtsWifiAccessPointRequest(const Vector::ExternalComms::RtsConnection_5& msg);
+  void HandleRtsWifiAccessPointRequest(
+      const Vector::ExternalComms::RtsConnection_5& msg);
 
   Signal::SmartHandle _rtsCancelPairingHandle;
-  void HandleRtsCancelPairing(const Vector::ExternalComms::RtsConnection_5& msg);
+  void HandleRtsCancelPairing(
+      const Vector::ExternalComms::RtsConnection_5& msg);
 
   Signal::SmartHandle _rtsAckHandle;
   void HandleRtsAck(const Vector::ExternalComms::RtsConnection_5& msg);
@@ -196,39 +210,48 @@ private:
   void HandleRtsLogRequest(const Vector::ExternalComms::RtsConnection_5& msg);
 
   Signal::SmartHandle _rtsCloudSessionHandle;
-  void HandleRtsCloudSessionRequest(const Vector::ExternalComms::RtsConnection_5& msg);
+  void HandleRtsCloudSessionRequest(
+      const Vector::ExternalComms::RtsConnection_5& msg);
 
   Signal::SmartHandle _rtsAppConnectionIdHandle;
-  void HandleRtsAppConnectionIdRequest(const Vector::ExternalComms::RtsConnection_5& msg);
+  void HandleRtsAppConnectionIdRequest(
+      const Vector::ExternalComms::RtsConnection_5& msg);
 
   Signal::SmartHandle _rtsForceDisconnectHandle;
-  void HandleRtsForceDisconnect(const Vector::ExternalComms::RtsConnection_5& msg);
+  void HandleRtsForceDisconnect(
+      const Vector::ExternalComms::RtsConnection_5& msg);
 
   Signal::SmartHandle _rtsSdkProxyHandle;
-  void HandleRtsSdkProxyRequest(const Vector::ExternalComms::RtsConnection_5& msg);
+  void HandleRtsSdkProxyRequest(
+      const Vector::ExternalComms::RtsConnection_5& msg);
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Send messages method
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - Send messages method
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - -
 
-  template<typename T, typename... Args>
+  template <typename T, typename... Args>
   int SendRtsMessage(Args&&... args) {
-    Anki::Vector::ExternalComms::ExternalComms msg = Anki::Vector::ExternalComms::ExternalComms(
-      Anki::Vector::ExternalComms::RtsConnection(Anki::Vector::ExternalComms::RtsConnection_5(T(std::forward<Args>(args)...))));
+    Anki::Vector::ExternalComms::ExternalComms msg =
+        Anki::Vector::ExternalComms::ExternalComms(
+            Anki::Vector::ExternalComms::RtsConnection(
+                Anki::Vector::ExternalComms::RtsConnection_5(
+                    T(std::forward<Args>(args)...))));
     std::vector<uint8_t> messageData(msg.Size());
     const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
 
-    if(_type == RtsCommsType::Unencrypted) {
+    if (_type == RtsCommsType::Unencrypted) {
       return _stream->SendPlainText(messageData.data(), packedSize);
-    } else if(_type == RtsCommsType::Encrypted) {
+    } else if (_type == RtsCommsType::Encrypted) {
       return _stream->SendEncrypted(messageData.data(), packedSize);
     } else {
-      Log::Write("Tried to send clad message when state was already set back to RAW.");
+      Log::Write(
+          "Tried to send clad message when state was already set back to RAW.");
     }
 
     return -1;
   }
 };
 
-} // Switchboard
-} // Anki
+}  // namespace Switchboard
+}  // namespace Anki

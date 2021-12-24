@@ -7,5 +7,7 @@
 #error expected std library: libc++
 #endif
 
-int main() { std::string x; return x.size(); }
-
+int main() {
+  std::string x;
+  return x.size();
+}

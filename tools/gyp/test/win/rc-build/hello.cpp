@@ -3,8 +3,8 @@
 // found in the LICENSE file.
 
 #define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 #include <tchar.h>
+#include <windows.h>
 
 #include "resource.h"
 
@@ -13,11 +13,8 @@
 TCHAR szTitle[MAX_LOADSTRING];
 TCHAR szWindowClass[MAX_LOADSTRING];
 
-int APIENTRY _tWinMain(
-    HINSTANCE hInstance,
-    HINSTANCE hPrevInstance,
-    LPTSTR    lpCmdLine,
-    int       nCmdShow) {
+int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                       LPTSTR lpCmdLine, int nCmdShow) {
   // Make sure we can load some resources.
   int count = 0;
   LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);

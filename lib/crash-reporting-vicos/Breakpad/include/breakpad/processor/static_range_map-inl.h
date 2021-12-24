@@ -36,18 +36,17 @@
 #ifndef PROCESSOR_STATIC_RANGE_MAP_INL_H__
 #define PROCESSOR_STATIC_RANGE_MAP_INL_H__
 
-#include "processor/static_range_map.h"
 #include "processor/logging.h"
+#include "processor/static_range_map.h"
 
 namespace google_breakpad {
 
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 bool StaticRangeMap<AddressType, EntryType>::RetrieveRange(
     const AddressType &address, const EntryType *&entry,
     AddressType *entry_base, AddressType *entry_size) const {
   MapConstIterator iterator = map_.lower_bound(address);
-  if (iterator == map_.end())
-    return false;
+  if (iterator == map_.end()) return false;
 
   // The map is keyed by the high address of each range, so |address| is
   // guaranteed to be lower than the range's high address.  If |range| is
@@ -59,26 +58,21 @@ bool StaticRangeMap<AddressType, EntryType>::RetrieveRange(
 
   // Make sure AddressType and EntryType are copyable basic types
   // e.g.: integer types, pointers etc
-  if (address < range->base())
-    return false;
+  if (address < range->base()) return false;
 
   entry = range->entryptr();
-  if (entry_base)
-    *entry_base = range->base();
-  if (entry_size)
-    *entry_size = iterator.GetKey() - range->base() + 1;
+  if (entry_base) *entry_base = range->base();
+  if (entry_size) *entry_size = iterator.GetKey() - range->base() + 1;
 
   return true;
 }
 
-
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 bool StaticRangeMap<AddressType, EntryType>::RetrieveNearestRange(
     const AddressType &address, const EntryType *&entry,
     AddressType *entry_base, AddressType *entry_size) const {
   // If address is within a range, RetrieveRange can handle it.
-  if (RetrieveRange(address, entry, entry_base, entry_size))
-    return true;
+  if (RetrieveRange(address, entry, entry_base, entry_size)) return true;
 
   // upper_bound gives the first element whose key is greater than address,
   // but we want the first element whose key is less than or equal to address.
@@ -87,25 +81,21 @@ bool StaticRangeMap<AddressType, EntryType>::RetrieveNearestRange(
   // the lowest stored key, so return false.
 
   MapConstIterator iterator = map_.upper_bound(address);
-  if (iterator == map_.begin())
-    return false;
+  if (iterator == map_.begin()) return false;
   --iterator;
 
   const Range *range = iterator.GetValuePtr();
   entry = range->entryptr();
-  if (entry_base)
-    *entry_base = range->base();
-  if (entry_size)
-    *entry_size = iterator.GetKey() - range->base() + 1;
+  if (entry_base) *entry_base = range->base();
+  if (entry_size) *entry_size = iterator.GetKey() - range->base() + 1;
 
   return true;
 }
 
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 bool StaticRangeMap<AddressType, EntryType>::RetrieveRangeAtIndex(
-    int index, const EntryType *&entry,
-    AddressType *entry_base, AddressType *entry_size) const {
-
+    int index, const EntryType *&entry, AddressType *entry_base,
+    AddressType *entry_size) const {
   if (index >= GetCount()) {
     BPLOG(ERROR) << "Index out of range: " << index << "/" << GetCount();
     return false;
@@ -116,15 +106,12 @@ bool StaticRangeMap<AddressType, EntryType>::RetrieveRangeAtIndex(
   const Range *range = iterator.GetValuePtr();
 
   entry = range->entryptr();
-  if (entry_base)
-    *entry_base = range->base();
-  if (entry_size)
-    *entry_size = iterator.GetKey() - range->base() + 1;
+  if (entry_base) *entry_base = range->base();
+  if (entry_size) *entry_size = iterator.GetKey() - range->base() + 1;
 
   return true;
 }
 
 }  // namespace google_breakpad
-
 
 #endif  // PROCESSOR_STATIC_RANGE_MAP_INL_H__

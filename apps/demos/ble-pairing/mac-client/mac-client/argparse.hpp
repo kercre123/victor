@@ -8,15 +8,15 @@ typedef std::unordered_map<std::string, size_t> IndexMap;
 #include <map>
 typedef std::map<std::string, size_t> IndexMap;
 #endif
-#include <string>
-#include <vector>
-#include <typeinfo>
-#include <stdexcept>
-#include <sstream>
-#include <iostream>
-#include <cassert>
 #include <algorithm>
+#include <cassert>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <typeinfo>
 #include <unordered_set>
+#include <vector>
 
 /*! @class ArgumentParser
  *  @brief A simple command-line argument parser based on the design of
@@ -41,7 +41,7 @@ typedef std::map<std::string, size_t> IndexMap;
  *
  */
 class ArgumentParser {
-private:
+ private:
   class Any;
   class Argument;
   class PlaceHolder;
@@ -50,21 +50,21 @@ private:
   typedef std::vector<Any> AnyVector;
   typedef std::vector<String> StringVector;
   typedef std::vector<Argument> ArgumentVector;
-  
+
   // --------------------------------------------------------------------------
   // Type-erasure internal storage
   // --------------------------------------------------------------------------
   class Any {
-  public:
+   public:
     // constructor
     Any() : content(0) {}
     // destructor
     ~Any() { delete content; }
     // INWARD CONVERSIONS
-    Any(const Any& other) : content(other.content ? other.content->clone() : 0) {}
+    Any(const Any& other)
+        : content(other.content ? other.content->clone() : 0) {}
     template <typename ValueType>
-    Any(const ValueType& other)
-    : content(new Holder<ValueType>(other)) {}
+    Any(const ValueType& other) : content(new Holder<ValueType>(other)) {}
     Any& swap(Any& other) {
       std::swap(content, other.content);
       return *this;
@@ -82,8 +82,8 @@ private:
     template <typename ValueType>
     ValueType* toPtr() const {
       return content->type_info() == typeid(ValueType)
-      ? &static_cast<Holder<ValueType>*>(content)->held_
-      : 0;
+                 ? &static_cast<Holder<ValueType>*>(content)->held_
+                 : 0;
     }
     template <typename ValueType>
     ValueType& castTo() {
@@ -95,11 +95,11 @@ private:
       if (!toPtr<ValueType>()) throw std::bad_cast();
       return *toPtr<ValueType>();
     }
-    
-  private:
+
+   private:
     // Inner placeholder interface
     class PlaceHolder {
-    public:
+     public:
       virtual ~PlaceHolder() {}
       virtual const std::type_info& type_info() const = 0;
       virtual PlaceHolder* clone() const = 0;
@@ -107,15 +107,17 @@ private:
     // Inner template concrete instantiation of PlaceHolder
     template <typename ValueType>
     class Holder : public PlaceHolder {
-    public:
+     public:
       ValueType held_;
       Holder(const ValueType& value) : held_(value) {}
-      virtual const std::type_info& type_info() const { return typeid(ValueType); }
+      virtual const std::type_info& type_info() const {
+        return typeid(ValueType);
+      }
       virtual PlaceHolder* clone() const { return new Holder(held_); }
     };
     PlaceHolder* content;
   };
-  
+
   // --------------------------------------------------------------------------
   // Argument
   // --------------------------------------------------------------------------
@@ -135,14 +137,21 @@ private:
   }
   static String escape(const String& in) {
     String out(in);
-    if (in.find(' ') != std::string::npos) out = String("\"").append(out).append("\"");
+    if (in.find(' ') != std::string::npos)
+      out = String("\"").append(out).append("\"");
     return out;
   }
-  
+
   struct Argument {
-    Argument() : short_name(""), name(""), optional(true), fixed_nargs(0), fixed(true) {}
-    Argument(const String& _short_name, const String& _name, bool _optional, char nargs)
-    : short_name(_short_name), name(_name), optional(_optional) {
+    Argument()
+        : short_name(""),
+          name(""),
+          optional(true),
+          fixed_nargs(0),
+          fixed(true) {}
+    Argument(const String& _short_name, const String& _name, bool _optional,
+             char nargs)
+        : short_name(_short_name), name(_name), optional(_optional) {
       if (nargs == '+' || nargs == '*') {
         variable_nargs = nargs;
         fixed = false;
@@ -162,7 +171,8 @@ private:
     String canonicalName() const { return (name.empty()) ? short_name : name; }
     String toString(bool named = true) const {
       std::ostringstream s;
-      String uname = name.empty() ? upper(strip(short_name)) : upper(strip(name));
+      String uname =
+          name.empty() ? upper(strip(short_name)) : upper(strip(name));
       if (named && optional) s << "[";
       if (named) s << canonicalName();
       if (fixed) {
@@ -181,7 +191,7 @@ private:
       return s.str();
     }
   };
-  
+
   void insertArgument(const Argument& arg) {
     size_t N = arguments_.size();
     arguments_.push_back(arg);
@@ -194,7 +204,7 @@ private:
     if (!arg.name.empty()) index_[arg.name] = N;
     if (!arg.optional) required_++;
   }
-  
+
   // --------------------------------------------------------------------------
   // Error handling
   // --------------------------------------------------------------------------
@@ -204,7 +214,7 @@ private:
     if (show_usage) std::cerr << usage() << std::endl;
     exit(-5);
   }
-  
+
   // --------------------------------------------------------------------------
   // Member variables
   // --------------------------------------------------------------------------
@@ -217,9 +227,10 @@ private:
   ArgumentVector arguments_;
   AnyVector variables_;
   std::unordered_set<std::string> found_;
-  
-public:
-  ArgumentParser() : ignore_first_(true), use_exceptions_(false), required_(0) {}
+
+ public:
+  ArgumentParser()
+      : ignore_first_(true), use_exceptions_(false), required_(0) {}
   // --------------------------------------------------------------------------
   // addArgument
   // --------------------------------------------------------------------------
@@ -238,7 +249,8 @@ public:
     Argument arg(verify(short_name), verify(name), optional, nargs);
     insertArgument(arg);
   }
-  void addFinalArgument(const String& name, char nargs = 1, bool optional = false) {
+  void addFinalArgument(const String& name, char nargs = 1,
+                        bool optional = false) {
     final_name_ = delimit(name);
     Argument arg("", final_name_, optional, nargs);
     insertArgument(arg);
@@ -248,32 +260,39 @@ public:
     if (name.empty()) argumentError("argument names must be non-empty");
     if ((name.size() == 2 && name[0] != '-') || name.size() == 3)
       argumentError(String("invalid argument '")
-                    .append(name)
-                    .append("'. Short names must begin with '-'"));
+                        .append(name)
+                        .append("'. Short names must begin with '-'"));
     if (name.size() > 3 && (name[0] != '-' || name[1] != '-'))
-      argumentError(String("invalid argument '")
-                    .append(name)
-                    .append("'. Multi-character names must begin with '--'"));
+      argumentError(
+          String("invalid argument '")
+              .append(name)
+              .append("'. Multi-character names must begin with '--'"));
     return name;
   }
-  
+
   // --------------------------------------------------------------------------
   // Parse
   // --------------------------------------------------------------------------
-  void parse(size_t argc, const char** argv) { parse(StringVector(argv, argv + argc)); }
-  
+  void parse(size_t argc, const char** argv) {
+    parse(StringVector(argv, argv + argc));
+  }
+
   void parse(const StringVector& argv) {
     // check if the app is named
-    if (app_name_.empty() && ignore_first_ && !argv.empty()) app_name_ = argv[0];
-    
+    if (app_name_.empty() && ignore_first_ && !argv.empty())
+      app_name_ = argv[0];
+
     // set up the working set
     Argument active;
-    Argument final = final_name_.empty() ? Argument() : arguments_[index_[final_name_]];
+    Argument final =
+        final_name_.empty() ? Argument() : arguments_[index_[final_name_]];
     size_t consumed = 0;
     size_t nrequired = final.optional ? required_ : required_ - 1;
-    size_t nfinal = final.optional ? 0 : (final.fixed ? final.fixed_nargs
-                                          : (final.variable_nargs == '+' ? 1 : 0));
-    
+    size_t nfinal = final.optional
+                        ? 0
+                        : (final.fixed ? final.fixed_nargs
+                                       : (final.variable_nargs == '+' ? 1 : 0));
+
     // iterate over each element of the array
     for (StringVector::const_iterator in = argv.begin() + ignore_first_;
          in < argv.end() - nfinal; ++in) {
@@ -284,8 +303,9 @@ public:
         // input
         // is the current active argument expecting more inputs?
         if (active.fixed && active.fixed_nargs <= consumed)
-          argumentError(String("attempt to pass too many inputs to ").append(active_name),
-                        true);
+          argumentError(
+              String("attempt to pass too many inputs to ").append(active_name),
+              true);
         if (active.fixed && active.fixed_nargs == 1) {
           variables_[index_[active_name]].castTo<String>() = el;
         } else {
@@ -298,9 +318,9 @@ public:
         if ((active.fixed && active.fixed_nargs != consumed) ||
             (!active.fixed && active.variable_nargs == '+' && consumed < 1))
           argumentError(String("encountered argument ")
-                        .append(el)
-                        .append(" when expecting more inputs to ")
-                        .append(active_name),
+                            .append(el)
+                            .append(" when expecting more inputs to ")
+                            .append(active_name),
                         true);
         active = arguments_[index_[el]];
         found_.insert(active.name);
@@ -308,28 +328,30 @@ public:
         // check if we've satisfied the required arguments
         if (active.optional && nrequired > 0)
           argumentError(String("encountered optional argument ")
-                        .append(el)
-                        .append(" when expecting more required arguments"),
+                            .append(el)
+                            .append(" when expecting more required arguments"),
                         true);
         // are there enough arguments for the new argument to consume?
-        if ((active.fixed && active.fixed_nargs > (argv.end() - in - nfinal - 1)) ||
+        if ((active.fixed &&
+             active.fixed_nargs > (argv.end() - in - nfinal - 1)) ||
             (!active.fixed && active.variable_nargs == '+' &&
              !(argv.end() - in - nfinal - 1)))
-          argumentError(String("too few inputs passed to argument ").append(el), true);
+          argumentError(String("too few inputs passed to argument ").append(el),
+                        true);
         if (!active.optional) nrequired--;
         consumed = 0;
       }
     }
-    
+
     for (StringVector::const_iterator in =
-         std::max(argv.begin() + ignore_first_, argv.end() - nfinal);
+             std::max(argv.begin() + ignore_first_, argv.end() - nfinal);
          in != argv.end(); ++in) {
       String el = *in;
       // check if we accidentally find an argument specifier
       if (index_.count(el))
         argumentError(String("encountered argument specifier ")
-                      .append(el)
-                      .append(" while parsing final required inputs"),
+                          .append(el)
+                          .append(" while parsing final required inputs"),
                       true);
       if (final.fixed && final.fixed_nargs == 1) {
         variables_[index_[final_name_]].castTo<String>() = el;
@@ -338,22 +360,25 @@ public:
       }
       nfinal--;
     }
-    
+
     // check that all of the required arguments have been encountered
     if (nrequired > 0 || nfinal > 0)
-      argumentError(String("too few required arguments passed to ").append(app_name_), true);
+      argumentError(
+          String("too few required arguments passed to ").append(app_name_),
+          true);
   }
-  
+
   // --------------------------------------------------------------------------
   // Retrieve
   // --------------------------------------------------------------------------
   template <typename T>
   T& retrieve(const String& name) {
-    if (index_.count(delimit(name)) == 0) throw std::out_of_range("Key not found");
+    if (index_.count(delimit(name)) == 0)
+      throw std::out_of_range("Key not found");
     size_t N = index_[delimit(name)];
     return variables_[N].castTo<T>();
   }
-  
+
   // --------------------------------------------------------------------------
   // Properties
   // --------------------------------------------------------------------------
@@ -363,9 +388,10 @@ public:
     help << "Usage: " << escape(app_name_);
     size_t indent = help.str().size();
     size_t linelength = 0;
-    
+
     // get the required arguments
-    for (ArgumentVector::const_iterator it = arguments_.begin(); it != arguments_.end(); ++it) {
+    for (ArgumentVector::const_iterator it = arguments_.begin();
+         it != arguments_.end(); ++it) {
       Argument arg = *it;
       if (arg.optional) continue;
       if (arg.name.compare(final_name_) == 0) continue;
@@ -379,9 +405,10 @@ public:
       }
       help << argstr;
     }
-    
+
     // get the optional arguments
-    for (ArgumentVector::const_iterator it = arguments_.begin(); it != arguments_.end(); ++it) {
+    for (ArgumentVector::const_iterator it = arguments_.begin();
+         it != arguments_.end(); ++it) {
       Argument arg = *it;
       if (!arg.optional) continue;
       if (arg.name.compare(final_name_) == 0) continue;
@@ -395,7 +422,7 @@ public:
       }
       help << argstr;
     }
-    
+
     // get the final argument
     if (!final_name_.empty()) {
       Argument arg = arguments_[index_[final_name_]];
@@ -408,7 +435,7 @@ public:
       }
       help << argstr;
     }
-    
+
     return help.str();
   }
   void useExceptions(bool state) { use_exceptions_ = state; }
@@ -421,7 +448,9 @@ public:
     variables_.clear();
     found_.clear();
   }
-  bool exists(const String& name) const { return found_.find(name) != found_.end(); }
+  bool exists(const String& name) const {
+    return found_.find(name) != found_.end();
+  }
   size_t count(const String& name) {
     // check if the name is an argument
     if (index_.count(delimit(name)) == 0) return 0;

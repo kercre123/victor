@@ -29,10 +29,8 @@
  */
 namespace Anki {
 
-class RotatedRectangle
-{
-public:
-
+class RotatedRectangle {
+ public:
   RotatedRectangle();
 
   /** This constructor builds a rectangle using two points and a
@@ -40,13 +38,14 @@ public:
    * the length defines the other side, which is perpendicular to the
    * first.
    */
-  RotatedRectangle(float x0, float y0, float x1, float y1, float otherSideLength);
+  RotatedRectangle(float x0, float y0, float x1, float y1,
+                   float otherSideLength);
 
   /** Given a convex polygon as a container of 2D float points, set
    * this object to be the roatated rectangle of minimum area which
    * bounds the polygon
    */
-  RotatedRectangle(const Quad2f& quad); // construct directly from quad
+  RotatedRectangle(const Quad2f& quad);  // construct directly from quad
   void ImportQuad(const Quad2f& quad);
 
   /** Returns true if the given (x,y) point is inside (or on the
@@ -59,27 +58,26 @@ public:
    */
   void Dump(std::ostream& out) const;
 
-  float GetWidth() const {return std::abs(length0);}
-  float GetHeight() const {return std::abs(length1);}
-  float GetX() const {return cornerX;}
-  float GetY() const {return cornerY;}
+  float GetWidth() const { return std::abs(length0); }
+  float GetHeight() const { return std::abs(length1); }
+  float GetX() const { return cornerX; }
+  float GetY() const { return cornerY; }
 
   Quad2f GetQuad() const;
 
-private:
-
+ private:
   // internal representation is a corner, two unit vectors (from that
   // corner) and two lengths
 
   float length0, length1;
   float cornerX, cornerY;
-  float vec0X, vec0Y; // vec 0 points along given line (from point 1 to 0)
+  float vec0X, vec0Y;  // vec 0 points along given line (from point 1 to 0)
   float vec1X, vec1Y;
 
-  void InitFromPoints(float x0, float y0, float x1, float y1, float otherSideLength);
+  void InitFromPoints(float x0, float y0, float x1, float y1,
+                      float otherSideLength);
 };
 
-}
+}  // namespace Anki
 
 #endif
-

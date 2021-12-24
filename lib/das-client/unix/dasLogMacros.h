@@ -15,12 +15,20 @@
 
 #include <stdio.h>
 
-#define LOGD(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
+#define LOGD(...)                 \
+  {                               \
+    fprintf(stderr, __VA_ARGS__); \
+    fprintf(stderr, "\n");        \
+  }
 
 #ifdef NDEBUG
 #define LOGV(...)
 #else
-#define LOGV(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
+#define LOGV(...)                 \
+  {                               \
+    fprintf(stderr, __VA_ARGS__); \
+    fprintf(stderr, "\n");        \
+  }
 #endif
 
-#endif // __DasLogMacros_H__
+#endif  // __DasLogMacros_H__

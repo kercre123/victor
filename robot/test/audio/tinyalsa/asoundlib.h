@@ -29,8 +29,8 @@
 #ifndef ASOUNDLIB_H
 #define ASOUNDLIB_H
 
-#include <sys/time.h>
 #include <stddef.h>
+#include <sys/time.h>
 
 #if defined(__cplusplus)
 extern "C" {
@@ -42,102 +42,102 @@ extern "C" {
 
 struct pcm;
 
-#define PCM_OUT        0x00000000
-#define PCM_IN         0x10000000
-#define PCM_MMAP       0x00000001
-#define PCM_NOIRQ      0x00000002
-#define PCM_NORESTART  0x00000004 /* PCM_NORESTART - when set, calls to
-                                   * pcm_write for a playback stream will not
-                                   * attempt to restart the stream in the case
-                                   * of an underflow, but will return -EPIPE
-                                   * instead.  After the first -EPIPE error, the
-                                   * stream is considered to be stopped, and a
-                                   * second call to pcm_write will attempt to
-                                   * restart the stream.
-                                   */
-#define PCM_MONOTONIC  0x00000008 /* see pcm_get_htimestamp */
+#define PCM_OUT 0x00000000
+#define PCM_IN 0x10000000
+#define PCM_MMAP 0x00000001
+#define PCM_NOIRQ 0x00000002
+#define PCM_NORESTART                                                           \
+  0x00000004                     /* PCM_NORESTART - when set, calls to          \
+                                  * pcm_write for a playback stream will not    \
+                                  * attempt to restart the stream in the case   \
+                                  * of an underflow, but will return -EPIPE     \
+                                  * instead.  After the first -EPIPE error, the \
+                                  * stream is considered to be stopped, and a   \
+                                  * second call to pcm_write will attempt to    \
+                                  * restart the stream.                         \
+                                  */
+#define PCM_MONOTONIC 0x00000008 /* see pcm_get_htimestamp */
 
 /* PCM runtime states */
-#define	PCM_STATE_RUNNING	3
-#define	PCM_STATE_XRUN		4
-#define	PCM_STATE_DRAINING	5
-#define	PCM_STATE_SUSPENDED	7
-#define	PCM_STATE_DISCONNECTED	8
+#define PCM_STATE_RUNNING 3
+#define PCM_STATE_XRUN 4
+#define PCM_STATE_DRAINING 5
+#define PCM_STATE_SUSPENDED 7
+#define PCM_STATE_DISCONNECTED 8
 
 /* Bit formats */
 enum pcm_format {
-    PCM_FORMAT_S16_LE = 0,
-    PCM_FORMAT_S32_LE,
-    PCM_FORMAT_S8,
-    PCM_FORMAT_S24_LE,
+  PCM_FORMAT_S16_LE = 0,
+  PCM_FORMAT_S32_LE,
+  PCM_FORMAT_S8,
+  PCM_FORMAT_S24_LE,
 
-    PCM_FORMAT_MAX,
+  PCM_FORMAT_MAX,
 };
 
 /* Bitmask has 256 bits (32 bytes) in asound.h */
 struct pcm_mask {
-    unsigned int bits[32 / sizeof(unsigned int)];
+  unsigned int bits[32 / sizeof(unsigned int)];
 };
 
 /* Configuration for a stream */
 struct pcm_config {
-    unsigned int channels;
-    unsigned int rate;
-    unsigned int period_size;
-    unsigned int period_count;
-    enum pcm_format format;
+  unsigned int channels;
+  unsigned int rate;
+  unsigned int period_size;
+  unsigned int period_count;
+  enum pcm_format format;
 
-    /* Values to use for the ALSA start, stop and silence thresholds.  Setting
-     * any one of these values to 0 will cause the default tinyalsa values to be
-     * used instead.  Tinyalsa defaults are as follows.
-     *
-     * start_threshold   : period_count * period_size
-     * stop_threshold    : period_count * period_size
-     * silence_threshold : 0
-     */
-    unsigned int start_threshold;
-    unsigned int stop_threshold;
-    unsigned int silence_threshold;
+  /* Values to use for the ALSA start, stop and silence thresholds.  Setting
+   * any one of these values to 0 will cause the default tinyalsa values to be
+   * used instead.  Tinyalsa defaults are as follows.
+   *
+   * start_threshold   : period_count * period_size
+   * stop_threshold    : period_count * period_size
+   * silence_threshold : 0
+   */
+  unsigned int start_threshold;
+  unsigned int stop_threshold;
+  unsigned int silence_threshold;
 };
 
 /* PCM parameters */
-enum pcm_param
-{
-    /* mask parameters */
-    PCM_PARAM_ACCESS,
-    PCM_PARAM_FORMAT,
-    PCM_PARAM_SUBFORMAT,
-    /* interval parameters */
-    PCM_PARAM_SAMPLE_BITS,
-    PCM_PARAM_FRAME_BITS,
-    PCM_PARAM_CHANNELS,
-    PCM_PARAM_RATE,
-    PCM_PARAM_PERIOD_TIME,
-    PCM_PARAM_PERIOD_SIZE,
-    PCM_PARAM_PERIOD_BYTES,
-    PCM_PARAM_PERIODS,
-    PCM_PARAM_BUFFER_TIME,
-    PCM_PARAM_BUFFER_SIZE,
-    PCM_PARAM_BUFFER_BYTES,
-    PCM_PARAM_TICK_TIME,
+enum pcm_param {
+  /* mask parameters */
+  PCM_PARAM_ACCESS,
+  PCM_PARAM_FORMAT,
+  PCM_PARAM_SUBFORMAT,
+  /* interval parameters */
+  PCM_PARAM_SAMPLE_BITS,
+  PCM_PARAM_FRAME_BITS,
+  PCM_PARAM_CHANNELS,
+  PCM_PARAM_RATE,
+  PCM_PARAM_PERIOD_TIME,
+  PCM_PARAM_PERIOD_SIZE,
+  PCM_PARAM_PERIOD_BYTES,
+  PCM_PARAM_PERIODS,
+  PCM_PARAM_BUFFER_TIME,
+  PCM_PARAM_BUFFER_SIZE,
+  PCM_PARAM_BUFFER_BYTES,
+  PCM_PARAM_TICK_TIME,
 };
 
 /* Mixer control types */
 enum mixer_ctl_type {
-    MIXER_CTL_TYPE_BOOL,
-    MIXER_CTL_TYPE_INT,
-    MIXER_CTL_TYPE_ENUM,
-    MIXER_CTL_TYPE_BYTE,
-    MIXER_CTL_TYPE_IEC958,
-    MIXER_CTL_TYPE_INT64,
-    MIXER_CTL_TYPE_UNKNOWN,
+  MIXER_CTL_TYPE_BOOL,
+  MIXER_CTL_TYPE_INT,
+  MIXER_CTL_TYPE_ENUM,
+  MIXER_CTL_TYPE_BYTE,
+  MIXER_CTL_TYPE_IEC958,
+  MIXER_CTL_TYPE_INT64,
+  MIXER_CTL_TYPE_UNKNOWN,
 
-    MIXER_CTL_TYPE_MAX,
+  MIXER_CTL_TYPE_MAX,
 };
 
 /* Open and close a stream */
-struct pcm *pcm_open(unsigned int card, unsigned int device,
-                     unsigned int flags, struct pcm_config *config);
+struct pcm *pcm_open(unsigned int card, unsigned int device, unsigned int flags,
+                     struct pcm_config *config);
 int pcm_close(struct pcm *pcm);
 int pcm_is_ready(struct pcm *pcm);
 
@@ -147,7 +147,7 @@ struct pcm_params *pcm_params_get(unsigned int card, unsigned int device,
 void pcm_params_free(struct pcm_params *pcm_params);
 
 struct pcm_mask *pcm_params_get_mask(struct pcm_params *pcm_params,
-        enum pcm_param param);
+                                     enum pcm_param param);
 unsigned int pcm_params_get_min(struct pcm_params *pcm_params,
                                 enum pcm_param param);
 unsigned int pcm_params_get_max(struct pcm_params *pcm_params,
@@ -173,8 +173,8 @@ unsigned int pcm_bytes_to_frames(struct pcm *pcm, unsigned int bytes);
  * otherwise the clock is CLOCK_REALTIME.
  * For an input stream, frames available are frames ready for the
  * application to read.
- * For an output stream, frames available are the number of empty frames available
- * for the application to write.
+ * For an output stream, frames available are the number of empty frames
+ * available for the application to write.
  */
 int pcm_get_htimestamp(struct pcm *pcm, unsigned int *avail,
                        struct timespec *tstamp);
@@ -203,7 +203,6 @@ int pcm_stop(struct pcm *pcm);
 
 /* Interrupt driven API */
 int pcm_wait(struct pcm *pcm, int timeout);
-
 
 /*
  * MIXER API
@@ -254,7 +253,7 @@ int mixer_ctl_get_range_min(struct mixer_ctl *ctl);
 int mixer_ctl_get_range_max(struct mixer_ctl *ctl);
 
 #if defined(__cplusplus)
-}  /* extern "C" */
+} /* extern "C" */
 #endif
 
 #endif

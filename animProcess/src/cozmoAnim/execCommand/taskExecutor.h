@@ -13,9 +13,7 @@
  *
  **/
 #ifndef __TaskExecutor_H__
-#define	__TaskExecutor_H__
-
-#include "ev++.h"
+#define __TaskExecutor_H__
 
 #include <chrono>
 #include <condition_variable>
@@ -23,35 +21,34 @@
 #include <thread>
 #include <vector>
 
-namespace Anki
-{
+#include "ev++.h"
+
+namespace Anki {
 
 typedef struct _TaskHolder {
   bool sync;
   std::function<void()> task;
   std::chrono::time_point<std::chrono::steady_clock> when;
 
-  bool operator < (const _TaskHolder& th) const
-  {
-    return (when > th.when);
-  }
+  bool operator<(const _TaskHolder& th) const { return (when > th.when); }
 } TaskHolder;
 
 class TaskExecutor {
-public:
-  TaskExecutor()
-      :TaskExecutor(nullptr) { }
+ public:
+  TaskExecutor() : TaskExecutor(nullptr) {}
   TaskExecutor(struct ev_loop* loop);
   ~TaskExecutor();
   void Wake(std::function<void()> task);
   void WakeSync(std::function<void()> task);
-  void WakeAfter(std::function<void()> task, std::chrono::time_point<std::chrono::steady_clock> when);
+  void WakeAfter(std::function<void()> task,
+                 std::chrono::time_point<std::chrono::steady_clock> when);
   void StopExecution();
-protected:
+
+ protected:
   TaskExecutor(const TaskExecutor&) = delete;
   TaskExecutor& operator=(const TaskExecutor&) = delete;
 
-private:
+ private:
   void AddTaskHolder(TaskHolder taskHolder);
   void AddTaskHolderToDeferredQueue(TaskHolder taskHolder);
   void InitWatchers();
@@ -64,7 +61,7 @@ private:
   void TimerWatcherCallback(ev::timer& w, int revents);
   void WakeUpBackgroundThread(const char c = 'x');
 
-private:
+ private:
   struct ev_loop* _loop;
   std::thread::id _loop_thread_id;
   int _pipeFileDescriptors[2];
@@ -82,6 +79,6 @@ private:
   bool _executing;
 };
 
-} // namespace Anki
+}  // namespace Anki
 
-#endif	/* __TaskExecutor_H__ */
+#endif /* __TaskExecutor_H__ */

@@ -11,27 +11,25 @@
  **/
 
 #include "exec_command.h"
-#include "util/threading/fork_and_exec.h"
-#include "taskExecutor.h"
 
 #include <sstream>
+
+#include "taskExecutor.h"
+#include "util/threading/fork_and_exec.h"
 
 namespace Anki {
 
 static TaskExecutor* sBackgroundTaskExecutor;
 static bool sBackgroundCommandsCancelled = false;
 
-int ExecCommand(const std::vector<std::string>& args)
-{
+int ExecCommand(const std::vector<std::string>& args) {
   int rc = ForkAndExec(args);
 
   return rc;
 }
 
 void ExecCommandInBackground(const std::vector<std::string>& args,
-                             ExecCommandCallback callback,
-                             long delayMillis)
-{
+                             ExecCommandCallback callback, long delayMillis) {
   sBackgroundCommandsCancelled = false;
   auto f = [args, callback]() {
     std::string output;
@@ -44,20 +42,21 @@ void ExecCommandInBackground(const std::vector<std::string>& args,
     sBackgroundTaskExecutor = new TaskExecutor();
   }
   if (delayMillis > 0L) {
-    auto when = std::chrono::steady_clock::now() + std::chrono::milliseconds(delayMillis);
+    auto when = std::chrono::steady_clock::now() +
+                std::chrono::milliseconds(delayMillis);
     sBackgroundTaskExecutor->WakeAfter(f, when);
   } else {
     sBackgroundTaskExecutor->Wake(f);
   }
 }
 
-void CancelBackgroundCommands()
-{
+void CancelBackgroundCommands() {
   sBackgroundCommandsCancelled = true;
   KillChildProcess();
   if (sBackgroundTaskExecutor) {
-    delete sBackgroundTaskExecutor; sBackgroundTaskExecutor = nullptr;
+    delete sBackgroundTaskExecutor;
+    sBackgroundTaskExecutor = nullptr;
   }
 }
 
-} // namespace Anki
+}  // namespace Anki

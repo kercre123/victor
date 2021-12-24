@@ -18,8 +18,8 @@
 #define GEMMLOWP_INTERNAL_PLATFORM_H_
 
 #ifdef _WIN32
-#include <windows.h>
 #include <malloc.h>
+#include <windows.h>
 #else
 #include <stdlib.h>
 #include <time.h>
@@ -31,8 +31,8 @@
 #endif
 
 #if defined ANDROID || defined __ANDROID__
-#include <malloc.h>
 #include <android/api-level.h>
+#include <malloc.h>
 // The 18 here should be 16, but has to be 18 for now due
 // to a Google-internal issue.
 #if __ANDROID_API__ < 18

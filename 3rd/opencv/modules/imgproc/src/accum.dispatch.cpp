@@ -1,11 +1,10 @@
- // This file is part of OpenCV project.
-// It is subject to the license terms in the LICENSE file found in the top-level directory
-// of this distribution and at http://opencv.org/license.html.
-
-#include "precomp.hpp"
+// This file is part of OpenCV project.
+// It is subject to the license terms in the LICENSE file found in the top-level
+// directory of this distribution and at http://opencv.org/license.html.
 
 #include "accum.simd.hpp"
-#include "accum.simd_declarations.hpp" // defines CV_CPU_DISPATCH_MODES_ALL=AVX2,...,BASELINE based on CMakeLists.txt content
+#include "accum.simd_declarations.hpp"  // defines CV_CPU_DISPATCH_MODES_ALL=AVX2,...,BASELINE based on CMakeLists.txt content
+#include "precomp.hpp"
 
 namespace cv {
 
@@ -17,4 +16,4 @@ DEF_ACC_FLT_FUNCS(32f, float, float)
 DEF_ACC_FLT_FUNCS(32f64f, float, double)
 DEF_ACC_FLT_FUNCS(64f, double, double)
 
-} //cv::hal
+}  // namespace cv

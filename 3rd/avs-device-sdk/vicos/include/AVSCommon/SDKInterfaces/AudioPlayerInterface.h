@@ -16,10 +16,10 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_AUDIOPLAYERINTERFACE_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_AUDIOPLAYERINTERFACE_H_
 
+#include <AVSCommon/SDKInterfaces/AudioPlayerObserverInterface.h>
+
 #include <chrono>
 #include <memory>
-
-#include <AVSCommon/SDKInterfaces/AudioPlayerObserverInterface.h>
 
 namespace alexaClientSDK {
 namespace avsCommon {
@@ -29,34 +29,40 @@ namespace sdkInterfaces {
  * This class provides an interface to the @c AudioPlayer.
  */
 class AudioPlayerInterface {
-public:
-    /**
-     * Destructor
-     */
-    virtual ~AudioPlayerInterface() = default;
+ public:
+  /**
+   * Destructor
+   */
+  virtual ~AudioPlayerInterface() = default;
 
-    /**
-     * This function adds an observer to @c AudioPlayer so that it will get notified for AudioPlayer state changes.
-     *
-     * @param observer The @c AudioPlayerObserverInterface
-     */
-    virtual void addObserver(std::shared_ptr<avsCommon::sdkInterfaces::AudioPlayerObserverInterface> observer) = 0;
+  /**
+   * This function adds an observer to @c AudioPlayer so that it will get
+   * notified for AudioPlayer state changes.
+   *
+   * @param observer The @c AudioPlayerObserverInterface
+   */
+  virtual void addObserver(
+      std::shared_ptr<avsCommon::sdkInterfaces::AudioPlayerObserverInterface>
+          observer) = 0;
 
-    /**
-     * This function removes an observer from @c AudioPlayer so that it will no longer be notified of
-     * AudioPlayer state changes.
-     *
-     * @param observer The @c AudioPlayerObserverInterface
-     */
-    virtual void removeObserver(std::shared_ptr<avsCommon::sdkInterfaces::AudioPlayerObserverInterface> observer) = 0;
+  /**
+   * This function removes an observer from @c AudioPlayer so that it will no
+   * longer be notified of AudioPlayer state changes.
+   *
+   * @param observer The @c AudioPlayerObserverInterface
+   */
+  virtual void removeObserver(
+      std::shared_ptr<avsCommon::sdkInterfaces::AudioPlayerObserverInterface>
+          observer) = 0;
 
-    /**
-     * This function retrieves the offset of the current AudioItem the @c AudioPlayer is handling.
-     * @note This function is blocking.
-     *
-     * @return This returns the offset in millisecond.
-     */
-    virtual std::chrono::milliseconds getAudioItemOffset() = 0;
+  /**
+   * This function retrieves the offset of the current AudioItem the @c
+   * AudioPlayer is handling.
+   * @note This function is blocking.
+   *
+   * @return This returns the offset in millisecond.
+   */
+  virtual std::chrono::milliseconds getAudioItemOffset() = 0;
 };
 
 }  // namespace sdkInterfaces

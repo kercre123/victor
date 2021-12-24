@@ -12,10 +12,8 @@
 #ifndef __DasGlobals_H__
 #define __DasGlobals_H__
 
-namespace Anki
-{
-namespace Das
-{
+namespace Anki {
+namespace Das {
 
 static constexpr const char* kMessageVersionGlobalKey = "$messv";
 static constexpr const char* kMessageVersionGlobalValue = "1";
@@ -37,8 +35,7 @@ static constexpr const char* kPlayerIdGlobalKey = "$player_id";
 static constexpr const char* kProfileIdGlobalKey = "$profile_id";
 static constexpr const char* kConnectedSessionIdGlobalKey = "$session_id";
 
+}  // namespace Das
+}  // namespace Anki
 
-} // namespace Das
-} // namespace Anki
-
-#endif // __DasGlobals_H__
+#endif  // __DasGlobals_H__

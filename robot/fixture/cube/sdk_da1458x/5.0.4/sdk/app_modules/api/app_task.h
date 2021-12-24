@@ -20,9 +20,9 @@
  * @ingroup APP
  * @brief Routes ALL messages to/from APP block.
  *
- * The APPTASK is the block responsible for bridging the final application with the
- * RWBLE software host stack. It communicates with the different modules of the BLE host,
- * i.e. @ref SMP, @ref GAP and @ref GATT.
+ * The APPTASK is the block responsible for bridging the final application with
+ *the RWBLE software host stack. It communicates with the different modules of
+ *the BLE host, i.e. @ref SMP, @ref GAP and @ref GATT.
  *
  * @{
  ****************************************************************************************
@@ -33,12 +33,13 @@
  ****************************************************************************************
  */
 
-#include "rwip_config.h"             // SW configuration
+#include "rwip_config.h"  // SW configuration
 
 #if (BLE_APP_PRESENT)
 
-#include "ke_msg.h"         // Kernel Message
-#include <stdint.h>         // Standard Integer
+#include <stdint.h>  // Standard Integer
+
+#include "ke_msg.h"  // Kernel Message
 
 /*
  * DEFINES
@@ -46,7 +47,7 @@
  */
 
 /// Number of APP Task Instances
-#define APP_IDX_MAX                 (1)
+#define APP_IDX_MAX (1)
 
 /*
  * ENUMERATIONS
@@ -54,27 +55,26 @@
  */
 
 /// States of APP task
-enum APP_STATE
-{
-    /// Disabled State
-    APP_DISABLED,
-    /// Database Initialization State
-    APP_DB_INIT,
-    /// Connectable state
-    APP_CONNECTABLE,
+enum APP_STATE {
+  /// Disabled State
+  APP_DISABLED,
+  /// Database Initialization State
+  APP_DB_INIT,
+  /// Connectable state
+  APP_CONNECTABLE,
 
-    /**
-     * CONNECTED STATES
-     */
-    /// Security state,
-    APP_SECURITY,
-    /// Connection Parameter Update State
-    APP_PARAM_UPD,
-    /// Connected state
-    APP_CONNECTED,
+  /**
+   * CONNECTED STATES
+   */
+  /// Security state,
+  APP_SECURITY,
+  /// Connection Parameter Update State
+  APP_PARAM_UPD,
+  /// Connected state
+  APP_CONNECTED,
 
-    /// Number of defined states.
-    APP_STATE_MAX
+  /// Number of defined states.
+  APP_STATE_MAX
 };
 
 /*
@@ -83,10 +83,9 @@ enum APP_STATE
  */
 
 /// Parameters of the @ref APP_MODULE_INIT_CMP_EVT message
-struct app_module_init_cmp_evt
-{
-    ///Status
-    uint8_t status;
+struct app_module_init_cmp_evt {
+  /// Status
+  uint8_t status;
 };
 
 /*
@@ -114,14 +113,12 @@ extern ke_state_t app_state[APP_IDX_MAX];
  * @return Returns if the message is handled by the process handler
  ****************************************************************************************
  */
-enum process_event_response app_gap_process_handler (ke_msg_id_t const msgid,
-                                                     void const *param,
-                                                     ke_task_id_t const dest_id,
-                                                     ke_task_id_t const src_id,
-                                                     enum ke_msg_status_tag *msg_ret);
+enum process_event_response app_gap_process_handler(
+    ke_msg_id_t const msgid, void const *param, ke_task_id_t const dest_id,
+    ke_task_id_t const src_id, enum ke_msg_status_tag *msg_ret);
 
 /// @} APPTASK
 
-#endif //(BLE_APP_PRESENT)
+#endif  //(BLE_APP_PRESENT)
 
-#endif // _APP_TASK_H_
+#endif  // _APP_TASK_H_

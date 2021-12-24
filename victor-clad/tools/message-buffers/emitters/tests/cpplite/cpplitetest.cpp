@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include "aligned-lite/CTest.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "aligned-lite/CTest.h"
+
 namespace AnkiTypes {}
 using namespace AnkiTypes;
 
-int test_Foo()
-{
+int test_Foo() {
   printf("Test Foo:\n");
   Foo foo1;
   foo1.isFoo = 0;
@@ -33,19 +33,19 @@ int test_Foo()
   foo1.myNormal = 0x0eadbeef;
   foo1.myFoo = AnkiEnum::d2;
   foo1.myVariable_length = 255;
-  //foo1.myString = "Blah Blah Blah";
+  // foo1.myString = "Blah Blah Blah";
 
   if (!foo1.IsValid()) {
     printf("INVALID MESSAGE\n");
     return 0;
   }
-  
-  if(foo1.Size() != 269) {
+
+  if (foo1.Size() != 269) {
     printf("FAIL Foo incorrect size\n");
     return 0;
   }
-  
-  if(foo1.MIN_SIZE != 14 || foo1.MAX_SIZE != 269) {
+
+  if (foo1.MIN_SIZE != 14 || foo1.MAX_SIZE != 269) {
     printf("FAIL Foo incorrect min or max size\n");
     return 0;
   }
@@ -59,23 +59,18 @@ int test_Foo()
     return 0;
   }
 
-  if (foo1.isFoo == foo2.isFoo &&
-      foo1.myByte == foo2.myByte &&
-      foo1.myShort == foo2.myShort &&
-      foo1.myFloat == foo2.myFloat &&
-      foo1.myNormal == foo2.myNormal &&
-      foo1.myFoo == foo2.myFoo) {
+  if (foo1.isFoo == foo2.isFoo && foo1.myByte == foo2.myByte &&
+      foo1.myShort == foo2.myShort && foo1.myFloat == foo2.myFloat &&
+      foo1.myNormal == foo2.myNormal && foo1.myFoo == foo2.myFoo) {
     printf("PASS foo1 == foo2\n");
     return 1;
-  }
-  else {
+  } else {
     printf("FAIL foo1 != foo2\n");
     return 0;
   }
 }
 
-int test_MyMessage()
-{
+int test_MyMessage() {
   printf("Test MyMessage:\n");
   MyMessage message;
   message.tag = MyMessage::Tag_foo;
@@ -90,12 +85,13 @@ int test_MyMessage()
     printf("INVALID MESSAGE 1\n");
     return 0;
   }
-  
+
   // MyMessage is a union where Bar is the largest member
   // Bar's max size is (8*1)+(2*1)+(2*3)+8+(8*3)+(4*1)+(2*20)+(257*2) = 606 +
   //    sizeof(generated member varuableBuff_length) = 608
-  // MyMessage has a generated Tag variable bringing its max size to 608 + 1 = 609
-  if(message.MIN_SIZE != 1 || message.MAX_SIZE != 609) {
+  // MyMessage has a generated Tag variable bringing its max size to 608 + 1 =
+  // 609
+  if (message.MIN_SIZE != 1 || message.MAX_SIZE != 609) {
     printf("FAIL MyMessage incorrect min or max size\n");
     return 0;
   }
@@ -114,22 +110,21 @@ int test_MyMessage()
       message.foo.myNormal == message2.foo.myNormal &&
       message.foo.myFoo == message2.foo.myFoo) {
     printf("PASS message.foo == message2.foo\n");
-  }
-  else {
+  } else {
     printf("FAIL message.foo != message2.foo\n");
     return 0;
   }
 
   Bar temp = {
-    { 1, 1, 0, 0, 1, 0, 1, 0 },
-    { 0, 1},
-    { 5, 6, 7 },
-    1000000000000000,
-    { 3.1415926535897932, -22.0e-123, 1.0 / 0.0 },
-    { AnkiEnum::d1, AnkiEnum::e1, AnkiEnum::d2, AnkiEnum::e2 },
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 },
-    1,
-    { 2 },
+      {1, 1, 0, 0, 1, 0, 1, 0},
+      {0, 1},
+      {5, 6, 7},
+      1000000000000000,
+      {3.1415926535897932, -22.0e-123, 1.0 / 0.0},
+      {AnkiEnum::d1, AnkiEnum::e1, AnkiEnum::d2, AnkiEnum::e2},
+      {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+      1,
+      {2},
   };
 
   message.tag = MyMessage::Tag_bar;
@@ -147,29 +142,31 @@ int test_MyMessage()
     return 0;
   }
 
-  if (memcmp(&message.bar.byteBuff, &message2.bar.byteBuff, sizeof(message.bar.byteBuff)) == 0 &&
-      memcmp(&message.bar.shortBuff, &message2.bar.shortBuff, sizeof(message.bar.shortBuff)) == 0 &&
-      memcmp(&message.bar.enumBuff, &message2.bar.enumBuff, sizeof(message.bar.enumBuff)) == 0 &&
-      memcmp(&message.bar.fixedBuff, &message2.bar.fixedBuff, sizeof(message.bar.fixedBuff)) == 0) {
+  if (memcmp(&message.bar.byteBuff, &message2.bar.byteBuff,
+             sizeof(message.bar.byteBuff)) == 0 &&
+      memcmp(&message.bar.shortBuff, &message2.bar.shortBuff,
+             sizeof(message.bar.shortBuff)) == 0 &&
+      memcmp(&message.bar.enumBuff, &message2.bar.enumBuff,
+             sizeof(message.bar.enumBuff)) == 0 &&
+      memcmp(&message.bar.fixedBuff, &message2.bar.fixedBuff,
+             sizeof(message.bar.fixedBuff)) == 0) {
     printf("PASS message.bar == message2.bar\n");
     return 1;
-  }
-  else {
+  } else {
     printf("FAIL message.foo != message2.foo\n");
     return 0;
   }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
   // fix warnings
   (void)argc;
   (void)argv;
 
-  if(!test_Foo()) {
+  if (!test_Foo()) {
     return 1;
   }
-  if(!test_MyMessage()) {
+  if (!test_MyMessage()) {
     return 3;
   }
   return 0;

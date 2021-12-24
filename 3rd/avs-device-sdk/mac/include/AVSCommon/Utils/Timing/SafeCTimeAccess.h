@@ -26,56 +26,60 @@ namespace utils {
 namespace timing {
 
 /**
- * This class allows access safe access to the multithreaded-unsafe time functions.  It is a singleton because there
- * needs to be a single lock that protects the time functions.  That single lock is contained within this class.
+ * This class allows access safe access to the multithreaded-unsafe time
+ * functions.  It is a singleton because there needs to be a single lock that
+ * protects the time functions.  That single lock is contained within this
+ * class.
  */
 class SafeCTimeAccess {
-public:
-    /**
-     * The method for accessing the singleton SafeCTimeAccess class.  It returns a shared_ptr so classes that depend on
-     * this class can keep it alive until they are destroyed.
-     *
-     * @return std::shared_ptr to the singleton SafeCTimeAccess object.
-     */
-    static std::shared_ptr<SafeCTimeAccess> instance();
+ public:
+  /**
+   * The method for accessing the singleton SafeCTimeAccess class.  It returns a
+   * shared_ptr so classes that depend on this class can keep it alive until
+   * they are destroyed.
+   *
+   * @return std::shared_ptr to the singleton SafeCTimeAccess object.
+   */
+  static std::shared_ptr<SafeCTimeAccess> instance();
 
-    /**
-     * Function to safely call std::gmtime.  std::gmtime uses a static internal data structure that is not thread-safe.
-     *
-     * @param time The time since epoch to convert.
-     * @param[out] time The output in calendar time, expressed in UTC time.
-     * @return true if successful, false otherwise.
-     */
-    bool getGmtime(const std::time_t& time, std::tm* calendarTime);
+  /**
+   * Function to safely call std::gmtime.  std::gmtime uses a static internal
+   * data structure that is not thread-safe.
+   *
+   * @param time The time since epoch to convert.
+   * @param[out] time The output in calendar time, expressed in UTC time.
+   * @return true if successful, false otherwise.
+   */
+  bool getGmtime(const std::time_t& time, std::tm* calendarTime);
 
-    /**
-     * Function to safely call std::localtime.  std::localtime uses a static internal data structure that is not
-     * thread-safe.
-     *
-     * @param time The time since epoch to convert.
-     * @param[out] time The output in calendar time, expressed in UTC time.
-     * @return true if successful, false otherwise.
-     */
-    bool getLocaltime(const std::time_t& time, std::tm* calendarTime);
+  /**
+   * Function to safely call std::localtime.  std::localtime uses a static
+   * internal data structure that is not thread-safe.
+   *
+   * @param time The time since epoch to convert.
+   * @param[out] time The output in calendar time, expressed in UTC time.
+   * @return true if successful, false otherwise.
+   */
+  bool getLocaltime(const std::time_t& time, std::tm* calendarTime);
 
-private:
-    SafeCTimeAccess() = default;
+ private:
+  SafeCTimeAccess() = default;
 
-    /**
-     * Helper function to eliminate duplicate code, because getGmtime and getLocaltime are almost identical.
-     *
-     * @param timeAccessFunction One of two funtions (std::gmtime and std::localtime) that need to be safely accessed.
-     * @param time The time since epoch to convert.
-     * @param[out] time The output in calendar time, expressed in UTC time.
-     * @return true if successful, false otherwise.
-     */
-    bool safeAccess(
-        std::tm* (*timeAccessFunction)(const std::time_t* time),
-        const std::time_t& time,
-        std::tm* calendarTime);
+  /**
+   * Helper function to eliminate duplicate code, because getGmtime and
+   * getLocaltime are almost identical.
+   *
+   * @param timeAccessFunction One of two funtions (std::gmtime and
+   * std::localtime) that need to be safely accessed.
+   * @param time The time since epoch to convert.
+   * @param[out] time The output in calendar time, expressed in UTC time.
+   * @return true if successful, false otherwise.
+   */
+  bool safeAccess(std::tm* (*timeAccessFunction)(const std::time_t* time),
+                  const std::time_t& time, std::tm* calendarTime);
 
-    /// Mutex used to protect access to the ctime functions.
-    std::mutex m_timeLock;
+  /// Mutex used to protect access to the ctime functions.
+  std::mutex m_timeLock;
 };
 
 }  // namespace timing

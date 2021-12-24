@@ -13,32 +13,34 @@
 #ifndef __Cozmo_Basestation_MessageHelpers_H__
 #define __Cozmo_Basestation_MessageHelpers_H__
 
+#include <string>
+
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
-#include <string>
 
 namespace Anki {
 namespace Vector {
 
-inline const char* MessageTagToString(const ExternalInterface::MessageEngineToGameTag& tag)
-{
+inline const char* MessageTagToString(
+    const ExternalInterface::MessageEngineToGameTag& tag) {
   return MessageEngineToGameTagToString(tag);
 }
 
-inline const char* MessageTagToString(const ExternalInterface::MessageGameToEngineTag& tag)
-{
+inline const char* MessageTagToString(
+    const ExternalInterface::MessageGameToEngineTag& tag) {
   return MessageGameToEngineTagToString(tag);
 }
 
-inline const char* MessageTagToString(const RobotInterface::RobotToEngineTag& tag)
-{
+inline const char* MessageTagToString(
+    const RobotInterface::RobotToEngineTag& tag) {
   return RobotToEngineTagToString(tag);
 }
-  
-ExternalInterface::MessageEngineToGameTag GetEToGMessageTypeFromString(const char* inString);
 
-}
-}
+ExternalInterface::MessageEngineToGameTag GetEToGMessageTypeFromString(
+    const char* inString);
+
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

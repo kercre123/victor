@@ -16,11 +16,10 @@
 #ifndef ALEXA_CLIENT_SDK_STORAGE_SQLITESTORAGE_INCLUDE_SQLITESTORAGE_SQLITEUTILS_H_
 #define ALEXA_CLIENT_SDK_STORAGE_SQLITESTORAGE_INCLUDE_SQLITESTORAGE_SQLITEUTILS_H_
 
-#include <string>
-
+#include <SQLiteStorage/SQLiteDatabase.h>
 #include <sqlite3.h>
 
-#include <SQLiteStorage/SQLiteDatabase.h>
+#include <string>
 
 namespace alexaClientSDK {
 namespace storage {
@@ -31,16 +30,19 @@ namespace sqliteStorage {
  * If a file at the given path already exists, this function will fail.
  *
  * @param filePath The location where the database should be created.
- * @return A pointer to the created sqlite database.  If it could not be created, @c nullptr is returned.
+ * @return A pointer to the created sqlite database.  If it could not be
+ * created, @c nullptr is returned.
  */
 sqlite3* createSQLiteDatabase(const std::string& filePath);
 
 /**
- * Opens a SQLite database that will be stored at the given (already existing) filePath.
- * If the database file does not already exist at the given filePath, this function will fail.
+ * Opens a SQLite database that will be stored at the given (already existing)
+ * filePath. If the database file does not already exist at the given filePath,
+ * this function will fail.
  *
  * @param filePath The location of the database file to be opened.
- * @return A pointer to the opened sqlite database.  If it could not be opened, @c nullptr is returned.
+ * @return A pointer to the opened sqlite database.  If it could not be opened,
+ * @c nullptr is returned.
  */
 sqlite3* openSQLiteDatabase(const std::string& filePath);
 
@@ -53,11 +55,13 @@ sqlite3* openSQLiteDatabase(const std::string& filePath);
 bool closeSQLiteDatabase(sqlite3* dbHandle);
 
 /**
- * Performs a SQL query, and does not inspect any result.  This is an appropriate function to call for simple queries,
- * which do not require bound parameters, such as when creating tables in a database.
+ * Performs a SQL query, and does not inspect any result.  This is an
+ * appropriate function to call for simple queries, which do not require bound
+ * parameters, such as when creating tables in a database.
  *
  * @param dbHandle A SQLite handle to an open database.
- * @param sqlString The SQL string which contains the full query to be performed.
+ * @param sqlString The SQL string which contains the full query to be
+ * performed.
  * @return Whether the query was successfully performed.
  */
 bool performQuery(sqlite3* dbHandle, const std::string& sqlString);
@@ -67,14 +71,17 @@ bool performQuery(sqlite3* dbHandle, const std::string& sqlString);
  *
  * @param db A SQLite database object.
  * @param tableName The name of the table to be queried.
- * @param[out] numberRows Where the number of rows will be stored on a successful lookup.
+ * @param[out] numberRows Where the number of rows will be stored on a
+ * successful lookup.
  * @return Whether the lookup was successful or not.
  */
-bool getNumberTableRows(SQLiteDatabase* db, const std::string& tableName, int* numberRows);
+bool getNumberTableRows(SQLiteDatabase* db, const std::string& tableName,
+                        int* numberRows);
 
 /**
- * Queries a specified column in a SQLite table, and identifies the highest value across all rows.
- * This function requires that the table and column exists, and that the column is of integer type.
+ * Queries a specified column in a SQLite table, and identifies the highest
+ * value across all rows. This function requires that the table and column
+ * exists, and that the column is of integer type.
  *
  * @param db A SQLite database object.
  * @param tableName The name of the table to be queried.
@@ -82,7 +89,8 @@ bool getNumberTableRows(SQLiteDatabase* db, const std::string& tableName, int* n
  * @param[out] maxId Where the maximum id will be stored on a successful lookup.
  * @return Whether the lookup was successful or not.
  */
-bool getTableMaxIntValue(SQLiteDatabase* db, const std::string& tableName, const std::string& columnName, int* maxId);
+bool getTableMaxIntValue(SQLiteDatabase* db, const std::string& tableName,
+                         const std::string& columnName, int* maxId);
 
 /**
  * Queries if a table exists within a given open database.
@@ -104,8 +112,9 @@ bool clearTable(sqlite3* dbHandle, const std::string& tableName);
 
 /**
  * Drops a table from the database.
- * Important note - per SQL mechanics, this single command will erase all records that may be stored in the
- * table being dropped.  This action cannot be undone.
+ * Important note - per SQL mechanics, this single command will erase all
+ * records that may be stored in the table being dropped.  This action cannot be
+ * undone.
  *
  * @param dbHandle A SQLite handle to an open database.
  * @param tableName The name of the table to be dropped.

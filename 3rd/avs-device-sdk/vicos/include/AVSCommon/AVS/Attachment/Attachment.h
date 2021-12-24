@@ -35,66 +35,70 @@ namespace attachment {
  * A class that represents an AVS attachment.
  */
 class Attachment {
-public:
-    /**
-     * Constructor.
-     *
-     * @param attachmentId The id for this attachment.
-     */
-    Attachment(const std::string& attachmentId);
+ public:
+  /**
+   * Constructor.
+   *
+   * @param attachmentId The id for this attachment.
+   */
+  Attachment(const std::string& attachmentId);
 
-    /**
-     * Destructor.
-     */
-    virtual ~Attachment() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~Attachment() = default;
 
-    /**
-     * Creates a writer object, with which the Attachment may be written to.
-     *
-     * @return a @unique_ptr to an AttachmentWriter.
-     */
+  /**
+   * Creates a writer object, with which the Attachment may be written to.
+   *
+   * @return a @unique_ptr to an AttachmentWriter.
+   */
 
-    virtual std::unique_ptr<AttachmentWriter> createWriter(
-        utils::sds::WriterPolicy policy = utils::sds::WriterPolicy::ALL_OR_NOTHING) = 0;
+  virtual std::unique_ptr<AttachmentWriter> createWriter(
+      utils::sds::WriterPolicy policy =
+          utils::sds::WriterPolicy::ALL_OR_NOTHING) = 0;
 
-    /**
-     * Creates a reader object, with which the Attachment may be read from.
-     *
-     * @param The policy used to configure the reader.
-     * @return a @unique_ptr to an AttachmentReader.
-     * */
-    virtual std::unique_ptr<AttachmentReader> createReader(utils::sds::ReaderPolicy policy) = 0;
+  /**
+   * Creates a reader object, with which the Attachment may be read from.
+   *
+   * @param The policy used to configure the reader.
+   * @return a @unique_ptr to an AttachmentReader.
+   * */
+  virtual std::unique_ptr<AttachmentReader> createReader(
+      utils::sds::ReaderPolicy policy) = 0;
 
-    /**
-     * An accessor to get the attachmentId.
-     *
-     * @return The attachment Id.
-     */
-    std::string getId() const;
+  /**
+   * An accessor to get the attachmentId.
+   *
+   * @return The attachment Id.
+   */
+  std::string getId() const;
 
-    /**
-     * Utility function to tell if a reader has been created for this object.
-     *
-     * @return Whether a reader has been created for this object.
-     */
-    bool hasCreatedReader();
+  /**
+   * Utility function to tell if a reader has been created for this object.
+   *
+   * @return Whether a reader has been created for this object.
+   */
+  bool hasCreatedReader();
 
-    /**
-     * Utility function to tell if a writer has been created for this object.
-     *
-     * @return Whether a writer has been created for this object.
-     */
-    bool hasCreatedWriter();
+  /**
+   * Utility function to tell if a writer has been created for this object.
+   *
+   * @return Whether a writer has been created for this object.
+   */
+  bool hasCreatedWriter();
 
-protected:
-    /// The id for this attachment object.
-    const std::string m_id;
-    /// mutex to protext access to the createReader and createWriter API.
-    std::mutex m_mutex;
-    /// An atomic tracking variable to tell whether this object has created a writer.
-    std::atomic<bool> m_hasCreatedWriter;
-    /// An atomic tracking variable to tell whether this object has created a reader.
-    std::atomic<bool> m_hasCreatedReader;
+ protected:
+  /// The id for this attachment object.
+  const std::string m_id;
+  /// mutex to protext access to the createReader and createWriter API.
+  std::mutex m_mutex;
+  /// An atomic tracking variable to tell whether this object has created a
+  /// writer.
+  std::atomic<bool> m_hasCreatedWriter;
+  /// An atomic tracking variable to tell whether this object has created a
+  /// reader.
+  std::atomic<bool> m_hasCreatedReader;
 };
 
 }  // namespace attachment

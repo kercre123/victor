@@ -24,46 +24,52 @@ namespace registrationManager {
 class CustomerDataManager;
 
 /**
- * Abstract base class which requires the derived class to implement a @c clearData() function.
+ * Abstract base class which requires the derived class to implement a @c
+ * clearData() function.
  *
- * For changes in the device registration, it is extremely important to remove any customer data saved in the device.
- * Classes that have any data related to the currently logged user must extend this class to guarantee that their data
+ * For changes in the device registration, it is extremely important to remove
+ * any customer data saved in the device. Classes that have any data related to
+ * the currently logged user must extend this class to guarantee that their data
  * will be wiped out during logout.
  */
 class CustomerDataHandler {
-public:
-    /**
-     * Build and register the new object with the CustomerDataManager.
-     *
-     * @param customerDataManager The CustomerDataManager that will keep track of the new data handler.
-     * @note The customerDataManager must have a valid pointer to a manager instance.
-     */
-    CustomerDataHandler(std::shared_ptr<CustomerDataManager> customerDataManager);
+ public:
+  /**
+   * Build and register the new object with the CustomerDataManager.
+   *
+   * @param customerDataManager The CustomerDataManager that will keep track of
+   * the new data handler.
+   * @note The customerDataManager must have a valid pointer to a manager
+   * instance.
+   */
+  CustomerDataHandler(std::shared_ptr<CustomerDataManager> customerDataManager);
 
-    /**
-     * CustomerDataHandler destructor.
-     *
-     * Deregister the handler with the CustomerDataManager.
-     */
-    virtual ~CustomerDataHandler();
+  /**
+   * CustomerDataHandler destructor.
+   *
+   * Deregister the handler with the CustomerDataManager.
+   */
+  virtual ~CustomerDataHandler();
 
-    /**
-     * Reset any internal state that may be associated with a particular user.
-     *
-     * @warning Object must succeed in deleting any customer data.
-     * @warning This method is called while CustomerDataManager is in a locked state. Do not call or wait for any
-     * CustomerDataManager operation.
-     */
-    virtual void clearData() = 0;
+  /**
+   * Reset any internal state that may be associated with a particular user.
+   *
+   * @warning Object must succeed in deleting any customer data.
+   * @warning This method is called while CustomerDataManager is in a locked
+   * state. Do not call or wait for any CustomerDataManager operation.
+   */
+  virtual void clearData() = 0;
 
-private:
-    /**
-     * Keep a constant pointer to CustomerDataManager so that the CustomerDataHandler object can auto remove itself.
-     *
-     * @note The goal is to guarantee that all customerDataHandlers are properly managed. The trade-off is that we have
-     * to keep a shared_pointer to its manager and the manager has to keep a raw pointer to each handler.
-     */
-    const std::shared_ptr<CustomerDataManager> m_dataManager;
+ private:
+  /**
+   * Keep a constant pointer to CustomerDataManager so that the
+   * CustomerDataHandler object can auto remove itself.
+   *
+   * @note The goal is to guarantee that all customerDataHandlers are properly
+   * managed. The trade-off is that we have to keep a shared_pointer to its
+   * manager and the manager has to keep a raw pointer to each handler.
+   */
+  const std::shared_ptr<CustomerDataManager> m_dataManager;
 };
 
 }  // namespace registrationManager

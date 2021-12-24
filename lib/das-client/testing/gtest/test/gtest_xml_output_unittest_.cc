@@ -41,29 +41,24 @@
 #include "gtest/gtest.h"
 
 using ::testing::InitGoogleTest;
+using ::testing::Test;
 using ::testing::TestEventListeners;
 using ::testing::TestWithParam;
 using ::testing::UnitTest;
-using ::testing::Test;
 using ::testing::Values;
 
-class SuccessfulTest : public Test {
-};
+class SuccessfulTest : public Test {};
 
 TEST_F(SuccessfulTest, Succeeds) {
   SUCCEED() << "This is a success.";
   ASSERT_EQ(1, 1);
 }
 
-class FailedTest : public Test {
-};
+class FailedTest : public Test {};
 
-TEST_F(FailedTest, Fails) {
-  ASSERT_EQ(1, 2);
-}
+TEST_F(FailedTest, Fails) { ASSERT_EQ(1, 2); }
 
-class DisabledTest : public Test {
-};
+class DisabledTest : public Test {};
 
 TEST_F(DisabledTest, DISABLED_test_not_run) {
   FAIL() << "Unexpected failure: Disabled test should not be run";
@@ -100,9 +95,7 @@ class PropertyRecordingTest : public Test {
   static void TearDownTestCase() { RecordProperty("TearDownTestCase", "aye"); }
 };
 
-TEST_F(PropertyRecordingTest, OneProperty) {
-  RecordProperty("key_1", "1");
-}
+TEST_F(PropertyRecordingTest, OneProperty) { RecordProperty("key_1", "1"); }
 
 TEST_F(PropertyRecordingTest, IntValuedProperty) {
   RecordProperty("key_int", 1);
@@ -119,9 +112,7 @@ TEST_F(PropertyRecordingTest, TwoValuesForOneKeyUsesLastValue) {
   RecordProperty("key_1", "2");
 }
 
-TEST(NoFixtureTest, RecordProperty) {
-  RecordProperty("key", "1");
-}
+TEST(NoFixtureTest, RecordProperty) { RecordProperty("key", "1"); }
 
 void ExternalUtilityThatCallsRecordProperty(const std::string& key, int value) {
   testing::Test::RecordProperty(key, value);
@@ -150,7 +141,8 @@ INSTANTIATE_TEST_CASE_P(Single, ValueParamTest, Values(33, 42));
 #if GTEST_HAS_TYPED_TEST
 // Verifies that the type parameter name is output in the 'type_param'
 // XML attribute for typed tests.
-template <typename T> class TypedTest : public Test {};
+template <typename T>
+class TypedTest : public Test {};
 typedef testing::Types<int, long> TypedTestTypes;
 TYPED_TEST_CASE(TypedTest, TypedTestTypes);
 TYPED_TEST(TypedTest, HasTypeParamAttribute) {}
@@ -159,13 +151,13 @@ TYPED_TEST(TypedTest, HasTypeParamAttribute) {}
 #if GTEST_HAS_TYPED_TEST_P
 // Verifies that the type parameter name is output in the 'type_param'
 // XML attribute for type-parameterized tests.
-template <typename T> class TypeParameterizedTestCase : public Test {};
+template <typename T>
+class TypeParameterizedTestCase : public Test {};
 TYPED_TEST_CASE_P(TypeParameterizedTestCase);
 TYPED_TEST_P(TypeParameterizedTestCase, HasTypeParamAttribute) {}
 REGISTER_TYPED_TEST_CASE_P(TypeParameterizedTestCase, HasTypeParamAttribute);
 typedef testing::Types<int, long> TypeParameterizedTestCaseTypes;
-INSTANTIATE_TYPED_TEST_CASE_P(Single,
-                              TypeParameterizedTestCase,
+INSTANTIATE_TYPED_TEST_CASE_P(Single, TypeParameterizedTestCase,
                               TypeParameterizedTestCaseTypes);
 #endif
 

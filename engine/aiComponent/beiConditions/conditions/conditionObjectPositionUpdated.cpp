@@ -1,21 +1,20 @@
 /**
-* File: ConditionObjectPositionUpdated.h
-*
-* Author: Matt Michini - Kevin M. Karol
-* Created: 2017/01/11  - 7/5/17
-*
-* Description: Strategy for responding to an object that's moved sufficiently far
-* in block world
-*
-* Copyright: Anki, Inc. 2017
-*
-*
-**/
+ * File: ConditionObjectPositionUpdated.h
+ *
+ * Author: Matt Michini - Kevin M. Karol
+ * Created: 2017/01/11  - 7/5/17
+ *
+ * Description: Strategy for responding to an object that's moved sufficiently
+ *far in block world
+ *
+ * Copyright: Anki, Inc. 2017
+ *
+ *
+ **/
 
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectPositionUpdated.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
-
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
@@ -24,285 +23,287 @@
 #include "engine/components/dockingComponent.h"
 #include "engine/cozmoContext.h"
 
-
 namespace Anki {
 namespace Vector {
 
-namespace{
+namespace {
 const bool kDebugAcknowledgements = false;
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionObjectPositionUpdated::ConditionObjectPositionUpdated(const Json::Value& config)
-: IBEICondition(config)
-{
-}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionObjectPositionUpdated::~ConditionObjectPositionUpdated()
-{
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+ConditionObjectPositionUpdated::ConditionObjectPositionUpdated(
+    const Json::Value& config)
+    : IBEICondition(config) {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionObjectPositionUpdated::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  _messageHelper.reset(new BEIConditionMessageHelper(this, behaviorExternalInterface));
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+ConditionObjectPositionUpdated::~ConditionObjectPositionUpdated() {}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void ConditionObjectPositionUpdated::InitInternal(
+    BehaviorExternalInterface& behaviorExternalInterface) {
+  _messageHelper.reset(
+      new BEIConditionMessageHelper(this, behaviorExternalInterface));
   _messageHelper->SubscribeToTags({
-    EngineToGameTag::RobotObservedObject,
+      EngineToGameTag::RobotObservedObject,
   });
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionObjectPositionUpdated::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool ConditionObjectPositionUpdated::AreConditionsMetInternal(
+    BehaviorExternalInterface& behaviorExternalInterface) const {
   // add a check for offTreadsState?
   return HasDesiredReactionTargets(behaviorExternalInterface);
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionObjectPositionUpdated::HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) 
-{
-  switch(event.GetData().GetTag())
-  {
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void ConditionObjectPositionUpdated::HandleEvent(
+    const EngineToGameEvent& event,
+    BehaviorExternalInterface& behaviorExternalInterface) {
+  switch (event.GetData().GetTag()) {
     case EngineToGameTag::RobotObservedObject: {
-      HandleObjectObserved(behaviorExternalInterface, event.GetData().Get_RobotObservedObject());
+      HandleObjectObserved(behaviorExternalInterface,
+                           event.GetData().Get_RobotObservedObject());
       break;
     }
-    
-    case EngineToGameTag::RobotDelocalized:
-    {
-      // this is passed through from the parent class - it's valid to be receiving this
-      // we just currently don't use it for anything.  Case exists so we don't print errors.
+
+    case EngineToGameTag::RobotDelocalized: {
+      // this is passed through from the parent class - it's valid to be
+      // receiving this we just currently don't use it for anything.  Case
+      // exists so we don't print errors.
       break;
     }
-    
+
     default:
-    PRINT_NAMED_ERROR("BehaviorAcknowledgeObject.HandleWhileNotRunning.InvalidTag",
-                      "Received event with unhandled tag %hhu.",
-                      event.GetData().GetTag());
-    break;
+      PRINT_NAMED_ERROR(
+          "BehaviorAcknowledgeObject.HandleWhileNotRunning.InvalidTag",
+          "Received event with unhandled tag %hhu.", event.GetData().GetTag());
+      break;
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionObjectPositionUpdated::HandleObjectObserved(BehaviorExternalInterface& behaviorExternalInterface,
-  const ExternalInterface::RobotObservedObject& msg)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void ConditionObjectPositionUpdated::HandleObjectObserved(
+    BehaviorExternalInterface& behaviorExternalInterface,
+    const ExternalInterface::RobotObservedObject& msg) {
   // Only care about light cubes (see VIC-13208)
   if (!IsValidLightCube(msg.objectType, false)) {
     return;
   }
 
   const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
-  // check if we want to react based on pose and cooldown, and also update position data even if we don't
-  // react
-  Pose3d obsPose( msg.pose, robotInfo.GetPoseOriginList() );
+  // check if we want to react based on pose and cooldown, and also update
+  // position data even if we don't react
+  Pose3d obsPose(msg.pose, robotInfo.GetPoseOriginList());
 
   // ignore cubes we are carrying or docking to (don't react to them)
-  if(msg.objectID == robotInfo.GetCarryingComponent().GetCarryingObjectID() ||
-     msg.objectID == robotInfo.GetDockingComponent().GetDockObject())
-  {
+  if (msg.objectID == robotInfo.GetCarryingComponent().GetCarryingObjectID() ||
+      msg.objectID == robotInfo.GetDockingComponent().GetDockObject()) {
     const bool considerReaction = false;
-    HandleNewObservation(msg.objectID, obsPose, msg.timestamp, considerReaction);
-  }
-  else {
+    HandleNewObservation(msg.objectID, obsPose, msg.timestamp,
+                         considerReaction);
+  } else {
     HandleNewObservation(msg.objectID, obsPose, msg.timestamp);
   }
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionObjectPositionUpdated::AddReactionData(s32 idToAdd, ReactionData &&data)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void ConditionObjectPositionUpdated::AddReactionData(s32 idToAdd,
+                                                     ReactionData&& data) {
   _reactionData[idToAdd] = std::move(data);
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionObjectPositionUpdated::RemoveReactionData(s32 idToRemove)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool ConditionObjectPositionUpdated::RemoveReactionData(s32 idToRemove) {
   const size_t N = _reactionData.erase(idToRemove);
   const bool idRemoved = (N > 0);
   return idRemoved;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionObjectPositionUpdated::ReactionData::FakeReaction()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void ConditionObjectPositionUpdated::ReactionData::FakeReaction() {
   lastReactionPose = lastPose;
   lastReactionTime_ms = lastSeenTime_ms;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionObjectPositionUpdated::HandleNewObservation(s32 id,
-                                                         const Pose3d& pose,
-                                                         RobotTimeStamp_t timestamp,
-                                                         bool reactionEnabled)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void ConditionObjectPositionUpdated::HandleNewObservation(
+    s32 id, const Pose3d& pose, RobotTimeStamp_t timestamp,
+    bool reactionEnabled) {
   const auto reactionIt = _reactionData.find(id);
-  
-  if( reactionIt == _reactionData.end() ) {
+
+  if (reactionIt == _reactionData.end()) {
     ReactionData reaction{
-      .lastPose            = pose,
-      .lastSeenTime_ms     = timestamp,
-      .lastReactionTime_ms = 0,
+        .lastPose = pose,
+        .lastSeenTime_ms = timestamp,
+        .lastReactionTime_ms = 0,
     };
 
-    // if the reactionary behavior is disabled, that means we don't want to react, so fake it to look like we
-    // just reacted
-    if( ! reactionEnabled ) {
+    // if the reactionary behavior is disabled, that means we don't want to
+    // react, so fake it to look like we just reacted
+    if (!reactionEnabled) {
       reaction.FakeReaction();
     }
 
-    if( kDebugAcknowledgements ) {
-      PRINT_CH_INFO("ReactionTriggers", ("ConditionObjectPositionUpdated.AddNewID"),
-                    "%d seen for the first time at (%f, %f, %f) @time %dms reactionEnabled=%d",
-                    id,
-                    pose.GetTranslation().x(),
-                    pose.GetTranslation().y(),
-                    pose.GetTranslation().z(),
-                    (TimeStamp_t)timestamp,
+    if (kDebugAcknowledgements) {
+      PRINT_CH_INFO("ReactionTriggers",
+                    ("ConditionObjectPositionUpdated.AddNewID"),
+                    "%d seen for the first time at (%f, %f, %f) @time %dms "
+                    "reactionEnabled=%d",
+                    id, pose.GetTranslation().x(), pose.GetTranslation().y(),
+                    pose.GetTranslation().z(), (TimeStamp_t)timestamp,
                     reactionEnabled ? 1 : 0);
     }
-    
+
     AddReactionData(id, std::move(reaction));
-  }
-  else {
+  } else {
     reactionIt->second.lastPose = pose;
     reactionIt->second.lastSeenTime_ms = timestamp;
 
-    if( ! reactionEnabled ) {
-      // same as above, fake reacting it now, so it won't try to react once we re-enable
+    if (!reactionEnabled) {
+      // same as above, fake reacting it now, so it won't try to react once we
+      // re-enable
       reactionIt->second.FakeReaction();
     }
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool ConditionObjectPositionUpdated::ShouldReactToTarget_poseHelper(
+    const Pose3d& thisPose, const Pose3d& otherPose) const {
+  // TODO:(bn) ideally pose should have an IsSameAs function which can return
+  // "yes", "no", or "don't know" / "wrong frame"
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionObjectPositionUpdated::ShouldReactToTarget_poseHelper(const Pose3d& thisPose,
-                                                                   const Pose3d& otherPose) const
-{
-  // TODO:(bn) ideally pose should have an IsSameAs function which can return "yes", "no", or
-  // "don't know" / "wrong frame"
-  
   Pose3d otherPoseWrtThis;
-  if( ! otherPose.GetWithRespectTo(thisPose, otherPoseWrtThis) ) {
-    // poses aren't in the same frame, so don't react (assume we moved, not the cube)
+  if (!otherPose.GetWithRespectTo(thisPose, otherPoseWrtThis)) {
+    // poses aren't in the same frame, so don't react (assume we moved, not the
+    // cube)
     return false;
   }
-  
+
   float distThreshold = _params.samePoseDistThreshold_mm;
-  
-  const bool thisPoseIsSame = thisPose.IsSameAs(otherPoseWrtThis,
-                                                distThreshold,
-                                                _params.samePoseAngleThreshold_rad);
-  
+
+  const bool thisPoseIsSame = thisPose.IsSameAs(
+      otherPoseWrtThis, distThreshold, _params.samePoseAngleThreshold_rad);
+
   // we want to react if the pose is not the same
   return !thisPoseIsSame;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionObjectPositionUpdated::ShouldReactToTarget(BehaviorExternalInterface& behaviorExternalInterface,
-                                                            const ReactionDataMap::value_type& reactionPair,
-                                                            bool matchAnyPose) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool ConditionObjectPositionUpdated::ShouldReactToTarget(
+    BehaviorExternalInterface& behaviorExternalInterface,
+    const ReactionDataMap::value_type& reactionPair, bool matchAnyPose) const {
   // we should react unless we find a reason not to
   bool shouldReact = true;
-  
-  if( matchAnyPose ) {
-    
-    if( kDebugAcknowledgements ) {
-      reactionPair.second.lastPose.Print("Behaviors", ("ConditionObjectPositionUpdated.lastPose"));
+
+  if (matchAnyPose) {
+    if (kDebugAcknowledgements) {
+      reactionPair.second.lastPose.Print(
+          "Behaviors", ("ConditionObjectPositionUpdated.lastPose"));
     }
-    
+
     // in this case, we need to check all poses regardless of ID
-    for( const auto& otherPair : _reactionData ) {
-      
-      if( otherPair.second.lastReactionTime_ms == 0 ) {
-        // don't match against something we've never reacted to (could be a brand new observation)
-        if( kDebugAcknowledgements ) {
-          PRINT_CH_INFO("ReactionTriggers", ("ConditionObjectPositionUpdated.CheckAnyPose.Skip"),
+    for (const auto& otherPair : _reactionData) {
+      if (otherPair.second.lastReactionTime_ms == 0) {
+        // don't match against something we've never reacted to (could be a
+        // brand new observation)
+        if (kDebugAcknowledgements) {
+          PRINT_CH_INFO("ReactionTriggers",
+                        ("ConditionObjectPositionUpdated.CheckAnyPose.Skip"),
                         "%3d vs %3d: skip because haven't reacted",
-                        reactionPair.first,
-                        otherPair.first);
+                        reactionPair.first, otherPair.first);
         }
-        
+
         continue;
       }
-      
+
       // if any single pose says we don't need to react, then don't react
-      const bool shouldReactToOther = ShouldReactToTarget_poseHelper(reactionPair.second.lastPose,
-                                                                     otherPair.second.lastReactionPose);
-      
-      if( kDebugAcknowledgements ) {
-        PRINT_CH_INFO("ReactionTriggers", ("ConditionObjectPositionUpdated.CheckAnyPose"),
-                      "%3d vs %3d: shouldReactToOther?%d ",
-                      reactionPair.first,
-                      otherPair.first,
-                      shouldReactToOther ? 1 : 0);
-        
-        otherPair.second.lastReactionPose.Print("Behaviors", ("ConditionObjectPositionUpdated.other.lastReaction"));
+      const bool shouldReactToOther = ShouldReactToTarget_poseHelper(
+          reactionPair.second.lastPose, otherPair.second.lastReactionPose);
+
+      if (kDebugAcknowledgements) {
+        PRINT_CH_INFO("ReactionTriggers",
+                      ("ConditionObjectPositionUpdated.CheckAnyPose"),
+                      "%3d vs %3d: shouldReactToOther?%d ", reactionPair.first,
+                      otherPair.first, shouldReactToOther ? 1 : 0);
+
+        otherPair.second.lastReactionPose.Print(
+            "Behaviors", ("ConditionObjectPositionUpdated.other.lastReaction"));
       }
-      
-      if( !shouldReactToOther ) {
+
+      if (!shouldReactToOther) {
         shouldReact = false;
         break;
       }
     }
-  }
-  else {
-    
-    const bool hasEverReactedToThisId = reactionPair.second.lastReactionTime_ms > 0;
-    
-    // if we have reacted, then check if we want to react again based on the last pose and time we reacted.
-    if( hasEverReactedToThisId ) {
+  } else {
+    const bool hasEverReactedToThisId =
+        reactionPair.second.lastReactionTime_ms > 0;
+
+    // if we have reacted, then check if we want to react again based on the
+    // last pose and time we reacted.
+    if (hasEverReactedToThisId) {
       const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
       const RobotTimeStamp_t currTimestamp = robotInfo.GetLastImageTimeStamp();
-      const bool isCooldownOver = currTimestamp - reactionPair.second.lastReactionTime_ms > _params.coolDownDuration_ms;
-      
-      const bool shouldReactToPose = ShouldReactToTarget_poseHelper(reactionPair.second.lastPose,
-                                                                    reactionPair.second.lastReactionPose);
+      const bool isCooldownOver =
+          currTimestamp - reactionPair.second.lastReactionTime_ms >
+          _params.coolDownDuration_ms;
+
+      const bool shouldReactToPose = ShouldReactToTarget_poseHelper(
+          reactionPair.second.lastPose, reactionPair.second.lastReactionPose);
       shouldReact = isCooldownOver || shouldReactToPose;
-      
-      if( kDebugAcknowledgements ) {
-        PRINT_CH_INFO("ReactionTriggers", ("ConditionObjectPositionUpdated.SingleReaction"),
-                      "%3d: shouldReact?%d isCooldownOver?%d shouldReactToPose?%d",
-                      reactionPair.first,
-                      shouldReact ? 1 : 0,
-                      shouldReactToPose ? 1 : 0,
-                      isCooldownOver ? 1 : 0);
-        
-        reactionPair.second.lastPose.Print("Behaviors", ("ConditionObjectPositionUpdated.lastPose"));
-        reactionPair.second.lastReactionPose.Print("Behaviors", ("ConditionObjectPositionUpdated.lastReactionPose"));
+
+      if (kDebugAcknowledgements) {
+        PRINT_CH_INFO(
+            "ReactionTriggers",
+            ("ConditionObjectPositionUpdated.SingleReaction"),
+            "%3d: shouldReact?%d isCooldownOver?%d shouldReactToPose?%d",
+            reactionPair.first, shouldReact ? 1 : 0, shouldReactToPose ? 1 : 0,
+            isCooldownOver ? 1 : 0);
+
+        reactionPair.second.lastPose.Print(
+            "Behaviors", ("ConditionObjectPositionUpdated.lastPose"));
+        reactionPair.second.lastReactionPose.Print(
+            "Behaviors", ("ConditionObjectPositionUpdated.lastReactionPose"));
       }
-      
-    }
-    else {
+
+    } else {
       // else, we have never reacted to this ID, so do so now
-      if( kDebugAcknowledgements ) {
-        PRINT_CH_INFO("ReactionTriggers", ("ConditionObjectPositionUpdated.DoInitialReaction"),
+      if (kDebugAcknowledgements) {
+        PRINT_CH_INFO("ReactionTriggers",
+                      ("ConditionObjectPositionUpdated.DoInitialReaction"),
                       "Doing first reaction to new id %d at ts=%dms",
                       reactionPair.first,
                       (TimeStamp_t)reactionPair.second.lastSeenTime_ms);
-        reactionPair.second.lastPose.Print("Behaviors", ("ConditionObjectPositionUpdated.NewPose"));
+        reactionPair.second.lastPose.Print(
+            "Behaviors", ("ConditionObjectPositionUpdated.NewPose"));
       }
     }
   }
-  
+
   return shouldReact;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionObjectPositionUpdated::HasDesiredReactionTargets(BehaviorExternalInterface& behaviorExternalInterface, bool matchAnyPose) const
-{
-  for( auto& reactionPair : _reactionData ) {
-    if( ShouldReactToTarget(behaviorExternalInterface, reactionPair, matchAnyPose) ) {
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool ConditionObjectPositionUpdated::HasDesiredReactionTargets(
+    BehaviorExternalInterface& behaviorExternalInterface,
+    bool matchAnyPose) const {
+  for (auto& reactionPair : _reactionData) {
+    if (ShouldReactToTarget(behaviorExternalInterface, reactionPair,
+                            matchAnyPose)) {
       reactionPair.second.FakeReaction();
       return true;
     }
@@ -310,6 +311,5 @@ bool ConditionObjectPositionUpdated::HasDesiredReactionTargets(BehaviorExternalI
   return false;
 }
 
-
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki

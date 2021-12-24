@@ -18,23 +18,23 @@
  * @addtogroup ROOT
  * @brief Entry points of the BLE stack
  *
- * This module contains the primitives that allow an application accessing and running the
- * BLE protocol stack
+ * This module contains the primitives that allow an application accessing and
+ *running the BLE protocol stack
  *
  * @{
  ****************************************************************************************
  */
 
-
 /*
  * INCLUDE FILES
  ****************************************************************************************
  */
-#include <stdint.h>
 #include <stdbool.h>
-#include "rwip_config.h"
-#include "compiler.h"
+#include <stdint.h>
+
 #include "co_error.h"
+#include "compiler.h"
+#include "rwip_config.h"
 
 /*
  * DEFINITIONS
@@ -91,7 +91,6 @@ uint32_t rwble_get_clock(void);
  */
 void rwble_send_message(uint32_t error);
 
-
 /**
  ****************************************************************************************
  * @brief RWBLE interrupt service routine
@@ -107,4 +106,4 @@ bool test_rxdone(void);
 void measure_errors_received(unsigned char pkts);
 /// @} RWBLE
 
-#endif // RWBLE_H_
+#endif  // RWBLE_H_

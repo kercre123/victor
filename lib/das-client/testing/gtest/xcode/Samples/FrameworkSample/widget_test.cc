@@ -35,10 +35,11 @@
 
 // This is a simple test file for the Widget class in the Widget.framework
 
-#include <string>
-#include "gtest/gtest.h"
-
 #include <Widget/widget.h>
+
+#include <string>
+
+#include "gtest/gtest.h"
 
 // This test verifies that the constructor sets the internal state of the
 // Widget class correctly.

@@ -7,26 +7,26 @@
 //
 
 #include <iostream>
+
+#include "tests/utilUnitTestShared.h"
 #include "util/helpers/includeGTest.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
-#include "tests/utilUnitTestShared.h"
 
-
-GTEST_API_ int main(int argc, char * argv[])
-{
+GTEST_API_ int main(int argc, char* argv[]) {
   Anki::Util::PrintfLoggerProvider printfLoggerProvider;
   Anki::Util::gLoggerProvider = &printfLoggerProvider;
-  for(int i=1; i<argc; ++i) {
+  for (int i = 1; i < argc; ++i) {
     int newLevel = -1;
     char buf[20];
-    if(sscanf(argv[i], "-d%d", &newLevel) == 1) {
+    if (sscanf(argv[i], "-d%d", &newLevel) == 1) {
       printf("Setting default log level to %d\n", newLevel);
-      printfLoggerProvider.SetMinLogLevel((Anki::Util::ILoggerProvider::LogLevel)newLevel);
-    }
-    else if (sscanf(argv[i], "-timing=%19s", buf) == 1) {
+      printfLoggerProvider.SetMinLogLevel(
+          (Anki::Util::ILoggerProvider::LogLevel)newLevel);
+    } else if (sscanf(argv[i], "-timing=%19s", buf) == 1) {
       if (strcmp(buf, "valgrind") == 0) {
-        UtilUnitTestShared::SetTimingMode(UtilUnitTestShared::TimingMode::Valgrind);
+        UtilUnitTestShared::SetTimingMode(
+            UtilUnitTestShared::TimingMode::Valgrind);
       }
     }
   }

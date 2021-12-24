@@ -3,124 +3,107 @@
 using namespace std;
 using namespace cv;
 using namespace perf;
-using std::tr1::make_tuple;
 using std::tr1::get;
+using std::tr1::make_tuple;
 
 PERF_TEST_P(Size_MatType, Mat_Eye,
             testing::Combine(testing::Values(TYPICAL_MAT_SIZES),
                              testing::Values(TYPICAL_MAT_TYPES))
 
-             )
-{
-    Size size = get<0>(GetParam());
-    int type = get<1>(GetParam());
-    Mat diagonalMatrix(size.height, size.width, type);
+) {
+  Size size = get<0>(GetParam());
+  int type = get<1>(GetParam());
+  Mat diagonalMatrix(size.height, size.width, type);
 
-    declare.out(diagonalMatrix);
+  declare.out(diagonalMatrix);
 
-    int runs = (size.width <= 640) ? 15 : 5;
-    TEST_CYCLE_MULTIRUN(runs)
-    {
-        diagonalMatrix = Mat::eye(size, type);
-    }
+  int runs = (size.width <= 640) ? 15 : 5;
+  TEST_CYCLE_MULTIRUN(runs) { diagonalMatrix = Mat::eye(size, type); }
 
-    SANITY_CHECK(diagonalMatrix, 1);
+  SANITY_CHECK(diagonalMatrix, 1);
 }
 
 PERF_TEST_P(Size_MatType, Mat_Zeros,
             testing::Combine(testing::Values(TYPICAL_MAT_SIZES),
                              testing::Values(TYPICAL_MAT_TYPES, CV_32FC3))
 
-             )
-{
-    Size size = get<0>(GetParam());
-    int type = get<1>(GetParam());
-    Mat zeroMatrix(size.height, size.width, type);
+) {
+  Size size = get<0>(GetParam());
+  int type = get<1>(GetParam());
+  Mat zeroMatrix(size.height, size.width, type);
 
-    declare.out(zeroMatrix);
+  declare.out(zeroMatrix);
 
-    int runs = (size.width <= 640) ? 15 : 5;
-    TEST_CYCLE_MULTIRUN(runs)
-    {
-        zeroMatrix = Mat::zeros(size, type);
-    }
+  int runs = (size.width <= 640) ? 15 : 5;
+  TEST_CYCLE_MULTIRUN(runs) { zeroMatrix = Mat::zeros(size, type); }
 
-    SANITY_CHECK(zeroMatrix, 1);
+  SANITY_CHECK(zeroMatrix, 1);
 }
 
 PERF_TEST_P(Size_MatType, Mat_Clone,
             testing::Combine(testing::Values(TYPICAL_MAT_SIZES),
                              testing::Values(TYPICAL_MAT_TYPES))
 
-             )
-{
-    Size size = get<0>(GetParam());
-    int type = get<1>(GetParam());
-    Mat source(size.height, size.width, type);
-    Mat destination(size.height, size.width, type);;
+) {
+  Size size = get<0>(GetParam());
+  int type = get<1>(GetParam());
+  Mat source(size.height, size.width, type);
+  Mat destination(size.height, size.width, type);
+  ;
 
-    declare.in(source, WARMUP_RNG).out(destination);
+  declare.in(source, WARMUP_RNG).out(destination);
 
-    TEST_CYCLE()
-    {
-        source.clone();
-    }
-    destination = source.clone();
+  TEST_CYCLE() { source.clone(); }
+  destination = source.clone();
 
-    SANITY_CHECK(destination, 1);
+  SANITY_CHECK(destination, 1);
 }
 
 PERF_TEST_P(Size_MatType, Mat_Clone_Roi,
             testing::Combine(testing::Values(TYPICAL_MAT_SIZES),
                              testing::Values(TYPICAL_MAT_TYPES))
 
-             )
-{
-    Size size = get<0>(GetParam());
-    int type = get<1>(GetParam());
+) {
+  Size size = get<0>(GetParam());
+  int type = get<1>(GetParam());
 
-    unsigned int width = size.width;
-    unsigned int height = size.height;
-    Mat source(height, width, type);
-    Mat destination(size.height/2, size.width/2, type);
+  unsigned int width = size.width;
+  unsigned int height = size.height;
+  Mat source(height, width, type);
+  Mat destination(size.height / 2, size.width / 2, type);
 
-    declare.in(source, WARMUP_RNG).out(destination);
+  declare.in(source, WARMUP_RNG).out(destination);
 
-    Mat roi(source, Rect(width/4, height/4, 3*width/4, 3*height/4));
+  Mat roi(source, Rect(width / 4, height / 4, 3 * width / 4, 3 * height / 4));
 
-    TEST_CYCLE()
-    {
-        roi.clone();
-    }
-    destination = roi.clone();
+  TEST_CYCLE() { roi.clone(); }
+  destination = roi.clone();
 
-    SANITY_CHECK(destination, 1);
+  SANITY_CHECK(destination, 1);
 }
 
 ///////////// Transform ////////////////////////
 
 PERF_TEST_P(Size_MatType, Mat_Transform,
             testing::Combine(testing::Values(TYPICAL_MAT_SIZES),
-                             testing::Values(CV_8UC3, CV_8SC3, CV_16UC3, CV_16SC3, CV_32SC3, CV_32FC3, CV_64FC3))
-            )
-{
-    const Size_MatType_t params = GetParam();
-    const Size srcSize0 = get<0>(params);
-    const Size srcSize = Size(1, srcSize0.width*srcSize0.height);
-    const int type = get<1>(params);
-    const float transform[] = { 0.5f,           0.f, 0.86602540378f, 128,
-                                0.f,            1.f, 0.f,            -64,
-                                0.86602540378f, 0.f, 0.5f,            32,};
-    Mat mtx(Size(4, 3), CV_32FC1, (void*)transform);
+                             testing::Values(CV_8UC3, CV_8SC3, CV_16UC3,
+                                             CV_16SC3, CV_32SC3, CV_32FC3,
+                                             CV_64FC3))) {
+  const Size_MatType_t params = GetParam();
+  const Size srcSize0 = get<0>(params);
+  const Size srcSize = Size(1, srcSize0.width * srcSize0.height);
+  const int type = get<1>(params);
+  const float transform[] = {
+      0.5f, 0.f, 0.86602540378f, 128, 0.f,  1.f,
+      0.f,  -64, 0.86602540378f, 0.f, 0.5f, 32,
+  };
+  Mat mtx(Size(4, 3), CV_32FC1, (void*)transform);
 
-    Mat src(srcSize, type), dst(srcSize, type);
-    randu(src, 0, 30);
-    declare.in(src).out(dst);
+  Mat src(srcSize, type), dst(srcSize, type);
+  randu(src, 0, 30);
+  declare.in(src).out(dst);
 
-    TEST_CYCLE()
-    {
-        cv::transform(src, dst, mtx);
-    }
+  TEST_CYCLE() { cv::transform(src, dst, mtx); }
 
-    SANITY_CHECK(dst, 1e-6, ERROR_RELATIVE);
+  SANITY_CHECK(dst, 1e-6, ERROR_RELATIVE);
 }

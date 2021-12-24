@@ -22,23 +22,25 @@ namespace alexaClientSDK {
 namespace settings {
 
 /**
- * Specifies the parameters needed to construct setting changed and report events.
+ * Specifies the parameters needed to construct setting changed and report
+ * events.
  */
 struct SettingEventMetadata {
-    /// The event namespace placed in the header.
-    std::string eventNamespace;
+  /// The event namespace placed in the header.
+  std::string eventNamespace;
 
-    /// The name for the event indicating a value changed in the setting.
-    std::string eventChangedName;
+  /// The name for the event indicating a value changed in the setting.
+  std::string eventChangedName;
 
-    /// The name for the event for reporting the value of a setting.
-    std::string eventReportName;
+  /// The name for the event for reporting the value of a setting.
+  std::string eventReportName;
 
-    /// The string key in the payload to specify the value of the setting.
-    std::string settingName;
+  /// The string key in the payload to specify the value of the setting.
+  std::string settingName;
 };
 
 }  // namespace settings
 }  // namespace alexaClientSDK
 
-#endif /* ALEXA_CLIENT_SDK_SETTINGS_INCLUDE_SETTINGS_SETTINGEVENTMETADATA_H_ */
+#endif /* ALEXA_CLIENT_SDK_SETTINGS_INCLUDE_SETTINGS_SETTINGEVENTMETADATA_H_ \
+        */

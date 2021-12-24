@@ -1,18 +1,14 @@
+#include "encoders.h"
+
 #include <string.h>
 
 #include "common.h"
 #include "hardware.h"
-
 #include "motors.h"
-#include "encoders.h"
 #include "timer.h"
 
 static const int8_t QUAD_DECODE[4][4] = {
-  {  0,  1, -1,  0 },
-  { -1,  0,  0,  1 },
-  {  1,  0,  0, -1 },
-  {  0, -1,  1,  0 }
-};
+    {0, 1, -1, 0}, {-1, 0, 0, 1}, {1, 0, 0, -1}, {0, -1, 1, 0}};
 
 static int page;
 static uint32_t time[2][MOTOR_COUNT];
@@ -29,10 +25,8 @@ static uint32_t prev_lift;
 static void stall_test();
 
 void Encoders::init(void) {
-  static const uint32_t EVENT_MASK =
-    LENCA::mask | LENCB::mask |
-    HENCA::mask | HENCB::mask |
-    RTENC::mask | LTENC::mask;
+  static const uint32_t EVENT_MASK = LENCA::mask | LENCB::mask | HENCA::mask |
+                                     HENCB::mask | RTENC::mask | LTENC::mask;
 
   // Enable power to encoder LEDs
   nVENC_EN::mode(MODE_OUTPUT);
@@ -46,19 +40,14 @@ void Encoders::init(void) {
   LTENC::mode(MODE_INPUT);
 
   // When this pin changes, do some shizz
-  SYSCFG->EXTICR[0] =
-    SYSCFG_EXTICR1_EXTI0_PA |
-    SYSCFG_EXTICR1_EXTI1_PA |
-    SYSCFG_EXTICR1_EXTI2_PB |
-    SYSCFG_EXTICR1_EXTI3_PB;
+  SYSCFG->EXTICR[0] = SYSCFG_EXTICR1_EXTI0_PA | SYSCFG_EXTICR1_EXTI1_PA |
+                      SYSCFG_EXTICR1_EXTI2_PB | SYSCFG_EXTICR1_EXTI3_PB;
 
-  SYSCFG->EXTICR[3] =
-    SYSCFG_EXTICR4_EXTI14_PC |
-    SYSCFG_EXTICR4_EXTI15_PC;
+  SYSCFG->EXTICR[3] = SYSCFG_EXTICR4_EXTI14_PC | SYSCFG_EXTICR4_EXTI15_PC;
 
   EXTI->FTSR |= EVENT_MASK;
   EXTI->RTSR |= EVENT_MASK;
-  EXTI->IMR  |= EVENT_MASK;
+  EXTI->IMR |= EVENT_MASK;
 
   NVIC_SetPriority(EXTI0_1_IRQn, PRIORITY_ENCODERS);
   NVIC_SetPriority(EXTI2_3_IRQn, PRIORITY_ENCODERS);
@@ -71,7 +60,7 @@ void Encoders::start() {
   NVIC_EnableIRQ(EXTI0_1_IRQn);
   NVIC_EnableIRQ(EXTI2_3_IRQn);
   NVIC_EnableIRQ(EXTI4_15_IRQn);
-  
+
   active = true;
 }
 
@@ -86,13 +75,13 @@ void Encoders::stop() {
 }
 
 void Encoders::tick_start() {
-  if (!active) return ;
-  
+  if (!active) return;
+
   nVENC_EN::reset();
 }
 
 void Encoders::tick_end() {
-  if (!active) return ;
+  if (!active) return;
 
   if (Motors::lift_driven) {
     lift_invalid = false;
@@ -107,7 +96,7 @@ void Encoders::tick_end() {
   }
 
   static const int STALE_TARGET = 40;
-  
+
   if (stale_count < STALE_TARGET) {
     if (++stale_count == STALE_TARGET) {
       NVIC_DisableIRQ(EXTI0_1_IRQn);
@@ -137,7 +126,7 @@ static void stall_test() {
   static bool stall_reset = true;
 
   bool invalid = false;
-  
+
   // Head encoders
   {
     static int delta = 0;
@@ -186,10 +175,10 @@ static void stall_test() {
     static uint32_t prev;
     const uint32_t now = RTENC::bank->IDR & (RTENC::mask | LTENC::mask);
     uint32_t change = prev ^ now;
-    
+
     static int delta_left = 0;
     static int delta_right = 0;
-    
+
     if (!stall_reset) {
       if (change & RTENC::mask) {
         if (++delta_right >= CHANGE_THRESHOLD) {
@@ -213,7 +202,7 @@ static void stall_test() {
   if (!invalid) {
     nVENC_EN::set();
     stall_reset = false;
-    return ;
+    return;
   }
 
   NVIC_EnableIRQ(EXTI0_1_IRQn);
@@ -224,7 +213,7 @@ static void stall_test() {
   stall_reset = true;
 }
 
-void Encoders::flip(uint32_t* &time_last, int32_t* &delta_last) {
+void Encoders::flip(uint32_t*& time_last, int32_t*& delta_last) {
   const int next_page = page ^ 1;
 
   time_last = time[page];

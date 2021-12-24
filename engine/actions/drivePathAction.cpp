@@ -11,29 +11,25 @@
  **/
 
 #include "engine/actions/drivePathAction.h"
+
+#include "coretech/planning/shared/path.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/components/pathComponent.h"
 #include "engine/robot.h"
-#include "coretech/planning/shared/path.h"
 
 namespace Anki {
 namespace Vector {
-  
 
 DrivePathAction::DrivePathAction(const Planning::Path& path)
-: IAction("DrivePathAction"
-          , RobotActionType::DRIVE_PATH
-          , (u8)AnimTrackFlag::BODY_TRACK)
-,_path(path)
-{
-}
+    : IAction("DrivePathAction", RobotActionType::DRIVE_PATH,
+              (u8)AnimTrackFlag::BODY_TRACK),
+      _path(path) {}
 
-ActionResult DrivePathAction::Init()
-{
+ActionResult DrivePathAction::Init() {
   ActionResult result = ActionResult::SUCCESS;
-  
+
   // Tell robot to execute this simple path
-  if(RESULT_OK != GetRobot().GetPathComponent().ExecuteCustomPath(_path)) {
+  if (RESULT_OK != GetRobot().GetPathComponent().ExecuteCustomPath(_path)) {
     result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
     return result;
   }
@@ -41,13 +37,12 @@ ActionResult DrivePathAction::Init()
   return result;
 }
 
-ActionResult DrivePathAction::CheckIfDone()
-{
-  if( GetRobot().GetPathComponent().LastPathFailed() ) {
+ActionResult DrivePathAction::CheckIfDone() {
+  if (GetRobot().GetPathComponent().LastPathFailed()) {
     return ActionResult::FAILED_TRAVERSING_PATH;
   }
 
-  if( GetRobot().GetPathComponent().IsActive() ) {
+  if (GetRobot().GetPathComponent().IsActive()) {
     return ActionResult::RUNNING;
   }
 
@@ -55,7 +50,5 @@ ActionResult DrivePathAction::CheckIfDone()
   return ActionResult::SUCCESS;
 }
 
-  
-} //namespace Vector
-} //namespace Anki
-
+}  // namespace Vector
+}  // namespace Anki

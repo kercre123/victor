@@ -30,50 +30,62 @@ struct MakeLocalPointer {
   typedef typename cl::sycl::local_ptr<T>::reference_t RefType;
 };
 
-
 namespace Eigen {
-  template<typename StrideDims, typename XprType> class TensorTupleReducerDeviceOp;
-  template<typename StrideDims, typename ArgType> struct TensorEvaluator<const TensorTupleReducerDeviceOp<StrideDims, ArgType>, SyclKernelDevice>;
+template <typename StrideDims, typename XprType>
+class TensorTupleReducerDeviceOp;
+template <typename StrideDims, typename ArgType>
+struct TensorEvaluator<const TensorTupleReducerDeviceOp<StrideDims, ArgType>,
+                       SyclKernelDevice>;
 namespace internal {
 
 #ifdef __SYCL_DEVICE_ONLY__
-template<typename A, typename B> struct TypeConversion {
-  template<typename T>
-  static typename MakeGlobalPointer<A>::Type get_address_space_pointer(typename MakeGlobalPointer<T>::Type p);
-  template<typename T>
-  static typename MakeLocalPointer<A>::Type get_address_space_pointer(typename MakeLocalPointer<T>::Type p);
+template <typename A, typename B>
+struct TypeConversion {
+  template <typename T>
+  static typename MakeGlobalPointer<A>::Type get_address_space_pointer(
+      typename MakeGlobalPointer<T>::Type p);
+  template <typename T>
+  static typename MakeLocalPointer<A>::Type get_address_space_pointer(
+      typename MakeLocalPointer<T>::Type p);
 
-  template<typename T>
+  template <typename T>
   static A* get_address_space_pointer(T* p);
   typedef decltype(get_address_space_pointer(B())) type;
 };
 
 #endif
-}
+}  // namespace internal
 namespace TensorSycl {
 namespace internal {
 
-  template<typename CoeffReturnType, typename OP, typename OutputAccessor, typename InputAccessor, typename LocalAccessor> struct GenericKernelReducer;
-/// This struct is used for special expression nodes with no operations (for example assign and selectOP).
-  struct NoOP;
+template <typename CoeffReturnType, typename OP, typename OutputAccessor,
+          typename InputAccessor, typename LocalAccessor>
+struct GenericKernelReducer;
+/// This struct is used for special expression nodes with no operations (for
+/// example assign and selectOP).
+struct NoOP;
 
-template<bool IsConst, typename T> struct GetType{
+template <bool IsConst, typename T>
+struct GetType {
   typedef const T Type;
 };
-template<typename T> struct GetType<false, T>{
+template <typename T>
+struct GetType<false, T> {
   typedef T Type;
 };
 
-template <bool Conds,  size_t X , size_t Y > struct ValueCondition {
-  static constexpr size_t Res =X;
+template <bool Conds, size_t X, size_t Y>
+struct ValueCondition {
+  static constexpr size_t Res = X;
 };
-template<size_t X, size_t Y> struct ValueCondition<false, X, Y> {
-  static constexpr size_t Res =Y;
+template <size_t X, size_t Y>
+struct ValueCondition<false, X, Y> {
+  static constexpr size_t Res = Y;
 };
 
-}
-}
-}
+}  // namespace internal
+}  // namespace TensorSycl
+}  // namespace Eigen
 
 // tuple construction
 #include "TensorSyclTuple.h"
@@ -111,10 +123,9 @@ template<size_t X, size_t Y> struct ValueCondition<false, X, Y> {
 
 // kernel execution using fusion
 #include "TensorSyclRun.h"
-//sycl functors
-#include "TensorSyclFunctors.h"
-
+// sycl functors
 #include "TensorContractionSycl.h"
+#include "TensorSyclFunctors.h"
 
 #endif  // end of EIGEN_USE_SYCL
 #endif  // UNSUPPORTED_EIGEN_CXX11_SRC_TENSOR_TENSORSYCL_H

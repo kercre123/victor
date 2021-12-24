@@ -5,10 +5,10 @@
  *
  * @brief Empty template project for external processor mode header file.
  *
- * Copyright (C) 2015. Dialog Semiconductor Ltd, unpublished work. This computer 
- * program includes Confidential, Proprietary Information and is a Trade Secret of 
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
- * unless authorized in writing. All Rights Reserved.
+ * Copyright (C) 2015. Dialog Semiconductor Ltd, unpublished work. This computer
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -23,7 +23,7 @@
  * @addtogroup APP
  * @ingroup RICOW
  *
- * @brief 
+ * @brief
  *
  * @{
  ****************************************************************************************
@@ -34,12 +34,11 @@
  ****************************************************************************************
  */
 
+#include "co_error.h"   // error code definitions
+#include "gapc_task.h"  // gap functions and messages
+#include "gapm_task.h"  // gap functions and messages
 #include "rwble_config.h"
-#include "gapc_task.h"                 // gap functions and messages
-#include "gapm_task.h"                 // gap functions and messages
-#include "co_error.h"                  // error code definitions
-#include "smpc_task.h"                 // error code definitions
- 
+#include "smpc_task.h"  // error code definitions
 
 /****************************************************************************
 Add here supported profiles' application header files.
@@ -69,14 +68,14 @@ i.e.
  ****************************************************************************************
  * @brief User code initiliazation function.
  *
- * @void 
+ * @void
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 
 void user_on_init(void);
 
 /// @} APP
 
-#endif // _USER_EMPTY_TEMPLATE_EXT_H_
+#endif  // _USER_EMPTY_TEMPLATE_EXT_H_

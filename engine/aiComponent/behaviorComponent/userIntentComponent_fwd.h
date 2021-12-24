@@ -14,6 +14,7 @@
 #define __Engine_AiComponent_BehaviorComponent_UserIntentComponent_Fwd_H__
 
 #include <stdint.h>
+
 #include <memory>
 
 namespace Anki {
@@ -30,7 +31,7 @@ struct UserIntentData;
 
 using UserIntentPtr = std::shared_ptr<const UserIntentData>;
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

@@ -3,9 +3,10 @@
  *
  * Author: damjan
  * Created: 11/20/12
- * 
- * Description: Utility class for measuring time and averaging recorded times and finding maximums.
- * 
+ *
+ * Description: Utility class for measuring time and averaging recorded times
+ *and finding maximums.
+ *
  *
  * Copyright: Anki, Inc. 2012
  *
@@ -13,27 +14,34 @@
 
 #ifndef BASESTATION_UTILS_STOPWATCH_H_
 #define BASESTATION_UTILS_STOPWATCH_H_
+#include <string>
+
 #include "util/helpers/includeIostream.h"
 #include "util/stats/runningStat.h"
-#include <string>
 
 namespace Anki {
 namespace Util {
 namespace Time {
 
 /**
- * Utility class for measuring time and averaging recorded times and finding maximums.
- * 
+ * Utility class for measuring time and averaging recorded times and finding
+ * maximums.
+ *
  * @author   damjan
  */
 class StopWatch {
-public:
+ public:
+  // Constructor
+  StopWatch(const std::string &id, double averageLimitMs = 0.0)
+      : id_(id), averageLimit_(averageLimitMs) {
+    ResetTrackers();
+  };
 
   // Constructor
-  StopWatch(const std::string &id, double averageLimitMs = 0.0) : id_(id), averageLimit_(averageLimitMs) { ResetTrackers(); };
-
-  // Constructor
-  StopWatch(const char *id, double averageLimitMs = 0.0) : id_(id), averageLimit_(averageLimitMs) { ResetTrackers(); };
+  StopWatch(const char *id, double averageLimitMs = 0.0)
+      : id_(id), averageLimit_(averageLimitMs) {
+    ResetTrackers();
+  };
 
   // Destructor
   virtual ~StopWatch(){};
@@ -41,7 +49,8 @@ public:
   // Starts measuring time
   void Start();
 
-  // Stops measuring time and logs stats if needed. Returns time elapsed in milliseconds
+  // Stops measuring time and logs stats if needed. Returns time elapsed in
+  // milliseconds
   double Stop();
 
   // Resets all trackers
@@ -50,8 +59,7 @@ public:
   // Logs collected data
   void LogStats();
 
-protected:
-
+ protected:
   // Encapsulates the time measurement code
   // returns number of nanoseconds elapsed since startTime
   uint64_t StopMeasuringTime();
@@ -75,9 +83,8 @@ protected:
   uint64_t startTime;
 };
 
-} // namespace Time
-} // namespace Util
-} // namespace Anki
+}  // namespace Time
+}  // namespace Util
+}  // namespace Anki
 
-
-#endif //BASESTATION_UTILS_STOPWATCH_H_
+#endif  // BASESTATION_UTILS_STOPWATCH_H_

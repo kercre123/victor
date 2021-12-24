@@ -2,22 +2,25 @@
  * File:          cozmoEngine.h
  * Date:          12/23/2014
  *
- * Description:   A platform-independent container for spinning up all the pieces
- *                required to run Cozmo on a device. We can derive classes to be host or client
- *                for now host/client has been removed until we know more about multi-robot requirements.
+ * Description:   A platform-independent container for spinning up all the
+ * pieces required to run Cozmo on a device. We can derive classes to be host or
+ * client for now host/client has been removed until we know more about
+ * multi-robot requirements.
  *
- *                 - Robot Vision Processor (for processing images from a physical robot's camera)
+ *                 - Robot Vision Processor (for processing images from a
+ * physical robot's camera)
  *                 - RobotComms
  *                 - GameComms and GameMsgHandler
  *                 - RobotVisionMsgHandler
  *                   - Uses Robot Comms to receive image msgs from robot.
  *                   - Passes images onto Robot Vision Processor
- *                   - Sends processed image markers to the basestation's port on
- *                     which it receives messages from the robot that sent the image.
- *                     In this way, the processed image markers appear to come directly
- *                     from the robot to the basestation.
- *                   - While we only have TCP support on robot, RobotVisionMsgHandler
- *                     will also forward non-image messages from the robot on to the basestation.
+ *                   - Sends processed image markers to the basestation's port
+ * on which it receives messages from the robot that sent the image. In this
+ * way, the processed image markers appear to come directly from the robot to
+ * the basestation.
+ *                   - While we only have TCP support on robot,
+ * RobotVisionMsgHandler will also forward non-image messages from the robot on
+ * to the basestation.
  *
  * Author: Andrew Stein / Kevin Yoon
  *
@@ -27,33 +30,31 @@
 #ifndef ANKI_COZMO_BASESTATION_COZMO_ENGINE_H
 #define ANKI_COZMO_BASESTATION_COZMO_ENGINE_H
 
-#include "util/logging/multiFormattedLoggerProvider.h"
-#include "coretech/vision/engine/image.h"
-#include "json/json.h"
-#include "util/signals/simpleSignal_fwd.h"
-
-#include "clad/types/imageTypes.h"
-#include "clad/types/engineState.h"
-#include "engine/debug/debugConsoleManager.h"
-#include "engine/debug/dasToSdkHandler.h"
-#include "util/global/globalDefinitions.h"
-
 #include <memory>
 
+#include "clad/types/engineState.h"
+#include "clad/types/imageTypes.h"
+#include "coretech/vision/engine/image.h"
+#include "engine/debug/dasToSdkHandler.h"
+#include "engine/debug/debugConsoleManager.h"
+#include "json/json.h"
+#include "util/global/globalDefinitions.h"
+#include "util/logging/multiFormattedLoggerProvider.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
 
-  // Forward declaration:
-  namespace Util {
-  namespace AnkiLab {
-    struct ActivateExperimentRequest;
-    struct AssignmentDef;
-    enum class AssignmentStatus : uint8_t;
-  }
-  namespace Data {
-    class DataPlatform;
-  }
-  }
+// Forward declaration:
+namespace Util {
+namespace AnkiLab {
+struct ActivateExperimentRequest;
+struct AssignmentDef;
+enum class AssignmentStatus : uint8_t;
+}  // namespace AnkiLab
+namespace Data {
+class DataPlatform;
+}
+}  // namespace Util
 
 namespace Vector {
 
@@ -70,16 +71,13 @@ template <typename Type>
 class AnkiEvent;
 
 namespace ExternalInterface {
-  class MessageGameToEngine;
+class MessageGameToEngine;
 }
 
-class CozmoEngine
-{
-public:
-
+class CozmoEngine {
+ public:
   CozmoEngine(Util::Data::DataPlatform* dataPlatform);
   virtual ~CozmoEngine();
-
 
   Result Init(const Json::Value& config);
 
@@ -90,8 +88,9 @@ public:
 
   Robot* GetRobot();
 
-  Util::AnkiLab::AssignmentStatus ActivateExperiment(const Util::AnkiLab::ActivateExperimentRequest& request,
-                                                     std::string& outVariationKey);
+  Util::AnkiLab::AssignmentStatus ActivateExperiment(
+      const Util::AnkiLab::ActivateExperimentRequest& request,
+      std::string& outVariationKey);
 
   void RegisterEngineTickPerformance(const float tickDuration_ms,
                                      const float tickFrequency_ms,
@@ -99,7 +98,9 @@ public:
                                      const float sleepDurationActual_ms) const;
 
   UiMessageHandler* GetUiMsgHandler() const { return _uiMsgHandler.get(); }
-  ProtoMessageHandler* GetProtoMsgHandler() const { return _protoMsgHandler.get(); }
+  ProtoMessageHandler* GetProtoMsgHandler() const {
+    return _protoMsgHandler.get();
+  }
 
   EngineState GetEngineState() const { return _engineState; }
 
@@ -107,23 +108,22 @@ public:
   void SetEngineThread();
 
   // Handle various message types
-  template<typename T>
+  template <typename T>
   void HandleMessage(const T& msg);
 
-protected:
-
+ protected:
   std::vector<::Signal::SmartHandle> _signalHandles;
 
-  bool                                                      _isInitialized = false;
-  Json::Value                                               _config;
-  std::unique_ptr<UiMessageHandler>                         _uiMsgHandler;
-  std::unique_ptr<ProtoMessageHandler>                      _protoMsgHandler;
-  std::unique_ptr<CozmoContext>                             _context;
-  Anki::Vector::DebugConsoleManager                          _debugConsoleManager;
-  Anki::Vector::DasToSdkHandler                              _dasToSdkHandler;
-  bool                                                      _hasRunFirstUpdate = false;
-  bool                                                      _uiWasConnected = false;
-  bool                                                      _updateMoveComponent = false;
+  bool _isInitialized = false;
+  Json::Value _config;
+  std::unique_ptr<UiMessageHandler> _uiMsgHandler;
+  std::unique_ptr<ProtoMessageHandler> _protoMsgHandler;
+  std::unique_ptr<CozmoContext> _context;
+  Anki::Vector::DebugConsoleManager _debugConsoleManager;
+  Anki::Vector::DasToSdkHandler _dasToSdkHandler;
+  bool _hasRunFirstUpdate = false;
+  bool _uiWasConnected = false;
+  bool _updateMoveComponent = false;
 
   virtual Result InitInternal();
 
@@ -137,12 +137,11 @@ protected:
 
   EngineState _engineState = EngineState::Stopped;
 
-  std::unique_ptr<AnimationTransfer>                        _animationTransferHandler;
+  std::unique_ptr<AnimationTransfer> _animationTransferHandler;
 
-}; // class CozmoEngine
+};  // class CozmoEngine
 
+}  // namespace Vector
+}  // namespace Anki
 
-} // namespace Vector
-} // namespace Anki
-
-#endif // ANKI_COZMO_BASESTATION_COZMO_ENGINE_H
+#endif  // ANKI_COZMO_BASESTATION_COZMO_ENGINE_H

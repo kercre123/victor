@@ -15,64 +15,59 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-
 namespace Anki {
 namespace Vector {
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class BehaviorEyeColor : public ICozmoBehavior
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+class BehaviorEyeColor : public ICozmoBehavior {
   friend class BehaviorFactory;
-  BehaviorEyeColor( const Json::Value& config );
+  BehaviorEyeColor(const Json::Value& config);
 
-
-public:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Overrides from ICozmoBehavior
+ public:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Overrides from ICozmoBehavior
 
   virtual bool WantsToBeActivatedBehavior() const override;
-  virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
-  virtual void GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
 
-
-protected:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Overrides from ICozmoBehavior
+ protected:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Overrides from ICozmoBehavior
 
   virtual void InitBehavior() override;
-  virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
+ private:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Instance Vars are members that last
+  // the lifetime of the behavior and generally do not change (config vars)
 
-private:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Instance Vars are members that last the lifetime of the behavior and generally do not change (config vars)
-
-  struct InstanceConfig
-  {
+  struct InstanceConfig {
     InstanceConfig();
 
   } _iVars;
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Dynamic Vars are members that
+  // change over the lifetime of the behavior and are generally reset every
+  // activation
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Dynamic Vars are members that change over the lifetime of the behavior and are generally reset every activation
-
-  struct DynamicVariables
-  {
+  struct DynamicVariables {
     DynamicVariables();
 
   } _dVars;
 
-}; // class BehaviorEyeColor
+};  // class BehaviorEyeColor
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorEyeColor_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorEyeColor_H__

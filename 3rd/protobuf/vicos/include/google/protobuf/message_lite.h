@@ -39,12 +39,13 @@
 #ifndef GOOGLE_PROTOBUF_MESSAGE_LITE_H__
 #define GOOGLE_PROTOBUF_MESSAGE_LITE_H__
 
-#include <climits>
+#include <google/protobuf/arena.h>
 #include <google/protobuf/stubs/common.h>
 #include <google/protobuf/stubs/logging.h>
 #include <google/protobuf/stubs/once.h>
-#include <google/protobuf/arena.h>
 #include <google/protobuf/stubs/port.h>
+
+#include <climits>
 
 namespace google {
 namespace protobuf {
@@ -55,7 +56,7 @@ class CodedInputStream;
 class CodedOutputStream;
 class ZeroCopyInputStream;
 class ZeroCopyOutputStream;
-}
+}  // namespace io
 namespace internal {
 
 class RepeatedPtrFieldBase;
@@ -82,9 +83,9 @@ inline size_t FromIntSize(int size) {
   return static_cast<unsigned int>(size);
 }
 
-// For cases where a legacy function returns an integer size.  We GOOGLE_DCHECK()
-// that the conversion will fit within an integer; if this is false then we
-// are losing information.
+// For cases where a legacy function returns an integer size.  We
+// GOOGLE_DCHECK() that the conversion will fit within an integer; if this is
+// false then we are losing information.
 inline int ToIntSize(size_t size) {
   GOOGLE_DCHECK_LE(size, static_cast<size_t>(INT_MAX));
   return static_cast<int>(size);
@@ -106,13 +107,9 @@ inline int ToIntSize(size_t size) {
 template <typename T>
 class ExplicitlyConstructed {
  public:
-  void DefaultConstruct() {
-    new (&union_) T();
-  }
+  void DefaultConstruct() { new (&union_) T(); }
 
-  void Destruct() {
-    get_mutable()->~T();
-  }
+  void Destruct() { get_mutable()->~T(); }
 
   constexpr const T& get() const { return reinterpret_cast<const T&>(union_); }
   T* get_mutable() { return reinterpret_cast<T*>(&union_); }
@@ -128,7 +125,8 @@ class ExplicitlyConstructed {
 
 // Default empty string object. Don't use this directly. Instead, call
 // GetEmptyString() to get the reference.
-LIBPROTOBUF_EXPORT extern ExplicitlyConstructed<::std::string> fixed_address_empty_string;
+LIBPROTOBUF_EXPORT extern ExplicitlyConstructed<::std::string>
+    fixed_address_empty_string;
 
 LIBPROTOBUF_EXPORT inline const ::std::string& GetEmptyStringAlreadyInited() {
   return fixed_address_empty_string.get();
@@ -259,7 +257,6 @@ class LIBPROTOBUF_EXPORT MessageLite {
   // required fields.
   bool ParsePartialFromArray(const void* data, int size);
 
-
   // Reads a protocol buffer from the stream and merges it into this
   // Message.  Singular fields read from the what is
   // already in the Message and repeated fields are appended to those
@@ -279,7 +276,6 @@ class LIBPROTOBUF_EXPORT MessageLite {
   // MergeFromCodedStream() is just implemented as MergePartialFromCodedStream()
   // followed by IsInitialized().
   virtual bool MergePartialFromCodedStream(io::CodedInputStream* input) = 0;
-
 
   // Serialization ---------------------------------------------------
   // Methods for serializing in protocol buffer format.  Most of these
@@ -332,15 +328,12 @@ class LIBPROTOBUF_EXPORT MessageLite {
 
   // Legacy ByteSize() API.
   PROTOBUF_RUNTIME_DEPRECATED("Please use ByteSizeLong() instead")
-  int ByteSize() const {
-    return internal::ToIntSize(ByteSizeLong());
-  }
+  int ByteSize() const { return internal::ToIntSize(ByteSizeLong()); }
 
   // Serializes the message without recomputing the size.  The message must not
   // have changed since the last call to ByteSize(), and the value returned by
   // ByteSize must be non-negative.  Otherwise the results are undefined.
-  virtual void SerializeWithCachedSizes(
-      io::CodedOutputStream* output) const;
+  virtual void SerializeWithCachedSizes(io::CodedOutputStream* output) const;
 
   // Functions below here are not part of the public interface.  It isn't
   // enforced, but they should be treated as private, and will be private
@@ -416,7 +409,6 @@ inline bool GetProto3PreserveUnknownsDefault() {
 // preserve unknowns.
 void LIBPROTOBUF_EXPORT SetProto3PreserveUnknownsDefault(bool preserve);
 }  // namespace internal
-
 
 }  // namespace protobuf
 

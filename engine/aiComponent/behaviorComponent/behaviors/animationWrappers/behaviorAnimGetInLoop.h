@@ -1,18 +1,19 @@
 /**
-* File: behaviorAnimGetInLoop.h
-*
-* Author: Kevin M. Karol
-* Created: 2/7/18
-*
-* Description: Behavior which mirrors the animation "Get In Loop" state machine
-* Flow: Play GetIn animation followed by Loop animation until EndLoop condition is met
-*   followed by GetOut animation
-*
-* Named for the animation state machine structure: https://ankiinc.atlassian.net/wiki/spaces/COZMO/pages/119668760/Animation+Statemachines+Guide
-*
-* Copyright: Anki, Inc. 2018
-*
-**/
+ * File: behaviorAnimGetInLoop.h
+ *
+ * Author: Kevin M. Karol
+ * Created: 2/7/18
+ *
+ * Description: Behavior which mirrors the animation "Get In Loop" state machine
+ * Flow: Play GetIn animation followed by Loop animation until EndLoop condition
+ *is met followed by GetOut animation
+ *
+ * Named for the animation state machine structure:
+ *https://ankiinc.atlassian.net/wiki/spaces/COZMO/pages/119668760/Animation+Statemachines+Guide
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorAnimGetInLoop_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorAnimGetInLoop_H__
@@ -21,49 +22,45 @@
 
 namespace Anki {
 namespace Vector {
-  
+
 enum class AnimationTrigger : int32_t;
-  
-class BehaviorAnimGetInLoop : public ICozmoBehavior
-{
-protected:
+
+class BehaviorAnimGetInLoop : public ICozmoBehavior {
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorAnimGetInLoop(const Json::Value& config);
-  
-public:
-  
+
+ public:
   virtual ~BehaviorAnimGetInLoop();
-  
+
   virtual bool WantsToBeActivatedBehavior() const override final;
 
-  // Notify the behavior that it should end the looping animation when it finishes
+  // Notify the behavior that it should end the looping animation when it
+  // finishes
   void RequestLoopEnd() { _dVars.shouldLoopEnd = true; }
 
-protected:
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override  final{
+ protected:
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override final {
     modifiers.wantsToBeActivatedWhenOffTreads = true;
-    modifiers.behaviorAlwaysDelegates         = false;
+    modifiers.behaviorAlwaysDelegates = false;
   }
-  
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override final;
-  
+
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override final;
+
   virtual void InitBehavior() override final;
   virtual void OnBehaviorActivated() override final;
   virtual void BehaviorUpdate() override final;
-  virtual void AnimBehaviorUpdate() {};
+  virtual void AnimBehaviorUpdate(){};
   virtual void OnBehaviorDeactivated() override final;
 
   // For derived classes that do their own looping
   AnimationTrigger GetLoopTrigger() { return _iConfig.loopTrigger; }
 
-
-private:
-  enum class BehaviorStage{
-    GetIn,
-    Loop,
-    GetOut
-  };
+ private:
+  enum class BehaviorStage { GetIn, Loop, GetOut };
 
   struct InstanceConfig {
     InstanceConfig();
@@ -71,9 +68,9 @@ private:
     AnimationTrigger loopTrigger;
     AnimationTrigger getOutTrigger;
     AnimationTrigger emergencyGetOutTrigger;
-    float            loopInterval_s;
-    bool             checkEndConditionDuringAnim;
-    uint8_t          tracksToLock;
+    float loopInterval_s;
+    bool checkEndConditionDuringAnim;
+    uint8_t tracksToLock;
 
     IBEIConditionPtr endLoopCondition;
   };
@@ -85,17 +82,15 @@ private:
     float nextLoopTime_s;
   };
 
-  InstanceConfig   _iConfig;
+  InstanceConfig _iConfig;
   DynamicVariables _dVars;
 
   void TransitionToGetIn();
   void TransitionToLoop();
   void TransitionToGetOut();
-
 };
-  
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorAnimGetInLoop_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorAnimGetInLoop_H__

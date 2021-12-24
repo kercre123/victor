@@ -4,7 +4,8 @@
  * Author: Sam Russell
  * Created: 2018 Jul 25
  *
- * Description: Condition which checks with the CubeInteractionTracker if we think the user is holding the cube right now
+ * Description: Condition which checks with the CubeInteractionTracker if we
+ *think the user is holding the cube right now
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -15,23 +16,23 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/components/cubes/cubeInteractionTracker.h"
 
-namespace Anki{
-namespace Vector{
+namespace Anki {
+namespace Vector {
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
 ConditionUserHoldingCube::ConditionUserHoldingCube(const Json::Value& config)
-: IBEICondition(config)
-{
-}
+    : IBEICondition(config) {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionUserHoldingCube::AreConditionsMetInternal(BehaviorExternalInterface& bei) const
-{
-  if(bei.GetCubeInteractionTracker().IsUserHoldingCube()){
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool ConditionUserHoldingCube::AreConditionsMetInternal(
+    BehaviorExternalInterface& bei) const {
+  if (bei.GetCubeInteractionTracker().IsUserHoldingCube()) {
     return true;
   }
-  return  false;
+  return false;
 }
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki

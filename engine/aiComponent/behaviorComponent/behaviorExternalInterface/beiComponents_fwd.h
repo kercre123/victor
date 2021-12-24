@@ -4,7 +4,7 @@
 namespace Anki {
 namespace Vector {
 
-enum class BEIComponentID{
+enum class BEIComponentID {
   AIComponent,
   Animation,
   BackpackLightComponent,
@@ -48,8 +48,7 @@ enum class BEIComponentID{
   Count
 };
 
+}  // namespace Vector
+}  // namespace Anki
 
-} // namespace Vector
-} // namespace Anki
-
-#endif // __Cozmo_Basestation_BehaviorSystem_BEI_Components_fwd_H__
+#endif  // __Cozmo_Basestation_BehaviorSystem_BEI_Components_fwd_H__

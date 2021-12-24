@@ -26,9 +26,9 @@
 #ifndef __CUTILS_DEBUGGER_H
 #define __CUTILS_DEBUGGER_H
 
+#include <stdint.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>
-#include <stdint.h>
 
 __BEGIN_DECLS
 
@@ -37,12 +37,12 @@ __BEGIN_DECLS
 #define DEBUGGER64_SOCKET_NAME DEBUGGER_SOCKET_NAME
 
 typedef enum {
-    // dump a crash
-    DEBUGGER_ACTION_CRASH,
-    // dump a tombstone file
-    DEBUGGER_ACTION_DUMP_TOMBSTONE,
-    // dump a backtrace only back to the socket
-    DEBUGGER_ACTION_DUMP_BACKTRACE,
+  // dump a crash
+  DEBUGGER_ACTION_CRASH,
+  // dump a tombstone file
+  DEBUGGER_ACTION_DUMP_TOMBSTONE,
+  // dump a backtrace only back to the socket
+  DEBUGGER_ACTION_DUMP_BACKTRACE,
 } debugger_action_t;
 
 // Make sure that all values have a fixed size so that this structure
@@ -50,25 +50,25 @@ typedef enum {
 // NOTE: Any changes to this structure must also be reflected in
 //       bionic/linker/debugger.cpp.
 typedef struct __attribute__((packed)) {
-    int32_t action;
-    pid_t tid;
-    uint64_t abort_msg_address;
-    int32_t original_si_code;
+  int32_t action;
+  pid_t tid;
+  uint64_t abort_msg_address;
+  int32_t original_si_code;
 } debugger_msg_t;
 
-/* Dumps a process backtrace, registers, and stack to a tombstone file (requires root).
- * Stores the tombstone path in the provided buffer.
- * Returns 0 on success, -1 on error.
+/* Dumps a process backtrace, registers, and stack to a tombstone file (requires
+ * root). Stores the tombstone path in the provided buffer. Returns 0 on
+ * success, -1 on error.
  */
 int victor_dump_tombstone(pid_t tid, char* pathbuf, size_t pathlen);
 
-/* Dumps a process backtrace, registers, and stack to a tombstone file (requires root).
- * Stores the tombstone path in the provided buffer.
- * If reading debugger data from debuggerd ever takes longer than timeout_secs
- * seconds, then stop and return an error.
- * Returns 0 on success, -1 on error.
+/* Dumps a process backtrace, registers, and stack to a tombstone file (requires
+ * root). Stores the tombstone path in the provided buffer. If reading debugger
+ * data from debuggerd ever takes longer than timeout_secs seconds, then stop
+ * and return an error. Returns 0 on success, -1 on error.
  */
-int victor_dump_tombstone_timeout(pid_t tid, char* pathbuf, size_t pathlen, int timeout_secs);
+int victor_dump_tombstone_timeout(pid_t tid, char* pathbuf, size_t pathlen,
+                                  int timeout_secs);
 
 /* Dumps a process backtrace only to the specified file (requires root).
  * Returns 0 on success, -1 on error.

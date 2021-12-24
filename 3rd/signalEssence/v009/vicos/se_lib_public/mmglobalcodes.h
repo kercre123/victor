@@ -3,18 +3,18 @@ extern "C" {
 #endif
 
 /* (C) Copyright 2010 Signal Essence; All Rights Reserved
-* 
-*   Module Name  - mmglobalcodes.h
-* 
-*   Author: Hugh McLaughlin
-* 
-*   History
-*       created Nov08,10 hjm  split from mmglobalparams.h
-*       
-*   Description:
-* 
-* **************************************************************************
-*/
+ *
+ *   Module Name  - mmglobalcodes.h
+ *
+ *   Author: Hugh McLaughlin
+ *
+ *   History
+ *       created Nov08,10 hjm  split from mmglobalparams.h
+ *
+ *   Description:
+ *
+ * **************************************************************************
+ */
 
 #ifndef __mmglobalcodes_h
 #define __mmglobalcodes_h
@@ -43,7 +43,7 @@ extern "C" {
 
 //
 // narrowband noise generator parameters
-#define NBNG_MAX_BANDS    25     // MUST BE SAME AS NB_FILT_COUNT
+#define NBNG_MAX_BANDS 25  // MUST BE SAME AS NB_FILT_COUNT
 #define NBNG_MAX_SECTIONS 4
 
 //
@@ -53,30 +53,27 @@ extern "C" {
 
 // Controls for AEC adaptation
 typedef enum {
-    SE_AF_FIRST_DONT_USE,
-    SE_AF_NORMAL_ADAPTATION,
-    SE_AF_DISABLE_ADAPTATION,
-    SE_AF_FORCE_ADAPTATION,
-    SE_AF_LAST
+  SE_AF_FIRST_DONT_USE,
+  SE_AF_NORMAL_ADAPTATION,
+  SE_AF_DISABLE_ADAPTATION,
+  SE_AF_FORCE_ADAPTATION,
+  SE_AF_LAST
 } AdaptiveFilterModes_t;
 
 //
 // the mmfx operating mode specifies, at a high level,
 // what processing is performed by the mmfx transmit and receive paths
-typedef enum
-{
-    MMFX_MODE_FIRST_DONT_USE,
-    MMFX_MIC_CALIBRATION,          // run mic calibration
-    MMFX_MIC_CALIBRATION_ANALYSIS, // do mic calibration analysis
-    MMFX_NBNG_TEST,        // narrowband noise test
-    MMFX_NORMAL_MODE,  // normal processing
-    MMFX_PASSTHRU,     // route mic N directly to sout; rin goes directly to rout
-    MMFX_MODE_LAST
+typedef enum {
+  MMFX_MODE_FIRST_DONT_USE,
+  MMFX_MIC_CALIBRATION,           // run mic calibration
+  MMFX_MIC_CALIBRATION_ANALYSIS,  // do mic calibration analysis
+  MMFX_NBNG_TEST,                 // narrowband noise test
+  MMFX_NORMAL_MODE,               // normal processing
+  MMFX_PASSTHRU,  // route mic N directly to sout; rin goes directly to rout
+  MMFX_MODE_LAST
 } MMFxOpMode_t;
-
 
 #endif
 #ifdef __cplusplus
 }
 #endif
-

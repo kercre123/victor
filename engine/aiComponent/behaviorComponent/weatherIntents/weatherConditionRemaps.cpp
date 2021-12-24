@@ -1,37 +1,36 @@
 /**
-* File: weatherConditionRemaps.cpp
-*
-* Author: Kevin Karol
-* Date:   7/23/2018
-*
-* Description: Weather conditions can be re-mapped based on additional data in the
-* weather response
-*
-* Copyright: Anki, Inc. 2018
-**/
-
+ * File: weatherConditionRemaps.cpp
+ *
+ * Author: Kevin Karol
+ * Date:   7/23/2018
+ *
+ * Description: Weather conditions can be re-mapped based on additional data in
+ *the weather response
+ *
+ * Copyright: Anki, Inc. 2018
+ **/
 
 #include "engine/aiComponent/behaviorComponent/weatherIntents/weatherConditionRemaps.h"
 
-#include "engine/aiComponent/behaviorComponent/weatherIntents/weatherIntentParser.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "engine/aiComponent/behaviorComponent/weatherIntents/weatherIntentParser.h"
 
 namespace Anki {
 namespace Vector {
 
 namespace {
-const char* kInitialTypesKey    = "InitialCladTypes";
+const char* kInitialTypesKey = "InitialCladTypes";
 const char* kRemapConditionsKey = "RemapConditions";
 const char* kOutputConditionKey = "OutputCondition";
 
 // remap conditions
 const char* kConditionTypeKey = "conditionType";
-const char* kOperatorKey      = "operator";
-const char* kAndOperator      = "and";
+const char* kOperatorKey = "operator";
+const char* kAndOperator = "and";
 
-const char* kTimeCondition   = "time";
+const char* kTimeCondition = "time";
 const char* kLocalTimeBeforeKey = "LocalTimeBefore";
-const char* kLocalTimeAfterKey  = "LocalTimeAfter";
+const char* kLocalTimeAfterKey = "LocalTimeAfter";
 
 const char* kTemperatureCondition = "temperature";
 const char* kTempBelowFarKey = "TemperatureBelowFarenheit";
@@ -42,136 +41,154 @@ const char* kValueKey = "value";
 
 const char* kWeatherStringForDaytime = "D";
 const char* kWeatherStringForNighttime = "N";
-}
+}  // namespace
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-WeatherConditionRemaps::WeatherConditionRemaps(const Json::Value& conditionRemaps)
-{
-  for(const auto& config: conditionRemaps){
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+WeatherConditionRemaps::WeatherConditionRemaps(
+    const Json::Value& conditionRemaps) {
+  for (const auto& config : conditionRemaps) {
     RemapEntry entry;
-    entry.remappedType = WeatherConditionTypeFromString(config[kOutputConditionKey].asString());
+    entry.remappedType =
+        WeatherConditionTypeFromString(config[kOutputConditionKey].asString());
 
     const std::string debugName = "WeatherConditionRemaps.ConditionParsing";
-    for(const auto& conditionSpec : config[kRemapConditionsKey]){
-      if(conditionSpec[kConditionTypeKey] == kTimeCondition){
-        if(conditionSpec.isMember(kLocalTimeBeforeKey)){
+    for (const auto& conditionSpec : config[kRemapConditionsKey]) {
+      if (conditionSpec[kConditionTypeKey] == kTimeCondition) {
+        if (conditionSpec.isMember(kLocalTimeBeforeKey)) {
           entry.localTimeBefore = std::make_unique<tm>();
-          strptime(conditionSpec[kLocalTimeBeforeKey].asString().c_str(), "%H:%M", entry.localTimeBefore.get());
+          strptime(conditionSpec[kLocalTimeBeforeKey].asString().c_str(),
+                   "%H:%M", entry.localTimeBefore.get());
         }
-        if(conditionSpec.isMember(kLocalTimeAfterKey)){
+        if (conditionSpec.isMember(kLocalTimeAfterKey)) {
           entry.localTimeAfter = std::make_unique<tm>();
-          strptime(conditionSpec[kLocalTimeAfterKey].asString().c_str(), "%H:%M", entry.localTimeAfter.get());
+          strptime(conditionSpec[kLocalTimeAfterKey].asString().c_str(),
+                   "%H:%M", entry.localTimeAfter.get());
         }
-      }else if(conditionSpec[kConditionTypeKey] == kTemperatureCondition){
-        if(conditionSpec.isMember(kTempBelowFarKey)){
-          entry.temperatureBelowF = JsonTools::ParseFloat(conditionSpec, kTempBelowFarKey, debugName);
+      } else if (conditionSpec[kConditionTypeKey] == kTemperatureCondition) {
+        if (conditionSpec.isMember(kTempBelowFarKey)) {
+          entry.temperatureBelowF =
+              JsonTools::ParseFloat(conditionSpec, kTempBelowFarKey, debugName);
         }
-        if(conditionSpec.isMember(kTempAboveFarKey)){
-          entry.temperatureAboveF = JsonTools::ParseFloat(conditionSpec, kTempAboveFarKey, debugName);
+        if (conditionSpec.isMember(kTempAboveFarKey)) {
+          entry.temperatureAboveF =
+              JsonTools::ParseFloat(conditionSpec, kTempAboveFarKey, debugName);
         }
-      }
-      else if(conditionSpec[kConditionTypeKey] == kDayOrNightCondition){
-        const bool isNight = JsonTools::ParseBool(conditionSpec, kValueKey, debugName);
-        entry.dayOrNightSpecifier = isNight ? kWeatherStringForNighttime : kWeatherStringForDaytime;
+      } else if (conditionSpec[kConditionTypeKey] == kDayOrNightCondition) {
+        const bool isNight =
+            JsonTools::ParseBool(conditionSpec, kValueKey, debugName);
+        entry.dayOrNightSpecifier =
+            isNight ? kWeatherStringForNighttime : kWeatherStringForDaytime;
       }
 
-      // If there's more than one condition specified we need to know what operator to apply to their results (and/or)
+      // If there's more than one condition specified we need to know what
+      // operator to apply to their results (and/or)
       const auto& names = conditionSpec.getMemberNames();
-      if(names.size() > 2){
-        if(ANKI_VERIFY(conditionSpec.isMember(kOperatorKey), 
-                       "WeatherConditionRemaps.Constructor.MissingRemapOpreator",
-                       "Multiple conditions specified, but no operator found in config")){
-          entry.allSpecifiedConditionsMustBeMet = (conditionSpec[kOperatorKey] == kAndOperator);
+      if (names.size() > 2) {
+        if (ANKI_VERIFY(
+                conditionSpec.isMember(kOperatorKey),
+                "WeatherConditionRemaps.Constructor.MissingRemapOpreator",
+                "Multiple conditions specified, but no operator found in "
+                "config")) {
+          entry.allSpecifiedConditionsMustBeMet =
+              (conditionSpec[kOperatorKey] == kAndOperator);
         }
       }
     }
 
-
     // Introduce an instance into the map for every initial clad type
-    for(const auto& initialType : config[kInitialTypesKey]){
+    for (const auto& initialType : config[kInitialTypesKey]) {
       auto type = WeatherConditionTypeFromString(initialType.asString());
       entry.initialType = type;
       auto iter = _remaps.find(type);
-      if(iter == _remaps.end()){
+      if (iter == _remaps.end()) {
         std::vector<RemapEntry> container;
         container.push_back(entry);
-        auto pair = std::make_pair<WeatherConditionType, std::vector<RemapEntry>>(std::move(type), std::move(container));
+        auto pair =
+            std::make_pair<WeatherConditionType, std::vector<RemapEntry>>(
+                std::move(type), std::move(container));
         _remaps.emplace(pair);
-      }else{
+      } else {
         iter->second.push_back(entry);
       }
     }
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-WeatherConditionType WeatherConditionRemaps::GetRemappedCondition(const WeatherIntentParser& parser,
-                                                                  const UserIntent_WeatherResponse& weatherIntent,
-                                                                  const WeatherConditionType initialCondition) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+WeatherConditionType WeatherConditionRemaps::GetRemappedCondition(
+    const WeatherIntentParser& parser,
+    const UserIntent_WeatherResponse& weatherIntent,
+    const WeatherConditionType initialCondition) const {
   const auto iter = _remaps.find(initialCondition);
-  if(iter != _remaps.end()){
+  if (iter != _remaps.end()) {
     const tm localDatetime = parser.GetLocalDateTime(weatherIntent);
 
     float trueTemperatureF = 0.0f;
     parser.GetTemperatureF(weatherIntent, trueTemperatureF);
 
-    for(const auto& entry : iter->second){
-
+    for (const auto& entry : iter->second) {
       ////////////////////////////////////////////////////////////////////////////////
       // Temperature
       ////////////////////////////////////////////////////////////////////////////////
-      const bool shouldConsiderTemperature = (entry.temperatureBelowF != kInvalidTemp) ||
-                                             (entry.temperatureAboveF != kInvalidTemp);
+      const bool shouldConsiderTemperature =
+          (entry.temperatureBelowF != kInvalidTemp) ||
+          (entry.temperatureAboveF != kInvalidTemp);
 
-      const bool isBelowConfigTemp = ((entry.temperatureBelowF != kInvalidTemp) &&
-                                      (entry.temperatureBelowF > trueTemperatureF));
-      const bool isAboveConfigTemp = ((entry.temperatureAboveF != kInvalidTemp) &&
-                                      (entry.temperatureAboveF < trueTemperatureF));
+      const bool isBelowConfigTemp =
+          ((entry.temperatureBelowF != kInvalidTemp) &&
+           (entry.temperatureBelowF > trueTemperatureF));
+      const bool isAboveConfigTemp =
+          ((entry.temperatureAboveF != kInvalidTemp) &&
+           (entry.temperatureAboveF < trueTemperatureF));
 
-      const bool inTemperatureRange = entry.allSpecifiedConditionsMustBeMet ? 
-                                        isBelowConfigTemp && isAboveConfigTemp : 
-                                        isBelowConfigTemp || isAboveConfigTemp;
+      const bool inTemperatureRange =
+          entry.allSpecifiedConditionsMustBeMet
+              ? isBelowConfigTemp && isAboveConfigTemp
+              : isBelowConfigTemp || isAboveConfigTemp;
 
       ////////////////////////////////////////////////////////////////////////////////
       // Local Time
       ////////////////////////////////////////////////////////////////////////////////
 
-      const bool shouldConsiderTime = (entry.localTimeBefore != nullptr) || (entry.localTimeAfter != nullptr);
-      const bool inTimeBefore = (entry.localTimeBefore != nullptr) &&
-                                  (entry.localTimeBefore->tm_hour >= localDatetime.tm_hour) &&
-                                    ((entry.localTimeBefore->tm_hour > localDatetime.tm_hour) ||
-                                     (entry.localTimeBefore->tm_min  > localDatetime.tm_min));
-      const bool inTimeAfter = (entry.localTimeAfter != nullptr) &&
-                                 (entry.localTimeAfter->tm_hour <= localDatetime.tm_hour) &&
-                                   ((entry.localTimeAfter->tm_hour < localDatetime.tm_hour) ||
-                                    (entry.localTimeAfter->tm_min < localDatetime.tm_min));
+      const bool shouldConsiderTime = (entry.localTimeBefore != nullptr) ||
+                                      (entry.localTimeAfter != nullptr);
+      const bool inTimeBefore =
+          (entry.localTimeBefore != nullptr) &&
+          (entry.localTimeBefore->tm_hour >= localDatetime.tm_hour) &&
+          ((entry.localTimeBefore->tm_hour > localDatetime.tm_hour) ||
+           (entry.localTimeBefore->tm_min > localDatetime.tm_min));
+      const bool inTimeAfter =
+          (entry.localTimeAfter != nullptr) &&
+          (entry.localTimeAfter->tm_hour <= localDatetime.tm_hour) &&
+          ((entry.localTimeAfter->tm_hour < localDatetime.tm_hour) ||
+           (entry.localTimeAfter->tm_min < localDatetime.tm_min));
 
-      const bool inTimeRange = entry.allSpecifiedConditionsMustBeMet ? 
-                                 inTimeBefore && inTimeAfter : 
-                                 inTimeBefore || inTimeAfter;
+      const bool inTimeRange = entry.allSpecifiedConditionsMustBeMet
+                                   ? inTimeBefore && inTimeAfter
+                                   : inTimeBefore || inTimeAfter;
 
       ////////////////////////////////////////////////////////////////////////////////
       // Day or night
       ////////////////////////////////////////////////////////////////////////////////
 
       const bool shouldConsiderDayOrNight = !entry.dayOrNightSpecifier.empty();
-      const bool dayOrNightConditionMet = (entry.dayOrNightSpecifier == weatherIntent.dayOrNight);
+      const bool dayOrNightConditionMet =
+          (entry.dayOrNightSpecifier == weatherIntent.dayOrNight);
 
-      ANKI_VERIFY( weatherIntent.dayOrNight.empty() ||
-                       weatherIntent.dayOrNight == kWeatherStringForDaytime ||
-                       weatherIntent.dayOrNight == kWeatherStringForNighttime,
-                       "WeatherConditionRemaps.DayOrNot.InvalidUserIntent",
-                       "User intent day or night response must be '%s' or '%s' if specified, got '%s'",
-                       kWeatherStringForDaytime,
-                       kWeatherStringForNighttime,
-                       weatherIntent.dayOrNight.c_str() );
+      ANKI_VERIFY(weatherIntent.dayOrNight.empty() ||
+                      weatherIntent.dayOrNight == kWeatherStringForDaytime ||
+                      weatherIntent.dayOrNight == kWeatherStringForNighttime,
+                  "WeatherConditionRemaps.DayOrNot.InvalidUserIntent",
+                  "User intent day or night response must be '%s' or '%s' if "
+                  "specified, got '%s'",
+                  kWeatherStringForDaytime, kWeatherStringForNighttime,
+                  weatherIntent.dayOrNight.c_str());
 
-
-      if((!shouldConsiderTemperature || inTemperatureRange) &&
-         (!shouldConsiderTime || inTimeRange) &&
-         (!shouldConsiderDayOrNight || dayOrNightConditionMet)){
+      if ((!shouldConsiderTemperature || inTemperatureRange) &&
+          (!shouldConsiderTime || inTimeRange) &&
+          (!shouldConsiderDayOrNight || dayOrNightConditionMet)) {
         return entry.remappedType;
       }
     }
@@ -180,19 +197,21 @@ WeatherConditionType WeatherConditionRemaps::GetRemappedCondition(const WeatherI
   return initialCondition;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-WeatherConditionRemaps::RemapEntry::RemapEntry(const RemapEntry& other)
-{
-  initialType       = other.initialType;
-  remappedType      = other.remappedType;
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+WeatherConditionRemaps::RemapEntry::RemapEntry(const RemapEntry& other) {
+  initialType = other.initialType;
+  remappedType = other.remappedType;
   temperatureBelowF = other.temperatureBelowF;
   temperatureAboveF = other.temperatureAboveF;
-  localTimeBefore   = (other.localTimeBefore == nullptr) ? nullptr : std::make_unique<tm>(*other.localTimeBefore.get());
-  localTimeAfter    = (other.localTimeAfter == nullptr)  ? nullptr : std::make_unique<tm>(*other.localTimeAfter.get());
+  localTimeBefore = (other.localTimeBefore == nullptr)
+                        ? nullptr
+                        : std::make_unique<tm>(*other.localTimeBefore.get());
+  localTimeAfter = (other.localTimeAfter == nullptr)
+                       ? nullptr
+                       : std::make_unique<tm>(*other.localTimeAfter.get());
   dayOrNightSpecifier = other.dayOrNightSpecifier;
 }
 
-
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki

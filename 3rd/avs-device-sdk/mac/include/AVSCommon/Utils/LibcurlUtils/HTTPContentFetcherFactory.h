@@ -16,11 +16,11 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_LIBCURLUTILS_HTTPCONTENTFETCHERFACTORY_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_LIBCURLUTILS_HTTPCONTENTFETCHERFACTORY_H_
 
-#include <memory>
-#include <string>
-
 #include <AVSCommon/SDKInterfaces/HTTPContentFetcherInterface.h>
 #include <AVSCommon/SDKInterfaces/HTTPContentFetcherInterfaceFactoryInterface.h>
+
+#include <memory>
+#include <string>
 
 namespace alexaClientSDK {
 namespace avsCommon {
@@ -30,9 +30,12 @@ namespace libcurlUtils {
 /**
  * A class that produces @c HTTPContentFetchers.
  */
-class HTTPContentFetcherFactory : public avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface {
-public:
-    std::unique_ptr<avsCommon::sdkInterfaces::HTTPContentFetcherInterface> create(const std::string& url) override;
+class HTTPContentFetcherFactory
+    : public avsCommon::sdkInterfaces::
+          HTTPContentFetcherInterfaceFactoryInterface {
+ public:
+  std::unique_ptr<avsCommon::sdkInterfaces::HTTPContentFetcherInterface> create(
+      const std::string& url) override;
 };
 
 }  // namespace libcurlUtils

@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 namespace gen {
-  extern void nodir();
-  extern void c();
-  extern void baz();
-}
+extern void nodir();
+extern void c();
+extern void baz();
+}  // namespace gen
 
 int main() {
   gen::nodir();

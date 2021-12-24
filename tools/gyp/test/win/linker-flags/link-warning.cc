@@ -5,6 +5,4 @@
 // This will cause LNK4254.
 #pragma comment(linker, "/merge:.data=.text")
 
-int main() {
-  return 0;
-}
+int main() { return 0; }

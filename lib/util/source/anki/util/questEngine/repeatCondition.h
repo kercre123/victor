@@ -14,35 +14,33 @@
 #ifndef __Util_QuestEngine_RepeatCondition_H__
 #define __Util_QuestEngine_RepeatCondition_H__
 
-#include "util/questEngine/abstractCondition.h"
 #include <stdint.h>
+
 #include <ctime>
 #include <string>
+
+#include "util/questEngine/abstractCondition.h"
 
 namespace Anki {
 namespace Util {
 namespace QuestEngine {
-      
-      
-class RepeatCondition : public AbstractCondition
-{
-public:
-       
-  explicit RepeatCondition(const std::string& ruleId, const double secondsSinceLast);
-  ~RepeatCondition() {};
-        
-  bool IsSatisfied(QuestEngine& questEngine, std::tm& eventTime) const override;
-        
-private:
-  
-  std::string _ruleId;
-  
-  double _secondsSinceLast;
-  
-};
-     
-} // namespace QuestEngine
-} // namespace Util
-} // namespace Anki
 
-#endif // __Util_QuestEngine_RepeatCondition_H__
+class RepeatCondition : public AbstractCondition {
+ public:
+  explicit RepeatCondition(const std::string& ruleId,
+                           const double secondsSinceLast);
+  ~RepeatCondition(){};
+
+  bool IsSatisfied(QuestEngine& questEngine, std::tm& eventTime) const override;
+
+ private:
+  std::string _ruleId;
+
+  double _secondsSinceLast;
+};
+
+}  // namespace QuestEngine
+}  // namespace Util
+}  // namespace Anki
+
+#endif  // __Util_QuestEngine_RepeatCondition_H__

@@ -1,11 +1,11 @@
 /**
-* File: robotLogDumper.cpp
-*
-* Description: Robot Log Dumper
-*
-* Copyright: Anki, inc. 2018
-*
-*/
+ * File: robotLogDumper.cpp
+ *
+ * Description: Robot Log Dumper
+ *
+ * Copyright: Anki, inc. 2018
+ *
+ */
 
 #include "robotLogDumper.h"
 
@@ -17,15 +17,15 @@
 namespace Anki {
 namespace Vector {
 
-Result RobotLogDumper::Dump(const std::string & gzpath)
-{
+Result RobotLogDumper::Dump(const std::string& gzpath) {
   // What command do we use to create the result?
-  const std::string & command = "/usr/bin/sudo /anki/bin/vic-log-cat | /bin/gzip > " + gzpath;
+  const std::string& command =
+      "/usr/bin/sudo /anki/bin/vic-log-cat | /bin/gzip > " + gzpath;
 
   // Run command to completion
   LOG_INFO("RobotLogDumper.Dump", "%s", command.c_str());
 
-  FILE * fp = popen(command.c_str(), "r");
+  FILE* fp = popen(command.c_str(), "r");
   char buf[BUFSIZ];
   while (fgets(buf, sizeof(buf), fp) != nullptr) {
     LOG_INFO("RobotLogDumper.Dump", "%s", buf);
@@ -42,5 +42,5 @@ Result RobotLogDumper::Dump(const std::string & gzpath)
   return RESULT_OK;
 }
 
-} // end namespace Vector
-} // end namespace Anki
+}  // end namespace Vector
+}  // end namespace Anki

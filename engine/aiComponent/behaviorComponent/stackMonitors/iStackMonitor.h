@@ -21,19 +21,18 @@ namespace Vector {
 class BehaviorExternalInterface;
 class BehaviorStack;
 class IBehavior;
-  
-class IStackMonitor
-{
-public:
-  IStackMonitor(){}
+
+class IStackMonitor {
+ public:
+  IStackMonitor() {}
   virtual ~IStackMonitor() = default;
-  
-  virtual void NotifyOfChange( BehaviorExternalInterface& bei,
-                               const std::vector<IBehavior*>& stack,
-                               const BehaviorStack* stackComponent ) = 0;
+
+  virtual void NotifyOfChange(BehaviorExternalInterface& bei,
+                              const std::vector<IBehavior*>& stack,
+                              const BehaviorStack* stackComponent) = 0;
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_StackMonitors_IStackMonitor_H__
+#endif  // __Engine_AiComponent_BehaviorComponent_StackMonitors_IStackMonitor_H__

@@ -19,7 +19,7 @@ extern "C" {
 
 #include "webp/encode.h"
 
-#define WEBP_EXTRAS_ABI_VERSION 0x0001    // MAJOR(8b) + MINOR(8b)
+#define WEBP_EXTRAS_ABI_VERSION 0x0001  // MAJOR(8b) + MINOR(8b)
 
 //------------------------------------------------------------------------------
 
@@ -64,7 +64,7 @@ WEBP_EXTERN(int) VP8EstimateQuality(const uint8_t* const data, size_t size);
 //------------------------------------------------------------------------------
 
 #ifdef __cplusplus
-}    // extern "C"
+}  // extern "C"
 #endif
 
-#endif  /* WEBP_EXTRAS_EXTRAS_H_ */
+#endif /* WEBP_EXTRAS_EXTRAS_H_ */

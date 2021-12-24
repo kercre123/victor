@@ -13,27 +13,24 @@
 #ifndef __Engine_AiComponent_BeiConditions_Conditions_ConditionBatteryLevel_H__
 #define __Engine_AiComponent_BeiConditions_Conditions_ConditionBatteryLevel_H__
 
-#include "engine/aiComponent/beiConditions/iBEICondition.h"
-
 #include "clad/types/batteryTypes.h"
+#include "engine/aiComponent/beiConditions/iBEICondition.h"
 
 namespace Anki {
 namespace Vector {
 
-class ConditionBatteryLevel : public IBEICondition
-{
-public:
+class ConditionBatteryLevel : public IBEICondition {
+ public:
   explicit ConditionBatteryLevel(const Json::Value& config);
 
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& bei) const override;
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& bei) const override;
 
-private:
+ private:
   BatteryLevel _targetBatteryLevel;
-  
 };
 
-}
-}
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

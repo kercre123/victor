@@ -12,19 +12,16 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IReactToObjectListener_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IReactToObjectListener_H__
 
-
 namespace Anki {
 namespace Vector {
 
-class IReactToObjectListener{
-public:
+class IReactToObjectListener {
+ public:
   virtual void ReactedToID(s32 id) = 0;
   virtual void ClearDesiredTargets() = 0;
-
 };
 
+}  // namespace Vector
+}  // namespace Anki
 
-} // namespace Vector
-} // namespace Anki
-
-#endif // __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IReactToObjectListener_H__
+#endif  // __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IReactToObjectListener_H__

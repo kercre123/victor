@@ -9,5 +9,5 @@
 #import <Foundation/Foundation.h>
 
 @interface NSString_URLEncoding : NSObject
-+(NSString *)urlEncodeString:(NSString*)string usingEncoding:(NSStringEncoding)encoding;
++ (NSString *)urlEncodeString:(NSString *)string usingEncoding:(NSStringEncoding)encoding;
 @end

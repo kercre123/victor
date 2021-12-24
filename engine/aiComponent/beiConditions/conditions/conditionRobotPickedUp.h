@@ -21,19 +21,17 @@ namespace Vector {
 
 class BEIConditionMessageHelper;
 
-class ConditionRobotPickedUp : public IBEICondition
-{
-public:
+class ConditionRobotPickedUp : public IBEICondition {
+ public:
   explicit ConditionRobotPickedUp(const Json::Value& config);
-  virtual ~ConditionRobotPickedUp() {};
+  virtual ~ConditionRobotPickedUp(){};
 
-protected:
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  
+ protected:
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) const override;
 };
 
+}  // namespace Vector
+}  // namespace Anki
 
-} // namespace Vector
-} // namespace Anki
-
-#endif // __AiComponent_BeiConditions_ConditionPickedUp__
+#endif  // __AiComponent_BeiConditions_ConditionPickedUp__

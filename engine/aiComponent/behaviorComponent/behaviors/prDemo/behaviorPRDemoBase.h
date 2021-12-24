@@ -21,29 +21,28 @@ namespace Vector {
 
 class BehaviorPRDemo;
 
-class BehaviorPRDemoBase : public ICozmoBehavior
-{
-public: 
+class BehaviorPRDemoBase : public ICozmoBehavior {
+ public:
   virtual ~BehaviorPRDemoBase();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorPRDemoBase(const Json::Value& config);  
+  explicit BehaviorPRDemoBase(const Json::Value& config);
 
   void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
-  void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {
+  }
 
   void InitBehavior() override;
   bool WantsToBeActivatedBehavior() const override { return true; }
   void BehaviorUpdate() override;
 
   void OnBehaviorActivated() override;
-  
-private:
 
+ private:
   struct InstanceConfig {
     InstanceConfig();
     // TODO: put configuration variables here
@@ -59,10 +58,9 @@ private:
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorPRDemoBase__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorPRDemoBase__

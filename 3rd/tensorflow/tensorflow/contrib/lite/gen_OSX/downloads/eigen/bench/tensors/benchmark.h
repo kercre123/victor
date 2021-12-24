@@ -15,14 +15,13 @@
  */
 #include <stddef.h>
 #include <stdint.h>
+
 #include <vector>
 
 namespace testing {
 class Benchmark {
  public:
-  Benchmark(const char* name, void (*fn)(int)) {
-    Register(name, fn, NULL);
-  }
+  Benchmark(const char* name, void (*fn)(int)) { Register(name, fn, NULL); }
   Benchmark(const char* name, void (*fn_range)(int, int)) {
     Register(name, NULL, fn_range);
   }
@@ -31,6 +30,7 @@ class Benchmark {
   const char* Name();
   bool ShouldRun(int argc, char* argv[]);
   void Run();
+
  private:
   const char* name_;
   void (*fn_)(int);
@@ -44,6 +44,6 @@ class Benchmark {
 void SetBenchmarkFlopsProcessed(int64_t);
 void StopBenchmarkTiming();
 void StartBenchmarkTiming();
-#define BENCHMARK(f) \
-    static ::testing::Benchmark* _benchmark_##f __attribute__((unused)) = \
-        (new ::testing::Benchmark(#f, f))
+#define BENCHMARK(f)                                                    \
+  static ::testing::Benchmark* _benchmark_##f __attribute__((unused)) = \
+      (new ::testing::Benchmark(#f, f))

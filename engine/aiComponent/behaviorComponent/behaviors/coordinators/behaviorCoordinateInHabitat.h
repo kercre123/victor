@@ -16,35 +16,33 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorCoordinateInHabitat__
 #pragma once
 
-#include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherPassThrough.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTreeStateHelpers.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherPassThrough.h"
 
 namespace Anki {
 namespace Vector {
 
-class BehaviorCoordinateInHabitat : public BehaviorDispatcherPassThrough
-{
-public: 
+class BehaviorCoordinateInHabitat : public BehaviorDispatcherPassThrough {
+ public:
   virtual ~BehaviorCoordinateInHabitat();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   explicit BehaviorCoordinateInHabitat(const Json::Value& config);
-  
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
 
   virtual void InitPassThrough() override;
   virtual void OnPassThroughActivated() override;
   virtual void PassThroughUpdate() override;
   virtual void OnPassThroughDeactivated() override;
 
-private:
-
+ private:
   struct InstanceConfig {
     InstanceConfig();
-    
+
     std::vector<std::string> suppressedBehaviorNames;
     std::vector<ICozmoBehaviorPtr> behaviorsToSuppressInHabitat;
   };
@@ -52,7 +50,7 @@ private:
   InstanceConfig _iConfig;
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorCoordinateInHabitat__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorCoordinateInHabitat__

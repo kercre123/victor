@@ -21,12 +21,12 @@
 #define HDR_VALUE_TRUNCATED -29991
 #define HDR_ENCODED_INPUT_TOO_LONG -29990
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 
-#include "hdr_time.h"
 #include "hdr_histogram.h"
+#include "hdr_time.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,11 +40,11 @@ int hdr_log_encode(struct hdr_histogram* histogram, char** encoded_histogram);
 /**
  * Decode and decompress the histogram with gzip.
  */
-int hdr_log_decode(struct hdr_histogram** histogram, char* base64_histogram, size_t base64_len);
+int hdr_log_decode(struct hdr_histogram** histogram, char* base64_histogram,
+                   size_t base64_len);
 
-struct hdr_log_writer
-{
-    uint32_t nonce;
+struct hdr_log_writer {
+  uint32_t nonce;
 };
 
 /**
@@ -63,48 +63,44 @@ int hdr_log_writer_init(struct hdr_log_writer* writer);
  * @param file The stream to output the log header to.
  * @param user_prefix User defined string to include in the header.
  * @param timestamp The start time that the histogram started recording from.
- * @return Will return 0 if it successfully completed or an error number if there
- * was a failure.  EIO if the write failed.
+ * @return Will return 0 if it successfully completed or an error number if
+ * there was a failure.  EIO if the write failed.
  */
-int hdr_log_write_header(
-    struct hdr_log_writer* writer,
-    FILE* file,
-    const char* user_prefix,
-    hdr_timespec* timestamp);
+int hdr_log_write_header(struct hdr_log_writer* writer, FILE* file,
+                         const char* user_prefix, hdr_timespec* timestamp);
 
 /**
  * Write an hdr_histogram entry to the log.  It will be encoded in a similar
- * fashion to the approach used by the Java version of the HdrHistogram.  It will
- * be a CSV line consisting of <start timestamp>,<end timestamp>,<max>,<histogram>
- * where <histogram> is the binary histogram gzip compressed and base64 encoded.
+ * fashion to the approach used by the Java version of the HdrHistogram.  It
+ * will be a CSV line consisting of <start timestamp>,<end
+ * timestamp>,<max>,<histogram> where <histogram> is the binary histogram gzip
+ * compressed and base64 encoded.
  *
- * Timestamp is a bit of misnomer for the start_timestamp and end_timestamp values
- * these could be offsets, e.g. start_timestamp could be offset from process start
- * time and end_timestamp could actually be the length of the recorded interval.
+ * Timestamp is a bit of misnomer for the start_timestamp and end_timestamp
+ * values these could be offsets, e.g. start_timestamp could be offset from
+ * process start time and end_timestamp could actually be the length of the
+ * recorded interval.
  *
  * @param writer 'This' pointer
  * @param file The stream to write the entry to.
  * @param start_timestamp The start timestamp to include in the logged entry.
  * @param end_timestamp The end timestamp to include in the logged entry.
  * @param histogram The histogram to encode and log.
- * @return Will return 0 if it successfully completed or an error number if there
- * was a failure.  Errors include HDR_DEFLATE_INIT_FAIL, HDR_DEFLATE_FAIL if
- * something when wrong during gzip compression.  ENOMEM if we failed to allocate
- * or reallocate the buffer used for encoding (out of memory problem).  EIO if
- * write failed.
+ * @return Will return 0 if it successfully completed or an error number if
+ * there was a failure.  Errors include HDR_DEFLATE_INIT_FAIL, HDR_DEFLATE_FAIL
+ * if something when wrong during gzip compression.  ENOMEM if we failed to
+ * allocate or reallocate the buffer used for encoding (out of memory problem).
+ * EIO if write failed.
  */
-int hdr_log_write(
-    struct hdr_log_writer* writer,
-    FILE* file,
-    const hdr_timespec* start_timestamp,
-    const hdr_timespec* end_timestamp,
-    struct hdr_histogram* histogram);
+int hdr_log_write(struct hdr_log_writer* writer, FILE* file,
+                  const hdr_timespec* start_timestamp,
+                  const hdr_timespec* end_timestamp,
+                  struct hdr_histogram* histogram);
 
-struct hdr_log_reader
-{
-    int major_version;
-    int minor_version;
-    hdr_timespec start_timestamp;
+struct hdr_log_reader {
+  int major_version;
+  int minor_version;
+  hdr_timespec start_timestamp;
 };
 
 /**
@@ -129,8 +125,9 @@ int hdr_log_read_header(struct hdr_log_reader* reader, FILE* file);
  * Reads an entry from the log filling in the specified histogram, timestamp and
  * interval values.  If the supplied pointer to the histogram for this method is
  * NULL then a new histogram will be allocated for the caller, however it will
- * become the callers responsibility to free it later.  If the pointer is non-null
- * the histogram read from the log will be merged with the supplied histogram.
+ * become the callers responsibility to free it later.  If the pointer is
+ * non-null the histogram read from the log will be merged with the supplied
+ * histogram.
  *
  * @param reader 'This' pointer
  * @param file The stream to read the histogram from.
@@ -147,9 +144,9 @@ int hdr_log_read_header(struct hdr_log_reader* reader, FILE* file);
  * or the histogram can not be allocated.  EIO if there was an error during
  * the read.  EINVAL in any input values are incorrect.
  */
-int hdr_log_read(
-    struct hdr_log_reader* reader, FILE* file, struct hdr_histogram** histogram,
-    hdr_timespec* timestamp, hdr_timespec* interval);
+int hdr_log_read(struct hdr_log_reader* reader, FILE* file,
+                 struct hdr_histogram** histogram, hdr_timespec* timestamp,
+                 hdr_timespec* interval);
 
 /**
  * Returns a string representation of the error number.

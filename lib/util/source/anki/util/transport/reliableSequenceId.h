@@ -25,21 +25,21 @@ extern "C" {
 #include "cBool.h"
 #endif
 
-typedef uint16_t  ReliableSequenceId;
+typedef uint16_t ReliableSequenceId;
 
 static const ReliableSequenceId k_InvalidReliableSeqId = 0;
 static const ReliableSequenceId k_MinReliableSeqId = 1;
 static const ReliableSequenceId k_MaxReliableSeqId = 65534;
 
-
 ReliableSequenceId PreviousSequenceId(ReliableSequenceId inSeqId);
 ReliableSequenceId NextSequenceId(ReliableSequenceId inSeqId);
-bool IsSequenceIdInRange(ReliableSequenceId seqId, ReliableSequenceId minSeqId, ReliableSequenceId maxSeqId);
+bool IsSequenceIdInRange(ReliableSequenceId seqId, ReliableSequenceId minSeqId,
+                         ReliableSequenceId maxSeqId);
 
 #ifdef __cplusplus
-} // end extern "C"
-} // end namespace Util
-} // end namespace Anki
+}  // end extern "C"
+}  // end namespace Util
+}  // end namespace Anki
 #endif
 
-#endif // __NetworkService_ReliableSequenceId_H__
+#endif  // __NetworkService_ReliableSequenceId_H__

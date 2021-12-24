@@ -16,13 +16,13 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_LIBCURLUTILS_LIBCURLHTTPCONTENTFETCHER_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_LIBCURLUTILS_LIBCURLHTTPCONTENTFETCHER_H_
 
+#include <AVSCommon/SDKInterfaces/HTTPContentFetcherInterface.h>
+#include <AVSCommon/Utils/LibcurlUtils/CurlEasyHandleWrapper.h>
+
 #include <atomic>
 #include <future>
 #include <string>
 #include <thread>
-
-#include <AVSCommon/SDKInterfaces/HTTPContentFetcherInterface.h>
-#include <AVSCommon/Utils/LibcurlUtils/CurlEasyHandleWrapper.h>
 
 namespace alexaClientSDK {
 namespace avsCommon {
@@ -30,97 +30,111 @@ namespace utils {
 namespace libcurlUtils {
 
 /**
- * A class used to retrieve content from remote URLs. Note that this object will only write to the Attachment while it
- * remains alive. If the object goes out of scope, writing to the Attachment will abort.
+ * A class used to retrieve content from remote URLs. Note that this object will
+ * only write to the Attachment while it remains alive. If the object goes out
+ * of scope, writing to the Attachment will abort.
  */
-class LibCurlHttpContentFetcher : public avsCommon::sdkInterfaces::HTTPContentFetcherInterface {
-public:
-    LibCurlHttpContentFetcher(const std::string& url);
+class LibCurlHttpContentFetcher
+    : public avsCommon::sdkInterfaces::HTTPContentFetcherInterface {
+ public:
+  LibCurlHttpContentFetcher(const std::string& url);
 
-    /**
-     * @copydoc
-     * In this implementation, the function may only be called once. Subsequent calls will return @c nullptr.
-     */
-    std::unique_ptr<avsCommon::utils::HTTPContent> getContent(
-        FetchOptions option,
-        std::shared_ptr<avsCommon::avs::attachment::AttachmentWriter> writer = nullptr,
-        const std::vector<std::string>& customHeaders = std::vector<std::string>()) override;
+  /**
+   * @copydoc
+   * In this implementation, the function may only be called once. Subsequent
+   * calls will return @c nullptr.
+   */
+  std::unique_ptr<avsCommon::utils::HTTPContent> getContent(
+      FetchOptions option,
+      std::shared_ptr<avsCommon::avs::attachment::AttachmentWriter> writer =
+          nullptr,
+      const std::vector<std::string>& customHeaders =
+          std::vector<std::string>()) override;
 
-    /*
-     * Destructor.
-     */
-    ~LibCurlHttpContentFetcher() override;
+  /*
+   * Destructor.
+   */
+  ~LibCurlHttpContentFetcher() override;
 
-private:
-    /// The callback to parse HTTP headers.
-    static size_t headerCallback(char* data, size_t size, size_t nmemb, void* userData);
+ private:
+  /// The callback to parse HTTP headers.
+  static size_t headerCallback(char* data, size_t size, size_t nmemb,
+                               void* userData);
 
-    /// The callback to parse HTTP bodies.
-    static size_t bodyCallback(char* data, size_t size, size_t nmemb, void* userData);
+  /// The callback to parse HTTP bodies.
+  static size_t bodyCallback(char* data, size_t size, size_t nmemb,
+                             void* userData);
 
-    /// A no-op callback to not parse HTTP bodies.
-    static size_t noopCallback(char* data, size_t size, size_t nmemb, void* userData);
+  /// A no-op callback to not parse HTTP bodies.
+  static size_t noopCallback(char* data, size_t size, size_t nmemb,
+                             void* userData);
 
-    /**
-     * Helper method to get custom HTTP headers list.
-     *
-     * @param customHeaders Custom HTTP headers to add.
-     * @return @c curl_slist of custom headers if customHeaders are not empty, otherwise NULL.
-     */
-    curl_slist* getCustomHeaderList(std::vector<std::string> customHeaders);
+  /**
+   * Helper method to get custom HTTP headers list.
+   *
+   * @param customHeaders Custom HTTP headers to add.
+   * @return @c curl_slist of custom headers if customHeaders are not empty,
+   * otherwise NULL.
+   */
+  curl_slist* getCustomHeaderList(std::vector<std::string> customHeaders);
 
-    /// The URL to fetch from.
-    std::string m_url;
+  /// The URL to fetch from.
+  std::string m_url;
 
-    /// A libcurl wrapper.
-    CurlEasyHandleWrapper m_curlWrapper;
+  /// A libcurl wrapper.
+  CurlEasyHandleWrapper m_curlWrapper;
 
-    /// A promise to the caller of @c getContent() that the HTTP status code will be set.
-    std::promise<long> m_statusCodePromise;
+  /// A promise to the caller of @c getContent() that the HTTP status code will
+  /// be set.
+  std::promise<long> m_statusCodePromise;
 
-    /// A promise to the caller of @c getContent() that the HTTP content type will be set.
-    std::promise<std::string> m_contentTypePromise;
+  /// A promise to the caller of @c getContent() that the HTTP content type will
+  /// be set.
+  std::promise<std::string> m_contentTypePromise;
 
-    /**
-     * The writer used to write the HTTP body to, if desired by the caller of @c getContent().
-     */
-    std::shared_ptr<avsCommon::avs::attachment::AttachmentWriter> m_streamWriter;
+  /**
+   * The writer used to write the HTTP body to, if desired by the caller of @c
+   * getContent().
+   */
+  std::shared_ptr<avsCommon::avs::attachment::AttachmentWriter> m_streamWriter;
 
-    /**
-     * The last status code parsed in an HTTP response header. Since we follow redirects, we only want the last status
-     * code.
-     */
-    long m_lastStatusCode;
+  /**
+   * The last status code parsed in an HTTP response header. Since we follow
+   * redirects, we only want the last status code.
+   */
+  long m_lastStatusCode;
 
-    /// The length of the content of the ongoing request.
-    ssize_t m_currentContentLength;
+  /// The length of the content of the ongoing request.
+  ssize_t m_currentContentLength;
 
-    /// Number of bytes that has been received in the ongoing request.
-    ssize_t m_currentContentReceivedLength;
+  /// Number of bytes that has been received in the ongoing request.
+  ssize_t m_currentContentReceivedLength;
 
-    /// Number of bytes that has been received since the first request.
-    ssize_t m_totalContentReceivedLength;
+  /// Number of bytes that has been received since the first request.
+  ssize_t m_totalContentReceivedLength;
 
-    /**
-     * The last content type parsed in an HTTP response header. Since we follow redirects, we only want the last content
-     * type.
-     */
-    std::string m_lastContentType;
+  /**
+   * The last content type parsed in an HTTP response header. Since we follow
+   * redirects, we only want the last content type.
+   */
+  std::string m_lastContentType;
 
-    /// Flag to indicate that the data-fetch operation has completed.
-    std::atomic<bool> m_done;
+  /// Flag to indicate that the data-fetch operation has completed.
+  std::atomic<bool> m_done;
 
-    /// Flag to indicate that the @c LibCurlHttpContentFetcher is being shutdown.
-    std::atomic<bool> m_isShutdown;
+  /// Flag to indicate that the @c LibCurlHttpContentFetcher is being shutdown.
+  std::atomic<bool> m_isShutdown;
 
-    /**
-     * Internal thread that does the curl_easy_perform. The reason for using a thread is that curl_easy_perform may
-     * block forever if the URL specified is a live stream.
-     */
-    std::thread m_thread;
+  /**
+   * Internal thread that does the curl_easy_perform. The reason for using a
+   * thread is that curl_easy_perform may block forever if the URL specified is
+   * a live stream.
+   */
+  std::thread m_thread;
 
-    /// Flag to indicate that a call to @c getContent() has been made. Subsequent calls will not be accepted.
-    std::atomic_flag m_hasObjectBeenUsed;
+  /// Flag to indicate that a call to @c getContent() has been made. Subsequent
+  /// calls will not be accepted.
+  std::atomic_flag m_hasObjectBeenUsed;
 };
 
 }  // namespace libcurlUtils

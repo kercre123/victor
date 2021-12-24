@@ -29,6 +29,7 @@
  ****************************************************************************************
  */
 #include <stdint.h>
+
 #include "co_bt.h"
 
 /*
@@ -56,4 +57,4 @@ void lld_util_get_bd_address(struct bd_addr *bd_addr);
 void lld_util_set_bd_address(struct bd_addr *bd_addr, uint8_t type);
 
 /// @} LLDUTIL
-#endif // LLD_UTIL_H_
+#endif  // LLD_UTIL_H_

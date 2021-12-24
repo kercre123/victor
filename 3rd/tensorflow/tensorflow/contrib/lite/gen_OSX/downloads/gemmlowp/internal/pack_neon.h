@@ -17,9 +17,9 @@
 #ifndef GEMMLOWP_INTERNAL_PACK_NEON_H_
 #define GEMMLOWP_INTERNAL_PACK_NEON_H_
 
-#include "pack.h"
-
 #include <arm_neon.h>
+
+#include "pack.h"
 
 namespace gemmlowp {
 

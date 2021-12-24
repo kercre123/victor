@@ -6,9 +6,9 @@
  * @brief Findme Target/Locator application.
  *
  * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer
- * program includes Confidential, Proprietary Information and is a Trade Secret of
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited
- * unless authorized in writing. All Rights Reserved.
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -68,7 +68,7 @@ void app_findt_enable(uint16_t conhdl);
  ****************************************************************************************
  */
 void default_findt_alert_ind_hnd(uint8_t connection_idx, uint8_t alert_lvl);
-#endif // BLE_FINDME_TARGET
+#endif  // BLE_FINDME_TARGET
 
 #if BLE_FINDME_LOCATOR
 /**
@@ -95,8 +95,8 @@ void app_findl_enable(uint16_t conhdl);
  ****************************************************************************************
  */
 void app_findl_set_alert(void);
-#endif // BLE_FINDME_LOCATOR
+#endif  // BLE_FINDME_LOCATOR
 
 /// @} APP
 
-#endif // _APP_FINDME_H_
+#endif  // _APP_FINDME_H_

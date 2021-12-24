@@ -31,55 +31,58 @@ namespace http2 {
  * Interface for consuming data returned from an @c HTTP2RequestInterface.
  */
 class HTTP2ResponseSinkInterface {
-public:
-    /**
-     * Default destructor.
-     */
-    virtual ~HTTP2ResponseSinkInterface() = default;
+ public:
+  /**
+   * Default destructor.
+   */
+  virtual ~HTTP2ResponseSinkInterface() = default;
 
-    /**
-     * Notification that an HTTP response code was returned for the request.
-     *
-     * @note Calls to this method may block network operations for the associated instance of HTTP2ConnectionInterface,
-     * so they should return quickly.
-     *
-     * @param responseCode The response code received for the request.
-     * @return Whether receipt of the response should continue.
-     */
-    virtual bool onReceiveResponseCode(long responseCode) = 0;
+  /**
+   * Notification that an HTTP response code was returned for the request.
+   *
+   * @note Calls to this method may block network operations for the associated
+   * instance of HTTP2ConnectionInterface, so they should return quickly.
+   *
+   * @param responseCode The response code received for the request.
+   * @return Whether receipt of the response should continue.
+   */
+  virtual bool onReceiveResponseCode(long responseCode) = 0;
 
-    /**
-     * Notification than an HTTP header line was received.
-     *
-     * @note Calls to this method may block network operations for the associated instance of HTTP2ConnectionInterface,
-     * so they should return quickly.
-     *
-     * @param line The HTTP response header line that was received.
-     * @return Whether receipt of the response should continue.
-     */
-    virtual bool onReceiveHeaderLine(const std::string& line) = 0;
+  /**
+   * Notification than an HTTP header line was received.
+   *
+   * @note Calls to this method may block network operations for the associated
+   * instance of HTTP2ConnectionInterface, so they should return quickly.
+   *
+   * @param line The HTTP response header line that was received.
+   * @return Whether receipt of the response should continue.
+   */
+  virtual bool onReceiveHeaderLine(const std::string& line) = 0;
 
-    /**
-     * Notification of receipt of body data in an HTTP2 response.
-     *
-     * @note Calls to this method may block network operations for the associated instance of HTTP2ConnectionInterface,
-     * so they should return quickly.
-     *
-     * @param bytes The buffer containing the bytes to consume.
-     * @param size The number of bytes to consume.
-     * @return Status of the operation.  @see HTTP2ReceiveDataStatus.
-     */
-    virtual HTTP2ReceiveDataStatus onReceiveData(const char* bytes, size_t size) = 0;
+  /**
+   * Notification of receipt of body data in an HTTP2 response.
+   *
+   * @note Calls to this method may block network operations for the associated
+   * instance of HTTP2ConnectionInterface, so they should return quickly.
+   *
+   * @param bytes The buffer containing the bytes to consume.
+   * @param size The number of bytes to consume.
+   * @return Status of the operation.  @see HTTP2ReceiveDataStatus.
+   */
+  virtual HTTP2ReceiveDataStatus onReceiveData(const char* bytes,
+                                               size_t size) = 0;
 
-    /**
-     * Notification that the request/response cycle has finished and no further notifications will be provided.
-     *
-     * @note Calls to this method may block network operations for the associated instance of HTTP2ConnectionInterface,
-     * so they should return quickly.
-     *
-     * @param status The status with which receiving the response finished.  @see HTTP2ResponseFinishedStatus.
-     */
-    virtual void onResponseFinished(HTTP2ResponseFinishedStatus status) = 0;
+  /**
+   * Notification that the request/response cycle has finished and no further
+   * notifications will be provided.
+   *
+   * @note Calls to this method may block network operations for the associated
+   * instance of HTTP2ConnectionInterface, so they should return quickly.
+   *
+   * @param status The status with which receiving the response finished.  @see
+   * HTTP2ResponseFinishedStatus.
+   */
+  virtual void onResponseFinished(HTTP2ResponseFinishedStatus status) = 0;
 };
 
 }  // namespace http2

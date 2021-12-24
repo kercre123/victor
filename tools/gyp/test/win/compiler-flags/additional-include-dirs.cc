@@ -5,6 +5,4 @@
 // No path qualification to test compiler include dir specification.
 #include "header.h"
 
-int main() {
-  return 0;
-}
+int main() { return 0; }

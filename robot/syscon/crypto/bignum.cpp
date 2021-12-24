@@ -1,7 +1,8 @@
+#include "bignum.h"
+
 #include <stdint.h>
 #include <string.h>
 
-#include "bignum.h"
 #include "stm32f0xx.h"
 
 void big_init(big_num_t& num) {
@@ -11,7 +12,7 @@ void big_init(big_num_t& num) {
 
 // Cheapo function for reducing used count
 static void bit_reduce(big_num_t& num) {
-  while (num.used > 0 && num.digits[num.used-1] == 0) {
+  while (num.used > 0 && num.digits[num.used - 1] == 0) {
     num.used--;
   }
 }
@@ -58,14 +59,9 @@ int big_compare(const big_num_t& a, const big_num_t& b) {
   return a.negative ? -diff : diff;
 }
 
+bool big_zero(const big_num_t& a) { return a.used == 0; }
 
-bool big_zero(const big_num_t& a) {
-  return a.used == 0;
-}
-
-static bool big_odd(const big_num_t& a) {
-  return big_bit_get(a, 0);
-}
+static bool big_odd(const big_num_t& a) { return big_bit_get(a, 0); }
 
 static bool big_mask(big_num_t& t, int bits) {
   int index = bits / CELL_BITS;
@@ -109,9 +105,9 @@ int big_msb(const big_num_t& a) {
   if (a.used == 0) {
     return -1;
   }
-  
+
   const big_num_cell_t data = a.digits[a.used - 1];
-  
+
   for (int i = CELL_BITS - 1; i >= 0; i--) {
     if (data & (1 << i)) {
       return (a.used - 1) * CELL_BITS + i;
@@ -126,7 +122,7 @@ int big_lsb(const big_num_t& a) {
     const big_num_cell_t data = a.digits[idx];
 
     if (data == 0) {
-      continue ;
+      continue;
     }
 
     for (int i = 0; i < CELL_BITS; i++) {
@@ -212,7 +208,7 @@ bool big_unsigned_add(big_num_t& out, const big_num_t& a, const big_num_t& b) {
     bottom = &b;
     top = &a;
   }
-  
+
   carry.word = 0;
 
   // Lower section summation
@@ -220,7 +216,7 @@ bool big_unsigned_add(big_num_t& out, const big_num_t& a, const big_num_t& b) {
     carry.word = bottom->digits[idx] + top->digits[idx] + carry.upper;
     out.digits[idx] = carry.lower;
   }
-  
+
   // Carry through
   for (; idx < top->used; idx++) {
     carry.word = top->digits[idx] + carry.upper;
@@ -230,7 +226,7 @@ bool big_unsigned_add(big_num_t& out, const big_num_t& a, const big_num_t& b) {
   // Bit expansion
   if (carry.upper) {
     // Overflow error
-    if (idx+1 >= CELL_SIZE) {
+    if (idx + 1 >= CELL_SIZE) {
       return true;
     }
 
@@ -242,7 +238,8 @@ bool big_unsigned_add(big_num_t& out, const big_num_t& a, const big_num_t& b) {
   return false;
 }
 
-bool big_unsigned_subtract(big_num_t& out, const big_num_t& a, const big_num_t& b) {
+bool big_unsigned_subtract(big_num_t& out, const big_num_t& a,
+                           const big_num_t& b) {
   union {
     struct {
       big_num_cell_t lower;
@@ -258,7 +255,7 @@ bool big_unsigned_subtract(big_num_t& out, const big_num_t& a, const big_num_t& 
   if (a.used < b.used) {
     return true;
   }
-  
+
   word = 0;
 
   // Lower section summation
@@ -266,7 +263,7 @@ bool big_unsigned_subtract(big_num_t& out, const big_num_t& a, const big_num_t& 
     word = a.digits[idx] - b.digits[idx] + parts.upper;
     out.digits[idx] = parts.lower;
   }
-  
+
   // Carry through
   for (; idx < a.used; idx++) {
     word = a.digits[idx] + parts.upper;
@@ -284,18 +281,17 @@ bool big_unsigned_subtract(big_num_t& out, const big_num_t& a, const big_num_t& 
   return false;
 }
 
-static bool big_add_sub(big_num_t& out, const big_num_t& a, const big_num_t& b, bool b_sign) {
+static bool big_add_sub(big_num_t& out, const big_num_t& a, const big_num_t& b,
+                        bool b_sign) {
   bool result;
 
   if (a.negative == b_sign) {
     result = big_unsigned_add(out, a, b);
     out.negative = a.negative;
-  }
-  else if (big_unsigned_compare(a, b) > 0) {
+  } else if (big_unsigned_compare(a, b) > 0) {
     result = big_unsigned_subtract(out, a, b);
     out.negative = a.negative;
-  }
-  else {
+  } else {
     result = big_unsigned_subtract(out, b, a);
     out.negative = !a.negative;
   }
@@ -320,7 +316,7 @@ bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b) {
 
   // Clear our the section of the output that might be uninitalized
   for (int i = a.used; i < CELL_SIZE; i++) {
-    out.digits[i]  = 0;
+    out.digits[i] = 0;
   }
 
   out.negative = a.negative != b.negative;
@@ -328,7 +324,8 @@ bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b) {
 
   for (int ai = amax; ai >= 0; ai--) {
     int a_value = a.digits[ai];
-    out.digits[ai] = 0; // This is done here so we can use inplace multiplication
+    out.digits[ai] =
+        0;  // This is done here so we can use inplace multiplication
 
     for (int bi = bmax; bi >= 0; bi--) {
       int write_index = ai + bi;
@@ -338,7 +335,7 @@ bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b) {
 
       // Zero result early abort
       if (carry.word == 0) {
-        continue ;
+        continue;
       }
 
       // Cannot write outside of boundary
@@ -369,10 +366,11 @@ bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b) {
   return clipped;
 }
 
-bool big_power(big_num_t& result, const big_num_t& base_in, const big_num_t& exp) {
+bool big_power(big_num_t& result, const big_num_t& base_in,
+               const big_num_t& exp) {
   big_num_t working[2];
-  big_num_t *base = &working[0];
-  big_num_t *temp = &working[1];
+  big_num_t* base = &working[0];
+  big_num_t* temp = &working[1];
 
   int msb = big_msb(exp);
 
@@ -380,7 +378,7 @@ bool big_power(big_num_t& result, const big_num_t& base_in, const big_num_t& exp
 
   *base = base_in;
 
-  for (int bit = 0; bit <= msb; bit++) {    
+  for (int bit = 0; bit <= msb; bit++) {
     if (big_bit_get(exp, bit)) {
       if (big_multiply(result, result, *base)) {
         return true;
@@ -403,7 +401,8 @@ bool big_power(big_num_t& result, const big_num_t& base_in, const big_num_t& exp
   return false;
 }
 
-bool big_divide(big_num_t& result, big_num_t& modulo, const big_num_t& a, const big_num_t& b) {
+bool big_divide(big_num_t& result, big_num_t& modulo, const big_num_t& a,
+                const big_num_t& b) {
   big_num_t divisor;
 
   // Zero out result, but say it's size is that of our divisor (maximum size)
@@ -422,7 +421,7 @@ bool big_divide(big_num_t& result, big_num_t& modulo, const big_num_t& a, const 
       big_unsigned_subtract(modulo, modulo, divisor);
       big_bit_set(result, shift);
     }
-    
+
     big_shr(divisor, divisor, 1);
   }
 
@@ -510,8 +509,7 @@ bool big_invm(big_num_t& out, const big_num_t& a_, const big_num_t& b_) {
       if (big_subtract(x1, x1, x2)) {
         return true;
       }
-    }
-    else {
+    } else {
       if (big_subtract(b, b, a)) {
         return true;
       }
@@ -562,7 +560,8 @@ bool mont_from(const big_mont_t& mont, big_num_t& out, const big_num_t& in) {
 }
 
 // TODO: overflow protection
-bool mont_multiply(const big_mont_t& mont, big_num_t& out, const big_num_t& a, const big_num_t& b) {
+bool mont_multiply(const big_mont_t& mont, big_num_t& out, const big_num_t& a,
+                   const big_num_t& b) {
   big_num_t temp;
 
   big_multiply(out, a, b);
@@ -584,14 +583,15 @@ bool mont_multiply(const big_mont_t& mont, big_num_t& out, const big_num_t& a, c
   return false;
 }
 
-bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in, const big_num_t& exp) {
+bool mont_power(const big_mont_t& mont, big_num_t& out,
+                const big_num_t& base_in, const big_num_t& exp) {
   big_num_t working[3];
-  big_num_t *base = &working[0];
-  big_num_t *temp = &working[1];
-  big_num_t *result = &working[2];
+  big_num_t* base = &working[0];
+  big_num_t* temp = &working[1];
+  big_num_t* result = &working[2];
 
   int msb = big_msb(exp);
-  
+
   *base = base_in;
   *result = AS_BN(mont.one);
 
@@ -602,19 +602,18 @@ bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in
       }
 
       {
-        big_num_t *x = result;
+        big_num_t* x = result;
         result = temp;
         temp = x;
       }
     }
-
 
     if (mont_multiply(mont, *temp, *base, *base)) {
       return true;
     }
 
     {
-      big_num_t *x = base;
+      big_num_t* x = base;
       base = temp;
       temp = x;
     }

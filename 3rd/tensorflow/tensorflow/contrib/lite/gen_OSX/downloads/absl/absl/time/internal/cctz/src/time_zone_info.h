@@ -72,14 +72,13 @@ class TimeZoneInfo : public TimeZoneIf {
   // TimeZoneIf implementations.
   time_zone::absolute_lookup BreakTime(
       const time_point<sys_seconds>& tp) const override;
-  time_zone::civil_lookup MakeTime(
-      const civil_second& cs) const override;
+  time_zone::civil_lookup MakeTime(const civil_second& cs) const override;
   std::string Description() const override;
   bool NextTransition(time_point<sys_seconds>* tp) const override;
   bool PrevTransition(time_point<sys_seconds>* tp) const override;
 
  private:
-  struct Header {  // counts of:
+  struct Header {            // counts of:
     std::size_t timecnt;     // transition times
     std::size_t typecnt;     // transition types
     std::size_t charcnt;     // zone abbreviation characters
@@ -111,7 +110,7 @@ class TimeZoneInfo : public TimeZoneIf {
 
   std::vector<Transition> transitions_;  // ordered by unix_time and civil_sec
   std::vector<TransitionType> transition_types_;  // distinct transition types
-  std::uint_fast8_t default_transition_type_;  // for before first transition
+  std::uint_fast8_t default_transition_type_;     // for before first transition
   std::string abbreviations_;  // all the NUL-terminated abbreviations
 
   std::string future_spec_;  // for after the last zic transition

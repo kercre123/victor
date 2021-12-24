@@ -11,8 +11,8 @@
  *
  **/
 
-
 #include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKLock.h"
+
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/sdkComponent.h"
 
@@ -21,61 +21,59 @@
 namespace Anki {
 namespace Vector {
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
 BehaviorSDKLock::BehaviorSDKLock(const Json::Value& config)
- : ICozmoBehavior(config)
-{
-}
+    : ICozmoBehavior(config) {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorSDKLock::WantsToBeActivatedBehavior() const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool BehaviorSDKLock::WantsToBeActivatedBehavior() const {
   auto& robotInfo = GetBEI().GetRobotInfo();
   auto& sdkComponent = robotInfo.GetSDKComponent();
   return sdkComponent.SDKWantsBehaviorLock();
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSDKLock::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
-{
-  modifiers.wantsToBeActivatedWhenCarryingObject  = true;
-  modifiers.wantsToBeActivatedWhenOnCharger       = true;
-  modifiers.wantsToBeActivatedWhenOffTreads       = true;
-  modifiers.behaviorAlwaysDelegates               = false;
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorSDKLock::GetBehaviorOperationModifiers(
+    BehaviorOperationModifiers& modifiers) const {
+  modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  modifiers.wantsToBeActivatedWhenOnCharger = true;
+  modifiers.wantsToBeActivatedWhenOffTreads = true;
+  modifiers.behaviorAlwaysDelegates = false;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSDKLock::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorSDKLock::GetBehaviorJsonKeys(
+    std::set<const char*>& expectedKeys) const {}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorSDKLock::OnBehaviorActivated() {
+  LOG_INFO("BehaviorSDKLock::OnBehaviorActivated", "activated");
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSDKLock::OnBehaviorActivated() 
-{
-  LOG_INFO("BehaviorSDKLock::OnBehaviorActivated","activated");
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSDKLock::BehaviorUpdate() 
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorSDKLock::BehaviorUpdate() {
   if (!IsActivated()) {
     return;
   }
 
   auto& robotInfo = GetBEI().GetRobotInfo();
   auto& sdkComponent = robotInfo.GetSDKComponent();
-  if (!sdkComponent.SDKWantsBehaviorLock())
-  {
+  if (!sdkComponent.SDKWantsBehaviorLock()) {
     CancelSelf();
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSDKLock::OnBehaviorDeactivated() 
-{
-  LOG_INFO("BehaviorSDKLock::OnBehaviorDeactivated","deactivated");
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorSDKLock::OnBehaviorDeactivated() {
+  LOG_INFO("BehaviorSDKLock::OnBehaviorDeactivated", "deactivated");
 }
 
-} //namespace Vector
-} //namespace Anki
+}  // namespace Vector
+}  // namespace Anki

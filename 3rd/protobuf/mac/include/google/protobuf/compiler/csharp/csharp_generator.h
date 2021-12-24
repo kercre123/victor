@@ -33,9 +33,9 @@
 #ifndef GOOGLE_PROTOBUF_COMPILER_CSHARP_GENERATOR_H__
 #define GOOGLE_PROTOBUF_COMPILER_CSHARP_GENERATOR_H__
 
-#include <string>
-
 #include <google/protobuf/compiler/code_generator.h>
+
+#include <string>
 
 namespace google {
 namespace protobuf {
@@ -48,12 +48,10 @@ namespace csharp {
 // CodeGenerator with the CommandLineInterface in your main() function.
 class LIBPROTOC_EXPORT Generator
     : public google::protobuf::compiler::CodeGenerator {
-public:
-  virtual bool Generate(
-      const FileDescriptor* file,
-      const string& parameter,
-      GeneratorContext* generator_context,
-      string* error) const;
+ public:
+  virtual bool Generate(const FileDescriptor* file, const string& parameter,
+                        GeneratorContext* generator_context,
+                        string* error) const;
 };
 
 }  // namespace csharp

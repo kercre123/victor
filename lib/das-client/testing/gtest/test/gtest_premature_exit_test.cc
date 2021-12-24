@@ -86,15 +86,17 @@ TEST_F(PrematureExitDeathTest, FileExistsDuringExecutionOfDeathTest) {
     return;
   }
 
-  EXPECT_DEATH_IF_SUPPORTED({
-      // If the file exists, crash the process such that the main test
-      // process will catch the (expected) crash and report a success;
-      // otherwise don't crash, which will cause the main test process
-      // to report that the death test has failed.
-      if (PrematureExitFileExists()) {
-        exit(1);
-      }
-    }, "");
+  EXPECT_DEATH_IF_SUPPORTED(
+      {
+        // If the file exists, crash the process such that the main test
+        // process will catch the (expected) crash and report a success;
+        // otherwise don't crash, which will cause the main test process
+        // to report that the death test has failed.
+        if (PrematureExitFileExists()) {
+          exit(1);
+        }
+      },
+      "");
 }
 
 // Tests that TEST_PREMATURE_EXIT_FILE is set where it's expected to
@@ -121,7 +123,7 @@ TEST_F(PrematureExitTest, PrematureExitFileExistsDuringTestExecution) {
 
 }  // namespace
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   InitGoogleTest(&argc, argv);
   const int exit_code = RUN_ALL_TESTS();
 

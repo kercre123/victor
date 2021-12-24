@@ -6,6 +6,4 @@ extern "C" {
 int zero(void);
 }
 
-int main() {
-  return zero();
-}
+int main() { return zero(); }

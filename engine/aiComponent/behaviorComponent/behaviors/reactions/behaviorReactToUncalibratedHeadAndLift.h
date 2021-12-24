@@ -24,31 +24,30 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorReactToUncalibratedHeadAndLift : public ICozmoBehavior
-{
-public: 
+class BehaviorReactToUncalibratedHeadAndLift : public ICozmoBehavior {
+ public:
   virtual ~BehaviorReactToUncalibratedHeadAndLift();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorReactToUncalibratedHeadAndLift(const Json::Value& config);  
+  explicit BehaviorReactToUncalibratedHeadAndLift(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-  
+ private:
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToUncalibratedHeadAndLift__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToUncalibratedHeadAndLift__

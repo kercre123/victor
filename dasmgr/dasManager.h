@@ -1,25 +1,25 @@
 /**
-* File: victor/dasmgr/dasManager.h
-*
-* Description: DASManager class declarations
-*
-* Copyright: Anki, inc. 2018
-*
-*/
+ * File: victor/dasmgr/dasManager.h
+ *
+ * Description: DASManager class declarations
+ *
+ * Copyright: Anki, inc. 2018
+ *
+ */
 
 #ifndef __victor_dasmgr_dasManager_h
 #define __victor_dasmgr_dasManager_h
-
-#include "dasConfig.h"
-#include "coretech/common/shared/types.h" // Anki Result
-#include "util/dispatchQueue/taskExecutor.h" // Anki TaskExecutor
-#include "util/logging/logtypes.h" // Anki LogLevel
 
 #include <chrono>
 #include <deque>
 #include <fstream>
 #include <memory>
 #include <string>
+
+#include "coretech/common/shared/types.h"  // Anki Result
+#include "dasConfig.h"
+#include "util/dispatchQueue/taskExecutor.h"  // Anki TaskExecutor
+#include "util/logging/logtypes.h"            // Anki LogLevel
 
 // Forward declarations
 typedef struct AndroidLogEntry_t AndroidLogEntry;
@@ -28,15 +28,15 @@ namespace Anki {
 namespace Vector {
 
 class DASManager {
-public:
+ public:
   // Class constructor
-  DASManager(const DASConfig & dasConfig);
+  DASManager(const DASConfig& dasConfig);
 
   // Run until error or termination log event ("@@") is read
   // Returns 0 on successful termination, else error code
-  Result Run(const bool & shutdown);
+  Result Run(const bool& shutdown);
 
-private:
+ private:
   using LogLevel = Anki::Util::LogLevel;
   using TaskExecutor = Anki::Util::TaskExecutor;
   using TimePoint = std::chrono::time_point<std::chrono::steady_clock>;
@@ -85,10 +85,10 @@ private:
   void PurgeBackupFiles();
   void EnforceStorageQuota();
 
-  std::string ConvertLogEntryToJson(const AndroidLogEntry & logEntry);
+  std::string ConvertLogEntryToJson(const AndroidLogEntry& logEntry);
 
   // Process a log message
-  void ProcessLogEntry(const AndroidLogEntry & logEntry);
+  void ProcessLogEntry(const AndroidLogEntry& logEntry);
 
   // Rename das.log to 00000000000X.json for the uploader task to pick up
   void RollLogFile();
@@ -110,17 +110,16 @@ private:
   // Update state flag and magic state file
   void SetAllowUpload(bool allow_upload);
 
-  void LoadTransientGlobals(const std::string & path);
-  void LoadPersistentGlobals(const std::string & path);
+  void LoadTransientGlobals(const std::string& path);
+  void LoadPersistentGlobals(const std::string& path);
   void LoadGlobalState();
 
-  void SaveTransientGlobals(const std::string & path);
-  void SavePersistentGlobals(const std::string & path);
+  void SaveTransientGlobals(const std::string& path);
+  void SavePersistentGlobals(const std::string& path);
   void SaveGlobalState();
-
 };
 
-} // end namespace Vector
-} // end namespace Anki
+}  // end namespace Vector
+}  // end namespace Anki
 
-#endif // __platform_dasmgr_dasManager_h
+#endif  // __platform_dasmgr_dasManager_h

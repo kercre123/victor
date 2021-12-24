@@ -20,7 +20,8 @@
 #ifdef NDEBUG
 #define LOGV(...)
 #else
-#define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, "daslib", __VA_ARGS__)
+#define LOGV(...) \
+  __android_log_print(ANDROID_LOG_VERBOSE, "daslib", __VA_ARGS__)
 #endif
 
-#endif // __DasLogMacros_H__
+#endif  // __DasLogMacros_H__

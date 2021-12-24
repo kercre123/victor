@@ -69,7 +69,6 @@
  *
  * Author: Neal Sidhwaney */
 
-
 /*
  * Breakpad minidump extension for PPC64 support.  Based on Darwin/Mac OS X'
  * mach/ppc/_types.h
@@ -90,45 +89,43 @@ typedef struct {
   /* context_flags is not present in ppc_thread_state, but it aids
    * identification of MDRawContextPPC among other raw context types,
    * and it guarantees alignment when we get to float_save. */
-  uint64_t              context_flags;
+  uint64_t context_flags;
 
-  uint64_t              srr0;    /* Machine status save/restore: stores pc
-                                  * (instruction) */
-  uint64_t              srr1;    /* Machine status save/restore: stores msr
-                                  * (ps, program/machine state) */
+  uint64_t srr0; /* Machine status save/restore: stores pc
+                  * (instruction) */
+  uint64_t srr1; /* Machine status save/restore: stores msr
+                  * (ps, program/machine state) */
   /* ppc_thread_state contains 32 fields, r0 .. r31.  Here, an array is
    * used for brevity. */
-  uint64_t              gpr[MD_CONTEXT_PPC64_GPR_COUNT];
-  uint64_t              cr;      /* Condition */
-  uint64_t              xer;     /* Integer (fiXed-point) exception */
-  uint64_t              lr;      /* Link */
-  uint64_t              ctr;     /* Count */
-  uint64_t              vrsave;  /* Vector save */
+  uint64_t gpr[MD_CONTEXT_PPC64_GPR_COUNT];
+  uint64_t cr;     /* Condition */
+  uint64_t xer;    /* Integer (fiXed-point) exception */
+  uint64_t lr;     /* Link */
+  uint64_t ctr;    /* Count */
+  uint64_t vrsave; /* Vector save */
 
   /* float_save and vector_save aren't present in ppc_thread_state, but
    * are represented in separate structures that still define a thread's
    * context. */
   MDFloatingSaveAreaPPC float_save;
-  MDVectorSaveAreaPPC   vector_save;
-} MDRawContextPPC64;  /* Based on ppc_thread_state */
+  MDVectorSaveAreaPPC vector_save;
+} MDRawContextPPC64; /* Based on ppc_thread_state */
 
 /* Indices into gpr for registers with a dedicated or conventional purpose. */
-enum MDPPC64RegisterNumbers {
-  MD_CONTEXT_PPC64_REG_SP = 1
-};
+enum MDPPC64RegisterNumbers { MD_CONTEXT_PPC64_REG_SP = 1 };
 
 /* For (MDRawContextPPC).context_flags.  These values indicate the type of
  * context stored in the structure.  MD_CONTEXT_PPC is Breakpad-defined.  Its
  * value was chosen to avoid likely conflicts with MD_CONTEXT_* for other
  * CPUs. */
-#define MD_CONTEXT_PPC64                0x01000000
-#define MD_CONTEXT_PPC64_BASE           (MD_CONTEXT_PPC64 | 0x00000001)
+#define MD_CONTEXT_PPC64 0x01000000
+#define MD_CONTEXT_PPC64_BASE (MD_CONTEXT_PPC64 | 0x00000001)
 #define MD_CONTEXT_PPC64_FLOATING_POINT (MD_CONTEXT_PPC64 | 0x00000008)
-#define MD_CONTEXT_PPC64_VECTOR         (MD_CONTEXT_PPC64 | 0x00000020)
+#define MD_CONTEXT_PPC64_VECTOR (MD_CONTEXT_PPC64 | 0x00000020)
 
-#define MD_CONTEXT_PPC64_FULL           MD_CONTEXT_PPC64_BASE
-#define MD_CONTEXT_PPC64_ALL            (MD_CONTEXT_PPC64_FULL | \
-                                         MD_CONTEXT_PPC64_FLOATING_POINT | \
-                                         MD_CONTEXT_PPC64_VECTOR)
+#define MD_CONTEXT_PPC64_FULL MD_CONTEXT_PPC64_BASE
+#define MD_CONTEXT_PPC64_ALL                                 \
+  (MD_CONTEXT_PPC64_FULL | MD_CONTEXT_PPC64_FLOATING_POINT | \
+   MD_CONTEXT_PPC64_VECTOR)
 
 #endif /* GOOGLE_BREAKPAD_COMMON_MINIDUMP_CPU_PPC64_H__ */

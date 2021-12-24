@@ -17,25 +17,17 @@
 
 #include <condition_variable>
 
-namespace Anki
-{
-namespace Das
-{
+namespace Anki {
+namespace Das {
 
-TaskExecutor::TaskExecutor()
-: _executing(true)
-{
+TaskExecutor::TaskExecutor() : _executing(true) {
   _taskExecuteThread = std::thread(&TaskExecutor::Execute, this);
   _taskDeferredThread = std::thread(&TaskExecutor::ProcessDeferredQueue, this);
 }
 
-TaskExecutor::~TaskExecutor()
-{
-  StopExecution();
-}
+TaskExecutor::~TaskExecutor() { StopExecution(); }
 
-void TaskExecutor::StopExecution()
-{
+void TaskExecutor::StopExecution() {
   // Cause Execute and ProcessDeferredQueue to break out of their while loops
   _executing = false;
 
@@ -54,8 +46,8 @@ void TaskExecutor::StopExecution()
     _taskDeferredCondition.notify_one();
   }
 
-  // Join the background threads.  We created the threads in the constructor, so they
-  // should be cleaned up in our destructor.
+  // Join the background threads.  We created the threads in the constructor, so
+  // they should be cleaned up in our destructor.
   try {
     if (_taskExecuteThread.joinable()) {
       _taskExecuteThread.join();
@@ -63,22 +55,20 @@ void TaskExecutor::StopExecution()
     if (_taskDeferredThread.joinable()) {
       _taskDeferredThread.join();
     }
-  } catch ( ... )
-  {
+  } catch (...) {
     // Suppress exceptions
   }
 }
 
-void TaskExecutor::Wake(std::function<void()> task)
-{
+void TaskExecutor::Wake(std::function<void()> task) {
   if (!_executing) {
     return;
   }
-  WakeAfter(std::move(task), std::chrono::time_point<std::chrono::system_clock>::min());
+  WakeAfter(std::move(task),
+            std::chrono::time_point<std::chrono::system_clock>::min());
 }
 
-void TaskExecutor::WakeSync(std::function<void()> task)
-{
+void TaskExecutor::WakeSync(std::function<void()> task) {
   if (!_executing) {
     return;
   }
@@ -100,12 +90,12 @@ void TaskExecutor::WakeSync(std::function<void()> task)
   AddTaskHolder(std::move(taskHolder));
 
   std::unique_lock<std::mutex> lk(_syncTaskCompleteMutex);
-  _syncTaskCondition.wait(lk, [this]{return _syncTaskDone;});
-
+  _syncTaskCondition.wait(lk, [this] { return _syncTaskDone; });
 }
 
-void TaskExecutor::WakeAfter(std::function<void()> task, std::chrono::time_point<std::chrono::system_clock> when)
-{
+void TaskExecutor::WakeAfter(
+    std::function<void()> task,
+    std::chrono::time_point<std::chrono::system_clock> when) {
   if (!_executing) {
     return;
   }
@@ -122,8 +112,7 @@ void TaskExecutor::WakeAfter(std::function<void()> task, std::chrono::time_point
   }
 }
 
-void TaskExecutor::AddTaskHolder(TaskHolder taskHolder)
-{
+void TaskExecutor::AddTaskHolder(TaskHolder taskHolder) {
   std::lock_guard<std::mutex> lock(_taskQueueMutex);
   if (!_executing) {
     return;
@@ -132,8 +121,7 @@ void TaskExecutor::AddTaskHolder(TaskHolder taskHolder)
   _taskQueueCondition.notify_one();
 }
 
-void TaskExecutor::AddTaskHolderToDeferredQueue(TaskHolder taskHolder)
-{
+void TaskExecutor::AddTaskHolderToDeferredQueue(TaskHolder taskHolder) {
   std::lock_guard<std::mutex> lock(_taskDeferredQueueMutex);
   if (!_executing) {
     return;
@@ -144,19 +132,14 @@ void TaskExecutor::AddTaskHolderToDeferredQueue(TaskHolder taskHolder)
   _taskDeferredCondition.notify_one();
 }
 
-
-
-void TaskExecutor::Wait(std::unique_lock<std::mutex> &lock,
-                        std::condition_variable &condition,
-                        const std::vector<TaskHolder>* tasks) const
-{
-  condition.wait(lock, [this, tasks] {
-      return tasks->size() > 0 || !_executing;
-  });
+void TaskExecutor::Wait(std::unique_lock<std::mutex>& lock,
+                        std::condition_variable& condition,
+                        const std::vector<TaskHolder>* tasks) const {
+  condition.wait(lock,
+                 [this, tasks] { return tasks->size() > 0 || !_executing; });
 }
 
-void TaskExecutor::Execute()
-{
+void TaskExecutor::Execute() {
   while (_executing) {
     std::unique_lock<std::mutex> lock(_taskQueueMutex);
     Wait(lock, _taskQueueCondition, &_taskQueue);
@@ -164,15 +147,14 @@ void TaskExecutor::Execute()
   }
 }
 
-void TaskExecutor::ProcessDeferredQueue()
-{
+void TaskExecutor::ProcessDeferredQueue() {
   auto abs_time = std::chrono::time_point<std::chrono::system_clock>::max();
   size_t queueSize = 0;
   while (_executing) {
     std::unique_lock<std::mutex> lock(_taskDeferredQueueMutex);
     _taskDeferredCondition.wait_until(lock, abs_time, [this, queueSize] {
-        return _deferredTaskQueue.size() > queueSize || !_executing;
-      });
+      return _deferredTaskQueue.size() > queueSize || !_executing;
+    });
 
     bool endLoop = false;
     while (_executing && !_deferredTaskQueue.empty() && !endLoop) {
@@ -193,8 +175,7 @@ void TaskExecutor::ProcessDeferredQueue()
   }
 }
 
-void TaskExecutor::Run(std::unique_lock<std::mutex> &lock)
-{
+void TaskExecutor::Run(std::unique_lock<std::mutex>& lock) {
   // copy
   std::vector<TaskHolder> taskQueue = std::move(_taskQueue);
   _taskQueue.clear();
@@ -210,5 +191,5 @@ void TaskExecutor::Run(std::unique_lock<std::mutex> &lock)
   }
 }
 
-} // namespace Das
-} // namespace Anki
+}  // namespace Das
+}  // namespace Anki

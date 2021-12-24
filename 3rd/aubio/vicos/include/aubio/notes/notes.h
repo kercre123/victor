@@ -44,15 +44,15 @@ typedef struct _aubio_notes_t aubio_notes_t;
   \return newly created ::aubio_notes_t
 
 */
-aubio_notes_t * new_aubio_notes (const char_t * method,
-    uint_t buf_size, uint_t hop_size, uint_t samplerate);
+aubio_notes_t *new_aubio_notes(const char_t *method, uint_t buf_size,
+                               uint_t hop_size, uint_t samplerate);
 
 /** delete notes detection object
 
   \param o notes detection object to delete
 
 */
-void del_aubio_notes(aubio_notes_t * o);
+void del_aubio_notes(aubio_notes_t *o);
 
 /** execute note detection on an input signal frame
 
@@ -66,7 +66,7 @@ void del_aubio_notes(aubio_notes_t * o);
    - 2. the midi note to turn off
 
 */
-void aubio_notes_do (aubio_notes_t *o, const fvec_t * input, fvec_t * output);
+void aubio_notes_do(aubio_notes_t *o, const fvec_t *input, fvec_t *output);
 
 /** set notes detection silence threshold
 
@@ -76,7 +76,7 @@ void aubio_notes_do (aubio_notes_t *o, const fvec_t * input, fvec_t * output);
   \return 0 on success, non-zero otherwise
 
 */
-uint_t aubio_notes_set_silence(aubio_notes_t * o, smpl_t silence);
+uint_t aubio_notes_set_silence(aubio_notes_t *o, smpl_t silence);
 
 /** get notes detection silence threshold
 
@@ -85,7 +85,7 @@ uint_t aubio_notes_set_silence(aubio_notes_t * o, smpl_t silence);
   \return current silence threshold
 
 */
-smpl_t aubio_notes_get_silence(const aubio_notes_t * o);
+smpl_t aubio_notes_get_silence(const aubio_notes_t *o);
 
 /** get notes detection minimum inter-onset interval, in millisecond
 
@@ -104,7 +104,7 @@ smpl_t aubio_notes_get_minioi_ms(const aubio_notes_t *o);
   \return 0 on success, non-zero otherwise
 
 */
-uint_t aubio_notes_set_minioi_ms (aubio_notes_t *o, smpl_t minioi_ms);
+uint_t aubio_notes_set_minioi_ms(aubio_notes_t *o, smpl_t minioi_ms);
 
 /** get notes object release drop level, in dB
 
@@ -113,7 +113,7 @@ uint_t aubio_notes_set_minioi_ms (aubio_notes_t *o, smpl_t minioi_ms);
   \return current release drop level, in dB
 
  */
-smpl_t aubio_notes_get_release_drop (const aubio_notes_t *o);
+smpl_t aubio_notes_get_release_drop(const aubio_notes_t *o);
 
 /** set note release drop level, in dB
 
@@ -134,7 +134,7 @@ smpl_t aubio_notes_get_release_drop (const aubio_notes_t *o);
   \return 0 on success, non-zero otherwise
 
 */
-uint_t aubio_notes_set_release_drop (aubio_notes_t *o, smpl_t release_drop);
+uint_t aubio_notes_set_release_drop(aubio_notes_t *o, smpl_t release_drop);
 
 #ifdef __cplusplus
 }

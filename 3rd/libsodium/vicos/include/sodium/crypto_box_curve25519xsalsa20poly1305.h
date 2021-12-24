@@ -2,13 +2,14 @@
 #define crypto_box_curve25519xsalsa20poly1305_H
 
 #include <stddef.h>
+
 #include "crypto_stream_xsalsa20.h"
 #include "export.h"
 
 #ifdef __cplusplus
-# ifdef __GNUC__
-#  pragma GCC diagnostic ignored "-Wlong-long"
-# endif
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wlong-long"
+#endif
 extern "C" {
 #endif
 
@@ -36,16 +37,17 @@ size_t crypto_box_curve25519xsalsa20poly1305_noncebytes(void);
 SODIUM_EXPORT
 size_t crypto_box_curve25519xsalsa20poly1305_macbytes(void);
 
-/* Only for the libsodium API - The NaCl compatibility API would require BOXZEROBYTES extra bytes */
+/* Only for the libsodium API - The NaCl compatibility API would require
+ * BOXZEROBYTES extra bytes */
 #define crypto_box_curve25519xsalsa20poly1305_MESSAGEBYTES_MAX \
-    (crypto_stream_xsalsa20_MESSAGEBYTES_MAX - crypto_box_curve25519xsalsa20poly1305_MACBYTES)
+  (crypto_stream_xsalsa20_MESSAGEBYTES_MAX -                   \
+   crypto_box_curve25519xsalsa20poly1305_MACBYTES)
 SODIUM_EXPORT
 size_t crypto_box_curve25519xsalsa20poly1305_messagebytes_max(void);
 
 SODIUM_EXPORT
-int crypto_box_curve25519xsalsa20poly1305_seed_keypair(unsigned char *pk,
-                                                       unsigned char *sk,
-                                                       const unsigned char *seed);
+int crypto_box_curve25519xsalsa20poly1305_seed_keypair(
+    unsigned char *pk, unsigned char *sk, const unsigned char *seed);
 
 SODIUM_EXPORT
 int crypto_box_curve25519xsalsa20poly1305_keypair(unsigned char *pk,
@@ -55,7 +57,7 @@ SODIUM_EXPORT
 int crypto_box_curve25519xsalsa20poly1305_beforenm(unsigned char *k,
                                                    const unsigned char *pk,
                                                    const unsigned char *sk)
-            __attribute__ ((warn_unused_result));
+    __attribute__((warn_unused_result));
 
 /* -- NaCl compatibility interface ; Requires padding -- */
 
@@ -64,28 +66,22 @@ SODIUM_EXPORT
 size_t crypto_box_curve25519xsalsa20poly1305_boxzerobytes(void);
 
 #define crypto_box_curve25519xsalsa20poly1305_ZEROBYTES \
-    (crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES + \
-     crypto_box_curve25519xsalsa20poly1305_MACBYTES)
+  (crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES + \
+   crypto_box_curve25519xsalsa20poly1305_MACBYTES)
 SODIUM_EXPORT
 size_t crypto_box_curve25519xsalsa20poly1305_zerobytes(void);
 
 SODIUM_EXPORT
-int crypto_box_curve25519xsalsa20poly1305(unsigned char *c,
-                                          const unsigned char *m,
-                                          unsigned long long mlen,
-                                          const unsigned char *n,
-                                          const unsigned char *pk,
-                                          const unsigned char *sk)
-            __attribute__ ((warn_unused_result));
+int crypto_box_curve25519xsalsa20poly1305(
+    unsigned char *c, const unsigned char *m, unsigned long long mlen,
+    const unsigned char *n, const unsigned char *pk, const unsigned char *sk)
+    __attribute__((warn_unused_result));
 
 SODIUM_EXPORT
-int crypto_box_curve25519xsalsa20poly1305_open(unsigned char *m,
-                                               const unsigned char *c,
-                                               unsigned long long clen,
-                                               const unsigned char *n,
-                                               const unsigned char *pk,
-                                               const unsigned char *sk)
-            __attribute__ ((warn_unused_result));
+int crypto_box_curve25519xsalsa20poly1305_open(
+    unsigned char *m, const unsigned char *c, unsigned long long clen,
+    const unsigned char *n, const unsigned char *pk, const unsigned char *sk)
+    __attribute__((warn_unused_result));
 
 SODIUM_EXPORT
 int crypto_box_curve25519xsalsa20poly1305_afternm(unsigned char *c,
@@ -100,7 +96,7 @@ int crypto_box_curve25519xsalsa20poly1305_open_afternm(unsigned char *m,
                                                        unsigned long long clen,
                                                        const unsigned char *n,
                                                        const unsigned char *k)
-            __attribute__ ((warn_unused_result));
+    __attribute__((warn_unused_result));
 
 #ifdef __cplusplus
 }

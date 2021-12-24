@@ -34,6 +34,7 @@
 #define COMMON_LINUX_FILE_ID_H__
 
 #include <limits.h>
+
 #include <string>
 
 #include "common/linux/guid_creator.h"
@@ -65,8 +66,7 @@ class FileID {
   // |identifier|. Return false if the identifier could not be created for this
   // file.
   static bool ElfFileIdentifierFromMappedFile(
-      const void* base,
-      wasteful_vector<uint8_t>& identifier);
+      const void* base, wasteful_vector<uint8_t>& identifier);
 
   // Convert the |identifier| data to a string.  The string will
   // be formatted as a UUID in all uppercase without dashes.

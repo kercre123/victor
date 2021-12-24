@@ -20,8 +20,8 @@
  * @ingroup DBG
  * @brief Debug tester emulator
  *
- * The DBG tester emulator enables low level base band tests such as ACL/SCO/ESCO
- * loopback.
+ * The DBG tester emulator enables low level base band tests such as
+ *ACL/SCO/ESCO loopback.
  *
  * @{
  ****************************************************************************************
@@ -31,7 +31,7 @@
  * INCLUDE FILES
  ****************************************************************************************
  */
-#include "rwip_config.h"       // stack configuration
+#include "rwip_config.h"  // stack configuration
 
 #if (BT_TESTER)
 
@@ -57,9 +57,11 @@
 * @return Error status
 ******************************************************************************************
 */
-extern uint8_t dbg_tester_start(uint8_t link_id, uint8_t test_scenario, uint8_t hopping_mode,
-                 uint8_t tx_freq, uint8_t rx_freq, uint8_t power_control, uint8_t poll_period,
-                 uint8_t packet_type, uint16_t payload_length);
+extern uint8_t dbg_tester_start(uint8_t link_id, uint8_t test_scenario,
+                                uint8_t hopping_mode, uint8_t tx_freq,
+                                uint8_t rx_freq, uint8_t power_control,
+                                uint8_t poll_period, uint8_t packet_type,
+                                uint16_t payload_length);
 
 /**
 ******************************************************************************************
@@ -71,10 +73,11 @@ extern uint8_t dbg_tester_start(uint8_t link_id, uint8_t test_scenario, uint8_t 
 *
 ******************************************************************************************
 */
-extern void dbg_tester_forward_lmp(uint8_t link_id, uint8_t * pdu, uint8_t buflen);
+extern void dbg_tester_forward_lmp(uint8_t link_id, uint8_t* pdu,
+                                   uint8_t buflen);
 
-#endif // BT_TESTER
+#endif  // BT_TESTER
 
 /// @} DBGTESTER
 
-#endif // DBG_TESTER_H_
+#endif  // DBG_TESTER_H_

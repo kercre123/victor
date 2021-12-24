@@ -4,9 +4,10 @@
  * Author: Brad Neuman
  * Created: 2017-11-30
  *
- * Description: A StateConceptStrategy that is implemented as a lmabda. This one cannot be created (solely)
- *              from config, it must be created in code. This can be useful to use the existing infrastructure
- *              and framework with a custom hard-coded strategy
+ * Description: A StateConceptStrategy that is implemented as a lmabda. This one
+ *cannot be created (solely) from config, it must be created in code. This can
+ *be useful to use the existing infrastructure and framework with a custom
+ *hard-coded strategy
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -20,51 +21,54 @@
 namespace Anki {
 namespace Vector {
 
-class ConditionLambda : public IBEICondition
-{
-public:
-
+class ConditionLambda : public IBEICondition {
+ public:
   using VisionModeSet = std::set<VisionModeRequest>;
-  
+
   // NOTE: this strategy takes no config, because it can't be data defined
-  ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
-                  const std::string& ownerDebugLabel);
+  ConditionLambda(
+      std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
+      const std::string& ownerDebugLabel);
 
   // Alternative constructor for Lambda's which have VisionModeRequirements
-  ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
-                  const VisionModeSet& requiredVisionModes,
-                  const std::string& ownerDebugLabel);
+  ConditionLambda(
+      std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
+      const VisionModeSet& requiredVisionModes,
+      const std::string& ownerDebugLabel);
 
   // Alternative constructor for Lambda's with specialized Active State
-  ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
-                  std::function<void(BehaviorExternalInterface& bei, bool setActive)> setActiveFunc,
-                  const std::string& ownerDebugLabel);
+  ConditionLambda(
+      std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
+      std::function<void(BehaviorExternalInterface& bei, bool setActive)>
+          setActiveFunc,
+      const std::string& ownerDebugLabel);
 
-  // Alternative constructor for Lambda's with specialized Active State AND VisionModeRequirements
-  ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
-                  std::function<void(BehaviorExternalInterface& bei, bool setActive)> setActiveFunc,
-                  const VisionModeSet& requiredVisionModes,
-                  const std::string& ownerDebugLabel);
+  // Alternative constructor for Lambda's with specialized Active State AND
+  // VisionModeRequirements
+  ConditionLambda(
+      std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
+      std::function<void(BehaviorExternalInterface& bei, bool setActive)>
+          setActiveFunc,
+      const VisionModeSet& requiredVisionModes,
+      const std::string& ownerDebugLabel);
 
-protected:
+ protected:
+  bool AreConditionsMetInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) const override;
 
-  bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-
-  virtual void SetActiveInternal(BehaviorExternalInterface& bei, bool setActive) override;
+  virtual void SetActiveInternal(BehaviorExternalInterface& bei,
+                                 bool setActive) override;
 
   virtual void GetRequiredVisionModes(VisionModeSet& requests) const override;
 
-private:
-
+ private:
   std::function<bool(BehaviorExternalInterface& bei)> _lambda;
-  std::function<void(BehaviorExternalInterface& bei, bool setActive)> _setActiveFunc;
+  std::function<void(BehaviorExternalInterface& bei, bool setActive)>
+      _setActiveFunc;
   VisionModeSet _requiredVisionModes;
-
 };
 
-}
-}
-
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

@@ -18,6 +18,7 @@
 #define GEMMLOWP_INTERNAL_PACK_AVX_H_
 
 #include <immintrin.h>
+
 #include "pack.h"
 
 namespace gemmlowp {

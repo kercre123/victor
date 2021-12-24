@@ -9,19 +9,16 @@
  * Copyright: Anki, Inc. 2016
  **/
 
- 
 #include "memoryMap/memoryMap.h"
 
 namespace Anki {
 namespace Vector {
 namespace NavMapFactory {
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-INavMap* CreateMemoryMap()
-{
-  return new MemoryMap();
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+INavMap* CreateMemoryMap() { return new MemoryMap(); }
 
-} // namespace
-} // namespace
-} // namespace
+}  // namespace NavMapFactory
+}  // namespace Vector
+}  // namespace Anki

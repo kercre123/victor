@@ -4,8 +4,9 @@
  * Author: Brad Neuman
  * Created: 2018-11-28
  *
- * Description: Condition that returns true if Alexa is doing something (speaking, listening, etc.). Will
- *              never return true if alexa isn't authorized / signed in
+ * Description: Condition that returns true if Alexa is doing something
+ *(speaking, listening, etc.). Will never return true if alexa isn't authorized
+ * / signed in
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -19,18 +20,16 @@
 namespace Anki {
 namespace Vector {
 
-class ConditionAlexaInteractionActive : public IBEICondition
-{
-public:
+class ConditionAlexaInteractionActive : public IBEICondition {
+ public:
   explicit ConditionAlexaInteractionActive(const Json::Value& config);
 
-protected:
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-
+ protected:
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) const override;
 };
 
-} // namespace
-} // namespace
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

@@ -36,9 +36,9 @@
 #ifndef ABSL_BASE_THREAD_ANNOTATIONS_H_
 #define ABSL_BASE_THREAD_ANNOTATIONS_H_
 #if defined(__clang__)
-#define THREAD_ANNOTATION_ATTRIBUTE__(x)   __attribute__((x))
+#define THREAD_ANNOTATION_ATTRIBUTE__(x) __attribute__((x))
 #else
-#define THREAD_ANNOTATION_ATTRIBUTE__(x)   // no-op
+#define THREAD_ANNOTATION_ATTRIBUTE__(x)  // no-op
 #endif
 
 // GUARDED_BY()
@@ -135,14 +135,12 @@
 // Documents a function that returns a mutex without acquiring it.  For example,
 // a public getter method that returns a pointer to a private mutex should
 // be annotated with LOCK_RETURNED.
-#define LOCK_RETURNED(x) \
-  THREAD_ANNOTATION_ATTRIBUTE__(lock_returned(x))
+#define LOCK_RETURNED(x) THREAD_ANNOTATION_ATTRIBUTE__(lock_returned(x))
 
 // LOCKABLE
 //
 // Documents if a class/type is a lockable type (such as the `Mutex` class).
-#define LOCKABLE \
-  THREAD_ANNOTATION_ATTRIBUTE__(lockable)
+#define LOCKABLE THREAD_ANNOTATION_ATTRIBUTE__(lockable)
 
 // SCOPED_LOCKABLE
 //
@@ -151,8 +149,7 @@
 // acquired, and the destructor should use `UNLOCK_FUNCTION()` with no
 // arguments; the analysis will assume that the destructor unlocks whatever the
 // constructor locked.
-#define SCOPED_LOCKABLE \
-  THREAD_ANNOTATION_ATTRIBUTE__(scoped_lockable)
+#define SCOPED_LOCKABLE THREAD_ANNOTATION_ATTRIBUTE__(scoped_lockable)
 
 // EXCLUSIVE_LOCK_FUNCTION()
 //
@@ -226,7 +223,7 @@
 // that are incorrect and need to be fixed.  It is used by automated tools to
 // avoid breaking the build when the analysis is updated.
 // Code owners are expected to eventually fix the routine.
-#define NO_THREAD_SAFETY_ANALYSIS_FIXME  NO_THREAD_SAFETY_ANALYSIS
+#define NO_THREAD_SAFETY_ANALYSIS_FIXME NO_THREAD_SAFETY_ANALYSIS
 
 // Similar to NO_THREAD_SAFETY_ANALYSIS_FIXME, this macro marks a GUARDED_BY
 // annotation that needs to be fixed, because it is producing thread safety
@@ -237,7 +234,6 @@
 // warnings when it is known that the read is not actually involved in a race,
 // but the compiler cannot confirm that.
 #define TS_UNCHECKED_READ(x) thread_safety_analysis::ts_unchecked_read(x)
-
 
 namespace thread_safety_analysis {
 

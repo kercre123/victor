@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <limits>
 #include <vector>
+
 #include "tensorflow/contrib/lite/kernels/internal/compatibility.h"
 
 namespace tflite {

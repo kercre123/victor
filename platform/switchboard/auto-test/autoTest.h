@@ -4,7 +4,7 @@
  * Author: paluri
  * Created: 3/22/2019
  *
- * Description: Header for describing simple class which 
+ * Description: Header for describing simple class which
  *              provides means of determing if test pin
  *              file exists, and whether robot is a dev
  *              disclaimer bot.
@@ -21,19 +21,17 @@ namespace Anki {
 namespace Switchboard {
 
 class AutoTest {
+ public:
+  static const std::string kTestPinFilePath;
 
-public:
-static const std::string kTestPinFilePath;
+  static bool DoesTestPinFileExist();
+  static bool IsDisclaimerBot();
+  static bool IsAutoTestBot();
 
-static bool DoesTestPinFileExist();
-static bool IsDisclaimerBot();
-static bool IsAutoTestBot();
-
-private:
-static const std::string kProcCmdlinePath;
-static const std::string kAnkiDevString;
-
+ private:
+  static const std::string kProcCmdlinePath;
+  static const std::string kAnkiDevString;
 };
 
-} // Switchboard
-} // Anki
+}  // namespace Switchboard
+}  // namespace Anki

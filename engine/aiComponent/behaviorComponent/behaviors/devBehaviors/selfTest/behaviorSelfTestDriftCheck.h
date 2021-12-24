@@ -18,37 +18,34 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorSelfTestDriftCheck : public IBehaviorSelfTest
-{
-protected:
-  
+class BehaviorSelfTestDriftCheck : public IBehaviorSelfTest {
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorSelfTestDriftCheck(const Json::Value& config);
-  
-protected:
-  virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
+
+ protected:
+  virtual void GetBehaviorOperationModifiersInternal(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOnCharger = true;
   }
 
-  virtual Result OnBehaviorActivatedInternal()   override;
+  virtual Result OnBehaviorActivatedInternal() override;
   virtual SelfTestStatus SelfTestUpdateInternal() override;
-  virtual void           OnBehaviorDeactivated()   override;
-    
-private:
-  
+  virtual void OnBehaviorDeactivated() override;
+
+ private:
   void TransitionToStartDriftCheck();
   void CheckDrift();
-  
+
   // Angle at the start of drift check
   Radians _startingRobotOrientation = 0;
-  
+
   // Whether or not the drift check is complete
   bool _driftCheckComplete = false;
-
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorSelfTestDriftCheck_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorSelfTestDriftCheck_H__

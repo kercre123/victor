@@ -13,7 +13,6 @@
 #include <string>
 #include <vector>
 
-
 namespace Anki {
 namespace Vector {
 
@@ -21,30 +20,27 @@ using VoiceMessageID = uint32_t;
 static constexpr VoiceMessageID kInvalidVoiceMessageId = 0;
 
 using VoiceMessageList = std::vector<VoiceMessageID>;
-struct VoiceMessageUser
-{
-  std::string       recipient; // note: this should be an object, not a string
-  VoiceMessageList  messages;
+struct VoiceMessageUser {
+  std::string recipient;  // note: this should be an object, not a string
+  VoiceMessageList messages;
 };
 
 using VoiceMessageUserList = std::vector<VoiceMessageUser>;
 
 // error "codes" when attempting to record/playback messages
-enum class EVoiceMessageError : uint8_t
-{
+enum class EVoiceMessageError : uint8_t {
   Success,
-  InvalidMessage,     // generic "something went wrong"
+  InvalidMessage,  // generic "something went wrong"
   MailboxFull,
   MessageAlreadyActive,
 };
 
-struct RecordMessageResult
-{
-  VoiceMessageID      id;
-  EVoiceMessageError  error;
+struct RecordMessageResult {
+  VoiceMessageID id;
+  EVoiceMessageError error;
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_Components_VoiceMessageTypes_H_
+#endif  // __Engine_Components_VoiceMessageTypes_H_

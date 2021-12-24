@@ -5,8 +5,7 @@
 // Should trigger C6001: using uninitialized memory <variable> for |i|.
 int f(bool b) {
   int i;
-  if (b)
-    i = 0;
+  if (b) i = 0;
   return i;
 }
 

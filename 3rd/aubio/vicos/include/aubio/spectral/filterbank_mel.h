@@ -35,8 +35,7 @@
 #define AUBIO_FILTERBANK_MEL_H
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /** filterbank initialization with triangular and overlapping bands
@@ -49,8 +48,9 @@ extern "C"
   boundaries found in freqs, in Hz, and using triangular overlapping bands.
 
 */
-uint_t aubio_filterbank_set_triangle_bands (aubio_filterbank_t * fb,
-    const fvec_t * freqs, smpl_t samplerate);
+uint_t aubio_filterbank_set_triangle_bands(aubio_filterbank_t* fb,
+                                           const fvec_t* freqs,
+                                           smpl_t samplerate);
 
 /** filterbank initialization for Mel filters using Slaney's coefficients
 
@@ -67,8 +67,8 @@ uint_t aubio_filterbank_set_triangle_bands (aubio_filterbank_t * fb,
   https://engineering.purdue.edu/~malcolm/interval/1998-010/
 
 */
-uint_t aubio_filterbank_set_mel_coeffs_slaney (aubio_filterbank_t * fb,
-    smpl_t samplerate);
+uint_t aubio_filterbank_set_mel_coeffs_slaney(aubio_filterbank_t* fb,
+                                              smpl_t samplerate);
 
 /** Mel filterbank initialization
 
@@ -87,8 +87,9 @@ uint_t aubio_filterbank_set_mel_coeffs_slaney (aubio_filterbank_t * fb,
   https://engineering.purdue.edu/~malcolm/interval/1998-010/
 
 */
-uint_t aubio_filterbank_set_mel_coeffs(aubio_filterbank_t * fb,
-    smpl_t samplerate, smpl_t fmin, smpl_t fmax);
+uint_t aubio_filterbank_set_mel_coeffs(aubio_filterbank_t* fb,
+                                       smpl_t samplerate, smpl_t fmin,
+                                       smpl_t fmax);
 
 /** Mel filterbank initialization
 
@@ -109,8 +110,9 @@ uint_t aubio_filterbank_set_mel_coeffs(aubio_filterbank_t * fb,
   HTK Speech Recognition Toolkit: http://htk.eng.cam.ac.uk/
 
 */
-uint_t aubio_filterbank_set_mel_coeffs_htk(aubio_filterbank_t * fb,
-    smpl_t samplerate, smpl_t fmin, smpl_t fmax);
+uint_t aubio_filterbank_set_mel_coeffs_htk(aubio_filterbank_t* fb,
+                                           smpl_t samplerate, smpl_t fmin,
+                                           smpl_t fmax);
 
 #ifdef __cplusplus
 }

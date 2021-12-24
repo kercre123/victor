@@ -1,19 +1,19 @@
-#include "common.h"
-#include "hardware.h"
-
-#include "power.h"
-#include "comms.h"
-#include "timer.h"
-#include "motors.h"
-#include "encoders.h"
-#include "i2c.h"
-#include "opto.h"
 #include "analog.h"
+#include "common.h"
+#include "comms.h"
+#include "encoders.h"
+#include "hardware.h"
+#include "i2c.h"
 #include "lights.h"
 #include "mics.h"
+#include "motors.h"
+#include "opto.h"
+#include "power.h"
+#include "timer.h"
 #include "touch.h"
 
-static const int RESET_COUNT_MAX = 200 * 5; // 5 second timeout on main execution
+static const int RESET_COUNT_MAX =
+    200 * 5;  // 5 second timeout on main execution
 static int reset_count = 0;
 
 void Main_Execution(void) {
@@ -32,14 +32,12 @@ void Main_Execution(void) {
   }
 }
 
-int main (void) {
+int main(void) {
   // Our vector table is in SRAM and DMA mapping
-  SYSCFG->CFGR1 = SYSCFG_CFGR1_USART1RX_DMA_RMP
-                | (SYSCFG_CFGR1_MEM_MODE_0 * 3)
-                ;
+  SYSCFG->CFGR1 = SYSCFG_CFGR1_USART1RX_DMA_RMP | (SYSCFG_CFGR1_MEM_MODE_0 * 3);
 
   // Create safe interrupt state
-  NVIC->ICER[0]  = ~0;
+  NVIC->ICER[0] = ~0;
   __enable_irq();
 
   Power::init();
@@ -54,7 +52,7 @@ int main (void) {
   Timer::init();
 
   // Low priority interrupts are now our main execution
-  for (;;) {   
+  for (;;) {
     Power::tick();
     __wfi();
     reset_count = 0;

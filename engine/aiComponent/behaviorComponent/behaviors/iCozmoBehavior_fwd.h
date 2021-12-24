@@ -15,6 +15,7 @@
 
 #include <functional>
 #include <memory>
+
 #include "clad/types/actionResults.h"
 
 namespace Anki {
@@ -22,46 +23,47 @@ namespace Vector {
 
 class IBehavior;
 class ICozmoBehavior;
-enum class BehaviorID: uint16_t;
-enum class BehaviorClass: uint8_t;
+enum class BehaviorID : uint16_t;
+enum class BehaviorClass : uint8_t;
 
 namespace ExternalInterface {
-  class MessageEngineToGame;
-  class MessageGameToEngine;
-  enum class MessageEngineToGameTag : uint8_t;
-  enum class MessageGameToEngineTag : uint8_t;
-  struct RobotCompletedAction;
-}
+class MessageEngineToGame;
+class MessageGameToEngine;
+enum class MessageEngineToGameTag : uint8_t;
+enum class MessageGameToEngineTag : uint8_t;
+struct RobotCompletedAction;
+}  // namespace ExternalInterface
 
 namespace external_interface {
-  class GatewayWrapper;
-  enum class GatewayWrapperTag : uint16_t;
-}
-  
+class GatewayWrapper;
+enum class GatewayWrapperTag : uint16_t;
+}  // namespace external_interface
+
 namespace RobotInterface {
-  class RobotToEngine;
+class RobotToEngine;
 }
 
-template<typename TYPE> class AnkiEvent;
+template <typename TYPE>
+class AnkiEvent;
 
 using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
 using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
-using RobotToEngineEvent= AnkiEvent<RobotInterface::RobotToEngine>;
-using AppToEngineEvent  = AnkiEvent<external_interface::GatewayWrapper>;
-  
-using EngineToGameTag   = ExternalInterface::MessageEngineToGameTag;
-using GameToEngineTag   = ExternalInterface::MessageGameToEngineTag;
-using AppToEngineTag    = external_interface::GatewayWrapperTag;
+using RobotToEngineEvent = AnkiEvent<RobotInterface::RobotToEngine>;
+using AppToEngineEvent = AnkiEvent<external_interface::GatewayWrapper>;
+
+using EngineToGameTag = ExternalInterface::MessageEngineToGameTag;
+using GameToEngineTag = ExternalInterface::MessageGameToEngineTag;
+using AppToEngineTag = external_interface::GatewayWrapperTag;
 
 class BehaviorExternalInterface;
 
-using ICozmoBehaviorPtr                                         = std::shared_ptr<ICozmoBehavior>;
-using BehaviorRobotCompletedActionCallback                      = std::function<void(const ExternalInterface::RobotCompletedAction&)>;
-using BehaviorActionResultCallback                              = std::function<void(const ActionResult&)>;
-using BehaviorSimpleCallback                                    = std::function<void()>;
+using ICozmoBehaviorPtr = std::shared_ptr<ICozmoBehavior>;
+using BehaviorRobotCompletedActionCallback =
+    std::function<void(const ExternalInterface::RobotCompletedAction&)>;
+using BehaviorActionResultCallback = std::function<void(const ActionResult&)>;
+using BehaviorSimpleCallback = std::function<void()>;
 
-}
-}
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

@@ -1,5 +1,5 @@
 /**
- * File: combinationCondition.h 
+ * File: combinationCondition.h
  *
  * Author: aubrey
  * Created: 05/12/15
@@ -14,9 +14,9 @@
 #ifndef __Util_QuestEngine_CombinationCondition_H__
 #define __Util_QuestEngine_CombinationCondition_H__
 
-#include "util/questEngine/abstractCondition.h"
 #include <vector>
 
+#include "util/questEngine/abstractCondition.h"
 
 namespace Anki {
 namespace Util {
@@ -32,33 +32,30 @@ typedef enum {
   CombinationConditionOperationAny,
 } CombinationConditionOperation;
 
-  
-class CombinationCondition : public AbstractCondition
-{
-public:
-  
-  CombinationCondition(CombinationConditionOperation operation, AbstractCondition* conditionA, AbstractCondition* conditionB = nullptr);
-  
-  ~CombinationCondition() override;
-  
-  void AddCondition(AbstractCondition* condition);
-  
-  bool IsSatisfied(QuestEngine& questEngine, std::tm& eventTime) const override;
-  
-private:
-  
-  CombinationConditionOperation _operation;
-  
-  AbstractCondition* _conditionA;
-  
-  AbstractCondition* _conditionB;
-  
-  std::vector<AbstractCondition*> _conditions;
-  
-};
-  
-} // namespace QuestEngine
-} // namespace Util
-} // namsepace Anki
+class CombinationCondition : public AbstractCondition {
+ public:
+  CombinationCondition(CombinationConditionOperation operation,
+                       AbstractCondition* conditionA,
+                       AbstractCondition* conditionB = nullptr);
 
-#endif // __Util_QuestEngine_CombinationCondition_H__
+  ~CombinationCondition() override;
+
+  void AddCondition(AbstractCondition* condition);
+
+  bool IsSatisfied(QuestEngine& questEngine, std::tm& eventTime) const override;
+
+ private:
+  CombinationConditionOperation _operation;
+
+  AbstractCondition* _conditionA;
+
+  AbstractCondition* _conditionB;
+
+  std::vector<AbstractCondition*> _conditions;
+};
+
+}  // namespace QuestEngine
+}  // namespace Util
+}  // namespace Anki
+
+#endif  // __Util_QuestEngine_CombinationCondition_H__

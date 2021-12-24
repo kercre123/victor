@@ -25,14 +25,14 @@ namespace settings {
  * Enumerate the type of notifications.
  */
 enum class SettingNotifications {
-    /// Setting value changed due to a local change.
-    LOCAL_CHANGE,
-    /// Setting value changed due to a change requested via cloud.
-    AVS_CHANGE,
-    /// Local request failed.
-    LOCAL_CHANGE_FAILED,
-    /// AVS request failed.
-    AVS_CHANGE_FAILED
+  /// Setting value changed due to a local change.
+  LOCAL_CHANGE,
+  /// Setting value changed due to a change requested via cloud.
+  AVS_CHANGE,
+  /// Local request failed.
+  LOCAL_CHANGE_FAILED,
+  /// AVS request failed.
+  AVS_CHANGE_FAILED
 };
 
 /**
@@ -42,25 +42,24 @@ enum class SettingNotifications {
  */
 template <typename SettingT>
 class SettingObserverInterface {
-public:
-    /**
-     * The virtual destructor.
-     */
-    virtual ~SettingObserverInterface() = default;
+ public:
+  /**
+   * The virtual destructor.
+   */
+  virtual ~SettingObserverInterface() = default;
 
-    /**
-     * Function called when the observed setting is called.
-     *
-     * @param value The current value of the setting. For @c LOCAL_CHANGE and @c AVS_CHANGE, the value should be the
-     * same as the one requested.
-     * @param notification The notification type.
-     */
-    virtual void onSettingNotification(
-        const typename SettingT::ValueType& value,
-        SettingNotifications notification) = 0;
+  /**
+   * Function called when the observed setting is called.
+   *
+   * @param value The current value of the setting. For @c LOCAL_CHANGE and @c
+   * AVS_CHANGE, the value should be the same as the one requested.
+   * @param notification The notification type.
+   */
+  virtual void onSettingNotification(const typename SettingT::ValueType& value,
+                                     SettingNotifications notification) = 0;
 
-    /// Only objects from SettingT can call the value change notification.
-    friend SettingT;
+  /// Only objects from SettingT can call the value change notification.
+  friend SettingT;
 };
 
 }  // namespace settings

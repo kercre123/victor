@@ -2,11 +2,10 @@
 #define TH_FILE_INC
 
 //#include "THStorage.h"
-#include "opencv2/core/hal/interface.h"
 #include "THGeneral.h"
+#include "opencv2/core/hal/interface.h"
 
-namespace TH
-{
+namespace TH {
 typedef struct THFile__ THFile;
 
 TH_API int THFile_isOpened(THFile *self);
@@ -42,12 +41,13 @@ TH_API long THFile_readIntRaw(THFile *self, int *data, long n);
 TH_API long THFile_readLongRaw(THFile *self, int64 *data, long n);
 TH_API long THFile_readFloatRaw(THFile *self, float *data, long n);
 TH_API long THFile_readDoubleRaw(THFile *self, double *data, long n);
-TH_API long THFile_readStringRaw(THFile *self, const char *format, char **str_); /* you must deallocate str_ */
+TH_API long THFile_readStringRaw(THFile *self, const char *format,
+                                 char **str_); /* you must deallocate str_ */
 
 TH_API void THFile_seek(THFile *self, long position);
 TH_API void THFile_seekEnd(THFile *self);
 TH_API long THFile_position(THFile *self);
 TH_API void THFile_close(THFile *self);
 TH_API void THFile_free(THFile *self);
-} // namespace
-#endif //TH_FILE_INC
+}  // namespace TH
+#endif  // TH_FILE_INC

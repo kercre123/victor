@@ -18,34 +18,34 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorSleeping : public ICozmoBehavior
-{
-protected:
+class BehaviorSleeping : public ICozmoBehavior {
+ protected:
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;  
+  friend class BehaviorFactory;
   BehaviorSleeping(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
 
   virtual bool CanBeGentlyInterruptedNow() const override;
 
   virtual void OnBehaviorActivated() override;
-  
+
   virtual void OnBehaviorDeactivated() override;
 
-  virtual bool WantsToBeActivatedBehavior() const override {
-    return true;}
-private:
+  virtual bool WantsToBeActivatedBehavior() const override { return true; }
 
+ private:
   void TransitionToSleeping();
   void TransitionToBoutOfStirring();
   void TransitionToPlayStirAnim();
 
-  // helper to "wait" without doing procedural face motions and then run a callback
+  // helper to "wait" without doing procedural face motions and then run a
+  // callback
   void HoldFaceForTime(const float waitTime_s,
-                       void(BehaviorSleeping::*callback)());
-
+                       void (BehaviorSleeping::*callback)());
 
   struct InstanceConfig {
     bool shouldEnterPowerSave = true;
@@ -55,20 +55,17 @@ private:
 
   struct DynamicVariables {
     DynamicVariables() = default;
-    
+
     bool animIsPlaying = false;
     int numRemainingInBout = 0;
     float stopHoldingFaceAtTime_s = 0.0f;
   };
 
-  InstanceConfig   _iConfig;
+  InstanceConfig _iConfig;
   DynamicVariables _dVars;
-
-
 };
 
-}
-}
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

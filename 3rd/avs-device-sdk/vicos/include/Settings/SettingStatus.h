@@ -23,17 +23,18 @@ namespace settings {
  * Specifies the state of a setting.
  */
 enum class SettingStatus {
-    /// The setting has either not been set and not been persisted in a storage or the setting is in an unknown status.
-    NOT_AVAILABLE,
+  /// The setting has either not been set and not been persisted in a storage or
+  /// the setting is in an unknown status.
+  NOT_AVAILABLE,
 
-    /// The setting has been set locally but not synchronized with AVS.
-    LOCAL_CHANGE_IN_PROGRESS,
+  /// The setting has been set locally but not synchronized with AVS.
+  LOCAL_CHANGE_IN_PROGRESS,
 
-    /// AVS request is in progress.
-    AVS_CHANGE_IN_PROGRESS,
+  /// AVS request is in progress.
+  AVS_CHANGE_IN_PROGRESS,
 
-    /// The setting has been set locally and synchronized with AVS.
-    SYNCHRONIZED
+  /// The setting has been set locally and synchronized with AVS.
+  SYNCHRONIZED
 };
 
 /**
@@ -43,34 +44,35 @@ enum class SettingStatus {
  * @return The string conversion of the @c SettingStatus.
  */
 inline std::string settingStatusToString(SettingStatus status) {
-    switch (status) {
-        case SettingStatus::LOCAL_CHANGE_IN_PROGRESS:
-            return "LOCAL_CHANGE_IN_PROGRESS";
-        case SettingStatus::AVS_CHANGE_IN_PROGRESS:
-            return "AVS_CHANGE_IN_PROGRESS";
-        case SettingStatus::SYNCHRONIZED:
-            return "SYNCHRONIZED";
-        case SettingStatus::NOT_AVAILABLE:
-            return "NOT_AVAILABLE";
-    }
-    return "UNKNOWN";
+  switch (status) {
+    case SettingStatus::LOCAL_CHANGE_IN_PROGRESS:
+      return "LOCAL_CHANGE_IN_PROGRESS";
+    case SettingStatus::AVS_CHANGE_IN_PROGRESS:
+      return "AVS_CHANGE_IN_PROGRESS";
+    case SettingStatus::SYNCHRONIZED:
+      return "SYNCHRONIZED";
+    case SettingStatus::NOT_AVAILABLE:
+      return "NOT_AVAILABLE";
+  }
+  return "UNKNOWN";
 }
 
 /**
- * This function parses a string and converts it to its corresponding @c SettingStatus.
+ * This function parses a string and converts it to its corresponding @c
+ * SettingStatus.
  *
  * @param statusString The string to be converted to @c SettingStatus.
  * @return The @c SettingStatus corresponding to the string provided.
  */
 inline SettingStatus stringToSettingStatus(const std::string& statusString) {
-    if ("LOCAL_CHANGE_IN_PROGRESS" == statusString) {
-        return SettingStatus::LOCAL_CHANGE_IN_PROGRESS;
-    } else if ("SYNCHRONIZED" == statusString) {
-        return SettingStatus::SYNCHRONIZED;
-    } else if ("AVS_CHANGE_IN_PROGRESS" == statusString) {
-        return SettingStatus::AVS_CHANGE_IN_PROGRESS;
-    }
-    return SettingStatus::NOT_AVAILABLE;
+  if ("LOCAL_CHANGE_IN_PROGRESS" == statusString) {
+    return SettingStatus::LOCAL_CHANGE_IN_PROGRESS;
+  } else if ("SYNCHRONIZED" == statusString) {
+    return SettingStatus::SYNCHRONIZED;
+  } else if ("AVS_CHANGE_IN_PROGRESS" == statusString) {
+    return SettingStatus::AVS_CHANGE_IN_PROGRESS;
+  }
+  return SettingStatus::NOT_AVAILABLE;
 }
 
 }  // namespace settings

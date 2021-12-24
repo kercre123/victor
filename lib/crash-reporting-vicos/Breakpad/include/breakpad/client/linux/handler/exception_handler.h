@@ -82,7 +82,7 @@ class ExceptionHandler {
   // attempting to write a minidump.  If a FilterCallback returns false,
   // Breakpad  will immediately report the exception as unhandled without
   // writing a minidump, allowing another handler the opportunity to handle it.
-  typedef bool (*FilterCallback)(void *context);
+  typedef bool (*FilterCallback)(void* context);
 
   // A callback function to run after the minidump has been written.
   // |descriptor| contains the file descriptor or file path containing the
@@ -101,8 +101,7 @@ class ExceptionHandler {
   // not report an exception of handled, false.  Callbacks will rarely want to
   // return true directly (unless |succeeded| is true).
   typedef bool (*MinidumpCallback)(const MinidumpDescriptor& descriptor,
-                                   void* context,
-                                   bool succeeded);
+                                   void* context, bool succeeded);
 
   // In certain cases, a user may wish to handle the generation of the minidump
   // themselves. In this case, they can install a handler callback which is
@@ -110,8 +109,7 @@ class ExceptionHandler {
   // processing of occurs and the process will shortly be crashed. If this
   // returns false, the normal processing continues.
   typedef bool (*HandlerCallback)(const void* crash_context,
-                                  size_t crash_context_size,
-                                  void* context);
+                                  size_t crash_context_size, void* context);
 
   // Creates a new ExceptionHandler instance to handle writing minidumps.
   // Before writing a minidump, the optional |filter| callback will be called.
@@ -124,12 +122,9 @@ class ExceptionHandler {
   // be written when WriteMinidump is called.
   // If |server_fd| is valid, the minidump is generated out-of-process.  If it
   // is -1, in-process generation will always be used.
-  ExceptionHandler(const MinidumpDescriptor& descriptor,
-                   FilterCallback filter,
-                   MinidumpCallback callback,
-                   void* callback_context,
-                   bool install_handler,
-                   const int server_fd);
+  ExceptionHandler(const MinidumpDescriptor& descriptor, FilterCallback filter,
+                   MinidumpCallback callback, void* callback_context,
+                   bool install_handler, const int server_fd);
   ~ExceptionHandler();
 
   const MinidumpDescriptor& minidump_descriptor() const {
@@ -165,8 +160,7 @@ class ExceptionHandler {
 
   // Convenience form of WriteMinidump which does not require an
   // ExceptionHandler instance.
-  static bool WriteMinidump(const string& dump_path,
-                            MinidumpCallback callback,
+  static bool WriteMinidump(const string& dump_path, MinidumpCallback callback,
                             void* callback_context);
 
   // Write a minidump of |child| immediately.  This can be used to
@@ -180,8 +174,7 @@ class ExceptionHandler {
   // Otherwise there's a pernicious race condition in which |child|
   // exits, is reaped, another process created with its pid, then that
   // new process dumped.
-  static bool WriteMinidumpForChild(pid_t child,
-                                    pid_t child_blamed_thread,
+  static bool WriteMinidumpForChild(pid_t child, pid_t child_blamed_thread,
                                     const string& dump_path,
                                     MinidumpCallback callback,
                                     void* callback_context);
@@ -201,17 +194,14 @@ class ExceptionHandler {
   };
 
   // Returns whether out-of-process dump generation is used or not.
-  bool IsOutOfProcess() const {
-    return crash_generation_client_.get() != NULL;
-  }
+  bool IsOutOfProcess() const { return crash_generation_client_.get() != NULL; }
 
   // Add information about a memory mapping. This can be used if
   // a custom library loader is used that maps things in a way
   // that the linux dumper can't handle by reading the maps file.
   void AddMappingInfo(const string& name,
                       const uint8_t identifier[sizeof(MDGUID)],
-                      uintptr_t start_address,
-                      size_t mapping_size,
+                      uintptr_t start_address, size_t mapping_size,
                       size_t file_offset);
 
   // Register a block of memory of length bytes starting at address ptr
@@ -234,14 +224,13 @@ class ExceptionHandler {
   static void RestoreHandlersLocked();
 
   void PreresolveSymbols();
-  bool GenerateDump(CrashContext *context);
+  bool GenerateDump(CrashContext* context);
   void SendContinueSignalToChild();
   void WaitForContinueSignal();
 
   static void SignalHandler(int sig, siginfo_t* info, void* uc);
   static int ThreadEntry(void* arg);
-  bool DoDump(pid_t crashing_process, const void* context,
-              size_t context_size);
+  bool DoDump(pid_t crashing_process, const void* context, size_t context_size);
 
   const FilterCallback filter_;
   const MinidumpCallback callback_;
@@ -272,7 +261,6 @@ class ExceptionHandler {
   // the dump.
   AppMemoryList app_memory_list_;
 };
-
 
 typedef bool (*FirstChanceHandler)(int, void*, void*);
 void SetFirstChanceExceptionHandler(FirstChanceHandler callback);

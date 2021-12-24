@@ -7,18 +7,18 @@
 #include "messages.h"
 
 namespace Motors {
-  extern bool head_driven;
-  extern bool lift_driven;
-  extern bool treads_driven;
-  
-  void receive(HeadToBody *payload);
-  void transmit(BodyToHead *payload);
+extern bool head_driven;
+extern bool lift_driven;
+extern bool treads_driven;
 
-  void init();
-  void stop();
-  void tick();
+void receive(HeadToBody *payload);
+void transmit(BodyToHead *payload);
 
-  void resetEncoderHysteresis();
-}
+void init();
+void stop();
+void tick();
+
+void resetEncoderHysteresis();
+}  // namespace Motors
 
 #endif

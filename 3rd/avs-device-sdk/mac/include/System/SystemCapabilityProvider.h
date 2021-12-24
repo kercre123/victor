@@ -16,38 +16,43 @@
 #ifndef ALEXA_CLIENT_SDK_CAPABILITYAGENTS_SYSTEM_INCLUDE_SYSTEM_SYSTEMCAPABILITYPROVIDER_H_
 #define ALEXA_CLIENT_SDK_CAPABILITYAGENTS_SYSTEM_INCLUDE_SYSTEM_SYSTEMCAPABILITYPROVIDER_H_
 
-#include <memory>
-
 #include <AVSCommon/SDKInterfaces/CapabilityConfigurationInterface.h>
+
+#include <memory>
 
 namespace alexaClientSDK {
 namespace capabilityAgents {
 namespace system {
 
 /**
- * This class handles providing configuration for the System Capability agent, since a single class
- * does not handle all of the capability agent's functionings.
+ * This class handles providing configuration for the System Capability agent,
+ * since a single class does not handle all of the capability agent's
+ * functionings.
  */
-class SystemCapabilityProvider : public avsCommon::sdkInterfaces::CapabilityConfigurationInterface {
-public:
-    /**
-     * Create an instance of @c SystemCapabilityProvider.
-     */
-    static std::shared_ptr<SystemCapabilityProvider> create();
+class SystemCapabilityProvider
+    : public avsCommon::sdkInterfaces::CapabilityConfigurationInterface {
+ public:
+  /**
+   * Create an instance of @c SystemCapabilityProvider.
+   */
+  static std::shared_ptr<SystemCapabilityProvider> create();
 
-    /// @name CapabilityConfigurationInterface Functions
-    /// @{
-    std::unordered_set<std::shared_ptr<avsCommon::avs::CapabilityConfiguration>> getCapabilityConfigurations() override;
-    /// @}
+  /// @name CapabilityConfigurationInterface Functions
+  /// @{
+  std::unordered_set<std::shared_ptr<avsCommon::avs::CapabilityConfiguration>>
+  getCapabilityConfigurations() override;
+  /// @}
 
-private:
-    /**
-     * Constructor.
-     */
-    SystemCapabilityProvider();
+ private:
+  /**
+   * Constructor.
+   */
+  SystemCapabilityProvider();
 
-    /// Set of capability configurations that will get published using the Capabilities API
-    std::unordered_set<std::shared_ptr<avsCommon::avs::CapabilityConfiguration>> m_capabilityConfigurations;
+  /// Set of capability configurations that will get published using the
+  /// Capabilities API
+  std::unordered_set<std::shared_ptr<avsCommon::avs::CapabilityConfiguration>>
+      m_capabilityConfigurations;
 };
 
 }  // namespace system

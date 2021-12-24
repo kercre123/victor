@@ -69,8 +69,8 @@
 #define MD_FLOATINGSAVEAREA_ARM64_FPR_COUNT 32
 
 typedef struct {
-  uint32_t       fpsr;      /* FPU status register */
-  uint32_t       fpcr;      /* FPU control register */
+  uint32_t fpsr; /* FPU status register */
+  uint32_t fpcr; /* FPU control register */
 
   /* 32 128-bit floating point registers, d0 .. d31. */
   uint128_struct regs[MD_FLOATINGSAVEAREA_ARM64_FPR_COUNT];
@@ -86,7 +86,7 @@ typedef struct {
   /* The next field determines the layout of the structure, and which parts
    * of it are populated
    */
-  uint64_t      context_flags;
+  uint64_t context_flags;
 
   /* 33 64-bit integer registers, x0 .. x31 + the PC
    * Note the following fixed uses:
@@ -95,7 +95,7 @@ typedef struct {
    *   x31 is the stack pointer
    *   The PC is effectively x32.
    */
-  uint64_t     iregs[MD_CONTEXT_ARM64_GPR_COUNT];
+  uint64_t iregs[MD_CONTEXT_ARM64_GPR_COUNT];
 
   /* CPSR (flags, basically): 32 bits:
         bit 31 - N (negative)
@@ -104,7 +104,7 @@ typedef struct {
         bit 28 - V (overflow)
         bit 27 - Q (saturation flag, sticky)
      All other fields -- ignore */
-  uint32_t    cpsr;
+  uint32_t cpsr;
 
   /* The next field is included with MD_CONTEXT64_ARM_FLOATING_POINT */
   MDFloatingSaveAreaARM64 float_save;
@@ -117,24 +117,24 @@ typedef struct {
  * purpose.
  */
 enum MDARM64RegisterNumbers {
-  MD_CONTEXT_ARM64_REG_FP     = 29,
-  MD_CONTEXT_ARM64_REG_LR     = 30,
-  MD_CONTEXT_ARM64_REG_SP     = 31,
-  MD_CONTEXT_ARM64_REG_PC     = 32
+  MD_CONTEXT_ARM64_REG_FP = 29,
+  MD_CONTEXT_ARM64_REG_LR = 30,
+  MD_CONTEXT_ARM64_REG_SP = 31,
+  MD_CONTEXT_ARM64_REG_PC = 32
 };
 
 /* For (MDRawContextARM64).context_flags.  These values indicate the type of
  * context stored in the structure. MD_CONTEXT_ARM64 is Breakpad-defined.
  * This value was chosen to avoid likely conflicts with MD_CONTEXT_*
  * for other CPUs. */
-#define MD_CONTEXT_ARM64                   0x80000000
-#define MD_CONTEXT_ARM64_INTEGER           (MD_CONTEXT_ARM64 | 0x00000002)
-#define MD_CONTEXT_ARM64_FLOATING_POINT    (MD_CONTEXT_ARM64 | 0x00000004)
+#define MD_CONTEXT_ARM64 0x80000000
+#define MD_CONTEXT_ARM64_INTEGER (MD_CONTEXT_ARM64 | 0x00000002)
+#define MD_CONTEXT_ARM64_FLOATING_POINT (MD_CONTEXT_ARM64 | 0x00000004)
 
-#define MD_CONTEXT_ARM64_FULL              (MD_CONTEXT_ARM64_INTEGER | \
-                                          MD_CONTEXT_ARM64_FLOATING_POINT)
+#define MD_CONTEXT_ARM64_FULL \
+  (MD_CONTEXT_ARM64_INTEGER | MD_CONTEXT_ARM64_FLOATING_POINT)
 
-#define MD_CONTEXT_ARM64_ALL               (MD_CONTEXT_ARM64_INTEGER | \
-                                          MD_CONTEXT_ARM64_FLOATING_POINT)
+#define MD_CONTEXT_ARM64_ALL \
+  (MD_CONTEXT_ARM64_INTEGER | MD_CONTEXT_ARM64_FLOATING_POINT)
 
-#endif  /* GOOGLE_BREAKPAD_COMMON_MINIDUMP_CPU_ARM64_H__ */
+#endif /* GOOGLE_BREAKPAD_COMMON_MINIDUMP_CPU_ARM64_H__ */

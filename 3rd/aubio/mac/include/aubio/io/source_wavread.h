@@ -61,7 +61,9 @@ typedef struct _aubio_source_wavread_t aubio_source_wavread_t;
   ::aubio_source_wavread_get_samplerate.
 
 */
-aubio_source_wavread_t * new_aubio_source_wavread(const char_t * uri, uint_t samplerate, uint_t hop_size);
+aubio_source_wavread_t *new_aubio_source_wavread(const char_t *uri,
+                                                 uint_t samplerate,
+                                                 uint_t hop_size);
 
 /**
 
@@ -75,7 +77,8 @@ aubio_source_wavread_t * new_aubio_source_wavread(const char_t * uri, uint_t sam
   source. `hop_size` if enough frames could be read, less otherwise.
 
 */
-void aubio_source_wavread_do(aubio_source_wavread_t * s, fvec_t * read_to, uint_t * read);
+void aubio_source_wavread_do(aubio_source_wavread_t *s, fvec_t *read_to,
+                             uint_t *read);
 
 /**
 
@@ -89,7 +92,8 @@ void aubio_source_wavread_do(aubio_source_wavread_t * s, fvec_t * read_to, uint_
   source. `hop_size` if enough frames could be read, less otherwise.
 
 */
-void aubio_source_wavread_do_multi(aubio_source_wavread_t * s, fmat_t * read_to, uint_t * read);
+void aubio_source_wavread_do_multi(aubio_source_wavread_t *s, fmat_t *read_to,
+                                   uint_t *read);
 
 /**
 
@@ -99,7 +103,7 @@ void aubio_source_wavread_do_multi(aubio_source_wavread_t * s, fmat_t * read_to,
   \return samplerate, in Hz
 
 */
-uint_t aubio_source_wavread_get_samplerate(aubio_source_wavread_t * s);
+uint_t aubio_source_wavread_get_samplerate(aubio_source_wavread_t *s);
 
 /**
 
@@ -109,7 +113,7 @@ uint_t aubio_source_wavread_get_samplerate(aubio_source_wavread_t * s);
   \return number of channels
 
 */
-uint_t aubio_source_wavread_get_channels (aubio_source_wavread_t * s);
+uint_t aubio_source_wavread_get_channels(aubio_source_wavread_t *s);
 
 /**
 
@@ -121,7 +125,7 @@ uint_t aubio_source_wavread_get_channels (aubio_source_wavread_t * s);
   \return 0 if sucessful, non-zero on failure
 
 */
-uint_t aubio_source_wavread_seek (aubio_source_wavread_t *s, uint_t pos);
+uint_t aubio_source_wavread_seek(aubio_source_wavread_t *s, uint_t pos);
 
 /**
 
@@ -131,7 +135,7 @@ uint_t aubio_source_wavread_seek (aubio_source_wavread_t *s, uint_t pos);
   \return number of frames in file
 
 */
-uint_t aubio_source_wavread_get_duration (const aubio_source_wavread_t *s);
+uint_t aubio_source_wavread_get_duration(const aubio_source_wavread_t *s);
 
 /**
 
@@ -142,7 +146,7 @@ uint_t aubio_source_wavread_get_duration (const aubio_source_wavread_t *s);
   \return 0 if sucessful, non-zero on failure
 
 */
-uint_t aubio_source_wavread_close (aubio_source_wavread_t *s);
+uint_t aubio_source_wavread_close(aubio_source_wavread_t *s);
 
 /**
 
@@ -151,7 +155,7 @@ uint_t aubio_source_wavread_close (aubio_source_wavread_t *s);
   \param s source object, created with ::new_aubio_source_wavread
 
 */
-void del_aubio_source_wavread(aubio_source_wavread_t * s);
+void del_aubio_source_wavread(aubio_source_wavread_t *s);
 
 #ifdef __cplusplus
 }

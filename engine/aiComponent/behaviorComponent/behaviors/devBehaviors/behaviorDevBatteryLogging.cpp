@@ -4,17 +4,19 @@
  * Author: Kevin Yoon
  * Date:   04/06/2018
  *
- * Description: Behavior for logging battery data under a variety of test conditions
+ * Description: Behavior for logging battery data under a variety of test
+ *conditions
  *
  * Copyright: Anki, Inc. 2018
  **/
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevBatteryLogging.h"
-#include "engine/aiComponent/beiConditions/iBEICondition.h"
-#include "engine/aiComponent/beiConditions/beiConditionFactory.h"
+
+#include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/actions/basicActions.h"
+#include "engine/aiComponent/beiConditions/beiConditionFactory.h"
+#include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/components/movementComponent.h"
@@ -22,22 +24,20 @@
 #include "engine/robot.h"
 
 // audio
-#include "engine/audio/engineRobotAudioClient.h"
-#include "clad/audio/audioEventTypes.h"
-
-#include "osState/osState.h"
-
-#include "coretech/common/engine/utils/data/dataPlatform.h"
-#include "coretech/common/engine/utils/timer.h"
-#include "coretech/vision/engine/image.h"
-#include "util/fileUtils/fileUtils.h"
-#include "util/console/consoleInterface.h"
-
 #include <fstream>
 #include <iomanip>
 #include <numeric>
 #include <sstream>
 #include <vector>
+
+#include "clad/audio/audioEventTypes.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/vision/engine/image.h"
+#include "engine/audio/engineRobotAudioClient.h"
+#include "osState/osState.h"
+#include "util/console/consoleInterface.h"
+#include "util/fileUtils/fileUtils.h"
 
 namespace Anki {
 namespace Vector {
@@ -46,30 +46,30 @@ using AMD_GE_GE = AudioMetaData::GameEvent::GenericEvent;
 using AMD_GOT = AudioMetaData::GameObjectType;
 
 namespace {
-  std::string _logFile = "";
+std::string _logFile = "";
 
-  const u32 LOGGING_PERIOD_MS = 5000;
-  EngineTimeStamp_t _nextLogTime_ms = 0;
+const u32 LOGGING_PERIOD_MS = 5000;
+EngineTimeStamp_t _nextLogTime_ms = 0;
 
-  static const char* kWheelSpeedKey = "wheelSpeed_mmps";
-  static const char* kLiftSpeedKey = "liftSpeed_degps";
-  static const char* kHeadSpeedKey = "headSpeed_degps";
-  static const char* kStartMovingVoltageKey = "startMovingVoltage";
+static const char* kWheelSpeedKey = "wheelSpeed_mmps";
+static const char* kLiftSpeedKey = "liftSpeed_degps";
+static const char* kHeadSpeedKey = "headSpeed_degps";
+static const char* kStartMovingVoltageKey = "startMovingVoltage";
 
-  static const char* kStressCPU = "stressCPU";
-  static const char* kStressSpeaker = "stressSpeaker";
-  static const char* kDriveOffChargerWhenFull = "driveOffChargerWhenFull";
-  static const char* kDoExploring = "doExploring";
+static const char* kStressCPU = "stressCPU";
+static const char* kStressSpeaker = "stressSpeaker";
+static const char* kDriveOffChargerWhenFull = "driveOffChargerWhenFull";
+static const char* kDoExploring = "doExploring";
 
-  bool _startMovingVoltageReached = false;
-  bool _drivingOffCharger = false;
-}
+bool _startMovingVoltageReached = false;
+bool _drivingOffCharger = false;
+}  // namespace
 
 #define LOG_CHANNEL "Behaviors"
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorDevBatteryLogging::InstanceConfig::InstanceConfig()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorDevBatteryLogging::InstanceConfig::InstanceConfig() {
   wheelSpeed_mmps = 0.f;
   liftSpeed_radps = 0.f;
   headSpeed_radps = 0.f;
@@ -84,64 +84,54 @@ BehaviorDevBatteryLogging::InstanceConfig::InstanceConfig()
   doExploring = false;
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevBatteryLogging::BehaviorDevBatteryLogging(const Json::Value& config)
-: ICozmoBehavior(config)
-{
+    : ICozmoBehavior(config) {
   _iConfig.wheelSpeed_mmps = config.get(kWheelSpeedKey, 0.f).asInt();
   _iConfig.liftSpeed_radps = DEG_TO_RAD(config.get(kLiftSpeedKey, 0.f).asInt());
   _iConfig.headSpeed_radps = DEG_TO_RAD(config.get(kHeadSpeedKey, 0.f).asInt());
 
-  _iConfig.startMovingVoltage = config.get(kStartMovingVoltageKey, 0.f).asFloat();
+  _iConfig.startMovingVoltage =
+      config.get(kStartMovingVoltageKey, 0.f).asFloat();
   _iConfig.stressCPU = config.get(kStressCPU, false).asBool();
   _iConfig.stressSpeaker = config.get(kStressSpeaker, false).asBool();
 
-  _iConfig.driveOffChargerWhenFull = config.get(kDriveOffChargerWhenFull, false).asBool();
+  _iConfig.driveOffChargerWhenFull =
+      config.get(kDriveOffChargerWhenFull, false).asBool();
   _iConfig.doExploring = config.get(kDoExploring, false).asBool();
 }
 
-void BehaviorDevBatteryLogging::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
-{
-  const char* list[] = {
-    kWheelSpeedKey,
-    kLiftSpeedKey,
-    kHeadSpeedKey,
-    kStartMovingVoltageKey,
-    kStressCPU,
-    kStressSpeaker,
-    kDriveOffChargerWhenFull,
-    kDoExploring
-  };
-  expectedKeys.insert( std::begin(list), std::end(list) );
+void BehaviorDevBatteryLogging::GetBehaviorJsonKeys(
+    std::set<const char*>& expectedKeys) const {
+  const char* list[] = {kWheelSpeedKey,           kLiftSpeedKey, kHeadSpeedKey,
+                        kStartMovingVoltageKey,   kStressCPU,    kStressSpeaker,
+                        kDriveOffChargerWhenFull, kDoExploring};
+  expectedKeys.insert(std::begin(list), std::end(list));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDevBatteryLogging::WantsToBeActivatedBehavior() const
-{
+bool BehaviorDevBatteryLogging::WantsToBeActivatedBehavior() const {
   return true;
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevBatteryLogging::InitBehavior()
-{
+void BehaviorDevBatteryLogging::InitBehavior() {
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.testBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ModeSelector));
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevBatteryLogging::GetAllDelegates(std::set<IBehavior*>& delegates) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevBatteryLogging::GetAllDelegates(
+    std::set<IBehavior*>& delegates) const {
   delegates.insert(_iConfig.testBehavior.get());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevBatteryLogging::OnBehaviorActivated()
-{
+void BehaviorDevBatteryLogging::OnBehaviorActivated() {
   // Stop all actions?
-  //Robot& robot = GetBEI().GetRobotInfo()._robot;
-  //robot.GetActionList().Cancel();
+  // Robot& robot = GetBEI().GetRobotInfo()._robot;
+  // robot.GetActionList().Cancel();
 
   _startMovingVoltageReached = false;
   _drivingOffCharger = false;
@@ -149,18 +139,17 @@ void BehaviorDevBatteryLogging::OnBehaviorActivated()
   InitLog();
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevBatteryLogging::EnqueueMotorActions()
-{
+void BehaviorDevBatteryLogging::EnqueueMotorActions() {
   if (!NEAR_ZERO(_iConfig.wheelSpeed_mmps)) {
     auto& moveComp = GetBEI().GetRobotInfo()._robot.GetMoveComponent();
-    moveComp.DriveWheels(_iConfig.wheelSpeed_mmps, _iConfig.wheelSpeed_mmps, 0.f, 0.f);
+    moveComp.DriveWheels(_iConfig.wheelSpeed_mmps, _iConfig.wheelSpeed_mmps,
+                         0.f, 0.f);
   }
 
   static bool goingUp = true;
   auto liftHeight = goingUp ? LIFT_HEIGHT_CARRY : LIFT_HEIGHT_LOWDOCK;
-  auto headAngle  = goingUp ? MAX_HEAD_ANGLE    : MIN_HEAD_ANGLE;
+  auto headAngle = goingUp ? MAX_HEAD_ANGLE : MIN_HEAD_ANGLE;
 
   std::list<IActionRunner*> actionList;
   if (!NEAR_ZERO(_iConfig.liftSpeed_radps)) {
@@ -177,31 +166,27 @@ void BehaviorDevBatteryLogging::EnqueueMotorActions()
 
   IActionRunner* allMotors = new CompoundActionParallel(actionList);
 
-  DelegateIfInControl(allMotors, &BehaviorDevBatteryLogging::EnqueueMotorActions);
+  DelegateIfInControl(allMotors,
+                      &BehaviorDevBatteryLogging::EnqueueMotorActions);
 
   goingUp = !goingUp;
 }
 
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevBatteryLogging::BehaviorUpdate()
-{
-  if(!IsActivated() || _drivingOffCharger){
+void BehaviorDevBatteryLogging::BehaviorUpdate() {
+  if (!IsActivated() || _drivingOffCharger) {
     return;
   }
 
   const auto& battComp = GetBEI().GetRobotInfo()._robot.GetBatteryComponent();
-  
+
   if (battComp.IsOnChargerPlatform()) {
     // Drive off charger when full
     if (_iConfig.driveOffChargerWhenFull && battComp.IsBatteryFull()) {
       _drivingOffCharger = true;
       DriveStraightAction* driveAction = new DriveStraightAction(100.f);
       driveAction->SetCanMoveOnCharger(true);
-      DelegateNow(driveAction, [](){
-        _drivingOffCharger = false;
-      });
+      DelegateNow(driveAction, []() { _drivingOffCharger = false; });
     }
 
     if (!_drivingOffCharger && IsControlDelegated()) {
@@ -209,39 +194,39 @@ void BehaviorDevBatteryLogging::BehaviorUpdate()
       CancelDelegates(false);
     }
   } else {
-
     if (_iConfig.doExploring) {
       if (!IsControlDelegated()) {
         DelegateIfInControl(_iConfig.testBehavior.get());
       }
     } else {
-
       // Start motors if voltage threshold has been reached
       if (!_startMovingVoltageReached && !IsControlDelegated()) {
         f32 battVoltage = battComp.GetBatteryVolts();
-        if (battVoltage < _iConfig.startMovingVoltage ) {
+        if (battVoltage < _iConfig.startMovingVoltage) {
           _startMovingVoltageReached = true;
 
-          if (_iConfig.wheelSpeed_mmps != 0 || _iConfig.liftSpeed_radps != 0 || _iConfig.headSpeed_radps != 0) {
+          if (_iConfig.wheelSpeed_mmps != 0 || _iConfig.liftSpeed_radps != 0 ||
+              _iConfig.headSpeed_radps != 0) {
             EnqueueMotorActions();
           }
 
           if (_iConfig.stressCPU) {
-            GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, {
-              {VisionMode::Faces, EVisionUpdateFrequency::High},
-              {VisionMode::Markers, EVisionUpdateFrequency::High},
-              {VisionMode::Motion, EVisionUpdateFrequency::High}
-            });
+            GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(
+                this, {{VisionMode::Faces, EVisionUpdateFrequency::High},
+                       {VisionMode::Markers, EVisionUpdateFrequency::High},
+                       {VisionMode::Motion, EVisionUpdateFrequency::High}});
           }
 
           if (_iConfig.stressSpeaker) {
-            GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Play__Robot_Vic_Sfx__Purr_Loop_Play, AMD_GOT::Behavior);
+            GetBEI().GetRobotAudioClient().PostEvent(
+                AMD_GE_GE::Play__Robot_Vic_Sfx__Purr_Loop_Play,
+                AMD_GOT::Behavior);
           }
-
         }
       } else {
         if (_iConfig.stressCPU) {
-          auto& animComp = GetBEI().GetRobotInfo()._robot.GetAnimationComponent();
+          auto& animComp =
+              GetBEI().GetRobotInfo()._robot.GetAnimationComponent();
           Vision::ImageRGB565 img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
           img.FillWith({255, 255, 255});
           animComp.DisplayFaceImage(img, BS_TIME_STEP_MS, true);
@@ -253,16 +238,17 @@ void BehaviorDevBatteryLogging::BehaviorUpdate()
   LogData();
 }
 
-
-void BehaviorDevBatteryLogging::InitLog()
-{
+void BehaviorDevBatteryLogging::InitLog() {
   // Initialize log file
-  std::string outputPath = GetBEI().GetRobotInfo().GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent, "battery_logs");
+  std::string outputPath =
+      GetBEI().GetRobotInfo().GetDataPlatform()->pathToResource(
+          Util::Data::Scope::Persistent, "battery_logs");
   Util::FileUtils::CreateDirectory(outputPath);
 
   // Get robot serial number
   std::stringstream ss;
-  ss << outputPath << "/BatteryLog_" << std::hex << GetBEI().GetRobotInfo().GetHeadSerialNumber() << "_";
+  ss << outputPath << "/BatteryLog_" << std::hex
+     << GetBEI().GetRobotInfo().GetHeadSerialNumber() << "_";
 
   // Get current date time
   auto now = std::chrono::system_clock::now();
@@ -271,7 +257,7 @@ void BehaviorDevBatteryLogging::InitLog()
 
   _logFile = ss.str() + ".txt";
 
-  int cnt=1;
+  int cnt = 1;
   while (Util::FileUtils::FileExists(_logFile)) {
     _logFile = ss.str() + "(" + std::to_string(cnt++) + ")";
   }
@@ -280,22 +266,22 @@ void BehaviorDevBatteryLogging::InitLog()
   std::ofstream fs;
   fs.open(_logFile.c_str(), std::ios_base::app);
   fs << "Time_ms, "
-      << "BatteryVolts, "
-      << "BatteryVolts_filtered, "
-      << "BatteryTemp_C, "
-      << "txBytes, "
-      << "rxBytes, "
-      << "CPU_activeTime), "
-      << "CPU_idleTime)\n";
+     << "BatteryVolts, "
+     << "BatteryVolts_filtered, "
+     << "BatteryTemp_C, "
+     << "txBytes, "
+     << "rxBytes, "
+     << "CPU_activeTime), "
+     << "CPU_idleTime)\n";
 
-  LOG_INFO("BehaviorDevBatteryLogging.InitLog.StartingLog", "%s", _logFile.c_str());
+  LOG_INFO("BehaviorDevBatteryLogging.InitLog.StartingLog", "%s",
+           _logFile.c_str());
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevBatteryLogging::LogData() const
-{
-  EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+void BehaviorDevBatteryLogging::LogData() const {
+  EngineTimeStamp_t currTime_ms =
+      BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
   if (currTime_ms >= _nextLogTime_ms) {
     _nextLogTime_ms += LOGGING_PERIOD_MS;
@@ -312,16 +298,19 @@ void BehaviorDevBatteryLogging::LogData() const
     std::vector<std::string> cpuTimeStatsStrVec;
     OSState::getInstance()->GetCPUTimeStats(cpuTimeStatsStrVec);
     if (cpuTimeStatsStrVec.size() > 0) {
-      std::stringstream ss(cpuTimeStatsStrVec[0]);  // First line is the overall CPU stats
+      std::stringstream ss(
+          cpuTimeStatsStrVec[0]);  // First line is the overall CPU stats
       std::string junk;
-      ss >> junk; // Toss out "cpu" at front
+      ss >> junk;  // Toss out "cpu" at front
       std::vector<int> cpuTimeStats;
       int num;
       while (ss >> num) {
         cpuTimeStats.push_back(num);
       }
       idleTime = cpuTimeStats[3] + cpuTimeStats[4];  // idle and iowait time
-      activeTime = std::accumulate(cpuTimeStats.begin(), cpuTimeStats.end(), 0) - idleTime;
+      activeTime =
+          std::accumulate(cpuTimeStats.begin(), cpuTimeStats.end(), 0) -
+          idleTime;
     }
 
     // Get wifi usage
@@ -331,25 +320,17 @@ void BehaviorDevBatteryLogging::LogData() const
     // Write stats to file
     std::ofstream fs;
     fs.open(_logFile.c_str(), std::ios_base::app);
-    fs << currTime_ms << ", "
-      << battVoltageRaw << ", "
-      << battVoltage << ", "
-      << battTemperature << ", "
-      << txBytes << ", "
-      << rxBytes << ", "
-      << activeTime << ", "
-      << idleTime << ", "
-      << "\n";
+    fs << currTime_ms << ", " << battVoltageRaw << ", " << battVoltage << ", "
+       << battTemperature << ", " << txBytes << ", " << rxBytes << ", "
+       << activeTime << ", " << idleTime << ", "
+       << "\n";
     fs.close();
     sync();
   }
-
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevBatteryLogging::OnBehaviorDeactivated()
-{
+void BehaviorDevBatteryLogging::OnBehaviorDeactivated() {
   // Stop motors
   CancelDelegates(false);
   if (!NEAR_ZERO(_iConfig.wheelSpeed_mmps)) {
@@ -358,11 +339,12 @@ void BehaviorDevBatteryLogging::OnBehaviorDeactivated()
   }
 
   if (_iConfig.stressSpeaker) {
-    GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Stop__Robot_Vic_Sfx__Purr_Loop_Stop, AMD_GOT::Behavior);
+    GetBEI().GetRobotAudioClient().PostEvent(
+        AMD_GE_GE::Stop__Robot_Vic_Sfx__Purr_Loop_Stop, AMD_GOT::Behavior);
   }
 
   _logFile = "";
 }
 
-} // Cozmo
-} // Anki
+}  // namespace Vector
+}  // namespace Anki

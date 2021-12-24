@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -14,23 +15,29 @@
 // Copyright (C) 2009, Willow Garage Inc., all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
-// This software is provided by the copyright holders and contributors "as is" and
+// This software is provided by the copyright holders and contributors "as is"
+and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -39,7 +46,6 @@
 // the use of this software, even if advised of the possibility of such damage.
 //
 //M*/
-
 
 #ifndef OPENCV_STITCHING_TIMELAPSERS_HPP
 #define OPENCV_STITCHING_TIMELAPSERS_HPP
@@ -52,40 +58,38 @@ namespace detail {
 //! @addtogroup stitching
 //! @{
 
-//  Base Timelapser class, takes a sequence of images, applies appropriate shift, stores result in dst_.
+//  Base Timelapser class, takes a sequence of images, applies appropriate
+//  shift, stores result in dst_.
 
-class CV_EXPORTS Timelapser
-{
-public:
+class CV_EXPORTS Timelapser {
+ public:
+  enum { AS_IS, CROP };
 
-    enum {AS_IS, CROP};
+  virtual ~Timelapser() {}
 
-    virtual ~Timelapser() {}
+  static Ptr<Timelapser> createDefault(int type);
 
-    static Ptr<Timelapser> createDefault(int type);
+  virtual void initialize(const std::vector<Point> &corners,
+                          const std::vector<Size> &sizes);
+  virtual void process(InputArray img, InputArray mask, Point tl);
+  virtual const UMat &getDst() { return dst_; }
 
-    virtual void initialize(const std::vector<Point> &corners, const std::vector<Size> &sizes);
-    virtual void process(InputArray img, InputArray mask, Point tl);
-    virtual const UMat& getDst() {return dst_;}
+ protected:
+  virtual bool test_point(Point pt);
 
-protected:
-
-    virtual bool test_point(Point pt);
-
-    UMat dst_;
-    Rect dst_roi_;
+  UMat dst_;
+  Rect dst_roi_;
 };
 
-
-class CV_EXPORTS TimelapserCrop : public Timelapser
-{
-public:
-    virtual void initialize(const std::vector<Point> &corners, const std::vector<Size> &sizes);
+class CV_EXPORTS TimelapserCrop : public Timelapser {
+ public:
+  virtual void initialize(const std::vector<Point> &corners,
+                          const std::vector<Size> &sizes);
 };
 
 //! @}
 
-} // namespace detail
-} // namespace cv
+}  // namespace detail
+}  // namespace cv
 
-#endif // OPENCV_STITCHING_TIMELAPSERS_HPP
+#endif  // OPENCV_STITCHING_TIMELAPSERS_HPP

@@ -16,11 +16,6 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_NETWORK_INTERNETCONNECTIONMONITOR_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_NETWORK_INTERNETCONNECTIONMONITOR_H_
 
-#include <chrono>
-#include <memory>
-#include <mutex>
-#include <unordered_set>
-
 #include <AVSCommon/AVS/Attachment/InProcessAttachment.h>
 #include <AVSCommon/AVS/Attachment/InProcessAttachmentReader.h>
 #include <AVSCommon/SDKInterfaces/HTTPContentFetcherInterfaceFactoryInterface.h>
@@ -28,100 +23,124 @@
 #include <AVSCommon/SDKInterfaces/InternetConnectionObserverInterface.h>
 #include <AVSCommon/Utils/Timing/Timer.h>
 
+#include <chrono>
+#include <memory>
+#include <mutex>
+#include <unordered_set>
+
 namespace alexaClientSDK {
 namespace avsCommon {
 namespace utils {
 namespace network {
 
 /**
- * A class to monitor internet connection and notify observers of connection status changes.
+ * A class to monitor internet connection and notify observers of connection
+ * status changes.
  */
-class InternetConnectionMonitor : public sdkInterfaces::InternetConnectionMonitorInterface {
-public:
-    /**
-     * Creates a InternetConnectionMonitor.
-     *
-     * @param contentFetcherFactory The content fetcher that will make the test run to an S3 endpoint.
-     * @return A unique_ptr to the InternetConnectionMonitor instance.
-     */
-    static std::unique_ptr<InternetConnectionMonitor> create(
-        std::shared_ptr<sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> contentFetcherFactory);
+class InternetConnectionMonitor
+    : public sdkInterfaces::InternetConnectionMonitorInterface {
+ public:
+  /**
+   * Creates a InternetConnectionMonitor.
+   *
+   * @param contentFetcherFactory The content fetcher that will make the test
+   * run to an S3 endpoint.
+   * @return A unique_ptr to the InternetConnectionMonitor instance.
+   */
+  static std::unique_ptr<InternetConnectionMonitor> create(
+      std::shared_ptr<
+          sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface>
+          contentFetcherFactory);
 
-    /**
-     * Destructor.
-     */
-    ~InternetConnectionMonitor();
+  /**
+   * Destructor.
+   */
+  ~InternetConnectionMonitor();
 
-    /// @name InternetConnectionMonitorInterface Methods
-    /// @{
-    void addInternetConnectionObserver(
-        std::shared_ptr<avsCommon::sdkInterfaces::InternetConnectionObserverInterface> observer) override;
-    void removeInternetConnectionObserver(
-        std::shared_ptr<avsCommon::sdkInterfaces::InternetConnectionObserverInterface> observer) override;
-    /// @}
+  /// @name InternetConnectionMonitorInterface Methods
+  /// @{
+  void addInternetConnectionObserver(
+      std::shared_ptr<
+          avsCommon::sdkInterfaces::InternetConnectionObserverInterface>
+          observer) override;
+  void removeInternetConnectionObserver(
+      std::shared_ptr<
+          avsCommon::sdkInterfaces::InternetConnectionObserverInterface>
+          observer) override;
+  /// @}
 
-private:
-    /**
-     * Constructor.
-     *
-     * @param contentFetcherFactory The content fetcher that will make the test run to an S3 endpoint.
-     */
-    InternetConnectionMonitor(
-        std::shared_ptr<sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> contentFetcherFactory);
+ private:
+  /**
+   * Constructor.
+   *
+   * @param contentFetcherFactory The content fetcher that will make the test
+   * run to an S3 endpoint.
+   */
+  InternetConnectionMonitor(
+      std::shared_ptr<
+          sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface>
+          contentFetcherFactory);
 
-    /**
-     * Begin monitoring internet connection.
-     */
-    void startMonitoring();
+  /**
+   * Begin monitoring internet connection.
+   */
+  void startMonitoring();
 
-    /**
-     * Stop monitoring internet connection.
-     */
-    void stopMonitoring();
+  /**
+   * Stop monitoring internet connection.
+   */
+  void stopMonitoring();
 
-    /**
-     * Test internet connection by connecting to an S3 endpoint and fetching HTTP content.
-     * The HTTP content is scanned for a validation string.
-     *
-     * @note The URL tested is http://spectrum.s3.amazonaws.com/kindle-wifi/wifistub.html, the Kindle reachability probe
-     * page.
-     */
-    void testConnection();
+  /**
+   * Test internet connection by connecting to an S3 endpoint and fetching HTTP
+   * content. The HTTP content is scanned for a validation string.
+   *
+   * @note The URL tested is
+   * http://spectrum.s3.amazonaws.com/kindle-wifi/wifistub.html, the Kindle
+   * reachability probe page.
+   */
+  void testConnection();
 
-    /**
-     * Update the connection status.
-     *
-     * @param connected The new connection status.
-     */
-    void updateConnectionStatus(bool connected);
+  /**
+   * Update the connection status.
+   *
+   * @param connected The new connection status.
+   */
+  void updateConnectionStatus(bool connected);
 
-    /**
-     * Notify observers of connection status.
-     *
-     * @note This should only be called while holding a lock to ensure synchronicity.
-     */
-    void notifyObserversLocked();
+  /**
+   * Notify observers of connection status.
+   *
+   * @note This should only be called while holding a lock to ensure
+   * synchronicity.
+   */
+  void notifyObserversLocked();
 
-    /// The set of connection observers.
-    std::unordered_set<std::shared_ptr<sdkInterfaces::InternetConnectionObserverInterface>> m_observers;
+  /// The set of connection observers.
+  std::unordered_set<
+      std::shared_ptr<sdkInterfaces::InternetConnectionObserverInterface>>
+      m_observers;
 
-    /// The current internet connection status.
-    bool m_connected;
+  /// The current internet connection status.
+  bool m_connected;
 
-    /// The period (in seconds) after which the monitor should re-test internet connection.
-    std::chrono::seconds m_period;
+  /// The period (in seconds) after which the monitor should re-test internet
+  /// connection.
+  std::chrono::seconds m_period;
 
-    /// The timer that will call testConnection() every m_period seconds.
-    avsCommon::utils::timing::Timer m_connectionTestTimer;
+  /// The timer that will call testConnection() every m_period seconds.
+  avsCommon::utils::timing::Timer m_connectionTestTimer;
 
-    /// The stream that will hold downloaded data.
-    std::shared_ptr<avsCommon::avs::attachment::InProcessAttachment> m_stream;
+  /// The stream that will hold downloaded data.
+  std::shared_ptr<avsCommon::avs::attachment::InProcessAttachment> m_stream;
 
-    /// The content fetcher factory that will produce a content fetcher.
-    std::shared_ptr<avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> m_contentFetcherFactory;
+  /// The content fetcher factory that will produce a content fetcher.
+  std::shared_ptr<
+      avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface>
+      m_contentFetcherFactory;
 
-    /// Mutex to serialize access to m_connected and m_observers.
-    std::mutex m_mutex;
+  /// Mutex to serialize access to m_connected and m_observers.
+  std::mutex m_mutex;
 };
 
 }  // namespace network

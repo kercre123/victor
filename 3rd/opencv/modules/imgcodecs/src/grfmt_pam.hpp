@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -19,24 +20,32 @@
 //  Copyright (C) 2015-2016, Itseez Inc., all rights reserved.
 //  Third party copyrights are property of their respective owners.
 //
-//  Redistribution and use in source and binary forms, with or without modification,
+//  Redistribution and use in source and binary forms, with or without
+modification,
 //  are permitted provided that the following conditions are met:
 //
 //    * Redistributions of source code must retain the above copyright notice,
 //      this list of conditions and the following disclaimer.
 //
-//    * Redistributions in binary form must reproduce the above copyright notice,
-//      this list of conditions and the following disclaimer in the documentation
+//    * Redistributions in binary form must reproduce the above copyright
+notice,
+//      this list of conditions and the following disclaimer in the
+documentation
 //      and/or other materials provided with the distribution.
 //
-//    * Neither the names of the copyright holders nor the names of the contributors
+//    * Neither the names of the copyright holders nor the names of the
+contributors
 //      may be used to endorse or promote products derived from this software
 //      without specific prior written permission.
 //
-//  This software is provided by the copyright holders and contributors "as is" and
-//  any express or implied warranties, including, but not limited to, the implied
-//  warranties of merchantability and fitness for a particular purpose are disclaimed.
-//  In no event shall copyright holders or contributors be liable for any direct,
+//  This software is provided by the copyright holders and contributors "as is"
+and
+//  any express or implied warranties, including, but not limited to, the
+implied
+//  warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+//  In no event shall copyright holders or contributors be liable for any
+direct,
 //  indirect, incidental, special, exemplary, or consequential damages
 //  (including, but not limited to, procurement of substitute goods or services;
 //  loss of use, data, or profits; or business interruption) however caused
@@ -47,53 +56,46 @@
 //
 //M*/
 
-//Based on "imgcodecs/src/grfmt_pxm.hpp"
-//Written by Dimitrios Katsaros <patcherwork@gmail.com>
+// Based on "imgcodecs/src/grfmt_pxm.hpp"
+// Written by Dimitrios Katsaros <patcherwork@gmail.com>
 
 #ifndef _OPENCV_PAM_HPP_
 #define _OPENCV_PAM_HPP_
 
-#include "grfmt_base.hpp"
 #include "bitstrm.hpp"
+#include "grfmt_base.hpp"
 
-namespace cv
-{
+namespace cv {
 
-class PAMDecoder : public BaseImageDecoder
-{
-public:
+class PAMDecoder : public BaseImageDecoder {
+ public:
+  PAMDecoder();
+  virtual ~PAMDecoder();
 
-    PAMDecoder();
-    virtual ~PAMDecoder();
+  bool readData(Mat& img);
+  bool readHeader();
 
-    bool  readData( Mat& img );
-    bool  readHeader();
+  size_t signatureLength() const;
+  bool checkSignature(const String& signature) const;
+  ImageDecoder newDecoder() const;
 
-    size_t signatureLength() const;
-    bool checkSignature( const String& signature ) const;
-    ImageDecoder newDecoder() const;
-
-protected:
-
-    RLByteStream    m_strm;
-    int m_maxval, m_channels, m_sampledepth, m_offset,
-        selected_fmt;
-    bool bit_mode;
+ protected:
+  RLByteStream m_strm;
+  int m_maxval, m_channels, m_sampledepth, m_offset, selected_fmt;
+  bool bit_mode;
 };
 
+class PAMEncoder : public BaseImageEncoder {
+ public:
+  PAMEncoder();
+  virtual ~PAMEncoder();
 
-class PAMEncoder : public BaseImageEncoder
-{
-public:
-    PAMEncoder();
-    virtual ~PAMEncoder();
+  bool isFormatSupported(int depth) const;
+  bool write(const Mat& img, const std::vector<int>& params);
 
-    bool  isFormatSupported( int depth ) const;
-    bool  write( const Mat& img, const std::vector<int>& params );
-
-    ImageEncoder newEncoder() const;
+  ImageEncoder newEncoder() const;
 };
 
-}
+}  // namespace cv
 
 #endif /* _OPENCV_PAM_HPP_ */

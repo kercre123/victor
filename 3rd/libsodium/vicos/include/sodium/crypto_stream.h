@@ -15,23 +15,23 @@
 #include "export.h"
 
 #ifdef __cplusplus
-# ifdef __GNUC__
-#  pragma GCC diagnostic ignored "-Wlong-long"
-# endif
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wlong-long"
+#endif
 extern "C" {
 #endif
 
 #define crypto_stream_KEYBYTES crypto_stream_xsalsa20_KEYBYTES
 SODIUM_EXPORT
-size_t  crypto_stream_keybytes(void);
+size_t crypto_stream_keybytes(void);
 
 #define crypto_stream_NONCEBYTES crypto_stream_xsalsa20_NONCEBYTES
 SODIUM_EXPORT
-size_t  crypto_stream_noncebytes(void);
+size_t crypto_stream_noncebytes(void);
 
 #define crypto_stream_MESSAGEBYTES_MAX crypto_stream_xsalsa20_MESSAGEBYTES_MAX
 SODIUM_EXPORT
-size_t  crypto_stream_messagebytes_max(void);
+size_t crypto_stream_messagebytes_max(void);
 
 #define crypto_stream_PRIMITIVE "xsalsa20"
 SODIUM_EXPORT

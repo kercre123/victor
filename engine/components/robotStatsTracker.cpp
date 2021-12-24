@@ -46,16 +46,14 @@ static const float kOdomFixedPoint = 100000.0f;
 // hacks to allow console funcs to interact
 static std::function<void(void)> sRobotStatsResetAllFunction;
 
-void ResetRobotStats( ConsoleFunctionContextRef context )
-{
-  if( sRobotStatsResetAllFunction ) {
-
+void ResetRobotStats(ConsoleFunctionContextRef context) {
+  if (sRobotStatsResetAllFunction) {
     // require a "reset" argument to avoid accidents
-    const std::string confirmStr = ConsoleArg_Get_String(context, "typeResetToConfirm");
-    if( confirmStr == "reset" ) {
+    const std::string confirmStr =
+        ConsoleArg_Get_String(context, "typeResetToConfirm");
+    if (confirmStr == "reset") {
       sRobotStatsResetAllFunction();
-    }
-    else {
+    } else {
       PRINT_NAMED_WARNING("ResetRobotStats.ConsoleFunc.Invalid",
                           "Must type 'reset' to reset");
     }
@@ -64,36 +62,35 @@ void ResetRobotStats( ConsoleFunctionContextRef context )
 
 static std::function<void(void)> sRobotStatsFlushFunction;
 
-void FlushRobotStatsToDisk( ConsoleFunctionContextRef context )
-{
-  if( sRobotStatsFlushFunction ) {
+void FlushRobotStatsToDisk(ConsoleFunctionContextRef context) {
+  if (sRobotStatsFlushFunction) {
     sRobotStatsFlushFunction();
   }
 }
 
+#endif  // REMOTE_CONSOLE_ENABLED
 
-#endif // REMOTE_CONSOLE_ENABLED
-
-}
+}  // namespace
 
 #define CONSOLE_GROUP "RobotStats"
 
-CONSOLE_VAR( f32, kRobotStats_AliveUpdatePeriod_s, CONSOLE_GROUP, 60.0f );
-CONSOLE_VAR( f32, kRobotStats_OverrideAliveHours, CONSOLE_GROUP, -1.0f);
+CONSOLE_VAR(f32, kRobotStats_AliveUpdatePeriod_s, CONSOLE_GROUP, 60.0f);
+CONSOLE_VAR(f32, kRobotStats_OverrideAliveHours, CONSOLE_GROUP, -1.0f);
 
-CONSOLE_FUNC( ResetRobotStats, CONSOLE_GROUP, const char* typeResetToConfirm );
-CONSOLE_FUNC( FlushRobotStatsToDisk, CONSOLE_GROUP );
+CONSOLE_FUNC(ResetRobotStats, CONSOLE_GROUP, const char* typeResetToConfirm);
+CONSOLE_FUNC(FlushRobotStatsToDisk, CONSOLE_GROUP);
 
 RobotStatsTracker::RobotStatsTracker()
-  : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::RobotStatsTracker)
-  , UnreliableComponent<BCComponentID>(this, BCComponentID::RobotStatsTracker)
-{
+    : IDependencyManagedComponent<RobotComponentID>(
+          this, RobotComponentID::RobotStatsTracker),
+      UnreliableComponent<BCComponentID>(this,
+                                         BCComponentID::RobotStatsTracker) {
 #if REMOTE_CONSOLE_ENABLED
-  if( !sRobotStatsResetAllFunction ) {
-    sRobotStatsResetAllFunction = [this](){ ResetAllStats(); };
+  if (!sRobotStatsResetAllFunction) {
+    sRobotStatsResetAllFunction = [this]() { ResetAllStats(); };
   }
-  if( !sRobotStatsFlushFunction ) {
-    sRobotStatsFlushFunction = [this](){
+  if (!sRobotStatsFlushFunction) {
+    sRobotStatsFlushFunction = [this]() {
       const bool saveToDiskImmediately = true;
       const bool saveToCloudImmediately = false;
       UpdateStatsJdoc(saveToDiskImmediately, saveToCloudImmediately);
@@ -102,31 +99,29 @@ RobotStatsTracker::RobotStatsTracker()
 #endif
 }
 
-RobotStatsTracker::~RobotStatsTracker()
-{
+RobotStatsTracker::~RobotStatsTracker() {
 #if REMOTE_CONSOLE_ENABLED
   sRobotStatsResetAllFunction = nullptr;
   sRobotStatsFlushFunction = nullptr;
 #endif
 }
 
-void RobotStatsTracker::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
-{
+void RobotStatsTracker::InitDependent(Vector::Robot* robot,
+                                      const RobotCompMap& dependentComps) {
   _jdocsManager = &robot->GetComponent<JdocsManager>();
 
   // Call the JdocsManager to see if our robot stats jdoc file exists
-  if (_jdocsManager->JdocNeedsCreation(external_interface::JdocType::ROBOT_LIFETIME_STATS))
-  {
+  if (_jdocsManager->JdocNeedsCreation(
+          external_interface::JdocType::ROBOT_LIFETIME_STATS)) {
     LOG_INFO("RobotStatsTracker.InitDependent.NoStatsJdocsFile",
              "Stats jdocs file not found; creating it now");
-    _jdocsManager->ClearJdocBody(external_interface::JdocType::ROBOT_LIFETIME_STATS);
+    _jdocsManager->ClearJdocBody(
+        external_interface::JdocType::ROBOT_LIFETIME_STATS);
     static const bool kSaveToDiskImmediately = true;
     UpdateStatsJdoc(kSaveToDiskImmediately);
-  }
-  else
-  {
-    if (_jdocsManager->JdocNeedsMigration(external_interface::JdocType::ROBOT_LIFETIME_STATS))
-    {
+  } else {
+    if (_jdocsManager->JdocNeedsMigration(
+            external_interface::JdocType::ROBOT_LIFETIME_STATS)) {
       DoJdocFormatMigration();
       static const bool kSaveToDiskImmediately = true;
       static const bool kSaveToCloudImmediately = false;
@@ -134,85 +129,90 @@ void RobotStatsTracker::InitDependent(Vector::Robot* robot, const RobotCompMap& 
     }
   }
 
-  _jdocsManager->RegisterFormatMigrationCallback(external_interface::JdocType::ROBOT_LIFETIME_STATS, [this]() {
-    DoJdocFormatMigration();
-  });
+  _jdocsManager->RegisterFormatMigrationCallback(
+      external_interface::JdocType::ROBOT_LIFETIME_STATS,
+      [this]() { DoJdocFormatMigration(); });
 
-  _jdocsManager->RegisterShutdownCallback(external_interface::JdocType::ROBOT_LIFETIME_STATS, [this]() {
-    AddRemainingAliveTimeOnShutdown();
-  });
+  _jdocsManager->RegisterShutdownCallback(
+      external_interface::JdocType::ROBOT_LIFETIME_STATS,
+      [this]() { AddRemainingAliveTimeOnShutdown(); });
 
   _currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _timeOfNextAliveTimeCheck = _currTime_s + kRobotStats_AliveUpdatePeriod_s;
 }
 
-void RobotStatsTracker::IncreaseStimulationSeconds(float delta)
-{
-  if( delta > 0.0f ) {
-    IncreaseHelper(kStimCategory, "StimSeconds", static_cast<uint64_t>(delta * kStimFixedPoint));
+void RobotStatsTracker::IncreaseStimulationSeconds(float delta) {
+  if (delta > 0.0f) {
+    IncreaseHelper(kStimCategory, "StimSeconds",
+                   static_cast<uint64_t>(delta * kStimFixedPoint));
   }
 }
 
-void RobotStatsTracker::IncreaseStimulationCumulativePositiveDelta(float delta)
-{
-  if( delta > 0.0f ) {
-    IncreaseHelper(kStimCategory, "CumlPosDelta", static_cast<uint64_t>(delta * kStimFixedPoint));
+void RobotStatsTracker::IncreaseStimulationCumulativePositiveDelta(
+    float delta) {
+  if (delta > 0.0f) {
+    IncreaseHelper(kStimCategory, "CumlPosDelta",
+                   static_cast<uint64_t>(delta * kStimFixedPoint));
   }
 }
 
-void RobotStatsTracker::IncrementActiveFeature(const ActiveFeature& feature, const std::string& intentSource)
-{
-  IncreaseHelper(kActiveFeatureCategory + std::string(kRobotStatsSeparator) + intentSource,
-                 ActiveFeatureToString(feature), 1);
+void RobotStatsTracker::IncrementActiveFeature(
+    const ActiveFeature& feature, const std::string& intentSource) {
+  IncreaseHelper(
+      kActiveFeatureCategory + std::string(kRobotStatsSeparator) + intentSource,
+      ActiveFeatureToString(feature), 1);
 
   // also log usage by type, to serve as a "summary" of voice commands
-  ActiveFeatureType featureType = GetActiveFeatureType(feature, ActiveFeatureType::Invalid);
-  if( featureType != ActiveFeatureType::Invalid &&
-      intentSource!= ActiveFeatureComponent::kIntentSourceAI) {
-    IncreaseHelper( kActiveFeatureTypeCategory, ActiveFeatureTypeToString(featureType), 1);
+  ActiveFeatureType featureType =
+      GetActiveFeatureType(feature, ActiveFeatureType::Invalid);
+  if (featureType != ActiveFeatureType::Invalid &&
+      intentSource != ActiveFeatureComponent::kIntentSourceAI) {
+    IncreaseHelper(kActiveFeatureTypeCategory,
+                   ActiveFeatureTypeToString(featureType), 1);
   }
 }
 
-void RobotStatsTracker::IncrementPettingDuration(const float secondsPet)
-{
+void RobotStatsTracker::IncrementPettingDuration(const float secondsPet) {
   const int time_ms = (int)std::round(secondsPet * 1000.0f);
   IncreaseHelper(kPettingDurationCategory, "ms", time_ms);
 }
 
-
-void RobotStatsTracker::IncrementBehaviorStat(const BehaviorStat& stat)
-{
+void RobotStatsTracker::IncrementBehaviorStat(const BehaviorStat& stat) {
   IncreaseHelper(kBehaviorStatCategory, BehaviorStatToString(stat), 1);
 }
 
-void RobotStatsTracker::IncrementNamedFacesPerDay()
-{
+void RobotStatsTracker::IncrementNamedFacesPerDay() {
   IncreaseHelper(kFacesCategory, "NamedFacePerDay", 1);
 }
 
-void RobotStatsTracker::IncreaseOdometer(float lWheelDelta_mm, float rWheelDelta_mm, float bodyDelta_mm)
-{
-  if( lWheelDelta_mm > 0.0f ) {
-    IncreaseHelper(kOdomCategory, "LWheel", static_cast<uint64_t>(lWheelDelta_mm * kOdomFixedPoint));
+void RobotStatsTracker::IncreaseOdometer(float lWheelDelta_mm,
+                                         float rWheelDelta_mm,
+                                         float bodyDelta_mm) {
+  if (lWheelDelta_mm > 0.0f) {
+    IncreaseHelper(kOdomCategory, "LWheel",
+                   static_cast<uint64_t>(lWheelDelta_mm * kOdomFixedPoint));
   }
-  if( rWheelDelta_mm > 0.0f ) {
-    IncreaseHelper(kOdomCategory, "RWheel", static_cast<uint64_t>(rWheelDelta_mm * kOdomFixedPoint));
+  if (rWheelDelta_mm > 0.0f) {
+    IncreaseHelper(kOdomCategory, "RWheel",
+                   static_cast<uint64_t>(rWheelDelta_mm * kOdomFixedPoint));
   }
-  if( bodyDelta_mm > 0.0f ) {
-    IncreaseHelper(kOdomCategory, "Body", static_cast<uint64_t>(bodyDelta_mm * kOdomFixedPoint));
+  if (bodyDelta_mm > 0.0f) {
+    IncreaseHelper(kOdomCategory, "Body",
+                   static_cast<uint64_t>(bodyDelta_mm * kOdomFixedPoint));
   }
 }
 
-void RobotStatsTracker::IncreaseHelper(const std::string& prefix, const std::string& stat, uint64_t delta)
-{
+void RobotStatsTracker::IncreaseHelper(const std::string& prefix,
+                                       const std::string& stat,
+                                       uint64_t delta) {
   const std::string key = prefix + kRobotStatsSeparator + stat;
 
-  auto& statsJson = *_jdocsManager->GetJdocBodyPointer(external_interface::ROBOT_LIFETIME_STATS);
+  auto& statsJson = *_jdocsManager->GetJdocBodyPointer(
+      external_interface::ROBOT_LIFETIME_STATS);
   if (!statsJson.isMember(key)) {
     statsJson[key] = 0;
     PRINT_CH_INFO("RobotStats", "RobotStatsTracker.Increase.NewStat",
-                  "Beginning to track value '%s'",
-                  key.c_str());
+                  "Beginning to track value '%s'", key.c_str());
   }
 
   statsJson[key] = statsJson[key].asUInt64() + delta;
@@ -220,33 +220,33 @@ void RobotStatsTracker::IncreaseHelper(const std::string& prefix, const std::str
   _dirtyJdoc = true;
 }
 
-void RobotStatsTracker::UpdateDependent(const RobotCompMap& dependentComps)
-{
+void RobotStatsTracker::UpdateDependent(const RobotCompMap& dependentComps) {
   _currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  if( _currTime_s > _timeOfNextAliveTimeCheck ) {
-    const auto secondsElapsed = static_cast<uint64_t>(kRobotStats_AliveUpdatePeriod_s);
-    IncreaseHelper( kLifetimeAliveCategory, "seconds", secondsElapsed );
+  if (_currTime_s > _timeOfNextAliveTimeCheck) {
+    const auto secondsElapsed =
+        static_cast<uint64_t>(kRobotStats_AliveUpdatePeriod_s);
+    IncreaseHelper(kLifetimeAliveCategory, "seconds", secondsElapsed);
     _timeOfNextAliveTimeCheck += kRobotStats_AliveUpdatePeriod_s;
   }
 
   // Update jdoc if there were change(s) this tick
-  // Note: In this case (robot lifetime stats), the call to UpdateStatsJdoc is very quick
-  // because the body of the jdoc is owned by the JdocsManager, and we are not saving to
-  // disk or submitting to cloud at this time
-  if (_dirtyJdoc)
-  {
+  // Note: In this case (robot lifetime stats), the call to UpdateStatsJdoc is
+  // very quick because the body of the jdoc is owned by the JdocsManager, and
+  // we are not saving to disk or submitting to cloud at this time
+  if (_dirtyJdoc) {
     static const bool kSaveToDiskImmediately = false;
     UpdateStatsJdoc(kSaveToDiskImmediately);
     _dirtyJdoc = false;
   }
 }
 
+#define FILTER_HELPER(key)    \
+  if (json.isMember(key)) {   \
+    jsonOut[key] = json[key]; \
+  }
 
-#define FILTER_HELPER(key) if (json.isMember(key)) { jsonOut[key] = json[key]; }
-
-Json::Value RobotStatsTracker::FilterStatsForApp(const Json::Value& json)
-{
+Json::Value RobotStatsTracker::FilterStatsForApp(const Json::Value& json) {
   Json::Value jsonOut;
 
   FILTER_HELPER("Stim.CumlPosDelta")
@@ -259,67 +259,63 @@ Json::Value RobotStatsTracker::FilterStatsForApp(const Json::Value& json)
   return jsonOut;
 }
 
-
 bool RobotStatsTracker::UpdateStatsJdoc(const bool saveToDiskImmediately,
-                                        const bool saveToCloudImmediately)
-{
+                                        const bool saveToCloudImmediately) {
   static const Json::Value* jdocBodyPtr = nullptr;
-  const bool success = _jdocsManager->UpdateJdoc(external_interface::JdocType::ROBOT_LIFETIME_STATS,
-                                                 jdocBodyPtr,
-                                                 saveToDiskImmediately,
-                                                 saveToCloudImmediately);
+  const bool success = _jdocsManager->UpdateJdoc(
+      external_interface::JdocType::ROBOT_LIFETIME_STATS, jdocBodyPtr,
+      saveToDiskImmediately, saveToCloudImmediately);
   return success;
 }
 
-void RobotStatsTracker::ResetAllStats()
-{
-  PRINT_NAMED_WARNING("RobotStatsTracker.ResetAllStats", "Resetting and wiping all stats");
-  _jdocsManager->ClearJdocBody(external_interface::JdocType::ROBOT_LIFETIME_STATS);
+void RobotStatsTracker::ResetAllStats() {
+  PRINT_NAMED_WARNING("RobotStatsTracker.ResetAllStats",
+                      "Resetting and wiping all stats");
+  _jdocsManager->ClearJdocBody(
+      external_interface::JdocType::ROBOT_LIFETIME_STATS);
   static const bool kSaveToDiskImmediately = true;
   static const bool kSaveToCloudImmediately = true;
   UpdateStatsJdoc(kSaveToDiskImmediately, kSaveToCloudImmediately);
 }
 
-
-void RobotStatsTracker::DoJdocFormatMigration()
-{
+void RobotStatsTracker::DoJdocFormatMigration() {
   const auto jdocType = external_interface::JdocType::ROBOT_LIFETIME_STATS;
   const auto docFormatVersion = _jdocsManager->GetJdocFmtVersion(jdocType);
   const auto curFormatVersion = _jdocsManager->GetCurFmtVersion(jdocType);
   LOG_INFO("RobotStatsTracker.DoJdocFormatMigration",
            "Migrating user entitlements jdoc from format version %llu to %llu",
            docFormatVersion, curFormatVersion);
-  if (docFormatVersion > curFormatVersion)
-  {
+  if (docFormatVersion > curFormatVersion) {
     LOG_ERROR("RobotStatsTracker.DoJdocFormatMigration.Error",
-              "Jdoc format version is newer than what victor code can handle; no migration possible");
+              "Jdoc format version is newer than what victor code can handle; "
+              "no migration possible");
     return;
   }
 
   // When we change 'format version' on this jdoc, migration
   // to a newer format version is performed here
-  
-  // Note that with the RobotStatsTracker, the JdocsManager owns the body of the jdoc,
-  // so any changes to the jdoc body should be done by first getting a pointer to the
-  // body with _jdocsManager->GetJdocBodyPointer, and then manipulating the body json
-  // directly
+
+  // Note that with the RobotStatsTracker, the JdocsManager owns the body of the
+  // jdoc, so any changes to the jdoc body should be done by first getting a
+  // pointer to the body with _jdocsManager->GetJdocBodyPointer, and then
+  // manipulating the body json directly
 
   // Now update the format version of this jdoc to the current format version
   _jdocsManager->SetJdocFmtVersionToCurrent(jdocType);
 }
 
-float RobotStatsTracker::GetNumHoursAlive() const
-{
-  if( kRobotStats_OverrideAliveHours >= 0.0f ) {
+float RobotStatsTracker::GetNumHoursAlive() const {
+  if (kRobotStats_OverrideAliveHours >= 0.0f) {
     return kRobotStats_OverrideAliveHours;
   }
-  
+
   std::string key(kLifetimeAliveCategory);
   key += kRobotStatsSeparator;
   key += "seconds";
-  
-  auto* statsJson = _jdocsManager->GetJdocBodyPointer(external_interface::ROBOT_LIFETIME_STATS);
-  if( statsJson != nullptr && statsJson->isMember(key) ) {
+
+  auto* statsJson = _jdocsManager->GetJdocBodyPointer(
+      external_interface::ROBOT_LIFETIME_STATS);
+  if (statsJson != nullptr && statsJson->isMember(key)) {
     const float sec = (*statsJson)[key].asFloat();
     return sec / (3600.0f);
   }
@@ -328,18 +324,17 @@ float RobotStatsTracker::GetNumHoursAlive() const
   return 0.0f;
 }
 
-void RobotStatsTracker::AddRemainingAliveTimeOnShutdown()
-{
-  const auto secondsElapsed = _currTime_s - (_timeOfNextAliveTimeCheck - kRobotStats_AliveUpdatePeriod_s);
+void RobotStatsTracker::AddRemainingAliveTimeOnShutdown() {
+  const auto secondsElapsed = _currTime_s - (_timeOfNextAliveTimeCheck -
+                                             kRobotStats_AliveUpdatePeriod_s);
   const auto secondsElapsedInt = static_cast<uint64_t>(secondsElapsed + 0.5f);
-  IncreaseHelper( kLifetimeAliveCategory, "seconds", secondsElapsedInt );
-  
-  // Although in this call we don't save to disk immediately, the JdocsManager destructor will do so for us
+  IncreaseHelper(kLifetimeAliveCategory, "seconds", secondsElapsedInt);
+
+  // Although in this call we don't save to disk immediately, the JdocsManager
+  // destructor will do so for us
   static const bool kSaveToDiskImmediately = false;
   UpdateStatsJdoc(kSaveToDiskImmediately);
 }
 
-
-}
-}
-
+}  // namespace Vector
+}  // namespace Anki

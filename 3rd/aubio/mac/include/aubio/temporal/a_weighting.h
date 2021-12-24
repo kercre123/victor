@@ -38,9 +38,10 @@
 
     - <a href="http://en.wikipedia.org/wiki/A-weighting">A-Weighting on
   Wikipedia</a>
-    - <a href="http://en.wikipedia.org/wiki/Weighting_filter">Weighting filter on
-  Wikipedia</a>
-    - <a href="http://www.mathworks.com/matlabcentral/fileexchange/69">Christophe
+    - <a href="http://en.wikipedia.org/wiki/Weighting_filter">Weighting filter
+  on Wikipedia</a>
+    - <a
+  href="http://www.mathworks.com/matlabcentral/fileexchange/69">Christophe
   Couvreur's 'octave' toolbox</a>
 
   The coefficients in this file have been computed using Christophe Couvreur's
@@ -69,7 +70,7 @@ extern "C" {
   \return a new filter object
 
 */
-aubio_filter_t *new_aubio_filter_a_weighting (uint_t samplerate);
+aubio_filter_t *new_aubio_filter_a_weighting(uint_t samplerate);
 
 /** set feedback and feedforward coefficients of a A-weighting filter
 
@@ -79,7 +80,7 @@ aubio_filter_t *new_aubio_filter_a_weighting (uint_t samplerate);
   192000 Hz
 
 */
-uint_t aubio_filter_set_a_weighting (aubio_filter_t * f, uint_t samplerate);
+uint_t aubio_filter_set_a_weighting(aubio_filter_t *f, uint_t samplerate);
 
 #ifdef __cplusplus
 }

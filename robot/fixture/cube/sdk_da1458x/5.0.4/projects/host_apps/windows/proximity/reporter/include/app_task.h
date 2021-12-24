@@ -5,10 +5,10 @@
  *
  * @brief Header file for application handlers for ble events and responses.
  *
- * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer 
- * program includes Confidential, Proprietary Information and is a Trade Secret of 
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
- * unless authorized in writing. All Rights Reserved.
+ * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -18,14 +18,14 @@
 #ifndef APP_TASK_H_
 #define APP_TASK_H_
 
-
 /*
  * INCLUDE FILES
  ****************************************************************************************
  */
-#include "ke_task.h"         // kernel task
-#include "ke_msg.h"          // kernel message
-#include <stdint.h>          // standard integer
+#include <stdint.h>  // standard integer
+
+#include "ke_msg.h"   // kernel message
+#include "ke_task.h"  // kernel task
 
 /*
  * DEFINES
@@ -33,18 +33,17 @@
  */
 
 /// application states
-enum
-{
-    /// Idle state
-    APP_IDLE,
-    /// Scanning state
-    APP_CONNECTABLE,
-    /// Connected state
-    APP_CONNECTED,
-    /// Number of defined states.
-    APP_STATE_MAX,
-    /// Scanning state
-    APP_SCAN,
+enum {
+  /// Idle state
+  APP_IDLE,
+  /// Scanning state
+  APP_CONNECTABLE,
+  /// Connected state
+  APP_CONNECTED,
+  /// Number of defined states.
+  APP_STATE_MAX,
+  /// Scanning state
+  APP_SCAN,
 };
 
 /*
@@ -68,7 +67,8 @@ extern struct app_env_tag app_env;
  * @return If the message was consumed or not.
  ****************************************************************************************
  */
-void app_find_device_name(unsigned char * adv_data, unsigned char adv_data_len, unsigned char dev_indx);
+void app_find_device_name(unsigned char *adv_data, unsigned char adv_data_len,
+                          unsigned char dev_indx);
 /**
  ****************************************************************************************
  * @brief Handles GAPM_CMP_EVT event for GAPM_SET_DEV_CONFIG_CMD.
@@ -85,7 +85,7 @@ int gapm_set_dev_config_completion_handler(ke_msg_id_t msgid,
                                            struct gapm_cmp_evt *param,
                                            ke_task_id_t dest_id,
                                            ke_task_id_t src_id);
-                                           
+
 /**
  ****************************************************************************************
  * @brief Handles ready indication from the GAP.
@@ -101,8 +101,7 @@ int gapm_set_dev_config_completion_handler(ke_msg_id_t msgid,
 
 int gapm_device_ready_ind_handler(ke_msg_id_t msgid,
                                   struct gap_ready_evt *param,
-                                  ke_task_id_t dest_id,
-                                  ke_task_id_t src_id);
+                                  ke_task_id_t dest_id, ke_task_id_t src_id);
 /**
  ****************************************************************************************
  * @brief Handles GAPM_ADV_REPORT_IND event.
@@ -118,8 +117,7 @@ int gapm_device_ready_ind_handler(ke_msg_id_t msgid,
 
 int gapm_adv_report_ind_handler(ke_msg_id_t msgid,
                                 struct gapm_adv_report_ind *param,
-                                ke_task_id_t dest_id,
-                                ke_task_id_t src_id);
+                                ke_task_id_t dest_id, ke_task_id_t src_id);
 /**
  ****************************************************************************************
  * @brief Handles Connection request indication event.
@@ -134,8 +132,7 @@ int gapm_adv_report_ind_handler(ke_msg_id_t msgid,
  */
 int gapc_connection_req_ind_handler(ke_msg_id_t msgid,
                                     struct gapc_connection_req_ind *param,
-                                    ke_task_id_t dest_id,
-                                    ke_task_id_t src_id);
+                                    ke_task_id_t dest_id, ke_task_id_t src_id);
 
 /**
  ****************************************************************************************
@@ -151,8 +148,7 @@ int gapc_connection_req_ind_handler(ke_msg_id_t msgid,
  */
 int gapc_disconnect_ind_handler(ke_msg_id_t msgid,
                                 struct gapc_disconnect_ind *param,
-                              ke_task_id_t dest_id,
-                              ke_task_id_t src_id);
+                                ke_task_id_t dest_id, ke_task_id_t src_id);
 /**
  ****************************************************************************************
  * @brief Handles RSSI indication event.
@@ -167,8 +163,7 @@ int gapc_disconnect_ind_handler(ke_msg_id_t msgid,
  */
 int gapc_con_rssi_ind_handler(ke_msg_id_t msgid,
                               struct gapc_con_rssi_ind *param,
-                              ke_task_id_t dest_id,
-                              ke_task_id_t src_id);
+                              ke_task_id_t dest_id, ke_task_id_t src_id);
 /**
  ****************************************************************************************
  * @brief Handle Bond indication.
@@ -181,10 +176,8 @@ int gapc_con_rssi_ind_handler(ke_msg_id_t msgid,
  * @return If the message was consumed or not.
  ****************************************************************************************
  */
-int gapc_bond_ind_handler(ke_msg_id_t msgid,
-                          struct gapc_bond_ind *param,
-                          ke_task_id_t dest_id,
-                          ke_task_id_t src_id);
+int gapc_bond_ind_handler(ke_msg_id_t msgid, struct gapc_bond_ind *param,
+                          ke_task_id_t dest_id, ke_task_id_t src_id);
 /**
  ****************************************************************************************
  * @brief Handle reset GAP request completion event.
@@ -197,11 +190,8 @@ int gapc_bond_ind_handler(ke_msg_id_t msgid,
  * @return If the message was consumed or not.
  ****************************************************************************************
  */
-int gapm_reset_completion_handler(ke_msg_id_t msgid,
-                                           struct gapm_cmp_evt *param,
-                                           ke_task_id_t  dest_id,
-                                           ke_task_id_t src_id);
-
+int gapm_reset_completion_handler(ke_msg_id_t msgid, struct gapm_cmp_evt *param,
+                                  ke_task_id_t dest_id, ke_task_id_t src_id);
 
 /**
  ****************************************************************************************
@@ -217,8 +207,7 @@ int gapm_reset_completion_handler(ke_msg_id_t msgid,
  */
 int gapc_bond_req_ind_handler(ke_msg_id_t msgid,
                               struct gapc_bond_req_ind *param,
-                                  ke_task_id_t dest_id,
-                                  ke_task_id_t src_id);
+                              ke_task_id_t dest_id, ke_task_id_t src_id);
 
 /**
  ****************************************************************************************
@@ -233,7 +222,7 @@ int gapc_bond_req_ind_handler(ke_msg_id_t msgid,
  ****************************************************************************************
  */
 int gapc_encrypt_req_ind_handler(ke_msg_id_t const msgid,
-                                 struct gapc_encrypt_req_ind * param,
+                                 struct gapc_encrypt_req_ind *param,
                                  ke_task_id_t const dest_id,
                                  ke_task_id_t const src_id);
 
@@ -278,11 +267,10 @@ int proxr_create_db_cfm_handler(ke_task_id_t const dest_id);
  * @return If the message was consumed or not.
  ****************************************************************************************
  */
-int diss_create_db_cfm_handler(ke_msg_id_t const msgid,  
-                               struct diss_create_db_cfm *param, 
-                               ke_task_id_t const dest_id, 
+int diss_create_db_cfm_handler(ke_msg_id_t const msgid,
+                               struct diss_create_db_cfm *param,
+                               ke_task_id_t const dest_id,
                                ke_task_id_t const src_id);
-
 
 /**
  ****************************************************************************************
@@ -297,9 +285,8 @@ int diss_create_db_cfm_handler(ke_msg_id_t const msgid,
  ****************************************************************************************
  */
 void proxr_level_upd_ind_handler(ke_msg_id_t msgid,
-                                 struct proxr_level_upd_ind  *param,
-                                 ke_task_id_t dest_id,
-                                 ke_task_id_t src_id);
+                                 struct proxr_level_upd_ind *param,
+                                 ke_task_id_t dest_id, ke_task_id_t src_id);
 
 /**
  ****************************************************************************************
@@ -315,9 +302,8 @@ void proxr_level_upd_ind_handler(ke_msg_id_t msgid,
  */
 void proxr_lls_alert_ind_handler(ke_msg_id_t msgid,
                                  struct proxr_lls_alert_ind *param,
-                                 ke_task_id_t dest_id,
-                                 ke_task_id_t src_id);
+                                 ke_task_id_t dest_id, ke_task_id_t src_id);
 
 /// @} APPTASK
 
-#endif // APP_TASK_H_
+#endif  // APP_TASK_H_

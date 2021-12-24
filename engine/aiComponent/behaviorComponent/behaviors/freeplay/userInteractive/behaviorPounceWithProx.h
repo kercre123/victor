@@ -18,37 +18,33 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorPounceWithProx : public ICozmoBehavior
-{
-private:
-  
+class BehaviorPounceWithProx : public ICozmoBehavior {
+ private:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorPounceWithProx(const Json::Value& config);
-  
-public:
+
+ public:
   virtual bool WantsToBeActivatedBehavior() const override;
 
-protected:
+ protected:
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.behaviorAlwaysDelegates = false;
   }
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override {}
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-  enum class PounceState{
-    WaitForMotion,
-    PounceOnMotion,
-    ReactToPounce
-  };
+ private:
+  enum class PounceState { WaitForMotion, PounceOnMotion, ReactToPounce };
 
-  struct InstanceConfig{
+  struct InstanceConfig {
     InstanceConfig();
     float maxPounceDist;
     float minGroundAreaForPounce;
@@ -56,7 +52,7 @@ private:
     IBEIConditionPtr inRangeCondition;
   };
 
-  struct DynamicVariables{
+  struct DynamicVariables {
     DynamicVariables();
     float prePouncePitch;
     bool motionObserved;
@@ -67,16 +63,14 @@ private:
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
 
-
   void TransitionToResultAnim();
   bool IsFingerCaught();
 
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   void TransitionToPounce();
-
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorPounceWithProx_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorPounceWithProx_H__

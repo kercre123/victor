@@ -1,19 +1,17 @@
+#include "rsa_pss.h"
+
 #include <string.h>
 
 #include "bignum.h"
-#include "sha256.h"
-#include "rsa_pss.h"
 #include "publickeys.h"
+#include "sha256.h"
 
 // This is encoded in big-endian format
-static const uint8_t PADDING[] = {
-  0x00, 0xFF, 0xFF, 
-  SHA256_OID,
-  0xFF, 0xFF, 0x01, 0x00
-};
+static const uint8_t PADDING[] = {0x00, 0xFF, 0xFF, SHA256_OID,
+                                  0xFF, 0xFF, 0x01, 0x00};
 
 static void MGF1(uint8_t* db, const uint8_t* checksum, int length) {
-  for (uint32_t count = 0; ; count++) {
+  for (uint32_t count = 0;; count++) {
     sha256_state digest;
     uint8_t mask[SHA256_DIGEST_SIZE];
 
@@ -24,7 +22,7 @@ static void MGF1(uint8_t* db, const uint8_t* checksum, int length) {
 
     for (int i = 0; i < SHA256_DIGEST_SIZE; i++) {
       if (length-- <= 0) {
-        return ;
+        return;
       }
 
       *(db++) ^= mask[i];
@@ -32,17 +30,18 @@ static void MGF1(uint8_t* db, const uint8_t* checksum, int length) {
   }
 }
 
-bool verify_cert(const uint8_t* target, const int target_size, const uint8_t* cert, int cert_size)
-{
-  big_num_t  rsa_decoded;
-  
+bool verify_cert(const uint8_t* target, const int target_size,
+                 const uint8_t* cert, int cert_size) {
+  big_num_t rsa_decoded;
+
   // RSA-2048 the cert
   {
-    big_num_t  temp;
+    big_num_t temp;
 
     memset(&temp, 0, sizeof(temp));
     memcpy(temp.digits, cert, cert_size);
-    temp.used = (cert_size + sizeof(big_num_cell_t) - 1) / sizeof(big_num_cell_t);
+    temp.used =
+        (cert_size + sizeof(big_num_cell_t) - 1) / sizeof(big_num_cell_t);
     temp.negative = false;
 
     // Convert to the pre-rsa (with padding shifted out)
@@ -52,15 +51,16 @@ bool verify_cert(const uint8_t* target, const int target_size, const uint8_t* ce
   }
 
   // Calculate constants
-  const int keySize  = big_msb(AS_BN(RSA_CERT_MONT.modulo));
-  const int modLength  = keySize / 8;
-  const int dbLength   = modLength - SHA256_DIGEST_SIZE;
+  const int keySize = big_msb(AS_BN(RSA_CERT_MONT.modulo));
+  const int modLength = keySize / 8;
+  const int dbLength = modLength - SHA256_DIGEST_SIZE;
   const int saltLength = dbLength - sizeof(PADDING);
-  const int padLength  = keySize % 8;
+  const int padLength = keySize % 8;
 
   uint8_t* const decoded = (uint8_t*)rsa_decoded.digits;
   const uint8_t* const mHash = decoded;
-  uint8_t* const dbMasked = &decoded[SHA256_DIGEST_SIZE]; // Also a pointer to the salt
+  uint8_t* const dbMasked =
+      &decoded[SHA256_DIGEST_SIZE];  // Also a pointer to the salt
   const uint8_t* const dbSalt = dbMasked;
   const uint8_t* const dbPadding = &dbMasked[saltLength];
 

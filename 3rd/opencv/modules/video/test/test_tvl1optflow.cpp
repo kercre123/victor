@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -13,23 +14,29 @@
 // Copyright (C) 2000, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of Intel Corporation may not be used to endorse or promote products
+//   * The name of Intel Corporation may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
-// This software is provided by the copyright holders and contributors "as is" and
+// This software is provided by the copyright holders and contributors "as is"
+and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -39,8 +46,9 @@
 //
 //M*/
 
-#include "test_precomp.hpp"
 #include <fstream>
+
+#include "test_precomp.hpp"
 
 using namespace std;
 using namespace cv;
@@ -48,130 +56,120 @@ using namespace cvtest;
 
 //#define DUMP
 
-namespace
-{
-    // first four bytes, should be the same in little endian
-    const float FLO_TAG_FLOAT = 202021.25f;  // check for this when READING the file
+namespace {
+// first four bytes, should be the same in little endian
+const float FLO_TAG_FLOAT = 202021.25f;  // check for this when READING the file
 
 #ifdef DUMP
-    // binary file format for flow data specified here:
-    // http://vision.middlebury.edu/flow/data/
-    void writeOpticalFlowToFile(const Mat_<Point2f>& flow, const string& fileName)
-    {
-        const char FLO_TAG_STRING[] = "PIEH";    // use this when WRITING the file
-        ofstream file(fileName.c_str(), ios_base::binary);
+// binary file format for flow data specified here:
+// http://vision.middlebury.edu/flow/data/
+void writeOpticalFlowToFile(const Mat_<Point2f>& flow, const string& fileName) {
+  const char FLO_TAG_STRING[] = "PIEH";  // use this when WRITING the file
+  ofstream file(fileName.c_str(), ios_base::binary);
 
-        file << FLO_TAG_STRING;
+  file << FLO_TAG_STRING;
 
-        file.write((const char*) &flow.cols, sizeof(int));
-        file.write((const char*) &flow.rows, sizeof(int));
+  file.write((const char*)&flow.cols, sizeof(int));
+  file.write((const char*)&flow.rows, sizeof(int));
 
-        for (int i = 0; i < flow.rows; ++i)
-        {
-            for (int j = 0; j < flow.cols; ++j)
-            {
-                const Point2f u = flow(i, j);
+  for (int i = 0; i < flow.rows; ++i) {
+    for (int j = 0; j < flow.cols; ++j) {
+      const Point2f u = flow(i, j);
 
-                file.write((const char*) &u.x, sizeof(float));
-                file.write((const char*) &u.y, sizeof(float));
-            }
-        }
+      file.write((const char*)&u.x, sizeof(float));
+      file.write((const char*)&u.y, sizeof(float));
     }
+  }
+}
 #endif
 
-    // binary file format for flow data specified here:
-    // http://vision.middlebury.edu/flow/data/
-    void readOpticalFlowFromFile(Mat_<Point2f>& flow, const string& fileName)
-    {
-        ifstream file(fileName.c_str(), ios_base::binary);
+// binary file format for flow data specified here:
+// http://vision.middlebury.edu/flow/data/
+void readOpticalFlowFromFile(Mat_<Point2f>& flow, const string& fileName) {
+  ifstream file(fileName.c_str(), ios_base::binary);
 
-        float tag;
-        file.read((char*) &tag, sizeof(float));
-        CV_Assert( tag == FLO_TAG_FLOAT );
+  float tag;
+  file.read((char*)&tag, sizeof(float));
+  CV_Assert(tag == FLO_TAG_FLOAT);
 
-        Size size;
+  Size size;
 
-        file.read((char*) &size.width, sizeof(int));
-        file.read((char*) &size.height, sizeof(int));
+  file.read((char*)&size.width, sizeof(int));
+  file.read((char*)&size.height, sizeof(int));
 
-        flow.create(size);
+  flow.create(size);
 
-        for (int i = 0; i < flow.rows; ++i)
-        {
-            for (int j = 0; j < flow.cols; ++j)
-            {
-                Point2f u;
+  for (int i = 0; i < flow.rows; ++i) {
+    for (int j = 0; j < flow.cols; ++j) {
+      Point2f u;
 
-                file.read((char*) &u.x, sizeof(float));
-                file.read((char*) &u.y, sizeof(float));
+      file.read((char*)&u.x, sizeof(float));
+      file.read((char*)&u.y, sizeof(float));
 
-                flow(i, j) = u;
-            }
-        }
-        file.close();
+      flow(i, j) = u;
     }
-
-    bool isFlowCorrect(Point2f u)
-    {
-        return !cvIsNaN(u.x) && !cvIsNaN(u.y) && (fabs(u.x) < 1e9) && (fabs(u.y) < 1e9);
-    }
-
-    void check(const Mat_<Point2f>& gold, const Mat_<Point2f>& flow, double threshold = 0.1, double expectedAccuracy = 0.95)
-    {
-        threshold = threshold*threshold;
-
-        size_t gold_counter = 0;
-        size_t valid_counter = 0;
-
-        for (int i = 0; i < gold.rows; ++i)
-        {
-            for (int j = 0; j < gold.cols; ++j)
-            {
-                const Point2f u1 = gold(i, j);
-                const Point2f u2 = flow(i, j);
-
-                if (isFlowCorrect(u1))
-                {
-                    gold_counter++;
-                    if (isFlowCorrect(u2))
-                    {
-                        const Point2f diff = u1 - u2;
-                        double err = diff.ddot(diff);
-                        if (err <= threshold)
-                            valid_counter++;
-                    }
-                }
-            }
-        }
-        EXPECT_GE(valid_counter, expectedAccuracy * gold_counter);
-    }
+  }
+  file.close();
 }
 
-TEST(Video_calcOpticalFlowDual_TVL1, Regression)
-{
-    const string frame1_path = TS::ptr()->get_data_path() + "optflow/RubberWhale1.png";
-    const string frame2_path = TS::ptr()->get_data_path() + "optflow/RubberWhale2.png";
-    const string gold_flow_path = TS::ptr()->get_data_path() + "optflow/tvl1_flow.flo";
+bool isFlowCorrect(Point2f u) {
+  return !cvIsNaN(u.x) && !cvIsNaN(u.y) && (fabs(u.x) < 1e9) &&
+         (fabs(u.y) < 1e9);
+}
 
-    Mat frame1 = imread(frame1_path, IMREAD_GRAYSCALE);
-    Mat frame2 = imread(frame2_path, IMREAD_GRAYSCALE);
-    ASSERT_FALSE(frame1.empty());
-    ASSERT_FALSE(frame2.empty());
+void check(const Mat_<Point2f>& gold, const Mat_<Point2f>& flow,
+           double threshold = 0.1, double expectedAccuracy = 0.95) {
+  threshold = threshold * threshold;
 
-    Mat_<Point2f> flow;
-    Ptr<DualTVL1OpticalFlow> tvl1 = cv::DualTVL1OpticalFlow::create();
+  size_t gold_counter = 0;
+  size_t valid_counter = 0;
 
-    tvl1->calc(frame1, frame2, flow);
+  for (int i = 0; i < gold.rows; ++i) {
+    for (int j = 0; j < gold.cols; ++j) {
+      const Point2f u1 = gold(i, j);
+      const Point2f u2 = flow(i, j);
+
+      if (isFlowCorrect(u1)) {
+        gold_counter++;
+        if (isFlowCorrect(u2)) {
+          const Point2f diff = u1 - u2;
+          double err = diff.ddot(diff);
+          if (err <= threshold) valid_counter++;
+        }
+      }
+    }
+  }
+  EXPECT_GE(valid_counter, expectedAccuracy * gold_counter);
+}
+}  // namespace
+
+TEST(Video_calcOpticalFlowDual_TVL1, Regression) {
+  const string frame1_path =
+      TS::ptr()->get_data_path() + "optflow/RubberWhale1.png";
+  const string frame2_path =
+      TS::ptr()->get_data_path() + "optflow/RubberWhale2.png";
+  const string gold_flow_path =
+      TS::ptr()->get_data_path() + "optflow/tvl1_flow.flo";
+
+  Mat frame1 = imread(frame1_path, IMREAD_GRAYSCALE);
+  Mat frame2 = imread(frame2_path, IMREAD_GRAYSCALE);
+  ASSERT_FALSE(frame1.empty());
+  ASSERT_FALSE(frame2.empty());
+
+  Mat_<Point2f> flow;
+  Ptr<DualTVL1OpticalFlow> tvl1 = cv::DualTVL1OpticalFlow::create();
+
+  tvl1->calc(frame1, frame2, flow);
 
 #ifdef DUMP
-    writeOpticalFlowToFile(flow, gold_flow_path);
+  writeOpticalFlowToFile(flow, gold_flow_path);
 #else
-    Mat_<Point2f> gold;
-    readOpticalFlowFromFile(gold, gold_flow_path);
+  Mat_<Point2f> gold;
+  readOpticalFlowFromFile(gold, gold_flow_path);
 
-    ASSERT_EQ(gold.rows, flow.rows);
-    ASSERT_EQ(gold.cols, flow.cols);
+  ASSERT_EQ(gold.rows, flow.rows);
+  ASSERT_EQ(gold.cols, flow.cols);
 
-    check(gold, flow);
+  check(gold, flow);
 #endif
 }

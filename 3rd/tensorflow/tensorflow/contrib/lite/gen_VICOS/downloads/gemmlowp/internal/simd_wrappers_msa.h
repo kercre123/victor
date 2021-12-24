@@ -129,9 +129,9 @@ static inline v4i32 workaround_msa_maddv_w(v4i32 a, v4i32 b, v4i32 c) {
 #else
   asm volatile("maddv.w %w[a], %w[b], %w[c]\n"
                // Outputs
-               : [a] "+f"(a)
+               : [ a ] "+f"(a)
                // Inputs
-               : [b] "f"(b), [c] "f"(c));
+               : [ b ] "f"(b), [ c ] "f"(c));
   return a;
 #endif
 }

@@ -4,7 +4,8 @@
  * Author: baustin
  * Created: 1/20/15
  *
- * Description: Interface for callbacks that will be invoked when network messages are received
+ * Description: Interface for callbacks that will be invoked when network
+ *messages are received
  *
  * Copyright: Anki, Inc. 2015
  *
@@ -21,12 +22,12 @@ namespace Util {
 class TransportAddress;
 
 class INetTransportDataReceiver {
-
-public:
+ public:
   INetTransportDataReceiver() {}
   virtual ~INetTransportDataReceiver() {}
 
-  virtual void ReceiveData(const uint8_t* buffer, unsigned int size, const TransportAddress& sourceAddress) = 0;
+  virtual void ReceiveData(const uint8_t* buffer, unsigned int size,
+                           const TransportAddress& sourceAddress) = 0;
 
   // event markers
   static const uint8_t* const OnConnected;
@@ -34,8 +35,7 @@ public:
   static const uint8_t* const OnDisconnected;
 };
 
-} // end namespace Util
-} // end namespace Anki
+}  // end namespace Util
+}  // end namespace Anki
 
-
-#endif // __NetworkService_INetTransport_H__
+#endif  // __NetworkService_INetTransport_H__

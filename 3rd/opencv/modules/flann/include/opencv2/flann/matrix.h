@@ -35,82 +35,64 @@
 
 #include "general.h"
 
-namespace cvflann
-{
+namespace cvflann {
 
 /**
- * Class that implements a simple rectangular matrix stored in a memory buffer and
- * provides convenient matrix-like access using the [] operators.
+ * Class that implements a simple rectangular matrix stored in a memory buffer
+ * and provides convenient matrix-like access using the [] operators.
  */
 template <typename T>
-class Matrix
-{
-public:
-    typedef T type;
+class Matrix {
+ public:
+  typedef T type;
 
-    size_t rows;
-    size_t cols;
-    size_t stride;
-    T* data;
+  size_t rows;
+  size_t cols;
+  size_t stride;
+  T* data;
 
-    Matrix() : rows(0), cols(0), stride(0), data(NULL)
-    {
-    }
+  Matrix() : rows(0), cols(0), stride(0), data(NULL) {}
 
-    Matrix(T* data_, size_t rows_, size_t cols_, size_t stride_ = 0) :
-        rows(rows_), cols(cols_),  stride(stride_), data(data_)
-    {
-        if (stride==0) stride = cols;
-    }
+  Matrix(T* data_, size_t rows_, size_t cols_, size_t stride_ = 0)
+      : rows(rows_), cols(cols_), stride(stride_), data(data_) {
+    if (stride == 0) stride = cols;
+  }
 
-    /**
-     * Convenience function for deallocating the storage data.
-     */
-    CV_DEPRECATED void free()
-    {
-        fprintf(stderr, "The cvflann::Matrix<T>::free() method is deprecated "
-                "and it does not do any memory deallocation any more.  You are"
-                "responsible for deallocating the matrix memory (by doing"
-                "'delete[] matrix.data' for example)");
-    }
+  /**
+   * Convenience function for deallocating the storage data.
+   */
+  CV_DEPRECATED void free() {
+    fprintf(stderr,
+            "The cvflann::Matrix<T>::free() method is deprecated "
+            "and it does not do any memory deallocation any more.  You are"
+            "responsible for deallocating the matrix memory (by doing"
+            "'delete[] matrix.data' for example)");
+  }
 
-    /**
-     * Operator that return a (pointer to a) row of the data.
-     */
-    T* operator[](size_t index) const
-    {
-        return data+index*stride;
-    }
+  /**
+   * Operator that return a (pointer to a) row of the data.
+   */
+  T* operator[](size_t index) const { return data + index * stride; }
 };
 
+class UntypedMatrix {
+ public:
+  size_t rows;
+  size_t cols;
+  void* data;
+  flann_datatype_t type;
 
-class UntypedMatrix
-{
-public:
-    size_t rows;
-    size_t cols;
-    void* data;
-    flann_datatype_t type;
+  UntypedMatrix(void* data_, long rows_, long cols_)
+      : rows(rows_), cols(cols_), data(data_) {}
 
-    UntypedMatrix(void* data_, long rows_, long cols_) :
-        rows(rows_), cols(cols_), data(data_)
-    {
-    }
+  ~UntypedMatrix() {}
 
-    ~UntypedMatrix()
-    {
-    }
-
-
-    template<typename T>
-    Matrix<T> as()
-    {
-        return Matrix<T>((T*)data, rows, cols);
-    }
+  template <typename T>
+  Matrix<T> as() {
+    return Matrix<T>((T*)data, rows, cols);
+  }
 };
 
+}  // namespace cvflann
 
-
-}
-
-#endif //OPENCV_FLANN_DATASET_H_
+#endif  // OPENCV_FLANN_DATASET_H_

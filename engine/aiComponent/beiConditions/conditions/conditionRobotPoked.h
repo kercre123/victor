@@ -19,20 +19,20 @@
 namespace Anki {
 namespace Vector {
 
-class ConditionRobotPoked : public IBEICondition{
-public:
+class ConditionRobotPoked : public IBEICondition {
+ public:
   explicit ConditionRobotPoked(const Json::Value& config);
 
-protected:
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+ protected:
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) const override;
 
-private:
+ private:
   // Time threshold for which robot is considered to have been recently "Poked"
   u32 _wasPokedRecentlyTimeThreshold_ms = 0;
-
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BeiConditions_Conditions_ConditionRobotPoked_H__
+#endif  // __Engine_AiComponent_BeiConditions_Conditions_ConditionRobotPoked_H__

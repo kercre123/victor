@@ -2,14 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "inline_test.h"
-
 #include <intrin.h>
 #include <stdio.h>
+
+#include "inline_test.h"
 
 #pragma intrinsic(_ReturnAddress)
 
 int main() {
-  if (IsFunctionInlined(_ReturnAddress()))
-    puts("==== inlined ====\n");
+  if (IsFunctionInlined(_ReturnAddress())) puts("==== inlined ====\n");
 }

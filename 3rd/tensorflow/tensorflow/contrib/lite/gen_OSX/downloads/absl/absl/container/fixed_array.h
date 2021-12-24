@@ -110,9 +110,9 @@ class FixedArray {
 
   FixedArray(const FixedArray& other) : rep_(other.begin(), other.end()) {}
   FixedArray(FixedArray&& other) noexcept(
-  // clang-format off
+      // clang-format off
       absl::allocator_is_nothrow<std::allocator<value_type>>::value &&
-  // clang-format on
+          // clang-format on
           std::is_nothrow_move_constructible<value_type>::value)
       : rep_(std::make_move_iterator(other.begin()),
              std::make_move_iterator(other.end())) {}
@@ -353,7 +353,9 @@ class FixedArray {
     // Partial specialization for elements of array type.
     template <typename U, size_t N>
     struct SelectImpl<U[N]> {
-      struct Holder { U v[N]; };
+      struct Holder {
+        U v[N];
+      };
       using type = Holder;
       static pointer AsValue(type* p) { return &p->v; }
     };
@@ -362,7 +364,7 @@ class FixedArray {
    public:
     using type = typename Impl::type;
 
-    static pointer AsValue(type *p) { return Impl::AsValue(p); }
+    static pointer AsValue(type* p) { return Impl::AsValue(p); }
 
     // TODO(billydonahue): fix the type aliasing violation
     // this assertion hints at.
@@ -371,7 +373,7 @@ class FixedArray {
   };
 
   using Holder = typename HolderTraits::type;
-  static pointer AsValue(Holder *p) { return HolderTraits::AsValue(p); }
+  static pointer AsValue(Holder* p) { return HolderTraits::AsValue(p); }
 
   // InlineSpace
   //
@@ -393,7 +395,7 @@ class FixedArray {
 
    private:
 #ifndef ADDRESS_SANITIZER
-    void Annotate(size_t, bool) const { }
+    void Annotate(size_t, bool) const {}
 #else
     void Annotate(size_t n, bool creating) const {
       if (!n) return;
@@ -482,7 +484,6 @@ class FixedArray {
     const size_type n_;
     Holder* const p_;
   };
-
 
   // Data members
   Rep rep_;

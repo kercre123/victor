@@ -5,10 +5,10 @@
 *
 * @brief Header file for basic console user interface of the host application.
 *
-* Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer 
-* program includes Confidential, Proprietary Information and is a Trade Secret of 
-* Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
-* unless authorized in writing. All Rights Reserved.
+* Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer
+* program includes Confidential, Proprietary Information and is a Trade Secret
+*of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+*prohibited unless authorized in writing. All Rights Reserved.
 *
 * <bluetooth.support@diasemi.com> and contributors.
 *
@@ -25,21 +25,20 @@ extern bool console_main_pass_state;
 extern bool conn_num_flag;
 
 typedef struct {
-    unsigned char type;
-    unsigned char val;
-	unsigned char idx;
+  unsigned char type;
+  unsigned char val;
+  unsigned char idx;
 } console_msg;
 
-enum
-{
-    CONSOLE_DEV_DISC_CMD,
-    CONSOLE_CONNECT_CMD,
-    CONSOLE_DISCONNECT_CMD,
-    CONSOLE_RD_LLV_CMD,
-    CONSOLE_RD_TXP_CMD,
-    CONSOLE_WR_LLV_CMD,
-    CONSOLE_WR_IAS_CMD,
-    CONSOLE_EXIT_CMD,
+enum {
+  CONSOLE_DEV_DISC_CMD,
+  CONSOLE_CONNECT_CMD,
+  CONSOLE_DISCONNECT_CMD,
+  CONSOLE_RD_LLV_CMD,
+  CONSOLE_RD_TXP_CMD,
+  CONSOLE_WR_LLV_CMD,
+  CONSOLE_WR_IAS_CMD,
+  CONSOLE_EXIT_CMD,
 };
 
 /*
@@ -48,7 +47,7 @@ enum
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void ConsoleSendScan(void);
 
 /*
@@ -59,7 +58,7 @@ void ConsoleSendScan(void);
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void ConsoleSendConnnect(int indx);
 
 /*
@@ -70,7 +69,7 @@ void ConsoleSendConnnect(int indx);
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void ConsoleSendDisconnnect(int id);
 
 /*
@@ -82,8 +81,8 @@ void ConsoleSendDisconnnect(int id);
  *
  * @return void.
  ****************************************************************************************
-*/
-void ConsoleRead(unsigned char type,unsigned char idx);
+ */
+void ConsoleRead(unsigned char type, unsigned char idx);
 
 /*
  ****************************************************************************************
@@ -95,7 +94,7 @@ void ConsoleRead(unsigned char type,unsigned char idx);
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void ConsoleWrite(unsigned char type, unsigned char val, unsigned char idx);
 
 /**
@@ -104,16 +103,17 @@ void ConsoleWrite(unsigned char type, unsigned char val, unsigned char idx);
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void ConsoleSendExit(void);
 
 /**
  ****************************************************************************************
- * @brief Handles keypress events and sends corresponding message to application's main thread.
+ * @brief Handles keypress events and sends corresponding message to
+ *application's main thread.
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void HandleKeyEvent(int Key);
 
 /**
@@ -122,7 +122,7 @@ void HandleKeyEvent(int Key);
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void ConsoleTitle(void);
 
 /**
@@ -131,7 +131,7 @@ void ConsoleTitle(void);
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void ConsoleScan(void);
 
 /**
@@ -140,7 +140,7 @@ void ConsoleScan(void);
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void ConsoleIdle(void);
 
 /**
@@ -149,7 +149,7 @@ void ConsoleIdle(void);
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void ConsolePrintScanList(void);
 
 /**
@@ -160,7 +160,7 @@ void ConsolePrintScanList(void);
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void ConsoleConnected(int full);
 
 /**
@@ -169,18 +169,17 @@ void ConsoleConnected(int full);
  *
  * @return If the message was consumed or not.
  ****************************************************************************************
-*/
+ */
 VOID ConsoleProc(PVOID unused);
 
 /**
  ****************************************************************************************
  * @brief Prints connected devices list
- * 
+ *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void ConsoleQues(void);
-
 
 /**
  ****************************************************************************************
@@ -188,7 +187,7 @@ void ConsoleQues(void);
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void print_err_con_num(void);
 
-#endif //CONSOLE_H_
+#endif  // CONSOLE_H_

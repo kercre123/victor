@@ -29,8 +29,9 @@
 //
 // Author: wan@google.com (Zhanyong Wan)
 
-#include "gtest/gtest.h"
 #include "sample4.h"
+
+#include "gtest/gtest.h"
 
 // Tests the Increment() method.
 TEST(Counter, Increment) {

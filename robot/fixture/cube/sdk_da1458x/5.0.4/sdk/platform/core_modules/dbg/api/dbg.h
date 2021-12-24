@@ -23,16 +23,13 @@
 ****************************************************************************************
 */
 
-
 /*
  * INCLUDE FILES
  ****************************************************************************************
  */
 
-#include "rwip_config.h"     // stack configuration
-
-#include "dbg_swdiag.h"        // sw profiling definitions
-
+#include "dbg_swdiag.h"   // sw profiling definitions
+#include "rwip_config.h"  // stack configuration
 
 /*
  * FUNCTION DECLARATION
@@ -61,7 +58,7 @@ void dbg_init(void);
  ****************************************************************************************
  */
 void dbg_warning(const char *format, ...);
-#endif //RW_DEBUG
+#endif  // RW_DEBUG
 
 /**
  ****************************************************************************************
@@ -75,4 +72,4 @@ void dbg_platform_reset_complete(uint32_t error);
 
 ///@} DBG
 
-#endif // DBG_H_
+#endif  // DBG_H_

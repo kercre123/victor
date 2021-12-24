@@ -4,7 +4,8 @@
  * Author: Brad Neuman
  * Created: 2017-12-07
  *
- * Description: Object to handle subscribing to messages and calling callbacks properly
+ * Description: Object to handle subscribing to messages and calling callbacks
+ *properly
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -23,22 +24,18 @@
 namespace Anki {
 namespace Vector {
 
-BEIConditionMessageHelper::BEIConditionMessageHelper(IBEIConditionEventHandler* handler,
-                                                                     BehaviorExternalInterface& bei)
-  : _bei(bei)
-  , _handler(handler)
-{
-}
-  
-BEIConditionMessageHelper::~BEIConditionMessageHelper()
-{
-}
+BEIConditionMessageHelper::BEIConditionMessageHelper(
+    IBEIConditionEventHandler* handler, BehaviorExternalInterface& bei)
+    : _bei(bei), _handler(handler) {}
 
-void BEIConditionMessageHelper::SubscribeToTags(std::set<ExternalInterface::MessageEngineToGameTag>&& tags)
-{
-  if( ! _bei.GetRobotInfo().HasExternalInterface() ) {
-    PRINT_NAMED_WARNING("BEIConditionMessageHelper.SubscribeToTags.NoRobotExternalInterface",
-                        "Can't subscribe to messages because robot has no external interface");
+BEIConditionMessageHelper::~BEIConditionMessageHelper() {}
+
+void BEIConditionMessageHelper::SubscribeToTags(
+    std::set<ExternalInterface::MessageEngineToGameTag>&& tags) {
+  if (!_bei.GetRobotInfo().HasExternalInterface()) {
+    PRINT_NAMED_WARNING(
+        "BEIConditionMessageHelper.SubscribeToTags.NoRobotExternalInterface",
+        "Can't subscribe to messages because robot has no external interface");
     return;
   }
 
@@ -47,17 +44,18 @@ void BEIConditionMessageHelper::SubscribeToTags(std::set<ExternalInterface::Mess
   auto handlerCallback = [this](const EngineToGameEvent& event) {
     _handler->HandleEvent(event, _bei);
   };
-  
-  for(auto tag : tags) {    
+
+  for (auto tag : tags) {
     _eventHandles.push_back(rei->Subscribe(tag, handlerCallback));
   }
 }
 
-void BEIConditionMessageHelper::SubscribeToTags(std::set<ExternalInterface::MessageGameToEngineTag>&& tags)
-{
-  if( ! _bei.GetRobotInfo().HasExternalInterface() ) {
-    PRINT_NAMED_WARNING("BEIConditionMessageHelper.SubscribeToTags.NoRobotExternalInterface",
-                        "Can't subscribe to messages because robot has no external interface");
+void BEIConditionMessageHelper::SubscribeToTags(
+    std::set<ExternalInterface::MessageGameToEngineTag>&& tags) {
+  if (!_bei.GetRobotInfo().HasExternalInterface()) {
+    PRINT_NAMED_WARNING(
+        "BEIConditionMessageHelper.SubscribeToTags.NoRobotExternalInterface",
+        "Can't subscribe to messages because robot has no external interface");
     return;
   }
 
@@ -66,11 +64,11 @@ void BEIConditionMessageHelper::SubscribeToTags(std::set<ExternalInterface::Mess
   auto handlerCallback = [this](const GameToEngineEvent& event) {
     _handler->HandleEvent(event, _bei);
   };
-  
-  for(auto tag : tags) {    
+
+  for (auto tag : tags) {
     _eventHandles.push_back(rei->Subscribe(tag, handlerCallback));
   }
 }
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki

@@ -32,34 +32,31 @@
 //
 // Author: Siyang Xie (lambxsy@google.com)
 
-
 #ifndef PROCESSOR_STATIC_MAP_INL_H__
 #define PROCESSOR_STATIC_MAP_INL_H__
 
+#include "processor/logging.h"
 #include "processor/static_map.h"
 #include "processor/static_map_iterator-inl.h"
-#include "processor/logging.h"
 
 namespace google_breakpad {
 
-template<typename Key, typename Value, typename Compare>
-StaticMap<Key, Value, Compare>::StaticMap(const char* raw_data)
-    : raw_data_(raw_data),
-      compare_() {
+template <typename Key, typename Value, typename Compare>
+StaticMap<Key, Value, Compare>::StaticMap(const char *raw_data)
+    : raw_data_(raw_data), compare_() {
   // First 4 Bytes store the number of nodes.
-  num_nodes_ = *(reinterpret_cast<const uint32_t*>(raw_data_));
+  num_nodes_ = *(reinterpret_cast<const uint32_t *>(raw_data_));
 
-  offsets_ = reinterpret_cast<const uint32_t*>(
-      raw_data_ + sizeof(num_nodes_));
+  offsets_ = reinterpret_cast<const uint32_t *>(raw_data_ + sizeof(num_nodes_));
 
-  keys_ = reinterpret_cast<const Key*>(
-      raw_data_ + (1 + num_nodes_) * sizeof(uint32_t));
+  keys_ = reinterpret_cast<const Key *>(raw_data_ +
+                                        (1 + num_nodes_) * sizeof(uint32_t));
 }
 
 // find(), lower_bound() and upper_bound() implement binary search algorithm.
-template<typename Key, typename Value, typename Compare>
-StaticMapIterator<Key, Value, Compare>
-StaticMap<Key, Value, Compare>::find(const Key &key) const {
+template <typename Key, typename Value, typename Compare>
+StaticMapIterator<Key, Value, Compare> StaticMap<Key, Value, Compare>::find(
+    const Key &key) const {
   int begin = 0;
   int end = num_nodes_;
   int middle;
@@ -67,8 +64,7 @@ StaticMap<Key, Value, Compare>::find(const Key &key) const {
   while (begin < end) {
     middle = begin + (end - begin) / 2;
     compare_result = compare_(key, GetKeyAtIndex(middle));
-    if (compare_result == 0)
-      return IteratorAtIndex(middle);
+    if (compare_result == 0) return IteratorAtIndex(middle);
     if (compare_result < 0) {
       end = middle;
     } else {
@@ -78,7 +74,7 @@ StaticMap<Key, Value, Compare>::find(const Key &key) const {
   return this->end();
 }
 
-template<typename Key, typename Value, typename Compare>
+template <typename Key, typename Value, typename Compare>
 StaticMapIterator<Key, Value, Compare>
 StaticMap<Key, Value, Compare>::lower_bound(const Key &key) const {
   int begin = 0;
@@ -88,8 +84,7 @@ StaticMap<Key, Value, Compare>::lower_bound(const Key &key) const {
   while (begin < end) {
     middle = begin + (end - begin) / 2;
     comp_result = compare_(key, GetKeyAtIndex(middle));
-    if (comp_result == 0)
-      return IteratorAtIndex(middle);
+    if (comp_result == 0) return IteratorAtIndex(middle);
     if (comp_result < 0) {
       end = middle;
     } else {
@@ -99,7 +94,7 @@ StaticMap<Key, Value, Compare>::lower_bound(const Key &key) const {
   return IteratorAtIndex(begin);
 }
 
-template<typename Key, typename Value, typename Compare>
+template <typename Key, typename Value, typename Compare>
 StaticMapIterator<Key, Value, Compare>
 StaticMap<Key, Value, Compare>::upper_bound(const Key &key) const {
   int begin = 0;
@@ -109,8 +104,7 @@ StaticMap<Key, Value, Compare>::upper_bound(const Key &key) const {
   while (begin < end) {
     middle = begin + (end - begin) / 2;
     compare_result = compare_(key, GetKeyAtIndex(middle));
-    if (compare_result == 0)
-      return IteratorAtIndex(middle + 1);
+    if (compare_result == 0) return IteratorAtIndex(middle + 1);
     if (compare_result < 0) {
       end = middle;
     } else {
@@ -120,11 +114,11 @@ StaticMap<Key, Value, Compare>::upper_bound(const Key &key) const {
   return IteratorAtIndex(begin);
 }
 
-template<typename Key, typename Value, typename Compare>
+template <typename Key, typename Value, typename Compare>
 bool StaticMap<Key, Value, Compare>::ValidateInMemoryStructure() const {
   // check the number of nodes is non-negative:
   if (!raw_data_) return false;
-  int32_t num_nodes = *(reinterpret_cast<const int32_t*>(raw_data_));
+  int32_t num_nodes = *(reinterpret_cast<const int32_t *>(raw_data_));
   if (num_nodes < 0) {
     BPLOG(INFO) << "StaticMap check failed: negative number of nodes";
     return false;
@@ -132,8 +126,8 @@ bool StaticMap<Key, Value, Compare>::ValidateInMemoryStructure() const {
 
   int node_index = 0;
   if (num_nodes_) {
-    uint64_t first_offset = sizeof(int32_t) * (num_nodes_ + 1)
-                           + sizeof(Key) * num_nodes_;
+    uint64_t first_offset =
+        sizeof(int32_t) * (num_nodes_ + 1) + sizeof(Key) * num_nodes_;
     // Num_nodes_ is too large.
     if (first_offset > 0xffffffffUL) {
       BPLOG(INFO) << "StaticMap check failed: size exceeds limit";
@@ -152,8 +146,8 @@ bool StaticMap<Key, Value, Compare>::ValidateInMemoryStructure() const {
       return false;
     }
     // Check Key[i] is strictly increasing as no duplicate keys are allowed.
-    if (compare_(GetKeyAtIndex(node_index),
-                 GetKeyAtIndex(node_index - 1)) <= 0) {
+    if (compare_(GetKeyAtIndex(node_index), GetKeyAtIndex(node_index - 1)) <=
+        0) {
       BPLOG(INFO) << "StaticMap check failed: node keys non-increasing";
       return false;
     }
@@ -161,7 +155,7 @@ bool StaticMap<Key, Value, Compare>::ValidateInMemoryStructure() const {
   return true;
 }
 
-template<typename Key, typename Value, typename Compare>
+template <typename Key, typename Value, typename Compare>
 const Key StaticMap<Key, Value, Compare>::GetKeyAtIndex(int index) const {
   if (index < 0 || index >= num_nodes_) {
     BPLOG(ERROR) << "Key index out of range error";

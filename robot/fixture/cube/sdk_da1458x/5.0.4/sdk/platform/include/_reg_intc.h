@@ -5,6 +5,4 @@
 
 //#define REG_INTC_BASE_ADDR 0x10001000
 
-
-#endif // __REG_INTC_H_
-
+#endif  // __REG_INTC_H_

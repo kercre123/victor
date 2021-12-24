@@ -25,74 +25,80 @@ namespace settings {
 namespace storage {
 
 /**
- * An Interface class which defines APIs for interacting with a database used for storing, loading, and modifying
- * settings.
- * @note: This class does not provide any setting level sanity testing. It is expected that the logic and @c
- * SettingStatus transitions are managed by the caller.  This class simply manages the persistence of settings data and
+ * An Interface class which defines APIs for interacting with a database used
+ * for storing, loading, and modifying settings.
+ * @note: This class does not provide any setting level sanity testing. It is
+ * expected that the logic and @c SettingStatus transitions are managed by the
+ * caller.  This class simply manages the persistence of settings data and
  * status.
  */
 class DeviceSettingStorageInterface {
-public:
-    /**
-     * The type holding the status and string value of a setting.
-     * If the status is @c NOT_AVAILABLE the value will contain the reason or error message why the setting value can
-     * not be retrieved.
-     */
-    using SettingStatusAndValue = std::pair<SettingStatus, std::string>;
+ public:
+  /**
+   * The type holding the status and string value of a setting.
+   * If the status is @c NOT_AVAILABLE the value will contain the reason or
+   * error message why the setting value can not be retrieved.
+   */
+  using SettingStatusAndValue = std::pair<SettingStatus, std::string>;
 
-    /**
-     * Destructor.
-     */
-    virtual ~DeviceSettingStorageInterface() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~DeviceSettingStorageInterface() = default;
 
-    /**
-     * Open an existing database.
-     *
-     * @return @c true If the database is opened ok or is already open @c false if this object is already managing an
-     * open database, or if there is another internal reason the database could not be opened.
-     */
-    virtual bool open() = 0;
+  /**
+   * Open an existing database.
+   *
+   * @return @c true If the database is opened ok or is already open @c false if
+   * this object is already managing an open database, or if there is another
+   * internal reason the database could not be opened.
+   */
+  virtual bool open() = 0;
 
-    /**
-     * Close the currently open database, if one is open.
-     */
-    virtual void close() = 0;
+  /**
+   * Close the currently open database, if one is open.
+   */
+  virtual void close() = 0;
 
-    /**
-     * Stores a single setting in the database.
-     *
-     * @param key The string identifier for the setting.
-     * @param value The string value of the setting.
-     * @param status The status of the setting.
-     * @return Whether the setting was successfully stored.
-     */
-    virtual bool storeSetting(const std::string& key, const std::string& value, SettingStatus status) = 0;
+  /**
+   * Stores a single setting in the database.
+   *
+   * @param key The string identifier for the setting.
+   * @param value The string value of the setting.
+   * @param status The status of the setting.
+   * @return Whether the setting was successfully stored.
+   */
+  virtual bool storeSetting(const std::string& key, const std::string& value,
+                            SettingStatus status) = 0;
 
-    /**
-     * Retrieves the setting status and value from the database.
-     *
-     * @param key The string identifier for the setting.
-     * @return The status and value of the setting. The value will contain the reason or error message if the status is
-     * @c NOT_AVAILABLE.
-     */
-    virtual SettingStatusAndValue loadSetting(const std::string& key) = 0;
+  /**
+   * Retrieves the setting status and value from the database.
+   *
+   * @param key The string identifier for the setting.
+   * @return The status and value of the setting. The value will contain the
+   * reason or error message if the status is
+   * @c NOT_AVAILABLE.
+   */
+  virtual SettingStatusAndValue loadSetting(const std::string& key) = 0;
 
-    /**
-     * Removes the entry for a particular setting in the database.
-     *
-     * @param key The string identifier for the setting.
-     * @return true if deletion is successful, false otherwise
-     */
-    virtual bool deleteSetting(const std::string& key) = 0;
+  /**
+   * Removes the entry for a particular setting in the database.
+   *
+   * @param key The string identifier for the setting.
+   * @return true if deletion is successful, false otherwise
+   */
+  virtual bool deleteSetting(const std::string& key) = 0;
 
-    /**
-     * Update the status of a setting  in the database. The update will fail if the setting does not exist.
-     *
-     * @param key The string identifier for the setting.
-     * @param status The status of the setting.
-     * @return Whether the status was successfully updated.
-     */
-    virtual bool updateSettingStatus(const std::string& key, SettingStatus status) = 0;
+  /**
+   * Update the status of a setting  in the database. The update will fail if
+   * the setting does not exist.
+   *
+   * @param key The string identifier for the setting.
+   * @param status The status of the setting.
+   * @return Whether the status was successfully updated.
+   */
+  virtual bool updateSettingStatus(const std::string& key,
+                                   SettingStatus status) = 0;
 };
 
 }  // namespace storage

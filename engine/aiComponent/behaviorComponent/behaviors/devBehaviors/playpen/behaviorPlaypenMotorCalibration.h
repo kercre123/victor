@@ -18,33 +18,31 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorPlaypenMotorCalibration : public IBehaviorPlaypen
-{
-protected:
-  
+class BehaviorPlaypenMotorCalibration : public IBehaviorPlaypen {
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorPlaypenMotorCalibration(const Json::Value& config);
-  
-protected:
-  virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
+
+ protected:
+  virtual void GetBehaviorOperationModifiersInternal(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOnCharger = true;
   }
 
-  virtual Result         OnBehaviorActivatedInternal()   override;
+  virtual Result OnBehaviorActivatedInternal() override;
   virtual PlaypenStatus PlaypenUpdateInternal() override;
-  virtual void           OnBehaviorDeactivated()   override;
-  
-  virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event) override;
-    
-private:
-  
+  virtual void OnBehaviorDeactivated() override;
+
+  virtual void HandleWhileActivatedInternal(
+      const EngineToGameEvent& event) override;
+
+ private:
   bool _liftCalibrated = false;
   bool _headCalibrated = false;
-  
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorPlaypenMotorCalibration_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorPlaypenMotorCalibration_H__

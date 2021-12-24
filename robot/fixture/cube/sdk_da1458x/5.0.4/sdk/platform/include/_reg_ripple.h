@@ -5,6 +5,4 @@
 
 #define REG_RIPPLE_BASE_ADDR 0x00000000
 
-
-#endif // __REG_RIPPLE_H_
-
+#endif  // __REG_RIPPLE_H_

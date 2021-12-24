@@ -4,7 +4,8 @@
  * Author: Sam Russell
  * Created: 2018-06-04
  *
- * Description: Simple input point for testing out all of the BlackjackVisualizer functionality
+ * Description: Simple input point for testing out all of the
+ *BlackjackVisualizer functionality
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -14,17 +15,15 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorDevTestBlackjackViz__
 #pragma once
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-
 #include "engine/aiComponent/behaviorComponent/behaviors/blackjack/blackJackSimulation.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/blackjack/blackJackVisualizer.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Vector {
 
-class BehaviorDevTestBlackjackViz : public ICozmoBehavior
-{
-public: 
+class BehaviorDevTestBlackjackViz : public ICozmoBehavior {
+ public:
   virtual ~BehaviorDevTestBlackjackViz();
 
   void DealToPlayer();
@@ -36,22 +35,22 @@ public:
   void AnnouncePlayerScore();
   void AnnounceDealerScore();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorDevTestBlackjackViz(const Json::Value& config);  
+  explicit BehaviorDevTestBlackjackViz(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-
+ private:
   struct InstanceConfig {
     InstanceConfig();
     Json::Value layout;
@@ -62,15 +61,14 @@ private:
     bool firstDealerCard = true;
   };
 
-  BlackJackGame         _game;
-  BlackJackVisualizer   _visualizer;
+  BlackJackGame _game;
+  BlackJackVisualizer _visualizer;
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorDevTestBlackjackViz__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorDevTestBlackjackViz__

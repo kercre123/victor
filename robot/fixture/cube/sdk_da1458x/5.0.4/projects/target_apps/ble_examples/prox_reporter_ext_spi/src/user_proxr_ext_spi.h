@@ -3,12 +3,13 @@
  *
  * @file user_proxr_ext_spi.h
  *
- * @brief Proximity reporter external processor over spi user application header file.
+ * @brief Proximity reporter external processor over spi user application header
+ *file.
  *
- * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer 
- * program includes Confidential, Proprietary Information and is a Trade Secret of 
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
- * unless authorized in writing. All Rights Reserved.
+ * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -29,19 +30,18 @@
  ****************************************************************************************
  */
 
-
 /*
  * INCLUDE FILES
  ****************************************************************************************
  */
 
+#include "arch_api.h"   // error code definitions
+#include "co_error.h"   // error code definitions
+#include "gapc_task.h"  // gap functions and messages
+#include "gapm_task.h"  // gap functions and messages
 #include "rwble_config.h"
-#include "gapc_task.h"                  // gap functions and messages
-#include "gapm_task.h"                  // gap functions and messages
-#include "co_error.h"                   // error code definitions
-#include "smpc_task.h"                  // error code definitions
-#include "arch_api.h"                  // error code definitions
-                  
+#include "smpc_task.h"  // error code definitions
+
 /*
  * TYPE DEFINITIONS
  ****************************************************************************************
@@ -52,7 +52,6 @@
  ****************************************************************************************
  */
 
-
 /*
  * FUNCTION DECLARATIONS
  ****************************************************************************************
@@ -62,14 +61,14 @@
  ****************************************************************************************
  * @brief User code initiliazation function.
  *
- * @void 
+ * @void
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 
 void user_on_init(void);
 
 /// @} APP
 
-#endif // _USER_PROXR_EXT_SPI_H_
+#endif  // _USER_PROXR_EXT_SPI_H_

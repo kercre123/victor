@@ -4,7 +4,7 @@
  * Author: Arjun Menon
  * Created: 07-30-18
  *
- * Description: 
+ * Description:
  * condition which returns true if the robot is in the habitat, false otherwise
  *
  * Copyright: Anki, Inc. 2018
@@ -19,24 +19,21 @@
 namespace Anki {
 namespace Vector {
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
 ConditionRobotInHabitat::ConditionRobotInHabitat(const Json::Value& config)
-: IBEICondition(config)
-{
+    : IBEICondition(config) {}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool ConditionRobotInHabitat::AreConditionsMetInternal(
+    BehaviorExternalInterface& behaviorExternalInterface) const {
+  return behaviorExternalInterface.GetHabitatDetectorComponent()
+             .GetHabitatBeliefState() == HabitatBeliefState::InHabitat;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionRobotInHabitat::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
-  return behaviorExternalInterface.GetHabitatDetectorComponent().GetHabitatBeliefState()==HabitatBeliefState::InHabitat;
-}
-  
-void ConditionRobotInHabitat::BuildDebugFactorsInternal( BEIConditionDebugFactors& factors ) const
-{
-}
- 
-  
+void ConditionRobotInHabitat::BuildDebugFactorsInternal(
+    BEIConditionDebugFactors& factors) const {}
 
-} // namespace
-} // namespace
-
+}  // namespace Vector
+}  // namespace Anki

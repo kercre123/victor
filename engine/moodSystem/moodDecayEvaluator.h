@@ -13,8 +13,9 @@
 #ifndef __Engine_MoodSystem_MoodDecayEvaluator_H__
 #define __Engine_MoodSystem_MoodDecayEvaluator_H__
 
-#include "json/json-forwards.h"
 #include <memory>
+
+#include "json/json-forwards.h"
 
 namespace Anki {
 
@@ -24,10 +25,8 @@ class GraphEvaluator2d;
 
 namespace Vector {
 
-class MoodDecayEvaulator
-{
-public:
-
+class MoodDecayEvaulator {
+ public:
   enum class DecayGraphType {
     // ratio of value based on time in seconds since the event
     TimeRatio,
@@ -43,26 +42,27 @@ public:
   bool ReadFromJson(const Json::Value& inJson);
   bool WriteToJson(Json::Value& outJson) const;
 
-  void SetDecayGraph(const Util::GraphEvaluator2d& newGraph, DecayGraphType graphType);
+  void SetDecayGraph(const Util::GraphEvaluator2d& newGraph,
+                     DecayGraphType graphType);
 
-  static bool VerifyDecayGraph(const Util::GraphEvaluator2d& newGraph, DecayGraphType graphType, bool warnOnErrors);
+  static bool VerifyDecayGraph(const Util::GraphEvaluator2d& newGraph,
+                               DecayGraphType graphType, bool warnOnErrors);
 
-  // Take in the current value and time and return the _new_ emotion value. Will apply the correct graph
-  // internally and won't cross 0 with decay
-  float EvaluateDecay(float currentValue, float currentTimeSinceEvent_s, float deltaTime_s, float& velocity, float& accel) const;
+  // Take in the current value and time and return the _new_ emotion value. Will
+  // apply the correct graph internally and won't cross 0 with decay
+  float EvaluateDecay(float currentValue, float currentTimeSinceEvent_s,
+                      float deltaTime_s, float& velocity, float& accel) const;
 
-  // Return true if the evaluator is empty and has no value (e.g. was default constructed or given an empty
-  // graph)
+  // Return true if the evaluator is empty and has no value (e.g. was default
+  // constructed or given an empty graph)
   bool Empty() const;
-  
-private:
 
+ private:
   std::unique_ptr<Util::GraphEvaluator2d> _decayGraph;
   DecayGraphType _graphType;
 };
 
-}
-}
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

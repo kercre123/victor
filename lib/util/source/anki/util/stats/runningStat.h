@@ -3,7 +3,7 @@
  *
  * Author: damjan
  * Created: 3/27/14
- * 
+ *
  * Description: Accurately computing running variance
  * http://www.johndcook.com/standard_deviation.html
  * adapted for less precision - floats..
@@ -14,7 +14,6 @@
 
 #ifndef BASESTATION_UTILS_RUNNINGSTAT_H_
 #define BASESTATION_UTILS_RUNNINGSTAT_H_
-
 
 namespace Anki {
 namespace Util {
@@ -29,8 +28,7 @@ namespace Stats {
  * @author   damjan
  */
 class RunningStat {
-public:
-
+ public:
   // Constructor
   RunningStat();
 
@@ -53,19 +51,18 @@ public:
   float StandardDeviation() const;
 
   // Logs collected data
-  void LogStats(const char * eventName);
+  void LogStats(const char* eventName);
 
   // Logs collected data
-  void LogStats(const char * eventName, const IEntityLoggerComponent * logger);
+  void LogStats(const char* eventName, const IEntityLoggerComponent* logger);
 
-private:
+ private:
   int m_n;
   float m_oldM, m_newM, m_oldS, m_newS;
 };
 
-} // end namespace Stats
-} // end namespace Util
-} // end namespace Anki
+}  // end namespace Stats
+}  // end namespace Util
+}  // end namespace Anki
 
-
-#endif //BASESTATION_UTILS_RUNNINGSTAT_H_
+#endif  // BASESTATION_UTILS_RUNNINGSTAT_H_

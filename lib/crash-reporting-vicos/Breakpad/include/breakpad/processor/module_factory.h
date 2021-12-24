@@ -44,25 +44,25 @@ namespace google_breakpad {
 
 class ModuleFactory {
  public:
-  virtual ~ModuleFactory() { };
+  virtual ~ModuleFactory(){};
   virtual SourceLineResolverBase::Module* CreateModule(
-      const string &name) const = 0;
+      const string& name) const = 0;
 };
 
 class BasicModuleFactory : public ModuleFactory {
  public:
-  virtual ~BasicModuleFactory() { }
+  virtual ~BasicModuleFactory() {}
   virtual BasicSourceLineResolver::Module* CreateModule(
-      const string &name) const {
+      const string& name) const {
     return new BasicSourceLineResolver::Module(name);
   }
 };
 
 class FastModuleFactory : public ModuleFactory {
  public:
-  virtual ~FastModuleFactory() { }
+  virtual ~FastModuleFactory() {}
   virtual FastSourceLineResolver::Module* CreateModule(
-      const string &name) const {
+      const string& name) const {
     return new FastSourceLineResolver::Module(name);
   }
 };

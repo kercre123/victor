@@ -22,67 +22,67 @@ namespace utils {
 namespace error {
 
 /**
- * Class representing result of an operation. The result has a status and a value.
+ * Class representing result of an operation. The result has a status and a
+ * value.
  *
  * @tparam TStatus Type of the status
  * @tparam TValue Type of the value
  */
 template <typename TStatus, typename TValue>
 class Result {
-public:
-    /**
-     * Constructor with both status and return value provided.
-     *
-     * @param status Status of the operation.
-     * @param value Value associated with the result.
-     */
-    inline Result(TStatus status, TValue value);
+ public:
+  /**
+   * Constructor with both status and return value provided.
+   *
+   * @param status Status of the operation.
+   * @param value Value associated with the result.
+   */
+  inline Result(TStatus status, TValue value);
 
-    /**
-     * Constructor with only status provided
-     *
-     * @param status Result status.
-     */
-    inline Result(TStatus status);
+  /**
+   * Constructor with only status provided
+   *
+   * @param status Result status.
+   */
+  inline Result(TStatus status);
 
-    /**
-     * Returns result status.
-     *
-     * @return Result status.
-     */
-    inline TStatus status();
+  /**
+   * Returns result status.
+   *
+   * @return Result status.
+   */
+  inline TStatus status();
 
-    /**
-     * Returns a value associated with the result.
-     *
-     * @return Value associated with the result.
-     */
-    inline TValue& value();
+  /**
+   * Returns a value associated with the result.
+   *
+   * @return Value associated with the result.
+   */
+  inline TValue& value();
 
-private:
-    /// Result status.
-    TStatus m_status;
+ private:
+  /// Result status.
+  TStatus m_status;
 
-    /// Value associated with the result.
-    TValue m_value;
+  /// Value associated with the result.
+  TValue m_value;
 };
 
 template <typename TStatus, typename TValue>
-Result<TStatus, TValue>::Result(TStatus status, TValue value) : m_status{status}, m_value(value) {
-}
+Result<TStatus, TValue>::Result(TStatus status, TValue value)
+    : m_status{status}, m_value(value) {}
 
 template <typename TStatus, typename TValue>
-Result<TStatus, TValue>::Result(TStatus status) : m_status{status} {
-}
+Result<TStatus, TValue>::Result(TStatus status) : m_status{status} {}
 
 template <typename TStatus, typename TValue>
 TValue& Result<TStatus, TValue>::value() {
-    return m_value;
+  return m_value;
 }
 
 template <typename TStatus, typename TValue>
 TStatus Result<TStatus, TValue>::status() {
-    return m_status;
+  return m_status;
 }
 
 }  // namespace error

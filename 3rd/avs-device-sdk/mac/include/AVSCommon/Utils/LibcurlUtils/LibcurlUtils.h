@@ -24,10 +24,13 @@ namespace utils {
 namespace libcurlUtils {
 
 /**
- * Prepare a CURL handle to require TLS based upon global configuration settings.
+ * Prepare a CURL handle to require TLS based upon global configuration
+ * settings.
  *
- * The 'libCurlUtils' sub-component of the global configuration supports the following options:
- * - CURLOPT_CAPATH If present, specifies a value for the libcurl property CURLOPT_CAPATH.
+ * The 'libCurlUtils' sub-component of the global configuration supports the
+ * following options:
+ * - CURLOPT_CAPATH If present, specifies a value for the libcurl property
+ * CURLOPT_CAPATH.
  *
  * Here is an example configuration:
  * @code

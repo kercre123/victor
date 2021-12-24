@@ -33,28 +33,27 @@
  * INCLUDE FILES
  ****************************************************************************************
  */
-#include "llm_task.h"
-#include "llc_task.h"
 #include "l2cm.h"
+#include "llc_task.h"
+#include "llm_task.h"
 #if (BLE_CENTRAL || BLE_PERIPHERAL)
 /*
  * INSTANCES
  ****************************************************************************************
  */
 /// Maximum number of instances of the L2CM task
-#define L2CM_IDX_MAX                        0x01
+#define L2CM_IDX_MAX 0x01
 
 /*
  * STATES
  ****************************************************************************************
  */
 /// Possible states of the L2CM task
-enum
-{
-    /// idle state
-    L2CM_IDLE,
-    /// Number of defined states.
-    L2CM_STATE_MAX
+enum {
+  /// idle state
+  L2CM_IDLE,
+  /// Number of defined states.
+  L2CM_STATE_MAX
 };
 /*
  * MESSAGES
@@ -62,23 +61,18 @@ enum
  */
 
 /// Message API of the L2CM task
-enum l2cm_msg_id
-{
-    /// Buffer size indication
-    L2CM_BUFF_SIZE_IND = KE_FIRST_MSG(TASK_L2CM),
+enum l2cm_msg_id {
+  /// Buffer size indication
+  L2CM_BUFF_SIZE_IND = KE_FIRST_MSG(TASK_L2CM),
 };
-
-
 
 /// Buffer size indication
-struct l2cm_buff_size_ind
-{
-    /// Data packet length
-    uint16_t data_pk_len;
-    /// total number of data packets
-    uint16_t tot_nb_data_pkts;
+struct l2cm_buff_size_ind {
+  /// Data packet length
+  uint16_t data_pk_len;
+  /// total number of data packets
+  uint16_t tot_nb_data_pkts;
 };
-
 
 /*
  * TASK DESCRIPTOR DECLARATIONS
@@ -87,6 +81,6 @@ struct l2cm_buff_size_ind
 extern const struct ke_state_handler l2cm_state_handler[L2CM_STATE_MAX];
 extern const struct ke_state_handler l2cm_default_handler;
 extern ke_state_t l2cm_state[L2CM_IDX_MAX];
-#endif // #if (BLE_CENTRAL || BLE_PERIPHERAL)
+#endif  // #if (BLE_CENTRAL || BLE_PERIPHERAL)
 /// @} L2CMTASK
-#endif // L2CM_TASK_H_
+#endif  // L2CM_TASK_H_

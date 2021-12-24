@@ -23,27 +23,30 @@ namespace avsCommon {
 namespace sdkInterfaces {
 
 /**
- * A ChannelObserverInterface is an interface class that clients can extend to register for focus changes.
+ * A ChannelObserverInterface is an interface class that clients can extend to
+ * register for focus changes.
  */
 class ChannelObserverInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~ChannelObserverInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~ChannelObserverInterface() = default;
 
-    /**
-     * Used to notify the observer of the Channel of focus changes. Once called, the client should make a user
-     * observable change only and return immediately. Any additional work that needs to be done should be done on a
-     * separate thread or after returning. "User observable change" here refers to events that the end user of the
-     * product can visibly see or hear. For example, Alexa speech or music playing would be examples of user
-     * observable changes. Other work, such as database storing, logging, or communicating via network should be
-     * done on a different thread. Not doing so could result in delays for other clients trying to access the
-     * Channel.
-     *
-     * @param newFocus The new Focus of the channel.
-     */
-    virtual void onFocusChanged(avs::FocusState newFocus) = 0;
+  /**
+   * Used to notify the observer of the Channel of focus changes. Once called,
+   * the client should make a user observable change only and return
+   * immediately. Any additional work that needs to be done should be done on a
+   * separate thread or after returning. "User observable change" here refers to
+   * events that the end user of the product can visibly see or hear. For
+   * example, Alexa speech or music playing would be examples of user observable
+   * changes. Other work, such as database storing, logging, or communicating
+   * via network should be done on a different thread. Not doing so could result
+   * in delays for other clients trying to access the Channel.
+   *
+   * @param newFocus The new Focus of the channel.
+   */
+  virtual void onFocusChanged(avs::FocusState newFocus) = 0;
 };
 
 }  // namespace sdkInterfaces

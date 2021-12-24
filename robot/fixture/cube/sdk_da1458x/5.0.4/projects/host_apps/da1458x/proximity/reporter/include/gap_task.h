@@ -5,16 +5,16 @@
  *
  * @brief Header file - GAP_TASK.
  *
- * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer 
- * program includes Confidential, Proprietary Information and is a Trade Secret of 
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
- * unless authorized in writing. All Rights Reserved.
+ * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
  ****************************************************************************************
  */
- 
+
 #ifndef GAP_TASK_H_
 #define GAP_TASK_H_
 /**
@@ -43,7 +43,7 @@
 #include "gapc_task.h"
 #include "gapm_task.h"
 
-#define TASK_APP    TASK_GTL
+#define TASK_APP TASK_GTL
 /// @} GAPTASK
 
-#endif // GAP_TASK_H_
+#endif  // GAP_TASK_H_

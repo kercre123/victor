@@ -25,17 +25,19 @@ namespace sdkInterfaces {
  * The interface for observer of all the settings.
  */
 class GlobalSettingsObserverInterface {
-public:
-    /**
-     * Destructor
-     */
-    virtual ~GlobalSettingsObserverInterface() = default;
+ public:
+  /**
+   * Destructor
+   */
+  virtual ~GlobalSettingsObserverInterface() = default;
 
-    /**
-     * The callback executed when a setting is changed.
-     * @param mapOfSettings The map which contains <key, value> pair for all settings.
-     */
-    virtual void onSettingChanged(const std::unordered_map<std::string, std::string>& mapOfSettings) = 0;
+  /**
+   * The callback executed when a setting is changed.
+   * @param mapOfSettings The map which contains <key, value> pair for all
+   * settings.
+   */
+  virtual void onSettingChanged(
+      const std::unordered_map<std::string, std::string>& mapOfSettings) = 0;
 };
 
 }  // namespace sdkInterfaces

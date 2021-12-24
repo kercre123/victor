@@ -32,8 +32,8 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <sys/mman.h>
+#include <unistd.h>
 
 #include <memory>
 #include <vector>
@@ -64,19 +64,15 @@ class PageAllocator {
         last_(NULL),
         current_page_(NULL),
         page_offset_(0),
-        pages_allocated_(0) {
-  }
+        pages_allocated_(0) {}
 
-  ~PageAllocator() {
-    FreeAll();
-  }
+  ~PageAllocator() { FreeAll(); }
 
-  void *Alloc(size_t bytes) {
-    if (!bytes)
-      return NULL;
+  void* Alloc(size_t bytes) {
+    if (!bytes) return NULL;
 
     if (current_page_ && page_size_ - page_offset_ >= bytes) {
-      uint8_t *const ret = current_page_ + page_offset_;
+      uint8_t* const ret = current_page_ + page_offset_;
       page_offset_ += bytes;
       if (page_offset_ == page_size_) {
         page_offset_ = 0;
@@ -88,9 +84,8 @@ class PageAllocator {
 
     const size_t pages =
         (bytes + sizeof(PageHeader) + page_size_ - 1) / page_size_;
-    uint8_t *const ret = GetNPages(pages);
-    if (!ret)
-      return NULL;
+    uint8_t* const ret = GetNPages(pages);
+    if (!ret) return NULL;
 
     page_offset_ =
         (page_size_ - (page_size_ * pages - (bytes + sizeof(PageHeader)))) %
@@ -115,11 +110,10 @@ class PageAllocator {
   unsigned long pages_allocated() { return pages_allocated_; }
 
  private:
-  uint8_t *GetNPages(size_t num_pages) {
-    void *a = sys_mmap(NULL, page_size_ * num_pages, PROT_READ | PROT_WRITE,
+  uint8_t* GetNPages(size_t num_pages) {
+    void* a = sys_mmap(NULL, page_size_ * num_pages, PROT_READ | PROT_WRITE,
                        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    if (a == MAP_FAILED)
-      return NULL;
+    if (a == MAP_FAILED) return NULL;
 
 #if defined(MEMORY_SANITIZER)
     // We need to indicate to MSan that memory allocated through sys_mmap is
@@ -127,7 +121,7 @@ class PageAllocator {
     __msan_unpoison(a, page_size_ * num_pages);
 #endif
 
-    struct PageHeader *header = reinterpret_cast<PageHeader*>(a);
+    struct PageHeader* header = reinterpret_cast<PageHeader*>(a);
     header->next = last_;
     header->num_pages = num_pages;
     last_ = header;
@@ -138,22 +132,22 @@ class PageAllocator {
   }
 
   void FreeAll() {
-    PageHeader *next;
+    PageHeader* next;
 
-    for (PageHeader *cur = last_; cur; cur = next) {
+    for (PageHeader* cur = last_; cur; cur = next) {
       next = cur->next;
       sys_munmap(cur, cur->num_pages * page_size_);
     }
   }
 
   struct PageHeader {
-    PageHeader *next;  // pointer to the start of the next set of pages.
+    PageHeader* next;  // pointer to the start of the next set of pages.
     size_t num_pages;  // the number of pages in this set.
   };
 
   const size_t page_size_;
-  PageHeader *last_;
-  uint8_t *current_page_;
+  PageHeader* last_;
+  uint8_t* current_page_;
   size_t page_offset_;
   unsigned long pages_allocated_;
 };
@@ -164,23 +158,18 @@ struct PageStdAllocator : public std::allocator<T> {
   typedef typename std::allocator<T>::pointer pointer;
   typedef typename std::allocator<T>::size_type size_type;
 
-  explicit PageStdAllocator(PageAllocator& allocator) : allocator_(allocator),
-                                                        stackdata_(NULL),
-                                                        stackdata_size_(0)
-  {}
+  explicit PageStdAllocator(PageAllocator& allocator)
+      : allocator_(allocator), stackdata_(NULL), stackdata_size_(0) {}
 
-  template <class Other> PageStdAllocator(const PageStdAllocator<Other>& other)
-      : allocator_(other.allocator_),
-        stackdata_(nullptr),
-        stackdata_size_(0)
-  {}
+  template <class Other>
+  PageStdAllocator(const PageStdAllocator<Other>& other)
+      : allocator_(other.allocator_), stackdata_(nullptr), stackdata_size_(0) {}
 
-  explicit PageStdAllocator(PageAllocator& allocator,
-                            pointer stackdata,
-                            size_type stackdata_size) : allocator_(allocator),
-      stackdata_(stackdata),
-      stackdata_size_(stackdata_size)
-  {}
+  explicit PageStdAllocator(PageAllocator& allocator, pointer stackdata,
+                            size_type stackdata_size)
+      : allocator_(allocator),
+        stackdata_(stackdata),
+        stackdata_size_(stackdata_size) {}
 
   inline pointer allocate(size_type n, const void* = 0) {
     const size_type size = sizeof(T) * n;
@@ -194,7 +183,8 @@ struct PageStdAllocator : public std::allocator<T> {
     // The PageAllocator doesn't free.
   }
 
-  template <typename U> struct rebind {
+  template <typename U>
+  struct rebind {
     typedef PageStdAllocator<U> other;
   };
 
@@ -202,7 +192,8 @@ struct PageStdAllocator : public std::allocator<T> {
   // Silly workaround for the gcc from Android's ndk (gcc 4.6), which will
   // otherwise complain that `other.allocator_` is private in the constructor
   // code.
-  template<typename Other> friend struct PageStdAllocator;
+  template <typename Other>
+  friend struct PageStdAllocator;
 
   PageAllocator& allocator_;
   pointer stackdata_;
@@ -212,13 +203,14 @@ struct PageStdAllocator : public std::allocator<T> {
 // A wasteful vector is a std::vector, except that it allocates memory from a
 // PageAllocator. It's wasteful because, when resizing, it always allocates a
 // whole new array since the PageAllocator doesn't support realloc.
-template<class T>
+template <class T>
 class wasteful_vector : public std::vector<T, PageStdAllocator<T> > {
  public:
   wasteful_vector(PageAllocator* allocator, unsigned size_hint = 16)
       : std::vector<T, PageStdAllocator<T> >(PageStdAllocator<T>(*allocator)) {
     std::vector<T, PageStdAllocator<T> >::reserve(size_hint);
   }
+
  protected:
   wasteful_vector(PageStdAllocator<T> allocator)
       : std::vector<T, PageStdAllocator<T> >(allocator) {}
@@ -226,15 +218,14 @@ class wasteful_vector : public std::vector<T, PageStdAllocator<T> > {
 
 // auto_wasteful_vector allocates space on the stack for N entries to avoid
 // using the PageAllocator for small data, while still allowing for larger data.
-template<class T, unsigned int N>
+template <class T, unsigned int N>
 class auto_wasteful_vector : public wasteful_vector<T> {
- T stackdata_[N];
+  T stackdata_[N];
+
  public:
   auto_wasteful_vector(PageAllocator* allocator)
-      : wasteful_vector<T>(
-            PageStdAllocator<T>(*allocator,
-                                &stackdata_[0],
-                                sizeof(stackdata_))) {
+      : wasteful_vector<T>(PageStdAllocator<T>(*allocator, &stackdata_[0],
+                                               sizeof(stackdata_))) {
     std::vector<T, PageStdAllocator<T> >::reserve(N);
   }
 };

@@ -12,7 +12,6 @@
  ****************************************************************************************
  */
 
-
 #ifndef _HTP_COMMON_H_
 #define _HTP_COMMON_H_
 
@@ -38,13 +37,12 @@
  ****************************************************************************************
  */
 
-///Temperature Measurement Flags field bit values
-enum
-{
-    HTPT_FLAG_CELSIUS             = 0x00,
-    HTPT_FLAG_FAHRENHEIT,
-    HTPT_FLAG_TIME,
-    HTPT_FLAG_TYPE                 = 0x04,
+/// Temperature Measurement Flags field bit values
+enum {
+  HTPT_FLAG_CELSIUS = 0x00,
+  HTPT_FLAG_FAHRENHEIT,
+  HTPT_FLAG_TIME,
+  HTPT_FLAG_TYPE = 0x04,
 };
 
 /*
@@ -52,19 +50,17 @@ enum
  ****************************************************************************************
  */
 
-///Temperature Measurement Value Structure
-struct htp_temp_meas
-{
-    ///Temp
-    uint32_t temp;
-    ///Time stamp
-    struct prf_date_time time_stamp;
-    ///Flag
-    uint8_t  flags;
-    ///Type
-    uint8_t  type;
+/// Temperature Measurement Value Structure
+struct htp_temp_meas {
+  /// Temp
+  uint32_t temp;
+  /// Time stamp
+  struct prf_date_time time_stamp;
+  /// Flag
+  uint8_t flags;
+  /// Type
+  uint8_t type;
 };
-
 
 #endif /* #if (BLE_HT_COLLECTOR || BLE_HT_THERMOMETER) */
 

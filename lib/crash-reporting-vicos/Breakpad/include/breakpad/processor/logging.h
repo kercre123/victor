@@ -92,21 +92,19 @@ namespace google_breakpad {
 
 class LogStream {
  public:
-  enum Severity {
-    SEVERITY_INFO,
-    SEVERITY_ERROR
-  };
+  enum Severity { SEVERITY_INFO, SEVERITY_ERROR };
 
   // Begin logging a message to the stream identified by |stream|, at the
   // indicated severity.  The file and line parameters should be set so as to
   // identify the line of source code that is producing a message.
-  LogStream(std::ostream &stream, Severity severity,
-            const char *file, int line);
+  LogStream(std::ostream &stream, Severity severity, const char *file,
+            int line);
 
   // Finish logging by printing a newline and flushing the output stream.
   ~LogStream();
 
-  template<typename T> std::ostream& operator<<(const T &t) {
+  template <typename T>
+  std::ostream &operator<<(const T &t) {
     return stream_ << t;
   }
 
@@ -147,16 +145,16 @@ int ErrnoString(string *error_string);
 #endif  // BPLOG_INIT
 
 #define BPLOG_LAZY_STREAM(stream, condition) \
-    !(condition) ? (void) 0 : \
-                   google_breakpad::LogMessageVoidify() & (BPLOG_ ## stream)
+  !(condition) ? (void)0                     \
+               : google_breakpad::LogMessageVoidify() & (BPLOG_##stream)
 
 #ifndef BPLOG_MINIMUM_SEVERITY
 #define BPLOG_MINIMUM_SEVERITY SEVERITY_INFO
 #endif
 
-#define BPLOG_LOG_IS_ON(severity) \
-    ((google_breakpad::LogStream::SEVERITY_ ## severity) >= \
-     (google_breakpad::LogStream::BPLOG_MINIMUM_SEVERITY))
+#define BPLOG_LOG_IS_ON(severity)                       \
+  ((google_breakpad::LogStream::SEVERITY_##severity) >= \
+   (google_breakpad::LogStream::BPLOG_MINIMUM_SEVERITY))
 
 #ifndef BPLOG
 #define BPLOG(severity) BPLOG_LAZY_STREAM(severity, BPLOG_LOG_IS_ON(severity))
@@ -166,21 +164,23 @@ int ErrnoString(string *error_string);
 #ifndef BPLOG_INFO_STREAM
 #define BPLOG_INFO_STREAM std::clog
 #endif  // BPLOG_INFO_STREAM
-#define BPLOG_INFO google_breakpad::LogStream(BPLOG_INFO_STREAM, \
-                       google_breakpad::LogStream::SEVERITY_INFO, \
-                       __FILE__, __LINE__)
+#define BPLOG_INFO                                                      \
+  google_breakpad::LogStream(BPLOG_INFO_STREAM,                         \
+                             google_breakpad::LogStream::SEVERITY_INFO, \
+                             __FILE__, __LINE__)
 #endif  // BPLOG_INFO
 
 #ifndef BPLOG_ERROR
 #ifndef BPLOG_ERROR_STREAM
 #define BPLOG_ERROR_STREAM std::cerr
 #endif  // BPLOG_ERROR_STREAM
-#define BPLOG_ERROR google_breakpad::LogStream(BPLOG_ERROR_STREAM, \
-                        google_breakpad::LogStream::SEVERITY_ERROR, \
-                        __FILE__, __LINE__)
+#define BPLOG_ERROR                                                      \
+  google_breakpad::LogStream(BPLOG_ERROR_STREAM,                         \
+                             google_breakpad::LogStream::SEVERITY_ERROR, \
+                             __FILE__, __LINE__)
 #endif  // BPLOG_ERROR
 
 #define BPLOG_IF(severity, condition) \
-    BPLOG_LAZY_STREAM(severity, ((condition) && BPLOG_LOG_IS_ON(severity)))
+  BPLOG_LAZY_STREAM(severity, ((condition) && BPLOG_LOG_IS_ON(severity)))
 
 #endif  // PROCESSOR_LOGGING_H__

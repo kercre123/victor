@@ -13,30 +13,27 @@
 #ifndef __Anki_Cozmo_BackpackLayerManager_H__
 #define __Anki_Cozmo_BackpackLayerManager_H__
 
-#include "cozmoAnim/animation/trackLayerManagers/iTrackLayerManager.h"
-
-#include "coretech/common/shared/types.h"
-#include "cannedAnimLib/cannedAnims/animation.h"
 #include "cannedAnimLib/baseTypes/track.h"
+#include "cannedAnimLib/cannedAnims/animation.h"
+#include "coretech/common/shared/types.h"
+#include "cozmoAnim/animation/trackLayerManagers/iTrackLayerManager.h"
 
 namespace Anki {
 namespace Vector {
 namespace Anim {
 
-class BackpackLayerManager : public ITrackLayerManager<BackpackLightsKeyFrame>
-{
-public:
-  
+class BackpackLayerManager : public ITrackLayerManager<BackpackLightsKeyFrame> {
+ public:
   BackpackLayerManager(const Util::RandomGenerator& rng);
-  
+
   // TODO: VIC-447: Restore glitching
   // Generates a track of all keyframes necessary for glitchy backpack lights
-  void GenerateGlitchLights(Animations::Track<BackpackLightsKeyFrame>& track) const;
-  
+  void GenerateGlitchLights(
+      Animations::Track<BackpackLightsKeyFrame>& track) const;
 };
-  
-}
-}
-}
+
+}  // namespace Anim
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

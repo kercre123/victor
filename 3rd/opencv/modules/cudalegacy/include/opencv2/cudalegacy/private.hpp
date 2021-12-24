@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -15,23 +16,29 @@
 // Copyright (C) 2013, OpenCV Foundation, all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
-// This software is provided by the copyright holders and contributors "as is" and
+// This software is provided by the copyright holders and contributors "as is"
+and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -45,52 +52,48 @@
 #define OPENCV_CORE_CUDALEGACY_PRIVATE_HPP
 
 #ifndef __OPENCV_BUILD
-#  error this is a private header which should not be used from outside of the OpenCV library
+#error this is a private header which should not be used from outside of the OpenCV library
 #endif
 
 #include "opencv2/core/private.cuda.hpp"
 
 #ifndef HAVE_CUDA
-#  error cudalegacy module requires CUDA
+#error cudalegacy module requires CUDA
 #endif
 
 #include "opencv2/cudalegacy.hpp"
 
 //! @cond IGNORED
 
-namespace cv { namespace cuda
-{
-    class NppStStreamHandler
-    {
-    public:
-        inline explicit NppStStreamHandler(cudaStream_t newStream = 0)
-        {
-            oldStream = nppStSetActiveCUDAstream(newStream);
-        }
+namespace cv {
+namespace cuda {
+class NppStStreamHandler {
+ public:
+  inline explicit NppStStreamHandler(cudaStream_t newStream = 0) {
+    oldStream = nppStSetActiveCUDAstream(newStream);
+  }
 
-        inline ~NppStStreamHandler()
-        {
-            nppStSetActiveCUDAstream(oldStream);
-        }
+  inline ~NppStStreamHandler() { nppStSetActiveCUDAstream(oldStream); }
 
-    private:
-        cudaStream_t oldStream;
-    };
+ private:
+  cudaStream_t oldStream;
+};
 
-    CV_EXPORTS cv::String getNcvErrorMessage(int code);
+CV_EXPORTS cv::String getNcvErrorMessage(int code);
 
-    static inline void checkNcvError(int err, const char* file, const int line, const char* func)
-    {
-        if (NCV_SUCCESS != err)
-        {
-            cv::String msg = getNcvErrorMessage(err);
-            cv::error(cv::Error::GpuApiCallError, msg, func, file, line);
-        }
-    }
-}}
+static inline void checkNcvError(int err, const char* file, const int line,
+                                 const char* func) {
+  if (NCV_SUCCESS != err) {
+    cv::String msg = getNcvErrorMessage(err);
+    cv::error(cv::Error::GpuApiCallError, msg, func, file, line);
+  }
+}
+}  // namespace cuda
+}  // namespace cv
 
-#define ncvSafeCall(expr)  cv::cuda::checkNcvError(expr, __FILE__, __LINE__, CV_Func)
+#define ncvSafeCall(expr) \
+  cv::cuda::checkNcvError(expr, __FILE__, __LINE__, CV_Func)
 
 //! @endcond
 
-#endif // OPENCV_CORE_CUDALEGACY_PRIVATE_HPP
+#endif  // OPENCV_CORE_CUDALEGACY_PRIVATE_HPP

@@ -1,58 +1,52 @@
+#include "mics.h"
+
 #include <string.h>
 
 #include "common.h"
 #include "hardware.h"
+#include "messages.h"
 #include "timer.h"
 
-#include "mics.h"
-
-#include "messages.h"
-
 extern "C" {
-  void start_mic_spi(int16_t a, int16_t b, void* tim);
-  void dec_odd(int32_t* acc, const uint16_t* samples, int16_t* output);
-  void dec_even(int32_t* acc, const uint16_t* samples, int16_t* output);
+void start_mic_spi(int16_t a, int16_t b, void* tim);
+void dec_odd(int32_t* acc, const uint16_t* samples, int16_t* output);
+void dec_even(int32_t* acc, const uint16_t* samples, int16_t* output);
 }
 
 const int SAMPLES_PER_IRQ = 20;
 static const int IRQS_PER_FRAME = AUDIO_SAMPLES_PER_FRAME / SAMPLES_PER_IRQ;
 static const int PDM_BYTES_PER_IRQ = SAMPLES_PER_IRQ * AUDIO_DECIMATION * 2 / 8;
-  
+
 static int16_t audio_data[2][AUDIO_SAMPLES_PER_FRAME * 4];
 static uint16_t pdm_data[2][2][PDM_BYTES_PER_IRQ / 2];
 static int sample_index;
 static bool reduced;
 
-static int16_t MIC_SPI_CR1 = 0
-           | SPI_CR1_MSTR                 // Master
-           | SPI_CR1_RXONLY               // Read only
-           | SPI_CR1_SSM                  // Software slave
-           | SPI_CR1_SSI                  // Slave selected
-           | SPI_CR1_LSBFIRST             // LSB First
-           | (SPI_CR1_BR_0 * AUDIO_SHIFT) // Prescale
-           | SPI_CR1_SPE
-           ;
+static int16_t MIC_SPI_CR1 = 0 | SPI_CR1_MSTR                // Master
+                             | SPI_CR1_RXONLY                // Read only
+                             | SPI_CR1_SSM                   // Software slave
+                             | SPI_CR1_SSI                   // Slave selected
+                             | SPI_CR1_LSBFIRST              // LSB First
+                             | (SPI_CR1_BR_0 * AUDIO_SHIFT)  // Prescale
+                             | SPI_CR1_SPE;
 
 static const int BUFFER_WORDS = sizeof(pdm_data[0]) / sizeof(uint16_t);
 
 static void configurePerf(SPI_TypeDef* spi, DMA_Channel_TypeDef* ch, int perf) {
   ch->CCR = 0;
-  ch->CPAR = (uint32_t) &spi->DR;
-  ch->CMAR = (uint32_t) &pdm_data[perf];
+  ch->CPAR = (uint32_t)&spi->DR;
+  ch->CMAR = (uint32_t)&pdm_data[perf];
   ch->CNDTR = BUFFER_WORDS;
-  ch->CCR = 0
-          | DMA_CCR_MINC      // Memory is incrementing
-          | DMA_CCR_PSIZE_0   // 16-bit mode
-          | DMA_CCR_MSIZE_0
-          | DMA_CCR_CIRC      // Circular mode
-          | DMA_CCR_PL        // Highest Priority
-          | DMA_CCR_EN        // Enabled
-          ;
+  ch->CCR = 0 | DMA_CCR_MINC                  // Memory is incrementing
+            | DMA_CCR_PSIZE_0                 // 16-bit mode
+            | DMA_CCR_MSIZE_0 | DMA_CCR_CIRC  // Circular mode
+            | DMA_CCR_PL                      // Highest Priority
+            | DMA_CCR_EN                      // Enabled
+      ;
 
-  spi->CR2 = 0
-           | SPI_CR2_DS            // 16-Bit word
-           | SPI_CR2_RXDMAEN       // RX DMA Enable
-           ;
+  spi->CR2 = 0 | SPI_CR2_DS     // 16-Bit word
+             | SPI_CR2_RXDMAEN  // RX DMA Enable
+      ;
 }
 
 void Mics::init(void) {
@@ -90,10 +84,7 @@ void Mics::init(void) {
   configurePerf(SPI2, DMA1_Channel4, 1);
 
   // Enable IRQs on channel 2 only, it will do double duty
-  DMA1_Channel2->CCR |= 0
-                     | DMA_CCR_HTIE
-                     | DMA_CCR_TCIE
-                     ;
+  DMA1_Channel2->CCR |= 0 | DMA_CCR_HTIE | DMA_CCR_TCIE;
 
   NVIC_SetPriority(DMA1_Channel2_3_IRQn, PRIORITY_MICS);
 
@@ -107,13 +98,9 @@ void Mics::start(void) {
   NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
 }
 
-void Mics::stop(void) {
-  NVIC_DisableIRQ(DMA1_Channel2_3_IRQn);
-}
+void Mics::stop(void) { NVIC_DisableIRQ(DMA1_Channel2_3_IRQn); }
 
-void Mics::reduce(bool reduce) {
-  reduced = reduce;
-}
+void Mics::reduce(bool reduce) { reduced = reduce; }
 
 void Mics::errorCode(uint16_t* data) {
   data[0] = *(uint16_t*)&pdm_data[0][0];
@@ -121,7 +108,8 @@ void Mics::errorCode(uint16_t* data) {
 }
 
 void Mics::transmit(int16_t* payload) {
-  memcpy(payload, audio_data[sample_index < IRQS_PER_FRAME ? 1 : 0], sizeof(audio_data[0]));
+  memcpy(payload, audio_data[sample_index < IRQS_PER_FRAME ? 1 : 0],
+         sizeof(audio_data[0]));
 }
 
 static void decimate(const uint16_t* input, int32_t* acc, int16_t* output) {
@@ -130,11 +118,11 @@ static void decimate(const uint16_t* input, int32_t* acc, int16_t* output) {
 }
 
 extern "C" void DMA1_Channel2_3_IRQHandler(void) {
-  static int16_t *output = audio_data[0];
+  static int16_t* output = audio_data[0];
   uint32_t isr = DMA1->ISR;
   DMA1->IFCR = DMA_IFCR_CGIF2;
 
-  static int32_t accumulator[2][4]; // 2 data lines, 2x2 channel accumulators
+  static int32_t accumulator[2][4];  // 2 data lines, 2x2 channel accumulators
 
   // Note: if this falls behind, it will drop a bunch of samples
   if (isr & DMA_ISR_HTIF2) {

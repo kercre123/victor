@@ -30,18 +30,18 @@ class Logger;
  * This interface class allows notifications when the sink Logger changes.
  */
 class SinkObserverInterface {
-public:
-    /**
-     * This function will be called when the sink changes.
-     *
-     * @param sink The updated sink @c Logger
-     */
-    virtual void onSinkChanged(const std::shared_ptr<Logger>& sink) = 0;
+ public:
+  /**
+   * This function will be called when the sink changes.
+   *
+   * @param sink The updated sink @c Logger
+   */
+  virtual void onSinkChanged(const std::shared_ptr<Logger>& sink) = 0;
 
-    /**
-     * Destructor.
-     */
-    virtual ~SinkObserverInterface() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~SinkObserverInterface() = default;
 };
 
 }  // namespace logger

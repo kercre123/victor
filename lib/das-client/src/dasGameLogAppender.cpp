@@ -10,34 +10,32 @@
  *
  **/
 #include "dasGameLogAppender.h"
-#include "dasGlobals.h"
+
 #include <sys/stat.h>
-#include <iomanip>
+
 #include <fstream>
+#include <iomanip>
 #include <sstream>
 
-namespace Anki
-{
-namespace Das
-{
+#include "dasGlobals.h"
 
-DasGameLogAppender::DasGameLogAppender(const std::string& gameLogDir, const std::string& gameId)
-: _gameLogDirPath(gameLogDir)
-{
+namespace Anki {
+namespace Das {
+
+DasGameLogAppender::DasGameLogAppender(const std::string& gameLogDir,
+                                       const std::string& gameId)
+    : _gameLogDirPath(gameLogDir) {
   std::string logDir = gameLogDir + "/" + gameId;
-  (void) mkdir(logDir.c_str(), S_IRWXU);
-}
-  
-DasGameLogAppender::~DasGameLogAppender()
-{
-  flush();
+  (void)mkdir(logDir.c_str(), S_IRWXU);
 }
 
-void DasGameLogAppender::append(DASLogLevel level, const char* eventName, const char* eventValue,
-                                ThreadId_t threadId, const char* file, const char* funct, int line,
-                                const std::map<std::string,std::string>* globals,
-                                const std::map<std::string,std::string>& data)
-{
+DasGameLogAppender::~DasGameLogAppender() { flush(); }
+
+void DasGameLogAppender::append(
+    DASLogLevel level, const char* eventName, const char* eventValue,
+    ThreadId_t threadId, const char* file, const char* funct, int line,
+    const std::map<std::string, std::string>* globals,
+    const std::map<std::string, std::string>& data) {
   if (nullptr == globals) {
     return;
   }
@@ -47,10 +45,13 @@ void DasGameLogAppender::append(DASLogLevel level, const char* eventName, const 
   }
 
   std::string gameId = it->second;
-  std::string logMessage = makeCsvRow(eventName, eventValue, threadId, globals, data);
+  std::string logMessage =
+      makeCsvRow(eventName, eventValue, threadId, globals, data);
 
-  auto l = [this, gameId = std::move(gameId), logMessage = std::move(logMessage)] {
-    std::string logFilePath = _gameLogDirPath + "/" + gameId + "/" + kLogFileName;
+  auto l = [this, gameId = std::move(gameId),
+            logMessage = std::move(logMessage)] {
+    std::string logFilePath =
+        _gameLogDirPath + "/" + gameId + "/" + kLogFileName;
     std::ofstream log(logFilePath, std::ios::app | std::ios::out);
     if (0 == log.tellp()) {
       log << kCsvHeaderRow << std::endl;
@@ -60,10 +61,10 @@ void DasGameLogAppender::append(DASLogLevel level, const char* eventName, const 
   _loggingQueue.Wake(l);
 }
 
-std::string DasGameLogAppender::makeCsvRow(const char* eventName, const char* eventValue, ThreadId_t threadId,
-                                           const std::map<std::string,std::string>* globals,
-                                           const std::map<std::string,std::string>& data)
-{
+std::string DasGameLogAppender::makeCsvRow(
+    const char* eventName, const char* eventValue, ThreadId_t threadId,
+    const std::map<std::string, std::string>* globals,
+    const std::map<std::string, std::string>& data) {
   std::ostringstream oss;
   std::string event(eventName);
   std::string value(eventValue);
@@ -95,10 +96,9 @@ std::string DasGameLogAppender::makeCsvRow(const char* eventName, const char* ev
   return oss.str();
 }
 
-std::string DasGameLogAppender::getValueForCsv(const char* key,
-                                               const std::map<std::string,std::string>* globals,
-                                               const std::map<std::string,std::string>& data)
-{
+std::string DasGameLogAppender::getValueForCsv(
+    const char* key, const std::map<std::string, std::string>* globals,
+    const std::map<std::string, std::string>& data) {
   std::string value = "";
 
   auto it = data.find(key);
@@ -116,13 +116,11 @@ std::string DasGameLogAppender::getValueForCsv(const char* key,
   return value;
 }
 
-void DasGameLogAppender::escapeStringForCsv(std::string& value)
-{
+void DasGameLogAppender::escapeStringForCsv(std::string& value) {
   bool needsToBeQuoted = false;
 
   std::size_t pos = value.find('\"');
-  while (std::string::npos != pos)
-  {
+  while (std::string::npos != pos) {
     needsToBeQuoted = true;
     value.insert(pos, "\"");
     pos += 2;
@@ -131,22 +129,19 @@ void DasGameLogAppender::escapeStringForCsv(std::string& value)
     }
   }
 
-  needsToBeQuoted = needsToBeQuoted
-    || (std::string::npos != value.find(','))
-    || (std::string::npos != value.find('\r'))
-    || (std::string::npos != value.find('\n'));
+  needsToBeQuoted = needsToBeQuoted || (std::string::npos != value.find(',')) ||
+                    (std::string::npos != value.find('\r')) ||
+                    (std::string::npos != value.find('\n'));
 
   if (needsToBeQuoted) {
     value = "\"" + value + "\"";
   }
 }
 
-void DasGameLogAppender::flush()
-{
+void DasGameLogAppender::flush() {
   auto l = [] {};
   _loggingQueue.WakeSync(l);
 }
 
-} // namespace Das
-} // namespace Anki
-
+}  // namespace Das
+}  // namespace Anki

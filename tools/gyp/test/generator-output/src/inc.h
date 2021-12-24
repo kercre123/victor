@@ -1,1 +1,1 @@
-#define INC_STRING      "inc.h"
+#define INC_STRING "inc.h"

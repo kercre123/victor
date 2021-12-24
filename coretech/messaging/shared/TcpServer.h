@@ -13,10 +13,11 @@
 //#define DEBUG_TCP_SERVER(__expr__) (std::cout << __expr__ << std::endl)
 // Verbose macro adds a lot of spam (e.g. every send and recv)
 #define DEBUG_TCP_SERVER_VERBOSE(__expr__)
-//#define DEBUG_TCP_SERVER_VERBOSE(__expr__) (std::cout << __expr__ << std::endl)
+//#define DEBUG_TCP_SERVER_VERBOSE(__expr__) (std::cout << __expr__ <<
+//std::endl)
 
 class TcpServer {
-public:
+ public:
   TcpServer();
   ~TcpServer();
 
@@ -27,17 +28,16 @@ public:
   bool Accept();
   void DisconnectClient();
   bool HasClient() const;
-  //bool SetBlocking()
+  // bool SetBlocking()
 
   int Send(const char* data, int size);
   int Recv(char* data, int maxSize);
 
-private:
-
+ private:
   void set_nonblock(int socket);
-  
-  int socketfd; // Listening socket descriptor
-  int client_sd; // Client socket descriptor
+
+  int socketfd;   // Listening socket descriptor
+  int client_sd;  // Client socket descriptor
 };
 
 #endif

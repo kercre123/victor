@@ -20,10 +20,11 @@
 #ifndef GEMMLOWP_INTERNAL_KERNEL_NEON_H_
 #define GEMMLOWP_INTERNAL_KERNEL_NEON_H_
 
-#include "kernel.h"
-
 #include <arm_neon.h>
+
 #include <cassert>
+
+#include "kernel.h"
 
 namespace gemmlowp {
 
@@ -269,12 +270,12 @@ struct NEON_32_Kernel12x4Depth2 : KernelBase {
         "vst1.32 {d22, d23}, [r0]!\n"
         "vst1.32 {d30, d31}, [r0]\n"
         :  // outputs
-        [lhs_ptr] "+r"(lhs_ptr), [rhs_ptr] "+r"(rhs_ptr),
-        [dst_ptr] "+r"(dst_ptr),
-        [run_depth] "+r"(run_depth)
+        [ lhs_ptr ] "+r"(lhs_ptr), [ rhs_ptr ] "+r"(rhs_ptr),
+        [ dst_ptr ] "+r"(dst_ptr),
+        [ run_depth ] "+r"(run_depth)
         :  // inputs
-        [start_depth] "r"(start_depth),
-        [dst_col_stride] "r"(dst_col_stride)
+        [ start_depth ] "r"(start_depth),
+        [ dst_col_stride ] "r"(dst_col_stride)
         :  // clobbers
         "cc", "memory", "r0", "r1",
         // note: someone on internet says that quad registers are
@@ -640,12 +641,13 @@ struct NEON_32_Kernel12x4Depth2Assuming12BitProducts : KernelBase {
         "vst1.32 {d14,d15}, [r1]!\n"
         "vst1.32 {d22,d23}, [r1], r0\n"
         :  // outputs
-        [lhs_ptr] "+r"(lhs_ptr), [rhs_ptr] "+r"(rhs_ptr),
-        [dst_ptr] "+r"(dst_ptr),
-        [run_depth] "+r"(run_depth)
+        [ lhs_ptr ] "+r"(lhs_ptr), [ rhs_ptr ] "+r"(rhs_ptr),
+        [ dst_ptr ] "+r"(dst_ptr),
+        [ run_depth ] "+r"(run_depth)
         :  // inputs
-        [start_depth] "r"(start_depth), [dst_col_stride] "r"(dst_col_stride),
-        [global_accumulators] "r"(&global_accumulators[0])
+        [ start_depth ] "r"(start_depth),
+        [ dst_col_stride ] "r"(dst_col_stride),
+        [ global_accumulators ] "r"(&global_accumulators[0])
         :  // clobbers
         "cc", "memory", "r0", "r1",
         // note: someone on internet says that quad registers are
@@ -904,11 +906,11 @@ struct NEON_32bit_GEMM_Int8Operands_LhsNonzero : KernelBase {
         "vst1.32 {d8, d9}, [r0], %[dst_col_stride]\n"
         "vst1.32 {d10, d11}, [r0]\n"
         :  // outputs
-        [lhs_ptr] "+r"(lhs_ptr), [rhs_ptr] "+r"(rhs_ptr),
-        [dst_ptr] "+r"(dst_ptr), [run_depth] "+r"(run_depth)
+        [ lhs_ptr ] "+r"(lhs_ptr), [ rhs_ptr ] "+r"(rhs_ptr),
+        [ dst_ptr ] "+r"(dst_ptr), [ run_depth ] "+r"(run_depth)
         :  // inputs
-        [start_depth] "r"(start_depth),
-        [dst_col_stride] "r"(dst_col_stride)
+        [ start_depth ] "r"(start_depth),
+        [ dst_col_stride ] "r"(dst_col_stride)
         :  // clobbers
         "cc", "memory", "r0", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7",
         "d8", "d9", "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17",
@@ -1244,11 +1246,11 @@ struct NEON_64bit_GEMM_Int8Operands_LhsNonzero : KernelBase {
         "st1 {v14.16b}, [x0], %[dst_col_stride]\n"
         "st1 {v15.16b}, [x0]\n"
         :  // outputs
-        [lhs_ptr] "+r"(lhs_ptr), [rhs_ptr] "+r"(rhs_ptr),
-        [dst_ptr] "+r"(dst_ptr), [run_depth] "+r"(run_depth),
-        [dst_col_stride] "+r"(dst_col_stride)
+        [ lhs_ptr ] "+r"(lhs_ptr), [ rhs_ptr ] "+r"(rhs_ptr),
+        [ dst_ptr ] "+r"(dst_ptr), [ run_depth ] "+r"(run_depth),
+        [ dst_col_stride ] "+r"(dst_col_stride)
         :  // inputs
-        [start_depth] "r"(start_depth)
+        [ start_depth ] "r"(start_depth)
         :  // clobbers
         "cc", "memory", "x0", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7",
         "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17",
@@ -1597,12 +1599,12 @@ struct NEON_64_Kernel12x8Depth2 : KernelBase {
 #undef GEMMLOWP_LABEL_LOOP
 #undef GEMMLOWP_LABEL_AFTER_LOOP
         :  // outputs
-        [lhs_ptr] "+r"(lhs_ptr), [rhs_ptr] "+r"(rhs_ptr),
-        [dst_ptr] "+r"(dst_ptr),
-        [run_depth] "+r"(run_depth)
+        [ lhs_ptr ] "+r"(lhs_ptr), [ rhs_ptr ] "+r"(rhs_ptr),
+        [ dst_ptr ] "+r"(dst_ptr),
+        [ run_depth ] "+r"(run_depth)
         :  // inputs
-        [start_depth] "r"(start_depth),
-        [dst_col_stride] "r"(dst_col_stride)
+        [ start_depth ] "r"(start_depth),
+        [ dst_col_stride ] "r"(dst_col_stride)
         :  // clobbers
         "cc", "memory", "x0", "x1", "v0", "v1", "v2", "v3", "v4", "v5", "v6",
         "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16",

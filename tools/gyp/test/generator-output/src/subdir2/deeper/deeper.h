@@ -1,1 +1,1 @@
-#define DEEPER_STRING   "subdir2/deeper/deeper.h"
+#define DEEPER_STRING "subdir2/deeper/deeper.h"

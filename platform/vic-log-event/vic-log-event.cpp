@@ -1,35 +1,32 @@
 /**
-* File: vic-log-event.cpp
-*
-* Description: Victor Log Event application main
-*
-* Copyright: Anki, inc. 2018
-*
-*/
+ * File: vic-log-event.cpp
+ *
+ * Description: Victor Log Event application main
+ *
+ * Copyright: Anki, inc. 2018
+ *
+ */
+
+#include <ctype.h>
 
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/logging/victorLogger.h"
 
-#include <ctype.h>
-
-void error(const char * cmd, const char * str)
-{
+void error(const char* cmd, const char* str) {
   fprintf(stderr, "%s: %s\n", cmd, str);
 }
 
-void usage(const char * cmd)
-{
+void usage(const char* cmd) {
   fprintf(stderr, "Usage: %s source event [s1-s4 i1-i4]\n", cmd);
 }
 
-int main(int argc, const char * argv[])
-{
+int main(int argc, const char* argv[]) {
   std::vector<std::string> args;
 
   // Process command line
   for (int i = 1; i < argc; ++i) {
-    const std::string & arg = argv[i];
+    const std::string& arg = argv[i];
     if (arg == "-h" || arg == "--help") {
       usage(argv[0]);
       exit(0);
@@ -69,7 +66,8 @@ int main(int argc, const char * argv[])
   int64_t i4 = (args.size() > 9 ? std::stoll(args[9]) : 0);
 
   // If new fields are added, the code above should be updated
-  static_assert(Anki::Util::DAS::FIELD_COUNT == 9, "Unexpected DAS field count");
+  static_assert(Anki::Util::DAS::FIELD_COUNT == 9,
+                "Unexpected DAS field count");
 
   // Set up the logger
   Anki::Util::VictorLogger logger(source);

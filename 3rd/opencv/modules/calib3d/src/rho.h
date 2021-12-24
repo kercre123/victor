@@ -1,17 +1,18 @@
 /*
   IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 
-  By downloading, copying, installing or using the software you agree to this license.
-  If you do not agree to this license, do not download, install,
-  copy or use the software.
+  By downloading, copying, installing or using the software you agree to this
+ license. If you do not agree to this license, do not download, install, copy or
+ use the software.
 
 
                           BSD 3-Clause License
 
- Copyright (C) 2014, Olexa Bilaniuk, Hamid Bazargani & Robert Laganiere, all rights reserved.
+ Copyright (C) 2014, Olexa Bilaniuk, Hamid Bazargani & Robert Laganiere, all
+ rights reserved.
 
- Redistribution and use in source and binary forms, with or without modification,
- are permitted provided that the following conditions are met:
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
 
    * Redistribution's of source code must retain the above copyright notice,
      this list of conditions and the following disclaimer.
@@ -20,17 +21,17 @@
      this list of conditions and the following disclaimer in the documentation
      and/or other materials provided with the distribution.
 
-   * The name of the copyright holders may not be used to endorse or promote products
-     derived from this software without specific prior written permission.
+   * The name of the copyright holders may not be used to endorse or promote
+ products derived from this software without specific prior written permission.
 
  This software is provided by the copyright holders and contributors "as is" and
  any express or implied warranties, including, but not limited to, the implied
- warranties of merchantability and fitness for a particular purpose are disclaimed.
- In no event shall the Intel Corporation or contributors be liable for any direct,
- indirect, incidental, special, exemplary, or consequential damages
- (including, but not limited to, procurement of substitute goods or services;
- loss of use, data, or profits; or business interruption) however caused
- and on any theory of liability, whether in contract, strict liability,
+ warranties of merchantability and fitness for a particular purpose are
+ disclaimed. In no event shall the Intel Corporation or contributors be liable
+ for any direct, indirect, incidental, special, exemplary, or consequential
+ damages (including, but not limited to, procurement of substitute goods or
+ services; loss of use, data, or profits; or business interruption) however
+ caused and on any theory of liability, whether in contract, strict liability,
  or tort (including negligence or otherwise) arising in any way out of
  the use of this software, even if advised of the possibility of such damage.
 */
@@ -47,37 +48,29 @@
 #ifndef __OPENCV_RHO_H__
 #define __OPENCV_RHO_H__
 
-
-
 /* Includes */
-#include <opencv2/core.hpp>
 #include <stdint.h>
 
-
-
-
+#include <opencv2/core.hpp>
 
 /* Defines */
 
-
 /* Flags */
 #ifndef RHO_FLAG_NONE
-#define RHO_FLAG_NONE                        (0U<<0)
+#define RHO_FLAG_NONE (0U << 0)
 #endif
 #ifndef RHO_FLAG_ENABLE_NR
-#define RHO_FLAG_ENABLE_NR                   (1U<<0)
+#define RHO_FLAG_ENABLE_NR (1U << 0)
 #endif
 #ifndef RHO_FLAG_ENABLE_REFINEMENT
-#define RHO_FLAG_ENABLE_REFINEMENT           (1U<<1)
+#define RHO_FLAG_ENABLE_REFINEMENT (1U << 1)
 #endif
 #ifndef RHO_FLAG_ENABLE_FINAL_REFINEMENT
-#define RHO_FLAG_ENABLE_FINAL_REFINEMENT     (1U<<2)
+#define RHO_FLAG_ENABLE_FINAL_REFINEMENT (1U << 2)
 #endif
 
-
-
 /* Namespace cv */
-namespace cv{
+namespace cv {
 
 /* Data structures */
 
@@ -87,7 +80,6 @@ namespace cv{
 
 struct RHO_HEST;
 typedef struct RHO_HEST RHO_HEST;
-
 
 /* Functions */
 
@@ -99,7 +91,6 @@ typedef struct RHO_HEST RHO_HEST;
  */
 
 Ptr<RHO_HEST> rhoInit(void);
-
 
 /**
  * Ensure that the estimator context's internal table for non-randomness
@@ -116,9 +107,7 @@ Ptr<RHO_HEST> rhoInit(void);
  * @return 0 if unsuccessful; non-zero otherwise.
  */
 
-int  rhoEnsureCapacity(Ptr<RHO_HEST> p, unsigned N, double beta);
-
-
+int rhoEnsureCapacity(Ptr<RHO_HEST> p, unsigned N, double beta);
 
 /**
  * Seeds the internal PRNG with the given seed.
@@ -132,7 +121,6 @@ int  rhoEnsureCapacity(Ptr<RHO_HEST> p, unsigned N, double beta);
  */
 
 void rhoSeed(Ptr<RHO_HEST> p, uint64_t seed);
-
 
 /**
  * Estimates the homography using the given context, matches and parameters to
@@ -241,28 +229,23 @@ void rhoSeed(Ptr<RHO_HEST> p, uint64_t seed);
  *                         inliers for acceptance was reached; 0 otherwise.
  */
 
-unsigned rhoHest(Ptr<RHO_HEST> p,       /* Homography estimation context. */
-                 const float*  src,     /* Source points */
-                 const float*  dst,     /* Destination points */
-                 char*         inl,     /* Inlier mask */
-                 unsigned      N,       /*  = src.length = dst.length = inl.length */
-                 float         maxD,    /*   3.0 */
-                 unsigned      maxI,    /*  2000 */
-                 unsigned      rConvg,  /*  2000 */
-                 double        cfd,     /* 0.995 */
-                 unsigned      minInl,  /*     4 */
-                 double        beta,    /*  0.35 */
-                 unsigned      flags,   /*     0 */
-                 const float*  guessH,  /* Extrinsic guess, NULL if none provided */
-                 float*        finalH); /* Final result. */
-
-
-
+unsigned rhoHest(
+    Ptr<RHO_HEST> p,     /* Homography estimation context. */
+    const float* src,    /* Source points */
+    const float* dst,    /* Destination points */
+    char* inl,           /* Inlier mask */
+    unsigned N,          /*  = src.length = dst.length = inl.length */
+    float maxD,          /*   3.0 */
+    unsigned maxI,       /*  2000 */
+    unsigned rConvg,     /*  2000 */
+    double cfd,          /* 0.995 */
+    unsigned minInl,     /*     4 */
+    double beta,         /*  0.35 */
+    unsigned flags,      /*     0 */
+    const float* guessH, /* Extrinsic guess, NULL if none provided */
+    float* finalH);      /* Final result. */
 
 /* End Namespace cv */
-}
-
-
-
+}  // namespace cv
 
 #endif

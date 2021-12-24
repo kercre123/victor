@@ -4,13 +4,12 @@
  * Author: Brad Neuman
  * Created: 2017-10-30
  *
- * Description: Simple dispatch behavior which runs each behavior in a list in order, if it wants to be
- *              activated
+ * Description: Simple dispatch behavior which runs each behavior in a list in
+ *order, if it wants to be activated
  *
  * Copyright: Anki, Inc. 2017
  *
  **/
-
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherQueue.h"
 
@@ -19,82 +18,78 @@
 
 namespace Anki {
 namespace Vector {
-  
+
 namespace {
 const char* kBehaviorsKey = "behaviors";
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorDispatcherQueue::InstanceConfig::InstanceConfig()
-{
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorDispatcherQueue::InstanceConfig::InstanceConfig() {}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorDispatcherQueue::DynamicVariables::DynamicVariables() {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorDispatcherQueue::DynamicVariables::DynamicVariables()
-{
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
 BehaviorDispatcherQueue::BehaviorDispatcherQueue(const Json::Value& config)
-  : IBehaviorDispatcher(config, false)
-{
+    : IBehaviorDispatcher(config, false) {
   const Json::Value& behaviorArray = config[kBehaviorsKey];
   DEV_ASSERT_MSG(!behaviorArray.isNull(),
                  "BehaviorDispatcherQueue.BehaviorsNotSpecified",
                  "No Behaviors key found");
-  if(!behaviorArray.isNull()) {
-    for(const auto& behaviorIDStr: behaviorArray) {
+  if (!behaviorArray.isNull()) {
+    for (const auto& behaviorIDStr : behaviorArray) {
       IBehaviorDispatcher::AddPossibleDispatch(behaviorIDStr.asString());
     }
   }
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherQueue::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
-{
-  expectedKeys.insert( kBehaviorsKey );
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherQueue::GetBehaviorJsonKeys(
+    std::set<const char*>& expectedKeys) const {
+  expectedKeys.insert(kBehaviorsKey);
   IBehaviorDispatcher::GetBehaviorJsonKeys(expectedKeys);
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherQueue::BehaviorDispatcher_OnActivated()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherQueue::BehaviorDispatcher_OnActivated() {
   _dVars.currIdx = 0;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherQueue::DispatcherUpdate()
-{
-  if( IsActivated() &&
-      !IsControlDelegated() &&
-      _dVars.currIdx >= GetAllPossibleDispatches().size() ) {
-    // we're past the end of the queue and control isn't delegated, so stop ourselves
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherQueue::DispatcherUpdate() {
+  if (IsActivated() && !IsControlDelegated() &&
+      _dVars.currIdx >= GetAllPossibleDispatches().size()) {
+    // we're past the end of the queue and control isn't delegated, so stop
+    // ourselves
     CancelSelf();
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorDispatcherQueue::GetDesiredBehavior()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+ICozmoBehaviorPtr BehaviorDispatcherQueue::GetDesiredBehavior() {
   // This should only be callable when the behavior isn't running anymore
-  DEV_ASSERT( !IsControlDelegated(), "BehaviorDispatcherQueue.GetDesiredBehavior.ControlNotDelegated" );
+  DEV_ASSERT(!IsControlDelegated(),
+             "BehaviorDispatcherQueue.GetDesiredBehavior.ControlNotDelegated");
 
   const auto& dispatches = GetAllPossibleDispatches();
 
   // iterate until we find a behavior that wants to be activated
-  while( _dVars.currIdx < dispatches.size() ) {
-    if( dispatches[_dVars.currIdx]->WantsToBeActivated() ) {
+  while (_dVars.currIdx < dispatches.size()) {
+    if (dispatches[_dVars.currIdx]->WantsToBeActivated()) {
       PRINT_CH_INFO("Behaviors", "BehaviorDispatcherQueue.SelectBehavior",
-                    "Selecting behavior %zu '%s'",
-                    _dVars.currIdx,
+                    "Selecting behavior %zu '%s'", _dVars.currIdx,
                     dispatches[_dVars.currIdx]->GetDebugLabel().c_str());
 
       // return this behavior and increment for next time
       return dispatches[_dVars.currIdx++];
-    }
-    else {
+    } else {
       // try the next behavior
       PRINT_CH_INFO("Behaviors", "BehaviorDispatcherQueue.SkipBehavior",
                     "Skipping behavior %zu '%s' because it doesn't want to run",
@@ -109,5 +104,5 @@ ICozmoBehaviorPtr BehaviorDispatcherQueue::GetDesiredBehavior()
   return ICozmoBehaviorPtr{};
 }
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki

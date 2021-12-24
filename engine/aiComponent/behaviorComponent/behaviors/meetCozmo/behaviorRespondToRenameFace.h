@@ -17,35 +17,34 @@
 
 namespace Anki {
 namespace Vector {
-  
-class BehaviorRespondToRenameFace : public ICozmoBehavior
-{
-private:
-  
+
+class BehaviorRespondToRenameFace : public ICozmoBehavior {
+ private:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorRespondToRenameFace(const Json::Value& config);
-  
-public:
+
+ public:
   virtual bool WantsToBeActivatedBehavior() const override;
-  
+
   void SetName(const std::string& name);
-  
-protected:
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  virtual void OnBehaviorActivated()   override;
-  virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event) override;
-  
-private:
-  
-  std::string      _name;
+
+ protected:
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+  virtual void OnBehaviorActivated() override;
+  virtual void HandleWhileInScopeButNotActivated(
+      const EngineToGameEvent& event) override;
+
+ private:
+  std::string _name;
   Vision::FaceID_t _faceID;
-  
-}; // class BehaviorReactToRenameFace
-  
 
-} // namespace Vector
-} // namespace Anki
+};  // class BehaviorReactToRenameFace
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorRespondToRenameFace_H__
+}  // namespace Vector
+}  // namespace Anki
+
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorRespondToRenameFace_H__

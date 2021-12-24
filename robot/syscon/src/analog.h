@@ -18,13 +18,13 @@ enum ADC_CHANNEL {
 };
 
 namespace Analog {
-  extern bool on_charger;
-  void init(void);
-  void tick(void);
-  void stop(void);
-  void transmit(BodyToHead* data);
-  void receive(HeadToBody* data);
-  void setPower(bool power);
-};
+extern bool on_charger;
+void init(void);
+void tick(void);
+void stop(void);
+void transmit(BodyToHead* data);
+void receive(HeadToBody* data);
+void setPower(bool power);
+};  // namespace Analog
 
 #endif

@@ -6,23 +6,23 @@
 #ifndef __Anki_Vision_Image_Impl_H__
 #define __Anki_Vision_Image_Impl_H__
 
-#include "coretech/vision/engine/image_fwd.h"
 #include "coretech/common/shared/array2d.h"
-#include "coretech/common/shared/math/rect.h"
 #include "coretech/common/shared/math/point.h"
+#include "coretech/common/shared/math/rect.h"
+#include "coretech/vision/engine/image_fwd.h"
 
 namespace Anki {
 namespace Vision {
 
-template<typename T>
-template<typename DerivedType>
-void ImageBase<T>::DrawSubImage(const DerivedType& subImage, const Point2f& topLeftCorner, 
-                                T blankPixelValue, bool drawBlankPixels)
-{
+template <typename T>
+template <typename DerivedType>
+void ImageBase<T>::DrawSubImage(const DerivedType& subImage,
+                                const Point2f& topLeftCorner, T blankPixelValue,
+                                bool drawBlankPixels) {
   s32 subImageColOffset = 0;
   s32 subImageRowOffset = 0;
 
-  // If the subimage wants to be placed with a negative position 
+  // If the subimage wants to be placed with a negative position
   // copy it starting wherever it would become visible in the image
   // rect will be clamped to 0,0 on intersect below
   if (topLeftCorner.x() < 0) {
@@ -34,8 +34,8 @@ void ImageBase<T>::DrawSubImage(const DerivedType& subImage, const Point2f& topL
 
   // Calculate where the subimage wants to be copied to and then clamp that area
   // to the space that actually exists within the image
-  Rectangle<s32> rect(topLeftCorner.x(), topLeftCorner.y(), 
-                      subImage.GetNumCols(), subImage.GetNumRows());    
+  Rectangle<s32> rect(topLeftCorner.x(), topLeftCorner.y(),
+                      subImage.GetNumCols(), subImage.GetNumRows());
   rect = GetBoundingRect().Intersect(rect);
 
   // named variables for readability
@@ -54,17 +54,21 @@ void ImageBase<T>::DrawSubImage(const DerivedType& subImage, const Point2f& topL
   if (drawBlankPixels) {
     // Faster render that copies all pixels
     const auto numBytesToCopy = sizeof(T) * numColsToCopy;
-    for(s32 relRowIdx = 0; relRowIdx < numRowsToCopy; ++relRowIdx) {
-      const T* source_row = subImage.GetRow(relRowIdx + subImageRowOffset) + subImageColOffset;
-      T* dest_row = Array2d<T>::GetRow(relRowIdx + destRowOffset) + destColOffset;
+    for (s32 relRowIdx = 0; relRowIdx < numRowsToCopy; ++relRowIdx) {
+      const T* source_row =
+          subImage.GetRow(relRowIdx + subImageRowOffset) + subImageColOffset;
+      T* dest_row =
+          Array2d<T>::GetRow(relRowIdx + destRowOffset) + destColOffset;
       std::memcpy(dest_row, source_row, numBytesToCopy);
     }
   } else {
     // Slower render that copies only non-blank pixels
     for (s32 relRowIdx = 0; relRowIdx < numRowsToCopy; ++relRowIdx) {
-      const T* source_row = subImage.GetRow(relRowIdx + subImageRowOffset) + subImageColOffset;
-      T* dest_row = Array2d<T>::GetRow(relRowIdx + destRowOffset) + destColOffset;
-      
+      const T* source_row =
+          subImage.GetRow(relRowIdx + subImageRowOffset) + subImageColOffset;
+      T* dest_row =
+          Array2d<T>::GetRow(relRowIdx + destRowOffset) + destColOffset;
+
       for (s32 relColIdx = 0; relColIdx < numColsToCopy; ++relColIdx) {
         if (source_row[relColIdx] != blankPixelValue) {
           dest_row[relColIdx] = source_row[relColIdx];
@@ -74,7 +78,7 @@ void ImageBase<T>::DrawSubImage(const DerivedType& subImage, const Point2f& topL
   }
 }
 
-} // namespace Vision
-} // namespace Anki
+}  // namespace Vision
+}  // namespace Anki
 
-#endif // __Anki_Vision_Image_Impl_H__
+#endif  // __Anki_Vision_Image_Impl_H__

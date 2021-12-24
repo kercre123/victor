@@ -54,6 +54,7 @@ struct ProfileEvent {
 #ifdef TFLITE_PROFILING_ENABLED
 
 #include <sys/time.h>
+
 #include <vector>
 
 namespace tflite {

@@ -10,38 +10,37 @@
  *
  **/
 
-
 #ifndef __Vector_Engine_PerfMetric_Engine_H__
 #define __Vector_Engine_PerfMetric_Engine_H__
 
-#include "util/perfMetric/iPerfMetric.h"
-#include "clad/types/behaviorComponent/activeFeatures.h"
-#include "util/stats/statsAccumulator.h"
-
 #include <string>
 
+#include "clad/types/behaviorComponent/activeFeatures.h"
+#include "util/perfMetric/iPerfMetric.h"
+#include "util/stats/statsAccumulator.h"
 
 namespace Anki {
 namespace Vector {
 
-
-class PerfMetricEngine : public PerfMetric
-{
-public:
+class PerfMetricEngine : public PerfMetric {
+ public:
   explicit PerfMetricEngine(const CozmoContext* context);
   virtual ~PerfMetricEngine();
 
-  virtual void Init(Util::Data::DataPlatform* dataPlatform, WebService::WebService* webService) override final;
-  virtual void Update(const float tickDuration_ms,
-                      const float tickFrequency_ms,
+  virtual void Init(Util::Data::DataPlatform* dataPlatform,
+                    WebService::WebService* webService) override final;
+  virtual void Update(const float tickDuration_ms, const float tickFrequency_ms,
                       const float sleepDurationIntended_ms,
                       const float sleepDurationActual_ms) override final;
 
-private:
-
+ private:
   virtual void InitDumpAccumulators() override final;
-  virtual const FrameMetric& UpdateDumpAccumulators(const int frameBufferIndex) override final;
-  virtual const FrameMetric& GetBaseFrame(const int frameBufferIndex) override final { return _frameBuffer[frameBufferIndex]; };
+  virtual const FrameMetric& UpdateDumpAccumulators(
+      const int frameBufferIndex) override final;
+  virtual const FrameMetric& GetBaseFrame(
+      const int frameBufferIndex) override final {
+    return _frameBuffer[frameBufferIndex];
+  };
   virtual int AppendFrameData(const DumpType dumpType,
                               const int frameBufferIndex,
                               const int dumpBufferOffset,
@@ -50,10 +49,9 @@ private:
                                 const int dumpBufferOffset,
                                 const int lineIndex) override final;
 
-  // Frame size:  Base struct is 16 bytes; here is 10 words * 4 (40 bytes), plus 32 bytes = 88 bytes
-  // x 4000 frames is ~344 KB
-  struct FrameMetricEngine : public FrameMetric
-  {
+  // Frame size:  Base struct is 16 bytes; here is 10 words * 4 (40 bytes), plus
+  // 32 bytes = 88 bytes x 4000 frames is ~344 KB
+  struct FrameMetricEngine : public FrameMetric {
     uint32_t _messageCountRobotToEngine;
     uint32_t _messageCountEngineToRobot;
     uint32_t _messageCountGameToEngine;
@@ -65,12 +63,13 @@ private:
     float _batteryVoltage;
     uint32_t _cpuFreq_kHz;
 
-    ActiveFeature    _activeFeature;
+    ActiveFeature _activeFeature;
     static const int kBehaviorStringMaxSize = 32;
-    char _behavior[kBehaviorStringMaxSize]; // Some description of what Victor is doing
+    char _behavior[kBehaviorStringMaxSize];  // Some description of what Victor
+                                             // is doing
   };
 
-  FrameMetricEngine*  _frameBuffer = nullptr;
+  FrameMetricEngine* _frameBuffer = nullptr;
 #if ANKI_PERF_METRIC_ENABLED
   const CozmoContext* _context;
 #endif
@@ -87,9 +86,8 @@ private:
 };
 
 static const int kNumFramesInBuffer = 1000;
-  
-} // namespace Vector
-} // namespace Anki
 
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Vector_Engine_PerfMetric_Engine_H__
+#endif  // __Vector_Engine_PerfMetric_Engine_H__

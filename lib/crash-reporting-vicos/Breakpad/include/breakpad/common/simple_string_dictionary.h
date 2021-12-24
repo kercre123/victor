@@ -68,19 +68,14 @@ class NonAllocatingMap {
     char key[KeySize];
     char value[ValueSize];
 
-    bool is_active() const {
-      return key[0] != '\0';
-    }
+    bool is_active() const { return key[0] != '\0'; }
   };
 
   // An Iterator can be used to iterate over all the active entries in a
   // NonAllocatingMap.
   class Iterator {
    public:
-    explicit Iterator(const NonAllocatingMap& map)
-        : map_(map),
-          current_(0) {
-    }
+    explicit Iterator(const NonAllocatingMap& map) : map_(map), current_(0) {}
 
     // Returns the next entry in the map, or NULL if at the end of the
     // collection.
@@ -101,12 +96,9 @@ class NonAllocatingMap {
     DISALLOW_COPY_AND_ASSIGN(Iterator);
   };
 
-  NonAllocatingMap() : entries_() {
-  }
+  NonAllocatingMap() : entries_() {}
 
-  NonAllocatingMap(const NonAllocatingMap& other) {
-    *this = other;
-  }
+  NonAllocatingMap(const NonAllocatingMap& other) { *this = other; }
 
   NonAllocatingMap& operator=(const NonAllocatingMap& other) {
     assert(other.key_size == key_size);
@@ -144,12 +136,10 @@ class NonAllocatingMap {
   // the key is not found, NULL is returned.
   const char* GetValueForKey(const char* key) const {
     assert(key);
-    if (!key)
-      return NULL;
+    if (!key) return NULL;
 
     const Entry* entry = GetConstEntryForKey(key);
-    if (!entry)
-      return NULL;
+    if (!entry) return NULL;
 
     return entry->value;
   }
@@ -165,13 +155,11 @@ class NonAllocatingMap {
     }
 
     assert(key);
-    if (!key)
-      return;
+    if (!key) return;
 
     // Key must not be an empty string.
     assert(key[0] != '\0');
-    if (key[0] == '\0')
-      return;
+    if (key[0] == '\0') return;
 
     Entry* entry = GetEntryForKey(key);
 
@@ -190,15 +178,13 @@ class NonAllocatingMap {
     }
 
     // If the map is out of space, entry will be NULL.
-    if (!entry)
-      return;
+    if (!entry) return;
 
 #ifndef NDEBUG
     // Sanity check that the key only appears once.
     int count = 0;
     for (size_t i = 0; i < num_entries; ++i) {
-      if (strncmp(entries_[i].key, key, key_size) == 0)
-        ++count;
+      if (strncmp(entries_[i].key, key, key_size) == 0) ++count;
     }
     assert(count == 1);
 #endif
@@ -211,8 +197,7 @@ class NonAllocatingMap {
   // the key is not found, this is a noop.
   void RemoveKey(const char* key) {
     assert(key);
-    if (!key)
-      return;
+    if (!key) return;
 
     Entry* entry = GetEntryForKey(key);
     if (entry) {

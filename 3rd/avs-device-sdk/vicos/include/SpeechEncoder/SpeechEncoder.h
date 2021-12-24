@@ -16,13 +16,13 @@
 #ifndef ALEXA_CLIENT_SDK_SPEECHENCODER_INCLUDE_SPEECHENCODER_SPEECHENCODER_H_
 #define ALEXA_CLIENT_SDK_SPEECHENCODER_INCLUDE_SPEECHENCODER_SPEECHENCODER_H_
 
-#include <atomic>
-#include <memory>
-#include <thread>
-
 #include <AVSCommon/AVS/AudioInputStream.h>
 #include <AVSCommon/Utils/AudioFormat.h>
 #include <AVSCommon/Utils/Threading/Executor.h>
+
+#include <atomic>
+#include <memory>
+#include <thread>
 
 #include "EncoderContext.h"
 
@@ -35,103 +35,108 @@ namespace speechencoder {
  * @c AudioInputStream
  */
 class SpeechEncoder {
-public:
-    /**
-     * Constructor.
-     *
-     * @param encoder The backend encoder implmentation.
-     */
-    SpeechEncoder(const std::shared_ptr<EncoderContext>& encoder);
+ public:
+  /**
+   * Constructor.
+   *
+   * @param encoder The backend encoder implmentation.
+   */
+  SpeechEncoder(const std::shared_ptr<EncoderContext>& encoder);
 
-    /**
-     * Destructor.
-     */
-    ~SpeechEncoder();
+  /**
+   * Destructor.
+   */
+  ~SpeechEncoder();
 
-    /**
-     * Start the new encoding session. @c SpeechEncoder can manage only single
-     * session at the same time, thus this call will be failed when ongoing
-     * encoding session exists, or pre-initialization on @c EncoderContext is
-     * failed.
-     *
-     * @param inputStream The @c AudioInputStream to stream audio from. (i.e.
-     * input stream that has raw PCM frames.)
-     * @param inputFormat The @c AudioFormat to describe the audio format of
-     * the input stream.
-     * @param begin The index where encoding should begin.
-     * @param reference The reference for the index.
-     * @return true if encoding session has been started successfully,
-     * otherwise false.
-     */
-    bool startEncoding(
-        const std::shared_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream>& inputStream,
-        alexaClientSDK::avsCommon::utils::AudioFormat inputFormat,
-        avsCommon::avs::AudioInputStream::Index begin,
-        avsCommon::avs::AudioInputStream::Reader::Reference reference);
+  /**
+   * Start the new encoding session. @c SpeechEncoder can manage only single
+   * session at the same time, thus this call will be failed when ongoing
+   * encoding session exists, or pre-initialization on @c EncoderContext is
+   * failed.
+   *
+   * @param inputStream The @c AudioInputStream to stream audio from. (i.e.
+   * input stream that has raw PCM frames.)
+   * @param inputFormat The @c AudioFormat to describe the audio format of
+   * the input stream.
+   * @param begin The index where encoding should begin.
+   * @param reference The reference for the index.
+   * @return true if encoding session has been started successfully,
+   * otherwise false.
+   */
+  bool startEncoding(
+      const std::shared_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream>&
+          inputStream,
+      alexaClientSDK::avsCommon::utils::AudioFormat inputFormat,
+      avsCommon::avs::AudioInputStream::Index begin,
+      avsCommon::avs::AudioInputStream::Reader::Reference reference);
 
-    /**
-     * Stop current encoding session.
-     *
-     * @param stopImmediately Flag indicating that encoding should stop immediatly.
-     * If this flag is set to @c false (the default), encoding will continue until
-     * any existing data in the buffer has been encoded. If this flag is set to
-     * @c true, existing data in the buffer which has not already been encoded will
-     * be discarded, and encoding will stop immediately.
-     */
-    void stopEncoding(bool stopImmediately = false);
+  /**
+   * Stop current encoding session.
+   *
+   * @param stopImmediately Flag indicating that encoding should stop
+   * immediatly. If this flag is set to @c false (the default), encoding will
+   * continue until any existing data in the buffer has been encoded. If this
+   * flag is set to
+   * @c true, existing data in the buffer which has not already been encoded
+   * will be discarded, and encoding will stop immediately.
+   */
+  void stopEncoding(bool stopImmediately = false);
 
-    /**
-     * Retrieve @c AudioInputStream for encoding results.
-     *
-     * @return @c AudioInputStream for streaming encoding results for further
-     * processing.
-     */
-    std::shared_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream> getEncodedStream();
+  /**
+   * Retrieve @c AudioInputStream for encoding results.
+   *
+   * @return @c AudioInputStream for streaming encoding results for further
+   * processing.
+   */
+  std::shared_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream>
+  getEncodedStream();
 
-    /**
-     * Retrieve a @c EncoderContext that was given with initialization.
-     *
-     * @return @c EncoderContext
-     */
-    std::shared_ptr<EncoderContext> getContext();
+  /**
+   * Retrieve a @c EncoderContext that was given with initialization.
+   *
+   * @return @c EncoderContext
+   */
+  std::shared_ptr<EncoderContext> getContext();
 
-private:
-    /**
-     * Thread loop
-     */
-    void encodeLoop(
-        avsCommon::avs::AudioInputStream::Index begin,
-        avsCommon::avs::AudioInputStream::Reader::Reference reference);
+ private:
+  /**
+   * Thread loop
+   */
+  void encodeLoop(
+      avsCommon::avs::AudioInputStream::Index begin,
+      avsCommon::avs::AudioInputStream::Reader::Reference reference);
 
-    /// Backend implementation
-    std::shared_ptr<EncoderContext> m_encoder;
+  /// Backend implementation
+  std::shared_ptr<EncoderContext> m_encoder;
 
-    /// Input AudioFormat (PCM)
-    alexaClientSDK::avsCommon::utils::AudioFormat m_inputAudioFormat;
+  /// Input AudioFormat (PCM)
+  alexaClientSDK::avsCommon::utils::AudioFormat m_inputAudioFormat;
 
-    /// Input AudioInputStream (i.e. PCM frames)
-    std::shared_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream> m_inputStream;
+  /// Input AudioInputStream (i.e. PCM frames)
+  std::shared_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream>
+      m_inputStream;
 
-    /// AudioFormat initialized from EncoderContext
-    alexaClientSDK::avsCommon::utils::AudioFormat m_outputAudioFormat;
+  /// AudioFormat initialized from EncoderContext
+  alexaClientSDK::avsCommon::utils::AudioFormat m_outputAudioFormat;
 
-    /// Maximum single encoded frame size (byte) initialized from EncoderContext
-    size_t m_maxFrameSize;
+  /// Maximum single encoded frame size (byte) initialized from EncoderContext
+  size_t m_maxFrameSize;
 
-    /// AudioInputStream for streaming results
-    std::shared_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream> m_encodedStream;
+  /// AudioInputStream for streaming results
+  std::shared_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream>
+      m_encodedStream;
 
-    /// true when the current session is active
-    std::atomic<bool> m_isEncoding;
+  /// true when the current session is active
+  std::atomic<bool> m_isEncoding;
 
-    /// true when stopEncoding has been called with stopImmediately=false
-    std::atomic<bool> m_stopRequested;
+  /// true when stopEncoding has been called with stopImmediately=false
+  std::atomic<bool> m_stopRequested;
 
-    /// Internal Executor for managing encoding thread
-    avsCommon::utils::threading::Executor m_executor;
+  /// Internal Executor for managing encoding thread
+  avsCommon::utils::threading::Executor m_executor;
 
-    /// Mutex for thread safety
-    std::mutex m_mutex;
+  /// Mutex for thread safety
+  std::mutex m_mutex;
 };
 
 }  // namespace speechencoder

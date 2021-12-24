@@ -21,17 +21,16 @@
  ****************************************************************************************
  */
 
-
 /*
  * INCLUDE FILES
  ****************************************************************************************
  */
 
-#include "rwip_config.h"     // SW configuration
+#include "rwip_config.h"  // SW configuration
 
 #if (GTL_ITF)
 
-#include "ke_task.h"         // kernel task
+#include "ke_task.h"  // kernel task
 
 /*
  * INSTANCES
@@ -45,14 +44,13 @@
  ****************************************************************************************
  */
 /// Possible states of the GTL task
-enum GTL_STATE
-{
-    /// TX IDLE state
-    GTL_TX_IDLE,
-    /// TX ONGOING state
-    GTL_TX_ONGOING,
-    /// Number of states.
-    GTL_STATE_MAX
+enum GTL_STATE {
+  /// TX IDLE state
+  GTL_TX_IDLE,
+  /// TX ONGOING state
+  GTL_TX_ONGOING,
+  /// Number of states.
+  GTL_STATE_MAX
 };
 
 /*
@@ -60,24 +58,24 @@ enum GTL_STATE
  ****************************************************************************************
  */
 /// Message API of the GTL task
-enum GTL_MSG
-{
-    GTL_MSG_ID_FIRST = KE_FIRST_MSG(TASK_GTL),
+enum GTL_MSG {
+  GTL_MSG_ID_FIRST = KE_FIRST_MSG(TASK_GTL),
 
-    #if BLE_EMB_PRESENT
-    GTL_HCI_UNKNOWN_CMD,
-    #endif // BLE_EMB_PRESENT
+#if BLE_EMB_PRESENT
+  GTL_HCI_UNKNOWN_CMD,
+#endif  // BLE_EMB_PRESENT
 
-    #if BLE_APP_NEB
-    GTL_NEB_MSG_TX,
-    #endif // BLE_APP_NEB
+#if BLE_APP_NEB
+  GTL_NEB_MSG_TX,
+#endif  // BLE_APP_NEB
 
-    /// to maintain device woken-up during some time
-    GTL_SLEEP_TO,
-    /// For polling the UART HW block when waiting Host to allow sleep (ext wakeup)
-    GTL_POLLING_TO,
-    
-    GTL_MSG_ID_LAST
+  /// to maintain device woken-up during some time
+  GTL_SLEEP_TO,
+  /// For polling the UART HW block when waiting Host to allow sleep (ext
+  /// wakeup)
+  GTL_POLLING_TO,
+
+  GTL_MSG_ID_LAST
 };
 
 /*
@@ -87,9 +85,8 @@ enum GTL_MSG
 extern const struct ke_state_handler gtl_default_handler;
 extern ke_state_t gtl_state[GTL_IDX_MAX];
 
-#endif //GTL_ITF
+#endif  // GTL_ITF
 
 /// @} GTL
 
-#endif // GTL_TASK_H_
-
+#endif  // GTL_TASK_H_

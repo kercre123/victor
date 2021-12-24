@@ -30,67 +30,67 @@ namespace error {
  */
 template <typename TValue>
 class SuccessResult : public utils::error::Result<bool, TValue> {
-public:
-    /**
-     * Creates a succeeded result with a value.
-     *
-     * @param value Value to be associated with the result.
-     * @return Succeeded result with a value.
-     */
-    inline static SuccessResult<TValue> success(TValue value);
+ public:
+  /**
+   * Creates a succeeded result with a value.
+   *
+   * @param value Value to be associated with the result.
+   * @return Succeeded result with a value.
+   */
+  inline static SuccessResult<TValue> success(TValue value);
 
-    /**
-     * Creates a failed result.
-     *
-     * @return Failed result.
-     */
-    inline static SuccessResult<TValue> failure();
+  /**
+   * Creates a failed result.
+   *
+   * @return Failed result.
+   */
+  inline static SuccessResult<TValue> failure();
 
-    /**
-     * Constructor with both success status and value provided.
-     *
-     * @param succeeded Success status. True for succes, false for failure.
-     * @param value Value to be associated with the result.
-     */
-    inline SuccessResult(bool succeeded, TValue value);
+  /**
+   * Constructor with both success status and value provided.
+   *
+   * @param succeeded Success status. True for succes, false for failure.
+   * @param value Value to be associated with the result.
+   */
+  inline SuccessResult(bool succeeded, TValue value);
 
-    /**
-     * Returns true if result status is succeeded, false otherwise.
-     *
-     * @return True if result status is succeeded, false otherwise.
-     */
-    inline bool isSucceeded();
+  /**
+   * Returns true if result status is succeeded, false otherwise.
+   *
+   * @return True if result status is succeeded, false otherwise.
+   */
+  inline bool isSucceeded();
 
-protected:
-    /**
-     * Constructor with only success status provided.
-     *
-     * @param succeeded Success status. True for success, false for failure.
-     */
-    explicit inline SuccessResult(bool succeeded);
+ protected:
+  /**
+   * Constructor with only success status provided.
+   *
+   * @param succeeded Success status. True for success, false for failure.
+   */
+  explicit inline SuccessResult(bool succeeded);
 };
 
 template <typename TValue>
-SuccessResult<TValue>::SuccessResult(bool succeeded) : Result<bool, TValue>(succeeded) {
-}
+SuccessResult<TValue>::SuccessResult(bool succeeded)
+    : Result<bool, TValue>(succeeded) {}
 
 template <typename TValue>
-SuccessResult<TValue>::SuccessResult(bool succeeded, TValue value) : Result<bool, TValue>(succeeded, value) {
-}
+SuccessResult<TValue>::SuccessResult(bool succeeded, TValue value)
+    : Result<bool, TValue>(succeeded, value) {}
 
 template <typename TValue>
 bool SuccessResult<TValue>::isSucceeded() {
-    return Result<bool, TValue>::status();
+  return Result<bool, TValue>::status();
 }
 
 template <typename TValue>
 SuccessResult<TValue> SuccessResult<TValue>::failure() {
-    return SuccessResult(false);
+  return SuccessResult(false);
 }
 
 template <typename TValue>
 SuccessResult<TValue> SuccessResult<TValue>::success(TValue value) {
-    return SuccessResult<TValue>(true, value);
+  return SuccessResult<TValue>(true, value);
 }
 
 }  // namespace error

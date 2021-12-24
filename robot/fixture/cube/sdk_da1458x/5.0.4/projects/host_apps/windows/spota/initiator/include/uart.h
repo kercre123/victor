@@ -5,10 +5,10 @@
  *
  * @brief Header file for uart interface.
  *
- * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer 
- * program includes Confidential, Proprietary Information and is a Trade Secret of 
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
- * unless authorized in writing. All Rights Reserved.
+ * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -24,6 +24,5 @@
 uint8_t InitUART(int Port, int BaudRate);
 VOID UARTProc(PVOID unused);
 VOID UARTSend(unsigned short size, unsigned char *data);
-
 
 #endif /* _UART_H_ */

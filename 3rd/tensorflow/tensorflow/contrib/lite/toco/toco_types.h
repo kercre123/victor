@@ -16,6 +16,7 @@ limitations under the License.
 #define TENSORFLOW_CONTRIB_LITE_TOCO_TYPES_H_
 
 #include <string>
+
 #include "tensorflow/core/platform/platform.h"
 
 #if defined(PLATFORM_GOOGLE) || defined(GOOGLE_INTEGRAL_TYPES)

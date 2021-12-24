@@ -4,6 +4,4 @@
  * found in the LICENSE file.
  */
 
-int main() {
-  return 0;
-}
+int main() { return 0; }

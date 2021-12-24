@@ -10,18 +10,17 @@
 
 #include <stdio.h>
 
-bool AnkiConsoleChannelIsOpen(Anki::Util::IConsoleChannel* channel)
-{
+bool AnkiConsoleChannelIsOpen(Anki::Util::IConsoleChannel* channel) {
   return channel->IsOpen();
 }
 
-int AnkiConsoleChannelWriteData(Anki::Util::IConsoleChannel* channel, uint8_t *buffer, size_t len)
-{
+int AnkiConsoleChannelWriteData(Anki::Util::IConsoleChannel* channel,
+                                uint8_t* buffer, size_t len) {
   return channel->WriteData(buffer, (int)len);
 }
 
-int AnkiConsoleChannelWriteLog(Anki::Util::IConsoleChannel* channel, const char *format, ...)
-{
+int AnkiConsoleChannelWriteLog(Anki::Util::IConsoleChannel* channel,
+                               const char* format, ...) {
   va_list ap;
   va_start(ap, format);
   int result = channel->WriteLogv(format, ap);
@@ -40,5 +39,5 @@ int IConsoleChannel::WriteLog(const char* format, ...) {
   return result;
 }
 
-}
-}
+}  // namespace Util
+}  // namespace Anki

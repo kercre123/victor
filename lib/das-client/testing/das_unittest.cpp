@@ -1,4 +1,5 @@
 #include "DAS.h"
+
 #include "DASPrivate.h"
 #include "dasGameLogAppender.h"
 #include "dasGlobals.h"
@@ -13,24 +14,27 @@
 
 #pragma GCC diagnostic pop
 
-
 TEST(DAS, GetLevel_Unset) {
   _DAS_ClearSetLevels();
-  EXPECT_EQ(DASLogLevel_NumLevels, _DAS_GetLevel("UnSetEvent", DASLogLevel_NumLevels));
+  EXPECT_EQ(DASLogLevel_NumLevels,
+            _DAS_GetLevel("UnSetEvent", DASLogLevel_NumLevels));
 }
 
 TEST(DAS, SetLevel_Simple) {
   _DAS_ClearSetLevels();
   _DAS_SetLevel("TestEvent", DASLogLevel_Info);
-  EXPECT_EQ(DASLogLevel_Info, _DAS_GetLevel("TestEvent", DASLogLevel_NumLevels));
+  EXPECT_EQ(DASLogLevel_Info,
+            _DAS_GetLevel("TestEvent", DASLogLevel_NumLevels));
 }
 
 TEST(DAS, SetLevel_Update) {
   _DAS_ClearSetLevels();
   _DAS_SetLevel("TestEvent", DASLogLevel_Info);
-  EXPECT_EQ(DASLogLevel_Info, _DAS_GetLevel("TestEvent", DASLogLevel_NumLevels));
+  EXPECT_EQ(DASLogLevel_Info,
+            _DAS_GetLevel("TestEvent", DASLogLevel_NumLevels));
   _DAS_SetLevel("TestEvent", DASLogLevel_Warn);
-  EXPECT_EQ(DASLogLevel_Warn, _DAS_GetLevel("TestEvent", DASLogLevel_NumLevels));
+  EXPECT_EQ(DASLogLevel_Warn,
+            _DAS_GetLevel("TestEvent", DASLogLevel_NumLevels));
 }
 
 TEST(DAS, SetLevel_Override) {
@@ -39,18 +43,25 @@ TEST(DAS, SetLevel_Override) {
   _DAS_SetLevel("TestParent.TestChildOne", DASLogLevel_Info);
   _DAS_SetLevel("TestParent.TestChildTwo", DASLogLevel_Debug);
 
-  EXPECT_EQ(DASLogLevel_Event, _DAS_GetLevel("TestParent", DASLogLevel_NumLevels));
-  EXPECT_EQ(DASLogLevel_Event, _DAS_GetLevel("TestParent.TestChildThree", DASLogLevel_NumLevels));
-  EXPECT_EQ(DASLogLevel_Info, _DAS_GetLevel("TestParent.TestChildOne", DASLogLevel_NumLevels));
-  EXPECT_EQ(DASLogLevel_Info, _DAS_GetLevel("TestParent.TestChildOne.Foo", DASLogLevel_NumLevels));
-  EXPECT_EQ(DASLogLevel_Debug, _DAS_GetLevel("TestParent.TestChildTwo", DASLogLevel_NumLevels));
-  EXPECT_EQ(DASLogLevel_Debug, _DAS_GetLevel("TestParent.TestChildTwo.Bar", DASLogLevel_NumLevels));
+  EXPECT_EQ(DASLogLevel_Event,
+            _DAS_GetLevel("TestParent", DASLogLevel_NumLevels));
+  EXPECT_EQ(DASLogLevel_Event,
+            _DAS_GetLevel("TestParent.TestChildThree", DASLogLevel_NumLevels));
+  EXPECT_EQ(DASLogLevel_Info,
+            _DAS_GetLevel("TestParent.TestChildOne", DASLogLevel_NumLevels));
+  EXPECT_EQ(DASLogLevel_Info, _DAS_GetLevel("TestParent.TestChildOne.Foo",
+                                            DASLogLevel_NumLevels));
+  EXPECT_EQ(DASLogLevel_Debug,
+            _DAS_GetLevel("TestParent.TestChildTwo", DASLogLevel_NumLevels));
+  EXPECT_EQ(DASLogLevel_Debug, _DAS_GetLevel("TestParent.TestChildTwo.Bar",
+                                             DASLogLevel_NumLevels));
 }
 
 TEST(DAS, ClearSetLevels) {
   _DAS_SetLevel("AnotherTestEvent", DASLogLevel_Warn);
   _DAS_ClearSetLevels();
-  EXPECT_EQ(DASLogLevel_NumLevels, _DAS_GetLevel("AnotherTestEvent", DASLogLevel_NumLevels));
+  EXPECT_EQ(DASLogLevel_NumLevels,
+            _DAS_GetLevel("AnotherTestEvent", DASLogLevel_NumLevels));
 }
 
 TEST(DAS, SetGlobal) {
@@ -91,6 +102,4 @@ TEST(DAS, SetGlobalGameId) {
   _DAS_ClearGlobals();
 }
 
-TEST(DAS, TearDown) {
-  DASClose();
-}
+TEST(DAS, TearDown) { DASClose(); }

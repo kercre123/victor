@@ -43,6 +43,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <string>
 
 #include "common/using_std_string.h"
@@ -51,10 +52,10 @@ namespace google_breakpad {
 
 // A buffer holding a series of bytes.
 struct ByteBuffer {
-  ByteBuffer() : start(0), end(0) { }
+  ByteBuffer() : start(0), end(0) {}
   ByteBuffer(const uint8_t *set_start, size_t set_size)
-      : start(set_start), end(set_start + set_size) { }
-  ~ByteBuffer() { };
+      : start(set_start), end(set_start + set_size) {}
+  ~ByteBuffer(){};
 
   // Equality operators. Useful in unit tests, and when we're using
   // ByteBuffers to refer to regions of a larger buffer.
@@ -83,8 +84,10 @@ class ByteCursor {
   // Create a cursor reading bytes from the start of BUFFER. By default, the
   // cursor reads multi-byte values in little-endian form.
   ByteCursor(const ByteBuffer *buffer, bool big_endian = false)
-      : buffer_(buffer), here_(buffer->start), 
-        big_endian_(big_endian), complete_(true) { }
+      : buffer_(buffer),
+        here_(buffer->start),
+        big_endian_(big_endian),
+        complete_(true) {}
 
   // Accessor and setter for this cursor's endianness flag.
   bool big_endian() const { return big_endian_; }
@@ -115,18 +118,16 @@ class ByteCursor {
   // *RESULT to the number. If we read off the end of our buffer, clear
   // this cursor's complete_ flag, and store a dummy value in *RESULT.
   // Return a reference to this cursor.
-  template<typename T>
+  template <typename T>
   ByteCursor &Read(size_t size, bool is_signed, T *result) {
     if (CheckAvailable(size)) {
       T v = 0;
       if (big_endian_) {
-        for (size_t i = 0; i < size; i++)
-          v = (v << 8) + here_[i];
+        for (size_t i = 0; i < size; i++) v = (v << 8) + here_[i];
       } else {
         // This loop condition looks weird, but size_t is unsigned, so
         // decrementing i after it is zero yields the largest size_t value.
-        for (size_t i = size - 1; i < size; i--)
-          v = (v << 8) + here_[i];
+        for (size_t i = size - 1; i < size; i--) v = (v << 8) + here_[i];
       }
       if (is_signed && size < sizeof(T)) {
         size_t sign_bit = (T)1 << (size * 8 - 1);
@@ -135,7 +136,7 @@ class ByteCursor {
       here_ += size;
       *result = v;
     } else {
-      *result = (T) 0xdeadbeef;
+      *result = (T)0xdeadbeef;
     }
     return *this;
   }
@@ -144,10 +145,10 @@ class ByteCursor {
   // *RESULT's size and signedness, and set *RESULT to the number. If we
   // read off the end of our buffer, clear this cursor's complete_ flag.
   // Return a reference to this cursor.
-  template<typename T>
+  template <typename T>
   ByteCursor &operator>>(T &result) {
     bool T_is_signed = (T)-1 < 0;
-    return Read(sizeof(T), T_is_signed, &result); 
+    return Read(sizeof(T), T_is_signed, &result);
   }
 
   // Copy the SIZE bytes at the cursor to BUFFER, and advance this
@@ -167,8 +168,8 @@ class ByteCursor {
   // complete_ flag, and set STR to the empty string. Return a reference to
   // this cursor.
   ByteCursor &CString(string *str) {
-    const uint8_t *end
-      = static_cast<const uint8_t *>(memchr(here_, '\0', Available()));
+    const uint8_t *end =
+        static_cast<const uint8_t *>(memchr(here_, '\0', Available()));
     if (end) {
       str->assign(reinterpret_cast<const char *>(here_), end - here_);
       here_ = end + 1;
@@ -190,13 +191,13 @@ class ByteCursor {
   // - Otherwise, if the LIMIT bytes at the cursor contain any '\0'
   //   characters, set *STR to a copy of the bytes before the first '\0',
   //   and advance the cursor by LIMIT bytes.
-  //   
+  //
   // - Otherwise, set *STR to a copy of those LIMIT bytes, and advance the
   //   cursor by LIMIT bytes.
   ByteCursor &CString(string *str, size_t limit) {
     if (CheckAvailable(limit)) {
-      const uint8_t *end
-        = static_cast<const uint8_t *>(memchr(here_, '\0', limit));
+      const uint8_t *end =
+          static_cast<const uint8_t *>(memchr(here_, '\0', limit));
       if (end)
         str->assign(reinterpret_cast<const char *>(here_), end - here_);
       else
@@ -227,8 +228,7 @@ class ByteCursor {
   // the end of our buffer, clear this cursor's complete_ flag, and
   // set *POINTER to NULL. Return a reference to this cursor.
   ByteCursor &Skip(size_t size) {
-    if (CheckAvailable(size))
-      here_ += size;
+    if (CheckAvailable(size)) here_ += size;
     return *this;
   }
 

@@ -16,46 +16,52 @@
 #ifndef ALEXA_CLIENT_SDK_ACL_INCLUDE_ACL_TRANSPORT_MESSAGEROUTEROBSERVERINTERFACE_H_
 #define ALEXA_CLIENT_SDK_ACL_INCLUDE_ACL_TRANSPORT_MESSAGEROUTEROBSERVERINTERFACE_H_
 
-#include <memory>
 #include <AVSCommon/SDKInterfaces/ConnectionStatusObserverInterface.h>
+
+#include <memory>
 
 namespace alexaClientSDK {
 namespace acl {
 
 /**
- * This interface class allows notifications from a MessageRouter object (or any derived class),
- * while not adding to the observer's public interface.  This is achieved by a friend relationship.
- * The MessageRouterObserverInterface will be notified when either the connection status changes,
- * or when a message arrives from AVS.
+ * This interface class allows notifications from a MessageRouter object (or any
+ * derived class), while not adding to the observer's public interface.  This is
+ * achieved by a friend relationship. The MessageRouterObserverInterface will be
+ * notified when either the connection status changes, or when a message arrives
+ * from AVS.
  */
 class MessageRouterObserverInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~MessageRouterObserverInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~MessageRouterObserverInterface() = default;
 
-private:
-    /**
-     * This function will be called when the connection status changes.
-     *
-     * @param status The current status of the connection.
-     * @param reason The reason the connection status changed.
-     */
-    virtual void onConnectionStatusChanged(
-        const avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status status,
-        const avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::ChangedReason reason) = 0;
+ private:
+  /**
+   * This function will be called when the connection status changes.
+   *
+   * @param status The current status of the connection.
+   * @param reason The reason the connection status changed.
+   */
+  virtual void onConnectionStatusChanged(
+      const avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status
+          status,
+      const avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::
+          ChangedReason reason) = 0;
 
-    /**
-     * This function will be called when a Message arrives from AVS.
-     *
-     * @param contextId The contextId of the AVS message, which is used when acquiring attachments.
-     * @param message The AVS message that has been received.
-     */
-    virtual void receive(const std::string& contextId, const std::string& message) = 0;
+  /**
+   * This function will be called when a Message arrives from AVS.
+   *
+   * @param contextId The contextId of the AVS message, which is used when
+   * acquiring attachments.
+   * @param message The AVS message that has been received.
+   */
+  virtual void receive(const std::string& contextId,
+                       const std::string& message) = 0;
 
-    /// The friend declaration.
-    friend class MessageRouter;
+  /// The friend declaration.
+  friend class MessageRouter;
 };
 
 }  // namespace acl

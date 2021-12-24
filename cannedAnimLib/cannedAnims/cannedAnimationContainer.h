@@ -11,40 +11,40 @@
  *
  **/
 
-
 #ifndef ANKI_COZMO_CANNED_ANIMATION_CONTAINER_H
 #define ANKI_COZMO_CANNED_ANIMATION_CONTAINER_H
 
-#include "cannedAnimLib/cannedAnims/animation.h"
 #include <unordered_map>
 #include <vector>
+
+#include "cannedAnimLib/cannedAnims/animation.h"
 
 namespace Anki {
 
 namespace Vector {
 
-class CannedAnimationContainer
-{
-public:
+class CannedAnimationContainer {
+ public:
   CannedAnimationContainer();
-                          
+
   ~CannedAnimationContainer();
-  
-  bool  HasAnimation(const std::string& name) const;
+
+  bool HasAnimation(const std::string& name) const;
   Animation* GetAnimation(const std::string& name);
   const Animation* GetAnimation(const std::string& name) const;
-  // If adding the new animation overwrites an existing animation, outOverwriting will be set to true
+  // If adding the new animation overwrites an existing animation,
+  // outOverwriting will be set to true
   void AddAnimation(Animation&& animation, bool& outOverwriting);
 
   std::vector<std::string> GetAnimationNames();
-  
-private:
+
+ private:
   using AnimMap = std::unordered_map<std::string, Animation>;
   std::unordered_map<std::string, Animation> _animations;
-  
-}; // class CannedAnimationContainer
-  
-} // namespace Vector
-} // namespace Anki
 
-#endif // ANKI_COZMO_CANNED_ANIMATION_CONTAINER_H
+};  // class CannedAnimationContainer
+
+}  // namespace Vector
+}  // namespace Anki
+
+#endif  // ANKI_COZMO_CANNED_ANIMATION_CONTAINER_H

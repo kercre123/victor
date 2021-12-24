@@ -1,15 +1,15 @@
 /**
-* File: strategyRobotTouched.h
-*
-* Author: Arjun Menon
-* Created: 10/18/2017
-*
-* Description: 
-* Strategy that wants to run whenever a robot is touched
-* 
-* Copyright: Anki, Inc. 2017
-*
-**/
+ * File: strategyRobotTouched.h
+ *
+ * Author: Arjun Menon
+ * Created: 10/18/2017
+ *
+ * Description:
+ * Strategy that wants to run whenever a robot is touched
+ *
+ * Copyright: Anki, Inc. 2017
+ *
+ **/
 
 #ifndef __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionRobotTouched_H__
 #define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionRobotTouched_H__
@@ -20,25 +20,24 @@
 namespace Anki {
 namespace Vector {
 
-class ConditionRobotTouched : public IBEICondition
-{
-public:
+class ConditionRobotTouched : public IBEICondition {
+ public:
   explicit ConditionRobotTouched(const Json::Value& config);
 
-protected:
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+ protected:
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) const override;
 
-private:
-
-  bool IsReceivingTouch(BehaviorExternalInterface& behaviorExternalInterface) const;
+ private:
+  bool IsReceivingTouch(
+      BehaviorExternalInterface& behaviorExternalInterface) const;
 
   // minimum time we must be touched before acknowledging
   // can be 0.0f to trigger for every gradation of touch
   float _kMinTouchTime;
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionRobotTouched_H__
-
+#endif  // __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionRobotTouched_H__

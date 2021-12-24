@@ -13,7 +13,6 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionAnyUserIntent.h"
 
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
@@ -22,17 +21,15 @@ namespace Anki {
 namespace Vector {
 
 ConditionAnyUserIntent::ConditionAnyUserIntent(const Json::Value& config)
-  : IBEICondition(config)
-{
-}
+    : IBEICondition(config) {}
 
-ConditionAnyUserIntent::~ConditionAnyUserIntent()
-{
-}
+ConditionAnyUserIntent::~ConditionAnyUserIntent() {}
 
-bool ConditionAnyUserIntent::AreConditionsMetInternal(BehaviorExternalInterface& bei) const
-{
-  const auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
+bool ConditionAnyUserIntent::AreConditionsMetInternal(
+    BehaviorExternalInterface& bei) const {
+  const auto& uic = bei.GetAIComponent()
+                        .GetComponent<BehaviorComponent>()
+                        .GetComponent<UserIntentComponent>();
 
   const bool pending = uic.IsAnyUserIntentPending();
   const bool active = uic.IsAnyUserIntentActive();
@@ -40,6 +37,5 @@ bool ConditionAnyUserIntent::AreConditionsMetInternal(BehaviorExternalInterface&
   return pending || active;
 }
 
-
-}
-}
+}  // namespace Vector
+}  // namespace Anki

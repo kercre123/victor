@@ -12,7 +12,6 @@
  *
  **/
 
-
 #ifndef __util_logging_logtypes_h
 #define __util_logging_logtypes_h
 
@@ -29,17 +28,17 @@ enum LogLevel {
   LOG_LEVEL_WARN,
   LOG_LEVEL_ERROR,
 
-  _LOG_LEVEL_COUNT // control field. Do not use for regular logging
+  _LOG_LEVEL_COUNT  // control field. Do not use for regular logging
 };
 
 using KVPair = std::pair<const char *, const char *>;
 using KVPairVector = std::vector<KVPair>;
 
 // returns a descriptive string for the given log level / or level from string
-const char * GetLogLevelString(LogLevel level);
-LogLevel GetLogLevelValue(const std::string& levelStr);
+const char *GetLogLevelString(LogLevel level);
+LogLevel GetLogLevelValue(const std::string &levelStr);
 
-} // end namespace Util
-} // end namespace Anki
+}  // end namespace Util
+}  // end namespace Anki
 
-#endif // __util_logging_logtypes_h
+#endif  // __util_logging_logtypes_h

@@ -19,17 +19,20 @@
  * Enumerates possible return values for set settings functions.
  */
 enum class SetSettingResult {
-    /// The set value is already the current setting value and there is no change in progress.
-    NO_CHANGE,
-    /// The change request has been enqueued. There will be a follow up notification to inform the operation result.
-    ENQUEUED,
-    /// The request failed because there is already a value change in process and the setter requested change
-    /// to abort if busy.
-    BUSY,
-    /// The request was failed because the setting requested does not exist.
-    UNAVAILABLE_SETTING,
-    /// The request failed due to some internal error.
-    INTERNAL_ERROR
+  /// The set value is already the current setting value and there is no change
+  /// in progress.
+  NO_CHANGE,
+  /// The change request has been enqueued. There will be a follow up
+  /// notification to inform the operation result.
+  ENQUEUED,
+  /// The request failed because there is already a value change in process and
+  /// the setter requested change
+  /// to abort if busy.
+  BUSY,
+  /// The request was failed because the setting requested does not exist.
+  UNAVAILABLE_SETTING,
+  /// The request failed due to some internal error.
+  INTERNAL_ERROR
 };
 
 #endif  // ALEXA_CLIENT_SDK_SETTINGS_INCLUDE_SETTINGS_SETSETTINGRESULT_H_

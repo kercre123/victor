@@ -23,35 +23,33 @@ class RandomGenerator;
 
 namespace Vector {
 
-class BehaviorCooldownInfo
-{
-public:
-  
-  explicit BehaviorCooldownInfo(float cooldownLength_s, float randomFactor = 0.0f);
+class BehaviorCooldownInfo {
+ public:
+  explicit BehaviorCooldownInfo(float cooldownLength_s,
+                                float randomFactor = 0.0f);
   explicit BehaviorCooldownInfo(const Json::Value& config);
-  
+
   bool OnCooldown() const;
   void StartCooldown(Util::RandomGenerator& rng);
-  
+
   void ResetCooldown() { _onCooldownUntil_s = -1.0f; }
 
   // if on cooldown, return the remaining seconds of cooldown, else return 0
   float GetRemainingCooldownTime_s() const;
 
-private:
+ private:
   // params
   float _cooldown_s = 0.0f;
   float _randomCooldownFactor = 0.0f;
 
   // members
   float _onCooldownUntil_s = -1.0f;
-  
+
   // Whether or not to ignore the dev-only time-speeder-upper (kTimeMultiplier)
   bool _ignoreFastForward = false;
 };
 
-}
-}
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

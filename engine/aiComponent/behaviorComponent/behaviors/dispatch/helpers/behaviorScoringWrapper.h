@@ -22,53 +22,57 @@
 
 namespace Anki {
 namespace Vector {
-  
-class BehaviorScoringWrapper
-{
-  
-public:
+
+class BehaviorScoringWrapper {
+ public:
   BehaviorScoringWrapper(const Json::Value& config);
   virtual ~BehaviorScoringWrapper();
-  
+
   void Init(BehaviorExternalInterface& bei);
-   
+
   // Notify the wrapper of the behaviors activation/deactivation state
   void BehaviorWillBeActivated();
   void BehaviorDeactivated();
 
   // Allow us to load scored JSON in seperately from the rest of parameters
   bool ReadFromJson(const Json::Value& config);
-  
+
   float EvaluateScore(BehaviorExternalInterface& bei) const;
   const MoodScorer& GetMoodScorer() const { return _moodScorer; }
-  size_t GetEmotionScorerCount() const { return _moodScorer.GetEmotionScorerCount(); }
-  const EmotionScorer& GetEmotionScorer(size_t index) const { return _moodScorer.GetEmotionScorer(index); }
-  
-  float EvaluateRepetitionPenalty() const;
-  const Util::GraphEvaluator2d& GetRepetitionPenalty() const { return _repetitionPenalty; }
-  
-  float EvaluateActivatedPenalty() const;
-  const Util::GraphEvaluator2d& GetActivatedPenalty() const { return _activatedPenalty; }
+  size_t GetEmotionScorerCount() const {
+    return _moodScorer.GetEmotionScorerCount();
+  }
+  const EmotionScorer& GetEmotionScorer(size_t index) const {
+    return _moodScorer.GetEmotionScorer(index);
+  }
 
-private:
-  
+  float EvaluateRepetitionPenalty() const;
+  const Util::GraphEvaluator2d& GetRepetitionPenalty() const {
+    return _repetitionPenalty;
+  }
+
+  float EvaluateActivatedPenalty() const;
+  const Util::GraphEvaluator2d& GetActivatedPenalty() const {
+    return _activatedPenalty;
+  }
+
+ private:
   // ==================== Member Vars ====================
   std::vector<Signal::SmartHandle> _eventHandlers;
   bool _isActivated = false;
-  
-  MoodScorer              _moodScorer;
-  Util::GraphEvaluator2d  _repetitionPenalty;
-  Util::GraphEvaluator2d  _activatedPenalty;
-  float                   _flatScore = 0.f;
-  float                   _lastTimeDeactivated = 0.f;
-  float                   _timeActivated   = 0.f;  
-  
+
+  MoodScorer _moodScorer;
+  Util::GraphEvaluator2d _repetitionPenalty;
+  Util::GraphEvaluator2d _activatedPenalty;
+  float _flatScore = 0.f;
+  float _lastTimeDeactivated = 0.f;
+  float _timeActivated = 0.f;
+
   bool _enableRepetitionPenalty = true;
   bool _enableActivatedPenalty = true;
 };
 
-} // namespace Vector
-} // namespace Anki
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

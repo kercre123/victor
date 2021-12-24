@@ -1,22 +1,21 @@
 /**
-* File: behaviorReactToCubeTap.h
-*
-* Author: Jarboo
-* Created: 3/15/2018
-*
-* Description: Reaction behavior when Victor detects a cube being tapped
-*
-* Copyright: Anki, Inc. 2018
-*
-**/
+ * File: behaviorReactToCubeTap.h
+ *
+ * Author: Jarboo
+ * Created: 3/15/2018
+ *
+ * Description: Reaction behavior when Victor detects a cube being tapped
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 #ifndef __Victor_Basestation_Behaviors_BehaviorReactToCubeTap_H__
 #define __Victor_Basestation_Behaviors_BehaviorReactToCubeTap_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "coretech/common/engine/objectIDs.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
-
 
 namespace Anki {
 namespace Vector {
@@ -24,50 +23,46 @@ namespace Vector {
 class BehaviorDriveOffCharger;
 enum class AnimationTrigger : int32_t;
 
-class BehaviorReactToCubeTap : public ICozmoBehavior
-{
-private:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+class BehaviorReactToCubeTap : public ICozmoBehavior {
+ private:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
 
   friend class BehaviorFactory;
-  BehaviorReactToCubeTap( const Json::Value& config );
+  BehaviorReactToCubeTap(const Json::Value& config);
 
-
-public:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ public:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
 
   virtual bool WantsToBeActivatedBehavior() const override;
-  virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
 
-
-protected:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ protected:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
 
   virtual void InitBehavior() override;
-  virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override;
-  virtual void AlwaysHandleInScope( const EngineToGameEvent& event ) override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
+ private:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
 
-private:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  struct CubeInfo
-  {
-    ObjectID      id;
-    float         lastTappedTime;
+  struct CubeInfo {
+    ObjectID id;
+    float lastTappedTime;
   };
 
-  enum class EState : uint8_t
-  {
+  enum class EState : uint8_t {
     Invalid,
     GetOffCharger,
     FindCube,
@@ -75,74 +70,72 @@ private:
     InteractWithCube,
   };
 
-  enum EIntensityLevel
-  {
+  enum EIntensityLevel {
     Level1,
     Level2,
     Level3,
 
     Count,
-    FirstLevel  = Level1,
-    LastLevel   = Level3,
+    FirstLevel = Level1,
+    LastLevel = Level3,
   };
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // State Functions
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - State Functions
 
   void ReactToCubeTapped();
   void OnCubeTappedWhileActive();
 
   void TransitionToGetOffCharger();
   void TransitionToFindCube();
-  void TransitionToGoToCube( bool playFoundCubeAnimation );
+  void TransitionToGoToCube(bool playFoundCubeAnimation);
   void TransitionToInteractWithCube();
 
   bool IsCubeLocated() const;
   void OnCubeNotFound();
-  void DriveToTargetCube( unsigned int attempt = 1 );
+  void DriveToTargetCube(unsigned int attempt = 1);
 
   AnimationTrigger GetCubeReactionAnimation() const;
   AnimationTrigger GetSearchForCubeAnimation() const;
-  
 
-private:
+ private:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Static Members
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Static Members
-
-  using CubeIntensityAnimations = Util::FullEnumToValueArrayChecker::FullEnumToValueArray<EIntensityLevel, AnimationTrigger, EIntensityLevel::Count>;
+  using CubeIntensityAnimations =
+      Util::FullEnumToValueArrayChecker::FullEnumToValueArray<
+          EIntensityLevel, AnimationTrigger, EIntensityLevel::Count>;
   static const CubeIntensityAnimations kReactToCubeAnimations;
   static const CubeIntensityAnimations kSearchForCubeAnimations;
 
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  struct InstanceConfig
-  {
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
+  struct InstanceConfig {
     InstanceConfig();
 
-    float                                       cubeInteractionDuration;
+    float cubeInteractionDuration;
 
     // behavior to drive off of the charger
-    std::string                                 chargerBehaviorString;
-    ICozmoBehaviorPtr                           chargerBehavior;
+    std::string chargerBehaviorString;
+    ICozmoBehaviorPtr chargerBehavior;
 
-    CubeInfo                                    targetCube;
+    CubeInfo targetCube;
 
   } _iVars;
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  struct DynamicVariables
-  {
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
+  struct DynamicVariables {
     DynamicVariables();
 
-    EState                                      state;
-    EIntensityLevel                             intensity;
+    EState state;
+    EIntensityLevel intensity;
 
   } _dVars;
-  
-}; // class BehaviorReactToCubeTap
 
-} // namespace Vector
-} // namespace Anki
+};  // class BehaviorReactToCubeTap
 
-#endif // __Victor_Basestation_Behaviors_BehaviorReactToCubeTap_H__
+}  // namespace Vector
+}  // namespace Anki
+
+#endif  // __Victor_Basestation_Behaviors_BehaviorReactToCubeTap_H__

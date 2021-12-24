@@ -136,7 +136,7 @@ enum {
   // A very small constant is chosen for kOnceDone so that it fit in a single
   // compare with immediate instruction for most common ISAs.  This is verified
   // for x86, POWER and ARM.
-  kOnceDone = 221,    // Random Number
+  kOnceDone = 221,  // Random Number
 };
 
 template <typename Callable, typename... Args>
@@ -146,16 +146,14 @@ void CallOnceImpl(std::atomic<uint32_t>* control,
 #ifndef NDEBUG
   {
     uint32_t old_control = control->load(std::memory_order_acquire);
-    if (old_control != kOnceInit &&
-        old_control != kOnceRunning &&
-        old_control != kOnceWaiter &&
-        old_control != kOnceDone) {
+    if (old_control != kOnceInit && old_control != kOnceRunning &&
+        old_control != kOnceWaiter && old_control != kOnceDone) {
       ABSL_RAW_LOG(
           FATAL,
           "Unexpected value for control word: %lx. Either the control word "
           "has non-static storage duration (where GoogleOnceDynamic might "
           "be appropriate), or there's been a memory corruption.",
-          static_cast<unsigned long>(old_control)); // NOLINT
+          static_cast<unsigned long>(old_control));  // NOLINT
     }
   }
 #endif  // NDEBUG

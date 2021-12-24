@@ -16,11 +16,11 @@
 #ifndef ALEXA_CLIENT_SDK_CAPABILITYAGENTS_DONOTDISTURB_INCLUDE_DONOTDISTURBCA_DNDMESSAGEREQUEST_H_
 #define ALEXA_CLIENT_SDK_CAPABILITYAGENTS_DONOTDISTURB_INCLUDE_DONOTDISTURBCA_DNDMESSAGEREQUEST_H_
 
-#include <future>
-#include <string>
-
 #include <AVSCommon/AVS/MessageRequest.h>
 #include <AVSCommon/SDKInterfaces/MessageRequestObserverInterface.h>
+
+#include <future>
+#include <string>
 
 namespace alexaClientSDK {
 namespace capabilityAgents {
@@ -30,37 +30,45 @@ namespace doNotDisturb {
  * Message request used to send AVS events for DND feature.
  */
 class DNDMessageRequest : public avsCommon::avs::MessageRequest {
-public:
-    /**
-     * Constructor
-     *
-     * @param jsonContent JSON representation of the message to send.
-     */
-    DNDMessageRequest(const std::string& jsonContent);
+ public:
+  /**
+   * Constructor
+   *
+   * @param jsonContent JSON representation of the message to send.
+   */
+  DNDMessageRequest(const std::string& jsonContent);
 
-    ~DNDMessageRequest() override;
+  ~DNDMessageRequest() override;
 
-    /// @name MessageRequest overridden methods
-    /// @{
-    void sendCompleted(avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status status) override;
-    /// @}
+  /// @name MessageRequest overridden methods
+  /// @{
+  void sendCompleted(
+      avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status status)
+      override;
+  /// @}
 
-    /**
-     * Returns a future to track completion state of the request.
-     *
-     * @return A future to track completion state of the request.
-     */
-    std::shared_future<avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status> getCompletionFuture();
+  /**
+   * Returns a future to track completion state of the request.
+   *
+   * @return A future to track completion state of the request.
+   */
+  std::shared_future<
+      avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status>
+  getCompletionFuture();
 
-private:
-    /// Promise to host std::future for the request.
-    std::promise<avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status> m_promise;
+ private:
+  /// Promise to host std::future for the request.
+  std::promise<
+      avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status>
+      m_promise;
 
-    /// Shared future to be exposed to waiters.
-    std::shared_future<avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status> m_future;
+  /// Shared future to be exposed to waiters.
+  std::shared_future<
+      avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status>
+      m_future;
 
-    /// Flag indicating whether the request has been completed.
-    bool m_isCompleted;
+  /// Flag indicating whether the request has been completed.
+  bool m_isCompleted;
 };
 
 }  // namespace doNotDisturb

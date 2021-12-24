@@ -34,7 +34,6 @@
 //
 // Author: Mark Mentovai, Ted Mielczarek
 
-
 #ifndef PROCESSOR_STACKWALKER_AMD64_H__
 #define PROCESSOR_STACKWALKER_AMD64_H__
 
@@ -42,8 +41,8 @@
 
 #include "google_breakpad/common/breakpad_types.h"
 #include "google_breakpad/common/minidump_format.h"
-#include "google_breakpad/processor/stackwalker.h"
 #include "google_breakpad/processor/stack_frame_cpu.h"
+#include "google_breakpad/processor/stackwalker.h"
 #include "processor/cfi_frame_info.h"
 
 namespace google_breakpad {
@@ -57,8 +56,7 @@ class StackwalkerAMD64 : public Stackwalker {
   // included in the stack.  The other arguments are passed directly through
   // to the base Stackwalker constructor.
   StackwalkerAMD64(const SystemInfo* system_info,
-                   const MDRawContextAMD64* context,
-                   MemoryRegion* memory,
+                   const MDRawContextAMD64* context, MemoryRegion* memory,
                    const CodeModules* modules,
                    StackFrameSymbolizer* frame_symbolizer);
 
@@ -75,7 +73,7 @@ class StackwalkerAMD64 : public Stackwalker {
   // Use cfi_frame_info (derived from STACK CFI records) to construct
   // the frame that called frames.back(). The caller takes ownership
   // of the returned frame. Return NULL on failure.
-  StackFrameAMD64* GetCallerByCFIFrameInfo(const vector<StackFrame*> &frames,
+  StackFrameAMD64* GetCallerByCFIFrameInfo(const vector<StackFrame*>& frames,
                                            CFIFrameInfo* cfi_frame_info);
 
   // Assumes a traditional frame layout where the frame pointer has not been
@@ -88,7 +86,7 @@ class StackwalkerAMD64 : public Stackwalker {
 
   // Scan the stack for plausible return addresses. The caller takes ownership
   // of the returned frame. Return NULL on failure.
-  StackFrameAMD64* GetCallerByStackScan(const vector<StackFrame*> &frames);
+  StackFrameAMD64* GetCallerByStackScan(const vector<StackFrame*>& frames);
 
   // Stores the CPU context corresponding to the innermost stack frame to
   // be returned by GetContextFrame.
@@ -101,8 +99,6 @@ class StackwalkerAMD64 : public Stackwalker {
   const CFIWalker cfi_walker_;
 };
 
-
 }  // namespace google_breakpad
-
 
 #endif  // PROCESSOR_STACKWALKER_AMD64_H__

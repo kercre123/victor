@@ -4,8 +4,8 @@
  * Author: Al Chaussee
  * Created: 08/14/17
  *
- * Description: Checks any final things playpen is interested in like battery voltage and that we have heard
- *              from an active object
+ * Description: Checks any final things playpen is interested in like battery
+ *voltage and that we have heard from an active object
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -19,33 +19,30 @@
 namespace Anki {
 namespace Vector {
 namespace ExternalInterface {
-  struct ObjectAvailable;
+struct ObjectAvailable;
 }
 
-class BehaviorPlaypenEndChecks : public IBehaviorPlaypen
-{
-protected:
-  
+class BehaviorPlaypenEndChecks : public IBehaviorPlaypen {
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorPlaypenEndChecks(const Json::Value& config);
-  
-protected:
+
+ protected:
   virtual void OnBehaviorEnteredActivatableScope() override;
-  
-  virtual Result OnBehaviorActivatedInternal()   override;
-  virtual void   OnBehaviorDeactivated()   override;
-  
+
+  virtual Result OnBehaviorActivatedInternal() override;
+  virtual void OnBehaviorDeactivated() override;
+
   virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
   virtual void AlwaysHandleInScope(const GameToEngineEvent& event) override;
-    
-private:
 
+ private:
   bool _heardFromLightCube = false;
   bool _wifiScanPassed = false;
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorPlaypenEndChecks_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorPlaypenEndChecks_H__

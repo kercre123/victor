@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -15,23 +16,29 @@
 // Copyright (C) 2013, OpenCV Foundation, all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
-// This software is provided by the copyright holders and contributors "as is" and
+// This software is provided by the copyright holders and contributors "as is"
+and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -48,52 +55,55 @@
 #include "opencv2/cudacodec.hpp"
 #include "thread.hpp"
 
-namespace cv { namespace cudacodec { namespace detail
-{
+namespace cv {
+namespace cudacodec {
+namespace detail {
 
 class VideoParser;
 
-class VideoSource
-{
-public:
-    virtual ~VideoSource() {}
+class VideoSource {
+ public:
+  virtual ~VideoSource() {}
 
-    virtual FormatInfo format() const = 0;
-    virtual void start() = 0;
-    virtual void stop() = 0;
-    virtual bool isStarted() const = 0;
-    virtual bool hasError() const = 0;
+  virtual FormatInfo format() const = 0;
+  virtual void start() = 0;
+  virtual void stop() = 0;
+  virtual bool isStarted() const = 0;
+  virtual bool hasError() const = 0;
 
-    void setVideoParser(detail::VideoParser* videoParser) { videoParser_ = videoParser; }
+  void setVideoParser(detail::VideoParser* videoParser) {
+    videoParser_ = videoParser;
+  }
 
-protected:
-    bool parseVideoData(const uchar* data, size_t size, bool endOfStream = false);
+ protected:
+  bool parseVideoData(const uchar* data, size_t size, bool endOfStream = false);
 
-private:
-    detail::VideoParser* videoParser_;
+ private:
+  detail::VideoParser* videoParser_;
 };
 
-class RawVideoSourceWrapper : public VideoSource
-{
-public:
-    RawVideoSourceWrapper(const Ptr<RawVideoSource>& source);
+class RawVideoSourceWrapper : public VideoSource {
+ public:
+  RawVideoSourceWrapper(const Ptr<RawVideoSource>& source);
 
-    FormatInfo format() const;
-    void start();
-    void stop();
-    bool isStarted() const;
-    bool hasError() const;
+  FormatInfo format() const;
+  void start();
+  void stop();
+  bool isStarted() const;
+  bool hasError() const;
 
-private:
-    Ptr<RawVideoSource> source_;
+ private:
+  Ptr<RawVideoSource> source_;
 
-    Ptr<Thread> thread_;
-    volatile bool stop_;
-    volatile bool hasError_;
+  Ptr<Thread> thread_;
+  volatile bool stop_;
+  volatile bool hasError_;
 
-    static void readLoop(void* userData);
+  static void readLoop(void* userData);
 };
 
-}}}
+}  // namespace detail
+}  // namespace cudacodec
+}  // namespace cv
 
-#endif // __CUDACODEC_VIDEO_SOURCE_H__
+#endif  // __CUDACODEC_VIDEO_SOURCE_H__

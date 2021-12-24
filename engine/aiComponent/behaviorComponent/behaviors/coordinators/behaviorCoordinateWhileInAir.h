@@ -4,7 +4,8 @@
  * Author: Kevin M. Karol
  * Created: 2018-06-23
  *
- * Description: Behavior responsible for managing the robot's behaviors when picked up/in the air
+ * Description: Behavior responsible for managing the robot's behaviors when
+ *picked up/in the air
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -14,20 +15,18 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorCoordinateWhileInAir__
 #pragma once
 
-#include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherPassThrough.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTreeStateHelpers.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherPassThrough.h"
 #include "engine/engineTimeStamp.h"
 
 namespace Anki {
 namespace Vector {
 
-class BehaviorCoordinateWhileInAir : public BehaviorDispatcherPassThrough
-{
-public: 
+class BehaviorCoordinateWhileInAir : public BehaviorDispatcherPassThrough {
+ public:
   virtual ~BehaviorCoordinateWhileInAir();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   explicit BehaviorCoordinateWhileInAir(const Json::Value& config);
@@ -36,8 +35,8 @@ protected:
   virtual void OnFirstPassThroughUpdate() override;
   virtual void PassThroughUpdate() override;
   virtual void OnPassThroughDeactivated() override;
-  
-private:
+
+ private:
   bool _areTreadsLocked = false;
   ICozmoBehaviorPtr _whileInAirDispatcher;
 
@@ -59,10 +58,9 @@ private:
   void LockTracksIfAppropriate();
   void SuppressInAirReactionIfAppropriate();
   void SuppressInitialPickupReactionIfAppropriate();
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorCoordinateWhileInAir__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorCoordinateWhileInAir__

@@ -30,12 +30,12 @@
 #ifndef CLIENT_LINUX_MINIDUMP_WRITER_DIRECTORY_READER_H_
 #define CLIENT_LINUX_MINIDUMP_WRITER_DIRECTORY_READER_H_
 
-#include <stdint.h>
-#include <unistd.h>
-#include <limits.h>
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
+#include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "common/linux/linux_libc_support.h"
 #include "third_party/lss/linux_syscall_support.h"
@@ -46,10 +46,7 @@ namespace google_breakpad {
 // functions which may allocate memory.
 class DirectoryReader {
  public:
-  DirectoryReader(int fd)
-      : fd_(fd),
-        buf_used_(0) {
-  }
+  DirectoryReader(int fd) : fd_(fd), buf_used_(0) {}
 
   // Return the next entry from the directory
   //   name: (output) the NUL terminated entry name
@@ -59,8 +56,7 @@ class DirectoryReader {
   // After calling this, one must call |PopEntry| otherwise you'll get the same
   // entry over and over.
   bool GetNextEntry(const char** name) {
-    struct kernel_dirent* const dent =
-      reinterpret_cast<kernel_dirent*>(buf_);
+    struct kernel_dirent* const dent = reinterpret_cast<kernel_dirent*>(buf_);
 
     if (buf_used_ == 0) {
       // need to read more entries.
@@ -74,8 +70,7 @@ class DirectoryReader {
       }
     }
 
-    if (buf_used_ == 0 && hit_eof_)
-      return false;
+    if (buf_used_ == 0 && hit_eof_) return false;
 
     assert(buf_used_ > 0);
 
@@ -84,11 +79,10 @@ class DirectoryReader {
   }
 
   void PopEntry() {
-    if (!buf_used_)
-      return;
+    if (!buf_used_) return;
 
     const struct kernel_dirent* const dent =
-      reinterpret_cast<kernel_dirent*>(buf_);
+        reinterpret_cast<kernel_dirent*>(buf_);
 
     buf_used_ -= dent->d_reclen;
     my_memmove(buf_, buf_ + dent->d_reclen, buf_used_);

@@ -121,7 +121,8 @@ struct OutputStageQuantizeDownInt32ByFixedPoint {
 // OutputStageQuantizeDownInt32ToUint8ScaleByFixedPoint is the old deprecated
 // name of OutputStageQuantizeDownInt32ByFixedPoint, before we noticed that
 // there really wasn't anything Uint8-specific about it.
-using OutputStageQuantizeDownInt32ToUint8ScaleByFixedPoint = OutputStageQuantizeDownInt32ByFixedPoint;
+using OutputStageQuantizeDownInt32ToUint8ScaleByFixedPoint =
+    OutputStageQuantizeDownInt32ByFixedPoint;
 
 // Variant of OutputStageQuantizeDownInt32ByFixedPoint where the 'shift'
 // is not necessarily just a right shift, so we can represent multipliers

@@ -7,15 +7,17 @@
 #include "gtest/gtest.h"
 
 #pragma GCC diagnostic pop
+#include <ftw.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include <sstream>
+
 #include "dasLogFileAppender.h"
 #include "fileUtils.h"
-#include "testUtils.h"
 #include "stringUtils.h"
-#include <stdio.h>
-#include <ftw.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sstream>
+#include "testUtils.h"
 
 static const std::string testDirectory("unitTestDasLogs");
 
@@ -23,16 +25,17 @@ namespace Anki {
 namespace Das {
 
 class DasLogFileAppenderTest : public testing::Test {
-protected:
+ protected:
   virtual void SetUp() {
     rmrf(testDirectory.c_str());
-    (void) mkdir(testDirectory.c_str(), 0777);
+    (void)mkdir(testDirectory.c_str(), 0777);
     testMessage_ = "Some Damned Data";
     appender_ = new Anki::Das::DasLogFileAppender(testDirectory);
   }
 
   virtual void TearDown() {
-    delete appender_; appender_ = nullptr;
+    delete appender_;
+    appender_ = nullptr;
     rmrf(testDirectory.c_str());
   }
 
@@ -46,7 +49,8 @@ protected:
     return path.substr(lastSlashPos + 1);
   }
 
-  std::string ExpectedPath(uint32_t logNumber, bool inProgress, bool includeDir) {
+  std::string ExpectedPath(uint32_t logNumber, bool inProgress,
+                           bool includeDir) {
     std::ostringstream oss;
     if (includeDir) {
       oss << testDirectory << "/";
@@ -60,12 +64,14 @@ protected:
     return oss.str();
   }
 
-public:
-  bool ArePathsWithoutExtensionsEqual(const std::string& path1, const std::string& path2) {
-    return (0 == StringByDeletingPathExtension(path1).compare(StringByDeletingPathExtension(path2)));
+ public:
+  bool ArePathsWithoutExtensionsEqual(const std::string& path1,
+                                      const std::string& path2) {
+    return (0 == StringByDeletingPathExtension(path1).compare(
+                     StringByDeletingPathExtension(path2)));
   }
 
-protected:
+ protected:
   Anki::Das::DasLogFileAppender* appender_;
   std::string testMessage_;
 };
@@ -73,15 +79,18 @@ protected:
 TEST_F(DasLogFileAppenderTest, GetCurrentLogfile_firstTime) {
   std::string currentLogFilePath = appender_->CurrentLogFilePath();
   std::string expectedFilePath = ExpectedPath(1, true, false);
-  ASSERT_EQ(expectedFilePath, LastPathComponent(currentLogFilePath)) << "Should have named the new log file properly";
-  ASSERT_TRUE(AnkiUtil::FileExistsAtPath(currentLogFilePath)) << "Should have created an empty log file at the returned path";
+  ASSERT_EQ(expectedFilePath, LastPathComponent(currentLogFilePath))
+      << "Should have named the new log file properly";
+  ASSERT_TRUE(AnkiUtil::FileExistsAtPath(currentLogFilePath))
+      << "Should have created an empty log file at the returned path";
 }
 
 TEST_F(DasLogFileAppenderTest, WriteData_firstTime) {
   appender_->WriteDataToCurrentLogfile(testMessage_);
 
   std::string currentLogFile = appender_->CurrentLogFilePath();
-  ASSERT_TRUE(AnkiUtil::FileExistsAtPath(currentLogFile)) << "File should exist at current log path";
+  ASSERT_TRUE(AnkiUtil::FileExistsAtPath(currentLogFile))
+      << "File should exist at current log path";
 
   appender_->Flush();
 
@@ -96,10 +105,13 @@ TEST_F(DasLogFileAppenderTest, Rollover_oldFile) {
   // now make sure the file we rolled over was saved
   appender_->Flush();
   std::string completedLogFilePath = ExpectedPath(1, false, true);
-  ASSERT_TRUE(AnkiUtil::FileExistsAtPath(completedLogFilePath)) << "Should have moved the old file to a .das file (not in progress)";
+  ASSERT_TRUE(AnkiUtil::FileExistsAtPath(completedLogFilePath))
+      << "Should have moved the old file to a .das file (not in progress)";
 
-  std::string logFileData = AnkiUtil::StringFromContentsOfFile(completedLogFilePath);
-  ASSERT_EQ(testMessage_, logFileData) << "The old file should match the data we wrote";
+  std::string logFileData =
+      AnkiUtil::StringFromContentsOfFile(completedLogFilePath);
+  ASSERT_EQ(testMessage_, logFileData)
+      << "The old file should match the data we wrote";
 }
 
 TEST_F(DasLogFileAppenderTest, Rollover_newFile) {
@@ -110,8 +122,10 @@ TEST_F(DasLogFileAppenderTest, Rollover_newFile) {
   appender_->Flush();
   std::string currentLogFilePath = appender_->CurrentLogFilePath();
   std::string expectedName = ExpectedPath(2, true, false);
-  ASSERT_EQ(expectedName, LastPathComponent(currentLogFilePath)) << "We should be writing to a new file now";
-  ASSERT_TRUE(AnkiUtil::FileExistsAtPath(currentLogFilePath)) << "Our new log file should exist";
+  ASSERT_EQ(expectedName, LastPathComponent(currentLogFilePath))
+      << "We should be writing to a new file now";
+  ASSERT_TRUE(AnkiUtil::FileExistsAtPath(currentLogFilePath))
+      << "Our new log file should exist";
 }
 
 TEST_F(DasLogFileAppenderTest, Rollover_write) {
@@ -122,12 +136,14 @@ TEST_F(DasLogFileAppenderTest, Rollover_write) {
   std::string newMessage = "New Data";
   appender_->WriteDataToCurrentLogfile(newMessage);
   appender_->Flush();
-  std::string logFileData = AnkiUtil::StringFromContentsOfFile(appender_->CurrentLogFilePath());
-  ASSERT_EQ(newMessage, logFileData) << "Should have written the new log to the new file";
+  std::string logFileData =
+      AnkiUtil::StringFromContentsOfFile(appender_->CurrentLogFilePath());
+  ASSERT_EQ(newMessage, logFileData)
+      << "Should have written the new log to the new file";
 }
 
 TEST_F(DasLogFileAppenderTest, Rollover_limitNumFiles) {
-  for (int i = 0 ; i < Anki::Das::kDasDefaultMaxLogFiles + 1; i++) {
+  for (int i = 0; i < Anki::Das::kDasDefaultMaxLogFiles + 1; i++) {
     appender_->WriteDataToCurrentLogfile(testMessage_);
     appender_->RolloverCurrentLogFile();
   }
@@ -135,27 +151,35 @@ TEST_F(DasLogFileAppenderTest, Rollover_limitNumFiles) {
   std::string newMessage = "Other wrapped data";
   std::string currentLogFilePath = appender_->CurrentLogFilePath();
   std::string expectedName = ExpectedPath(2, true, false);
-  ASSERT_EQ(expectedName, LastPathComponent(currentLogFilePath)) << "Should have named the new log file properly (and wrapped)";
+  ASSERT_EQ(expectedName, LastPathComponent(currentLogFilePath))
+      << "Should have named the new log file properly (and wrapped)";
 
   appender_->WriteDataToCurrentLogfile(newMessage);
   appender_->Flush();
-  std::string logFileData = AnkiUtil::StringFromContentsOfFile(appender_->CurrentLogFilePath());
-  ASSERT_EQ(newMessage, logFileData) << "Should have written the log (and just the log) to the wrapped log file";
+  std::string logFileData =
+      AnkiUtil::StringFromContentsOfFile(appender_->CurrentLogFilePath());
+  ASSERT_EQ(newMessage, logFileData) << "Should have written the log (and just "
+                                        "the log) to the wrapped log file";
 }
 
 TEST_F(DasLogFileAppenderTest, ConsumeLogFiles_empty) {
-  appender_->ConsumeLogFiles(std::bind([](const std::string& logFilePath, bool *stop) {
-        ADD_FAILURE() << "This shouldn't have been called, we have no log files!";
+  appender_->ConsumeLogFiles(std::bind(
+      [](const std::string& logFilePath, bool* stop) {
+        ADD_FAILURE()
+            << "This shouldn't have been called, we have no log files!";
         return true;
-      }, std::placeholders::_1, std::placeholders::_2));
+      },
+      std::placeholders::_1, std::placeholders::_2));
 }
 
 TEST_F(DasLogFileAppenderTest, ConsumeLogFiles_oneUnfinishedLog) {
   appender_->WriteDataToCurrentLogfile(testMessage_);
-  appender_->ConsumeLogFiles(std::bind([](const std::string& logFilePath, bool *stop) {
+  appender_->ConsumeLogFiles(std::bind(
+      [](const std::string& logFilePath, bool* stop) {
         ADD_FAILURE() << "No finished log file, we shouldn't be called";
         return true;
-      }, std::placeholders::_1, std::placeholders::_2));
+      },
+      std::placeholders::_1, std::placeholders::_2));
 }
 
 TEST_F(DasLogFileAppenderTest, ConsumeLogFiles_oneFinishedLog) {
@@ -166,16 +190,23 @@ TEST_F(DasLogFileAppenderTest, ConsumeLogFiles_oneFinishedLog) {
   std::string testLogFilePath = appender_->CurrentLogFilePath();
   appender_->RolloverCurrentLogFile();
   appender_->Flush();
-  appender_->ConsumeLogFiles(std::bind([&](const std::string& logFilePath, bool *stop) {
-        EXPECT_TRUE(ArePathsWithoutExtensionsEqual(testLogFilePath, logFilePath)) << "Should be consuming the file we logged to";
+  appender_->ConsumeLogFiles(std::bind(
+      [&](const std::string& logFilePath, bool* stop) {
+        EXPECT_TRUE(
+            ArePathsWithoutExtensionsEqual(testLogFilePath, logFilePath))
+            << "Should be consuming the file we logged to";
         processedLogPath = logFilePath;
         processedLog = AnkiUtil::StringFromContentsOfFile(logFilePath);
         numLogFilesProcessed++;
         return true;
-      }, std::placeholders::_1, std::placeholders::_2));
-  ASSERT_EQ(1, numLogFilesProcessed) << "Should have only consumed one log file";
-  ASSERT_EQ(testMessage_, processedLog) << "Logged data should have been consumed";
-  ASSERT_FALSE(AnkiUtil::FileExistsAtPath(processedLogPath)) << "Should have deleted the file we consumed";
+      },
+      std::placeholders::_1, std::placeholders::_2));
+  ASSERT_EQ(1, numLogFilesProcessed)
+      << "Should have only consumed one log file";
+  ASSERT_EQ(testMessage_, processedLog)
+      << "Logged data should have been consumed";
+  ASSERT_FALSE(AnkiUtil::FileExistsAtPath(processedLogPath))
+      << "Should have deleted the file we consumed";
 }
 
 TEST_F(DasLogFileAppenderTest, ConsumeLogFiles_oneFinishedLogNoDelete) {
@@ -186,55 +217,70 @@ TEST_F(DasLogFileAppenderTest, ConsumeLogFiles_oneFinishedLogNoDelete) {
   std::string testLogFilePath = appender_->CurrentLogFilePath();
   appender_->RolloverCurrentLogFile();
   appender_->Flush();
-  appender_->ConsumeLogFiles(std::bind([&](const std::string& logFilePath, bool *stop) {
-        EXPECT_TRUE(ArePathsWithoutExtensionsEqual(testLogFilePath, logFilePath)) << "Should be consuming the file we logged to";
+  appender_->ConsumeLogFiles(std::bind(
+      [&](const std::string& logFilePath, bool* stop) {
+        EXPECT_TRUE(
+            ArePathsWithoutExtensionsEqual(testLogFilePath, logFilePath))
+            << "Should be consuming the file we logged to";
         processedLogPath = logFilePath;
         processedLog = AnkiUtil::StringFromContentsOfFile(logFilePath);
         numLogFilesProcessed++;
         return false;
-      }, std::placeholders::_1, std::placeholders::_2));
-  ASSERT_EQ(1, numLogFilesProcessed) << "Should have only consumed one log file";
-  ASSERT_EQ(testMessage_, processedLog) << "Logged data should have been consumed";
-  ASSERT_TRUE(AnkiUtil::FileExistsAtPath(processedLogPath)) << "Should NOT have deleted the file we consumed";
+      },
+      std::placeholders::_1, std::placeholders::_2));
+  ASSERT_EQ(1, numLogFilesProcessed)
+      << "Should have only consumed one log file";
+  ASSERT_EQ(testMessage_, processedLog)
+      << "Logged data should have been consumed";
+  ASSERT_TRUE(AnkiUtil::FileExistsAtPath(processedLogPath))
+      << "Should NOT have deleted the file we consumed";
 }
 
 TEST_F(DasLogFileAppenderTest, ConsumeLogFiles_twoFinishedLogs) {
   int numLogFilesProcessed = 0;
   appender_->WriteDataToCurrentLogfile(testMessage_);
-  appender_->RolloverCurrentLogFile(); // 1
+  appender_->RolloverCurrentLogFile();  // 1
   appender_->WriteDataToCurrentLogfile(testMessage_);
-  appender_->RolloverCurrentLogFile(); // 2
+  appender_->RolloverCurrentLogFile();  // 2
   appender_->Flush();
-  appender_->ConsumeLogFiles(std::bind([&](const std::string& logFilePath, bool *stop) {
+  appender_->ConsumeLogFiles(std::bind(
+      [&](const std::string& logFilePath, bool* stop) {
         numLogFilesProcessed++;
         return true;
-      }, std::placeholders::_1, std::placeholders::_2));
+      },
+      std::placeholders::_1, std::placeholders::_2));
   ASSERT_EQ(2, numLogFilesProcessed) << "Should have consumed two log files";
   // try it again, all logs should be gone.
-  appender_->ConsumeLogFiles(std::bind([&](const std::string& logFilePath, bool *stop) {
+  appender_->ConsumeLogFiles(std::bind(
+      [&](const std::string& logFilePath, bool* stop) {
         numLogFilesProcessed++;
         return true;
-      }, std::placeholders::_1, std::placeholders::_2));
+      },
+      std::placeholders::_1, std::placeholders::_2));
   ASSERT_EQ(2, numLogFilesProcessed) << "Should have consumed two log files";
 }
 
 TEST_F(DasLogFileAppenderTest, ConsumeLogFiles_twoFinishedLogsNoDelete) {
   int numLogFilesProcessed = 0;
   appender_->WriteDataToCurrentLogfile(testMessage_);
-  appender_->RolloverCurrentLogFile(); // 1
+  appender_->RolloverCurrentLogFile();  // 1
   appender_->WriteDataToCurrentLogfile(testMessage_);
-  appender_->RolloverCurrentLogFile(); // 2
+  appender_->RolloverCurrentLogFile();  // 2
   appender_->Flush();
-  appender_->ConsumeLogFiles(std::bind([&](const std::string& logFilePath, bool *stop) {
+  appender_->ConsumeLogFiles(std::bind(
+      [&](const std::string& logFilePath, bool* stop) {
         numLogFilesProcessed++;
         return false;
-      }, std::placeholders::_1, std::placeholders::_2));
+      },
+      std::placeholders::_1, std::placeholders::_2));
   ASSERT_EQ(2, numLogFilesProcessed) << "Should have consumed two log files";
   // try it again, all logs should be gone.
-  appender_->ConsumeLogFiles(std::bind([&](const std::string& logFilePath, bool *stop) {
+  appender_->ConsumeLogFiles(std::bind(
+      [&](const std::string& logFilePath, bool* stop) {
         numLogFilesProcessed++;
         return true;
-      }, std::placeholders::_1, std::placeholders::_2));
+      },
+      std::placeholders::_1, std::placeholders::_2));
   ASSERT_EQ(4, numLogFilesProcessed) << "Should have consumed four log files";
 }
 
@@ -246,14 +292,20 @@ TEST_F(DasLogFileAppenderTest, WriteToLog_autoRollover) {
   appender_->Flush();
 
   std::string completedLogFilePath = ExpectedPath(1, false, true);
-  ASSERT_TRUE(AnkiUtil::FileExistsAtPath(completedLogFilePath)) << "Should have moved the old file to a .das file (not in progress)";
-  std::string verificationData = AnkiUtil::StringFromContentsOfFile(completedLogFilePath);
-  ASSERT_EQ(testMessage, verificationData) << "The old file should match the data we wrote";
+  ASSERT_TRUE(AnkiUtil::FileExistsAtPath(completedLogFilePath))
+      << "Should have moved the old file to a .das file (not in progress)";
+  std::string verificationData =
+      AnkiUtil::StringFromContentsOfFile(completedLogFilePath);
+  ASSERT_EQ(testMessage, verificationData)
+      << "The old file should match the data we wrote";
 
   std::string inProgressLogFilePath = ExpectedPath(2, true, true);
-  ASSERT_TRUE(AnkiUtil::FileExistsAtPath(inProgressLogFilePath)) << "Should have logged the second bind of data to the new file (in progress)";
+  ASSERT_TRUE(AnkiUtil::FileExistsAtPath(inProgressLogFilePath))
+      << "Should have logged the second bind of data to the new file (in "
+         "progress)";
   verificationData = AnkiUtil::StringFromContentsOfFile(inProgressLogFilePath);
-  ASSERT_EQ(testMessage, verificationData) << "The in progress file should match the data we wrote";
+  ASSERT_EQ(testMessage, verificationData)
+      << "The in progress file should match the data we wrote";
 }
 
 TEST_F(DasLogFileAppenderTest, Init_resumeInProgress) {
@@ -262,18 +314,22 @@ TEST_F(DasLogFileAppenderTest, Init_resumeInProgress) {
   appender_->RolloverCurrentLogFile();
   appender_->WriteDataToCurrentLogfile(testMessage);
   appender_->Flush();
-  delete appender_; appender_ = nullptr;
+  delete appender_;
+  appender_ = nullptr;
   appender_ = new Anki::Das::DasLogFileAppender(testDirectory);
   std::string inProgressLog = appender_->CurrentLogFilePath();
   std::string expectedName = ExpectedPath(3, true, false);
-  ASSERT_EQ(expectedName, LastPathComponent(inProgressLog)) << "wrong resumed file!";
+  ASSERT_EQ(expectedName, LastPathComponent(inProgressLog))
+      << "wrong resumed file!";
 
   appender_->WriteDataToCurrentLogfile(testMessage);
   appender_->Flush();
   std::string verificationData = testMessage;
 
-  std::string dataInFile = AnkiUtil::StringFromContentsOfFile(appender_->CurrentLogFilePath());
-  ASSERT_EQ(verificationData, dataInFile) << "We should have actually started a new in-progress log";
+  std::string dataInFile =
+      AnkiUtil::StringFromContentsOfFile(appender_->CurrentLogFilePath());
+  ASSERT_EQ(verificationData, dataInFile)
+      << "We should have actually started a new in-progress log";
 }
 
 TEST_F(DasLogFileAppenderTest, Init_rolloverAfterResume) {
@@ -282,7 +338,8 @@ TEST_F(DasLogFileAppenderTest, Init_rolloverAfterResume) {
   appender_->RolloverCurrentLogFile();
   appender_->WriteDataToCurrentLogfile(testMessage);
   appender_->Flush();
-  delete appender_; appender_ = nullptr;
+  delete appender_;
+  appender_ = nullptr;
   appender_ = new Anki::Das::DasLogFileAppender(testDirectory);
   appender_->RolloverCurrentLogFile();
   std::string inProgressLog = appender_->CurrentLogFilePath();
@@ -290,5 +347,5 @@ TEST_F(DasLogFileAppenderTest, Init_rolloverAfterResume) {
   ASSERT_EQ(expectedName, LastPathComponent(inProgressLog));
 }
 
-} // namespace Das
-} // namespace Anki
+}  // namespace Das
+}  // namespace Anki

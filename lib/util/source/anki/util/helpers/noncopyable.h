@@ -13,19 +13,19 @@
 #ifndef UTIL_NONCOPYABLE_H_
 #define UTIL_NONCOPYABLE_H_
 
-namespace Anki{ namespace Util {
+namespace Anki {
+namespace Util {
 
 // delete copy constructor and assignment operator
-class noncopyable
-{
+class noncopyable {
  protected:
   noncopyable() = default;
   ~noncopyable() = default;
-  noncopyable( const noncopyable& ) = delete;
-  noncopyable& operator=( const noncopyable& ) = delete;
+  noncopyable(const noncopyable&) = delete;
+  noncopyable& operator=(const noncopyable&) = delete;
 };
 
-}; // namespace
-}; // namespace
+};  // namespace Util
+};  // namespace Anki
 
 #endif

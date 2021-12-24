@@ -18,6 +18,7 @@
 #define ABSL_BASE_INTERNAL_UNALIGNED_ACCESS_H_
 
 #include <string.h>
+
 #include <cstdint>
 
 #include "absl/base/attributes.h"
@@ -39,7 +40,7 @@
 // (namespaces, inline) which are absent or incompatible in C.
 #if defined(__cplusplus)
 
-#if defined(ADDRESS_SANITIZER) || defined(THREAD_SANITIZER) ||\
+#if defined(ADDRESS_SANITIZER) || defined(THREAD_SANITIZER) || \
     defined(MEMORY_SANITIZER)
 // Consider we have an unaligned load/store of 4 bytes from address 0x...05.
 // AddressSanitizer will treat it as a 3-byte access to the range 05:07 and
@@ -125,18 +126,12 @@ inline void UnalignedStore64(void *p, uint64_t v) {
 #define ABSL_INTERNAL_UNALIGNED_STORE64(_p, _val) \
   (*reinterpret_cast<uint64_t *>(_p) = (_val))
 
-#elif defined(__arm__) && \
-      !defined(__ARM_ARCH_5__) && \
-      !defined(__ARM_ARCH_5T__) && \
-      !defined(__ARM_ARCH_5TE__) && \
-      !defined(__ARM_ARCH_5TEJ__) && \
-      !defined(__ARM_ARCH_6__) && \
-      !defined(__ARM_ARCH_6J__) && \
-      !defined(__ARM_ARCH_6K__) && \
-      !defined(__ARM_ARCH_6Z__) && \
-      !defined(__ARM_ARCH_6ZK__) && \
-      !defined(__ARM_ARCH_6T2__)
-
+#elif defined(__arm__) && !defined(__ARM_ARCH_5__) &&          \
+    !defined(__ARM_ARCH_5T__) && !defined(__ARM_ARCH_5TE__) && \
+    !defined(__ARM_ARCH_5TEJ__) && !defined(__ARM_ARCH_6__) && \
+    !defined(__ARM_ARCH_6J__) && !defined(__ARM_ARCH_6K__) &&  \
+    !defined(__ARM_ARCH_6Z__) && !defined(__ARM_ARCH_6ZK__) && \
+    !defined(__ARM_ARCH_6T2__)
 
 // ARMv7 and newer support native unaligned accesses, but only of 16-bit
 // and 32-bit values (not 64-bit); older versions either raise a fatal signal,

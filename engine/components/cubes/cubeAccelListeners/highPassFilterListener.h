@@ -13,11 +13,9 @@
 #ifndef __Engine_CubeAccelListeners_HighPassFilterListener_H__
 #define __Engine_CubeAccelListeners_HighPassFilterListener_H__
 
-#include "engine/components/cubes/cubeAccelListeners/iCubeAccelListener.h"
-
 #include "clad/types/activeObjectAccel.h"
-
 #include "coretech/common/shared/math/matrix.h"
+#include "engine/components/cubes/cubeAccelListeners/iCubeAccelListener.h"
 
 namespace Anki {
 namespace Vector {
@@ -27,34 +25,35 @@ struct ActiveAccel;
 namespace CubeAccelListeners {
 
 // Typical high pass filter on each of the 3 axes of accelerometer data
-class HighPassFilterListener : public ICubeAccelListener
-{
-public:
+class HighPassFilterListener : public ICubeAccelListener {
+ public:
   // The reference to output is updated with the latest output of the filter
   // The lower the coeffs, the more sensitive the output of the filter is to
   // high frequencies.
-  // As the coeffs increase, the filter becomes more sensitive to lower and lower frequencies
-  HighPassFilterListener(const Vec3f& coeffs, std::weak_ptr<ActiveAccel> output);
-  
-protected:
+  // As the coeffs increase, the filter becomes more sensitive to lower and
+  // lower frequencies
+  HighPassFilterListener(const Vec3f& coeffs,
+                         std::weak_ptr<ActiveAccel> output);
+
+ protected:
   virtual void InitInternal(const ActiveAccel& accel) override;
-  
+
   virtual void UpdateInternal(const ActiveAccel& accel) override;
-  
-private:
+
+ private:
   // Coefficients for each axis
   const Vec3f _coeffs;
-  
-  // Weak pointer to a variable that will be updated with the output of the filter
+
+  // Weak pointer to a variable that will be updated with the output of the
+  // filter
   std::weak_ptr<ActiveAccel> _output;
-  
+
   // Previous input to the filter
   ActiveAccel _prevInput;
-  
 };
 
-}
-}
-}
+}  // namespace CubeAccelListeners
+}  // namespace Vector
+}  // namespace Anki
 
-#endif //__Engine_CubeAccelListeners_HighPassFilterListener_H__
+#endif  //__Engine_CubeAccelListeners_HighPassFilterListener_H__

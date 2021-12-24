@@ -19,26 +19,25 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorTrackCube : public ICozmoBehavior
-{
-public: 
+class BehaviorTrackCube : public ICozmoBehavior {
+ public:
   virtual ~BehaviorTrackCube();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   explicit BehaviorTrackCube(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-  
+ private:
   ObjectID GetVisibleCube() const;
   void StartAction();
 
@@ -55,10 +54,9 @@ private:
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTrackCube__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTrackCube__

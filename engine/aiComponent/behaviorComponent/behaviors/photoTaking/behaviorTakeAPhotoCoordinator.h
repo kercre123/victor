@@ -4,7 +4,8 @@
  * Author: Kevin M. Karol
  * Created: 2018-06-05
  *
- * Description: Behavior which handles the behavior flow when the user wants to take a photo
+ * Description: Behavior which handles the behavior flow when the user wants to
+ *take a photo
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -19,29 +20,27 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorTakeAPhotoCoordinator : public ICozmoBehavior
-{
-public: 
+class BehaviorTakeAPhotoCoordinator : public ICozmoBehavior {
+ public:
   virtual ~BehaviorTakeAPhotoCoordinator();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorTakeAPhotoCoordinator(const Json::Value& config);  
+  explicit BehaviorTakeAPhotoCoordinator(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual void InitBehavior() override;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
 
-
-private:
-
+ private:
   struct InstanceConfig {
     InstanceConfig();
     ICozmoBehaviorPtr frameFacesBehavior;
@@ -64,10 +63,9 @@ private:
   void TransitionToFocusingAnimation();
   void TransitionToTakePhoto();
   void CaptureCurrentImage();
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTakeAPhotoCoordinator__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTakeAPhotoCoordinator__

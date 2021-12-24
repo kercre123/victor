@@ -22,10 +22,8 @@ namespace Vector {
 namespace RobotInterface {
 class MessageHandler;
 }
-class PathDolerOuter
-{
-public:
-
+class PathDolerOuter {
+ public:
   PathDolerOuter(RobotInterface::MessageHandler* msgHandler);
 
   // Updates the current path and will begins doling it out
@@ -33,21 +31,21 @@ public:
   // this is called
   void SetPath(const Planning::Path& path);
 
-  // change the path without resetting the dole index. Should only be used if we are only
-  // updating segments on the current path that have not been doled
+  // change the path without resetting the dole index. Should only be used if we
+  // are only updating segments on the current path that have not been doled
   void ReplacePath(const Planning::Path& newPath);
 
   void ClearPath();
 
   // Doles out the path bit by bit to the robot. The argument is the
-  // currPathIdx: The current (absolute) segment index that the robot is traversing.
+  // currPathIdx: The current (absolute) segment index that the robot is
+  // traversing.
   void Update(const s8 currPathIdx);
 
-  const Planning::Path& GetPath() const {return path_;}
-  s16 GetLastDoledIdx() const {return lastDoledSegmentIdx_;}
+  const Planning::Path& GetPath() const { return path_; }
+  s16 GetLastDoledIdx() const { return lastDoledSegmentIdx_; }
 
-protected:
-
+ protected:
   void Dole(size_t numToDole);
 
   Planning::Path path_;
@@ -55,13 +53,12 @@ protected:
   size_t pathSizeOnBasestation_;
 
   s16 lastDoledSegmentIdx_;
-  
+
   // A reference to the MessageHandler that the robot uses for outgoing comms
   RobotInterface::MessageHandler* msgHandler_;
-
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

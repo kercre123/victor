@@ -23,7 +23,7 @@ namespace Anki {
 namespace Util {
 
 class AudienceTags {
-public:
+ public:
   using TagHandler = std::function<bool()>;
   using DynamicTagHandler = std::function<std::string()>;
 
@@ -31,19 +31,22 @@ public:
   bool IsTagRegistered(const std::string& tag) const;
 
   // Dynamic tags calculate their value and return it as a string
-  // Useful for tags about locale or location where there are potentially 100s of tags
+  // Useful for tags about locale or location where there are potentially 100s
+  // of tags
   void RegisterDynamicTag(DynamicTagHandler handler);
 
-  // Get a set of all tags the user belongs to (can returned cached results previously calculated)
+  // Get a set of all tags the user belongs to (can returned cached results
+  // previously calculated)
   const std::vector<std::string>& GetQualifiedTags() const;
 
-  // Get a set of all tags the user belongs to (force re-generates the cache even if available)
+  // Get a set of all tags the user belongs to (force re-generates the cache
+  // even if available)
   const std::vector<std::string>& CalculateQualifiedTags() const;
 
   // Verify that the given tags are known to exist by us
   bool VerifyTags(const std::vector<std::string>& tags) const;
 
-private:
+ private:
   std::map<std::string, TagHandler> _tagHandlers;
   std::vector<DynamicTagHandler> _dynamicTagHandlers;
 
@@ -51,7 +54,7 @@ private:
   mutable std::vector<std::string> _qualifiedTags;
 };
 
-} // namespace Util
-} // namespace Anki
+}  // namespace Util
+}  // namespace Anki
 
-#endif // __Util_AudienceTags_AudienceTags_H__
+#endif  // __Util_AudienceTags_AudienceTags_H__

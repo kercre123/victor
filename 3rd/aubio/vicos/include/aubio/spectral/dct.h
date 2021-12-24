@@ -50,7 +50,7 @@ typedef struct _aubio_dct_t aubio_dct_t;
   \param size length of the DCT
 
 */
-aubio_dct_t * new_aubio_dct(uint_t size);
+aubio_dct_t *new_aubio_dct(uint_t size);
 
 /** compute forward DCT
 
@@ -59,7 +59,7 @@ aubio_dct_t * new_aubio_dct(uint_t size);
   \param dct_output transformed input array
 
 */
-void aubio_dct_do (aubio_dct_t *s, const fvec_t * input, fvec_t * dct_output);
+void aubio_dct_do(aubio_dct_t *s, const fvec_t *input, fvec_t *dct_output);
 
 /** compute backward DCT
 
@@ -68,15 +68,14 @@ void aubio_dct_do (aubio_dct_t *s, const fvec_t * input, fvec_t * dct_output);
   \param idct_output transformed input array
 
 */
-void aubio_dct_rdo (aubio_dct_t *s, const fvec_t * input, fvec_t * idct_output);
-
+void aubio_dct_rdo(aubio_dct_t *s, const fvec_t *input, fvec_t *idct_output);
 
 /** delete DCT object
 
   \param s dct object as returned by new_aubio_dct
 
 */
-void del_aubio_dct (aubio_dct_t *s);
+void del_aubio_dct(aubio_dct_t *s);
 
 #ifdef __cplusplus
 }

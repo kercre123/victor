@@ -14,4 +14,3 @@
 #include <stddef.h>
 
 void *malloc_zero(size_t size);
-

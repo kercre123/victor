@@ -4,7 +4,7 @@
  * Author: shawnb
  * Created: 3/08/2018
  *
- * Description: Communication point for message coming from / 
+ * Description: Communication point for message coming from /
  *              going to the engine process. Currently this is
  *              using a udp connection where engine acts as the
  *              server, and this is the client.
@@ -16,47 +16,45 @@
 #ifndef PLATFORM_SWITCHBOARD_SWITCHBOARDD_ENGINEMESSAGINGCLIENT_H_
 #define PLATFORM_SWITCHBOARD_SWITCHBOARDD_ENGINEMESSAGINGCLIENT_H_
 
-#include <string>
 #include <signals/simpleSignal.hpp>
-#include "ev++.h"
-#include "coretech/messaging/shared/socketConstants.h"
-#include "coretech/messaging/shared/LocalUdpClient.h"
+#include <string>
+
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "coretech/messaging/shared/LocalUdpClient.h"
+#include "coretech/messaging/shared/socketConstants.h"
+#include "ev++.h"
 #include "switchboardd/ISwitchboardCommandClient.h"
 
 namespace Anki {
 namespace Switchboard {
 
 class EngineMessagingClient : public ISwitchboardCommandClient {
-public:
-  using EngineMessageSignal = Signal::Signal<void (Anki::Vector::ExternalInterface::MessageEngineToGame)>;
+ public:
+  using EngineMessageSignal = Signal::Signal<void(
+      Anki::Vector::ExternalInterface::MessageEngineToGame)>;
   explicit EngineMessagingClient(struct ev_loop* loop);
   bool Init();
   bool Connect();
   bool Disconnect();
-  void SendMessage(const Anki::Vector::ExternalInterface::MessageGameToEngine& message);
+  void SendMessage(
+      const Anki::Vector::ExternalInterface::MessageGameToEngine& message);
   void SetPairingPin(std::string pin);
   void SendBLEConnectionStatus(bool connected);
-  void ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus status);
+  void ShowPairingStatus(
+      Anki::Vector::SwitchboardInterface::ConnectionStatus status);
   void HandleWifiScanRequest();
-  void HandleWifiConnectRequest(const std::string& ssid,
-                                const std::string& pwd,
+  void HandleWifiConnectRequest(const std::string& ssid, const std::string& pwd,
                                 bool disconnectAfterConnection);
   void HandleHasBleKeysRequest();
-  EngineMessageSignal& OnReceivePairingStatus() {
-    return _pairingStatusSignal;
-  }
-  EngineMessageSignal& OnReceiveEngineMessage() {
-    return _engineMessageSignal;
-  }
-  static void sEvEngineMessageHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
+  EngineMessageSignal& OnReceivePairingStatus() { return _pairingStatusSignal; }
+  EngineMessageSignal& OnReceiveEngineMessage() { return _engineMessageSignal; }
+  static void sEvEngineMessageHandler(struct ev_loop* loop, struct ev_timer* w,
+                                      int revents);
 
-
-private:
-
+ private:
   void HandleWifiConnectRequest(const std::string& ssid);
-  
+
   LocalUdpClient _client;
   EngineMessageSignal _pairingStatusSignal;
   EngineMessageSignal _engineMessageSignal;
@@ -73,7 +71,7 @@ private:
   static const unsigned int kMessageHeaderLength = 2;
   const float kEngineMessageFrequency_s = 0.1;
 };
-} // Switchboard
-} // Anki
+}  // namespace Switchboard
+}  // namespace Anki
 
-#endif // PLATFORM_SWITCHBOARD_SWITCHBOARDD_ENGINEMESSAGINGCLIENT_H_
+#endif  // PLATFORM_SWITCHBOARD_SWITCHBOARDD_ENGINEMESSAGINGCLIENT_H_

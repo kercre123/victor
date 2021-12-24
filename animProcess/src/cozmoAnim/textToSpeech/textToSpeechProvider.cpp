@@ -30,8 +30,8 @@ namespace Anki {
 namespace Vector {
 namespace TextToSpeech {
 
-TextToSpeechProvider::TextToSpeechProvider(const Anim::AnimContext * ctx, const Json::Value& tts_config)
-{
+TextToSpeechProvider::TextToSpeechProvider(const Anim::AnimContext* ctx,
+                                           const Json::Value& tts_config) {
   // Get configuration struct for this platform
 #if defined(ANKI_PLATFORM_OSX)
   Json::Value tts_platform_config = tts_config["osx"];
@@ -45,36 +45,37 @@ TextToSpeechProvider::TextToSpeechProvider(const Anim::AnimContext * ctx, const 
   _impl = std::make_unique<TextToSpeechProviderImpl>(ctx, tts_platform_config);
 }
 
-TextToSpeechProvider::~TextToSpeechProvider()
-{
+TextToSpeechProvider::~TextToSpeechProvider() {
   // Nothing to do here
 }
 
-Result TextToSpeechProvider::SetLocale(const std::string & locale)
-{
+Result TextToSpeechProvider::SetLocale(const std::string& locale) {
   // Forward to implementation
-  DEV_ASSERT(_impl != nullptr, "TextToSpeechProvider.SetLocale.InvalidImplementation");
+  DEV_ASSERT(_impl != nullptr,
+             "TextToSpeechProvider.SetLocale.InvalidImplementation");
   return _impl->SetLocale(locale);
 }
 
-Result TextToSpeechProvider::GetFirstAudioData(const std::string & text,
+Result TextToSpeechProvider::GetFirstAudioData(const std::string& text,
                                                float durationScalar,
                                                float pitchScalar,
-                                               TextToSpeechProviderData & data,
-                                               bool & done)
-{
+                                               TextToSpeechProviderData& data,
+                                               bool& done) {
   // Forward to implementation
-  DEV_ASSERT(_impl != nullptr, "TextToSpeechProvider.GetFirstAudioData.InvalidImplementation");
-  return _impl->GetFirstAudioData(text, durationScalar, pitchScalar, data, done);
+  DEV_ASSERT(_impl != nullptr,
+             "TextToSpeechProvider.GetFirstAudioData.InvalidImplementation");
+  return _impl->GetFirstAudioData(text, durationScalar, pitchScalar, data,
+                                  done);
 }
 
-Result TextToSpeechProvider::GetNextAudioData(TextToSpeechProviderData & data, bool & done)
-{
+Result TextToSpeechProvider::GetNextAudioData(TextToSpeechProviderData& data,
+                                              bool& done) {
   // Forward to implementation
-  DEV_ASSERT(_impl != nullptr, "TextToSpeechProvider.GetNextAudioData.InvalidImplementation");
+  DEV_ASSERT(_impl != nullptr,
+             "TextToSpeechProvider.GetNextAudioData.InvalidImplementation");
   return _impl->GetNextAudioData(data, done);
 }
 
-} // end namespace TextToSpeech
-} // end namespace Vector
-} // end namespace Anki
+}  // end namespace TextToSpeech
+}  // end namespace Vector
+}  // end namespace Anki

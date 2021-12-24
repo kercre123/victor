@@ -1,6 +1,6 @@
 // This file is part of OpenCV project.
-// It is subject to the license terms in the LICENSE file found in the top-level directory
-// of this distribution and at http://opencv.org/license.html.
+// It is subject to the license terms in the LICENSE file found in the top-level
+// directory of this distribution and at http://opencv.org/license.html.
 
 // Copyright (C) 2014, Advanced Micro Devices, Inc., all rights reserved.
 // Third party copyrights are property of their respective owners.
@@ -8,7 +8,7 @@
 #include "../perf_precomp.hpp"
 #include "opencv2/ts/ocl_perf.hpp"
 
-#if 0 //def HAVE_OPENCL
+#if 0  // def HAVE_OPENCL
 
 namespace cvtest {
 namespace ocl {
@@ -33,4 +33,4 @@ OCL_PERF_TEST_P(UpdateMotionHistoryFixture, UpdateMotionHistory, OCL_TEST_SIZES)
 
 } } // namespace cvtest::ocl
 
-#endif // HAVE_OPENCL
+#endif  // HAVE_OPENCL

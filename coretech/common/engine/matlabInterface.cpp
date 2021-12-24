@@ -4,14 +4,9 @@
 
 namespace Anki {
 
-  Matlab::Matlab(bool clearWorkspace)
-  : SharedMatlabInterface(clearWorkspace)
-  {
-    
-  }
+Matlab::Matlab(bool clearWorkspace) : SharedMatlabInterface(clearWorkspace) {}
 
-  
-} // namespace Anki
+}  // namespace Anki
 
 #else
 //
@@ -22,4 +17,4 @@ namespace Anki {
 //
 int coretech_common_engine_matlabInterface = 0;
 
-#endif // defined(ANKICORETECH_USE_MATLAB) && ANKICORETECH_USE_MATLAB
+#endif  // defined(ANKICORETECH_USE_MATLAB) && ANKICORETECH_USE_MATLAB

@@ -10,17 +10,18 @@
  */
 
 #if defined(ANDROID) || defined(VICOS)
-#define  PLATFORM_ANDROID 1
+#define PLATFORM_ANDROID 1
 #else
-#define  PLATFORM_OSX 1
+#define PLATFORM_OSX 1
 #endif
 
 #if defined(PLATFORM_ANDROID)
 
-#include "android/spine_logging.h"
-#include "android/serial_support.h"
-#include <unistd.h>
 #include <termios.h>
+#include <unistd.h>
+
+#include "android/serial_support.h"
+#include "android/spine_logging.h"
 
 #define SPINE_TTY "/dev/ttyHS0"
 #define SPINE_TTY_LEGACY "/dev/ttyHSL1"
@@ -30,8 +31,8 @@
 
 #elif defined(PLATFORM_OSX)
 
-#include "osx/spine_logging.h"
 #include "osx/serial_support.h"
+#include "osx/spine_logging.h"
 
 #define SPINE_TTY "/dev/ttyUSB_LINK"
 #define SPINE_BAUD B230400
@@ -42,4 +43,4 @@
 
 #endif
 
-#endif//SPINE_PLATFORM_H
+#endif  // SPINE_PLATFORM_H

@@ -8,13 +8,11 @@
 
 #include <iostream>
 #include <string>
+
 #include "StringMapBuilder.h"
 
-int main(int argc, const char * argv[])
-{
-
-  if (argc != 4)
-  {
+int main(int argc, const char* argv[]) {
+  if (argc != 4) {
     std::cout << "StringMapBuilder <source_path> <work_path> <config.json>\n";
     std::cout << "or run stringMapBuilder.sh\n";
     return -1;
@@ -27,7 +25,8 @@ int main(int argc, const char * argv[])
     std::cout << "StringMapBuilder finished successfully\n";
     return 0;
   } else {
-    std::cout << "StringMapBuilder finished with errors. String map.json should not be trusted!\n";
+    std::cout << "StringMapBuilder finished with errors. String map.json "
+                 "should not be trusted!\n";
     return 1;
   }
 }

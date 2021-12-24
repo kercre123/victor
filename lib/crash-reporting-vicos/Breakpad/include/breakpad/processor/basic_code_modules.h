@@ -58,7 +58,7 @@ class BasicCodeModules : public CodeModules {
   // the CodeModules and CodeModule interfaces without requiring all of the
   // resources that other implementations may require.  A copy will be
   // made of each contained CodeModule using CodeModule::Copy.
-  explicit BasicCodeModules(const CodeModules *that);
+  explicit BasicCodeModules(const CodeModules* that);
 
   virtual ~BasicCodeModules();
 
@@ -69,8 +69,8 @@ class BasicCodeModules : public CodeModules {
   virtual const CodeModule* GetModuleAtSequence(unsigned int sequence) const;
   virtual const CodeModule* GetModuleAtIndex(unsigned int index) const;
   virtual const CodeModules* Copy() const;
-  virtual std::vector<linked_ptr<const CodeModule> >
-  GetShrunkRangeModules() const;
+  virtual std::vector<linked_ptr<const CodeModule> > GetShrunkRangeModules()
+      const;
   virtual bool IsModuleShrinkEnabled() const;
 
  protected:
@@ -89,8 +89,8 @@ class BasicCodeModules : public CodeModules {
 
  private:
   // Disallow copy constructor and assignment operator.
-  BasicCodeModules(const BasicCodeModules &that);
-  void operator=(const BasicCodeModules &that);
+  BasicCodeModules(const BasicCodeModules& that);
+  void operator=(const BasicCodeModules& that);
 };
 
 }  // namespace google_breakpad

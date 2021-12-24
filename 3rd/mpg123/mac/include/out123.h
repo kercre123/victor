@@ -1,12 +1,12 @@
 /*
-	out123: audio output interface
+        out123: audio output interface
 
-	copyright 1995-2016 by the mpg123 project,
-	free software under the terms of the LGPL 2.1
+        copyright 1995-2016 by the mpg123 project,
+        free software under the terms of the LGPL 2.1
 
-	see COPYING and AUTHORS files in distribution or http://mpg123.org
-	initially written as audio.h by Michael Hipp, reworked into out123 API
-	by Thomas Orgis
+        see COPYING and AUTHORS files in distribution or http://mpg123.org
+        initially written as audio.h by Michael Hipp, reworked into out123 API
+        by Thomas Orgis
 */
 
 #ifndef _OUT123_H_
@@ -33,11 +33,11 @@
 
 #ifndef MPG123_EXPORT
 /** Defines needed for MS Visual Studio(tm) DLL builds.
- * Every public function must be prefixed with MPG123_EXPORT. When building 
+ * Every public function must be prefixed with MPG123_EXPORT. When building
  * the DLL ensure to define BUILD_MPG123_DLL. This makes the function accessible
  * for clients and includes it in the import library which is created together
  * with the DLL. When consuming the DLL ensure to define LINK_MPG123_DLL which
- * imports the functions from the DLL. 
+ * imports the functions from the DLL.
  */
 #ifdef BUILD_MPG123_DLL
 /* The dll exports. */
@@ -93,62 +93,79 @@ struct out123_struct;
 typedef struct out123_struct out123_handle;
 
 /** Enumeration of codes for the parameters that it is possible to set/get. */
-enum out123_parms
-{
-	OUT123_FLAGS = 1 /**< integer, various flags, see enum out123_flags */
-,	OUT123_PRELOAD /**< float, fraction of buffer to fill before playback */
-,	OUT123_GAIN    /**< integer, output device gain (module-specific) */
-,	OUT123_VERBOSE /**< integer, verbosity to stderr, >= 0 */
-,	OUT123_DEVICEBUFFER /**<
- *  float, length of device buffer in seconds;
- *  This might be ignored, might have only a loose relation to actual
- *  buffer sizes and latency, depending on output driver. Try to tune
- *  this before opening a device if you want to influcence latency or reduce
- *  dropouts. Value <= 0 uses some default, usually favouring stable playback
- *  over low latency. Values above 0.5 are probably too much.
- */
-,	OUT123_PROPFLAGS /**< integer, query driver/device property flags (r/o) */
-,	OUT123_NAME /**< string, name of this instance (NULL restores default);
- * The value returned by out123_getparam() might be different if the audio
- * backend changed it (to be unique among clients, p.ex.).
- * TODO: The name provided here is used as prefix in diagnostic messages. */
-,	OUT123_BINDIR /**< string, path to a program binary directory to use
- * as starting point in the search for the output module directory
- * (e.g. ../lib/mpg123 or ./plugins). The environment variable MPG123_MODDIR
- * is always tried first and the in-built installation path last.
- */
+enum out123_parms {
+  OUT123_FLAGS = 1 /**< integer, various flags, see enum out123_flags */
+  ,
+  OUT123_PRELOAD /**< float, fraction of buffer to fill before playback */
+  ,
+  OUT123_GAIN /**< integer, output device gain (module-specific) */
+  ,
+  OUT123_VERBOSE /**< integer, verbosity to stderr, >= 0 */
+  ,
+  OUT123_DEVICEBUFFER /**<
+                       *  float, length of device buffer in seconds;
+                       *  This might be ignored, might have only a loose
+                       * relation to actual buffer sizes and latency, depending
+                       * on output driver. Try to tune this before opening a
+                       * device if you want to influcence latency or reduce
+                       *  dropouts. Value <= 0 uses some default, usually
+                       * favouring stable playback over low latency. Values
+                       * above 0.5 are probably too much.
+                       */
+  ,
+  OUT123_PROPFLAGS /**< integer, query driver/device property flags (r/o) */
+  ,
+  OUT123_NAME /**< string, name of this instance (NULL restores default);
+               * The value returned by out123_getparam() might be different if
+               * the audio backend changed it (to be unique among clients,
+               * p.ex.).
+               * TODO: The name provided here is used as prefix in diagnostic
+               * messages. */
+  ,
+  OUT123_BINDIR /**< string, path to a program binary directory to use
+                 * as starting point in the search for the output module
+                 * directory (e.g. ../lib/mpg123 or ./plugins). The environment
+                 * variable MPG123_MODDIR is always tried first and the in-built
+                 * installation path last.
+                 */
 };
 
 /** Flags to tune out123 behaviour */
-enum out123_flags
-{
-	OUT123_HEADPHONES       = 0x01 /**< output to headphones (if supported) */
-,	OUT123_INTERNAL_SPEAKER = 0x02 /**< output to speaker (if supported) */
-,	OUT123_LINE_OUT         = 0x04 /**< output to line out (if supported) */
-,	OUT123_QUIET               = 0x08 /**< no printouts to standard error */
-,	OUT123_KEEP_PLAYING        = 0x10 /**<
- *  When this is set (default), playback continues in a loop when the device
- *  does not consume all given data at once. This happens when encountering
- *  signals (like SIGSTOP, SIGCONT) that cause interruption of the underlying
- *  functions.
- *  Note that this flag is meaningless when the optional buffer is employed,
- *  There, your program will always block until the buffer completely took
- *  over the data given to it via out123_play(), unless a communication error
- *  arises.
- */
+enum out123_flags {
+  OUT123_HEADPHONES = 0x01 /**< output to headphones (if supported) */
+  ,
+  OUT123_INTERNAL_SPEAKER = 0x02 /**< output to speaker (if supported) */
+  ,
+  OUT123_LINE_OUT = 0x04 /**< output to line out (if supported) */
+  ,
+  OUT123_QUIET = 0x08 /**< no printouts to standard error */
+  ,
+  OUT123_KEEP_PLAYING =
+      0x10 /**<
+            *  When this is set (default), playback continues in a loop when the
+            * device does not consume all given data at once. This happens when
+            * encountering signals (like SIGSTOP, SIGCONT) that cause
+            * interruption of the underlying functions. Note that this flag is
+            * meaningless when the optional buffer is employed, There, your
+            * program will always block until the buffer completely took over
+            * the data given to it via out123_play(), unless a communication
+            * error arises.
+            */
 };
 
 /** Read-only output driver/device property flags (OUT123_PROPFLAGS). */
-enum out123_propflags
-{
-	OUT123_PROP_LIVE = 0x01 /**< This is a live output, meaning that
- *  special care might be needed for pauses in playback (p.ex. stream
- *  of silence instead of interruption), as opposed to files on disk.
- */
-,	OUT123_PROP_PERSISTENT = 0x02 /**< This (live) output does not need
- *  special care for pauses (continues with silence itself),
- *  out123_pause() does nothing to the device.
- */
+enum out123_propflags {
+  OUT123_PROP_LIVE =
+      0x01 /**< This is a live output, meaning that
+            *  special care might be needed for pauses in playback (p.ex. stream
+            *  of silence instead of interruption), as opposed to files on disk.
+            */
+  ,
+  OUT123_PROP_PERSISTENT =
+      0x02 /**< This (live) output does not need
+            *  special care for pauses (continues with silence itself),
+            *  out123_pause() does nothing to the device.
+            */
 };
 
 /** Create a new output handle.
@@ -171,26 +188,41 @@ void out123_del(out123_handle *ao);
  * error occured. Which one, that can be queried using out123_errcode()
  * and friends.
  */
-enum out123_error
-{
-	OUT123_ERR = -1 /**< generic alias for verbosity, always == -1 */
-,	OUT123_OK  = 0  /**< just a name for zero, not going to change */
-,	OUT123_DOOM /**< dazzled, out of memory */
-,	OUT123_BAD_DRIVER_NAME /**< bad driver name given */
-,	OUT123_BAD_DRIVER /**< unspecified issue loading a driver */
-,	OUT123_NO_DRIVER /**< no driver loaded */
-,	OUT123_NOT_LIVE /**< no active audio device */
-,	OUT123_DEV_PLAY /**< some device playback error */
-,	OUT123_DEV_OPEN /**< error opening device */
-,	OUT123_BUFFER_ERROR /**<
- * Some (really unexpected) error in buffer infrastructure.
- */
-,	OUT123_MODULE_ERROR /**< basic failure in module loading */
-,	OUT123_ARG_ERROR /**< some bad function arguments supplied */
-,	OUT123_BAD_PARAM /**< unknown parameter code */
-,	OUT123_SET_RO_PARAM /**< attempt to set read-only parameter */
-,	OUT123_BAD_HANDLE /**< bad handle pointer (NULL, usually) */
-,	OUT123_ERRCOUNT /**< placeholder for shaping arrays */
+enum out123_error {
+  OUT123_ERR = -1 /**< generic alias for verbosity, always == -1 */
+  ,
+  OUT123_OK = 0 /**< just a name for zero, not going to change */
+  ,
+  OUT123_DOOM /**< dazzled, out of memory */
+  ,
+  OUT123_BAD_DRIVER_NAME /**< bad driver name given */
+  ,
+  OUT123_BAD_DRIVER /**< unspecified issue loading a driver */
+  ,
+  OUT123_NO_DRIVER /**< no driver loaded */
+  ,
+  OUT123_NOT_LIVE /**< no active audio device */
+  ,
+  OUT123_DEV_PLAY /**< some device playback error */
+  ,
+  OUT123_DEV_OPEN /**< error opening device */
+  ,
+  OUT123_BUFFER_ERROR /**<
+                       * Some (really unexpected) error in buffer
+                       * infrastructure.
+                       */
+  ,
+  OUT123_MODULE_ERROR /**< basic failure in module loading */
+  ,
+  OUT123_ARG_ERROR /**< some bad function arguments supplied */
+  ,
+  OUT123_BAD_PARAM /**< unknown parameter code */
+  ,
+  OUT123_SET_RO_PARAM /**< attempt to set read-only parameter */
+  ,
+  OUT123_BAD_HANDLE /**< bad handle pointer (NULL, usually) */
+  ,
+  OUT123_ERRCOUNT /**< placeholder for shaping arrays */
 };
 
 /** Get string representation of last encountered error in the
@@ -199,7 +231,7 @@ enum out123_error
  * \return error string
  */
 MPG123_EXPORT
-const char* out123_strerror(out123_handle *ao);
+const char *out123_strerror(out123_handle *ao);
 
 /** Get the plain errcode intead of a string.
  * Note that this used to return OUT123_ERR instead of
@@ -215,7 +247,7 @@ int out123_errcode(out123_handle *ao);
  * \return error string
  */
 MPG123_EXPORT
-const char* out123_plain_strerror(int errcode);
+const char *out123_plain_strerror(int errcode);
 
 /** Set a desired output buffer size.
  *  This starts a separate process that handles the audio output, decoupling
@@ -251,7 +283,7 @@ const char* out123_plain_strerror(int errcode);
 MPG123_EXPORT
 int out123_set_buffer(out123_handle *ao, size_t buffer_bytes);
 
-/** Set a specific parameter, for a specific out123_handle, using a parameter 
+/** Set a specific parameter, for a specific out123_handle, using a parameter
  *  code chosen from the out123_parms enumeration, to the specified value.
  *  The parameters usually only change what happens on next out123_open, not
  *  incfluencing running operation.
@@ -263,14 +295,14 @@ int out123_set_buffer(out123_handle *ao, size_t buffer_bytes);
  * \return 0 on success, OUT123_ERR on error.
  */
 MPG123_EXPORT
-int out123_param( out123_handle *ao, enum out123_parms code
-,                 long value, double fvalue, const char *svalue );
+int out123_param(out123_handle *ao, enum out123_parms code, long value,
+                 double fvalue, const char *svalue);
 #define out123_param_int(ao, code, value) \
-	out123_param((ao), (code), (value), 0., NULL)
+  out123_param((ao), (code), (value), 0., NULL)
 #define out123_param_float(ao, code, value) \
-	out123_param((ao), (code), 0, (value), NULL)
+  out123_param((ao), (code), 0, (value), NULL)
 #define out123_param_string(ao, code, value) \
-	out123_param((ao), (code), 0, 0., (value))
+  out123_param((ao), (code), 0, 0., (value))
 
 /** Get a specific parameter, for a specific out123_handle, using a parameter
  *  code chosen from the out123_parms enumeration, to the specified value.
@@ -283,14 +315,14 @@ int out123_param( out123_handle *ao, enum out123_parms code
  * \return 0 on success, OUT123_ERR on error (bad parameter name or bad handle).
  */
 MPG123_EXPORT
-int out123_getparam( out123_handle *ao, enum out123_parms code
-,                    long *ret_value, double *ret_fvalue, char* *ret_svalue );
+int out123_getparam(out123_handle *ao, enum out123_parms code, long *ret_value,
+                    double *ret_fvalue, char **ret_svalue);
 #define out123_getparam_int(ao, code, value) \
-	out123_getparam((ao), (code), (value), NULL, NULL)
+  out123_getparam((ao), (code), (value), NULL, NULL)
 #define out123_getparam_float(ao, code, value) \
-	out123_getparam((ao), (code), NULL, (value), NULL)
+  out123_getparam((ao), (code), NULL, (value), NULL)
 #define out123_getparam_string(ao, code, value) \
-	out123_getparam((ao), (code), NULL, NULL, (value))
+  out123_getparam((ao), (code), NULL, NULL, (value))
 
 /** Copy parameters from another out123_handle.
  * \param ao handle
@@ -298,7 +330,7 @@ int out123_getparam( out123_handle *ao, enum out123_parms code
  * \return 0 in success, -1 on error
  */
 MPG123_EXPORT
-int out123_param_from(out123_handle *ao, out123_handle* from_ao);
+int out123_param_from(out123_handle *ao, out123_handle *from_ao);
 
 /** Get list of driver modules reachable in system in C argv-style format.
  *  The client is responsible for freeing the memory of both the individual
@@ -327,7 +359,7 @@ int out123_drivers(out123_handle *ao, char ***names, char ***descr);
  * \return 0 on success, -1 on error.
  */
 MPG123_EXPORT
-int out123_open(out123_handle *ao, const char* driver, const char* device);
+int out123_open(out123_handle *ao, const char *driver, const char *device);
 
 /** Give info about currently loaded driver and device
  *  Any of the return addresses can be NULL if you are not interested in
@@ -412,9 +444,9 @@ MPG123_EXPORT int out123_encsize(int encoding);
  * \return number of returned format enries, -1 on error
  */
 MPG123_EXPORT
-int out123_formats( out123_handle *ao, const long *rates, int ratecount
-                  , int minchannels, int maxchannels
-                  , struct mpg123_fmt **fmtlist );
+int out123_formats(out123_handle *ao, const long *rates, int ratecount,
+                   int minchannels, int maxchannels,
+                   struct mpg123_fmt **fmtlist);
 
 /** Get list of encodings known to the library.
  *  You are responsible for freeing the allocated array.
@@ -436,14 +468,14 @@ int out123_enc_byname(const char *name);
  * \return short name for valid encodings, NULL otherwise
  */
 MPG123_EXPORT
-const char* out123_enc_name(int encoding);
+const char *out123_enc_name(int encoding);
 
 /** Get long name of encoding.
  * \param encoding code (enum mpg123_enc_enum)
  * \return long name for valid encodings, NULL otherwise
  */
 MPG123_EXPORT
-const char* out123_enc_longname(int encoding);
+const char *out123_enc_longname(int encoding);
 
 /** Start playback with a certain output format
  *  It might be a good idea to have audio data handy to feed after this
@@ -458,8 +490,7 @@ const char* out123_enc_longname(int encoding);
  * \return 0 on success, negative on error (bad format, usually)
  */
 MPG123_EXPORT
-int out123_start( out123_handle *ao
-,                 long rate, int channels, int encoding );
+int out123_start(out123_handle *ao, long rate, int channels, int encoding);
 
 /** Pause playback
  *  Interrupt playback, holding any data in the optional buffer.
@@ -503,15 +534,14 @@ void out123_stop(out123_handle *ao);
  *  Also note that it is no accident that the buffer parameter is not marked
  *  as constant. Some output drivers might need to do things like swap
  *  byte order. This is done in-place instead of wasting memory on yet
- *  another copy. 
+ *  another copy.
  * \param ao handle
  * \param buffer pointer to raw audio data to be played
  * \param bytes number of bytes to read from the buffer
  * \return number of bytes played (might be less than given, even zero)
  */
 MPG123_EXPORT
-size_t out123_play( out123_handle *ao
-                  , void *buffer, size_t bytes );
+size_t out123_play(out123_handle *ao, void *buffer, size_t bytes);
 
 /** Drop any buffered data, making next provided data play right away.
  *  This does not imply an actual pause in playback.
@@ -575,8 +605,8 @@ size_t out123_buffered(out123_handle *ao);
  * \return 0 on success, -1 on error
  */
 MPG123_EXPORT
-int out123_getformat( out123_handle *ao
-,	long *rate, int *channels, int *encoding, int *framesize );
+int out123_getformat(out123_handle *ao, long *rate, int *channels,
+                     int *encoding, int *framesize);
 
 /* @} */
 
@@ -585,4 +615,3 @@ int out123_getformat( out123_handle *ao
 #endif
 
 #endif
-

@@ -50,8 +50,8 @@ typedef struct _aubio_tempo_t aubio_tempo_t;
   \return newly created ::aubio_tempo_t if successful, `NULL` otherwise
 
 */
-aubio_tempo_t * new_aubio_tempo (const char_t * method,
-    uint_t buf_size, uint_t hop_size, uint_t samplerate);
+aubio_tempo_t *new_aubio_tempo(const char_t *method, uint_t buf_size,
+                               uint_t hop_size, uint_t samplerate);
 
 /** execute tempo detection
 
@@ -60,28 +60,28 @@ aubio_tempo_t * new_aubio_tempo (const char_t * method,
   \param tempo output beats
 
 */
-void aubio_tempo_do (aubio_tempo_t *o, const fvec_t * input, fvec_t * tempo);
+void aubio_tempo_do(aubio_tempo_t *o, const fvec_t *input, fvec_t *tempo);
 
 /** get the time of the latest beat detected, in samples
 
   \param o tempo detection object as returned by ::new_aubio_tempo
 
 */
-uint_t aubio_tempo_get_last (aubio_tempo_t *o);
+uint_t aubio_tempo_get_last(aubio_tempo_t *o);
 
 /** get the time of the latest beat detected, in seconds
 
   \param o tempo detection object as returned by ::new_aubio_tempo
 
 */
-smpl_t aubio_tempo_get_last_s (aubio_tempo_t *o);
+smpl_t aubio_tempo_get_last_s(aubio_tempo_t *o);
 
 /** get the time of the latest beat detected, in milliseconds
 
   \param o tempo detection object as returned by ::new_aubio_tempo
 
 */
-smpl_t aubio_tempo_get_last_ms (aubio_tempo_t *o);
+smpl_t aubio_tempo_get_last_ms(aubio_tempo_t *o);
 
 /** set tempo detection silence threshold
 
@@ -91,7 +91,7 @@ smpl_t aubio_tempo_get_last_ms (aubio_tempo_t *o);
   \return `0` if successful, non-zero otherwise
 
 */
-uint_t aubio_tempo_set_silence(aubio_tempo_t * o, smpl_t silence);
+uint_t aubio_tempo_set_silence(aubio_tempo_t *o, smpl_t silence);
 
 /** get tempo detection silence threshold
 
@@ -100,7 +100,7 @@ uint_t aubio_tempo_set_silence(aubio_tempo_t * o, smpl_t silence);
   \return current silence threshold
 
 */
-smpl_t aubio_tempo_get_silence(aubio_tempo_t * o);
+smpl_t aubio_tempo_get_silence(aubio_tempo_t *o);
 
 /** set tempo detection peak picking threshold
 
@@ -110,7 +110,7 @@ smpl_t aubio_tempo_get_silence(aubio_tempo_t * o);
   \return `0` if successful, non-zero otherwise
 
 */
-uint_t aubio_tempo_set_threshold(aubio_tempo_t * o, smpl_t threshold);
+uint_t aubio_tempo_set_threshold(aubio_tempo_t *o, smpl_t threshold);
 
 /** get tempo peak picking threshold
 
@@ -119,7 +119,7 @@ uint_t aubio_tempo_set_threshold(aubio_tempo_t * o, smpl_t threshold);
   \return current tempo detection threshold
 
 */
-smpl_t aubio_tempo_get_threshold(aubio_tempo_t * o);
+smpl_t aubio_tempo_get_threshold(aubio_tempo_t *o);
 
 /** get current beat period in samples
 
@@ -129,7 +129,7 @@ smpl_t aubio_tempo_get_threshold(aubio_tempo_t * o);
   value is found.
 
 */
-smpl_t aubio_tempo_get_period (aubio_tempo_t * bt);
+smpl_t aubio_tempo_get_period(aubio_tempo_t *bt);
 
 /** get current beat period in seconds
 
@@ -139,7 +139,7 @@ smpl_t aubio_tempo_get_period (aubio_tempo_t * bt);
   value is found.
 
 */
-smpl_t aubio_tempo_get_period_s (aubio_tempo_t * bt);
+smpl_t aubio_tempo_get_period_s(aubio_tempo_t *bt);
 
 /** get current tempo
 
@@ -148,7 +148,7 @@ smpl_t aubio_tempo_get_period_s (aubio_tempo_t * bt);
   \return the currently observed tempo, or `0` if no consistent value is found
 
 */
-smpl_t aubio_tempo_get_bpm(aubio_tempo_t * o);
+smpl_t aubio_tempo_get_bpm(aubio_tempo_t *o);
 
 /** get current tempo confidence
 
@@ -158,7 +158,7 @@ smpl_t aubio_tempo_get_bpm(aubio_tempo_t * o);
   more confidence, `0` if no consistent value is found.
 
 */
-smpl_t aubio_tempo_get_confidence(aubio_tempo_t * o);
+smpl_t aubio_tempo_get_confidence(aubio_tempo_t *o);
 
 /** set number of tatum per beat
 
@@ -191,7 +191,7 @@ smpl_t aubio_tempo_get_last_tatum(aubio_tempo_t *o);
   \return current delay, in samples
 
  */
-uint_t aubio_tempo_get_delay(aubio_tempo_t * o);
+uint_t aubio_tempo_get_delay(aubio_tempo_t *o);
 
 /** get current delay in seconds
 
@@ -200,7 +200,7 @@ uint_t aubio_tempo_get_delay(aubio_tempo_t * o);
   \return current delay, in seconds
 
  */
-smpl_t aubio_tempo_get_delay_s(aubio_tempo_t * o);
+smpl_t aubio_tempo_get_delay_s(aubio_tempo_t *o);
 
 /** get current delay in ms
 
@@ -209,7 +209,7 @@ smpl_t aubio_tempo_get_delay_s(aubio_tempo_t * o);
   \return current delay, in milliseconds
 
  */
-smpl_t aubio_tempo_get_delay_ms(aubio_tempo_t * o);
+smpl_t aubio_tempo_get_delay_ms(aubio_tempo_t *o);
 
 /** set current delay
 
@@ -219,7 +219,7 @@ smpl_t aubio_tempo_get_delay_ms(aubio_tempo_t * o);
   \return `0` if successful, non-zero otherwise
 
  */
-uint_t aubio_tempo_set_delay(aubio_tempo_t * o, sint_t delay);
+uint_t aubio_tempo_set_delay(aubio_tempo_t *o, sint_t delay);
 
 /** set current delay in seconds
 
@@ -229,7 +229,7 @@ uint_t aubio_tempo_set_delay(aubio_tempo_t * o, sint_t delay);
   \return `0` if successful, non-zero otherwise
 
  */
-uint_t aubio_tempo_set_delay_s(aubio_tempo_t * o, smpl_t delay);
+uint_t aubio_tempo_set_delay_s(aubio_tempo_t *o, smpl_t delay);
 
 /** set current delay
 
@@ -239,14 +239,14 @@ uint_t aubio_tempo_set_delay_s(aubio_tempo_t * o, smpl_t delay);
   \return `0` if successful, non-zero otherwise
 
  */
-uint_t aubio_tempo_set_delay_ms(aubio_tempo_t * o, smpl_t delay);
+uint_t aubio_tempo_set_delay_ms(aubio_tempo_t *o, smpl_t delay);
 
 /** delete tempo detection object
 
   \param o beat tracking object
 
 */
-void del_aubio_tempo(aubio_tempo_t * o);
+void del_aubio_tempo(aubio_tempo_t *o);
 
 #ifdef __cplusplus
 }

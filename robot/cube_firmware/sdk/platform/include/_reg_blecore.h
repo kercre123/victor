@@ -5,6 +5,4 @@
 
 #define REG_BLECORE_BASE_ADDR 0x40000000
 
-
-#endif // __REG_BLECORE_H_
-
+#endif  // __REG_BLECORE_H_

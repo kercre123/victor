@@ -20,12 +20,14 @@ namespace alexaClientSDK {
 namespace avsCommon {
 namespace avs {
 
-/// An enum class indicating whether an operation originated from a Device or Cloud (AVS).
+/// An enum class indicating whether an operation originated from a Device or
+/// Cloud (AVS).
 enum class Requester {
-    /// The request came from AVS as a result of a directive.
-    CLOUD,
-    /// The request came from the device. Can be from either the AVS device or a connected device.
-    DEVICE
+  /// The request came from AVS as a result of a directive.
+  CLOUD,
+  /// The request came from the device. Can be from either the AVS device or a
+  /// connected device.
+  DEVICE
 };
 
 /**
@@ -35,24 +37,25 @@ enum class Requester {
  * @return The string representation of the enum.
  */
 inline std::string requesterToString(Requester requester) {
-    switch (requester) {
-        case Requester::CLOUD:
-            return "CLOUD";
-        case Requester::DEVICE:
-            return "DEVICE";
-    }
-    return "UNKNOWN";
+  switch (requester) {
+    case Requester::CLOUD:
+      return "CLOUD";
+    case Requester::DEVICE:
+      return "DEVICE";
+  }
+  return "UNKNOWN";
 }
 
 /**
  * Write a @c Requester value to an @c ostream as a string.
  *
  * @param stream The stream to write the value to.
- * @param requester The @c Requester value to write to the @c ostream as a string.
+ * @param requester The @c Requester value to write to the @c ostream as a
+ * string.
  * @return The @c ostream that was passed in and written to.
  */
 inline std::ostream& operator<<(std::ostream& stream, Requester requester) {
-    return stream << requesterToString(requester);
+  return stream << requesterToString(requester);
 }
 
 }  // namespace avs

@@ -13,17 +13,15 @@
 #ifndef _ANKICORETECH_PLANNING_OPENLIST_H_
 #define _ANKICORETECH_PLANNING_OPENLIST_H_
 
-#include "coretech/planning/engine/xythetaEnvironment.h"
 #include <map>
+
+#include "coretech/planning/engine/xythetaEnvironment.h"
 
 namespace Anki {
 namespace Planning {
 
-class OpenList
-{
-
-public:
-
+class OpenList {
+ public:
   typedef std::multimap<float, StateID>::iterator iterator;
 
   OpenList();
@@ -49,7 +47,7 @@ public:
   iterator insert(StateID stateID, const float f);
 
   // Returns a "null iterator" that will always be consistent
-  static iterator nullIterator() {return nullIterator_;}
+  static iterator nullIterator() { return nullIterator_; }
 
   // removes an iterator.
   void remove(iterator it);
@@ -59,8 +57,12 @@ public:
   std::multimap<float, StateID>::iterator end() { return fMap_.end(); };
 
   // const versions
-  std::multimap<float, StateID>::const_iterator begin() const { return fMap_.begin(); };
-  std::multimap<float, StateID>::const_iterator end() const { return fMap_.end(); };
+  std::multimap<float, StateID>::const_iterator begin() const {
+    return fMap_.begin();
+  };
+  std::multimap<float, StateID>::const_iterator end() const {
+    return fMap_.end();
+  };
 
   // Returns true if the state is contained in the open list. warning:
   // these are both linear time!! don't call these
@@ -69,9 +71,8 @@ public:
   // returns very high number if id is not in this list, otherwise
   // returns the f value. Linear time function!
   float fVal(StateID id) const;
-  
-private:
 
+ private:
   // Multimap is internally stored as a min heap
   // This multimap maps from a given f value to a state ID
   std::multimap<float, StateID> fMap_;
@@ -84,9 +85,8 @@ private:
   static iterator nullIterator_;
 };
 
-}
+}  // namespace Planning
 
-}
+}  // namespace Anki
 
-
-#endif // BASESTATION_PLANNING_OPENLIST_H_
+#endif  // BASESTATION_PLANNING_OPENLIST_H_

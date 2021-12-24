@@ -23,26 +23,27 @@ namespace capabilityAgents {
 namespace alerts {
 
 /**
- * A reminder class.  This represents an alert which the user wishes to activate at a specific point in time,
- * which they specify as that absolute time point, rather than an offset from the current time.
+ * A reminder class.  This represents an alert which the user wishes to activate
+ * at a specific point in time, which they specify as that absolute time point,
+ * rather than an offset from the current time.
  *
- * The user expectation is that the activation of the reminder will include custom assets (if the device is connected
- * to the internet), such as Alexa telling the user something specific with respect to the reminder being set.
+ * The user expectation is that the activation of the reminder will include
+ * custom assets (if the device is connected to the internet), such as Alexa
+ * telling the user something specific with respect to the reminder being set.
  *
  * Usage example:
  * "Alexa, remind me to walk the dog at 10am".
  * 10am : Alexa will say "This is your 10am reminder to walk the dog."
  */
 class Reminder : public Alert {
-public:
-    /// String representation of this type.
-    static const std::string TYPE_NAME;
+ public:
+  /// String representation of this type.
+  static const std::string TYPE_NAME;
 
-    Reminder(
-        std::function<std::unique_ptr<std::istream>()> defaultAudioFactory,
-        std::function<std::unique_ptr<std::istream>()> shortAudioFactory);
+  Reminder(std::function<std::unique_ptr<std::istream>()> defaultAudioFactory,
+           std::function<std::unique_ptr<std::istream>()> shortAudioFactory);
 
-    std::string getTypeName() const override;
+  std::string getTypeName() const override;
 };
 
 }  // namespace alerts

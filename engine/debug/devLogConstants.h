@@ -20,8 +20,7 @@ namespace DevLogConstants {
 static constexpr int kNumLogTimestampDigits = 7;
 }
 
-}
-}
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

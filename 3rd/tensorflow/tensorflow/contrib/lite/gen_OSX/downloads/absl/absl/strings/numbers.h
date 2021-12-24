@@ -42,9 +42,9 @@ namespace absl {
 // SimpleAtoi()
 //
 // Converts the given std::string into an integer value, returning `true` if
-// successful. The std::string must reflect a base-10 integer (optionally followed or
-// preceded by ASCII whitespace) whose value falls within the range of the
-// integer type,
+// successful. The std::string must reflect a base-10 integer (optionally
+// followed or preceded by ASCII whitespace) whose value falls within the range
+// of the integer type,
 template <typename int_type>
 ABSL_MUST_USE_RESULT bool SimpleAtoi(absl::string_view s, int_type* out);
 
@@ -62,9 +62,9 @@ ABSL_MUST_USE_RESULT bool SimpleAtod(absl::string_view str, double* value);
 
 // SimpleAtob()
 //
-// Converts the given std::string into a boolean, returning `true` if successful.
-// The following case-insensitive strings are interpreted as boolean `true`:
-// "true", "t", "yes", "y", "1". The following case-insensitive strings
+// Converts the given std::string into a boolean, returning `true` if
+// successful. The following case-insensitive strings are interpreted as boolean
+// `true`: "true", "t", "yes", "y", "1". The following case-insensitive strings
 // are interpreted as boolean `false`: "false", "f", "no", "n", "0".
 ABSL_MUST_USE_RESULT bool SimpleAtob(absl::string_view str, bool* value);
 
@@ -110,7 +110,7 @@ char* FastIntToBuffer(int_type i, char* buffer) {
   // with enums, and it also serves to check that int_type is not a pointer.
   // If one day something like std::is_signed<enum E> works, switch to it.
   if (static_cast<int_type>(1) - 2 < 0) {  // Signed
-    if (sizeof(i) > 32 / 8) {           // 33-bit to 64-bit
+    if (sizeof(i) > 32 / 8) {              // 33-bit to 64-bit
       return FastIntToBuffer(static_cast<int64_t>(i), buffer);
     } else {  // 32-bit or less
       return FastIntToBuffer(static_cast<int32_t>(i), buffer);
@@ -128,11 +128,11 @@ char* FastIntToBuffer(int_type i, char* buffer) {
 
 // SimpleAtoi()
 //
-// Converts a std::string to an integer, using `safe_strto?()` functions for actual
-// parsing, returning `true` if successful. The `safe_strto?()` functions apply
-// strict checking; the std::string must be a base-10 integer, optionally followed or
-// preceded by ASCII whitespace, with a value in the range of the corresponding
-// integer type.
+// Converts a std::string to an integer, using `safe_strto?()` functions for
+// actual parsing, returning `true` if successful. The `safe_strto?()` functions
+// apply strict checking; the std::string must be a base-10 integer, optionally
+// followed or preceded by ASCII whitespace, with a value in the range of the
+// corresponding integer type.
 template <typename int_type>
 ABSL_MUST_USE_RESULT bool SimpleAtoi(absl::string_view s, int_type* out) {
   static_assert(sizeof(*out) == 4 || sizeof(*out) == 8,
@@ -144,7 +144,7 @@ ABSL_MUST_USE_RESULT bool SimpleAtoi(absl::string_view s, int_type* out) {
   // with enums, and it also serves to check that int_type is not a pointer.
   // If one day something like std::is_signed<enum E> works, switch to it.
   if (static_cast<int_type>(1) - 2 < 0) {  // Signed
-    if (sizeof(*out) == 64 / 8) {       // 64-bit
+    if (sizeof(*out) == 64 / 8) {          // 64-bit
       int64_t val;
       parsed = numbers_internal::safe_strto64_base(s, &val, 10);
       *out = static_cast<int_type>(val);

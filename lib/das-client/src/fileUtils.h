@@ -15,8 +15,7 @@
 
 #include <string>
 
-namespace AnkiUtil
-{
+namespace AnkiUtil {
 bool FileExistsAtPath(const std::string& path);
-} // namespace AnkiUtil
-#endif // __FileUtils_H__
+}  // namespace AnkiUtil
+#endif  // __FileUtils_H__

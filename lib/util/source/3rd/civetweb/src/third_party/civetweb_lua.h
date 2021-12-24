@@ -27,8 +27,8 @@
 #define CIVETWEB_LUA_H
 
 #define LUA_LIB
-#include "lua.h"
 #include "lauxlib.h"
+#include "lua.h"
 #include "lualib.h"
 
 #ifndef LUA_VERSION_NUM
@@ -40,17 +40,17 @@
 #define LUA_ERRGCMM 999 /* not supported */
 #define mg_lua_load(a, b, c, d, e) lua_load(a, b, c, d)
 #define lua_rawlen lua_objlen
-#define lua_newstate(a, b)                                                     \
-	luaL_newstate() /* Must use luaL_newstate() for 64 bit target */
+#define lua_newstate(a, b) \
+  luaL_newstate() /* Must use luaL_newstate() for 64 bit target */
 #define lua_pushinteger lua_pushnumber
-#define luaL_newlib(L, t)                                                      \
-	{                                                                          \
-		luaL_Reg const *r = t;                                                 \
-		while (r->name) {                                                      \
-			lua_register(L, r->name, r->func);                                 \
-			r++;                                                               \
-		}                                                                      \
-	}
+#define luaL_newlib(L, t)                \
+  {                                      \
+    luaL_Reg const *r = t;               \
+    while (r->name) {                    \
+      lua_register(L, r->name, r->func); \
+      r++;                               \
+    }                                    \
+  }
 #define luaL_setfuncs(L, r, u) lua_register(L, r->name, r->func)
 
 #elif LUA_VERSION_NUM == 502
@@ -65,7 +65,7 @@
 
 #ifdef LUA_VERSION_MAKEFILE
 #if LUA_VERSION_MAKEFILE != LUA_VERSION_NUM
-#error                                                                         \
+#error \
     "Mismatch between Lua version specified in Makefile and Lua version in lua.h"
 #endif
 #endif

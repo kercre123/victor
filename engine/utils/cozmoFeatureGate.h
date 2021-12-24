@@ -4,7 +4,8 @@
  * Author: baustin
  * Created: 6/15/16
  *
- * Description: Light wrapper for FeatureGate to initialize it with Cozmo-specific configuration
+ * Description: Light wrapper for FeatureGate to initialize it with
+ *Cozmo-specific configuration
  *
  * Copyright: Anki, Inc. 2016
  *
@@ -17,7 +18,7 @@
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Json {
-  class Value;
+class Value;
 }
 
 namespace Anki {
@@ -26,31 +27,32 @@ namespace Util {
 namespace Data {
 class DataPlatform;
 }
-}
+}  // namespace Util
 
 namespace Vector {
 
 class CozmoContext;
 enum class FeatureType : uint8_t;
 
-class CozmoFeatureGate : public Util::FeatureGate
-{
+class CozmoFeatureGate : public Util::FeatureGate {
   using Base = Util::FeatureGate;
-public:
-  CozmoFeatureGate( Util::Data::DataPlatform* platform );
-  
+
+ public:
+  CozmoFeatureGate(Util::Data::DataPlatform* platform);
+
   void Init(const CozmoContext* context, const std::string& jsonContents);
 
   bool IsFeatureEnabled(FeatureType feature) const;
   void SetFeatureEnabled(FeatureType feature, bool enabled);
-private:
-  
-  void SendFeaturesToWebViz(const std::function<void(const Json::Value&)>& sendFunc) const;
-  
+
+ private:
+  void SendFeaturesToWebViz(
+      const std::function<void(const Json::Value&)>& sendFunc) const;
+
   std::vector<::Signal::SmartHandle> _signalHandles;
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

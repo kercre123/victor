@@ -26,12 +26,12 @@ namespace aip {
  * Enumerates the different initiators supported by AVS.
  */
 enum class Initiator {
-    /// Recognize event was initiated by a press-and-hold action.
-    PRESS_AND_HOLD,
-    /// Recognize event was initiated by a tap-to-talk action.
-    TAP,
-    /// Recognize event was initiated by a wakeword action.
-    WAKEWORD
+  /// Recognize event was initiated by a press-and-hold action.
+  PRESS_AND_HOLD,
+  /// Recognize event was initiated by a tap-to-talk action.
+  TAP,
+  /// Recognize event was initiated by a wakeword action.
+  WAKEWORD
 };
 
 /**
@@ -41,15 +41,15 @@ enum class Initiator {
  * @return The @c std::string conversion of the @c Initiator value.
  */
 inline std::string initiatorToString(Initiator initiator) {
-    switch (initiator) {
-        case Initiator::PRESS_AND_HOLD:
-            return "PRESS_AND_HOLD";
-        case Initiator::TAP:
-            return "TAP";
-        case Initiator::WAKEWORD:
-            return "WAKEWORD";
-    }
-    return "Unknown Inititator";
+  switch (initiator) {
+    case Initiator::PRESS_AND_HOLD:
+      return "PRESS_AND_HOLD";
+    case Initiator::TAP:
+      return "TAP";
+    case Initiator::WAKEWORD:
+      return "WAKEWORD";
+  }
+  return "Unknown Inititator";
 }
 
 }  // namespace aip

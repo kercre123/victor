@@ -1,16 +1,18 @@
 /**
-* File: main.cpp
-*
-* Author: ross
-* Created: Jun 24 2018
-*
-* Description: runs the plugin for giving the proto generated code some nice features from CLAD
-*
-* Copyright: Anki, Inc. 2018
-*/
+ * File: main.cpp
+ *
+ * Author: ross
+ * Created: Jun 24 2018
+ *
+ * Description: runs the plugin for giving the proto generated code some nice
+ * features from CLAD
+ *
+ * Copyright: Anki, Inc. 2018
+ */
+
+#include <google/protobuf/compiler/plugin.h>
 
 #include "ankiProtoGenerator.h"
-#include <google/protobuf/compiler/plugin.h>
 
 using namespace Anki;
 

@@ -19,40 +19,39 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorDanceToTheBeatCoordinator : public ICozmoBehavior
-{
-public: 
+class BehaviorDanceToTheBeatCoordinator : public ICozmoBehavior {
+ public:
   virtual ~BehaviorDanceToTheBeatCoordinator();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorDanceToTheBeatCoordinator(const Json::Value& config);  
+  explicit BehaviorDanceToTheBeatCoordinator(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual void InitBehavior() override;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
 
-private:
-
+ private:
   struct InstanceConfig {
-    InstanceConfig() {};
-    
+    InstanceConfig(){};
+
     std::string listeningBehaviorStr;
     std::string longListeningBehaviorStr;
     std::string offChargerDancingBehaviorStr;
     std::string onChargerDancingBehaviorStr;
-    
+
     ICozmoBehaviorPtr listeningBehavior;
     ICozmoBehaviorPtr longListeningBehavior;
     ICozmoBehaviorPtr offChargerDancingBehavior;
     ICozmoBehaviorPtr onChargerDancingBehavior;
-    
+
     ICozmoBehaviorPtr driveOffChargerBehavior;
     ICozmoBehaviorPtr goHomeBehavior;
   };
@@ -63,28 +62,29 @@ private:
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-  
-  // After listening is complete, check if there is a confident beat or not. If so, dispatch the proper behaviors
+
+  // After listening is complete, check if there is a confident beat or not. If
+  // so, dispatch the proper behaviors
   void CheckIfBeatDetected();
-  
+
   // Start dancing (while off charger)
   void TransitionToOffChargerDance();
-  
+
   // Start dancing (while on charger)
   void TransitionToOnChargerDance();
-  
+
   // Drive off the charger to possibly dance
   void TransitionToDriveOffCharger();
-  
+
   // After driving off the charger, listening to confirm a beat again
   void TransitionToOffChargerListening();
-  
-  // Returns true if the backpack has been fiddled with recently enough to adversely affect beat detection
+
+  // Returns true if the backpack has been fiddled with recently enough to
+  // adversely affect beat detection
   bool RecentBackpackActivity() const;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorDanceToTheBeatCoordinator__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorDanceToTheBeatCoordinator__

@@ -30,14 +30,16 @@ namespace attachment {
  * A collection of util functions related to Attachment classes.
  */
 class AttachmentUtils {
-public:
-    /**
-     * Create an @c AttachmentReader with a preset content of a @c std::vector of @c char.
-     *
-     * @param srcBuffer The reader content.
-     * @return A new @c AttachmentReader or @c nullptr if the operation failed.
-     */
-    static std::unique_ptr<AttachmentReader> createAttachmentReader(const std::vector<char>& srcBuffer);
+ public:
+  /**
+   * Create an @c AttachmentReader with a preset content of a @c std::vector of
+   * @c char.
+   *
+   * @param srcBuffer The reader content.
+   * @return A new @c AttachmentReader or @c nullptr if the operation failed.
+   */
+  static std::unique_ptr<AttachmentReader> createAttachmentReader(
+      const std::vector<char>& srcBuffer);
 };
 
 }  // namespace attachment

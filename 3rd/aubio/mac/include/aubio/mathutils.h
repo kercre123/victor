@@ -43,7 +43,7 @@ extern "C" {
   \return the mean of `v`
 
 */
-smpl_t fvec_mean (fvec_t * s);
+smpl_t fvec_mean(fvec_t *s);
 
 /** find the max of a vector
 
@@ -52,7 +52,7 @@ smpl_t fvec_mean (fvec_t * s);
   \return the value of the minimum of v
 
 */
-smpl_t fvec_max (fvec_t * s);
+smpl_t fvec_max(fvec_t *s);
 
 /** find the min of a vector
 
@@ -61,7 +61,7 @@ smpl_t fvec_max (fvec_t * s);
   \return the value of the maximum of v
 
 */
-smpl_t fvec_min (fvec_t * s);
+smpl_t fvec_min(fvec_t *s);
 
 /** find the index of the min of a vector
 
@@ -70,7 +70,7 @@ smpl_t fvec_min (fvec_t * s);
   \return the index of the minimum element of v
 
 */
-uint_t fvec_min_elem (fvec_t * s);
+uint_t fvec_min_elem(fvec_t *s);
 
 /** find the index of the max of a vector
 
@@ -79,7 +79,7 @@ uint_t fvec_min_elem (fvec_t * s);
   \return the index of the maximum element of v
 
 */
-uint_t fvec_max_elem (fvec_t * s);
+uint_t fvec_max_elem(fvec_t *s);
 
 /** swap the left and right halves of a vector
 
@@ -97,7 +97,7 @@ can be used before computing the FFT to simplify the phase relationship of the
 resulting spectrum. See Amalia de Götzen's paper referred to above.
 
 */
-void fvec_shift (fvec_t * v);
+void fvec_shift(fvec_t *v);
 
 /** swap the left and right halves of a vector
 
@@ -115,7 +115,7 @@ can be used after computing the inverse FFT to simplify the phase relationship
 of the resulting spectrum. See Amalia de Götzen's paper referred to above.
 
 */
-void fvec_ishift (fvec_t * v);
+void fvec_ishift(fvec_t *v);
 
 /** push a new element to the end of a vector, erasing the first element and
  * sliding all others
@@ -123,7 +123,8 @@ void fvec_ishift (fvec_t * v);
   \param in vector to push to
   \param new_elem new_element to add at the end of the vector
 
-  In numpy words, this is equivalent to: in = np.concatenate([in, [new_elem]])[1:]
+  In numpy words, this is equivalent to: in = np.concatenate([in,
+ [new_elem]])[1:]
 
 */
 void fvec_push(fvec_t *in, smpl_t new_elem);
@@ -135,7 +136,7 @@ void fvec_push(fvec_t *in, smpl_t new_elem);
   \return the sum of v
 
 */
-smpl_t fvec_sum (fvec_t * v);
+smpl_t fvec_sum(fvec_t *v);
 
 /** compute the High Frequency Content of a vector
 
@@ -146,7 +147,7 @@ smpl_t fvec_sum (fvec_t * v);
   \return the HFC of v
 
 */
-smpl_t fvec_local_hfc (fvec_t * v);
+smpl_t fvec_local_hfc(fvec_t *v);
 
 /** computes the p-norm of a vector
 
@@ -172,7 +173,7 @@ input vector.
   \return the p-norm of v
 
 */
-smpl_t fvec_alpha_norm (fvec_t * v, smpl_t p);
+smpl_t fvec_alpha_norm(fvec_t *v, smpl_t p);
 
 /**  alpha normalisation
 
@@ -183,7 +184,7 @@ fvec_alpha_norm().
   \param p order of the computed norm
 
 */
-void fvec_alpha_normalise (fvec_t * v, smpl_t p);
+void fvec_alpha_normalise(fvec_t *v, smpl_t p);
 
 /** add a constant to each elements of a vector
 
@@ -191,7 +192,7 @@ void fvec_alpha_normalise (fvec_t * v, smpl_t p);
   \param c constant to add to v
 
 */
-void fvec_add (fvec_t * v, smpl_t c);
+void fvec_add(fvec_t *v, smpl_t c);
 
 /** multiply each elements of a vector by a scalar
 
@@ -199,14 +200,14 @@ void fvec_add (fvec_t * v, smpl_t c);
   \param s constant to scale v with
 
 */
-void fvec_mul (fvec_t * v, smpl_t s);
+void fvec_mul(fvec_t *v, smpl_t s);
 
 /** remove the minimum value of the vector to each elements
 
   \param v vector to remove minimum from
 
 */
-void fvec_min_removal (fvec_t * v);
+void fvec_min_removal(fvec_t *v);
 
 /** compute moving median threshold of a vector
 
@@ -223,8 +224,8 @@ pre elements after pos.
   \return moving median threshold value
 
 */
-smpl_t fvec_moving_thres (fvec_t * v, fvec_t * tmp, uint_t post, uint_t pre,
-    uint_t pos);
+smpl_t fvec_moving_thres(fvec_t *v, fvec_t *tmp, uint_t post, uint_t pre,
+                         uint_t pos);
 
 /** apply adaptive threshold to a vector
 
@@ -237,7 +238,7 @@ moving median threshold computed at p.
   \param pre length of anti-causal part to take after pos
 
 */
-void fvec_adapt_thres (fvec_t * v, fvec_t * tmp, uint_t post, uint_t pre);
+void fvec_adapt_thres(fvec_t *v, fvec_t *tmp, uint_t post, uint_t pre);
 
 /** returns the median of a vector
 
@@ -254,7 +255,7 @@ and in the Public Domain.
   \return the median of v
 
 */
-smpl_t fvec_median (fvec_t * v);
+smpl_t fvec_median(fvec_t *v);
 
 /** finds exact peak index by quadratic interpolation
 
@@ -262,14 +263,16 @@ smpl_t fvec_median (fvec_t * v);
   Peaks](https://ccrma.stanford.edu/~jos/sasp/Quadratic_Peak_Interpolation.html),
   by Julius O. Smith III
 
-  \f$ p_{frac} = \frac{1}{2} \frac {x[p-1] - x[p+1]} {x[p-1] - 2 x[p] + x[p+1]} \in [ -.5, .5] \f$
+  \f$ p_{frac} = \frac{1}{2} \frac {x[p-1] - x[p+1]} {x[p-1] - 2 x[p] + x[p+1]}
+  \in [ -.5, .5] \f$
 
   \param x vector to get the interpolated peak position from
   \param p index of the peak in vector `x`
-  \return \f$ p + p_{frac} \f$ exact peak position of interpolated maximum or minimum
+  \return \f$ p + p_{frac} \f$ exact peak position of interpolated maximum or
+  minimum
 
 */
-smpl_t fvec_quadratic_peak_pos (const fvec_t * x, uint_t p);
+smpl_t fvec_quadratic_peak_pos(const fvec_t *x, uint_t p);
 
 /** finds magnitude of peak by quadratic interpolation
 
@@ -282,7 +285,7 @@ smpl_t fvec_quadratic_peak_pos (const fvec_t * x, uint_t p);
   \return magnitude of interpolated peak
 
 */
-smpl_t fvec_quadratic_peak_mag (fvec_t * x, smpl_t p);
+smpl_t fvec_quadratic_peak_mag(fvec_t *x, smpl_t p);
 
 /** Quadratic interpolation using Lagrange polynomial.
 
@@ -295,7 +298,7 @@ processing'', Vladimir Arnost,
   \return \f$ s0 + (pf/2.)*((pf-3.)*s0-2.*(pf-2.)*s1+(pf-1.)*s2); \f$
 
 */
-smpl_t aubio_quadfrac (smpl_t s0, smpl_t s1, smpl_t s2, smpl_t pf);
+smpl_t aubio_quadfrac(smpl_t s0, smpl_t s1, smpl_t s2, smpl_t pf);
 
 /** return 1 if v[p] is a peak and positive, 0 otherwise
 
@@ -312,7 +315,7 @@ peak is defined as follows:
   \return 1 if a peak is found, 0 otherwise
 
 */
-uint_t fvec_peakpick (const fvec_t * v, uint_t p);
+uint_t fvec_peakpick(const fvec_t *v, uint_t p);
 
 /** return 1 if a is a power of 2, 0 otherwise */
 uint_t aubio_is_power_of_two(uint_t a);
@@ -329,7 +332,7 @@ uint_t aubio_power_of_two_order(uint_t a);
   \param output vector to store autocorrelation function to
 
 */
-void aubio_autocorr (const fvec_t * input, fvec_t * output);
+void aubio_autocorr(const fvec_t *input, fvec_t *output);
 
 #ifdef __cplusplus
 }

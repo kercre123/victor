@@ -13,37 +13,37 @@
 #ifndef __Engine_Components_RangeSensorComponent_H__
 #define __Engine_Components_RangeSensorComponent_H__
 
-#include "engine/components/sensors/iSensorComponent.h"
-
-#include "coretech/common/engine/math/pose.h"
-
-#include "util/entityComponent/entity.h"
+#include <vector>
 
 #include "clad/types/tofTypes.h"
-
+#include "coretech/common/engine/math/pose.h"
+#include "engine/components/sensors/iSensorComponent.h"
+#include "util/entityComponent/entity.h"
 #include "util/signals/simpleSignal_fwd.h"
-
-#include <vector>
 
 namespace Anki {
 namespace Vector {
 
-class RangeSensorComponent : public IDependencyManagedComponent<RobotComponentID>
-{
-public:
+class RangeSensorComponent
+    : public IDependencyManagedComponent<RobotComponentID> {
+ public:
   RangeSensorComponent();
   ~RangeSensorComponent();
 
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Robot* robot,
+                             const RobotCompMap& dependentComps) override;
 
-  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override { }  
-  
-  virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override { }
-  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override { }
-  
+  virtual void GetInitDependencies(
+      RobotCompIDSet& dependencies) const override {}
+
+  virtual void AdditionalInitAccessibleComponents(
+      RobotCompIDSet& components) const override {}
+  virtual void GetUpdateDependencies(
+      RobotCompIDSet& dependencies) const override {}
+
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
 
   //////
@@ -52,14 +52,16 @@ public:
 
   using RangeData = std::array<Vec3f, 16>;
   const RangeData& GetLatestRangeData() const { return _latestRangeData; }
-  const RangeDataRaw& GetLatestRawRangeData(bool& isNew) const { isNew = _rawDataIsNew; return _latestRawRangeData; }
-  
-private:
+  const RangeDataRaw& GetLatestRawRangeData(bool& isNew) const {
+    isNew = _rawDataIsNew;
+    return _latestRawRangeData;
+  }
 
+ private:
   Robot* _robot = nullptr;
 
   Signal::SmartHandle _signalHandle;
-  
+
   RangeDataRaw _latestRawRangeData;
   RangeData _latestRangeData;
   bool _rawDataIsNew = false;
@@ -67,8 +69,7 @@ private:
   bool _sendRangeData = false;
 };
 
-
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

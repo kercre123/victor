@@ -16,10 +16,10 @@
 #ifndef ALEXA_CLIENT_SDK_CAPABILITYAGENTS_SETTINGS_INCLUDE_SETTINGS_SQLITESETTINGSTORAGE_H_
 #define ALEXA_CLIENT_SDK_CAPABILITYAGENTS_SETTINGS_INCLUDE_SETTINGS_SQLITESETTINGSTORAGE_H_
 
-#include "Settings/SettingsStorageInterface.h"
-
 #include <AVSCommon/Utils/Configuration/ConfigurationNode.h>
 #include <SQLiteStorage/SQLiteDatabase.h>
+
+#include "Settings/SettingsStorageInterface.h"
 
 namespace alexaClientSDK {
 namespace capabilityAgents {
@@ -31,46 +31,50 @@ namespace settings {
  * This class is not thread-safe.
  */
 class SQLiteSettingStorage : public SettingsStorageInterface {
-public:
-    /**
-     * Factory method for creating a storage object for Settings based on an SQLite database.
-     *
-     * @param configurationRoot The global config object.
-     * @return Pointer to the SQLiteSettingStorage object, nullptr if there's an error creating it.
-     */
-    static std::unique_ptr<SQLiteSettingStorage> create(
-        const avsCommon::utils::configuration::ConfigurationNode& configurationRoot);
+ public:
+  /**
+   * Factory method for creating a storage object for Settings based on an
+   * SQLite database.
+   *
+   * @param configurationRoot The global config object.
+   * @return Pointer to the SQLiteSettingStorage object, nullptr if there's an
+   * error creating it.
+   */
+  static std::unique_ptr<SQLiteSettingStorage> create(
+      const avsCommon::utils::configuration::ConfigurationNode&
+          configurationRoot);
 
-    /**
-     * Constructor.
-     *
-     * @param dbFilePath The location of the SQLite database file.
-     */
-    SQLiteSettingStorage(const std::string& databaseFilePath);
+  /**
+   * Constructor.
+   *
+   * @param dbFilePath The location of the SQLite database file.
+   */
+  SQLiteSettingStorage(const std::string& databaseFilePath);
 
-    bool createDatabase() override;
+  bool createDatabase() override;
 
-    bool open() override;
+  bool open() override;
 
-    void close() override;
+  void close() override;
 
-    bool settingExists(const std::string& key) override;
+  bool settingExists(const std::string& key) override;
 
-    bool store(const std::string& key, const std::string& value) override;
+  bool store(const std::string& key, const std::string& value) override;
 
-    bool load(std::unordered_map<std::string, std::string>* mapOfSettings) override;
+  bool load(
+      std::unordered_map<std::string, std::string>* mapOfSettings) override;
 
-    bool modify(const std::string& key, const std::string& value) override;
+  bool modify(const std::string& key, const std::string& value) override;
 
-    bool erase(const std::string& key) override;
+  bool erase(const std::string& key) override;
 
-    bool clearDatabase() override;
+  bool clearDatabase() override;
 
-    ~SQLiteSettingStorage();
+  ~SQLiteSettingStorage();
 
-private:
-    /// The underlying database class.
-    alexaClientSDK::storage::sqliteStorage::SQLiteDatabase m_database;
+ private:
+  /// The underlying database class.
+  alexaClientSDK::storage::sqliteStorage::SQLiteDatabase m_database;
 };
 
 }  // namespace settings

@@ -4,10 +4,10 @@
  * Author: Arjun Menon
  * Created: 2019-03-05
  *
- * Description: Under certain lighting conditions, this behavior 
- * will handle choosing the appropriate vision modes to maximize 
+ * Description: Under certain lighting conditions, this behavior
+ * will handle choosing the appropriate vision modes to maximize
  * probability of observing the charger
- * 
+ *
  * Copyright: Anki, Inc. 2019
  *
  **/
@@ -23,20 +23,20 @@ namespace Vector {
 
 class WaitForLambdaAction;
 
-class BehaviorRobustChargerObservation : public ICozmoBehavior
-{
-public: 
+class BehaviorRobustChargerObservation : public ICozmoBehavior {
+ public:
   virtual ~BehaviorRobustChargerObservation();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorRobustChargerObservation(const Json::Value& config);  
+  explicit BehaviorRobustChargerObservation(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
@@ -47,8 +47,7 @@ protected:
 
   bool IsLowLightVision() const;
 
-private:
-
+ private:
   struct InstanceConfig {
     InstanceConfig();
 
@@ -66,7 +65,7 @@ private:
 
     // Count of the frames where the image quality was TooDark.
     // NOTE: only counted while marker detection is being run.
-    u32 numFramesOfImageTooDark = 0; 
+    u32 numFramesOfImageTooDark = 0;
 
     bool isLowlight = false;
     bool playedGetout = false;
@@ -76,7 +75,7 @@ private:
   DynamicVariables _dVars;
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorRobustChargerObservation__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorRobustChargerObservation__

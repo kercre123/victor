@@ -26,14 +26,15 @@ namespace Util {
 class UDPTransport;
 
 class WifiUtil {
-public:
+ public:
   static std::string GetSSID();
   static std::string GetConnectionStatus();
-  static Signal::SmartHandle RegisterTransport(UDPTransport* transport) __attribute__((warn_unused_result));
+  static Signal::SmartHandle RegisterTransport(UDPTransport* transport)
+      __attribute__((warn_unused_result));
 };
 
-}
-}
+}  // namespace Util
+}  // namespace Anki
 
-#endif // ANKI_PLATFORM_ANDROID
-#endif // __Anki_Util_Wifi_WifiUtil_Android_H__
+#endif  // ANKI_PLATFORM_ANDROID
+#endif  // __Anki_Util_Wifi_WifiUtil_Android_H__

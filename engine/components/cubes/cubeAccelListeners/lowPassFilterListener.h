@@ -13,44 +13,41 @@
 #ifndef __Engine_CubeAccelListeners_LowPassFilterListener_H__
 #define __Engine_CubeAccelListeners_LowPassFilterListener_H__
 
-#include "engine/components/cubes/cubeAccelListeners/iCubeAccelListener.h"
-
 #include "coretech/common/shared/math/point_fwd.h"
+#include "engine/components/cubes/cubeAccelListeners/iCubeAccelListener.h"
 
 namespace Anki {
 namespace Vector {
-  
+
 struct ActiveAccel;
-  
+
 namespace CubeAccelListeners {
 
 // Typical low pass filter on each of the 3 axes of accelerometer data
-class LowPassFilterListener : public ICubeAccelListener
-{
-public:
+class LowPassFilterListener : public ICubeAccelListener {
+ public:
   // The reference to output is updated with the latest output of the filter
-  // The lower the coeffs, the more the data is filtered (rapid changes won't affect filter much)
-  // The higher the coeffs, the less the data is filtered
+  // The lower the coeffs, the more the data is filtered (rapid changes won't
+  // affect filter much) The higher the coeffs, the less the data is filtered
   LowPassFilterListener(const Vec3f& coeffs, std::weak_ptr<ActiveAccel> output);
-  
-protected:
+
+ protected:
   virtual void InitInternal(const ActiveAccel& accel) override;
-  
+
   virtual void UpdateInternal(const ActiveAccel& accel) override;
-  
-private:
+
+ private:
   // Coefficients for each axis
   const Vec3f _coeffs;
-  
+
   // Reference to a variable that will be updated with the output of the filter
-  // Make sure reference variable does not go out of scope in the owner of the filter
+  // Make sure reference variable does not go out of scope in the owner of the
+  // filter
   std::weak_ptr<ActiveAccel> _output;
-  
 };
 
+}  // namespace CubeAccelListeners
+}  // namespace Vector
+}  // namespace Anki
 
-}
-}
-}
-
-#endif //__Engine_CubeAccelListeners_LowPassFilterListener_H__
+#endif  //__Engine_CubeAccelListeners_LowPassFilterListener_H__

@@ -14,26 +14,22 @@
 #ifndef __Util_QuestEngine_AbstractAction_H__
 #define __Util_QuestEngine_AbstractAction_H__
 
-
 namespace Anki {
 namespace Util {
 namespace QuestEngine {
 
 class QuestEngine;
-  
-class AbstractAction
-{
-public:
-  
-  AbstractAction() {};
-  virtual ~AbstractAction() {}
-      
-  virtual void PerformAction(QuestEngine& questEngine) = 0;
-      
-};
- 
-} // namespace QuestEngine
-} // namespace Util
-} // namespace Anki
 
-#endif // __Util_QuestEngine_AbstractAction_H__
+class AbstractAction {
+ public:
+  AbstractAction(){};
+  virtual ~AbstractAction() {}
+
+  virtual void PerformAction(QuestEngine& questEngine) = 0;
+};
+
+}  // namespace QuestEngine
+}  // namespace Util
+}  // namespace Anki
+
+#endif  // __Util_QuestEngine_AbstractAction_H__

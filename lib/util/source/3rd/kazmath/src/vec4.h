@@ -30,15 +30,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct kmMat4;
 
-#pragma pack(push)  /* push current alignment to stack */
-#pragma pack(1)     /* set alignment to 1 byte boundary */
+#pragma pack(push) /* push current alignment to stack */
+#pragma pack(1)    /* set alignment to 1 byte boundary */
 
-typedef struct kmVec4
-{
-	kmScalar x;
-	kmScalar y;
-	kmScalar z;
-	kmScalar w;
+typedef struct kmVec4 {
+  kmScalar x;
+  kmScalar y;
+  kmScalar z;
+  kmScalar w;
 } kmVec4;
 
 #pragma pack(pop)
@@ -47,23 +46,29 @@ typedef struct kmVec4
 extern "C" {
 #endif
 
-kmVec4* kmVec4Fill(kmVec4* pOut, kmScalar x, kmScalar y, kmScalar z, kmScalar w);
+kmVec4* kmVec4Fill(kmVec4* pOut, kmScalar x, kmScalar y, kmScalar z,
+                   kmScalar w);
 kmVec4* kmVec4Add(kmVec4* pOut, const kmVec4* pV1, const kmVec4* pV2);
 kmScalar kmVec4Dot(const kmVec4* pV1, const kmVec4* pV2);
 kmScalar kmVec4Length(const kmVec4* pIn);
 kmScalar kmVec4LengthSq(const kmVec4* pIn);
-kmVec4* kmVec4Lerp(kmVec4* pOut, const kmVec4* pV1, const kmVec4* pV2, kmScalar t);
+kmVec4* kmVec4Lerp(kmVec4* pOut, const kmVec4* pV1, const kmVec4* pV2,
+                   kmScalar t);
 kmVec4* kmVec4Normalize(kmVec4* pOut, const kmVec4* pIn);
-kmVec4* kmVec4Scale(kmVec4* pOut, const kmVec4* pIn, const kmScalar s); /**< Scales a vector to length s*/
+kmVec4* kmVec4Scale(kmVec4* pOut, const kmVec4* pIn,
+                    const kmScalar s); /**< Scales a vector to length s*/
 kmVec4* kmVec4Subtract(kmVec4* pOut, const kmVec4* pV1, const kmVec4* pV2);
-kmVec4* kmVec4Mul( kmVec4* pOut,const kmVec4* pV1, const kmVec4* pV2 ); 
-kmVec4* kmVec4Div( kmVec4* pOut,const kmVec4* pV1, const kmVec4* pV2 ); 
+kmVec4* kmVec4Mul(kmVec4* pOut, const kmVec4* pV1, const kmVec4* pV2);
+kmVec4* kmVec4Div(kmVec4* pOut, const kmVec4* pV1, const kmVec4* pV2);
 
-kmVec4* kmVec4MultiplyMat4(kmVec4* pOut, const kmVec4* pV, const struct kmMat4* pM);
-kmVec4* kmVec4Transform(kmVec4* pOut, const kmVec4* pV, const struct kmMat4* pM);
+kmVec4* kmVec4MultiplyMat4(kmVec4* pOut, const kmVec4* pV,
+                           const struct kmMat4* pM);
+kmVec4* kmVec4Transform(kmVec4* pOut, const kmVec4* pV,
+                        const struct kmMat4* pM);
 kmVec4* kmVec4TransformArray(kmVec4* pOut, unsigned int outStride,
-			const kmVec4* pV, unsigned int vStride, const struct kmMat4* pM, unsigned int count);
-int 	kmVec4AreEqual(const kmVec4* p1, const kmVec4* p2);
+                             const kmVec4* pV, unsigned int vStride,
+                             const struct kmMat4* pM, unsigned int count);
+int kmVec4AreEqual(const kmVec4* p1, const kmVec4* p2);
 kmVec4* kmVec4Assign(kmVec4* pOut, const kmVec4* pIn);
 
 #ifdef __cplusplus

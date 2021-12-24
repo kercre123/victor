@@ -26,14 +26,15 @@ namespace avs {
  * An enum class used to specify the levels of focus that a Channel can have.
  */
 enum class FocusState {
-    /// Represents the highest focus a Channel can have.
-    FOREGROUND,
+  /// Represents the highest focus a Channel can have.
+  FOREGROUND,
 
-    /// Represents the intermediate level focus a Channel can have.
-    BACKGROUND,
+  /// Represents the intermediate level focus a Channel can have.
+  BACKGROUND,
 
-    /// This focus is used to represent when a Channel is not being used or when an observer should stop.
-    NONE
+  /// This focus is used to represent when a Channel is not being used or when
+  /// an observer should stop.
+  NONE
 };
 
 /**
@@ -43,15 +44,15 @@ enum class FocusState {
  * @return The string conversion of @c state.
  */
 inline std::string focusStateToString(FocusState state) {
-    switch (state) {
-        case FocusState::FOREGROUND:
-            return "FOREGROUND";
-        case FocusState::BACKGROUND:
-            return "BACKGROUND";
-        case FocusState::NONE:
-            return "NONE";
-    }
-    return "Unknown State";
+  switch (state) {
+    case FocusState::FOREGROUND:
+      return "FOREGROUND";
+    case FocusState::BACKGROUND:
+      return "BACKGROUND";
+    case FocusState::NONE:
+      return "NONE";
+  }
+  return "Unknown State";
 }
 
 /**
@@ -62,7 +63,7 @@ inline std::string focusStateToString(FocusState state) {
  * @return The @c ostream that was passed in and written to.
  */
 inline std::ostream& operator<<(std::ostream& stream, const FocusState& state) {
-    return stream << focusStateToString(state);
+  return stream << focusStateToString(state);
 }
 
 }  // namespace avs

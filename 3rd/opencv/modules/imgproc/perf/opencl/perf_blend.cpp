@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -18,23 +19,28 @@
 //    Fangfang Bai, fangfang@multicorewareinc.com
 //    Jin Ma,       jin@multicorewareinc.com
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors as is and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -56,27 +62,30 @@ namespace ocl {
 
 typedef Size_MatType BlendLinearFixture;
 
-OCL_PERF_TEST_P(BlendLinearFixture, BlendLinear, ::testing::Combine(OCL_TEST_SIZES, OCL_TEST_TYPES_134))
-{
-    Size_MatType_t params = GetParam();
-    const Size srcSize = get<0>(params);
-    const int srcType = get<1>(params);
-    const double eps = CV_MAT_DEPTH(srcType) <= CV_32S ? 1.0 : 0.2;
+OCL_PERF_TEST_P(BlendLinearFixture, BlendLinear,
+                ::testing::Combine(OCL_TEST_SIZES, OCL_TEST_TYPES_134)) {
+  Size_MatType_t params = GetParam();
+  const Size srcSize = get<0>(params);
+  const int srcType = get<1>(params);
+  const double eps = CV_MAT_DEPTH(srcType) <= CV_32S ? 1.0 : 0.2;
 
-    checkDeviceMaxMemoryAllocSize(srcSize, srcType);
+  checkDeviceMaxMemoryAllocSize(srcSize, srcType);
 
-    UMat src1(srcSize, srcType), src2(srcSize, srcType), dst(srcSize, srcType);
-    UMat weights1(srcSize, CV_32FC1), weights2(srcSize, CV_32FC1);
+  UMat src1(srcSize, srcType), src2(srcSize, srcType), dst(srcSize, srcType);
+  UMat weights1(srcSize, CV_32FC1), weights2(srcSize, CV_32FC1);
 
-    declare.in(src1, src2, WARMUP_RNG).in(weights1, weights2, WARMUP_READ).out(dst);
-    randu(weights1, 0, 1);
-    randu(weights2, 0, 1);
+  declare.in(src1, src2, WARMUP_RNG)
+      .in(weights1, weights2, WARMUP_READ)
+      .out(dst);
+  randu(weights1, 0, 1);
+  randu(weights2, 0, 1);
 
-    OCL_TEST_CYCLE() cv::blendLinear(src1, src2, weights1, weights2, dst);
+  OCL_TEST_CYCLE() cv::blendLinear(src1, src2, weights1, weights2, dst);
 
-    SANITY_CHECK(dst, eps);
+  SANITY_CHECK(dst, eps);
 }
 
-} } // namespace cvtest::ocl
+}  // namespace ocl
+}  // namespace cvtest
 
-#endif // HAVE_OPENCL
+#endif  // HAVE_OPENCL

@@ -53,8 +53,8 @@ extern "C" {
   \param a2 feedback filter coefficient
 
 */
-uint_t aubio_filter_set_biquad (aubio_filter_t * f, lsmp_t b0, lsmp_t b1,
-    lsmp_t b2, lsmp_t a1, lsmp_t a2);
+uint_t aubio_filter_set_biquad(aubio_filter_t *f, lsmp_t b0, lsmp_t b1,
+                               lsmp_t b2, lsmp_t a1, lsmp_t a2);
 
 /** create biquad filter with `b0`, `b1`, `b2`, `a1`, `a2` coeffs
 
@@ -65,8 +65,8 @@ uint_t aubio_filter_set_biquad (aubio_filter_t * f, lsmp_t b0, lsmp_t b1,
   \param a2 feedback filter coefficient
 
 */
-aubio_filter_t *new_aubio_filter_biquad (lsmp_t b0, lsmp_t b1, lsmp_t b2,
-    lsmp_t a1, lsmp_t a2);
+aubio_filter_t *new_aubio_filter_biquad(lsmp_t b0, lsmp_t b1, lsmp_t b2,
+                                        lsmp_t a1, lsmp_t a2);
 
 #ifdef __cplusplus
 }

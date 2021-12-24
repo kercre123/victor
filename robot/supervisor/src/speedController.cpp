@@ -28,169 +28,163 @@
  * only if it turns out that we need it.
  **/
 
-#include <math.h>
-#include "coretech/common/shared/types.h"
 #include "speedController.h"
-#include "wheelController.h"
+
+#include <math.h>
+
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/logging.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
+#include "coretech/common/shared/types.h"
+#include "wheelController.h"
 
 #define DEBUG_SPEED_CONTROLLER 0
 
 namespace Anki {
-  namespace Vector {
-  namespace SpeedController {
-
+namespace Vector {
+namespace SpeedController {
 
 // #pragma mark --- "Member Variables" ---
-    namespace {
-      // The target desired speed the user commanded to the car [mm/sec].
-      // This is our eventual goal for the vehicle speed, given enough time for acceleration
-      s16 userCommandedDesiredVehicleSpeed_ = 0;
+namespace {
+// The target desired speed the user commanded to the car [mm/sec].
+// This is our eventual goal for the vehicle speed, given enough time for
+// acceleration
+s16 userCommandedDesiredVehicleSpeed_ = 0;
 
-      // The current speed according to the target speed and acceleration set by the user. [mm/sec]
-      // This is our speed goal for the current iteration. This is what the PID controller will use
-      f32 userCommandedCurrentVehicleSpeed_ = 0;
+// The current speed according to the target speed and acceleration set by the
+// user. [mm/sec] This is our speed goal for the current iteration. This is what
+// the PID controller will use
+f32 userCommandedCurrentVehicleSpeed_ = 0;
 
-      // The acceleration the user commanded to the car [mm/sec^2]
-      const u16 DEFAULT_ACCEL_MMPS2 = 200;
-      u16 userCommandedAcceleration_ = DEFAULT_ACCEL_MMPS2;
+// The acceleration the user commanded to the car [mm/sec^2]
+const u16 DEFAULT_ACCEL_MMPS2 = 200;
+u16 userCommandedAcceleration_ = DEFAULT_ACCEL_MMPS2;
 
-      // The deceleration the user commanded to the car [mm/sec^2]
-      const u16 DEFAULT_DECEL_MMPS2 = 1000;
-      u16 userCommandedDeceleration_ = DEFAULT_DECEL_MMPS2;
+// The deceleration the user commanded to the car [mm/sec^2]
+const u16 DEFAULT_DECEL_MMPS2 = 1000;
+u16 userCommandedDeceleration_ = DEFAULT_DECEL_MMPS2;
 
+// The controller needs to regulate the speed of the car "around" the user
+// commanded speed [mm/sec]
+s16 controllerCommandedVehicleSpeed_ = 0;
 
-      // The controller needs to regulate the speed of the car "around" the user commanded speed [mm/sec]
-      s16 controllerCommandedVehicleSpeed_ = 0;
-
-    } // private namespace
+}  // namespace
 
 // #pragma mark --- Method Implementations ---
 
-    // Forward declaration
-    void Run(s16 desVehicleSpeed);
+// Forward declaration
+void Run(s16 desVehicleSpeed);
 
-    // Getters and Setters
-    void SetUserCommandedCurrentVehicleSpeed(s16 ucspeed)
-    {
-      userCommandedCurrentVehicleSpeed_ = ucspeed;
-    }
+// Getters and Setters
+void SetUserCommandedCurrentVehicleSpeed(s16 ucspeed) {
+  userCommandedCurrentVehicleSpeed_ = ucspeed;
+}
 
-    s16 GetUserCommandedCurrentVehicleSpeed(void)
-    {
-      return (s16)userCommandedCurrentVehicleSpeed_;
-    }
+s16 GetUserCommandedCurrentVehicleSpeed(void) {
+  return (s16)userCommandedCurrentVehicleSpeed_;
+}
 
-    void SetUserCommandedDesiredVehicleSpeed(s16 ucspeed)
-    {
-      userCommandedDesiredVehicleSpeed_ = ucspeed;
+void SetUserCommandedDesiredVehicleSpeed(s16 ucspeed) {
+  userCommandedDesiredVehicleSpeed_ = ucspeed;
 
-      // If the current measured speed and the current user commanded speed
-      // are on the same side of the user desired speed and the measured speed
-      // is closer to the user desired speed than the current user commanded speed, then set the
-      // current user commanded speed to be the current measured speed.
-      // It makes no sense to try to slow down before speeding up!
-      s16 desiredAndCurrentSpeedDiff = userCommandedDesiredVehicleSpeed_ - userCommandedCurrentVehicleSpeed_;
-      s16 desiredAndMeasuredSpeedDiff = userCommandedDesiredVehicleSpeed_ - GetCurrentMeasuredVehicleSpeed();
-      if ( signbit(desiredAndCurrentSpeedDiff) == signbit(desiredAndMeasuredSpeedDiff)
-          && ABS(desiredAndCurrentSpeedDiff) > ABS(desiredAndMeasuredSpeedDiff) ) {
-        userCommandedCurrentVehicleSpeed_ = GetCurrentMeasuredVehicleSpeed();
-      }
+  // If the current measured speed and the current user commanded speed
+  // are on the same side of the user desired speed and the measured speed
+  // is closer to the user desired speed than the current user commanded speed,
+  // then set the current user commanded speed to be the current measured speed.
+  // It makes no sense to try to slow down before speeding up!
+  s16 desiredAndCurrentSpeedDiff =
+      userCommandedDesiredVehicleSpeed_ - userCommandedCurrentVehicleSpeed_;
+  s16 desiredAndMeasuredSpeedDiff =
+      userCommandedDesiredVehicleSpeed_ - GetCurrentMeasuredVehicleSpeed();
+  if (signbit(desiredAndCurrentSpeedDiff) ==
+          signbit(desiredAndMeasuredSpeedDiff) &&
+      ABS(desiredAndCurrentSpeedDiff) > ABS(desiredAndMeasuredSpeedDiff)) {
+    userCommandedCurrentVehicleSpeed_ = GetCurrentMeasuredVehicleSpeed();
+  }
 
-      // Similarly, if the current measured speed and the current user commanded speed
-      // are on opposite sides of the user desired speed, set the user commanded speed
-      // to be the desired speed.
-      if ( signbit(desiredAndCurrentSpeedDiff) != signbit(desiredAndMeasuredSpeedDiff) ) {
-        userCommandedCurrentVehicleSpeed_ = userCommandedDesiredVehicleSpeed_;
-      }
-    }
+  // Similarly, if the current measured speed and the current user commanded
+  // speed are on opposite sides of the user desired speed, set the user
+  // commanded speed to be the desired speed.
+  if (signbit(desiredAndCurrentSpeedDiff) !=
+      signbit(desiredAndMeasuredSpeedDiff)) {
+    userCommandedCurrentVehicleSpeed_ = userCommandedDesiredVehicleSpeed_;
+  }
+}
 
-    s16 GetUserCommandedDesiredVehicleSpeed(void)
-    {
-      return userCommandedDesiredVehicleSpeed_;
-    }
+s16 GetUserCommandedDesiredVehicleSpeed(void) {
+  return userCommandedDesiredVehicleSpeed_;
+}
 
-    void SetBothDesiredAndCurrentUserSpeed(s16 ucspeed)
-    {
-      userCommandedDesiredVehicleSpeed_ = ucspeed;
-      userCommandedCurrentVehicleSpeed_ = ucspeed;
-    }
+void SetBothDesiredAndCurrentUserSpeed(s16 ucspeed) {
+  userCommandedDesiredVehicleSpeed_ = ucspeed;
+  userCommandedCurrentVehicleSpeed_ = ucspeed;
+}
 
-    void SetUserCommandedAcceleration(u16 ucAccel)
-    {
-      userCommandedAcceleration_ = ucAccel;
-    }
+void SetUserCommandedAcceleration(u16 ucAccel) {
+  userCommandedAcceleration_ = ucAccel;
+}
 
-    u16 GetUserCommandedAcceleration(void)
-    {
-      return userCommandedAcceleration_;
-    }
+u16 GetUserCommandedAcceleration(void) { return userCommandedAcceleration_; }
 
-    void SetUserCommandedDeceleration(u16 ucDecel)
-    {
-      userCommandedDeceleration_ = ucDecel;
-    }
+void SetUserCommandedDeceleration(u16 ucDecel) {
+  userCommandedDeceleration_ = ucDecel;
+}
 
-    u16 GetUserCommandedDeceleration(void)
-    {
-      return userCommandedDeceleration_;
-    }
-    
-    void SetDefaultAccelerationAndDeceleration()
-    {
-      userCommandedAcceleration_ = DEFAULT_ACCEL_MMPS2;
-      userCommandedDeceleration_ = DEFAULT_DECEL_MMPS2;
-    }
+u16 GetUserCommandedDeceleration(void) { return userCommandedDeceleration_; }
 
-    void SetControllerCommandedVehicleSpeed(s16 ccspeed)
-    {
-      controllerCommandedVehicleSpeed_ = ccspeed;
-    }
+void SetDefaultAccelerationAndDeceleration() {
+  userCommandedAcceleration_ = DEFAULT_ACCEL_MMPS2;
+  userCommandedDeceleration_ = DEFAULT_DECEL_MMPS2;
+}
 
-    s16 GetControllerCommandedVehicleSpeed(void)
-    {
-      return controllerCommandedVehicleSpeed_;
-    }
+void SetControllerCommandedVehicleSpeed(s16 ccspeed) {
+  controllerCommandedVehicleSpeed_ = ccspeed;
+}
 
-    //This tells us how fast the vehicle is driving right now in mm/sec
-    s16 GetCurrentMeasuredVehicleSpeed(void)
-    {
-      f32 filteredSpeedL, filteredSpeedR;
-      WheelController::GetFilteredWheelSpeeds(filteredSpeedL, filteredSpeedR);
+s16 GetControllerCommandedVehicleSpeed(void) {
+  return controllerCommandedVehicleSpeed_;
+}
 
-      // TODO: are we sure this should be returned as s16?
-      return (s16)(0.5f*(filteredSpeedL + filteredSpeedR));
-    }
+// This tells us how fast the vehicle is driving right now in mm/sec
+s16 GetCurrentMeasuredVehicleSpeed(void) {
+  f32 filteredSpeedL, filteredSpeedR;
+  WheelController::GetFilteredWheelSpeeds(filteredSpeedL, filteredSpeedR);
 
-    void RunAccelerationUpdate(void)
-    {
-      if (userCommandedDesiredVehicleSpeed_ > userCommandedCurrentVehicleSpeed_) {
-        // Go faster
-        userCommandedCurrentVehicleSpeed_ += (f32)userCommandedAcceleration_ * Vector::CONTROL_DT;
-        userCommandedCurrentVehicleSpeed_ = MIN(userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_);
-      } else if (userCommandedDesiredVehicleSpeed_ < userCommandedCurrentVehicleSpeed_) {
-        // Go slower
-        userCommandedCurrentVehicleSpeed_ -= (f32)userCommandedDeceleration_ * Vector::CONTROL_DT;
-        userCommandedCurrentVehicleSpeed_ = MAX(userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_);
-      }
+  // TODO: are we sure this should be returned as s16?
+  return (s16)(0.5f * (filteredSpeedL + filteredSpeedR));
+}
 
-      //PRINT("RunAccelUpdate: accel/decel = (%d,%d), commandedSpeed = %f, desiredSpeed = %d\n",
-      //      userCommandedAcceleration_, userCommandedDeceleration_,
-      //      userCommandedCurrentVehicleSpeed_, userCommandedDesiredVehicleSpeed_);
-    }
+void RunAccelerationUpdate(void) {
+  if (userCommandedDesiredVehicleSpeed_ > userCommandedCurrentVehicleSpeed_) {
+    // Go faster
+    userCommandedCurrentVehicleSpeed_ +=
+        (f32)userCommandedAcceleration_ * Vector::CONTROL_DT;
+    userCommandedCurrentVehicleSpeed_ = MIN(userCommandedDesiredVehicleSpeed_,
+                                            userCommandedCurrentVehicleSpeed_);
+  } else if (userCommandedDesiredVehicleSpeed_ <
+             userCommandedCurrentVehicleSpeed_) {
+    // Go slower
+    userCommandedCurrentVehicleSpeed_ -=
+        (f32)userCommandedDeceleration_ * Vector::CONTROL_DT;
+    userCommandedCurrentVehicleSpeed_ = MAX(userCommandedDesiredVehicleSpeed_,
+                                            userCommandedCurrentVehicleSpeed_);
+  }
 
-    void Manage(void)
-    {
-      //For now, the only thing we do is to set the controller commanded vehicle speed to whatever the user commanded
-      //Later we will (potentially) change this to a PI contontroller trying to achieve the speed we want
+  // PRINT("RunAccelUpdate: accel/decel = (%d,%d), commandedSpeed = %f,
+  // desiredSpeed = %d\n",
+  //      userCommandedAcceleration_, userCommandedDeceleration_,
+  //      userCommandedCurrentVehicleSpeed_, userCommandedDesiredVehicleSpeed_);
+}
 
-      RunAccelerationUpdate();
-      controllerCommandedVehicleSpeed_ = GetUserCommandedCurrentVehicleSpeed();
+void Manage(void) {
+  // For now, the only thing we do is to set the controller commanded vehicle
+  // speed to whatever the user commanded Later we will (potentially) change this
+  // to a PI contontroller trying to achieve the speed we want
 
-    }
+  RunAccelerationUpdate();
+  controllerCommandedVehicleSpeed_ = GetUserCommandedCurrentVehicleSpeed();
+}
 
-  } // namespace SpeedController
-  } // namespace Vector
-} // namespace Anki
+}  // namespace SpeedController
+}  // namespace Vector
+}  // namespace Anki

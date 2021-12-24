@@ -11,7 +11,6 @@
 
 #include "util/http/abstractHttpAdapter.h"
 
-
 namespace Anki {
 namespace Util {
 
@@ -19,10 +18,8 @@ namespace Dispatch {
 class Queue;
 }
 
-class HttpAdapter : public IHttpAdapter
-{
-public:
-
+class HttpAdapter : public IHttpAdapter {
+ public:
   HttpAdapter(Util::Dispatch::Queue* queue = nullptr) {}
   virtual ~HttpAdapter() {}
 
@@ -30,23 +27,24 @@ public:
 
   virtual bool IsAdapterUp() override { return false; }
 
-  virtual void StartRequest(HttpRequest request,
-                    Util::Dispatch::Queue* queue,
-                    HttpRequestCallback callback,
-                    HttpRequestDownloadProgressCallback progressCallback = nullptr) override {}
+  virtual void StartRequest(
+      HttpRequest request, Util::Dispatch::Queue* queue,
+      HttpRequestCallback callback,
+      HttpRequestDownloadProgressCallback progressCallback = nullptr) override {
+  }
 
-  virtual void ExecuteCallback(const uint64_t hash,
-                       const int responseCode,
-                       std::map<std::string,std::string>& responseHeaders,
-                       std::vector<uint8_t>& responseBody) override {}
+  virtual void ExecuteCallback(
+      const uint64_t hash, const int responseCode,
+      std::map<std::string, std::string>& responseHeaders,
+      std::vector<uint8_t>& responseBody) override {}
 
-  virtual void ExecuteDownloadProgressCallback(const uint64_t hash,
-                                       const int64_t bytesWritten,
-                                       const int64_t totalBytesWritten,
-                                       const int64_t totalBytesExpectedToWrite) override {}
+  virtual void ExecuteDownloadProgressCallback(
+      const uint64_t hash, const int64_t bytesWritten,
+      const int64_t totalBytesWritten,
+      const int64_t totalBytesExpectedToWrite) override {}
 };
 
-}
-}
+}  // namespace Util
+}  // namespace Anki
 
-#endif // defined(__Anki_Util_HttpAdapterVicos_H__)
+#endif  // defined(__Anki_Util_HttpAdapterVicos_H__)

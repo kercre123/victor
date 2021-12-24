@@ -66,7 +66,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #define kmPI 3.14159265358979323846f
-#define kmPIOver180  (kmPI / 180.0f)
+#define kmPIOver180 (kmPI / 180.0f)
 #define kmPIUnder180 (180.0 / kmPI)
 #define kmEpsilon 0.0001
 

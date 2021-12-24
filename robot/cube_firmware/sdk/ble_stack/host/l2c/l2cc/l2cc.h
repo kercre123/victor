@@ -36,15 +36,15 @@
 
 #if (BLE_CENTRAL || BLE_PERIPHERAL)
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 /*
  * DEFINES
  ****************************************************************************************
  */
 /// Maximum number of instances of the L2CC task
-#define L2CC_IDX_MAX            (BLE_CONNECTION_MAX)
+#define L2CC_IDX_MAX (BLE_CONNECTION_MAX)
 
 /*
  * STRUCTURES
@@ -54,12 +54,11 @@
 struct l2cc_pdu_recv_ind;
 
 /// L2CAP environment structure
-struct l2cc_env_tag
-{
-    /// Send PDU request
-    struct l2cc_pdu_send_req *p_send_req;
-    /// Received PDU Buffer
-    struct l2cc_pdu_recv_ind *p_recv_ind;
+struct l2cc_env_tag {
+  /// Send PDU request
+  struct l2cc_pdu_send_req *p_send_req;
+  /// Received PDU Buffer
+  struct l2cc_pdu_recv_ind *p_recv_ind;
 };
 
 /*
@@ -79,7 +78,8 @@ extern struct l2cc_env_tag *l2cc_env[L2CC_IDX_MAX];
  ****************************************************************************************
  * @brief Create and Initialize the L2CAP controller task.
  *
- * @param[in] reset   true if it's requested by a reset; false if it's boot initialization
+ * @param[in] reset   true if it's requested by a reset; false if it's boot
+ *initialization
  *
  ****************************************************************************************
  */
@@ -109,14 +109,14 @@ void l2cc_cleanup(uint8_t conidx);
 
 /**
  ****************************************************************************************
- * @brief Update state of all L2Cap controller task according to number of buffer
- * available
+ * @brief Update state of all L2Cap controller task according to number of
+ *buffer available
  ****************************************************************************************
  */
 void l2cc_update_state(void);
 
-#endif //(BLE_CENTRAL || BLE_PERIPHERAL)
+#endif  //(BLE_CENTRAL || BLE_PERIPHERAL)
 
 /// @} L2CC
 
-#endif // L2CC_H_
+#endif  // L2CC_H_

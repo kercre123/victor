@@ -67,7 +67,7 @@
  * equivalent types and values in the Windows Platform SDK are given in
  * comments.
  *
- * Author: Mark Mentovai 
+ * Author: Mark Mentovai
  * Change to split into its own file: Neal Sidhwaney */
 
 /*
@@ -85,9 +85,8 @@ typedef struct {
    * here for precise sizing. */
   uint64_t fpregs[MD_FLOATINGSAVEAREA_PPC_FPR_COUNT];
   uint32_t fpscr_pad;
-  uint32_t fpscr;      /* Status/control */
-} MDFloatingSaveAreaPPC;  /* Based on ppc_float_state */
-
+  uint32_t fpscr;        /* Status/control */
+} MDFloatingSaveAreaPPC; /* Based on ppc_float_state */
 
 #define MD_VECTORSAVEAREA_PPC_VR_COUNT 32
 
@@ -95,12 +94,11 @@ typedef struct {
   /* Vector registers (including vscr) are 128 bits, but mach/ppc/_types.h
    * exposes them as four 32-bit quantities. */
   uint128_struct save_vr[MD_VECTORSAVEAREA_PPC_VR_COUNT];
-  uint128_struct save_vscr;  /* Status/control */
-  uint32_t       save_pad5[4];
-  uint32_t       save_vrvalid;  /* Indicates which vector registers are saved */
-  uint32_t       save_pad6[7];
-} MDVectorSaveAreaPPC;  /* ppc_vector_state */
-
+  uint128_struct save_vscr; /* Status/control */
+  uint32_t save_pad5[4];
+  uint32_t save_vrvalid; /* Indicates which vector registers are saved */
+  uint32_t save_pad6[7];
+} MDVectorSaveAreaPPC; /* ppc_vector_state */
 
 #define MD_CONTEXT_PPC_GPR_COUNT 32
 
@@ -117,33 +115,31 @@ typedef struct {
   /* context_flags is not present in ppc_thread_state, but it aids
    * identification of MDRawContextPPC among other raw context types,
    * and it guarantees alignment when we get to float_save. */
-  uint32_t              context_flags;
+  uint32_t context_flags;
 
-  uint32_t              srr0;    /* Machine status save/restore: stores pc
-                                  * (instruction) */
-  uint32_t              srr1;    /* Machine status save/restore: stores msr
-                                  * (ps, program/machine state) */
+  uint32_t srr0; /* Machine status save/restore: stores pc
+                  * (instruction) */
+  uint32_t srr1; /* Machine status save/restore: stores msr
+                  * (ps, program/machine state) */
   /* ppc_thread_state contains 32 fields, r0 .. r31.  Here, an array is
    * used for brevity. */
-  uint32_t              gpr[MD_CONTEXT_PPC_GPR_COUNT];
-  uint32_t              cr;      /* Condition */
-  uint32_t              xer;     /* Integer (fiXed-point) exception */
-  uint32_t              lr;      /* Link */
-  uint32_t              ctr;     /* Count */
-  uint32_t              mq;      /* Multiply/Quotient (PPC 601, POWER only) */
-  uint32_t              vrsave;  /* Vector save */
+  uint32_t gpr[MD_CONTEXT_PPC_GPR_COUNT];
+  uint32_t cr;     /* Condition */
+  uint32_t xer;    /* Integer (fiXed-point) exception */
+  uint32_t lr;     /* Link */
+  uint32_t ctr;    /* Count */
+  uint32_t mq;     /* Multiply/Quotient (PPC 601, POWER only) */
+  uint32_t vrsave; /* Vector save */
 
   /* float_save and vector_save aren't present in ppc_thread_state, but
    * are represented in separate structures that still define a thread's
    * context. */
   MDFloatingSaveAreaPPC float_save;
-  MDVectorSaveAreaPPC   vector_save;
-} MDRawContextPPC;  /* Based on ppc_thread_state */
+  MDVectorSaveAreaPPC vector_save;
+} MDRawContextPPC; /* Based on ppc_thread_state */
 
 /* Indices into gpr for registers with a dedicated or conventional purpose. */
-enum MDPPCRegisterNumbers {
-  MD_CONTEXT_PPC_REG_SP = 1
-};
+enum MDPPCRegisterNumbers { MD_CONTEXT_PPC_REG_SP = 1 };
 
 #if defined(__SUNPRO_C) || defined(__SUNPRO_CC)
 #pragma pack(0)
@@ -155,14 +151,13 @@ enum MDPPCRegisterNumbers {
  * context stored in the structure.  MD_CONTEXT_PPC is Breakpad-defined.  Its
  * value was chosen to avoid likely conflicts with MD_CONTEXT_* for other
  * CPUs. */
-#define MD_CONTEXT_PPC                0x20000000
-#define MD_CONTEXT_PPC_BASE           (MD_CONTEXT_PPC | 0x00000001)
+#define MD_CONTEXT_PPC 0x20000000
+#define MD_CONTEXT_PPC_BASE (MD_CONTEXT_PPC | 0x00000001)
 #define MD_CONTEXT_PPC_FLOATING_POINT (MD_CONTEXT_PPC | 0x00000008)
-#define MD_CONTEXT_PPC_VECTOR         (MD_CONTEXT_PPC | 0x00000020)
+#define MD_CONTEXT_PPC_VECTOR (MD_CONTEXT_PPC | 0x00000020)
 
-#define MD_CONTEXT_PPC_FULL           MD_CONTEXT_PPC_BASE
-#define MD_CONTEXT_PPC_ALL            (MD_CONTEXT_PPC_FULL | \
-                                       MD_CONTEXT_PPC_FLOATING_POINT | \
-                                       MD_CONTEXT_PPC_VECTOR)
+#define MD_CONTEXT_PPC_FULL MD_CONTEXT_PPC_BASE
+#define MD_CONTEXT_PPC_ALL \
+  (MD_CONTEXT_PPC_FULL | MD_CONTEXT_PPC_FLOATING_POINT | MD_CONTEXT_PPC_VECTOR)
 
 #endif /* GOOGLE_BREAKPAD_COMMON_MINIDUMP_CPU_PPC_H__ */

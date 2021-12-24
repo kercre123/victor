@@ -14,17 +14,17 @@
 #define CONSOLE_MACRO_H
 
 #ifndef REMOTE_CONSOLE_ENABLED
-  #if defined(NDEBUG)
-    #define REMOTE_CONSOLE_ENABLED 1 // also enabled for release builds
-  #else
-    #define REMOTE_CONSOLE_ENABLED 1 // enabled for debug builds
-  #endif
+#if defined(NDEBUG)
+#define REMOTE_CONSOLE_ENABLED 1  // also enabled for release builds
+#else
+#define REMOTE_CONSOLE_ENABLED 1  // enabled for debug builds
+#endif
 #endif
 
 #if REMOTE_CONSOLE_ENABLED
-  #define REMOTE_CONSOLE_ENABLED_ONLY( expr )   expr
+#define REMOTE_CONSOLE_ENABLED_ONLY(expr) expr
 #else
-  #define REMOTE_CONSOLE_ENABLED_ONLY( expr )
+#define REMOTE_CONSOLE_ENABLED_ONLY(expr)
 #endif
 
-#endif // CONSOLE_MACRO_H
+#endif  // CONSOLE_MACRO_H

@@ -50,11 +50,11 @@ class Matrix : public MatrixMap<tScalar, tOrder> {
   typedef MatrixMap<const tScalar, tOrder> ConstMap;
   typedef typename Map::Scalar Scalar;
   static const MapOrder Order = tOrder;
+  using Map::cols_;
+  using Map::data_;
   using Map::kOrder;
   using Map::rows_;
-  using Map::cols_;
   using Map::stride_;
-  using Map::data_;
 
  public:
   Matrix() : Map(nullptr, 0, 0, 0) {}

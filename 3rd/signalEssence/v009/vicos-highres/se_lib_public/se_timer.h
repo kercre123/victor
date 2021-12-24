@@ -4,7 +4,7 @@ extern "C" {
 
 #ifndef SE_TIMER_H
 #define SE_TIMER_H
-	
+
 /***************************************************************************
    (C) Copyright 2015 SignalEssence; All Rights Reserved
 
@@ -12,9 +12,9 @@ extern "C" {
 
     Author: Caleb Crome
 
-    Description: simple timer functions to probe time it takes for 
+    Description: simple timer functions to probe time it takes for
       parts of the algorithm to run.
-    
+
 
     Machine/Compiler:
     (ANSI C)

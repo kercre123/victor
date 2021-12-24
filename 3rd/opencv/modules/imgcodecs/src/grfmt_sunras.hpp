@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -14,23 +15,29 @@
 // Copyright (C) 2009, Willow Garage Inc., all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
-// This software is provided by the copyright holders and contributors "as is" and
+// This software is provided by the copyright holders and contributors "as is"
+and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -45,61 +52,52 @@
 
 #include "grfmt_base.hpp"
 
-namespace cv
-{
+namespace cv {
 
-enum SunRasType
-{
-    RAS_OLD = 0,
-    RAS_STANDARD = 1,
-    RAS_BYTE_ENCODED = 2, /* RLE encoded */
-    RAS_FORMAT_RGB = 3    /* RGB instead of BGR */
+enum SunRasType {
+  RAS_OLD = 0,
+  RAS_STANDARD = 1,
+  RAS_BYTE_ENCODED = 2, /* RLE encoded */
+  RAS_FORMAT_RGB = 3    /* RGB instead of BGR */
 };
 
-enum SunRasMapType
-{
-    RMT_NONE = 0,       /* direct color encoding */
-    RMT_EQUAL_RGB = 1   /* paletted image */
+enum SunRasMapType {
+  RMT_NONE = 0,     /* direct color encoding */
+  RMT_EQUAL_RGB = 1 /* paletted image */
 };
-
 
 // Sun Raster Reader
-class SunRasterDecoder : public BaseImageDecoder
-{
-public:
+class SunRasterDecoder : public BaseImageDecoder {
+ public:
+  SunRasterDecoder();
+  virtual ~SunRasterDecoder();
 
-    SunRasterDecoder();
-    virtual ~SunRasterDecoder();
+  bool readData(Mat& img);
+  bool readHeader();
+  void close();
 
-    bool  readData( Mat& img );
-    bool  readHeader();
-    void  close();
+  ImageDecoder newDecoder() const;
 
-    ImageDecoder newDecoder() const;
-
-protected:
-
-    RMByteStream    m_strm;
-    PaletteEntry    m_palette[256];
-    int             m_bpp;
-    int             m_offset;
-    SunRasType      m_encoding;
-    SunRasMapType   m_maptype;
-    int             m_maplength;
+ protected:
+  RMByteStream m_strm;
+  PaletteEntry m_palette[256];
+  int m_bpp;
+  int m_offset;
+  SunRasType m_encoding;
+  SunRasMapType m_maptype;
+  int m_maplength;
 };
 
+class SunRasterEncoder : public BaseImageEncoder {
+ public:
+  SunRasterEncoder();
+  virtual ~SunRasterEncoder();
 
-class SunRasterEncoder : public BaseImageEncoder
-{
-public:
-    SunRasterEncoder();
-    virtual ~SunRasterEncoder();
+  bool write(const Mat& img, const std::vector<int>& params);
 
-    bool write( const Mat& img, const std::vector<int>& params );
-
-    ImageEncoder newEncoder() const;
+  ImageEncoder newEncoder() const;
 };
 
-}
+}  // namespace cv
 
-#endif/*_GRFMT_SUNRAS_H_*/
+#endif /*_GRFMT_SUNRAS_H_*/

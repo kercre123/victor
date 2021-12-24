@@ -38,7 +38,10 @@
 //     return result;
 //   }
 #if defined(__pnacl__)
-#define ABSL_BLOCK_TAIL_CALL_OPTIMIZATION() if (volatile int x = 0) { (void)x; }
+#define ABSL_BLOCK_TAIL_CALL_OPTIMIZATION() \
+  if (volatile int x = 0) {                 \
+    (void)x;                                \
+  }
 #elif defined(__clang__)
 // Clang will not tail call given inline volatile assembly.
 #define ABSL_BLOCK_TAIL_CALL_OPTIMIZATION() __asm__ __volatile__("")
@@ -50,7 +53,10 @@
 // The __nop() intrinsic blocks the optimisation.
 #define ABSL_BLOCK_TAIL_CALL_OPTIMIZATION() __nop()
 #else
-#define ABSL_BLOCK_TAIL_CALL_OPTIMIZATION() if (volatile int x = 0) { (void)x; }
+#define ABSL_BLOCK_TAIL_CALL_OPTIMIZATION() \
+  if (volatile int x = 0) {                 \
+    (void)x;                                \
+  }
 #endif
 
 // ABSL_CACHELINE_SIZE

@@ -15,44 +15,39 @@
 
 #ifndef ANKI_COZMO_ROBOT_SIM_HARDWAREINTERFACE_H
 #define ANKI_COZMO_ROBOT_SIM_HARDWAREINTERFACE_H
-#include "coretech/common/shared/types.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "coretech/common/shared/types.h"
 
+namespace Anki {
+namespace Vector {
+namespace HAL {
+// Result Init(void);
+void Destroy(void);
 
-namespace Anki
-{
-  namespace Vector
-  {
-    namespace HAL
-    {
-      //Result Init(void);
-      void Destroy(void);
+// Misc simulator-only stuff
+bool IsInitialized();
+void UpdateDisplay();
 
-      // Misc simulator-only stuff
-      bool IsInitialized();
-      void UpdateDisplay();
+// Take a step (needed for webots only)
+// Result Step(void);
 
-      // Take a step (needed for webots only)
-      //Result Step(void);
-
-      // Ground truth (no-op if not in simulation)
-      void GetGroundTruthPose(f32 &x, f32 &y, f32& rad);
+// Ground truth (no-op if not in simulation)
+void GetGroundTruthPose(f32 &x, f32 &y, f32 &rad);
 
 // #pragma mark --- Gripper ---
-      /////////////////////////////////////////////////////////////////////
-      // GRIPPER
-      //
-      
-      bool IsGripperEngaged();
-      
-      // Engage/Disengage gripper
-      // NOTE: Does not guarantee physical connection.
-      void EngageGripper();
-      void DisengageGripper();
+/////////////////////////////////////////////////////////////////////
+// GRIPPER
+//
 
-      
-    } // namespace HAL
-  } // namespace Vector
-} // namespace Anki
+bool IsGripperEngaged();
 
-#endif // ANKI_COZMO_ROBOT_SIM_HARDWAREINTERFACE_H
+// Engage/Disengage gripper
+// NOTE: Does not guarantee physical connection.
+void EngageGripper();
+void DisengageGripper();
+
+}  // namespace HAL
+}  // namespace Vector
+}  // namespace Anki
+
+#endif  // ANKI_COZMO_ROBOT_SIM_HARDWAREINTERFACE_H

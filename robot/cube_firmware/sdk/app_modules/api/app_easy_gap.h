@@ -6,9 +6,9 @@
  * @brief Easy GAP API.
  *
  * Copyright (C) 2015. Dialog Semiconductor Ltd, unpublished work. This computer
- * program includes Confidential, Proprietary Information and is a Trade Secret of
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited
- * unless authorized in writing. All Rights Reserved.
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -34,9 +34,10 @@
 
 #if (BLE_APP_PRESENT)
 
-#include <stdint.h>          // Standard Integer Definition
-#include <co_bt.h>           // Common BT Definitions
-#include "arch.h"            // Platform Definitions
+#include <co_bt.h>   // Common BT Definitions
+#include <stdint.h>  // Standard Integer Definition
+
+#include "arch.h"  // Platform Definitions
 #include "gapc.h"
 
 /*
@@ -50,9 +51,8 @@
  * @return int8_t Connection Id number
  ****************************************************************************************
  */
-__INLINE int8_t conhdl_to_conidx(uint16_t conhdl)
-{
-    return (gapc_get_conidx(conhdl));
+__INLINE int8_t conhdl_to_conidx(uint16_t conhdl) {
+  return (gapc_get_conidx(conhdl));
 }
 
 /**
@@ -61,9 +61,8 @@ __INLINE int8_t conhdl_to_conidx(uint16_t conhdl)
  * @return int16_t Connection handle number
  ****************************************************************************************
  */
-__INLINE int16_t conidx_to_conhdl(uint8_t conidx)
-{
-    return (gapc_get_conhdl(conidx));
+__INLINE int16_t conidx_to_conhdl(uint8_t conidx) {
+  return (gapc_get_conhdl(conidx));
 }
 
 /**
@@ -100,7 +99,8 @@ void app_easy_gap_disconnect(uint8_t connection_idx);
  * @return void
  ****************************************************************************************
  */
-void app_easy_gap_confirm(uint8_t connection_idx, enum gap_auth auth, enum gap_authz authorize);
+void app_easy_gap_confirm(uint8_t connection_idx, enum gap_auth auth,
+                          enum gap_authz authorize);
 
 /**
  ****************************************************************************************
@@ -142,7 +142,8 @@ void app_easy_gap_advertise_stop(void);
  * @return void
  ****************************************************************************************
  */
-void app_easy_gap_undirected_advertise_with_timeout_start(uint16_t delay, void (*timeout_callback)(void));
+void app_easy_gap_undirected_advertise_with_timeout_start(
+    uint16_t delay, void (*timeout_callback)(void));
 
 /**
  ****************************************************************************************
@@ -157,24 +158,27 @@ void app_easy_gap_advertise_with_timeout_stop(void);
  * @brief Get non connectable advertising message with filled parameters.
  * @return gapm_start_advertise_cmd Pointer to advertising message
  ****************************************************************************************
-*/
-struct gapm_start_advertise_cmd* app_easy_gap_non_connectable_advertise_get_active(void);
+ */
+struct gapm_start_advertise_cmd*
+app_easy_gap_non_connectable_advertise_get_active(void);
 
 /**
  ****************************************************************************************
  * @brief Get undirected connectable advertising message with filled parameters.
  * @return gapm_start_advertise_cmd Pointer to advertising message
  ****************************************************************************************
-*/
-struct gapm_start_advertise_cmd* app_easy_gap_undirected_advertise_get_active(void);
+ */
+struct gapm_start_advertise_cmd* app_easy_gap_undirected_advertise_get_active(
+    void);
 
 /**
  ****************************************************************************************
  * @brief Get directed connectable advertising message with filled parameters.
  * @return gapm_start_advertise_cmd Pointer to advertising message
  ****************************************************************************************
-*/
-struct gapm_start_advertise_cmd* app_easy_gap_directed_advertise_get_active(void);
+ */
+struct gapm_start_advertise_cmd* app_easy_gap_directed_advertise_get_active(
+    void);
 
 /**
  ****************************************************************************************
@@ -182,7 +186,7 @@ struct gapm_start_advertise_cmd* app_easy_gap_directed_advertise_get_active(void
  * @param[in] connection_idx Connection Id number
  * @return void
  ****************************************************************************************
-*/
+ */
 void app_easy_gap_param_update_start(uint8_t connection_idx);
 
 /**
@@ -191,15 +195,16 @@ void app_easy_gap_param_update_start(uint8_t connection_idx);
  * @param[in] connection_idx Connection Id number
  * @return gapc_param_update_cmd Pointer to param update request message
  ****************************************************************************************
-*/
-struct gapc_param_update_cmd* app_easy_gap_param_update_get_active(uint8_t connection_idx);
+ */
+struct gapc_param_update_cmd* app_easy_gap_param_update_get_active(
+    uint8_t connection_idx);
 
 /**
  ****************************************************************************************
  * @brief Start connection.
  * @return void
  ****************************************************************************************
-*/
+ */
 void app_easy_gap_start_connection_to(void);
 
 /**
@@ -210,23 +215,25 @@ void app_easy_gap_start_connection_to(void);
  * @param[in] intv           Connection interval
  * @return void
  ****************************************************************************************
-*/
-void app_easy_gap_start_connection_to_set(uint8_t peer_addr_type, uint8_t *peer_addr, uint16_t intv);
+ */
+void app_easy_gap_start_connection_to_set(uint8_t peer_addr_type,
+                                          uint8_t* peer_addr, uint16_t intv);
 
 /**
  ****************************************************************************************
  * @brief Get connection message with filled parameters
  * @return gapm_start_connection_cmd Pointer to connection message
  ****************************************************************************************
-*/
-struct gapm_start_connection_cmd* app_easy_gap_start_connection_to_get_active(void);
+ */
+struct gapm_start_connection_cmd* app_easy_gap_start_connection_to_get_active(
+    void);
 
 /**
  ****************************************************************************************
  * @brief Get device configuration message with filled parameters
  * @return gapm_set_dev_config_cmd Pointer to device configuration message
  ****************************************************************************************
-*/
+ */
 struct gapm_set_dev_config_cmd* app_easy_gap_dev_config_get_active(void);
 
 /**
@@ -234,11 +241,11 @@ struct gapm_set_dev_config_cmd* app_easy_gap_dev_config_get_active(void);
  * @brief Configure device
  * @return void
  ****************************************************************************************
-*/
+ */
 void app_easy_gap_dev_configure(void);
 
 /// @} APP
 
-#endif //(BLE_APP_PRESENT)
+#endif  //(BLE_APP_PRESENT)
 
-#endif // _APP_EASY_GAP_H_
+#endif  // _APP_EASY_GAP_H_

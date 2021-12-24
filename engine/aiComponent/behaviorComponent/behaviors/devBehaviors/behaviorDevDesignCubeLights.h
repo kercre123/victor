@@ -15,33 +15,32 @@
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-
 #include "engine/components/cubes/cubeLights/cubeLightAnimation.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 
 namespace Anki {
 namespace Vector {
 
-class BehaviorDevDesignCubeLights : public ICozmoBehavior
-{
-public: 
+class BehaviorDevDesignCubeLights : public ICozmoBehavior {
+ public:
   virtual ~BehaviorDevDesignCubeLights();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorDevDesignCubeLights(const Json::Value& config);  
+  explicit BehaviorDevDesignCubeLights(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
+ private:
   static const u32 kInvalidHandle = UINT_MAX;
 
   struct InstanceConfig {
@@ -58,10 +57,9 @@ private:
   DynamicVariables _dVars;
 
   CubeLightAnimation::ObjectLights BuildLightsFromConsoleVars() const;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorDevDesignCubeLights__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorDevDesignCubeLights__

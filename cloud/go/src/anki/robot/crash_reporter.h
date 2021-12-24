@@ -2,7 +2,7 @@
 // anki/robot/crash_reporter.h
 //
 // Declare an extern "C" interface to C++ internals.
-// This file provides a bridge between 
+// This file provides a bridge between
 // crash_reporter.go (compiled as C) and (compiled as C++).
 //
 
@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-void InstallCrashReporter(const char * procname);
+void InstallCrashReporter(const char* procname);
 
 void UninstallCrashReporter();
 
@@ -21,4 +21,4 @@ void UninstallCrashReporter();
 }
 #endif
 
-#endif // __anki_robot_crash_reporter_h
+#endif  // __anki_robot_crash_reporter_h

@@ -16,16 +16,16 @@ namespace Eigen {
 
 namespace internal {
 
-template<> EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS EIGEN_UNUSED
-Packet4f pexp<Packet4f>(const Packet4f& _x)
-{
+template <>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS EIGEN_UNUSED Packet4f
+pexp<Packet4f>(const Packet4f& _x) {
   Packet4f x = _x;
   Packet4f tmp, fx;
 
-  _EIGEN_DECLARE_CONST_Packet4f(1 , 1.0f);
+  _EIGEN_DECLARE_CONST_Packet4f(1, 1.0f);
   _EIGEN_DECLARE_CONST_Packet4f(half, 0.5f);
   _EIGEN_DECLARE_CONST_Packet4i(0x7f, 0x7f);
-  _EIGEN_DECLARE_CONST_Packet4f(exp_hi,  88.3762626647950f);
+  _EIGEN_DECLARE_CONST_Packet4f(exp_hi, 88.3762626647950f);
   _EIGEN_DECLARE_CONST_Packet4f(exp_lo, -88.3762626647949f);
   _EIGEN_DECLARE_CONST_Packet4f(cephes_LOG2EF, 1.44269504088896341f);
   _EIGEN_DECLARE_CONST_Packet4f(cephes_exp_C1, 0.693359375f);
@@ -84,11 +84,11 @@ Packet4f pexp<Packet4f>(const Packet4f& _x)
   return y;
 }
 
-template<> EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS EIGEN_UNUSED
-Packet4f plog<Packet4f>(const Packet4f& _x)
-{
+template <>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS EIGEN_UNUSED Packet4f
+plog<Packet4f>(const Packet4f& _x) {
   Packet4f x = _x;
-  _EIGEN_DECLARE_CONST_Packet4f(1 , 1.0f);
+  _EIGEN_DECLARE_CONST_Packet4f(1, 1.0f);
   _EIGEN_DECLARE_CONST_Packet4f(half, 0.5f);
   _EIGEN_DECLARE_CONST_Packet4i(0x7f, 0x7f);
 
@@ -99,14 +99,14 @@ Packet4f plog<Packet4f>(const Packet4f& _x)
   */
   _EIGEN_DECLARE_CONST_Packet4f(cephes_SQRTHF, 0.707106781186547524f);
   _EIGEN_DECLARE_CONST_Packet4f(cephes_log_p0, 7.0376836292E-2f);
-  _EIGEN_DECLARE_CONST_Packet4f(cephes_log_p1, - 1.1514610310E-1f);
+  _EIGEN_DECLARE_CONST_Packet4f(cephes_log_p1, -1.1514610310E-1f);
   _EIGEN_DECLARE_CONST_Packet4f(cephes_log_p2, 1.1676998740E-1f);
-  _EIGEN_DECLARE_CONST_Packet4f(cephes_log_p3, - 1.2420140846E-1f);
-  _EIGEN_DECLARE_CONST_Packet4f(cephes_log_p4, + 1.4249322787E-1f);
-  _EIGEN_DECLARE_CONST_Packet4f(cephes_log_p5, - 1.6668057665E-1f);
-  _EIGEN_DECLARE_CONST_Packet4f(cephes_log_p6, + 2.0000714765E-1f);
-  _EIGEN_DECLARE_CONST_Packet4f(cephes_log_p7, - 2.4999993993E-1f);
-  _EIGEN_DECLARE_CONST_Packet4f(cephes_log_p8, + 3.3333331174E-1f);
+  _EIGEN_DECLARE_CONST_Packet4f(cephes_log_p3, -1.2420140846E-1f);
+  _EIGEN_DECLARE_CONST_Packet4f(cephes_log_p4, +1.4249322787E-1f);
+  _EIGEN_DECLARE_CONST_Packet4f(cephes_log_p5, -1.6668057665E-1f);
+  _EIGEN_DECLARE_CONST_Packet4f(cephes_log_p6, +2.0000714765E-1f);
+  _EIGEN_DECLARE_CONST_Packet4f(cephes_log_p7, -2.4999993993E-1f);
+  _EIGEN_DECLARE_CONST_Packet4f(cephes_log_p8, +3.3333331174E-1f);
   _EIGEN_DECLARE_CONST_Packet4f(cephes_log_q1, -2.12194440e-4f);
   _EIGEN_DECLARE_CONST_Packet4f(cephes_log_q2, 0.693359375f);
 
@@ -134,12 +134,14 @@ Packet4f plog<Packet4f>(const Packet4f& _x)
      } else { x = x - 1.0; }
   */
   Packet4ui mask = vcltq_f32(x, p4f_cephes_SQRTHF);
-  Packet4f tmp = vreinterpretq_f32_u32(vandq_u32(vreinterpretq_u32_f32(x), mask));
+  Packet4f tmp =
+      vreinterpretq_f32_u32(vandq_u32(vreinterpretq_u32_f32(x), mask));
   x = vsubq_f32(x, p4f_1);
-  e = vsubq_f32(e, vreinterpretq_f32_u32(vandq_u32(vreinterpretq_u32_f32(p4f_1), mask)));
+  e = vsubq_f32(
+      e, vreinterpretq_f32_u32(vandq_u32(vreinterpretq_u32_f32(p4f_1), mask)));
   x = vaddq_f32(x, tmp);
 
-  Packet4f z = vmulq_f32(x,x);
+  Packet4f z = vmulq_f32(x, x);
 
   Packet4f y = p4f_cephes_log_p0;
   y = vmulq_f32(y, x);
@@ -165,19 +167,19 @@ Packet4f plog<Packet4f>(const Packet4f& _x)
   tmp = vmulq_f32(e, p4f_cephes_log_q1);
   y = vaddq_f32(y, tmp);
 
-
   tmp = vmulq_f32(z, p4f_half);
   y = vsubq_f32(y, tmp);
 
   tmp = vmulq_f32(e, p4f_cephes_log_q2);
   x = vaddq_f32(x, y);
   x = vaddq_f32(x, tmp);
-  x = vreinterpretq_f32_u32(vorrq_u32(vreinterpretq_u32_f32(x), invalid_mask)); // negative arg will be NAN
+  x = vreinterpretq_f32_u32(vorrq_u32(
+      vreinterpretq_u32_f32(x), invalid_mask));  // negative arg will be NAN
   return x;
 }
 
-} // end namespace internal
+}  // end namespace internal
 
-} // end namespace Eigen
+}  // end namespace Eigen
 
-#endif // EIGEN_MATH_FUNCTIONS_NEON_H
+#endif  // EIGEN_MATH_FUNCTIONS_NEON_H

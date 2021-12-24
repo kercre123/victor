@@ -9,11 +9,10 @@
  * Copyright: Anki, Inc. 2018
  **/
 
-
 #include "coretech/common/engine/scopedTicToc.h"
 
 namespace Anki {
 
 bool ScopedTicToc::_enabled = true;
 
-} // namespace Anki
+}  // namespace Anki

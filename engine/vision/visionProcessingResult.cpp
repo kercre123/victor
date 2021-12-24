@@ -15,63 +15,59 @@
 
 namespace Anki {
 namespace Vector {
-    
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-static bool SalientPointDetectionPresent(const std::list<Vision::SalientPoint>& salientPoints,
-                                         const Vision::SalientPointType salientType,
-                                         const TimeStamp_t atTimestamp)
-{
-  for(const auto& salientPoint : salientPoints)
-  {
-    if( (atTimestamp == salientPoint.timestamp) && (salientType == salientPoint.salientType) )
-    {
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+static bool SalientPointDetectionPresent(
+    const std::list<Vision::SalientPoint>& salientPoints,
+    const Vision::SalientPointType salientType, const TimeStamp_t atTimestamp) {
+  for (const auto& salientPoint : salientPoints) {
+    if ((atTimestamp == salientPoint.timestamp) &&
+        (salientType == salientPoint.salientType)) {
       return true;
     }
   }
   return false;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool VisionProcessingResult::ContainsDetectionsForMode(const VisionMode mode, const TimeStamp_t atTimestamp) const
-{
-  switch(mode)
-  {
-    case VisionMode::Markers:
-    {
-      for(const auto& marker: observedMarkers)
-      {
-        if(marker.GetTimeStamp() == atTimestamp)
-        {
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool VisionProcessingResult::ContainsDetectionsForMode(
+    const VisionMode mode, const TimeStamp_t atTimestamp) const {
+  switch (mode) {
+    case VisionMode::Markers: {
+      for (const auto& marker : observedMarkers) {
+        if (marker.GetTimeStamp() == atTimestamp) {
           return true;
         }
       }
       return false;
     }
-      
-    case VisionMode::Faces:
-    {
-      for(const auto& face : faces)
-      {
-        if(face.GetTimeStamp() == atTimestamp)
-        {
+
+    case VisionMode::Faces: {
+      for (const auto& face : faces) {
+        if (face.GetTimeStamp() == atTimestamp) {
           return true;
         }
       }
       return false;
     }
-      
+
     case VisionMode::Hands:
-      return SalientPointDetectionPresent(salientPoints, Vision::SalientPointType::Hand, atTimestamp);
-      
+      return SalientPointDetectionPresent(
+          salientPoints, Vision::SalientPointType::Hand, atTimestamp);
+
     case VisionMode::People:
-      return SalientPointDetectionPresent(salientPoints, Vision::SalientPointType::Person, atTimestamp);
-      
+      return SalientPointDetectionPresent(
+          salientPoints, Vision::SalientPointType::Person, atTimestamp);
+
     default:
-      LOG_ERROR("VisionProcessingResult.ContainsDetectionsForMode.ModeNotSupported",
-                "VisionMode:%s", EnumToString(mode));
+      LOG_ERROR(
+          "VisionProcessingResult.ContainsDetectionsForMode.ModeNotSupported",
+          "VisionMode:%s", EnumToString(mode));
       return false;
   }
 }
-  
-} // namespace Vector
-} // namespace Anki
+
+}  // namespace Vector
+}  // namespace Anki

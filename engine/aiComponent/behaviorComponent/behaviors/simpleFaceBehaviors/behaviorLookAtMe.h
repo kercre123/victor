@@ -18,34 +18,33 @@
 
 namespace Anki {
 namespace Vector {
-  
+
 enum class AnimationTrigger : int32_t;
 
-class BehaviorLookAtMe : public ISimpleFaceBehavior
-{
-public: 
+class BehaviorLookAtMe : public ISimpleFaceBehavior {
+ public:
   virtual ~BehaviorLookAtMe() = default;
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorLookAtMe(const Json::Value& config);  
+  explicit BehaviorLookAtMe(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-
+ private:
   struct InstanceConfig {
     InstanceConfig();
-    float panTolerance_deg; // ignored if negative
-    
+    float panTolerance_deg;  // ignored if negative
+
     AnimationTrigger animGetIn;
     AnimationTrigger animLoop;
     AnimationTrigger animGetOut;
@@ -63,10 +62,9 @@ private:
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorLookAtMe__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorLookAtMe__

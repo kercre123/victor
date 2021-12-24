@@ -15,12 +15,14 @@
 
 #include "dasNSLog.h"
 
-#define LOGD(fmt, ...) {DASNSLogV(fmt, __VA_ARGS__);}
+#define LOGD(fmt, ...) \
+  { DASNSLogV(fmt, __VA_ARGS__); }
 
 #ifdef NDEBUG
 #define LOGV(fmt, ...)
 #else
-#define LOGV(fmt, ...) {DASNSLogV(fmt, __VA_ARGS__);}
+#define LOGV(fmt, ...) \
+  { DASNSLogV(fmt, __VA_ARGS__); }
 #endif
 
-#endif // __DasLogMacros_H__
+#endif  // __DasLogMacros_H__

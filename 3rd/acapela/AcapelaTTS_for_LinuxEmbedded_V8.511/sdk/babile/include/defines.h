@@ -11,7 +11,7 @@
  * Purpose:             This header is included into each BABEL project
  *                      It contains the project specific compilation flags
  * Author:              NM
- * History : 
+ * History :
  *            21/06/2001    Created     NM
  *            03/09/2001    Update      NM
  *
@@ -24,11 +24,9 @@
  *
  */
 
-
 #ifndef __COMMON__BB_DEFINES_H__
 #define __COMMON__BB_DEFINES_H__
 
-  
 /**********************************************************************/
 /*   PLATFORM DEFINITION                                              */
 /**********************************************************************/
@@ -47,18 +45,15 @@
 /**********************************************************************/
 /*   BABEL COMMON INCLUDE FILES                                       */
 /**********************************************************************/
-#include "bb_def.h"     /* BABEL's constants definitions */
-#include "bb_types.h"   /* BABEL's types definitions */
-#include "bb_mem.h"     /* BABEL's memory definitions */
-
-
+#include "bb_def.h"   /* BABEL's constants definitions */
+#include "bb_mem.h"   /* BABEL's memory definitions */
+#include "bb_types.h" /* BABEL's types definitions */
 
 /**********************************************************************/
 /*   PROJECT SPECIFIC COMPILATION FLAGS                               */
 /**********************************************************************/
-/* TO-DO : Add your specific preprocessor defines file here */ 
+/* TO-DO : Add your specific preprocessor defines file here */
 /* <my_module_path>\def\<my_specific_path>\<my_defines_file.h> */
-
 
 #include "defines_generic.h"
 #ifndef __BB_DEFINES_DEFINED__

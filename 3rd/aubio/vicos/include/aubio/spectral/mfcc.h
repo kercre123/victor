@@ -39,8 +39,7 @@
 #define AUBIO_MFCC_H
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /** mfcc object */
@@ -54,15 +53,15 @@ typedef struct _aubio_mfcc_t aubio_mfcc_t;
   \param n_filters number of desired filters
 
 */
-aubio_mfcc_t *new_aubio_mfcc (uint_t buf_size,
-    uint_t n_filters, uint_t n_coeffs, uint_t samplerate);
+aubio_mfcc_t *new_aubio_mfcc(uint_t buf_size, uint_t n_filters, uint_t n_coeffs,
+                             uint_t samplerate);
 
 /** delete mfcc object
 
   \param mf mfcc object as returned by new_aubio_mfcc
 
 */
-void del_aubio_mfcc (aubio_mfcc_t * mf);
+void del_aubio_mfcc(aubio_mfcc_t *mf);
 
 /** mfcc object processing
 
@@ -71,7 +70,7 @@ void del_aubio_mfcc (aubio_mfcc_t * mf);
   \param out output mel coefficients buffer (n_coeffs long)
 
 */
-void aubio_mfcc_do (aubio_mfcc_t * mf, const cvec_t * in, fvec_t * out);
+void aubio_mfcc_do(aubio_mfcc_t *mf, const cvec_t *in, fvec_t *out);
 
 /** set power parameter
 
@@ -82,7 +81,7 @@ void aubio_mfcc_do (aubio_mfcc_t * mf, const cvec_t * in, fvec_t * out);
   See aubio_filterbank_set_power().
 
  */
-uint_t aubio_mfcc_set_power (aubio_mfcc_t *mf, smpl_t power);
+uint_t aubio_mfcc_set_power(aubio_mfcc_t *mf, smpl_t power);
 
 /** get power parameter
 
@@ -92,7 +91,7 @@ uint_t aubio_mfcc_set_power (aubio_mfcc_t *mf, smpl_t power);
   See aubio_filterbank_get_power().
 
  */
-smpl_t aubio_mfcc_get_power (aubio_mfcc_t *mf);
+smpl_t aubio_mfcc_get_power(aubio_mfcc_t *mf);
 
 /** set scaling parameter
 
@@ -103,7 +102,7 @@ smpl_t aubio_mfcc_get_power (aubio_mfcc_t *mf);
   computing the DCT. Defaults to `1`.
 
 */
-uint_t aubio_mfcc_set_scale (aubio_mfcc_t *mf, smpl_t scale);
+uint_t aubio_mfcc_set_scale(aubio_mfcc_t *mf, smpl_t scale);
 
 /** get scaling parameter
 
@@ -111,7 +110,7 @@ uint_t aubio_mfcc_set_scale (aubio_mfcc_t *mf, smpl_t scale);
   \return current scaling parameter. Defaults to `1`.
 
  */
-smpl_t aubio_mfcc_get_scale (aubio_mfcc_t *mf);
+smpl_t aubio_mfcc_get_scale(aubio_mfcc_t *mf);
 
 /** Mel filterbank initialization
 
@@ -128,8 +127,7 @@ smpl_t aubio_mfcc_get_scale (aubio_mfcc_t *mf);
   aubio_filterbank_set_mel_coeffs()
 
 */
-uint_t aubio_mfcc_set_mel_coeffs (aubio_mfcc_t *mf,
-        smpl_t fmin, smpl_t fmax);
+uint_t aubio_mfcc_set_mel_coeffs(aubio_mfcc_t *mf, smpl_t fmin, smpl_t fmax);
 
 /** Mel filterbank initialization
 
@@ -146,8 +144,8 @@ uint_t aubio_mfcc_set_mel_coeffs (aubio_mfcc_t *mf,
   aubio_filterbank_set_mel_coeffs_htk()
 
 */
-uint_t aubio_mfcc_set_mel_coeffs_htk (aubio_mfcc_t *mf,
-        smpl_t fmin, smpl_t fmax);
+uint_t aubio_mfcc_set_mel_coeffs_htk(aubio_mfcc_t *mf, smpl_t fmin,
+                                     smpl_t fmax);
 
 /** Mel filterbank initialization (Auditory Toolbox's parameters)
 
@@ -164,7 +162,7 @@ uint_t aubio_mfcc_set_mel_coeffs_htk (aubio_mfcc_t *mf,
   aubio_filterbank_set_mel_coeffs_slaney()
 
 */
-uint_t aubio_mfcc_set_mel_coeffs_slaney (aubio_mfcc_t *mf);
+uint_t aubio_mfcc_set_mel_coeffs_slaney(aubio_mfcc_t *mf);
 
 #ifdef __cplusplus
 }

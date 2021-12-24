@@ -26,12 +26,14 @@ namespace libcurlUtils {
 /**
  * A class that produces @c LibcurlHTTP2Connection instances.
  */
-class LibcurlHTTP2ConnectionFactory : public avsCommon::utils::http2::HTTP2ConnectionFactoryInterface {
-public:
-    /// @name HTTP2ConnectionFactoryInterface methods.
-    /// @{
-    std::shared_ptr<avsCommon::utils::http2::HTTP2ConnectionInterface> createHTTP2Connection() override;
-    /// *}
+class LibcurlHTTP2ConnectionFactory
+    : public avsCommon::utils::http2::HTTP2ConnectionFactoryInterface {
+ public:
+  /// @name HTTP2ConnectionFactoryInterface methods.
+  /// @{
+  std::shared_ptr<avsCommon::utils::http2::HTTP2ConnectionInterface>
+  createHTTP2Connection() override;
+  /// *}
 };
 
 }  // namespace libcurlUtils

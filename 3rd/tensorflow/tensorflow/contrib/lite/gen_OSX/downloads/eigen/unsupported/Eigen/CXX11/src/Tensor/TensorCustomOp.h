@@ -13,16 +13,15 @@
 namespace Eigen {
 
 /** \class TensorCustomUnaryOp
-  * \ingroup CXX11_Tensor_Module
-  *
-  * \brief Tensor custom class.
-  *
-  *
-  */
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Tensor custom class.
+ *
+ *
+ */
 namespace internal {
-template<typename CustomUnaryFunc, typename XprType>
-struct traits<TensorCustomUnaryOp<CustomUnaryFunc, XprType> >
-{
+template <typename CustomUnaryFunc, typename XprType>
+struct traits<TensorCustomUnaryOp<CustomUnaryFunc, XprType> > {
   typedef typename XprType::Scalar Scalar;
   typedef typename XprType::StorageKind StorageKind;
   typedef typename XprType::Index Index;
@@ -33,34 +32,33 @@ struct traits<TensorCustomUnaryOp<CustomUnaryFunc, XprType> >
   typedef typename traits<XprType>::PointerType PointerType;
 };
 
-template<typename CustomUnaryFunc, typename XprType>
-struct eval<TensorCustomUnaryOp<CustomUnaryFunc, XprType>, Eigen::Dense>
-{
+template <typename CustomUnaryFunc, typename XprType>
+struct eval<TensorCustomUnaryOp<CustomUnaryFunc, XprType>, Eigen::Dense> {
   typedef const TensorCustomUnaryOp<CustomUnaryFunc, XprType>& type;
 };
 
-template<typename CustomUnaryFunc, typename XprType>
-struct nested<TensorCustomUnaryOp<CustomUnaryFunc, XprType> >
-{
+template <typename CustomUnaryFunc, typename XprType>
+struct nested<TensorCustomUnaryOp<CustomUnaryFunc, XprType> > {
   typedef TensorCustomUnaryOp<CustomUnaryFunc, XprType> type;
 };
 
 }  // end namespace internal
 
-
-
-template<typename CustomUnaryFunc, typename XprType>
-class TensorCustomUnaryOp : public TensorBase<TensorCustomUnaryOp<CustomUnaryFunc, XprType>, ReadOnlyAccessors>
-{
-  public:
+template <typename CustomUnaryFunc, typename XprType>
+class TensorCustomUnaryOp
+    : public TensorBase<TensorCustomUnaryOp<CustomUnaryFunc, XprType>,
+                        ReadOnlyAccessors> {
+ public:
   typedef typename internal::traits<TensorCustomUnaryOp>::Scalar Scalar;
   typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
   typedef typename XprType::CoeffReturnType CoeffReturnType;
   typedef typename internal::nested<TensorCustomUnaryOp>::type Nested;
-  typedef typename internal::traits<TensorCustomUnaryOp>::StorageKind StorageKind;
+  typedef
+      typename internal::traits<TensorCustomUnaryOp>::StorageKind StorageKind;
   typedef typename internal::traits<TensorCustomUnaryOp>::Index Index;
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorCustomUnaryOp(const XprType& expr, const CustomUnaryFunc& func)
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+  TensorCustomUnaryOp(const XprType& expr, const CustomUnaryFunc& func)
       : m_expr(expr), m_func(func) {}
 
   EIGEN_DEVICE_FUNC
@@ -68,26 +66,31 @@ class TensorCustomUnaryOp : public TensorBase<TensorCustomUnaryOp<CustomUnaryFun
 
   EIGEN_DEVICE_FUNC
   const typename internal::remove_all<typename XprType::Nested>::type&
-  expression() const { return m_expr; }
+  expression() const {
+    return m_expr;
+  }
 
-  protected:
-    typename XprType::Nested m_expr;
-    const CustomUnaryFunc m_func;
+ protected:
+  typename XprType::Nested m_expr;
+  const CustomUnaryFunc m_func;
 };
 
-
 // Eval as rvalue
-template<typename CustomUnaryFunc, typename XprType, typename Device>
-struct TensorEvaluator<const TensorCustomUnaryOp<CustomUnaryFunc, XprType>, Device>
-{
+template <typename CustomUnaryFunc, typename XprType, typename Device>
+struct TensorEvaluator<const TensorCustomUnaryOp<CustomUnaryFunc, XprType>,
+                       Device> {
   typedef TensorCustomUnaryOp<CustomUnaryFunc, XprType> ArgType;
   typedef typename internal::traits<ArgType>::Index Index;
   static const int NumDims = internal::traits<ArgType>::NumDimensions;
   typedef DSizes<Index, NumDims> Dimensions;
-  typedef typename internal::remove_const<typename ArgType::Scalar>::type Scalar;
-  typedef typename internal::remove_const<typename XprType::CoeffReturnType>::type CoeffReturnType;
+  typedef
+      typename internal::remove_const<typename ArgType::Scalar>::type Scalar;
+  typedef
+      typename internal::remove_const<typename XprType::CoeffReturnType>::type
+          CoeffReturnType;
   typedef typename PacketType<CoeffReturnType, Device>::type PacketReturnType;
-  static const int PacketSize = internal::unpacket_traits<PacketReturnType>::size;
+  static const int PacketSize =
+      internal::unpacket_traits<PacketReturnType>::size;
 
   enum {
     IsAligned = false,
@@ -98,15 +101,18 @@ struct TensorEvaluator<const TensorCustomUnaryOp<CustomUnaryFunc, XprType>, Devi
     RawAccess = false
   };
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const ArgType& op, const Device& device)
-      : m_op(op), m_device(device), m_result(NULL)
-  {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const ArgType& op,
+                                                        const Device& device)
+      : m_op(op), m_device(device), m_result(NULL) {
     m_dimensions = op.func().dimensions(op.expression());
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const {
+    return m_dimensions;
+  }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(CoeffReturnType* data) {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(
+      CoeffReturnType* data) {
     if (data) {
       evalTo(data);
       return false;
@@ -125,24 +131,31 @@ struct TensorEvaluator<const TensorCustomUnaryOp<CustomUnaryFunc, XprType>, Devi
     }
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType coeff(Index index) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType
+  coeff(Index index) const {
     return m_result[index];
   }
 
-  template<int LoadMode>
+  template <int LoadMode>
   EIGEN_DEVICE_FUNC PacketReturnType packet(Index index) const {
     return internal::ploadt<PacketReturnType, LoadMode>(m_result + index);
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorOpCost costPerCoeff(bool vectorized) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorOpCost
+  costPerCoeff(bool vectorized) const {
     // TODO(rmlarsen): Extend CustomOp API to return its cost estimate.
     return TensorOpCost(sizeof(CoeffReturnType), 0, 0, vectorized, PacketSize);
   }
 
-  EIGEN_DEVICE_FUNC typename Eigen::internal::traits<XprType>::PointerType data() const { return m_result; }
+  EIGEN_DEVICE_FUNC typename Eigen::internal::traits<XprType>::PointerType
+  data() const {
+    return m_result;
+  }
 
 #ifdef EIGEN_USE_SYCL
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Device& device() const { return m_device; }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Device& device() const {
+    return m_device;
+  }
 #endif
 
  protected:
@@ -158,65 +171,71 @@ struct TensorEvaluator<const TensorCustomUnaryOp<CustomUnaryFunc, XprType>, Devi
   CoeffReturnType* m_result;
 };
 
-
-
 /** \class TensorCustomBinaryOp
-  * \ingroup CXX11_Tensor_Module
-  *
-  * \brief Tensor custom class.
-  *
-  *
-  */
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Tensor custom class.
+ *
+ *
+ */
 namespace internal {
-template<typename CustomBinaryFunc, typename LhsXprType, typename RhsXprType>
-struct traits<TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, RhsXprType> >
-{
-  typedef typename internal::promote_storage_type<typename LhsXprType::Scalar,
-                                                  typename RhsXprType::Scalar>::ret Scalar;
-  typedef typename internal::promote_storage_type<typename LhsXprType::CoeffReturnType,
-                                                  typename RhsXprType::CoeffReturnType>::ret CoeffReturnType;
-  typedef typename promote_storage_type<typename traits<LhsXprType>::StorageKind,
-                                        typename traits<RhsXprType>::StorageKind>::ret StorageKind;
+template <typename CustomBinaryFunc, typename LhsXprType, typename RhsXprType>
+struct traits<TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, RhsXprType> > {
+  typedef typename internal::promote_storage_type<
+      typename LhsXprType::Scalar, typename RhsXprType::Scalar>::ret Scalar;
+  typedef typename internal::promote_storage_type<
+      typename LhsXprType::CoeffReturnType,
+      typename RhsXprType::CoeffReturnType>::ret CoeffReturnType;
+  typedef typename promote_storage_type<
+      typename traits<LhsXprType>::StorageKind,
+      typename traits<RhsXprType>::StorageKind>::ret StorageKind;
   typedef typename promote_index_type<typename traits<LhsXprType>::Index,
-                                      typename traits<RhsXprType>::Index>::type Index;
+                                      typename traits<RhsXprType>::Index>::type
+      Index;
   typedef typename LhsXprType::Nested LhsNested;
   typedef typename RhsXprType::Nested RhsNested;
   typedef typename remove_reference<LhsNested>::type _LhsNested;
   typedef typename remove_reference<RhsNested>::type _RhsNested;
   static const int NumDimensions = traits<LhsXprType>::NumDimensions;
   static const int Layout = traits<LhsXprType>::Layout;
-  typedef typename conditional<Pointer_type_promotion<typename LhsXprType::Scalar, Scalar>::val,
-                                typename traits<LhsXprType>::PointerType, typename traits<RhsXprType>::PointerType>::type PointerType;
+  typedef typename conditional<
+      Pointer_type_promotion<typename LhsXprType::Scalar, Scalar>::val,
+      typename traits<LhsXprType>::PointerType,
+      typename traits<RhsXprType>::PointerType>::type PointerType;
 };
 
-template<typename CustomBinaryFunc, typename LhsXprType, typename RhsXprType>
-struct eval<TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, RhsXprType>, Eigen::Dense>
-{
-  typedef const TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, RhsXprType>& type;
+template <typename CustomBinaryFunc, typename LhsXprType, typename RhsXprType>
+struct eval<TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, RhsXprType>,
+            Eigen::Dense> {
+  typedef const TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, RhsXprType>&
+      type;
 };
 
-template<typename CustomBinaryFunc, typename LhsXprType, typename RhsXprType>
-struct nested<TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, RhsXprType> >
-{
+template <typename CustomBinaryFunc, typename LhsXprType, typename RhsXprType>
+struct nested<TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, RhsXprType> > {
   typedef TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, RhsXprType> type;
 };
 
 }  // end namespace internal
 
-
-
-template<typename CustomBinaryFunc, typename LhsXprType, typename RhsXprType>
-class TensorCustomBinaryOp : public TensorBase<TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, RhsXprType>, ReadOnlyAccessors>
-{
-  public:
+template <typename CustomBinaryFunc, typename LhsXprType, typename RhsXprType>
+class TensorCustomBinaryOp
+    : public TensorBase<
+          TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, RhsXprType>,
+          ReadOnlyAccessors> {
+ public:
   typedef typename internal::traits<TensorCustomBinaryOp>::Scalar Scalar;
   typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
-  typedef typename internal::traits<TensorCustomBinaryOp>::CoeffReturnType CoeffReturnType;
+  typedef typename internal::traits<TensorCustomBinaryOp>::CoeffReturnType
+      CoeffReturnType;
   typedef typename internal::nested<TensorCustomBinaryOp>::type Nested;
-  typedef typename internal::traits<TensorCustomBinaryOp>::StorageKind StorageKind;
+  typedef
+      typename internal::traits<TensorCustomBinaryOp>::StorageKind StorageKind;
   typedef typename internal::traits<TensorCustomBinaryOp>::Index Index;
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorCustomBinaryOp(const LhsXprType& lhs, const RhsXprType& rhs, const CustomBinaryFunc& func)
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+  TensorCustomBinaryOp(const LhsXprType& lhs, const RhsXprType& rhs,
+                       const CustomBinaryFunc& func)
 
       : m_lhs_xpr(lhs), m_rhs_xpr(rhs), m_func(func) {}
 
@@ -225,31 +244,40 @@ class TensorCustomBinaryOp : public TensorBase<TensorCustomBinaryOp<CustomBinary
 
   EIGEN_DEVICE_FUNC
   const typename internal::remove_all<typename LhsXprType::Nested>::type&
-  lhsExpression() const { return m_lhs_xpr; }
+  lhsExpression() const {
+    return m_lhs_xpr;
+  }
 
   EIGEN_DEVICE_FUNC
   const typename internal::remove_all<typename RhsXprType::Nested>::type&
-  rhsExpression() const { return m_rhs_xpr; }
+  rhsExpression() const {
+    return m_rhs_xpr;
+  }
 
-  protected:
-    typename LhsXprType::Nested m_lhs_xpr;
-    typename RhsXprType::Nested m_rhs_xpr;
-    const CustomBinaryFunc m_func;
+ protected:
+  typename LhsXprType::Nested m_lhs_xpr;
+  typename RhsXprType::Nested m_rhs_xpr;
+  const CustomBinaryFunc m_func;
 };
 
-
 // Eval as rvalue
-template<typename CustomBinaryFunc, typename LhsXprType, typename RhsXprType, typename Device>
-struct TensorEvaluator<const TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, RhsXprType>, Device>
-{
-  typedef TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, RhsXprType> XprType;
+template <typename CustomBinaryFunc, typename LhsXprType, typename RhsXprType,
+          typename Device>
+struct TensorEvaluator<
+    const TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, RhsXprType>,
+    Device> {
+  typedef TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, RhsXprType>
+      XprType;
   typedef typename internal::traits<XprType>::Index Index;
   static const int NumDims = internal::traits<XprType>::NumDimensions;
   typedef DSizes<Index, NumDims> Dimensions;
   typedef typename XprType::Scalar Scalar;
-  typedef typename internal::remove_const<typename XprType::CoeffReturnType>::type CoeffReturnType;
+  typedef
+      typename internal::remove_const<typename XprType::CoeffReturnType>::type
+          CoeffReturnType;
   typedef typename PacketType<CoeffReturnType, Device>::type PacketReturnType;
-  static const int PacketSize = internal::unpacket_traits<PacketReturnType>::size;
+  static const int PacketSize =
+      internal::unpacket_traits<PacketReturnType>::size;
 
   enum {
     IsAligned = false,
@@ -260,20 +288,24 @@ struct TensorEvaluator<const TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, 
     RawAccess = false
   };
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device)
-      : m_op(op), m_device(device), m_result(NULL)
-  {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op,
+                                                        const Device& device)
+      : m_op(op), m_device(device), m_result(NULL) {
     m_dimensions = op.func().dimensions(op.lhsExpression(), op.rhsExpression());
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const {
+    return m_dimensions;
+  }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(CoeffReturnType* data) {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(
+      CoeffReturnType* data) {
     if (data) {
       evalTo(data);
       return false;
     } else {
-      m_result = static_cast<Scalar *>(m_device.allocate(dimensions().TotalSize() * sizeof(Scalar)));
+      m_result = static_cast<Scalar*>(
+          m_device.allocate(dimensions().TotalSize() * sizeof(Scalar)));
       evalTo(m_result);
       return true;
     }
@@ -286,30 +318,38 @@ struct TensorEvaluator<const TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, 
     }
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType coeff(Index index) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType
+  coeff(Index index) const {
     return m_result[index];
   }
 
-  template<int LoadMode>
+  template <int LoadMode>
   EIGEN_DEVICE_FUNC PacketReturnType packet(Index index) const {
     return internal::ploadt<PacketReturnType, LoadMode>(m_result + index);
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorOpCost costPerCoeff(bool vectorized) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorOpCost
+  costPerCoeff(bool vectorized) const {
     // TODO(rmlarsen): Extend CustomOp API to return its cost estimate.
     return TensorOpCost(sizeof(CoeffReturnType), 0, 0, vectorized, PacketSize);
   }
 
-  EIGEN_DEVICE_FUNC typename internal::traits<XprType>::PointerType data() const { return m_result; }
+  EIGEN_DEVICE_FUNC typename internal::traits<XprType>::PointerType data()
+      const {
+    return m_result;
+  }
 
 #ifdef EIGEN_USE_SYCL
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Device& device() const { return m_device; }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Device& device() const {
+    return m_device;
+  }
 #endif
 
  protected:
   EIGEN_DEVICE_FUNC void evalTo(Scalar* data) {
     TensorMap<Tensor<Scalar, NumDims, Layout> > result(data, m_dimensions);
-    m_op.func().eval(m_op.lhsExpression(), m_op.rhsExpression(), result, m_device);
+    m_op.func().eval(m_op.lhsExpression(), m_op.rhsExpression(), result,
+                     m_device);
   }
 
   Dimensions m_dimensions;
@@ -318,7 +358,6 @@ struct TensorEvaluator<const TensorCustomBinaryOp<CustomBinaryFunc, LhsXprType, 
   CoeffReturnType* m_result;
 };
 
+}  // end namespace Eigen
 
-} // end namespace Eigen
-
-#endif // EIGEN_CXX11_TENSOR_TENSOR_CUSTOM_OP_H
+#endif  // EIGEN_CXX11_TENSOR_TENSOR_CUSTOM_OP_H

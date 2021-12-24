@@ -32,12 +32,11 @@
 #define GOOGLE_PROTOBUF_MAP_ENTRY_LITE_H__
 
 #include <assert.h>
-
-#include <google/protobuf/stubs/casts.h>
 #include <google/protobuf/arena.h>
 #include <google/protobuf/arenastring.h>
 #include <google/protobuf/map.h>
 #include <google/protobuf/map_type_handler.h>
+#include <google/protobuf/stubs/casts.h>
 #include <google/protobuf/stubs/port.h>
 #include <google/protobuf/wire_format_lite_inl.h>
 
@@ -111,8 +110,8 @@ class MapEntryImpl : public Base {
   // Enum type cannot be used for MapTypeHandler::Read. Define a type
   // which will replace Enum with int.
   typedef typename KeyTypeHandler::MapEntryAccessorType KeyMapEntryAccessorType;
-  typedef typename ValueTypeHandler::MapEntryAccessorType
-      ValueMapEntryAccessorType;
+  typedef
+      typename ValueTypeHandler::MapEntryAccessorType ValueMapEntryAccessorType;
 
   // Constants for field number.
   static const int kKeyFieldNumber = 1;
@@ -183,7 +182,8 @@ class MapEntryImpl : public Base {
     MergeFromInternal(*::google::protobuf::down_cast<const Derived*>(&other));
   }
 
-  bool MergePartialFromCodedStream(::google::protobuf::io::CodedInputStream* input) {
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) {
     uint32 tag;
 
     for (;;) {
@@ -213,9 +213,8 @@ class MapEntryImpl : public Base {
           break;
 
         default:
-          if (tag == 0 ||
-              WireFormatLite::GetTagWireType(tag) ==
-              WireFormatLite::WIRETYPE_END_GROUP) {
+          if (tag == 0 || WireFormatLite::GetTagWireType(tag) ==
+                              WireFormatLite::WIRETYPE_END_GROUP) {
             return true;
           }
           if (!WireFormatLite::SkipField(input, tag)) return false;
@@ -226,20 +225,24 @@ class MapEntryImpl : public Base {
 
   size_t ByteSizeLong() const {
     size_t size = 0;
-    size += has_key() ?
-        kTagSize + static_cast<size_t>(KeyTypeHandler::ByteSize(key())) : 0;
-    size += has_value() ?
-        kTagSize + static_cast<size_t>(ValueTypeHandler::ByteSize(value())) : 0;
+    size += has_key() ? kTagSize +
+                            static_cast<size_t>(KeyTypeHandler::ByteSize(key()))
+                      : 0;
+    size += has_value()
+                ? kTagSize +
+                      static_cast<size_t>(ValueTypeHandler::ByteSize(value()))
+                : 0;
     return size;
   }
 
-  void SerializeWithCachedSizes(::google::protobuf::io::CodedOutputStream* output) const {
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const {
     KeyTypeHandler::Write(kKeyFieldNumber, key(), output);
     ValueTypeHandler::Write(kValueFieldNumber, value(), output);
   }
 
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(bool deterministic,
-                                                   ::google::protobuf::uint8* output) const {
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* output) const {
     output = KeyTypeHandler::InternalWriteToArray(kKeyFieldNumber, key(),
                                                   deterministic, output);
     output = ValueTypeHandler::InternalWriteToArray(kValueFieldNumber, value(),
@@ -251,12 +254,12 @@ class MapEntryImpl : public Base {
 
   int GetCachedSize() const {
     int size = 0;
-    size += has_key()
-        ? static_cast<int>(kTagSize) + KeyTypeHandler::GetCachedSize(key())
-        : 0;
-    size += has_value()
-        ? static_cast<int>(kTagSize) + ValueTypeHandler::GetCachedSize(value())
-        : 0;
+    size += has_key() ? static_cast<int>(kTagSize) +
+                            KeyTypeHandler::GetCachedSize(key())
+                      : 0;
+    size += has_value() ? static_cast<int>(kTagSize) +
+                              ValueTypeHandler::GetCachedSize(value())
+                        : 0;
     return size;
   }
 
@@ -300,8 +303,8 @@ class MapEntryImpl : public Base {
  public:
   void Clear() {
     KeyTypeHandler::Clear(&key_, GetArenaNoVirtual());
-    ValueTypeHandler::ClearMaybeByDefaultEnum(
-        &value_, GetArenaNoVirtual(), default_enum_value);
+    ValueTypeHandler::ClearMaybeByDefaultEnum(&value_, GetArenaNoVirtual(),
+                                              default_enum_value);
     clear_has_key();
     clear_has_value();
   }
@@ -312,14 +315,13 @@ class MapEntryImpl : public Base {
     ValueTypeHandler::AssignDefaultValue(&d->value_);
   }
 
-  Arena* GetArena() const {
-    return GetArenaNoVirtual();
-  }
+  Arena* GetArena() const { return GetArenaNoVirtual(); }
 
   // Create a MapEntryImpl for given key and value from google::protobuf::Map in
   // serialization. This function is only called when value is enum. Enum is
   // treated differently because its type in MapEntry is int and its type in
-  // google::protobuf::Map is enum. We cannot create a reference to int from an enum.
+  // google::protobuf::Map is enum. We cannot create a reference to int from an
+  // enum.
   static Derived* EnumWrap(const Key& key, const Value value, Arena* arena) {
     return Arena::CreateMessage<MapEnumEntryWrapper>(arena, key, value);
   }
@@ -340,7 +342,8 @@ class MapEntryImpl : public Base {
     // This does what the typical MergePartialFromCodedStream() is expected to
     // do, with the additional side-effect that if successful (i.e., if true is
     // going to be its return value) it inserts the key-value pair into map_.
-    bool MergePartialFromCodedStream(::google::protobuf::io::CodedInputStream* input) {
+    bool MergePartialFromCodedStream(
+        ::google::protobuf::io::CodedInputStream* input) {
       // Look for the expected thing: a key and then a value.  If it fails,
       // invoke the enclosing class's MergePartialFromCodedStream, or return
       // false if that would be pointless.
@@ -394,10 +397,9 @@ class MapEntryImpl : public Base {
       // path, so it's not a big deal.
       key_ = entry_->key();
       value_ptr_ = &(*map_)[key_];
-      MoveHelper<ValueTypeHandler::kIsEnum,
-                 ValueTypeHandler::kIsMessage,
+      MoveHelper<ValueTypeHandler::kIsEnum, ValueTypeHandler::kIsMessage,
                  ValueTypeHandler::kWireType ==
-                 WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+                     WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
                  Value>::Move(entry_->mutable_value(), value_ptr_);
     }
 
@@ -406,16 +408,17 @@ class MapEntryImpl : public Base {
     // allowed by the spec.
     bool ReadBeyondKeyValuePair(::google::protobuf::io::CodedInputStream* input)
         GOOGLE_PROTOBUF_ATTRIBUTE_COLD {
-      typedef MoveHelper<KeyTypeHandler::kIsEnum,
-                         KeyTypeHandler::kIsMessage,
+      typedef MoveHelper<KeyTypeHandler::kIsEnum, KeyTypeHandler::kIsMessage,
                          KeyTypeHandler::kWireType ==
-                         WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
-                         Key> KeyMover;
+                             WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+                         Key>
+          KeyMover;
       typedef MoveHelper<ValueTypeHandler::kIsEnum,
                          ValueTypeHandler::kIsMessage,
                          ValueTypeHandler::kWireType ==
-                         WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
-                         Value> ValueMover;
+                             WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+                         Value>
+          ValueMover;
       entry_.reset(mf_->NewEntry());
       ValueMover::Move(value_ptr_, entry_->mutable_value());
       map_->erase(key_);
@@ -445,15 +448,15 @@ class MapEntryImpl : public Base {
 
  private:
   // Serializing a generated message containing map field involves serializing
-  // key-value pairs from google::protobuf::Map. The wire format of each key-value pair
-  // after serialization should be the same as that of a MapEntry message
-  // containing the same key and value inside it.  However, google::protobuf::Map doesn't
-  // store key and value as MapEntry message, which disables us to use existing
-  // code to serialize message. In order to use existing code to serialize
-  // message, we need to construct a MapEntry from key-value pair. But it
-  // involves copy of key and value to construct a MapEntry. In order to avoid
-  // this copy in constructing a MapEntry, we need the following class which
-  // only takes references of given key and value.
+  // key-value pairs from google::protobuf::Map. The wire format of each
+  // key-value pair after serialization should be the same as that of a MapEntry
+  // message containing the same key and value inside it.  However,
+  // google::protobuf::Map doesn't store key and value as MapEntry message,
+  // which disables us to use existing code to serialize message. In order to
+  // use existing code to serialize message, we need to construct a MapEntry
+  // from key-value pair. But it involves copy of key and value to construct a
+  // MapEntry. In order to avoid this copy in constructing a MapEntry, we need
+  // the following class which only takes references of given key and value.
   class MapEntryWrapper : public Derived {
     typedef Derived BaseClass;
     typedef typename BaseClass::KeyMapEntryAccessorType KeyMapEntryAccessorType;
@@ -507,9 +510,7 @@ class MapEntryImpl : public Base {
     typedef void DestructorSkippable_;
   };
 
-  inline Arena* GetArenaNoVirtual() const {
-    return arena_;
-  }
+  inline Arena* GetArenaNoVirtual() const { return arena_; }
 
  public:  // Needed for constructing tables
   KeyOnMemory key_;
@@ -556,7 +557,7 @@ struct DeconstructMapEntry;
 
 template <typename T, typename K, typename V, WireFormatLite::FieldType key,
           WireFormatLite::FieldType value, int default_enum>
-struct DeconstructMapEntry<MapEntryLite<T, K, V, key, value, default_enum> > {
+struct DeconstructMapEntry<MapEntryLite<T, K, V, key, value, default_enum>> {
   typedef K Key;
   typedef V Value;
   static const WireFormatLite::FieldType kKeyFieldType = key;
@@ -570,7 +571,8 @@ struct DeconstructMapEntry<MapEntryLite<T, K, V, key, value, default_enum> > {
 // type is relatively small and easy to copy then copying Keys into an
 // array of SortItems can be beneficial.  Then all the data the sorting
 // algorithm needs to touch is in that one array.
-template <typename Key, typename PtrToKeyValuePair> struct SortItem {
+template <typename Key, typename PtrToKeyValuePair>
+struct SortItem {
   SortItem() {}
   explicit SortItem(PtrToKeyValuePair p) : first(p->first), second(p) {}
 
@@ -578,16 +580,14 @@ template <typename Key, typename PtrToKeyValuePair> struct SortItem {
   PtrToKeyValuePair second;
 };
 
-template <typename T> struct CompareByFirstField {
-  bool operator()(const T& a, const T& b) const {
-    return a.first < b.first;
-  }
+template <typename T>
+struct CompareByFirstField {
+  bool operator()(const T& a, const T& b) const { return a.first < b.first; }
 };
 
-template <typename T> struct CompareByDerefFirst {
-  bool operator()(const T& a, const T& b) const {
-    return a->first < b->first;
-  }
+template <typename T>
+struct CompareByDerefFirst {
+  bool operator()(const T& a, const T& b) const { return a->first < b->first; }
 };
 
 // Helper for table driven serialization
@@ -635,7 +635,7 @@ template <typename T, typename Key, typename Value,
           WireFormatLite::FieldType kKeyFieldType,
           WireFormatLite::FieldType kValueFieldType, int default_enum_value>
 struct MapEntryHelper<MapEntryLite<T, Key, Value, kKeyFieldType,
-                                   kValueFieldType, default_enum_value> > {
+                                   kValueFieldType, default_enum_value>> {
   // Provide utilities to parse/serialize key/value.  Provide utilities to
   // manipulate internal stored type.
   typedef MapTypeHandler<kKeyFieldType, Key> KeyTypeHandler;

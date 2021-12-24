@@ -25,34 +25,40 @@ namespace avsCommon {
 namespace sdkInterfaces {
 
 /**
- * Interface for indicating the result of a request to @c preHandle() or @c handle() an @c AVSDirective.
+ * Interface for indicating the result of a request to @c preHandle() or @c
+ * handle() an @c AVSDirective.
  *
- * Once one of the 'setter' methods have been called the handling of the @c AVSDirective is finished and
- * further calls to 'setter' methods should not be made.
+ * Once one of the 'setter' methods have been called the handling of the @c
+ * AVSDirective is finished and further calls to 'setter' methods should not be
+ * made.
  */
 class DirectiveHandlerResultInterface {
-public:
-    /**
-     * Virtual destructor to ensure proper cleanup by derived types.
-     */
-    virtual ~DirectiveHandlerResultInterface() = default;
+ public:
+  /**
+   * Virtual destructor to ensure proper cleanup by derived types.
+   */
+  virtual ~DirectiveHandlerResultInterface() = default;
 
-    /**
-     * Indicate that the handling of the @c AVSDirective successfully ran to successful completion.
-     *
-     * @note Once this has been called, no other methods of this object should be called.
-     */
-    virtual void setCompleted() = 0;
+  /**
+   * Indicate that the handling of the @c AVSDirective successfully ran to
+   * successful completion.
+   *
+   * @note Once this has been called, no other methods of this object should be
+   * called.
+   */
+  virtual void setCompleted() = 0;
 
-    /**
-     * Indicate that handling an @c AVSDirective failed such that subsequent @c AVSDirectives with the
-     * same @c DialogRequestId should be cancelled.
-     *
-     * @note Once this has been called, no other methods of this object should be called.
-     *
-     * @param description A description, suitable for logging, that indicates the nature of the failure.
-     */
-    virtual void setFailed(const std::string& description) = 0;
+  /**
+   * Indicate that handling an @c AVSDirective failed such that subsequent @c
+   * AVSDirectives with the same @c DialogRequestId should be cancelled.
+   *
+   * @note Once this has been called, no other methods of this object should be
+   * called.
+   *
+   * @param description A description, suitable for logging, that indicates the
+   * nature of the failure.
+   */
+  virtual void setFailed(const std::string& description) = 0;
 };
 
 }  // namespace sdkInterfaces

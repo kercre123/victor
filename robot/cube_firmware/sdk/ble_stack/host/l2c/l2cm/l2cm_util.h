@@ -56,4 +56,4 @@
 void l2cm_set_link_layer_buff_size(uint16_t pkt_len, uint16_t nb_acl);
 #endif /* #if (BLE_CENTRAL || BLE_PERIPHERAL) */
 /// @} L2CMUTIL
-#endif // L2CM_UTIL_H_
+#endif  // L2CM_UTIL_H_

@@ -17,10 +17,8 @@ namespace Anki {
 namespace Util {
 namespace QuestEngine {
 
-AbstractCondition::AbstractCondition()
-{
-}
+AbstractCondition::AbstractCondition() {}
 
-} // namespace QuestEngine
-} // namespace Util
-} // namespace Anki
+}  // namespace QuestEngine
+}  // namespace Util
+}  // namespace Anki

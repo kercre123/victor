@@ -10,68 +10,58 @@
  *
  **/
 
-
 #ifndef __Cozmo_Game_Comms_SdkStatus_H__
 #define __Cozmo_Game_Comms_SdkStatus_H__
 
+#include <stddef.h>
+#include <stdint.h>
+
+#include <string>
 
 #include "clad/types/sdkStatusTypes.h"
 #include "util/container/circularBuffer.h"
-#include <stddef.h>
-#include <stdint.h>
-#include <string>
 
 namespace Anki {
 namespace Vector {
 
-  
 class IExternalInterface;
 
-namespace ExternalInterface
-{
-  class MessageGameToEngine;
-  struct UiDeviceConnectionWrongVersion;
-  enum class MessageEngineToGameTag : uint8_t;
-  enum class MessageGameToEngineTag : uint8_t;
-} // namespace ExternalInterface
+namespace ExternalInterface {
+class MessageGameToEngine;
+struct UiDeviceConnectionWrongVersion;
+enum class MessageEngineToGameTag : uint8_t;
+enum class MessageGameToEngineTag : uint8_t;
+}  // namespace ExternalInterface
 
-  
 class ISocketComms;
-  
 
-class SdkStatus
-{
-public:
-  
+class SdkStatus {
+ public:
   SdkStatus();
   ~SdkStatus() {}
-  
-  void OnWrongVersion(const ExternalInterface::UiDeviceConnectionWrongVersion& message);
 
-  void SetStatus(SdkStatusType statusType, std::string&& statusText)
-  {
+  void OnWrongVersion(
+      const ExternalInterface::UiDeviceConnectionWrongVersion& message);
+
+  void SetStatus(SdkStatusType statusType, std::string&& statusText) {
     const uint32_t idx = (uint32_t)statusType;
     _sdkStatusStrings[idx] = std::move(statusText);
   }
-  
-  const std::string& GetStatus(SdkStatusType statusType) const
-  {
+
+  const std::string& GetStatus(SdkStatusType statusType) const {
     const uint32_t idx = (uint32_t)statusType;
     return _sdkStatusStrings[idx];
   }
 
-private:
-    
-  Util::CircularBuffer<ExternalInterface::MessageGameToEngineTag>  _recentCommands;
+ private:
+  Util::CircularBuffer<ExternalInterface::MessageGameToEngineTag>
+      _recentCommands;
 
-  std::string   _connectedSdkBuildVersion;
-  std::string   _sdkStatusStrings[SdkStatusTypeNumEntries];
+  std::string _connectedSdkBuildVersion;
+  std::string _sdkStatusStrings[SdkStatusTypeNumEntries];
 };
-  
-  
-} // namespace Vector
-} // namespace Anki
 
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Game_Comms_SdkStatus_H__
-
+#endif  // __Cozmo_Game_Comms_SdkStatus_H__

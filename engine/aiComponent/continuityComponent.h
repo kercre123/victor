@@ -1,15 +1,15 @@
 /**
-* File: continuityComponent.h
-*
-* Author: Kevin M. Karol
-* Created: 2/1/18
-*
-* Description: Component responsible for ensuring decisions by the behavior system
-* blend together well by the time they are sent to robot
-*
-* Copyright: Anki, Inc. 2018
-*
-**/
+ * File: continuityComponent.h
+ *
+ * Author: Kevin M. Karol
+ * Created: 2/1/18
+ *
+ * Description: Component responsible for ensuring decisions by the behavior
+ *system blend together well by the time they are sent to robot
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 #ifndef __Cozmo_Basestation_AI_ContinuityComponent_H__
 #define __Cozmo_Basestation_AI_ContinuityComponent_H__
@@ -28,23 +28,24 @@ enum class AnimationTrigger : int32_t;
 class Robot;
 
 class ContinuityComponent : public IDependencyManagedComponent<AIComponentID>,
-                            private Util::noncopyable
-{
-public:
+                            private Util::noncopyable {
+ public:
   ContinuityComponent(Robot& robot);
   ~ContinuityComponent();
 
-  
   // IDependencyManagedComponent<AIComponentID> functions
-  virtual void InitDependent(Robot *robot, const AICompMap& dependentComps) override;
+  virtual void InitDependent(Robot* robot,
+                             const AICompMap& dependentComps) override;
   virtual void UpdateDependent(const AICompMap& dependentComps) override;
   // end IDependencyManagedComponent<AIComponentID> functions
 
-  // Inform the continuity component when we are displaying information on the face
-  // like pairing or CC screens
-  // Prevents emergency getouts from playing as they can draw over the info screens
-  void UpdateInfoFace(bool displayingInfoFace) { _displayingInfoFace = displayingInfoFace; }
-  
+  // Inform the continuity component when we are displaying information on the
+  // face like pairing or CC screens Prevents emergency getouts from playing as
+  // they can draw over the info screens
+  void UpdateInfoFace(bool displayingInfoFace) {
+    _displayingInfoFace = displayingInfoFace;
+  }
+
   // Inform the continuity component of the next desired action
   bool GetIntoAction(IActionRunner* action);
 
@@ -55,7 +56,7 @@ public:
   // the next action is queued
   void PlayEmergencyGetOut(AnimationTrigger anim);
 
-private:
+ private:
   Robot& _robot;
   bool _playingGetOut = false;
   uint32_t _animTag;
@@ -64,11 +65,9 @@ private:
   bool _displayingInfoFace = false;
 
   bool QueueAction(IActionRunner* action);
-
-
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_AI_ContinuityComponent_H__
+#endif  // __Cozmo_Basestation_AI_ContinuityComponent_H__

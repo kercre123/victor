@@ -16,48 +16,44 @@
 #define private public
 #define protected public
 
+#include "engine/components/pathComponent.h"
+#include "engine/cozmoContext.h"
 #include "engine/minimalAnglePlanner.h"
 #include "engine/robot.h"
-#include "engine/cozmoContext.h"
-#include "engine/components/pathComponent.h"
 
 using namespace Anki;
 using namespace Vector;
 
 extern Anki::Vector::CozmoContext* cozmoContext;
 
-
 namespace {
-MinimalAnglePlanner* GetPlanner(Robot& robot)
-{
-  return dynamic_cast<MinimalAnglePlanner*>(robot.GetPathComponent()._shortMinAnglePathPlanner.get());
+MinimalAnglePlanner* GetPlanner(Robot& robot) {
+  return dynamic_cast<MinimalAnglePlanner*>(
+      robot.GetPathComponent()._shortMinAnglePathPlanner.get());
 }
-}
+}  // namespace
 
-TEST(MinAnglePlanner, Create)
-{
+TEST(MinAnglePlanner, Create) {
   Robot robot(1, cozmoContext);
 
   MinimalAnglePlanner* planner = GetPlanner(robot);
-  ASSERT_TRUE( planner != nullptr );
+  ASSERT_TRUE(planner != nullptr);
 }
 
-
-TEST(MinAnglePlanner, Straight)
-{
+TEST(MinAnglePlanner, Straight) {
   Robot robot(1, cozmoContext);
 
   MinimalAnglePlanner* planner = GetPlanner(robot);
-  ASSERT_TRUE( planner != nullptr );
+  ASSERT_TRUE(planner != nullptr);
 
-  Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
-  Pose3d goal(0, Z_AXIS_3D(), Vec3f(20,0,0) );
+  Pose3d start(0, Z_AXIS_3D(), Vec3f(0, 0, 0));
+  Pose3d goal(0, Z_AXIS_3D(), Vec3f(20, 0, 0));
 
   EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
   EPlannerStatus status = planner->CheckPlanningStatus();
-  EXPECT_EQ( status, EPlannerStatus::CompleteWithPlan );
+  EXPECT_EQ(status, EPlannerStatus::CompleteWithPlan);
 
   Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
@@ -65,7 +61,7 @@ TEST(MinAnglePlanner, Straight)
   bool hasPath = planner->HasCompletePath();
   path = planner->GetCompletePath();
   selectedTargetIdx = planner->GetPathSelectedTargetIndex();
-  
+
   ASSERT_TRUE(hasPath);
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
@@ -74,22 +70,20 @@ TEST(MinAnglePlanner, Straight)
   EXPECT_EQ(path[0].GetType(), Planning::PathSegmentType::PST_LINE);
 }
 
-
-TEST(MinAnglePlanner, Simple)
-{
+TEST(MinAnglePlanner, Simple) {
   Robot robot(1, cozmoContext);
 
   MinimalAnglePlanner* planner = GetPlanner(robot);
-  ASSERT_TRUE( planner != nullptr );
+  ASSERT_TRUE(planner != nullptr);
 
-  Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
-  Pose3d goal(0, Z_AXIS_3D(), Vec3f(5,7,0) );
+  Pose3d start(0, Z_AXIS_3D(), Vec3f(0, 0, 0));
+  Pose3d goal(0, Z_AXIS_3D(), Vec3f(5, 7, 0));
 
   EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
   EPlannerStatus status = planner->CheckPlanningStatus();
-  EXPECT_EQ( status, EPlannerStatus::CompleteWithPlan );
+  EXPECT_EQ(status, EPlannerStatus::CompleteWithPlan);
 
   Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
@@ -97,7 +91,7 @@ TEST(MinAnglePlanner, Simple)
   bool hasPath = planner->HasCompletePath();
   path = planner->GetCompletePath();
   selectedTargetIdx = planner->GetPathSelectedTargetIndex();
-  
+
   ASSERT_TRUE(hasPath);
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
@@ -109,21 +103,20 @@ TEST(MinAnglePlanner, Simple)
   EXPECT_EQ(path[3].GetType(), Planning::PathSegmentType::PST_POINT_TURN);
 }
 
-TEST(MinAnglePlanner, NoFinalTurn)
-{
+TEST(MinAnglePlanner, NoFinalTurn) {
   Robot robot(1, cozmoContext);
 
   MinimalAnglePlanner* planner = GetPlanner(robot);
-  ASSERT_TRUE( planner != nullptr );
+  ASSERT_TRUE(planner != nullptr);
 
-  Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
-  Pose3d goal(0.392f, Z_AXIS_3D(), Vec3f(5,7,0) );
+  Pose3d start(0, Z_AXIS_3D(), Vec3f(0, 0, 0));
+  Pose3d goal(0.392f, Z_AXIS_3D(), Vec3f(5, 7, 0));
 
   EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
   EPlannerStatus status = planner->CheckPlanningStatus();
-  EXPECT_EQ( status, EPlannerStatus::CompleteWithPlan );
+  EXPECT_EQ(status, EPlannerStatus::CompleteWithPlan);
 
   Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
@@ -131,7 +124,7 @@ TEST(MinAnglePlanner, NoFinalTurn)
   bool hasPath = planner->HasCompletePath();
   path = planner->GetCompletePath();
   selectedTargetIdx = planner->GetPathSelectedTargetIndex();
-  
+
   ASSERT_TRUE(hasPath);
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
@@ -142,21 +135,20 @@ TEST(MinAnglePlanner, NoFinalTurn)
   EXPECT_EQ(path[2].GetType(), Planning::PathSegmentType::PST_LINE);
 }
 
-TEST(MinAnglePlanner, StraightAndTurn)
-{
+TEST(MinAnglePlanner, StraightAndTurn) {
   Robot robot(1, cozmoContext);
 
   MinimalAnglePlanner* planner = GetPlanner(robot);
-  ASSERT_TRUE( planner != nullptr );
+  ASSERT_TRUE(planner != nullptr);
 
-  Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
-  Pose3d goal(0.392f, Z_AXIS_3D(), Vec3f(12.0f,0.04f,0) );
+  Pose3d start(0, Z_AXIS_3D(), Vec3f(0, 0, 0));
+  Pose3d goal(0.392f, Z_AXIS_3D(), Vec3f(12.0f, 0.04f, 0));
 
   EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
   EPlannerStatus status = planner->CheckPlanningStatus();
-  EXPECT_EQ( status, EPlannerStatus::CompleteWithPlan );
+  EXPECT_EQ(status, EPlannerStatus::CompleteWithPlan);
 
   Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
@@ -164,7 +156,7 @@ TEST(MinAnglePlanner, StraightAndTurn)
   bool hasPath = planner->HasCompletePath();
   path = planner->GetCompletePath();
   selectedTargetIdx = planner->GetPathSelectedTargetIndex();
-  
+
   ASSERT_TRUE(hasPath);
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
@@ -174,21 +166,20 @@ TEST(MinAnglePlanner, StraightAndTurn)
   EXPECT_EQ(path[1].GetType(), Planning::PathSegmentType::PST_POINT_TURN);
 }
 
-TEST(MinAnglePlanner, NoBackup)
-{
+TEST(MinAnglePlanner, NoBackup) {
   Robot robot(1, cozmoContext);
 
   MinimalAnglePlanner* planner = GetPlanner(robot);
-  ASSERT_TRUE( planner != nullptr );
+  ASSERT_TRUE(planner != nullptr);
 
-  Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
-  Pose3d goal(0, Z_AXIS_3D(), Vec3f(20,1.3,0) );
+  Pose3d start(0, Z_AXIS_3D(), Vec3f(0, 0, 0));
+  Pose3d goal(0, Z_AXIS_3D(), Vec3f(20, 1.3, 0));
 
   EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
   EPlannerStatus status = planner->CheckPlanningStatus();
-  EXPECT_EQ( status, EPlannerStatus::CompleteWithPlan );
+  EXPECT_EQ(status, EPlannerStatus::CompleteWithPlan);
 
   Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
@@ -196,7 +187,7 @@ TEST(MinAnglePlanner, NoBackup)
   bool hasPath = planner->HasCompletePath();
   path = planner->GetCompletePath();
   selectedTargetIdx = planner->GetPathSelectedTargetIndex();
-  
+
   ASSERT_TRUE(hasPath);
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
@@ -207,21 +198,20 @@ TEST(MinAnglePlanner, NoBackup)
   EXPECT_EQ(path[2].GetType(), Planning::PathSegmentType::PST_POINT_TURN);
 }
 
-TEST(MinAnglePlanner, TurnOnly)
-{
+TEST(MinAnglePlanner, TurnOnly) {
   Robot robot(1, cozmoContext);
 
   MinimalAnglePlanner* planner = GetPlanner(robot);
-  ASSERT_TRUE( planner != nullptr );
+  ASSERT_TRUE(planner != nullptr);
 
-  Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
-  Pose3d goal(DEG_TO_RAD(45.0f), Z_AXIS_3D(), Vec3f(1.4f,-0.54,0) );
+  Pose3d start(0, Z_AXIS_3D(), Vec3f(0, 0, 0));
+  Pose3d goal(DEG_TO_RAD(45.0f), Z_AXIS_3D(), Vec3f(1.4f, -0.54, 0));
 
   EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
   EPlannerStatus status = planner->CheckPlanningStatus();
-  EXPECT_EQ( status, EPlannerStatus::CompleteWithPlan );
+  EXPECT_EQ(status, EPlannerStatus::CompleteWithPlan);
 
   Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
@@ -229,7 +219,7 @@ TEST(MinAnglePlanner, TurnOnly)
   bool hasPath = planner->HasCompletePath();
   path = planner->GetCompletePath();
   selectedTargetIdx = planner->GetPathSelectedTargetIndex();
-  
+
   ASSERT_TRUE(hasPath);
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
@@ -238,21 +228,20 @@ TEST(MinAnglePlanner, TurnOnly)
   EXPECT_EQ(path[0].GetType(), Planning::PathSegmentType::PST_POINT_TURN);
 }
 
-TEST(MinAnglePlanner, OldBug)
-{
+TEST(MinAnglePlanner, OldBug) {
   Robot robot(1, cozmoContext);
 
   MinimalAnglePlanner* planner = GetPlanner(robot);
-  ASSERT_TRUE( planner != nullptr );
+  ASSERT_TRUE(planner != nullptr);
 
   Pose3d start(0, Z_AXIS_3D(), Vec3f(166.914886f, 153.714859f, 0));
-  Pose3d goal( DEG_TO_RAD(-7.68f), Z_AXIS_3D(), Vec3f(149.33f, 153.33f, 0));
+  Pose3d goal(DEG_TO_RAD(-7.68f), Z_AXIS_3D(), Vec3f(149.33f, 153.33f, 0));
 
   EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
   EPlannerStatus status = planner->CheckPlanningStatus();
-  EXPECT_EQ( status, EPlannerStatus::CompleteWithPlan );
+  EXPECT_EQ(status, EPlannerStatus::CompleteWithPlan);
 
   Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;

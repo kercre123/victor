@@ -284,8 +284,8 @@
 // ABSL_ATTRIBUTE_RETURNS_NONNULL
 //
 // Tells the compiler that a particular function never returns a null pointer.
-#if ABSL_HAVE_ATTRIBUTE(returns_nonnull) || \
-    (defined(__GNUC__) && \
+#if ABSL_HAVE_ATTRIBUTE(returns_nonnull) ||                      \
+    (defined(__GNUC__) &&                                        \
      (__GNUC__ > 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)) && \
      !defined(__clang__))
 #define ABSL_ATTRIBUTE_RETURNS_NONNULL __attribute__((returns_nonnull))
@@ -317,7 +317,6 @@
   __attribute__((section(#name))) __attribute__((noinline))
 #endif
 
-
 // ABSL_ATTRIBUTE_SECTION_VARIABLE
 //
 // Tells the compiler/linker to put a given variable into a section and define
@@ -336,8 +335,8 @@
 // a no-op on ELF but not on Mach-O.
 //
 #ifndef ABSL_DECLARE_ATTRIBUTE_SECTION_VARS
-#define ABSL_DECLARE_ATTRIBUTE_SECTION_VARS(name) \
-  extern char __start_##name[] ABSL_ATTRIBUTE_WEAK;    \
+#define ABSL_DECLARE_ATTRIBUTE_SECTION_VARS(name)   \
+  extern char __start_##name[] ABSL_ATTRIBUTE_WEAK; \
   extern char __stop_##name[] ABSL_ATTRIBUTE_WEAK
 #endif
 #ifndef ABSL_DEFINE_ATTRIBUTE_SECTION_VARS
@@ -483,7 +482,7 @@
 #define ABSL_XRAY_NEVER_INSTRUMENT [[clang::xray_never_instrument]]
 #if ABSL_HAVE_CPP_ATTRIBUTE(clang::xray_log_args)
 #define ABSL_XRAY_LOG_ARGS(N) \
-    [[clang::xray_always_instrument, clang::xray_log_args(N)]]
+  [[clang::xray_always_instrument, clang::xray_log_args(N)]]
 #else
 #define ABSL_XRAY_LOG_ARGS(N) [[clang::xray_always_instrument]]
 #endif

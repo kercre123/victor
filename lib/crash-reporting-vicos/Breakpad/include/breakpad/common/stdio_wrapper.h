@@ -39,5 +39,4 @@
 typedef SSIZE_T ssize_t;
 #endif
 
-
 #endif  // GOOGLE_BREAKPAD_COMMON_STDIO_WRAPPER_H

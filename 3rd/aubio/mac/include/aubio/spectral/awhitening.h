@@ -39,7 +39,6 @@
 
 */
 
-
 #ifndef _AUBIO_SPECTRAL_WHITENING_H
 #define _AUBIO_SPECTRAL_WHITENING_H
 
@@ -52,12 +51,13 @@ typedef struct _aubio_spectral_whitening_t aubio_spectral_whitening_t;
 
 /** execute spectral adaptive whitening, in-place
 
-  \param o spectral whitening object as returned by new_aubio_spectral_whitening()
-  \param fftgrain input signal spectrum as computed by aubio_pvoc_do() or aubio_fft_do()
+  \param o spectral whitening object as returned by
+  new_aubio_spectral_whitening() \param fftgrain input signal spectrum as
+  computed by aubio_pvoc_do() or aubio_fft_do()
 
 */
-void aubio_spectral_whitening_do (aubio_spectral_whitening_t * o,
-                                  cvec_t * fftgrain);
+void aubio_spectral_whitening_do(aubio_spectral_whitening_t *o,
+                                 cvec_t *fftgrain);
 
 /** creation of a spectral whitening object
 
@@ -66,57 +66,61 @@ void aubio_spectral_whitening_do (aubio_spectral_whitening_t * o,
   \param samplerate sampling rate of the input signal
 
 */
-aubio_spectral_whitening_t *new_aubio_spectral_whitening (uint_t buf_size,
-                                                          uint_t hop_size,
-                                                          uint_t samplerate);
+aubio_spectral_whitening_t *new_aubio_spectral_whitening(uint_t buf_size,
+                                                         uint_t hop_size,
+                                                         uint_t samplerate);
 
 /** reset spectral whitening object
 
-  \param o spectral whitening object as returned by new_aubio_spectral_whitening()
+  \param o spectral whitening object as returned by
+  new_aubio_spectral_whitening()
 
  */
-void aubio_spectral_whitening_reset (aubio_spectral_whitening_t * o);
+void aubio_spectral_whitening_reset(aubio_spectral_whitening_t *o);
 
 /** set relaxation time for spectral whitening
 
-  \param o spectral whitening object as returned by new_aubio_spectral_whitening()
-  \param relax_time relaxation time in seconds between 20 and 500, defaults 250
+  \param o spectral whitening object as returned by
+  new_aubio_spectral_whitening() \param relax_time relaxation time in seconds
+  between 20 and 500, defaults 250
 
   */
-uint_t aubio_spectral_whitening_set_relax_time (aubio_spectral_whitening_t * o,
-    smpl_t relax_time);
+uint_t aubio_spectral_whitening_set_relax_time(aubio_spectral_whitening_t *o,
+                                               smpl_t relax_time);
 
 /** get relaxation time of spectral whitening
 
-  \param o spectral whitening object as returned by new_aubio_spectral_whitening()
-  \return relaxation time in seconds
+  \param o spectral whitening object as returned by
+  new_aubio_spectral_whitening() \return relaxation time in seconds
 
 */
-smpl_t aubio_spectral_whitening_get_relax_time (aubio_spectral_whitening_t * o);
+smpl_t aubio_spectral_whitening_get_relax_time(aubio_spectral_whitening_t *o);
 
 /** set floor for spectral whitening
 
-  \param o spectral whitening object as returned by new_aubio_spectral_whitening()
-  \param floor value (typically between 1.e-6 and .2, defaults to 1.e-4)
+  \param o spectral whitening object as returned by
+  new_aubio_spectral_whitening() \param floor value (typically between 1.e-6 and
+  .2, defaults to 1.e-4)
 
   */
-uint_t aubio_spectral_whitening_set_floor (aubio_spectral_whitening_t * o,
-    smpl_t floor);
+uint_t aubio_spectral_whitening_set_floor(aubio_spectral_whitening_t *o,
+                                          smpl_t floor);
 
 /** get floor of spectral whitening
 
-  \param o spectral whitening object as returned by new_aubio_spectral_whitening()
-  \return floor value
+  \param o spectral whitening object as returned by
+  new_aubio_spectral_whitening() \return floor value
 
 */
-smpl_t aubio_spectral_whitening_get_floor (aubio_spectral_whitening_t * o);
+smpl_t aubio_spectral_whitening_get_floor(aubio_spectral_whitening_t *o);
 
 /** deletion of a spectral whitening
 
-  \param o spectral whitening object as returned by new_aubio_spectral_whitening()
+  \param o spectral whitening object as returned by
+  new_aubio_spectral_whitening()
 
 */
-void del_aubio_spectral_whitening (aubio_spectral_whitening_t * o);
+void del_aubio_spectral_whitening(aubio_spectral_whitening_t *o);
 
 #ifdef __cplusplus
 }

@@ -55,18 +55,17 @@
  ****************************************************************************************
  */
 /// L2CAP Specific Error
-enum
-{
-    /// Success
-    L2C_ERR_NO_ERROR           = 0x00,
-    /// Message cannot be sent because connection lost. (disconnected)
-    L2C_ERR_CONNECTION_LOST    = 0x60,
-    /// Invalid PDU length exceed MTU
-    L2C_ERR_INVALID_MTU_EXCEED = 0x61,
-    /// Invalid Channel ID
-    L2C_ERR_INVALID_CID        = 0x62,
-    /// Invalid PDU
-    L2C_ERR_INVALID_PDU        = 0x63,
+enum {
+  /// Success
+  L2C_ERR_NO_ERROR = 0x00,
+  /// Message cannot be sent because connection lost. (disconnected)
+  L2C_ERR_CONNECTION_LOST = 0x60,
+  /// Invalid PDU length exceed MTU
+  L2C_ERR_INVALID_MTU_EXCEED = 0x61,
+  /// Invalid Channel ID
+  L2C_ERR_INVALID_CID = 0x62,
+  /// Invalid PDU
+  L2C_ERR_INVALID_PDU = 0x63,
 };
 
 /*
@@ -75,20 +74,18 @@ enum
  */
 
 /// L2CM buffer management
-struct l2cm_buf_mon
-{
-    /// LE buffer watch
-    uint16_t    le_acl_data_pkt_len;
-    uint16_t    le_acl_total_nb_acl_pkt;
-    /// number of buffers still available
-    uint16_t    nb_buffer_avail;
+struct l2cm_buf_mon {
+  /// LE buffer watch
+  uint16_t le_acl_data_pkt_len;
+  uint16_t le_acl_total_nb_acl_pkt;
+  /// number of buffers still available
+  uint16_t nb_buffer_avail;
 };
 /// L2CAP Manager environment structure to be saved
-struct l2cm_env_tag
-{
-    /// buffer information
-    struct l2cm_buf_mon buf_mon;
- };
+struct l2cm_env_tag {
+  /// buffer information
+  struct l2cm_buf_mon buf_mon;
+};
 
 /*
  * GLOBAL VARIABLE DECLARATIONS
@@ -105,10 +102,7 @@ extern struct l2cm_env_tag l2cm_env;
  * @brief Acquire low layer LE ACL packet
  ****************************************************************************************
  */
-__INLINE void l2cm_buffer_acquire(void)
-{
-    l2cm_env.buf_mon.nb_buffer_avail--;
-}
+__INLINE void l2cm_buffer_acquire(void) { l2cm_env.buf_mon.nb_buffer_avail--; }
 
 /**
  ****************************************************************************************
@@ -117,9 +111,8 @@ __INLINE void l2cm_buffer_acquire(void)
  * @parm[in] nb Number of buffer to release.
  ****************************************************************************************
  */
-__INLINE void l2cm_buffer_release(uint16_t nb)
-{
-    l2cm_env.buf_mon.nb_buffer_avail += nb;
+__INLINE void l2cm_buffer_release(uint16_t nb) {
+  l2cm_env.buf_mon.nb_buffer_avail += nb;
 }
 
 /**
@@ -129,9 +122,8 @@ __INLINE void l2cm_buffer_release(uint16_t nb)
  * @return Number of low layer buffer available
  ****************************************************************************************
  */
-__INLINE uint16_t l2cm_get_nb_buffer_available(void)
-{
-    return l2cm_env.buf_mon.nb_buffer_avail;
+__INLINE uint16_t l2cm_get_nb_buffer_available(void) {
+  return l2cm_env.buf_mon.nb_buffer_avail;
 }
 
 /**
@@ -141,21 +133,19 @@ __INLINE uint16_t l2cm_get_nb_buffer_available(void)
  * @return size of LE ACL Buffers
  ****************************************************************************************
  */
- __INLINE uint16_t l2cm_get_buffer_size(void)
- {
-     return l2cm_env.buf_mon.le_acl_data_pkt_len;
- }
+__INLINE uint16_t l2cm_get_buffer_size(void) {
+  return l2cm_env.buf_mon.le_acl_data_pkt_len;
+}
 /**
  ****************************************************************************************
  * @brief Create and Initialize the L2CAP manager task.
  *
- * @param[in] reset   true if it's requested by a reset; false if it's boot initialization
+ * @param[in] reset   true if it's requested by a reset; false if it's boot
+ *initialization
  *
  ****************************************************************************************
  */
 void l2cm_init(bool reset);
-
-
 
 /**
  ****************************************************************************************
@@ -179,6 +169,6 @@ void l2cm_cleanup(uint8_t conidx);
 
 /// @} L2CM
 
-#endif //(BLE_L2CM)
+#endif  //(BLE_L2CM)
 
-#endif // L2CM_H_
+#endif  // L2CM_H_

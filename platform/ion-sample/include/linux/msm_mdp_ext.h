@@ -21,7 +21,8 @@
 #include <linux/msm_mdp.h>
 #define MDP_IOCTL_MAGIC 'S'
 #define MSMFB_ATOMIC_COMMIT _IOWR(MDP_IOCTL_MAGIC, 128, void *)
-#define MSMFB_ASYNC_POSITION_UPDATE _IOWR(MDP_IOCTL_MAGIC, 129, struct mdp_position_update)
+#define MSMFB_ASYNC_POSITION_UPDATE \
+  _IOWR(MDP_IOCTL_MAGIC, 129, struct mdp_position_update)
 #define MSMFB_MDP_SET_CFG _IOW(MDP_IOCTL_MAGIC, 130, struct mdp_set_cfg)
 #ifdef __LP64
 #define MDP_LAYER_COMMIT_V1_PAD 1
@@ -78,9 +79,9 @@ struct mdp_input_layer {
   enum mdp_color_space color_space;
   struct mdp_rect src_rect;
   struct mdp_rect dst_rect;
-  void __user * scale;
+  void __user *scale;
   struct mdp_layer_buffer buffer;
-  void __user * pp_info;
+  void __user *pp_info;
   int error_code;
   uint32_t reserved[6];
 };
@@ -109,13 +110,13 @@ struct mdp_layer_commit_v1 {
   int release_fence;
   struct mdp_rect left_roi;
   struct mdp_rect right_roi;
-  struct mdp_input_layer __user * input_layers;
+  struct mdp_input_layer __user *input_layers;
   uint32_t input_layer_cnt;
-  struct mdp_output_layer __user * output_layer;
+  struct mdp_output_layer __user *output_layer;
   int retire_fence;
-  void __user * dest_scaler;
+  void __user *dest_scaler;
   uint32_t dest_scaler_cnt;
-  struct mdp_frc_info __user * frc_info;
+  struct mdp_frc_info __user *frc_info;
   uint32_t reserved[MDP_LAYER_COMMIT_V1_PAD];
 };
 struct mdp_layer_commit {
@@ -137,7 +138,7 @@ struct mdp_async_layer {
   uint32_t reserved[3];
 };
 struct mdp_position_update {
-  struct mdp_async_layer __user * input_layers;
+  struct mdp_async_layer __user *input_layers;
   uint32_t input_layer_cnt;
 };
 #define MAX_DET_CURVES 3
@@ -224,4 +225,3 @@ struct mdp_set_cfg {
   uint64_t __user payload;
 };
 #endif
-

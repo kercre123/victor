@@ -1,10 +1,10 @@
-/**************************************************************************//**
- * @file     system_ARMCM0.h
- * @brief    CMSIS Device System Header File for
- *           ARMCM0 Device Series
- * @version  V2.00
- * @date     18. August 2015
- ******************************************************************************/
+/**************************************************************************/ /**
+                                                                              * @file     system_ARMCM0.h
+                                                                              * @brief    CMSIS Device System Header File for
+                                                                              *           ARMCM0 Device Series
+                                                                              * @version  V2.00
+                                                                              * @date     18. August 2015
+                                                                              ******************************************************************************/
 /* Copyright (c) 2011 - 2015 ARM LIMITED
    All rights reserved.
    Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@
    POSSIBILITY OF SUCH DAMAGE.
    ---------------------------------------------------------------------------*/
 
-
 #ifndef SYSTEM_ARMCM0_H
 #define SYSTEM_ARMCM0_H
 
@@ -39,8 +38,7 @@
 extern "C" {
 #endif
 
-extern uint32_t SystemCoreClock;     /*!< System Clock Frequency (Core Clock)  */
-
+extern uint32_t SystemCoreClock; /*!< System Clock Frequency (Core Clock)  */
 
 /**
  * Initialize the system
@@ -51,7 +49,7 @@ extern uint32_t SystemCoreClock;     /*!< System Clock Frequency (Core Clock)  *
  * @brief  Setup the microcontroller system.
  *         Initialize the System and update the SystemCoreClock variable.
  */
-extern void SystemInit (void);
+extern void SystemInit(void);
 
 /**
  * Update SystemCoreClock variable
@@ -59,10 +57,10 @@ extern void SystemInit (void);
  * @param  none
  * @return none
  *
- * @brief  Updates the SystemCoreClock with current core Clock 
+ * @brief  Updates the SystemCoreClock with current core Clock
  *         retrieved from cpu registers.
  */
-extern void SystemCoreClockUpdate (void);
+extern void SystemCoreClockUpdate(void);
 
 #ifdef __cplusplus
 }

@@ -18,25 +18,25 @@
 namespace Anki {
 namespace Vector {
 
-  enum class EVisionUpdateFrequency
-  {
-    SingleShot, // Run once and auto-disable the next time schedule is requested
-    Low,
-    Med,
-    High,
-    Standard
-  };
+enum class EVisionUpdateFrequency {
+  SingleShot,  // Run once and auto-disable the next time schedule is requested
+  Low,
+  Med,
+  High,
+  Standard
+};
 
-  struct VisionModeRequest
-  {
-    VisionMode mode;
-    EVisionUpdateFrequency frequency;
+struct VisionModeRequest {
+  VisionMode mode;
+  EVisionUpdateFrequency frequency;
 
-    // Define comparison to enable storage in std::set
-    bool operator<(const VisionModeRequest& rhs) const { return this->mode < rhs.mode; }
-  };
-      
-} // namespace Vector
-} // namespace Anki
+  // Define comparison to enable storage in std::set
+  bool operator<(const VisionModeRequest& rhs) const {
+    return this->mode < rhs.mode;
+  }
+};
 
-#endif // __Engine_Components_visionScheduleMediator_fwd_H__
+}  // namespace Vector
+}  // namespace Anki
+
+#endif  // __Engine_Components_visionScheduleMediator_fwd_H__

@@ -24,11 +24,14 @@ namespace resources {
 namespace audio {
 
 /**
- * A class that delivers a stream to the audio data for the default notification sound.
+ * A class that delivers a stream to the audio data for the default notification
+ * sound.
  */
-class NotificationsAudioFactory : public avsCommon::sdkInterfaces::audio::NotificationsAudioFactoryInterface {
-public:
-    std::function<std::unique_ptr<std::istream>()> notificationDefault() const override;
+class NotificationsAudioFactory : public avsCommon::sdkInterfaces::audio::
+                                      NotificationsAudioFactoryInterface {
+ public:
+  std::function<std::unique_ptr<std::istream>()> notificationDefault()
+      const override;
 };
 
 }  // namespace audio

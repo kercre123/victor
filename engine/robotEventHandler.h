@@ -13,14 +13,14 @@
 #ifndef __Cozmo_Basestation_RobotEventHandler_H__
 #define __Cozmo_Basestation_RobotEventHandler_H__
 
-#include "coretech/common/shared/types.h"
-#include "engine/externalInterface/externalInterface.h"
-#include "clad/externalInterface/messageActions.h"
-#include "util/signals/simpleSignal_fwd.h"
-#include "util/helpers/noncopyable.h"
-
 #include <map>
 #include <vector>
+
+#include "clad/externalInterface/messageActions.h"
+#include "coretech/common/shared/types.h"
+#include "engine/externalInterface/externalInterface.h"
+#include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
 namespace Vector {
@@ -38,37 +38,42 @@ enum class QueueActionPosition : uint8_t;
 template <typename Type>
 class AnkiEvent;
 
-class RobotEventHandler : private Util::noncopyable
-{
-public:
+class RobotEventHandler : private Util::noncopyable {
+ public:
   RobotEventHandler(const CozmoContext* context);
-  
-  template<typename T>
+
+  template <typename T>
   void HandleMessage(const T& msg);
-  
-  using ActionUnionFcn  = IActionRunner* (*)(Robot& robot, const ExternalInterface::RobotActionUnion& actionUnion);
-  using GameToEngineFcn = IActionRunner* (*)(Robot& robot, const ExternalInterface::MessageGameToEngine& msg);
-  
-protected:
+
+  using ActionUnionFcn =
+      IActionRunner* (*)(Robot& robot,
+                         const ExternalInterface::RobotActionUnion&
+                             actionUnion);
+  using GameToEngineFcn =
+      IActionRunner* (*)(Robot& robot,
+                         const ExternalInterface::MessageGameToEngine& msg);
+
+ protected:
   const CozmoContext* _context;
   std::vector<Signal::SmartHandle> _signalHandles;
   using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
   using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
-  
+
   void HandleActionEvents(const GameToEngineEvent& event);
-  
+
   static u32 GetNextGameActionTag();
-  
-private:
-  
-  std::map<ExternalInterface::RobotActionUnionTag,    ActionUnionFcn>                   _actionUnionHandlerLUT;
-  std::map<ExternalInterface::MessageGameToEngineTag, std::pair<GameToEngineFcn,s32> >  _gameToEngineHandlerLUT;
+
+ private:
+  std::map<ExternalInterface::RobotActionUnionTag, ActionUnionFcn>
+      _actionUnionHandlerLUT;
+  std::map<ExternalInterface::MessageGameToEngineTag,
+           std::pair<GameToEngineFcn, s32> >
+      _gameToEngineHandlerLUT;
 
   static u32 _gameActionTagCounter;
 };
 
-  
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_RobotEventHandler_H__
+#endif  // __Cozmo_Basestation_RobotEventHandler_H__

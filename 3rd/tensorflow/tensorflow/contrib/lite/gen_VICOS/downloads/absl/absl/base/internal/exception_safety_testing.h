@@ -26,7 +26,6 @@
 #include <tuple>
 #include <unordered_map>
 
-#include "gtest/gtest.h"
 #include "absl/base/config.h"
 #include "absl/base/internal/pretty_function.h"
 #include "absl/memory/memory.h"
@@ -34,6 +33,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
 #include "absl/types/optional.h"
+#include "gtest/gtest.h"
 
 namespace testing {
 

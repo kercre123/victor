@@ -36,15 +36,15 @@
 #include <stdio.h>
 
 #if GTEST_OS_MAC
-# include <time.h>
+#include <time.h>
 #endif  // GTEST_OS_MAC
 
 #include <list>
 #include <utility>  // For std::pair and std::make_pair.
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
+#include "gtest/gtest.h"
 
 // Indicates that this translation unit is part of Google Test's
 // implementation.  It must come before gtest-internal-inl.h is
@@ -212,10 +212,10 @@ TEST(ImplicitCastTest, CanUseImplicitConstructor) {
 }
 
 TEST(IteratorTraitsTest, WorksForSTLContainerIterators) {
-  StaticAssertTypeEq<int,
-      IteratorTraits< ::std::vector<int>::const_iterator>::value_type>();
-  StaticAssertTypeEq<bool,
-      IteratorTraits< ::std::list<bool>::iterator>::value_type>();
+  StaticAssertTypeEq<
+      int, IteratorTraits< ::std::vector<int>::const_iterator>::value_type>();
+  StaticAssertTypeEq<
+      bool, IteratorTraits< ::std::list<bool>::iterator>::value_type>();
 }
 
 TEST(IteratorTraitsTest, WorksForPointerToNonConst) {
@@ -226,7 +226,7 @@ TEST(IteratorTraitsTest, WorksForPointerToNonConst) {
 TEST(IteratorTraitsTest, WorksForPointerToConst) {
   StaticAssertTypeEq<char, IteratorTraits<const char*>::value_type>();
   StaticAssertTypeEq<const void*,
-      IteratorTraits<const void* const*>::value_type>();
+                     IteratorTraits<const void* const*>::value_type>();
 }
 
 // Tests that the element_type typedef is available in scoped_ptr and refers
@@ -262,8 +262,8 @@ TEST(GtestCheckSyntaxTest, WorksWithSwitch) {
   }
 
   switch (0)
-    case 0:
-      GTEST_CHECK_(true) << "Check failed in switch case";
+  case 0:
+    GTEST_CHECK_(true) << "Check failed in switch case";
 }
 
 // Verifies behavior of FormatFileLocation.
@@ -273,8 +273,8 @@ TEST(FormatFileLocationTest, FormatsFileLocation) {
 }
 
 TEST(FormatFileLocationTest, FormatsUnknownFile) {
-  EXPECT_PRED_FORMAT2(
-      IsSubstring, "unknown file", FormatFileLocation(NULL, 42));
+  EXPECT_PRED_FORMAT2(IsSubstring, "unknown file",
+                      FormatFileLocation(NULL, 42));
   EXPECT_PRED_FORMAT2(IsSubstring, "42", FormatFileLocation(NULL, 42));
 }
 
@@ -292,8 +292,7 @@ TEST(FormatCompilerIndependentFileLocationTest, FormatsFileLocation) {
 }
 
 TEST(FormatCompilerIndependentFileLocationTest, FormatsUknownFile) {
-  EXPECT_EQ("unknown file:42",
-            FormatCompilerIndependentFileLocation(NULL, 42));
+  EXPECT_EQ("unknown file:42", FormatCompilerIndependentFileLocation(NULL, 42));
 }
 
 TEST(FormatCompilerIndependentFileLocationTest, FormatsUknownLine) {
@@ -315,8 +314,8 @@ void* ThreadFunc(void* data) {
 TEST(GetThreadCountTest, ReturnsCorrectValue) {
   EXPECT_EQ(1U, GetThreadCount());
   pthread_mutex_t mutex;
-  pthread_attr_t  attr;
-  pthread_t       thread_id;
+  pthread_attr_t attr;
+  pthread_t thread_id;
 
   // TODO(vladl@google.com): turn mutex into internal::Mutex for automatic
   // destruction.
@@ -334,19 +333,18 @@ TEST(GetThreadCountTest, ReturnsCorrectValue) {
   void* dummy;
   ASSERT_EQ(0, pthread_join(thread_id, &dummy));
 
-# if GTEST_OS_MAC
+#if GTEST_OS_MAC
 
   // MacOS X may not immediately report the updated thread count after
   // joining a thread, causing flakiness in this test. To counter that, we
   // wait for up to .5 seconds for the OS to report the correct value.
   for (int i = 0; i < 5; ++i) {
-    if (GetThreadCount() == 1)
-      break;
+    if (GetThreadCount() == 1) break;
 
     SleepMilliseconds(100);
   }
 
-# endif  // GTEST_OS_MAC
+#endif  // GTEST_OS_MAC
 
   EXPECT_EQ(1U, GetThreadCount());
   pthread_mutex_destroy(&mutex);
@@ -361,13 +359,13 @@ TEST(GtestCheckDeathTest, DiesWithCorrectOutputOnFailure) {
   const bool a_false_condition = false;
   const char regex[] =
 #ifdef _MSC_VER
-     "gtest-port_test\\.cc\\(\\d+\\):"
+      "gtest-port_test\\.cc\\(\\d+\\):"
 #elif GTEST_USES_POSIX_RE
-     "gtest-port_test\\.cc:[0-9]+"
+      "gtest-port_test\\.cc:[0-9]+"
 #else
-     "gtest-port_test\\.cc:\\d+"
+      "gtest-port_test\\.cc:\\d+"
 #endif  // _MSC_VER
-     ".*a_false_condition.*Extra info.*";
+      ".*a_false_condition.*Extra info.*";
 
   EXPECT_DEATH_IF_SUPPORTED(GTEST_CHECK_(a_false_condition) << "Extra info",
                             regex);
@@ -376,10 +374,12 @@ TEST(GtestCheckDeathTest, DiesWithCorrectOutputOnFailure) {
 #if GTEST_HAS_DEATH_TEST
 
 TEST(GtestCheckDeathTest, LivesSilentlyOnSuccess) {
-  EXPECT_EXIT({
-      GTEST_CHECK_(true) << "Extra info";
-      ::std::cerr << "Success\n";
-      exit(0); },
+  EXPECT_EXIT(
+      {
+        GTEST_CHECK_(true) << "Extra info";
+        ::std::cerr << "Success\n";
+        exit(0);
+      },
       ::testing::ExitedWithCode(0), "Success");
 }
 
@@ -402,19 +402,19 @@ TEST(RegexEngineSelectionTest, SelectsCorrectRegexEngine) {
 
 #if GTEST_USES_POSIX_RE
 
-# if GTEST_HAS_TYPED_TEST
+#if GTEST_HAS_TYPED_TEST
 
 template <typename Str>
 class RETest : public ::testing::Test {};
 
 // Defines StringTypes as the list of all string types that class RE
 // supports.
-typedef testing::Types<
-    ::std::string,
-#  if GTEST_HAS_GLOBAL_STRING
-    ::string,
-#  endif  // GTEST_HAS_GLOBAL_STRING
-    const char*> StringTypes;
+typedef testing::Types< ::std::string,
+#if GTEST_HAS_GLOBAL_STRING
+                        ::string,
+#endif  // GTEST_HAS_GLOBAL_STRING
+                        const char*>
+    StringTypes;
 
 TYPED_TEST_CASE(RETest, StringTypes);
 
@@ -432,9 +432,9 @@ TYPED_TEST(RETest, ImplicitConstructorWorks) {
 
 // Tests that RE's constructors reject invalid regular expressions.
 TYPED_TEST(RETest, RejectsInvalidRegex) {
-  EXPECT_NONFATAL_FAILURE({
-    const RE invalid(TypeParam("?"));
-  }, "\"?\" is not a valid POSIX Extended regular expression.");
+  EXPECT_NONFATAL_FAILURE(
+      { const RE invalid(TypeParam("?")); },
+      "\"?\" is not a valid POSIX Extended regular expression.");
 }
 
 // Tests RE::FullMatch().
@@ -464,7 +464,7 @@ TYPED_TEST(RETest, PartialMatchWorks) {
   EXPECT_FALSE(RE::PartialMatch(TypeParam("zza"), re));
 }
 
-# endif  // GTEST_HAS_TYPED_TEST
+#endif  // GTEST_HAS_TYPED_TEST
 
 #elif GTEST_USES_SIMPLE_RE
 
@@ -830,8 +830,7 @@ TEST(MatchRegexAtHeadTest, WorksWhenRegexStartsWithRepetition) {
   EXPECT_TRUE(MatchRegexAtHead("a?b", "ab"));
 }
 
-TEST(MatchRegexAtHeadTest,
-     WorksWhenRegexStartsWithRepetionOfEscapeSequence) {
+TEST(MatchRegexAtHeadTest, WorksWhenRegexStartsWithRepetionOfEscapeSequence) {
   EXPECT_FALSE(MatchRegexAtHead("\\.+a", "abc"));
   EXPECT_FALSE(MatchRegexAtHead("\\s?b", "  b"));
 
@@ -887,17 +886,14 @@ TEST(RETest, ImplicitConstructorWorks) {
 
 // Tests that RE's constructors reject invalid regular expressions.
 TEST(RETest, RejectsInvalidRegex) {
-  EXPECT_NONFATAL_FAILURE({
-    const RE normal(NULL);
-  }, "NULL is not a valid simple regular expression");
+  EXPECT_NONFATAL_FAILURE({ const RE normal(NULL); },
+                          "NULL is not a valid simple regular expression");
 
-  EXPECT_NONFATAL_FAILURE({
-    const RE normal(".*(\\w+");
-  }, "'(' is unsupported");
+  EXPECT_NONFATAL_FAILURE({ const RE normal(".*(\\w+"); },
+                          "'(' is unsupported");
 
-  EXPECT_NONFATAL_FAILURE({
-    const RE invalid("^?");
-  }, "'?' can only follow a repeatable token");
+  EXPECT_NONFATAL_FAILURE({ const RE invalid("^?"); },
+                          "'?' can only follow a repeatable token");
 }
 
 // Tests RE::FullMatch().
@@ -1039,12 +1035,13 @@ TEST(ThreadWithParamTest, ConstructorExecutesThreadFunc) {
 TEST(MutexDeathTest, AssertHeldShouldAssertWhenNotLocked) {
   // AssertHeld() is flaky only in the presence of multiple threads accessing
   // the lock. In this case, the test is robust.
-  EXPECT_DEATH_IF_SUPPORTED({
-    Mutex m;
-    { MutexLock lock(&m); }
-    m.AssertHeld();
-  },
-  "thread .*hold");
+  EXPECT_DEATH_IF_SUPPORTED(
+      {
+        Mutex m;
+        { MutexLock lock(&m); }
+        m.AssertHeld();
+      },
+      "thread .*hold");
 }
 
 TEST(MutexTest, AssertHeldShouldNotAssertWhenLocked) {
@@ -1055,8 +1052,8 @@ TEST(MutexTest, AssertHeldShouldNotAssertWhenLocked) {
 
 class AtomicCounterWithMutex {
  public:
-  explicit AtomicCounterWithMutex(Mutex* mutex) :
-    value_(0), mutex_(mutex), random_(42) {}
+  explicit AtomicCounterWithMutex(Mutex* mutex)
+      : value_(0), mutex_(mutex), random_(42) {}
 
   void Increment() {
     MutexLock lock(mutex_);
@@ -1084,12 +1081,11 @@ class AtomicCounterWithMutex {
  private:
   volatile int value_;
   Mutex* const mutex_;  // Protects value_.
-  Random       random_;
+  Random random_;
 };
 
 void CountingThreadFunc(pair<AtomicCounterWithMutex*, int> param) {
-  for (int i = 0; i < param.second; ++i)
-      param.first->Increment();
+  for (int i = 0; i < param.second; ++i) param.first->Increment();
 }
 
 // Tests that the mutex only lets one thread at a time to lock it.
@@ -1105,14 +1101,12 @@ TEST(MutexTest, OnlyOneThreadCanLockAtATime) {
   // Creates and runs kThreadCount threads that increment locked_counter
   // kCycleCount times each.
   for (int i = 0; i < kThreadCount; ++i) {
-    counting_threads[i].reset(new ThreadType(&CountingThreadFunc,
-                                             make_pair(&locked_counter,
-                                                       kCycleCount),
-                                             &threads_can_start));
+    counting_threads[i].reset(new ThreadType(
+        &CountingThreadFunc, make_pair(&locked_counter, kCycleCount),
+        &threads_can_start));
   }
   threads_can_start.Notify();
-  for (int i = 0; i < kThreadCount; ++i)
-    counting_threads[i]->Join();
+  for (int i = 0; i < kThreadCount; ++i) counting_threads[i]->Join();
 
   // If the mutex lets more than one thread to increment the counter at a
   // time, they are likely to encounter a race condition and have some
@@ -1122,7 +1116,7 @@ TEST(MutexTest, OnlyOneThreadCanLockAtATime) {
 }
 
 template <typename T>
-void RunFromThread(void (func)(T), T param) {
+void RunFromThread(void(func)(T), T param) {
   ThreadWithParam<T> thread(func, param, NULL);
   thread.Join();
 }
@@ -1216,8 +1210,8 @@ TEST(ThreadLocalTest, DestroysManagedObjectAtThreadExit) {
     ASSERT_FALSE(g_destroyed[0]);
 
     // This creates another DestructorTracker object in the new thread.
-    ThreadWithParam<ThreadParam> thread(
-        &CallThreadLocalGet, &thread_local_tracker, NULL);
+    ThreadWithParam<ThreadParam> thread(&CallThreadLocalGet,
+                                        &thread_local_tracker, NULL);
     thread.Join();
 
     // Now the new thread has exited.  The per-thread object for it

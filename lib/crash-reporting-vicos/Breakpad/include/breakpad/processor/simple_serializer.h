@@ -46,7 +46,8 @@ typedef uint64_t MemAddr;
 
 // Default implementation of SimpleSerializer template.
 // Specializations are defined in "simple_serializer-inl.h".
-template<class Type> class SimpleSerializer {
+template <class Type>
+class SimpleSerializer {
  public:
   // Calculate and return the size of the 'item'.
   static size_t SizeOf(const Type &item) { return sizeof(item); }

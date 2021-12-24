@@ -18,12 +18,12 @@
 namespace Anki {
 namespace Vector {
 namespace Anim {
-  class AnimContext;
-  class AnimationStreamer;
-}
+class AnimContext;
+class AnimationStreamer;
+}  // namespace Anim
 
 namespace SwitchboardInterface {
-  struct SetConnectionStatus;
+struct SetConnectionStatus;
 }
 
 void SetBLEPin(uint32_t pin);
@@ -34,7 +34,7 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
                           Anim::AnimationStreamer* animStreamer,
                           const Anim::AnimContext* context);
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

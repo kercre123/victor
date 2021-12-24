@@ -9,7 +9,7 @@
  *    $LastChangedBy$
  *    $LastChangedRevision$
  *
- * Description: 
+ * Description:
  *    Defines various linear algebra methods. Templated implementations are
  *    in a separate linearAlgebra.h file.
  *
@@ -27,7 +27,7 @@
 #include "coretech/common/shared/math/point_fwd.h"
 
 namespace Anki {
-  
+
 // Returns a projection operator for the given plane normal, n,
 //
 //   P = I - n*n^T
@@ -40,33 +40,24 @@ namespace Anki {
 // must be a unit vector!
 //
 // TODO: make normal a UnitVector type
-template<size_t N, typename T>
-SmallSquareMatrix<N,T> GetProjectionOperator(const Point<N,T>& normal);
+template <size_t N, typename T>
+SmallSquareMatrix<N, T> GetProjectionOperator(const Point<N, T>& normal);
 
-enum class LeastSquaresMethod : u8 {
-  LU,
-  Cholesky,
-  Eigenvalue,
-  SVD,
-  QR
-};
+enum class LeastSquaresMethod : u8 { LU, Cholesky, Eigenvalue, SVD, QR };
 
 // Returns x for the linear system Ax = b
 // 1. b and x are columns stored as a SmallMatrix
-template<MatDimType M, MatDimType N, typename T>
-Result LeastSquares(const SmallMatrix<M, N, T>&   A,
-                    const SmallMatrix<M, 1, T>&   b,
-                    SmallMatrix<N,1,T>&           x,
-                    LeastSquaresMethod            method = LeastSquaresMethod::LU);
+template <MatDimType M, MatDimType N, typename T>
+Result LeastSquares(const SmallMatrix<M, N, T>& A,
+                    const SmallMatrix<M, 1, T>& b, SmallMatrix<N, 1, T>& x,
+                    LeastSquaresMethod method = LeastSquaresMethod::LU);
 
 // 2. b and x are stored as vectors (points)
-template<MatDimType M, MatDimType N, typename T>
-Result LeastSquares(const SmallMatrix<M, N, T>&   A,
-                    const Point<M,T>&             b,
-                    Point<N,T>&                   x,
-                    LeastSquaresMethod            method = LeastSquaresMethod::LU);
+template <MatDimType M, MatDimType N, typename T>
+Result LeastSquares(const SmallMatrix<M, N, T>& A, const Point<M, T>& b,
+                    Point<N, T>& x,
+                    LeastSquaresMethod method = LeastSquaresMethod::LU);
 
-  
-} // namespace Anki
+}  // namespace Anki
 
-#endif // ANKI_COMMON_BASESTATION_MATH_LINEAR_ALGEBRA_H
+#endif  // ANKI_COMMON_BASESTATION_MATH_LINEAR_ALGEBRA_H

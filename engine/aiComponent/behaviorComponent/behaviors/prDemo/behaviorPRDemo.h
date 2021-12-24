@@ -23,43 +23,40 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorPRDemo : public InternalStatesBehavior
-{
-public: 
+class BehaviorPRDemo : public InternalStatesBehavior {
+ public:
   virtual ~BehaviorPRDemo();
 
   // let this behavior know about things it needs for the demo
-  void InformOfVoiceIntent( const UserIntentTag& intentTag );
+  void InformOfVoiceIntent(const UserIntentTag& intentTag);
   void InformTimerIsRinging();
-  
+
   void Reset();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorPRDemo(const Json::Value& config);  
+  explicit BehaviorPRDemo(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
     modifiers.wantsToBeActivatedWhenOffTreads = true;
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.behaviorAlwaysDelegates = false;
   }
-  
+
   virtual bool WantsToBeActivatedBehavior() const override { return true; }
 
-  virtual void OverrideResumeState( StateID& resumeState ) override;
-  
-private:
+  virtual void OverrideResumeState(StateID& resumeState) override;
 
+ private:
   void SetOverideState(StateID state);
 
   StateID _resumeOverride = InternalStatesBehavior::InvalidStateID;
-
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorPRDemo__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorPRDemo__

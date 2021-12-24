@@ -19,8 +19,8 @@
 //
 // This file contains the definition of the `absl::string_view` class. A
 // `string_view` points to a contiguous span of characters, often part or all of
-// another `std::string`, double-quoted std::string literal, character array, or even
-// another `string_view`.
+// another `std::string`, double-quoted std::string literal, character array, or
+// even another `string_view`.
 //
 // This `absl::string_view` abstraction is designed to be a drop-in
 // replacement for the C++17 `std::string_view` abstraction.
@@ -28,6 +28,7 @@
 #define ABSL_STRINGS_STRING_VIEW_H_
 
 #include <algorithm>
+
 #include "absl/base/config.h"
 
 #ifdef ABSL_HAVE_STD_STRING_VIEW
@@ -56,16 +57,17 @@ namespace absl {
 
 // absl::string_view
 //
-// A `string_view` provides a lightweight view into the std::string data provided by
-// a `std::string`, double-quoted std::string literal, character array, or even
-// another `string_view`. A `string_view` does *not* own the std::string to which it
-// points, and that data cannot be modified through the view.
+// A `string_view` provides a lightweight view into the std::string data
+// provided by a `std::string`, double-quoted std::string literal, character
+// array, or even another `string_view`. A `string_view` does *not* own the
+// std::string to which it points, and that data cannot be modified through the
+// view.
 //
 // You can use `string_view` as a function or method parameter anywhere a
 // parameter can receive a double-quoted std::string literal, `const char*`,
 // `std::string`, or another `absl::string_view` argument with no need to copy
-// the std::string data. Systematic use of `string_view` within function arguments
-// reduces data copies and `strlen()` calls.
+// the std::string data. Systematic use of `string_view` within function
+// arguments reduces data copies and `strlen()` calls.
 //
 // Because of its small size, prefer passing `string_view` by value:
 //
@@ -97,9 +99,9 @@ namespace absl {
 // `string_view` this way, it is your responsibility to ensure that the object
 // pointed to by the `string_view` outlives the `string_view`.
 //
-// A `string_view` may represent a whole std::string or just part of a std::string. For
-// example, when splitting a std::string, `std::vector<absl::string_view>` is a
-// natural data type for the output.
+// A `string_view` may represent a whole std::string or just part of a
+// std::string. For example, when splitting a std::string,
+// `std::vector<absl::string_view>` is a natural data type for the output.
 //
 //
 // When constructed from a source which is nul-terminated, the `string_view`
@@ -247,9 +249,7 @@ class string_view {
   // string_view::size()
   //
   // Returns the number of characters in the `string_view`.
-  constexpr size_type size() const noexcept {
-    return length_;
-  }
+  constexpr size_type size() const noexcept { return length_; }
 
   // string_view::length()
   //
@@ -416,8 +416,7 @@ class string_view {
   // Finds the last occurrence of a substring `s` within the `string_view`,
   // returning the position of the first character's match, or `npos` if no
   // match was found.
-  size_type rfind(string_view s, size_type pos = npos) const
-      noexcept;
+  size_type rfind(string_view s, size_type pos = npos) const noexcept;
 
   // Overload of `string_view::rfind()` for finding the last given character `c`
   // within the `string_view`.
@@ -428,13 +427,11 @@ class string_view {
   // Finds the first occurrence of any of the characters in `s` within the
   // `string_view`, returning the start position of the match, or `npos` if no
   // match was found.
-  size_type find_first_of(string_view s, size_type pos = 0) const
-      noexcept;
+  size_type find_first_of(string_view s, size_type pos = 0) const noexcept;
 
   // Overload of `string_view::find_first_of()` for finding a character `c`
   // within the `string_view`.
-  size_type find_first_of(char c, size_type pos = 0) const
-      noexcept {
+  size_type find_first_of(char c, size_type pos = 0) const noexcept {
     return find(c, pos);
   }
 
@@ -443,13 +440,11 @@ class string_view {
   // Finds the last occurrence of any of the characters in `s` within the
   // `string_view`, returning the start position of the match, or `npos` if no
   // match was found.
-  size_type find_last_of(string_view s, size_type pos = npos) const
-      noexcept;
+  size_type find_last_of(string_view s, size_type pos = npos) const noexcept;
 
   // Overload of `string_view::find_last_of()` for finding a character `c`
   // within the `string_view`.
-  size_type find_last_of(char c, size_type pos = npos) const
-      noexcept {
+  size_type find_last_of(char c, size_type pos = npos) const noexcept {
     return rfind(c, pos);
   }
 
@@ -470,12 +465,11 @@ class string_view {
   // `string_view`, returning the start position of the last non-match, or
   // `npos` if no non-match was found.
   size_type find_last_not_of(string_view s,
-                                          size_type pos = npos) const noexcept;
+                             size_type pos = npos) const noexcept;
 
   // Overload of `string_view::find_last_not_of()` for finding a character
   // that is not `c` within the `string_view`.
-  size_type find_last_not_of(char c, size_type pos = npos) const
-      noexcept;
+  size_type find_last_not_of(char c, size_type pos = npos) const noexcept;
 
  private:
   static constexpr size_type kMaxSize =

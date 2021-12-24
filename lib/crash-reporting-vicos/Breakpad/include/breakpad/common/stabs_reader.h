@@ -89,26 +89,24 @@ class StabsReader {
   // actual symbol table; UNITIZED should be true when parsing Linux stabs,
   // false when parsing Mac OS X STABS. For details, see:
   // http://sourceware.org/gdb/current/onlinedocs/stabs/Stab-Section-Basics.html
-  // 
+  //
   // Note that, in ELF, the .stabstr section should be found using the
   // 'sh_link' field of the .stab section header, not by name.
-  StabsReader(const uint8_t *stab,    size_t stab_size,
-              const uint8_t *stabstr, size_t stabstr_size,
-              bool big_endian, size_t value_size, bool unitized,
-              StabsHandler *handler);
+  StabsReader(const uint8_t *stab, size_t stab_size, const uint8_t *stabstr,
+              size_t stabstr_size, bool big_endian, size_t value_size,
+              bool unitized, StabsHandler *handler);
 
   // Process the STABS data, calling the handler's member functions to
   // report what we find.  While the handler functions return true,
   // continue to process until we reach the end of the section.  If we
   // processed the entire section and all handlers returned true,
   // return true.  If any handler returned false, return false.
-  // 
+  //
   // This is only meant to be called once per StabsReader instance;
   // resuming a prior processing pass that stopped abruptly isn't supported.
   bool Process();
 
  private:
-
   // An class for walking arrays of STABS entries. This isolates the main
   // STABS reader from the exact format (size; endianness) of the entries
   // themselves.
@@ -153,7 +151,11 @@ class StabsReader {
 
     // Move to the next entry. This function's behavior is undefined if
     // at_end() is true when it is called.
-    EntryIterator &operator++() { Fetch(); entry_.index++; return *this; }
+    EntryIterator &operator++() {
+      Fetch();
+      entry_.index++;
+      return *this;
+    }
 
     // Dereferencing this iterator produces a reference to an Entry structure
     // that holds the current entry's values. The entry is owned by this
@@ -237,8 +239,8 @@ class StabsReader {
 // true so processing will continue.
 class StabsHandler {
  public:
-  StabsHandler() { }
-  virtual ~StabsHandler() { }
+  StabsHandler() {}
+  virtual ~StabsHandler() {}
 
   // Some general notes about the handler callback functions:
 
@@ -301,7 +303,7 @@ class StabsHandler {
   // the function's ending address is not available, and the consumer
   // must infer it by other means.
   virtual bool EndFunction(uint64_t address) { return true; }
-  
+
   // Report that the code at ADDRESS is attributable to line NUMBER of
   // the source file named FILENAME.  The caller must infer the ending
   // address of the line.
@@ -311,15 +313,13 @@ class StabsHandler {
 
   // Report that an exported function NAME is present at ADDRESS.
   // The size of the function is unknown.
-  virtual bool Extern(const string &name, uint64_t address) {
-    return true;
-  }
+  virtual bool Extern(const string &name, uint64_t address) { return true; }
 
   // Report a warning.  FORMAT is a printf-like format string,
   // specifying how to format the subsequent arguments.
   virtual void Warning(const char *format, ...) = 0;
 };
 
-} // namespace google_breakpad
+}  // namespace google_breakpad
 
 #endif  // COMMON_STABS_READER_H__

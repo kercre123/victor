@@ -4,7 +4,8 @@
  * Author: Brad
  * Created: 2018-08-13
  *
- * Description: Top level behavior to coordinate sleep / wake cycles of the robot
+ * Description: Top level behavior to coordinate sleep / wake cycles of the
+ *robot
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -14,39 +15,35 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorSleepCycle__
 #pragma once
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-
-#include "coretech/common/engine/robotTimeStamp.h"
-
 #include "clad/types/behaviorComponent/sleepingTypes.h"
+#include "coretech/common/engine/robotTimeStamp.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Vector {
 
-class BehaviorSleepCycle : public ICozmoBehavior
-{
-public:
+class BehaviorSleepCycle : public ICozmoBehavior {
+ public:
   virtual ~BehaviorSleepCycle();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   explicit BehaviorSleepCycle(const Json::Value& config);
 
   virtual void InitBehavior() override;
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
 
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
-
-private:
-
+ private:
   class SleepState;
 
   void ParseWakeReasonConditions(const Json::Value& config);
@@ -67,8 +64,8 @@ private:
 
   // Helper for transitioning to new sleep state.
   // Delegates to preSleepDelegate, if defined, before transitioning to sleep.
-  void SleepTransitionHelper(const SleepStateID& newState, 
-                             const bool playSleepGetIn = true, 
+  void SleepTransitionHelper(const SleepStateID& newState,
+                             const bool playSleepGetIn = true,
                              ICozmoBehaviorPtr preSleepDelegate = nullptr);
 
   void RespondToPersonCheck();
@@ -98,9 +95,9 @@ private:
 
   void PopulateWebVizJson(Json::Value& data) const;
 
-  void MuteForPersonCheck( bool mute );
+  void MuteForPersonCheck(bool mute);
 
-  void SetAudioActive( bool active );
+  void SetAudioActive(bool active);
 
   bool WasNightlyReboot() const;
 
@@ -121,17 +118,18 @@ private:
     ICozmoBehaviorPtr joltInPalmBehavior;
     ICozmoBehaviorPtr pickupFromPalmReaction;
 
-    std::map< WakeReason, IBEIConditionPtr > wakeConditions;
+    std::map<WakeReason, IBEIConditionPtr> wakeConditions;
 
     // high temp or low battery.
-    // eventually we may want general "sleep conditions" similar to how "wake conditions" work
+    // eventually we may want general "sleep conditions" similar to how "wake
+    // conditions" work
     IBEIConditionPtr emergencyCondition;
-    
+
     // Robot wants to sleep on user's palm
     IBEIConditionPtr heldInPalmCondition;
 
-    std::vector< WakeReason > alwaysWakeReasons;
-    std::map< SleepStateID, std::vector< WakeReason > > wakeReasonsPerState;
+    std::vector<WakeReason> alwaysWakeReasons;
+    std::map<SleepStateID, std::vector<WakeReason>> wakeReasonsPerState;
   };
 
   struct DynamicVariables {
@@ -157,10 +155,9 @@ private:
 
   // for webviz debug subscriptions
   std::vector<::Signal::SmartHandle> _eventHandles;
-
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorSleepCycle__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorSleepCycle__

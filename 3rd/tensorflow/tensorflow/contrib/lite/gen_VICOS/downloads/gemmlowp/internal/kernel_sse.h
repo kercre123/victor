@@ -21,10 +21,11 @@
 #ifndef GEMMLOWP_INTERNAL_KERNEL_SSE_H_
 #define GEMMLOWP_INTERNAL_KERNEL_SSE_H_
 
-#include "kernel.h"
-
 #include <string.h>
+
 #include <cassert>
+
+#include "kernel.h"
 
 namespace gemmlowp {
 
@@ -191,11 +192,12 @@ struct SSE4_32_Kernel4x4Depth2 : KernelBase {
         "movdqu %%xmm7  , 0x00(%[dst_ptr], %%ecx, 1)\n\t"
 
         :  // outputs
-        [lhs_ptr] "+r"(lhs_ptr), [rhs_ptr] "+r"(rhs_ptr),
-        [dst_ptr] "+r"(dst_ptr)
+        [ lhs_ptr ] "+r"(lhs_ptr), [ rhs_ptr ] "+r"(rhs_ptr),
+        [ dst_ptr ] "+r"(dst_ptr)
         :  // inputs
-        [start_depth] "g"(start_depth), [dst_col_stride] "g"(dst_col_stride),
-        [run_depth_cells] "g"(run_depth_cells)
+        [ start_depth ] "g"(start_depth),
+        [ dst_col_stride ] "g"(dst_col_stride),
+        [ run_depth_cells ] "g"(run_depth_cells)
         :  // clobbers
         "cc", "memory", "%xmm0", "%xmm1", "%xmm3", "%xmm2", "%xmm4", "%xmm5",
         "%xmm6", "%xmm7", "%eax", "%ecx");
@@ -498,12 +500,12 @@ struct SSE4_64_Kernel12x4Depth2 : KernelBase {
         "movdqu %%xmm15 , 0x20(%[dst_ptr], %%r13, 1)\n\t"
 
         :  // outputs
-        [lhs_ptr] "+r"(lhs_ptr), [rhs_ptr] "+r"(rhs_ptr),
-        [dst_ptr] "+r"(dst_ptr)
+        [ lhs_ptr ] "+r"(lhs_ptr), [ rhs_ptr ] "+r"(rhs_ptr),
+        [ dst_ptr ] "+r"(dst_ptr)
         :  // inputs
-        [start_depth] "r"(start_depth),
-        [dst_col_stride_q] "r"(dst_col_stride_q),
-        [run_depth_cells] "r"(run_depth_cells)
+        [ start_depth ] "r"(start_depth),
+        [ dst_col_stride_q ] "r"(dst_col_stride_q),
+        [ run_depth_cells ] "r"(run_depth_cells)
         :  // clobbers
         "cc", "memory", "%xmm0", "%xmm1", "%xmm3", "%xmm2", "%xmm4", "%xmm5",
         "%xmm6", "%xmm7", "%xmm8", "%xmm9", "%xmm10", "%r12", "%r13", "%r14",

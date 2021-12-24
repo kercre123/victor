@@ -16,11 +16,11 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_LIBCURLUTILS_HTTPPUT_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_UTILS_INCLUDE_AVSCOMMON_UTILS_LIBCURLUTILS_HTTPPUT_H_
 
+#include <curl/curl.h>
+
 #include <memory>
 #include <mutex>
 #include <string>
-
-#include <curl/curl.h>
 
 #include "AVSCommon/Utils/LibcurlUtils/CurlEasyHandleWrapper.h"
 #include "AVSCommon/Utils/LibcurlUtils/HttpPutInterface.h"
@@ -32,48 +32,51 @@ namespace libcurlUtils {
 
 /// LIBCURL based implementation of HttpPutInterface.
 class HttpPut : public HttpPutInterface {
-public:
-    /**
-     * Create a new HttpPut instance, passing ownership of the new instance on to the caller.
-     *
-     * @return Returns an std::unique_ptr to the new HttpPut instance, or @c nullptr of the operation failed.
-     */
-    static std::unique_ptr<HttpPut> create();
+ public:
+  /**
+   * Create a new HttpPut instance, passing ownership of the new instance on to
+   * the caller.
+   *
+   * @return Returns an std::unique_ptr to the new HttpPut instance, or @c
+   * nullptr of the operation failed.
+   */
+  static std::unique_ptr<HttpPut> create();
 
-    /**
-     * HttpPut destructor
-     */
-    ~HttpPut() = default;
+  /**
+   * HttpPut destructor
+   */
+  ~HttpPut() = default;
 
-    /**
-     * Deleted copy constructor.
-     *
-     * @param rhs The 'right hand side' to not copy.
-     */
-    HttpPut(const HttpPut& rhs) = delete;
+  /**
+   * Deleted copy constructor.
+   *
+   * @param rhs The 'right hand side' to not copy.
+   */
+  HttpPut(const HttpPut& rhs) = delete;
 
-    /**
-     * Deleted assignment operator.
-     *
-     * @param rhs The 'right hand side' to not copy.
-     * @return The object assigned to.
-     */
-    HttpPut& operator=(const HttpPut& rhs) = delete;
+  /**
+   * Deleted assignment operator.
+   *
+   * @param rhs The 'right hand side' to not copy.
+   * @return The object assigned to.
+   */
+  HttpPut& operator=(const HttpPut& rhs) = delete;
 
-    HTTPResponse doPut(const std::string& url, const std::vector<std::string>& headers, const std::string& data)
-        override;
+  HTTPResponse doPut(const std::string& url,
+                     const std::vector<std::string>& headers,
+                     const std::string& data) override;
 
-private:
-    /**
-     * Default HttpPut constructor.
-     */
-    HttpPut() = default;
+ private:
+  /**
+   * Default HttpPut constructor.
+   */
+  HttpPut() = default;
 
-    /// Mutex to serialize access to @c m_curl.
-    std::mutex m_mutex;
+  /// Mutex to serialize access to @c m_curl.
+  std::mutex m_mutex;
 
-    /// CURL handle with which to make requests
-    CurlEasyHandleWrapper m_curl;
+  /// CURL handle with which to make requests
+  CurlEasyHandleWrapper m_curl;
 };
 
 }  // namespace libcurlUtils

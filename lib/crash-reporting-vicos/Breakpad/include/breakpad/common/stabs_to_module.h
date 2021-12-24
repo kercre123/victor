@@ -51,7 +51,7 @@ namespace google_breakpad {
 
 using std::vector;
 
-// A StabsToModule is a handler that receives parsed STABS debugging 
+// A StabsToModule is a handler that receives parsed STABS debugging
 // information from a StabsReader, and uses that to populate
 // a Module. (All classes are in the google_breakpad namespace.) A
 // Module represents the contents of a Breakpad symbol file, and knows
@@ -59,17 +59,17 @@ using std::vector;
 // the bridge between STABS and Breakpad data.
 // When processing Darwin Mach-O files, this also receives public linker
 // symbols, like those found in system libraries.
-class StabsToModule: public google_breakpad::StabsHandler {
+class StabsToModule : public google_breakpad::StabsHandler {
  public:
   // Receive parsed debugging information from a StabsReader, and
   // store it all in MODULE.
-  StabsToModule(Module *module) :
-      module_(module),
-      in_compilation_unit_(false),
-      comp_unit_base_address_(0),
-      current_function_(NULL),
-      current_source_file_(NULL),
-      current_source_file_name_(NULL) { }
+  StabsToModule(Module *module)
+      : module_(module),
+        in_compilation_unit_(false),
+        comp_unit_base_address_(0),
+        current_function_(NULL),
+        current_source_file_(NULL),
+        current_source_file_name_(NULL) {}
   ~StabsToModule();
 
   // The standard StabsHandler virtual member functions.
@@ -92,7 +92,6 @@ class StabsToModule: public google_breakpad::StabsHandler {
   void Finalize();
 
  private:
-
   // An arbitrary, but very large, size to use for functions whose
   // size we can't compute properly.
   static const uint64_t kFallbackSize = 0x10000000;

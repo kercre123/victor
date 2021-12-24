@@ -38,8 +38,8 @@ using sys_seconds = std::chrono::duration<std::int_fast64_t>;
 
 namespace detail {
 template <typename D>
-inline std::pair<time_point<sys_seconds>, D>
-split_seconds(const time_point<D>& tp) {
+inline std::pair<time_point<sys_seconds>, D> split_seconds(
+    const time_point<D>& tp) {
   auto sec = std::chrono::time_point_cast<sys_seconds>(tp);
   auto sub = tp - sec;
   if (sub.count() < 0) {
@@ -48,8 +48,8 @@ split_seconds(const time_point<D>& tp) {
   }
   return {sec, std::chrono::duration_cast<D>(sub)};
 }
-inline std::pair<time_point<sys_seconds>, sys_seconds>
-split_seconds(const time_point<sys_seconds>& tp) {
+inline std::pair<time_point<sys_seconds>, sys_seconds> split_seconds(
+    const time_point<sys_seconds>& tp) {
   return {tp, sys_seconds(0)};
 }
 }  // namespace detail
@@ -264,8 +264,8 @@ inline std::string format(const std::string& fmt, const time_point<D>& tp,
 //
 //   "1970-01-01 00:00:00.0 +0000"
 //
-// For example, parsing a std::string of "15:45" (%H:%M) will return a time_point
-// that represents "1970-01-01 15:45:00.0 +0000".
+// For example, parsing a std::string of "15:45" (%H:%M) will return a
+// time_point that represents "1970-01-01 15:45:00.0 +0000".
 //
 // Note that parse() returns time instants, so it makes most sense to parse
 // fully-specified date/time strings that include a UTC offset (%z, %Ez, or

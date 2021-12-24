@@ -23,10 +23,10 @@ namespace bluetooth {
 
 /// An Enum representing the current A2DP role.
 enum class A2DPRole {
-    /// AVS device acting as an A2DPSink.
-    SINK,
-    /// AVS device acting as an A2DPSource.
-    SOURCE
+  /// AVS device acting as an A2DPSink.
+  SINK,
+  /// AVS device acting as an A2DPSource.
+  SOURCE
 };
 
 }  // namespace bluetooth

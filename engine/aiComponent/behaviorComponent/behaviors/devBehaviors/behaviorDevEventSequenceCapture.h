@@ -4,7 +4,8 @@
  * Author: Humphrey Hu
  * Created: 2018-05-14
  *
- * Description: Dev behavior to trigger a user event and capture data before and after it
+ * Description: Dev behavior to trigger a user event and capture data before and
+ *after it
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -20,56 +21,54 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorDevEventSequenceCapture : public ICozmoBehavior
-{
+class BehaviorDevEventSequenceCapture : public ICozmoBehavior {
   friend class BehaviorFactory;
   explicit BehaviorDevEventSequenceCapture(const Json::Value& config);
 
-public:
-
+ public:
   virtual ~BehaviorDevEventSequenceCapture();
 
-  virtual bool WantsToBeActivatedBehavior() const override
-  {
-    return true;
-  }
+  virtual bool WantsToBeActivatedBehavior() const override { return true; }
 
-protected:
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+ protected:
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOffTreads = true;
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.behaviorAlwaysDelegates = false;
-    modifiers.visionModesForActiveScope->insert({VisionMode::SaveImages, EVisionUpdateFrequency::High});
-    modifiers.visionModesForActiveScope->insert({VisionMode::MirrorMode,   EVisionUpdateFrequency::High});
+    modifiers.visionModesForActiveScope->insert(
+        {VisionMode::SaveImages, EVisionUpdateFrequency::High});
+    modifiers.visionModesForActiveScope->insert(
+        {VisionMode::MirrorMode, EVisionUpdateFrequency::High});
   }
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
 
   virtual void BehaviorUpdate() override;
 
-private:
+ private:
   struct InstanceConfig {
     InstanceConfig();
     std::string imageSavePath;
-    int8_t      imageSaveQuality;
-    Vision::ImageCacheSize  imageSaveSize;
-    bool        useCapTouch;
+    int8_t imageSaveQuality;
+    Vision::ImageCacheSize imageSaveSize;
+    bool useCapTouch;
 
-    float       sequenceSetupTime;
-    float       preEventCaptureTime;
-    float       postEventCaptureTime;
+    float sequenceSetupTime;
+    float preEventCaptureTime;
+    float postEventCaptureTime;
 
-    bool        enableRandomHeadTilt;
-    float       minHeadTilt;
-    float       maxHeadTilt;
+    bool enableRandomHeadTilt;
+    float minHeadTilt;
+    float maxHeadTilt;
 
     std::list<std::string> classNames;
   };
 
-  enum class SequenceState
-  {
+  enum class SequenceState {
     Waiting = 0,
     Setup,
     PreEventCapture,
@@ -79,19 +78,19 @@ private:
   struct DynamicVariables {
     DynamicVariables();
 
-    SequenceState      seqState;
-    float              waitStartTime_s;
-    RobotTimeStamp_t   seqStartTimeStamp;
-    RobotTimeStamp_t   seqEventTimeStamp;
-    RobotTimeStamp_t   seqEndTimeStamp;
-    int32_t            currentSeqNumber;
-    bool               wasTouched;
-    bool               wasLiftUp;
+    SequenceState seqState;
+    float waitStartTime_s;
+    RobotTimeStamp_t seqStartTimeStamp;
+    RobotTimeStamp_t seqEventTimeStamp;
+    RobotTimeStamp_t seqEndTimeStamp;
+    int32_t currentSeqNumber;
+    bool wasTouched;
+    bool wasLiftUp;
 
     std::list<std::string>::const_iterator currentClassIter;
   };
 
-  InstanceConfig   _iConfig;
+  InstanceConfig _iConfig;
   DynamicVariables _dVars;
 
   int32_t GetNumCurrentSequences() const;
@@ -104,10 +103,9 @@ private:
   std::string GetAbsInfoSavePath() const;
   std::string GetAbsBaseSavePath() const;
   void SwitchToNextClass();
-
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_DevBehaviors_BehaviorDevEventSequenceCapture_H__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_DevBehaviors_BehaviorDevEventSequenceCapture_H__

@@ -16,11 +16,11 @@
 #ifndef ALEXA_CLIENT_SDK_APPLICATIONUTILITIES_RESOURCES_AUDIO_INCLUDE_AUDIO_AUDIOFACTORY_H_
 #define ALEXA_CLIENT_SDK_APPLICATIONUTILITIES_RESOURCES_AUDIO_INCLUDE_AUDIO_AUDIOFACTORY_H_
 
-#include <AVSCommon/SDKInterfaces/Audio/AudioFactoryInterface.h>
-
 #include <AVSCommon/SDKInterfaces/Audio/AlertsAudioFactoryInterface.h>
-#include "AVSCommon/SDKInterfaces/Audio/CommunicationsAudioFactoryInterface.h"
+#include <AVSCommon/SDKInterfaces/Audio/AudioFactoryInterface.h>
 #include <AVSCommon/SDKInterfaces/Audio/NotificationsAudioFactoryInterface.h>
+
+#include "AVSCommon/SDKInterfaces/Audio/CommunicationsAudioFactoryInterface.h"
 
 namespace alexaClientSDK {
 namespace applicationUtilities {
@@ -28,14 +28,20 @@ namespace resources {
 namespace audio {
 
 /**
- * A class that constructs an object to create unique streams to the audio data for the Alerts.
+ * A class that constructs an object to create unique streams to the audio data
+ * for the Alerts.
  */
-class AudioFactory : public avsCommon::sdkInterfaces::audio::AudioFactoryInterface {
-public:
-    std::shared_ptr<avsCommon::sdkInterfaces::audio::AlertsAudioFactoryInterface> alerts() const override;
-    std::shared_ptr<avsCommon::sdkInterfaces::audio::NotificationsAudioFactoryInterface> notifications() const override;
-    std::shared_ptr<avsCommon::sdkInterfaces::audio::CommunicationsAudioFactoryInterface> communications()
-        const override;
+class AudioFactory
+    : public avsCommon::sdkInterfaces::audio::AudioFactoryInterface {
+ public:
+  std::shared_ptr<avsCommon::sdkInterfaces::audio::AlertsAudioFactoryInterface>
+  alerts() const override;
+  std::shared_ptr<
+      avsCommon::sdkInterfaces::audio::NotificationsAudioFactoryInterface>
+  notifications() const override;
+  std::shared_ptr<
+      avsCommon::sdkInterfaces::audio::CommunicationsAudioFactoryInterface>
+  communications() const override;
 };
 
 }  // namespace audio

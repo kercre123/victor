@@ -17,11 +17,13 @@ namespace Anki {
 namespace Messaging {
 
 //
-// Returns length of sockaddr_un that has been initialized with null-terminated path.
-// Compatible with SUN_LEN defined in <sys/un.h> on some (but not all) platforms.
+// Returns length of sockaddr_un that has been initialized with null-terminated
+// path. Compatible with SUN_LEN defined in <sys/un.h> on some (but not all)
+// platforms.
 //
 #if !defined(SUN_LEN)
-#define SUN_LEN(su) (sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
+#define SUN_LEN(su) \
+  (sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
 #endif
 
 // Set non-blocking I/O flag, aka O_NONBLOCK
@@ -46,7 +48,7 @@ int GetIncomingSize(int socket);
 // Returns number of bytes queued for write on socket or -1 on error
 int GetOutgoingSize(int socket);
 
-} // end namespace Messaging
-} // end namespace Anki
+}  // end namespace Messaging
+}  // end namespace Anki
 
 #endif

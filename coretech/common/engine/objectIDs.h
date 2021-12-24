@@ -7,7 +7,8 @@
  * Description: Base class for inheritable, strongly-typed, unique values, used
  *              for unique ObjectIDs for now. Using a full class instead of just
  *              an int provides for strong typing and runtime ID generation.
- *              Still, this is a bit gross and could probably be refactored/removed.
+ *              Still, this is a bit gross and could probably be
+ *refactored/removed.
  *
  * Copyright: Anki, Inc. 2014
  **/
@@ -23,92 +24,97 @@
 
 namespace Anki {
 
-  template<typename StorageType_>
-  class UniqueEnumeratedValue
-  {
-  public:
-    using StorageType = StorageType_;
+template <typename StorageType_>
+class UniqueEnumeratedValue {
+ public:
+  using StorageType = StorageType_;
 
-    UniqueEnumeratedValue() : _value(UNKNOWN_VALUE) { }
+  UniqueEnumeratedValue() : _value(UNKNOWN_VALUE) {}
 
-    // Comparison and sorting (for use as key value)
-    bool operator==(const UniqueEnumeratedValue& other) const { return _value == other._value; }
-    bool operator!=(const UniqueEnumeratedValue& other) const { return _value != other._value; }
-    bool operator< (const UniqueEnumeratedValue& other) const { return _value <  other._value; }
+  // Comparison and sorting (for use as key value)
+  bool operator==(const UniqueEnumeratedValue& other) const {
+    return _value == other._value;
+  }
+  bool operator!=(const UniqueEnumeratedValue& other) const {
+    return _value != other._value;
+  }
+  bool operator<(const UniqueEnumeratedValue& other) const {
+    return _value < other._value;
+  }
 
-    bool operator==(const StorageType_ value) const { return _value == value; }
-    bool operator!=(const StorageType_ value) const { return _value != value; }
-    bool operator< (const StorageType value) const { return _value <  value; }
+  bool operator==(const StorageType_ value) const { return _value == value; }
+  bool operator!=(const StorageType_ value) const { return _value != value; }
+  bool operator<(const StorageType value) const { return _value < value; }
 
-    //
-    // The ability to assign from a value or from another UniqueEnumeratedValue
-    // is a bit weird since it means you can have another one of these objects
-    // in existance with the same ID (so it isn't really unique). This sort of
-    // assignment should only be used as a means of selecting/finding a specific
-    // UniqueEnumeratedValue.
-    //
+  //
+  // The ability to assign from a value or from another UniqueEnumeratedValue
+  // is a bit weird since it means you can have another one of these objects
+  // in existance with the same ID (so it isn't really unique). This sort of
+  // assignment should only be used as a means of selecting/finding a specific
+  // UniqueEnumeratedValue.
+  //
 
-    // Assignment
-    UniqueEnumeratedValue<StorageType>& operator=(const UniqueEnumeratedValue<StorageType>& other) {
-      _value = other._value;
-      return *this;
-    }
+  // Assignment
+  UniqueEnumeratedValue<StorageType>& operator=(
+      const UniqueEnumeratedValue<StorageType>& other) {
+    _value = other._value;
+    return *this;
+  }
 
-    UniqueEnumeratedValue<StorageType>& operator=(const StorageType value) {
-      _value = value;
-      return *this;
-    }
+  UniqueEnumeratedValue<StorageType>& operator=(const StorageType value) {
+    _value = value;
+    return *this;
+  }
 
-    template<typename FwdType>
-    explicit UniqueEnumeratedValue(FwdType&& value) : _value(std::forward<FwdType>(value)) { }
+  template <typename FwdType>
+  explicit UniqueEnumeratedValue(FwdType&& value)
+      : _value(std::forward<FwdType>(value)) {}
 
-    bool IsUnknown() const { return _value == UNKNOWN_VALUE; }
+  bool IsUnknown() const { return _value == UNKNOWN_VALUE; }
 
-    bool IsSet() const { return _value != UNKNOWN_VALUE; }
+  bool IsSet() const { return _value != UNKNOWN_VALUE; }
 
-    void SetToUnknown() { _value = UNKNOWN_VALUE; }
+  void SetToUnknown() { _value = UNKNOWN_VALUE; }
 
-    void UnSet() { _value = UNKNOWN_VALUE; }
+  void UnSet() { _value = UNKNOWN_VALUE; }
 
-    //void SetToAny() { _value = ANY_VALUE; }
+  // void SetToAny() { _value = ANY_VALUE; }
 
-    StorageType GetValue() const { return _value; }
+  StorageType GetValue() const { return _value; }
 
-    operator StorageType() const { return _value; }
+  operator StorageType() const { return _value; }
 
-  protected:
+ protected:
+  // Derived classes can choose whether to expose this ability or not
+  void SetValue(StorageType newValue) { _value = newValue; }
 
-    // Derived classes can choose whether to expose this ability or not
-    void SetValue(StorageType newValue) { _value = newValue; }
+ private:
+  static const StorageType UNKNOWN_VALUE = -1;
+  // static const StorageType ANY_VALUE     =
+  // std::numeric_limits<StorageType>::max();
 
-  private:
+  StorageType _value;
 
-    static const StorageType UNKNOWN_VALUE = -1;
-    //static const StorageType ANY_VALUE     = std::numeric_limits<StorageType>::max();
+};  // class UniqueEnumeratedValue
 
-    StorageType _value;
+void ResetObjectIDCounter();
 
-  }; // class UniqueEnumeratedValue
+class ObjectID : public UniqueEnumeratedValue<int> {
+  friend void ResetObjectIDCounter();
 
-  void ResetObjectIDCounter();
+ public:
+  void Set();
 
-  class ObjectID : public UniqueEnumeratedValue<int>
-  {
-    friend void ResetObjectIDCounter();
-  public:
+  using UniqueEnumeratedValue<StorageType>::operator=;
 
-    void Set();
+  ObjectID() = default;
+  ObjectID(StorageType value) : UniqueEnumeratedValue<StorageType>(value) {}
 
-    using UniqueEnumeratedValue<StorageType>::operator=;
+ private:
+  static StorageType UniqueIDCounter;
 
-    ObjectID() = default;
-    ObjectID(StorageType value) : UniqueEnumeratedValue<StorageType>(value) { }
+};  // class ObjectID
 
-  private:
-    static StorageType UniqueIDCounter;
+}  // namespace Anki
 
-  }; // class ObjectID
-
-} // namespace Anki
-
-#endif // __Anki_Common_ObjectIDs_H__
+#endif  // __Anki_Common_ObjectIDs_H__

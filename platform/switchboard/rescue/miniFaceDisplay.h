@@ -1,14 +1,14 @@
 /**
-* File: miniFaceDisplay.h
-*
-* Author: chapados
-* Date:   02/22/2019
-*
-* Description: Minimal face display functionality to support emergency pairing in a 
-*              fault-code situation.
-*
-* Copyright: Anki, Inc. 2019
-**/
+ * File: miniFaceDisplay.h
+ *
+ * Author: chapados
+ * Date:   02/22/2019
+ *
+ * Description: Minimal face display functionality to support emergency pairing
+ *in a fault-code situation.
+ *
+ * Copyright: Anki, Inc. 2019
+ **/
 #pragma once
 
 #include <cstdint>
@@ -27,5 +27,5 @@ bool DrawStartPairingScreen(const std::string& robotName);
 // Draws BLE name, key icon, and BLE pin to screen
 void DrawShowPinScreen(const std::string& robotName, const std::string& pin);
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki

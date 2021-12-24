@@ -16,6 +16,7 @@ limitations under the License.
 #define TENSORFLOW_CONTRIB_LITE_TOCO_EXPORT_TENSORFLOW_H_
 
 #include <string>
+
 #include "tensorflow/contrib/lite/toco/model.h"
 
 namespace toco {

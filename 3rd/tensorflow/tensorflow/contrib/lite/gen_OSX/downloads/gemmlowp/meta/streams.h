@@ -17,6 +17,7 @@
 
 #include <iostream>
 #include <typeinfo>
+
 #include "base.h"
 
 namespace gemmlowp {

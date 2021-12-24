@@ -18,25 +18,24 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorMoveHeadToAngle : public ICozmoBehavior
-{
-public: 
+class BehaviorMoveHeadToAngle : public ICozmoBehavior {
+ public:
   virtual ~BehaviorMoveHeadToAngle();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorMoveHeadToAngle(const Json::Value& config);  
+  explicit BehaviorMoveHeadToAngle(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
 
-private:
-
+ private:
   struct InstanceConfig {
     InstanceConfig();
     float headAngle_deg;
@@ -48,10 +47,9 @@ private:
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorMoveHeadToAngle__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorMoveHeadToAngle__

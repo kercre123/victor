@@ -48,78 +48,78 @@ namespace libdis {
 namespace google_breakpad {
 
 enum {
-  DISX86_NONE =                 0x0,
-  DISX86_BAD_BRANCH_TARGET =    0x1,
-  DISX86_BAD_ARGUMENT_PASSED =  0x2,
-  DISX86_BAD_WRITE =            0x4,
-  DISX86_BAD_BLOCK_WRITE =      0x8,
-  DISX86_BAD_READ =             0x10,
-  DISX86_BAD_BLOCK_READ =       0x20,
-  DISX86_BAD_COMPARISON =       0x40
+  DISX86_NONE = 0x0,
+  DISX86_BAD_BRANCH_TARGET = 0x1,
+  DISX86_BAD_ARGUMENT_PASSED = 0x2,
+  DISX86_BAD_WRITE = 0x4,
+  DISX86_BAD_BLOCK_WRITE = 0x8,
+  DISX86_BAD_READ = 0x10,
+  DISX86_BAD_BLOCK_READ = 0x20,
+  DISX86_BAD_COMPARISON = 0x40
 };
 
 class DisassemblerX86 {
-  public:
-    // TODO(cdn): Modify this class to take a MemoryRegion instead of just
-    // a raw buffer. This will make it easier to use this on arbitrary
-    // minidumps without first copying out the code segment.
-    DisassemblerX86(const uint8_t *bytecode, uint32_t, uint32_t);
-    ~DisassemblerX86();
+ public:
+  // TODO(cdn): Modify this class to take a MemoryRegion instead of just
+  // a raw buffer. This will make it easier to use this on arbitrary
+  // minidumps without first copying out the code segment.
+  DisassemblerX86(const uint8_t *bytecode, uint32_t, uint32_t);
+  ~DisassemblerX86();
 
-    // This walks to the next instruction in the memory region and
-    // sets flags based on the type of instruction and previous state
-    // including any registers marked as bad through setBadRead()
-    // or setBadWrite(). This method can be called in a loop to
-    // disassemble until the end of a region.
-    uint32_t NextInstruction();
+  // This walks to the next instruction in the memory region and
+  // sets flags based on the type of instruction and previous state
+  // including any registers marked as bad through setBadRead()
+  // or setBadWrite(). This method can be called in a loop to
+  // disassemble until the end of a region.
+  uint32_t NextInstruction();
 
-    // Indicates whether the current disassembled instruction was valid.
-    bool currentInstructionValid() { return instr_valid_; }
+  // Indicates whether the current disassembled instruction was valid.
+  bool currentInstructionValid() { return instr_valid_; }
 
-    // Returns the current instruction as defined in libdis.h,
-    // or NULL if the current instruction is not valid.
-    const libdis::x86_insn_t* currentInstruction() {
-      return instr_valid_ ? &current_instr_ : NULL;
-    }
+  // Returns the current instruction as defined in libdis.h,
+  // or NULL if the current instruction is not valid.
+  const libdis::x86_insn_t *currentInstruction() {
+    return instr_valid_ ? &current_instr_ : NULL;
+  }
 
-    // Returns the type of the current instruction as defined in libdis.h.
-    libdis::x86_insn_group currentInstructionGroup() {
-      return current_instr_.group;
-    }
+  // Returns the type of the current instruction as defined in libdis.h.
+  libdis::x86_insn_group currentInstructionGroup() {
+    return current_instr_.group;
+  }
 
-    // Indicates whether a return instruction has been encountered.
-    bool endOfBlock() { return end_of_block_; }
+  // Indicates whether a return instruction has been encountered.
+  bool endOfBlock() { return end_of_block_; }
 
-    // The flags set so far for the disassembly.
-    uint16_t flags() { return flags_; }
+  // The flags set so far for the disassembly.
+  uint16_t flags() { return flags_; }
 
-    // This sets an indicator that the register used to determine
-    // src or dest for the current instruction is tainted. These can
-    // be used after examining the current instruction to indicate,
-    // for example that a bad read or write occurred and the pointer
-    // stored in the register is currently invalid.
-    bool setBadRead();
-    bool setBadWrite();
+  // This sets an indicator that the register used to determine
+  // src or dest for the current instruction is tainted. These can
+  // be used after examining the current instruction to indicate,
+  // for example that a bad read or write occurred and the pointer
+  // stored in the register is currently invalid.
+  bool setBadRead();
+  bool setBadWrite();
 
-  protected:
-    const uint8_t *bytecode_;
-    uint32_t size_;
-    uint32_t virtual_address_;
-    uint32_t current_byte_offset_;
-    uint32_t current_inst_offset_;
+ protected:
+  const uint8_t *bytecode_;
+  uint32_t size_;
+  uint32_t virtual_address_;
+  uint32_t current_byte_offset_;
+  uint32_t current_inst_offset_;
 
-    bool instr_valid_;
-    libdis::x86_insn_t current_instr_;
+  bool instr_valid_;
+  libdis::x86_insn_t current_instr_;
 
-    // TODO(cdn): Maybe also track an expression's index register.
-    // ex: mov eax, [ebx + ecx]; ebx is base, ecx is index.
-    bool register_valid_;
-    libdis::x86_reg_t bad_register_;
+  // TODO(cdn): Maybe also track an expression's index register.
+  // ex: mov eax, [ebx + ecx]; ebx is base, ecx is index.
+  bool register_valid_;
+  libdis::x86_reg_t bad_register_;
 
-    bool pushed_bad_value_;
-    bool end_of_block_;
+  bool pushed_bad_value_;
+  bool end_of_block_;
 
-    uint16_t flags_;
+  uint16_t flags_;
 };
 
 }  // namespace google_breakpad

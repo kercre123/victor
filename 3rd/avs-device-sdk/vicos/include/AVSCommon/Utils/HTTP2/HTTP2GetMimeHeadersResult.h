@@ -27,54 +27,55 @@ namespace utils {
 namespace http2 {
 
 /**
- * Value returned from @c HTTP2MimeRequestSourceInterface::getMimeHeaderLines(), combining a status and a
- * vector of header lines.
+ * Value returned from @c HTTP2MimeRequestSourceInterface::getMimeHeaderLines(),
+ * combining a status and a vector of header lines.
  */
 struct HTTP2GetMimeHeadersResult {
-public:
-    /// The status of the @c getMimeHeadersLines() operation.  @see HTTP2SendStatus.
-    HTTP2SendStatus status;
+ public:
+  /// The status of the @c getMimeHeadersLines() operation.  @see
+  /// HTTP2SendStatus.
+  HTTP2SendStatus status;
 
-    /// The headers returned from @c getMimeHeaderLines.  Only non-empty if @c status == @c CONTINUE.
-    std::vector<std::string> headers;
+  /// The headers returned from @c getMimeHeaderLines.  Only non-empty if @c
+  /// status == @c CONTINUE.
+  std::vector<std::string> headers;
 
-    /**
-     * Construct a HTTP2GetMimeHeadersResult with a status of CONTINUE and the header values to continue with.
-     * @param headers The headers to send.
-     * @return A HTTP2GetMimeHeadersResult with status CONTINUE and the specified header lines.
-     */
-    HTTP2GetMimeHeadersResult(const std::vector<std::string>& headers);
+  /**
+   * Construct a HTTP2GetMimeHeadersResult with a status of CONTINUE and the
+   * header values to continue with.
+   * @param headers The headers to send.
+   * @return A HTTP2GetMimeHeadersResult with status CONTINUE and the specified
+   * header lines.
+   */
+  HTTP2GetMimeHeadersResult(const std::vector<std::string>& headers);
 
-    /// Const PAUSE result.
-    static const HTTP2GetMimeHeadersResult PAUSE;
+  /// Const PAUSE result.
+  static const HTTP2GetMimeHeadersResult PAUSE;
 
-    /// Const COMPLETE result.
-    static const HTTP2GetMimeHeadersResult COMPLETE;
+  /// Const COMPLETE result.
+  static const HTTP2GetMimeHeadersResult COMPLETE;
 
-    /// Const ABORT result.
-    static const HTTP2GetMimeHeadersResult ABORT;
+  /// Const ABORT result.
+  static const HTTP2GetMimeHeadersResult ABORT;
 
-private:
-    /**
-     * Constructor.
-     *
-     * @param status The status of the @c getMimeHeaders() operation.
-     * @param headers The headers to send.
-     */
-    HTTP2GetMimeHeadersResult(HTTP2SendStatus status, const std::vector<std::string>& headers);
+ private:
+  /**
+   * Constructor.
+   *
+   * @param status The status of the @c getMimeHeaders() operation.
+   * @param headers The headers to send.
+   */
+  HTTP2GetMimeHeadersResult(HTTP2SendStatus status,
+                            const std::vector<std::string>& headers);
 };
 
-inline HTTP2GetMimeHeadersResult::HTTP2GetMimeHeadersResult(const std::vector<std::string>& headers) :
-        status{HTTP2SendStatus::CONTINUE},
-        headers{headers} {
-}
+inline HTTP2GetMimeHeadersResult::HTTP2GetMimeHeadersResult(
+    const std::vector<std::string>& headers)
+    : status{HTTP2SendStatus::CONTINUE}, headers{headers} {}
 
 inline HTTP2GetMimeHeadersResult::HTTP2GetMimeHeadersResult(
-    HTTP2SendStatus statusIn,
-    const std::vector<std::string>& headersIn) :
-        status{statusIn},
-        headers{headersIn} {
-}
+    HTTP2SendStatus statusIn, const std::vector<std::string>& headersIn)
+    : status{statusIn}, headers{headersIn} {}
 
 }  // namespace http2
 }  // namespace utils

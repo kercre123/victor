@@ -14,103 +14,81 @@
  * limitations under the License.
  */
 
- /**
-  * File: SafeMessageBuffer.cpp
-  *
-  * Description: Utility for safe message serialization and deserialization.
-  *
-  **/
+/**
+ * File: SafeMessageBuffer.cpp
+ *
+ * Description: Utility for safe message serialization and deserialization.
+ *
+ **/
 
 #include <CLAD/SafeMessageBuffer.h>
+
 #include <cassert>
 #include <cstring>
 
-namespace CLAD
-{
+namespace CLAD {
 
 SafeMessageBuffer::SafeMessageBuffer()
-  : _buffer(nullptr)
-  , _bufferSize(0)
-  , _writeHead(_buffer)
-  , _readHead(_buffer)
-  , _ownsBufferMemory(false)
-{
-}
-
+    : _buffer(nullptr),
+      _bufferSize(0),
+      _writeHead(_buffer),
+      _readHead(_buffer),
+      _ownsBufferMemory(false) {}
 
 SafeMessageBuffer::SafeMessageBuffer(size_t inSize)
-  : _buffer(nullptr)
-  , _bufferSize(0)
-  , _writeHead(_buffer)
-  , _readHead(_buffer)
-  , _ownsBufferMemory(false)
-{
+    : _buffer(nullptr),
+      _bufferSize(0),
+      _writeHead(_buffer),
+      _readHead(_buffer),
+      _ownsBufferMemory(false) {
   AllocateBuffer(inSize);
 }
 
+SafeMessageBuffer::SafeMessageBuffer(uint8_t* inBuffer, size_t inBufferSize,
+                                     bool inOwnsBufferMemory)
+    : _buffer(inBuffer),
+      _bufferSize(inBufferSize),
+      _writeHead(_buffer),
+      _readHead(_buffer),
+      _ownsBufferMemory(inOwnsBufferMemory) {}
 
-SafeMessageBuffer::SafeMessageBuffer(uint8_t* inBuffer, size_t inBufferSize, bool inOwnsBufferMemory)
-  : _buffer(inBuffer)
-  , _bufferSize(inBufferSize)
-  , _writeHead(_buffer)
-  , _readHead(_buffer)
-  , _ownsBufferMemory(inOwnsBufferMemory)
-{
-}
+SafeMessageBuffer::~SafeMessageBuffer() { ReleaseBuffer(); }
 
+void SafeMessageBuffer::ReleaseBuffer() {
+  if (_ownsBufferMemory) {
+    delete[] _buffer;
+    _ownsBufferMemory = false;
+  }
 
-SafeMessageBuffer::~SafeMessageBuffer()
-{
-  ReleaseBuffer();
-}
-
-
-void SafeMessageBuffer::ReleaseBuffer()
-{
-  if (_ownsBufferMemory)
-    {
-      delete[] _buffer;
-      _ownsBufferMemory = false;
-    }
-
-  _buffer    = nullptr;
+  _buffer = nullptr;
   _writeHead = _buffer;
-  _readHead  = _buffer;
+  _readHead = _buffer;
 }
 
-
-void SafeMessageBuffer::SetBuffer(uint8_t* inBuffer, size_t inBufferSize, bool inOwnsBufferMemory)
-{
+void SafeMessageBuffer::SetBuffer(uint8_t* inBuffer, size_t inBufferSize,
+                                  bool inOwnsBufferMemory) {
   ReleaseBuffer();
 
-  _buffer           = inBuffer;
-  _bufferSize       = inBufferSize;
-  _writeHead        = _buffer;
-  _readHead         = _buffer;
+  _buffer = inBuffer;
+  _bufferSize = inBufferSize;
+  _writeHead = _buffer;
+  _readHead = _buffer;
   _ownsBufferMemory = inOwnsBufferMemory;
 }
 
-
-void SafeMessageBuffer::AllocateBuffer(size_t inBufferSize)
-{
+void SafeMessageBuffer::AllocateBuffer(size_t inBufferSize) {
   uint8_t* newBuffer = new uint8_t[inBufferSize];
   SetBuffer(newBuffer, inBufferSize, true);
 }
 
-
-size_t SafeMessageBuffer::GetBytesWritten() const
-{
+size_t SafeMessageBuffer::GetBytesWritten() const {
   return (_writeHead - _buffer);
 }
 
+size_t SafeMessageBuffer::GetBytesRead() const { return (_readHead - _buffer); }
 
-size_t SafeMessageBuffer::GetBytesRead() const
-{
-  return (_readHead - _buffer);
-}
-
-size_t SafeMessageBuffer::CopyBytesOut(uint8_t* outBuffer, size_t bufferSize) const
-{
+size_t SafeMessageBuffer::CopyBytesOut(uint8_t* outBuffer,
+                                       size_t bufferSize) const {
   size_t byteCount = GetBytesWritten();
   if (bufferSize < byteCount) {
     return 0;
@@ -119,14 +97,12 @@ size_t SafeMessageBuffer::CopyBytesOut(uint8_t* outBuffer, size_t bufferSize) co
   return (byteCount);
 }
 
-void SafeMessageBuffer::Clear()
-{
+void SafeMessageBuffer::Clear() {
   memset(_buffer, 0, _bufferSize);
   _writeHead = _readHead = _buffer;
 }
 
-bool SafeMessageBuffer::WriteBytes(const void* srcData, size_t sizeOfWrite)
-{
+bool SafeMessageBuffer::WriteBytes(const void* srcData, size_t sizeOfWrite) {
   const bool isRoomForWrite = (GetBytesWritten() + sizeOfWrite) <= _bufferSize;
   assert(isRoomForWrite);
   if (isRoomForWrite) {
@@ -136,9 +112,7 @@ bool SafeMessageBuffer::WriteBytes(const void* srcData, size_t sizeOfWrite)
   return isRoomForWrite;
 }
 
-
-bool SafeMessageBuffer::ReadBytes(void* destData, size_t sizeOfRead) const
-{
+bool SafeMessageBuffer::ReadBytes(void* destData, size_t sizeOfRead) const {
   const bool isRoomForRead = ((GetBytesRead() + sizeOfRead) <= _bufferSize);
   assert(isRoomForRead);
   if (isRoomForRead) {
@@ -148,16 +122,14 @@ bool SafeMessageBuffer::ReadBytes(void* destData, size_t sizeOfRead) const
   return isRoomForRead;
 }
 
-template<>
-bool SafeMessageBuffer::Write<bool>(bool val)
-{
+template <>
+bool SafeMessageBuffer::Write<bool>(bool val) {
   uint8_t tmp = val ? 1 : 0;
   return WriteBytes(&tmp, sizeof(tmp));
 }
 
-template<>
-bool SafeMessageBuffer::Read<bool>(bool& outVal) const
-{
+template <>
+bool SafeMessageBuffer::Read<bool>(bool& outVal) const {
   uint8_t tmp;
   bool readOk = Read(tmp);
   if (readOk) {
@@ -166,26 +138,27 @@ bool SafeMessageBuffer::Read<bool>(bool& outVal) const
   return readOk;
 }
 
-bool SafeMessageBuffer::ContentsEqual(const SafeMessageBuffer& other) const
-{
-    if (_buffer == nullptr || _bufferSize == 0) {
-        return other._buffer == nullptr || other._bufferSize == 0;
-    }
-    else if (other._buffer == nullptr || other._bufferSize == 0) {
-        return false;
-    }
+bool SafeMessageBuffer::ContentsEqual(const SafeMessageBuffer& other) const {
+  if (_buffer == nullptr || _bufferSize == 0) {
+    return other._buffer == nullptr || other._bufferSize == 0;
+  } else if (other._buffer == nullptr || other._bufferSize == 0) {
+    return false;
+  }
 
-    size_t thisSize = (_writeHead > _readHead) ? _writeHead - _readHead : _bufferSize;
-    uint8_t* thisBuffer = (_writeHead > _readHead) ? _readHead : _buffer;
-    size_t otherSize = (other._writeHead > other._readHead) ? other._writeHead - other._readHead : other._bufferSize;
-    uint8_t* otherBuffer = (other._writeHead > other._readHead) ? other._readHead : other._buffer;
+  size_t thisSize =
+      (_writeHead > _readHead) ? _writeHead - _readHead : _bufferSize;
+  uint8_t* thisBuffer = (_writeHead > _readHead) ? _readHead : _buffer;
+  size_t otherSize = (other._writeHead > other._readHead)
+                         ? other._writeHead - other._readHead
+                         : other._bufferSize;
+  uint8_t* otherBuffer =
+      (other._writeHead > other._readHead) ? other._readHead : other._buffer;
 
-    if (thisSize != otherSize) {
-        return false;
-    }
-    else {
-        return std::equal(thisBuffer, thisBuffer + thisSize, otherBuffer);
-    }
+  if (thisSize != otherSize) {
+    return false;
+  } else {
+    return std::equal(thisBuffer, thisBuffer + thisSize, otherBuffer);
+  }
 }
 
-} // CLAD
+}  // namespace CLAD

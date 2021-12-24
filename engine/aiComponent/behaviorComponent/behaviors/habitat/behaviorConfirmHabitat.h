@@ -20,8 +20,8 @@
 #ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_Habitat_BehaviorConfirmHabitat_H__
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_Habitat_BehaviorConfirmHabitat_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "clad/types/habitatDetectionTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Vector {
@@ -29,29 +29,27 @@ namespace Vector {
 class BlockWorldFilter;
 class ObservableObject;
 
-class BehaviorConfirmHabitat : public ICozmoBehavior
-{
-protected:
-
+class BehaviorConfirmHabitat : public ICozmoBehavior {
+ protected:
   friend class BehaviorFactory;
   BehaviorConfirmHabitat(const Json::Value& config);
-  
-public:
 
+ public:
   virtual ~BehaviorConfirmHabitat();
   virtual bool WantsToBeActivatedBehavior() const override;
   void InitBehavior() override;
-  
-protected:
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override
-  {
+ protected:
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.behaviorAlwaysDelegates = false;
-    modifiers.visionModesForActiveScope->insert({ VisionMode::Markers, EVisionUpdateFrequency::High });
+    modifiers.visionModesForActiveScope->insert(
+        {VisionMode::Markers, EVisionUpdateFrequency::High});
   }
-  
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void OnBehaviorEnteredActivatableScope() override;
@@ -60,9 +58,10 @@ protected:
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  
+
   // state action helper methods
-  void DelegateActionHelper(IActionRunner* action, RobotCompletedActionCallback&& callback);
+  void DelegateActionHelper(IActionRunner* action,
+                            RobotCompletedActionCallback&& callback);
   void TransitionToRandomWalk();
   void TransitionToSeekLineFromCharger();
   void TransitionToBackupForward();
@@ -70,38 +69,37 @@ protected:
   void TransitionToReactToHabitat();
   void TransitionToReactToWhite(uint8_t whiteDetectedFlags);
   void TransitionToReactToWhite(HabitatLineRelPose lineRelPose);
-  
+
   // helper motions to reposition the robot from certain line positions
   void TransitionToCliffAlignWhite();
-  void TransitionToBackupTurnForward(int backDist_mm, f32 angle, int forwardDist_mm);
-  void TransitionToTurnBackupForward(f32 angle, int backDist_mm, int forwardDist_mm);
-  
+  void TransitionToBackupTurnForward(int backDist_mm, f32 angle,
+                                     int forwardDist_mm);
+  void TransitionToTurnBackupForward(f32 angle, int backDist_mm,
+                                     int forwardDist_mm);
+
   // returns nullptr if there is no charger seen
   const ObservableObject* GetChargerIfObserved() const;
-  
-  // Accumulate readings from ProxSensor when trying to check for close obstacles
-  // returns whether there are enough readings to call CheckIsCloseToObstacle()
+
+  // Accumulate readings from ProxSensor when trying to check for close
+  // obstacles returns whether there are enough readings to call
+  // CheckIsCloseToObstacle()
   bool UpdateProxSensorFilter();
-  
+
   // perceive whether an object is very close to the robot
   // => this triggers a backup reaction to unstick us from tight situations
   bool CheckIsCloseToObstacle() const;
-  
-  int RandomSign() const
-  {
-    return (GetRNG().RandInt(2)==1) ? 1 : -1;
-  }
-  
+
+  int RandomSign() const { return (GetRNG().RandInt(2) == 1) ? 1 : -1; }
+
   // returns true iff:
   // - the charger is seen
   // - a pose can be computed between the robot and the charger
   // - the cliff sensor poses for FrontLeft and FrontRight are
   //    in the bounding box for the logo
   bool CheckIfFrontCliffsAreInLogoRegion();
-  
+
   // steps in the process of confirming habitat
-  enum class ConfirmHabitatPhase
-  {
+  enum class ConfirmHabitatPhase {
     InitialCheckObstacle,
     InitialCheckCharger,
     LocalizeCharger,
@@ -109,50 +107,48 @@ protected:
     RandomWalk,
     LineDocking
   };
-  
-  struct DynamicVariables
-  {
+
+  struct DynamicVariables {
     // the current step or phase of habitat confirmation procedure
     ConfirmHabitatPhase _phase = ConfirmHabitatPhase::InitialCheckObstacle;
-    
+
     // flag set if the random walk detects a nearby obstacle
     // this will gate choosing certain drive actions, or
     // make the robot take a different maneuver to unblock it
     bool _randomWalkTooCloseObstacle = false;
-    
+
     // time of last reaction animation, for cooldown purposes
     float _nextWhiteReactionAnimTime_sec = 0.0;
-    
+
     // buffer of prox sensor readings to accumulate in order to
     // check for a too-close obstacle in front of the robot
     std::vector<u16> _validProxDistances = {};
-    
+
     u32 _numTicksWaitingForProx = 0;
-    
+
     // whether we are retrying the cliff align action
     bool _cliffAlignRetry = false;
 
     explicit DynamicVariables() = default;
   };
-  
-  struct InstanceConfig
-  {
+
+  struct InstanceConfig {
     IBEIConditionPtr onTreadsTimeCondition;
-    
+
     std::string searchForChargerBehaviorIDStr;
     ICozmoBehaviorPtr searchForChargerBehavior;
-    
+
     explicit InstanceConfig();
   };
-  
+
   // persist this filter because we use it to search for the charger
   std::unique_ptr<BlockWorldFilter> _chargerFilter;
-  
+
   DynamicVariables _dVars;
   InstanceConfig _iConfig;
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
-#endif//__Engine_AiComponent_BehaviorComponent_Behaviors_Habitat_BehaviorConfirmHabitat_H__
+#endif  //__Engine_AiComponent_BehaviorComponent_Behaviors_Habitat_BehaviorConfirmHabitat_H__

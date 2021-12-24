@@ -31,7 +31,8 @@ typedef int32_t FirmwareVersion;
 /// The invalid firmware version.
 static const FirmwareVersion INVALID_FIRMWARE_VERSION = 0;
 
-static const FirmwareVersion MAX_FIRMWARE_VERSION = std::numeric_limits<FirmwareVersion>::max();
+static const FirmwareVersion MAX_FIRMWARE_VERSION =
+    std::numeric_limits<FirmwareVersion>::max();
 
 /**
  * Determine whether a firmware version is valid.
@@ -40,7 +41,7 @@ static const FirmwareVersion MAX_FIRMWARE_VERSION = std::numeric_limits<Firmware
  * @return Whether the specified firmware version is valid.
  */
 inline bool isValidFirmwareVersion(FirmwareVersion version) {
-    return version > 0;
+  return version > 0;
 }
 
 };  // namespace softwareInfo
@@ -49,15 +50,16 @@ inline bool isValidFirmwareVersion(FirmwareVersion version) {
  * This interface receives notifications from @c SoftwareInfoSender instances.
  */
 class SoftwareInfoSenderObserverInterface {
-public:
-    virtual ~SoftwareInfoSenderObserverInterface() = default;
+ public:
+  virtual ~SoftwareInfoSenderObserverInterface() = default;
 
-    /**
-     * Notification that the firmware version has been accepted by AVS.
-     *
-     * @param The firmware version that was accepted.
-     */
-    virtual void onFirmwareVersionAccepted(softwareInfo::FirmwareVersion firmwareVersion) = 0;
+  /**
+   * Notification that the firmware version has been accepted by AVS.
+   *
+   * @param The firmware version that was accepted.
+   */
+  virtual void onFirmwareVersionAccepted(
+      softwareInfo::FirmwareVersion firmwareVersion) = 0;
 };
 
 }  // namespace sdkInterfaces

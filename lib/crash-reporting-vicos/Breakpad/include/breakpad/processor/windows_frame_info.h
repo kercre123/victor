@@ -34,12 +34,11 @@
 //
 // Author: Mark Mentovai
 
-
 #ifndef PROCESSOR_WINDOWS_FRAME_INFO_H__
 #define PROCESSOR_WINDOWS_FRAME_INFO_H__
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <string>
 #include <vector>
@@ -57,11 +56,7 @@ namespace google_breakpad {
 
 struct WindowsFrameInfo {
  public:
-  enum Validity {
-    VALID_NONE           = 0,
-    VALID_PARAMETER_SIZE = 1,
-    VALID_ALL            = -1
-  };
+  enum Validity { VALID_NONE = 0, VALID_PARAMETER_SIZE = 1, VALID_ALL = -1 };
 
   // The types for stack_info_.  This is equivalent to MS DIA's
   // StackFrameTypeEnum.  Each identifies a different type of frame
@@ -77,26 +72,23 @@ struct WindowsFrameInfo {
     STACK_INFO_UNKNOWN = -1
   };
 
-  WindowsFrameInfo() : type_(STACK_INFO_UNKNOWN),
-                     valid(VALID_NONE),
-                     prolog_size(0),
-                     epilog_size(0),
-                     parameter_size(0),
-                     saved_register_size(0),
-                     local_size(0),
-                     max_stack_size(0),
-                     allocates_base_pointer(0),
-                     program_string() {}
+  WindowsFrameInfo()
+      : type_(STACK_INFO_UNKNOWN),
+        valid(VALID_NONE),
+        prolog_size(0),
+        epilog_size(0),
+        parameter_size(0),
+        saved_register_size(0),
+        local_size(0),
+        max_stack_size(0),
+        allocates_base_pointer(0),
+        program_string() {}
 
-  WindowsFrameInfo(StackInfoTypes type,
-                 uint32_t set_prolog_size,
-                 uint32_t set_epilog_size,
-                 uint32_t set_parameter_size,
-                 uint32_t set_saved_register_size,
-                 uint32_t set_local_size,
-                 uint32_t set_max_stack_size,
-                 int set_allocates_base_pointer,
-                 const string set_program_string)
+  WindowsFrameInfo(StackInfoTypes type, uint32_t set_prolog_size,
+                   uint32_t set_epilog_size, uint32_t set_parameter_size,
+                   uint32_t set_saved_register_size, uint32_t set_local_size,
+                   uint32_t set_max_stack_size, int set_allocates_base_pointer,
+                   const string set_program_string)
       : type_(type),
         valid(VALID_ALL),
         prolog_size(set_prolog_size),
@@ -112,33 +104,29 @@ struct WindowsFrameInfo {
   // a string. Returns NULL if parsing fails, or a new object
   // otherwise. type, rva and code_size are present in the STACK line,
   // but not the StackFrameInfo structure, so return them as outparams.
-  static WindowsFrameInfo *ParseFromString(const string string,
-                                           int &type,
-                                           uint64_t &rva,
-                                           uint64_t &code_size) {
+  static WindowsFrameInfo *ParseFromString(const string string, int &type,
+                                           uint64_t &rva, uint64_t &code_size) {
     // The format of a STACK WIN record is documented at:
     //
     // https://chromium.googlesource.com/breakpad/breakpad/+/master/docs/symbol_files.md
 
-    std::vector<char>  buffer;
+    std::vector<char> buffer;
     StringToVector(string, buffer);
-    std::vector<char*> tokens;
-    if (!Tokenize(&buffer[0], " \r\n", 11, &tokens))
-      return NULL;
+    std::vector<char *> tokens;
+    if (!Tokenize(&buffer[0], " \r\n", 11, &tokens)) return NULL;
 
     type = strtol(tokens[0], NULL, 16);
-    if (type < 0 || type > STACK_INFO_LAST - 1)
-      return NULL;
+    if (type < 0 || type > STACK_INFO_LAST - 1) return NULL;
 
-    rva                           = strtoull(tokens[1],  NULL, 16);
-    code_size                     = strtoull(tokens[2],  NULL, 16);
-    uint32_t prolog_size          =  strtoul(tokens[3],  NULL, 16);
-    uint32_t epilog_size          =  strtoul(tokens[4],  NULL, 16);
-    uint32_t parameter_size       =  strtoul(tokens[5],  NULL, 16);
-    uint32_t saved_register_size  =  strtoul(tokens[6],  NULL, 16);
-    uint32_t local_size           =  strtoul(tokens[7],  NULL, 16);
-    uint32_t max_stack_size       =  strtoul(tokens[8],  NULL, 16);
-    int has_program_string        =  strtoul(tokens[9], NULL, 16);
+    rva = strtoull(tokens[1], NULL, 16);
+    code_size = strtoull(tokens[2], NULL, 16);
+    uint32_t prolog_size = strtoul(tokens[3], NULL, 16);
+    uint32_t epilog_size = strtoul(tokens[4], NULL, 16);
+    uint32_t parameter_size = strtoul(tokens[5], NULL, 16);
+    uint32_t saved_register_size = strtoul(tokens[6], NULL, 16);
+    uint32_t local_size = strtoul(tokens[7], NULL, 16);
+    uint32_t max_stack_size = strtoul(tokens[8], NULL, 16);
+    int has_program_string = strtoul(tokens[9], NULL, 16);
 
     const char *program_string = "";
     int allocates_base_pointer = 0;
@@ -148,15 +136,10 @@ struct WindowsFrameInfo {
       allocates_base_pointer = strtoul(tokens[10], NULL, 16);
     }
 
-    return new WindowsFrameInfo(static_cast<StackInfoTypes>(type),
-                                prolog_size,
-                                epilog_size,
-                                parameter_size,
-                                saved_register_size,
-                                local_size,
-                                max_stack_size,
-                                allocates_base_pointer,
-                                program_string);
+    return new WindowsFrameInfo(static_cast<StackInfoTypes>(type), prolog_size,
+                                epilog_size, parameter_size,
+                                saved_register_size, local_size, max_stack_size,
+                                allocates_base_pointer, program_string);
   }
 
   // CopyFrom makes "this" WindowsFrameInfo object identical to "that".
@@ -204,6 +187,5 @@ struct WindowsFrameInfo {
 };
 
 }  // namespace google_breakpad
-
 
 #endif  // PROCESSOR_WINDOWS_FRAME_INFO_H__

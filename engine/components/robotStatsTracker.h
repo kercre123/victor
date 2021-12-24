@@ -16,12 +16,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent_fwd.h"
 #include "engine/robotComponents_fwd.h"
+#include "json/json.h"
 #include "osState/wallTime.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
-
-#include "json/json.h"
-
 
 namespace Anki {
 namespace Vector {
@@ -30,20 +28,19 @@ enum class ActiveFeature : uint32_t;
 enum class BehaviorStat : uint32_t;
 
 class JdocsManager;
-  
-class RobotStatsTracker : public IDependencyManagedComponent<RobotComponentID>,
-                          public UnreliableComponent<BCComponentID>, 
-                          private Anki::Util::noncopyable
-{
-public:
 
+class RobotStatsTracker : public IDependencyManagedComponent<RobotComponentID>,
+                          public UnreliableComponent<BCComponentID>,
+                          private Anki::Util::noncopyable {
+ public:
   RobotStatsTracker();
   ~RobotStatsTracker();
 
   void IncreaseStimulationSeconds(float delta);
   void IncreaseStimulationCumulativePositiveDelta(float delta);
-  
-  void IncrementActiveFeature(const ActiveFeature& feature, const std::string& intentSource);
+
+  void IncrementActiveFeature(const ActiveFeature& feature,
+                              const std::string& intentSource);
 
   // specifically for petting duration
   void IncrementPettingDuration(const float secondsPet);
@@ -52,17 +49,20 @@ public:
 
   void IncrementNamedFacesPerDay();
 
-  void IncreaseOdometer(float lWheelDelta_mm, float rWheelDelta_mm, float bodyDelta_mm);
+  void IncreaseOdometer(float lWheelDelta_mm, float rWheelDelta_mm,
+                        float bodyDelta_mm);
 
   float GetNumHoursAlive() const;
 
   ////////////////////////////////////////////////////////////////////////////////
 
-  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+  virtual void GetInitDependencies(
+      RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::JdocsManager);
   }
-  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot,
+                             const RobotCompMap& dependentComps) override;
 
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
 
@@ -70,15 +70,15 @@ public:
   using UnreliableComponent<BCComponentID>::InitDependent;
   using UnreliableComponent<BCComponentID>::GetInitDependencies;
   using UnreliableComponent<BCComponentID>::UpdateDependent;
-  
+
   static Json::Value FilterStatsForApp(const Json::Value& json);
 
-private:
-
+ private:
   // reset everything including file backup. This is destructive, be careful!
   void ResetAllStats();
-  
-  void IncreaseHelper(const std::string& prefix, const std::string& stat, uint64_t delta);
+
+  void IncreaseHelper(const std::string& prefix, const std::string& stat,
+                      uint64_t delta);
 
   bool UpdateStatsJdoc(const bool saveToDiskImmediately,
                        const bool saveToCloudImmediately = false);
@@ -90,13 +90,13 @@ private:
   bool _dirtyJdoc = false;
   JdocsManager* _jdocsManager = nullptr;
   float _timeOfNextAliveTimeCheck = 0.0f;
-  // We store the current basestation time each tick, because we need it in the shutdown
-  // callback (AddRemainingAliveTimeOnShutdown) and by the time that executes, basestation
-  // timer is already destroyed
+  // We store the current basestation time each tick, because we need it in the
+  // shutdown callback (AddRemainingAliveTimeOnShutdown) and by the time that
+  // executes, basestation timer is already destroyed
   float _currTime_s = 0.0f;
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

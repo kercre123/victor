@@ -30,25 +30,25 @@ namespace http2 {
  * Interface for making an HTTP2 request.
  */
 class HTTP2RequestInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~HTTP2RequestInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~HTTP2RequestInterface() = default;
 
-    /**
-     * Cancel this @c HTTP2Request.
-     *
-     * @return Whether cancelling this request was triggered.
-     */
-    virtual bool cancel() = 0;
+  /**
+   * Cancel this @c HTTP2Request.
+   *
+   * @return Whether cancelling this request was triggered.
+   */
+  virtual bool cancel() = 0;
 
-    /**
-     * Get an integer uniquely identifying this request.
-     *
-     * @return An integer uniquely identifying this request.
-     */
-    virtual std::string getId() const = 0;
+  /**
+   * Get an integer uniquely identifying this request.
+   *
+   * @return An integer uniquely identifying this request.
+   */
+  virtual std::string getId() const = 0;
 };
 
 }  // namespace http2

@@ -1,22 +1,21 @@
 /**
-* File: behaviorCoordinateGlobalInterrupts.h
-*
-* Author: Kevin M. Karol
-* Created: 2/22/18
-*
-* Description: Behavior responsible for handling special case needs 
-* that require coordination across behavior global interrupts
-*
-* Copyright: Anki, Inc. 2018
-*
-**/
+ * File: behaviorCoordinateGlobalInterrupts.h
+ *
+ * Author: Kevin M. Karol
+ * Created: 2/22/18
+ *
+ * Description: Behavior responsible for handling special case needs
+ * that require coordination across behavior global interrupts
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 #ifndef __Engine_Behaviors_BehaviorCoordinateGlobalInterrupts_H__
 #define __Engine_Behaviors_BehaviorCoordinateGlobalInterrupts_H__
 
-
-#include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherPassThrough.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTreeStateHelpers.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherPassThrough.h"
 
 namespace Anki {
 namespace Vector {
@@ -27,15 +26,14 @@ class BehaviorHighLevelAI;
 class BehaviorReactToVoiceCommand;
 class BehaviorTimerUtilityCoordinator;
 
-
-class BehaviorCoordinateGlobalInterrupts : public BehaviorDispatcherPassThrough
-{
-public:
+class BehaviorCoordinateGlobalInterrupts
+    : public BehaviorDispatcherPassThrough {
+ public:
   virtual ~BehaviorCoordinateGlobalInterrupts();
 
-protected:
+ protected:
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;  
+  friend class BehaviorFactory;
   BehaviorCoordinateGlobalInterrupts(const Json::Value& config);
 
   virtual void InitPassThrough() override;
@@ -43,13 +41,12 @@ protected:
   virtual void PassThroughUpdate() override;
   virtual void OnPassThroughDeactivated() override;
 
-private:
-  
+ private:
   void CreateConsoleVars();
-  
-  struct InstanceConfig{
+
+  struct InstanceConfig {
     InstanceConfig();
-    IBEIConditionPtr  triggerWordPendingCond;
+    IBEIConditionPtr triggerWordPendingCond;
     ICozmoBehaviorPtr wakeWordBehavior;
     std::shared_ptr<BehaviorTimerUtilityCoordinator> timerCoordBehavior;
     AreBehaviorsActivatedHelper behaviorsThatShouldSuppressTimerAntics;
@@ -59,10 +56,10 @@ private:
 
     ICozmoBehaviorPtr meetVictorBehavior;
     std::vector<ICozmoBehaviorPtr> toSuppressWhenMeetVictor;
-    
+
     ICozmoBehaviorPtr danceToTheBeatBehavior;
     std::vector<ICozmoBehaviorPtr> toSuppressWhenDancingToTheBeat;
-    
+
     AreBehaviorsActivatedHelper behaviorsThatShouldntReactToUnexpectedMovement;
     ICozmoBehaviorPtr reactToUnexpectedMovementBehavior;
 
@@ -77,25 +74,23 @@ private:
     std::vector<std::shared_ptr<BehaviorDriveToFace>> driveToFaceBehaviors;
 
     std::vector<ICozmoBehaviorPtr> toSuppressWhenGoingHome;
-    
+
     std::unordered_map<ICozmoBehaviorPtr, bool> devActivatableOverrides;
   };
 
-  struct DynamicVariables{
+  struct DynamicVariables {
     DynamicVariables();
 
     bool suppressProx;
   };
 
-  InstanceConfig   _iConfig;
+  InstanceConfig _iConfig;
   DynamicVariables _dVars;
 
   bool ShouldSuppressProxReaction();
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-
-#endif // __Engine_Behaviors_BehaviorCoordinateGlobalInterrupts_H__
+#endif  // __Engine_Behaviors_BehaviorCoordinateGlobalInterrupts_H__

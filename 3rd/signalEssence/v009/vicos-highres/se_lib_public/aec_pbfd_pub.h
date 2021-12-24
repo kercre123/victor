@@ -25,48 +25,45 @@ extern "C" {
 
 //
 // configuration parameters
-typedef struct
-{
-    int32 blockSize;       // input block size
-    int32 lenChanModel;    // length of channel model
-    int32 sampleRate_Hz;
+typedef struct {
+  int32 blockSize;     // input block size
+  int32 lenChanModel;  // length of channel model
+  int32 sampleRate_Hz;
 
+  //
+  // channel model profile
+  int profileFlatDurationIndex;
+  float32 profileDecayDbPerMsec;
+  float32 profileMinGainDb;
 
-    //
-    // channel model profile
-    int profileFlatDurationIndex;
-    float32 profileDecayDbPerMsec;
-    float32 profileMinGainDb;
+  uint16 sinScalingRshifts;  // number of rshifts to apply to SIn
 
-    uint16  sinScalingRshifts;  // number of rshifts to apply to SIn
+  float32 refPowerBinCorrectionDb;  // correction applied to per-bin power
+                                    // during adaptation
 
-    float32 refPowerBinCorrectionDb; // correction applied to per-bin power during adaptation
+  float32
+      muPerBlock;  // stepsize per block (used to compute stepsize per update)
+  float32 maxMuPerUpdate;  // maximum stepsize per update
 
-    float32 muPerBlock; // stepsize per block (used to compute stepsize per update)
-    float32 maxMuPerUpdate; // maximum stepsize per update
+  uint16 bypassBackupChanModel;  // 1 = don't use backup channel model for echo
+                                 // cancellation
 
-    uint16 bypassBackupChanModel; // 1 = don't use backup channel model for echo cancellation
+  int32 numMics;  // number of mics; for staggered update scheduling
+                  // set to 0 for default (see AecPbfdInit)
+  //
+  // echo-canceller parameters
+  int ecLenDft;
 
-    int32 numMics;   // number of mics; for staggered update scheduling
-                      // set to 0 for default (see AecPbfdInit)
-    //
-    // echo-canceller parameters
-    int ecLenDft;
-
-    // length of step size modifier transition
-    float32 lenStepSizeTransitionPercent;
+  // length of step size modifier transition
+  float32 lenStepSizeTransitionPercent;
 } AecPbfdConfig_t;
 
 //
 // configure AEC
-void AecPbfdSetDefaultConfig(AecPbfdConfig_t* pConfig,
-                             int32 blockSize,
-                             int32 lenChanModel,
-                             int32 sampleRate_Hz);
+void AecPbfdSetDefaultConfig(AecPbfdConfig_t* pConfig, int32 blockSize,
+                             int32 lenChanModel, int32 sampleRate_Hz);
 
-
-#endif // 
+#endif  //
 #ifdef __cplusplus
 }
 #endif
-

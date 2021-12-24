@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -16,23 +17,29 @@
 // Copyright (C) 2015, Itseez Inc., all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
-// This software is provided by the copyright holders and contributors "as is" and
+// This software is provided by the copyright holders and contributors "as is"
+and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -48,11 +55,11 @@
 #include "opencv2/core/hal/interface.h"
 
 #if defined __GNUC__
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #elif defined _MSC_VER
-#  pragma warning( push )
-#  pragma warning( disable: 4100 )
+#pragma warning(push)
+#pragma warning(disable : 4100)
 #endif
 
 //! @addtogroup core_hal_interface
@@ -73,21 +80,89 @@ Sub: _dst[i] = src1[i] - src2[i]_
 */
 //! @addtogroup core_hal_interface_addsub Element-wise add and subtract
 //! @{
-inline int hal_ni_add8u(const uchar *src1_data, size_t src1_step, const uchar *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_add8s(const schar *src1_data, size_t src1_step, const schar *src2_data, size_t src2_step, schar *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_add16u(const ushort *src1_data, size_t src1_step, const ushort *src2_data, size_t src2_step, ushort *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_add16s(const short *src1_data, size_t src1_step, const short *src2_data, size_t src2_step, short *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_add32s(const int *src1_data, size_t src1_step, const int *src2_data, size_t src2_step, int *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_add32f(const float *src1_data, size_t src1_step, const float *src2_data, size_t src2_step, float *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_add64f(const double *src1_data, size_t src1_step, const double *src2_data, size_t src2_step, double *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_add8u(const uchar *src1_data, size_t src1_step,
+                        const uchar *src2_data, size_t src2_step,
+                        uchar *dst_data, size_t dst_step, int width,
+                        int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_add8s(const schar *src1_data, size_t src1_step,
+                        const schar *src2_data, size_t src2_step,
+                        schar *dst_data, size_t dst_step, int width,
+                        int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_add16u(const ushort *src1_data, size_t src1_step,
+                         const ushort *src2_data, size_t src2_step,
+                         ushort *dst_data, size_t dst_step, int width,
+                         int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_add16s(const short *src1_data, size_t src1_step,
+                         const short *src2_data, size_t src2_step,
+                         short *dst_data, size_t dst_step, int width,
+                         int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_add32s(const int *src1_data, size_t src1_step,
+                         const int *src2_data, size_t src2_step, int *dst_data,
+                         size_t dst_step, int width, int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_add32f(const float *src1_data, size_t src1_step,
+                         const float *src2_data, size_t src2_step,
+                         float *dst_data, size_t dst_step, int width,
+                         int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_add64f(const double *src1_data, size_t src1_step,
+                         const double *src2_data, size_t src2_step,
+                         double *dst_data, size_t dst_step, int width,
+                         int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 
-inline int hal_ni_sub8u(const uchar *src1_data, size_t src1_step, const uchar *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_sub8s(const schar *src1_data, size_t src1_step, const schar *src2_data, size_t src2_step, schar *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_sub16u(const ushort *src1_data, size_t src1_step, const ushort *src2_data, size_t src2_step, ushort *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_sub16s(const short *src1_data, size_t src1_step, const short *src2_data, size_t src2_step, short *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_sub32s(const int *src1_data, size_t src1_step, const int *src2_data, size_t src2_step, int *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_sub32f(const float *src1_data, size_t src1_step, const float *src2_data, size_t src2_step, float *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_sub64f(const double *src1_data, size_t src1_step, const double *src2_data, size_t src2_step, double *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_sub8u(const uchar *src1_data, size_t src1_step,
+                        const uchar *src2_data, size_t src2_step,
+                        uchar *dst_data, size_t dst_step, int width,
+                        int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_sub8s(const schar *src1_data, size_t src1_step,
+                        const schar *src2_data, size_t src2_step,
+                        schar *dst_data, size_t dst_step, int width,
+                        int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_sub16u(const ushort *src1_data, size_t src1_step,
+                         const ushort *src2_data, size_t src2_step,
+                         ushort *dst_data, size_t dst_step, int width,
+                         int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_sub16s(const short *src1_data, size_t src1_step,
+                         const short *src2_data, size_t src2_step,
+                         short *dst_data, size_t dst_step, int width,
+                         int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_sub32s(const int *src1_data, size_t src1_step,
+                         const int *src2_data, size_t src2_step, int *dst_data,
+                         size_t dst_step, int width, int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_sub32f(const float *src1_data, size_t src1_step,
+                         const float *src2_data, size_t src2_step,
+                         float *dst_data, size_t dst_step, int width,
+                         int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_sub64f(const double *src1_data, size_t src1_step,
+                         const double *src2_data, size_t src2_step,
+                         double *dst_data, size_t dst_step, int width,
+                         int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 /**
@@ -100,21 +175,89 @@ Maximum: _dst[i] = max(src1[i], src2[i])_
 */
 //! @addtogroup core_hal_interface_minmax Element-wise minimum or maximum
 //! @{
-inline int hal_ni_max8u(const uchar *src1_data, size_t src1_step, const uchar *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_max8s(const schar *src1_data, size_t src1_step, const schar *src2_data, size_t src2_step, schar *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_max16u(const ushort *src1_data, size_t src1_step, const ushort *src2_data, size_t src2_step, ushort *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_max16s(const short *src1_data, size_t src1_step, const short *src2_data, size_t src2_step, short *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_max32s(const int *src1_data, size_t src1_step, const int *src2_data, size_t src2_step, int *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_max32f(const float *src1_data, size_t src1_step, const float *src2_data, size_t src2_step, float *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_max64f(const double *src1_data, size_t src1_step, const double *src2_data, size_t src2_step, double *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_max8u(const uchar *src1_data, size_t src1_step,
+                        const uchar *src2_data, size_t src2_step,
+                        uchar *dst_data, size_t dst_step, int width,
+                        int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_max8s(const schar *src1_data, size_t src1_step,
+                        const schar *src2_data, size_t src2_step,
+                        schar *dst_data, size_t dst_step, int width,
+                        int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_max16u(const ushort *src1_data, size_t src1_step,
+                         const ushort *src2_data, size_t src2_step,
+                         ushort *dst_data, size_t dst_step, int width,
+                         int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_max16s(const short *src1_data, size_t src1_step,
+                         const short *src2_data, size_t src2_step,
+                         short *dst_data, size_t dst_step, int width,
+                         int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_max32s(const int *src1_data, size_t src1_step,
+                         const int *src2_data, size_t src2_step, int *dst_data,
+                         size_t dst_step, int width, int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_max32f(const float *src1_data, size_t src1_step,
+                         const float *src2_data, size_t src2_step,
+                         float *dst_data, size_t dst_step, int width,
+                         int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_max64f(const double *src1_data, size_t src1_step,
+                         const double *src2_data, size_t src2_step,
+                         double *dst_data, size_t dst_step, int width,
+                         int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 
-inline int hal_ni_min8u(const uchar *src1_data, size_t src1_step, const uchar *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_min8s(const schar *src1_data, size_t src1_step, const schar *src2_data, size_t src2_step, schar *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_min16u(const ushort *src1_data, size_t src1_step, const ushort *src2_data, size_t src2_step, ushort *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_min16s(const short *src1_data, size_t src1_step, const short *src2_data, size_t src2_step, short *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_min32s(const int *src1_data, size_t src1_step, const int *src2_data, size_t src2_step, int *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_min32f(const float *src1_data, size_t src1_step, const float *src2_data, size_t src2_step, float *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_min64f(const double *src1_data, size_t src1_step, const double *src2_data, size_t src2_step, double *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_min8u(const uchar *src1_data, size_t src1_step,
+                        const uchar *src2_data, size_t src2_step,
+                        uchar *dst_data, size_t dst_step, int width,
+                        int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_min8s(const schar *src1_data, size_t src1_step,
+                        const schar *src2_data, size_t src2_step,
+                        schar *dst_data, size_t dst_step, int width,
+                        int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_min16u(const ushort *src1_data, size_t src1_step,
+                         const ushort *src2_data, size_t src2_step,
+                         ushort *dst_data, size_t dst_step, int width,
+                         int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_min16s(const short *src1_data, size_t src1_step,
+                         const short *src2_data, size_t src2_step,
+                         short *dst_data, size_t dst_step, int width,
+                         int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_min32s(const int *src1_data, size_t src1_step,
+                         const int *src2_data, size_t src2_step, int *dst_data,
+                         size_t dst_step, int width, int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_min32f(const float *src1_data, size_t src1_step,
+                         const float *src2_data, size_t src2_step,
+                         float *dst_data, size_t dst_step, int width,
+                         int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_min64f(const double *src1_data, size_t src1_step,
+                         const double *src2_data, size_t src2_step,
+                         double *dst_data, size_t dst_step, int width,
+                         int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 /**
@@ -127,13 +270,48 @@ Absolute difference: _dst[i] = | src1[i] - src2[i] |_
 */
 //! @addtogroup core_hal_interface_absdiff Element-wise absolute difference
 //! @{
-inline int hal_ni_absdiff8u(const uchar *src1_data, size_t src1_step, const uchar *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_absdiff8s(const schar *src1_data, size_t src1_step, const schar *src2_data, size_t src2_step, schar *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_absdiff16u(const ushort *src1_data, size_t src1_step, const ushort *src2_data, size_t src2_step, ushort *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_absdiff16s(const short *src1_data, size_t src1_step, const short *src2_data, size_t src2_step, short *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_absdiff32s(const int *src1_data, size_t src1_step, const int *src2_data, size_t src2_step, int *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_absdiff32f(const float *src1_data, size_t src1_step, const float *src2_data, size_t src2_step, float *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_absdiff64f(const double *src1_data, size_t src1_step, const double *src2_data, size_t src2_step, double *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_absdiff8u(const uchar *src1_data, size_t src1_step,
+                            const uchar *src2_data, size_t src2_step,
+                            uchar *dst_data, size_t dst_step, int width,
+                            int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_absdiff8s(const schar *src1_data, size_t src1_step,
+                            const schar *src2_data, size_t src2_step,
+                            schar *dst_data, size_t dst_step, int width,
+                            int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_absdiff16u(const ushort *src1_data, size_t src1_step,
+                             const ushort *src2_data, size_t src2_step,
+                             ushort *dst_data, size_t dst_step, int width,
+                             int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_absdiff16s(const short *src1_data, size_t src1_step,
+                             const short *src2_data, size_t src2_step,
+                             short *dst_data, size_t dst_step, int width,
+                             int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_absdiff32s(const int *src1_data, size_t src1_step,
+                             const int *src2_data, size_t src2_step,
+                             int *dst_data, size_t dst_step, int width,
+                             int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_absdiff32f(const float *src1_data, size_t src1_step,
+                             const float *src2_data, size_t src2_step,
+                             float *dst_data, size_t dst_step, int width,
+                             int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_absdiff64f(const double *src1_data, size_t src1_step,
+                             const double *src2_data, size_t src2_step,
+                             double *dst_data, size_t dst_step, int width,
+                             int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 /**
@@ -148,10 +326,28 @@ Bitwise NOT: _dst[i] = !src[i]_
  */
 //! @addtogroup core_hal_interface_logical Bitwise logical operations
 //! @{
-inline int hal_ni_and8u(const uchar *src1_data, size_t src1_step, const uchar *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_or8u(const uchar *src1_data, size_t src1_step, const uchar *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_xor8u(const uchar *src1_data, size_t src1_step, const uchar *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_not8u(const uchar *src_data, size_t src_step, uchar *dst_data, size_t dst_step, int width, int height) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_and8u(const uchar *src1_data, size_t src1_step,
+                        const uchar *src2_data, size_t src2_step,
+                        uchar *dst_data, size_t dst_step, int width,
+                        int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_or8u(const uchar *src1_data, size_t src1_step,
+                       const uchar *src2_data, size_t src2_step,
+                       uchar *dst_data, size_t dst_step, int width,
+                       int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_xor8u(const uchar *src1_data, size_t src1_step,
+                        const uchar *src2_data, size_t src2_step,
+                        uchar *dst_data, size_t dst_step, int width,
+                        int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_not8u(const uchar *src_data, size_t src_step, uchar *dst_data,
+                        size_t dst_step, int width, int height) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 //! @cond IGNORED
@@ -206,13 +402,48 @@ Compare: _dst[i] = src1[i] op src2[i]_
 */
 //! @addtogroup core_hal_interface_compare Element-wise compare
 //! @{
-inline int hal_ni_cmp8u(const uchar *src1_data, size_t src1_step, const uchar *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height, int operation) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_cmp8s(const schar *src1_data, size_t src1_step, const schar *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height, int operation) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_cmp16u(const ushort *src1_data, size_t src1_step, const ushort *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height, int operation) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_cmp16s(const short *src1_data, size_t src1_step, const short *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height, int operation) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_cmp32s(const int *src1_data, size_t src1_step, const int *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height, int operation) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_cmp32f(const float *src1_data, size_t src1_step, const float *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height, int operation) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_cmp64f(const double *src1_data, size_t src1_step, const double *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height, int operation) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_cmp8u(const uchar *src1_data, size_t src1_step,
+                        const uchar *src2_data, size_t src2_step,
+                        uchar *dst_data, size_t dst_step, int width, int height,
+                        int operation) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_cmp8s(const schar *src1_data, size_t src1_step,
+                        const schar *src2_data, size_t src2_step,
+                        uchar *dst_data, size_t dst_step, int width, int height,
+                        int operation) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_cmp16u(const ushort *src1_data, size_t src1_step,
+                         const ushort *src2_data, size_t src2_step,
+                         uchar *dst_data, size_t dst_step, int width,
+                         int height, int operation) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_cmp16s(const short *src1_data, size_t src1_step,
+                         const short *src2_data, size_t src2_step,
+                         uchar *dst_data, size_t dst_step, int width,
+                         int height, int operation) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_cmp32s(const int *src1_data, size_t src1_step,
+                         const int *src2_data, size_t src2_step,
+                         uchar *dst_data, size_t dst_step, int width,
+                         int height, int operation) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_cmp32f(const float *src1_data, size_t src1_step,
+                         const float *src2_data, size_t src2_step,
+                         uchar *dst_data, size_t dst_step, int width,
+                         int height, int operation) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_cmp64f(const double *src1_data, size_t src1_step,
+                         const double *src2_data, size_t src2_step,
+                         uchar *dst_data, size_t dst_step, int width,
+                         int height, int operation) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 //! @cond IGNORED
@@ -235,13 +466,47 @@ Multiply: _dst[i] = scale * src1[i] * src2[i]_
 */
 //! @addtogroup core_hal_interface_multiply Element-wise multiply
 //! @{
-inline int hal_ni_mul8u(const uchar *src1_data, size_t src1_step, const uchar *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_mul8s(const schar *src1_data, size_t src1_step, const schar *src2_data, size_t src2_step, schar *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_mul16u(const ushort *src1_data, size_t src1_step, const ushort *src2_data, size_t src2_step, ushort *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_mul16s(const short *src1_data, size_t src1_step, const short *src2_data, size_t src2_step, short *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_mul32s(const int *src1_data, size_t src1_step, const int *src2_data, size_t src2_step, int *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_mul32f(const float *src1_data, size_t src1_step, const float *src2_data, size_t src2_step, float *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_mul64f(const double *src1_data, size_t src1_step, const double *src2_data, size_t src2_step, double *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_mul8u(const uchar *src1_data, size_t src1_step,
+                        const uchar *src2_data, size_t src2_step,
+                        uchar *dst_data, size_t dst_step, int width, int height,
+                        double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_mul8s(const schar *src1_data, size_t src1_step,
+                        const schar *src2_data, size_t src2_step,
+                        schar *dst_data, size_t dst_step, int width, int height,
+                        double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_mul16u(const ushort *src1_data, size_t src1_step,
+                         const ushort *src2_data, size_t src2_step,
+                         ushort *dst_data, size_t dst_step, int width,
+                         int height, double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_mul16s(const short *src1_data, size_t src1_step,
+                         const short *src2_data, size_t src2_step,
+                         short *dst_data, size_t dst_step, int width,
+                         int height, double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_mul32s(const int *src1_data, size_t src1_step,
+                         const int *src2_data, size_t src2_step, int *dst_data,
+                         size_t dst_step, int width, int height, double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_mul32f(const float *src1_data, size_t src1_step,
+                         const float *src2_data, size_t src2_step,
+                         float *dst_data, size_t dst_step, int width,
+                         int height, double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_mul64f(const double *src1_data, size_t src1_step,
+                         const double *src2_data, size_t src2_step,
+                         double *dst_data, size_t dst_step, int width,
+                         int height, double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 /**
@@ -254,13 +519,47 @@ Divide: _dst[i] = scale * src1[i] / src2[i]_
 */
 //! @addtogroup core_hal_interface_divide Element-wise divide
 //! @{
-inline int hal_ni_div8u(const uchar *src1_data, size_t src1_step, const uchar *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_div8s(const schar *src1_data, size_t src1_step, const schar *src2_data, size_t src2_step, schar *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_div16u(const ushort *src1_data, size_t src1_step, const ushort *src2_data, size_t src2_step, ushort *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_div16s(const short *src1_data, size_t src1_step, const short *src2_data, size_t src2_step, short *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_div32s(const int *src1_data, size_t src1_step, const int *src2_data, size_t src2_step, int *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_div32f(const float *src1_data, size_t src1_step, const float *src2_data, size_t src2_step, float *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_div64f(const double *src1_data, size_t src1_step, const double *src2_data, size_t src2_step, double *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_div8u(const uchar *src1_data, size_t src1_step,
+                        const uchar *src2_data, size_t src2_step,
+                        uchar *dst_data, size_t dst_step, int width, int height,
+                        double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_div8s(const schar *src1_data, size_t src1_step,
+                        const schar *src2_data, size_t src2_step,
+                        schar *dst_data, size_t dst_step, int width, int height,
+                        double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_div16u(const ushort *src1_data, size_t src1_step,
+                         const ushort *src2_data, size_t src2_step,
+                         ushort *dst_data, size_t dst_step, int width,
+                         int height, double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_div16s(const short *src1_data, size_t src1_step,
+                         const short *src2_data, size_t src2_step,
+                         short *dst_data, size_t dst_step, int width,
+                         int height, double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_div32s(const int *src1_data, size_t src1_step,
+                         const int *src2_data, size_t src2_step, int *dst_data,
+                         size_t dst_step, int width, int height, double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_div32f(const float *src1_data, size_t src1_step,
+                         const float *src2_data, size_t src2_step,
+                         float *dst_data, size_t dst_step, int width,
+                         int height, double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_div64f(const double *src1_data, size_t src1_step,
+                         const double *src2_data, size_t src2_step,
+                         double *dst_data, size_t dst_step, int width,
+                         int height, double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 /**
@@ -272,13 +571,41 @@ Computes reciprocial: _dst[i] = scale / src[i]_
  */
 //! @addtogroup core_hal_interface_reciprocial Element-wise reciprocial
 //! @{
-inline int hal_ni_recip8u(const uchar *src_data, size_t src_step, uchar *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_recip8s(const schar *src_data, size_t src_step, schar *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_recip16u(const ushort *src_data, size_t src_step, ushort *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_recip16s(const short *src_data, size_t src_step, short *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_recip32s(const int *src_data, size_t src_step, int *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_recip32f(const float *src_data, size_t src_step, float *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_recip64f(const double *src_data, size_t src_step, double *dst_data, size_t dst_step, int width, int height, double scale) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_recip8u(const uchar *src_data, size_t src_step,
+                          uchar *dst_data, size_t dst_step, int width,
+                          int height, double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_recip8s(const schar *src_data, size_t src_step,
+                          schar *dst_data, size_t dst_step, int width,
+                          int height, double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_recip16u(const ushort *src_data, size_t src_step,
+                           ushort *dst_data, size_t dst_step, int width,
+                           int height, double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_recip16s(const short *src_data, size_t src_step,
+                           short *dst_data, size_t dst_step, int width,
+                           int height, double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_recip32s(const int *src_data, size_t src_step, int *dst_data,
+                           size_t dst_step, int width, int height,
+                           double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_recip32f(const float *src_data, size_t src_step,
+                           float *dst_data, size_t dst_step, int width,
+                           int height, double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_recip64f(const double *src_data, size_t src_step,
+                           double *dst_data, size_t dst_step, int width,
+                           int height, double scale) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 //! @cond IGNORED
@@ -306,7 +633,8 @@ inline int hal_ni_recip64f(const double *src_data, size_t src_step, double *dst_
 //! @endcond
 
 /**
-Computes weighted sum of two arrays using formula: _dst[i] = a * src1[i] + b * src2[i] + c_
+Computes weighted sum of two arrays using formula: _dst[i] = a * src1[i] + b *
+src2[i] + c_
 @param src1_data,src1_step first source image data and step
 @param src2_data,src2_step second source image data and step
 @param dst_data,dst_step destination image data and step
@@ -315,13 +643,48 @@ Computes weighted sum of two arrays using formula: _dst[i] = a * src1[i] + b * s
  */
 //! @addtogroup core_hal_interface_addWeighted Element-wise weighted sum
 //! @{
-inline int hal_ni_addWeighted8u(const uchar *src1_data, size_t src1_step, const uchar *src2_data, size_t src2_step, uchar *dst_data, size_t dst_step, int width, int height, const double scalars[3]) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_addWeighted8s(const schar *src1_data, size_t src1_step, const schar *src2_data, size_t src2_step, schar *dst_data, size_t dst_step, int width, int height, const double scalars[3]) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_addWeighted16u(const ushort *src1_data, size_t src1_step, const ushort *src2_data, size_t src2_step, ushort *dst_data, size_t dst_step, int width, int height, const double scalars[3]) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_addWeighted16s(const short *src1_data, size_t src1_step, const short *src2_data, size_t src2_step, short *dst_data, size_t dst_step, int width, int height, const double scalars[3]) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_addWeighted32s(const int *src1_data, size_t src1_step, const int *src2_data, size_t src2_step, int *dst_data, size_t dst_step, int width, int height, const double scalars[3]) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_addWeighted32f(const float *src1_data, size_t src1_step, const float *src2_data, size_t src2_step, float *dst_data, size_t dst_step, int width, int height, const double scalars[3]) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_addWeighted64f(const double *src1_data, size_t src1_step, const double *src2_data, size_t src2_step, double *dst_data, size_t dst_step, int width, int height, const double scalars[3]) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_addWeighted8u(const uchar *src1_data, size_t src1_step,
+                                const uchar *src2_data, size_t src2_step,
+                                uchar *dst_data, size_t dst_step, int width,
+                                int height, const double scalars[3]) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_addWeighted8s(const schar *src1_data, size_t src1_step,
+                                const schar *src2_data, size_t src2_step,
+                                schar *dst_data, size_t dst_step, int width,
+                                int height, const double scalars[3]) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_addWeighted16u(const ushort *src1_data, size_t src1_step,
+                                 const ushort *src2_data, size_t src2_step,
+                                 ushort *dst_data, size_t dst_step, int width,
+                                 int height, const double scalars[3]) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_addWeighted16s(const short *src1_data, size_t src1_step,
+                                 const short *src2_data, size_t src2_step,
+                                 short *dst_data, size_t dst_step, int width,
+                                 int height, const double scalars[3]) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_addWeighted32s(const int *src1_data, size_t src1_step,
+                                 const int *src2_data, size_t src2_step,
+                                 int *dst_data, size_t dst_step, int width,
+                                 int height, const double scalars[3]) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_addWeighted32f(const float *src1_data, size_t src1_step,
+                                 const float *src2_data, size_t src2_step,
+                                 float *dst_data, size_t dst_step, int width,
+                                 int height, const double scalars[3]) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_addWeighted64f(const double *src1_data, size_t src1_step,
+                                 const double *src2_data, size_t src2_step,
+                                 double *dst_data, size_t dst_step, int width,
+                                 int height, const double scalars[3]) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 //! @cond IGNORED
@@ -335,17 +698,31 @@ inline int hal_ni_addWeighted64f(const double *src1_data, size_t src1_step, cons
 //! @endcond
 
 /**
-@param src_data array of interleaved values (__len__ x __cn__ items) [ B, G, R, B, G, R, ...]
-@param dst_data array of pointers to destination arrays (__cn__ items x __len__ items) [ [B, B, ...], [G, G, ...], [R, R, ...] ]
+@param src_data array of interleaved values (__len__ x __cn__ items) [ B, G, R,
+B, G, R, ...]
+@param dst_data array of pointers to destination arrays (__cn__ items x __len__
+items) [ [B, B, ...], [G, G, ...], [R, R, ...] ]
 @param len number of elements
 @param cn number of channels
  */
 //! @addtogroup core_hal_interface_split Channel split
 //! @{
-inline int hal_ni_split8u(const uchar *src_data, uchar **dst_data, int len, int cn) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_split16u(const ushort *src_data, ushort **dst_data, int len, int cn) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_split32s(const int *src_data, int **dst_data, int len, int cn) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_split64s(const int64 *src_data, int64 **dst_data, int len, int cn) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_split8u(const uchar *src_data, uchar **dst_data, int len,
+                          int cn) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_split16u(const ushort *src_data, ushort **dst_data, int len,
+                           int cn) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_split32s(const int *src_data, int **dst_data, int len,
+                           int cn) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_split64s(const int64 *src_data, int64 **dst_data, int len,
+                           int cn) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 //! @cond IGNORED
@@ -356,17 +733,31 @@ inline int hal_ni_split64s(const int64 *src_data, int64 **dst_data, int len, int
 //! @endcond
 
 /**
-@param src_data array of pointers to source arrays (__cn__ items x __len__ items) [ [B, B, ...], [G, G, ...], [R, R, ...] ]
-@param dst_data destination array of interleaved values (__len__ x __cn__ items) [ B, G, R, B, G, R, ...]
+@param src_data array of pointers to source arrays (__cn__ items x __len__
+items) [ [B, B, ...], [G, G, ...], [R, R, ...] ]
+@param dst_data destination array of interleaved values (__len__ x __cn__ items)
+[ B, G, R, B, G, R, ...]
 @param len number of elements
 @param cn number of channels
  */
 //! @addtogroup core_hal_interface_merge Channel merge
 //! @{
-inline int hal_ni_merge8u(const uchar **src_data, uchar *dst_data, int len, int cn) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_merge16u(const ushort **src_data, ushort *dst_data, int len, int cn) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_merge32s(const int **src_data, int *dst_data, int len, int cn) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_merge64s(const int64 **src_data, int64 *dst_data, int len, int cn) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_merge8u(const uchar **src_data, uchar *dst_data, int len,
+                          int cn) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_merge16u(const ushort **src_data, ushort *dst_data, int len,
+                           int cn) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_merge32s(const int **src_data, int *dst_data, int len,
+                           int cn) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_merge64s(const int64 **src_data, int64 *dst_data, int len,
+                           int cn) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 //! @cond IGNORED
@@ -376,24 +767,29 @@ inline int hal_ni_merge64s(const int64 **src_data, int64 *dst_data, int len, int
 #define cv_hal_merge64s hal_ni_merge64s
 //! @endcond
 
-
 /**
 @param y,x source Y and X arrays
 @param dst destination array
 @param len length of arrays
-@param angleInDegrees if set to true return angles in degrees, otherwise in radians
+@param angleInDegrees if set to true return angles in degrees, otherwise in
+radians
  */
 //! @addtogroup core_hal_interface_fastAtan Atan calculation
 //! @{
-inline int hal_ni_fastAtan32f(const float* y, const float* x, float* dst, int len, bool angleInDegrees) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_fastAtan64f(const double* y, const double* x, double* dst, int len, bool angleInDegrees) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_fastAtan32f(const float *y, const float *x, float *dst,
+                              int len, bool angleInDegrees) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_fastAtan64f(const double *y, const double *x, double *dst,
+                              int len, bool angleInDegrees) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 //! @cond IGNORED
 #define cv_hal_fastAtan32f hal_ni_fastAtan32f
 #define cv_hal_fastAtan64f hal_ni_fastAtan64f
 //! @endcond
-
 
 /**
 @param x,y source X and Y arrays
@@ -402,15 +798,20 @@ inline int hal_ni_fastAtan64f(const double* y, const double* x, double* dst, int
  */
 //! @addtogroup core_hal_interface_magnitude Magnitude calculation
 //! @{
-inline int hal_ni_magnitude32f(const float *x, const float *y, float *dst, int len) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_magnitude64f(const double *x, const double  *y, double *dst, int len) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_magnitude32f(const float *x, const float *y, float *dst,
+                               int len) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_magnitude64f(const double *x, const double *y, double *dst,
+                               int len) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 //! @cond IGNORED
 #define cv_hal_magnitude32f hal_ni_magnitude32f
 #define cv_hal_magnitude64f hal_ni_magnitude64f
 //! @endcond
-
 
 /**
 @param src source array
@@ -419,15 +820,18 @@ inline int hal_ni_magnitude64f(const double *x, const double  *y, double *dst, i
  */
 //! @addtogroup core_hal_interface_invSqrt Inverse square root calculation
 //! @{
-inline int hal_ni_invSqrt32f(const float* src, float* dst, int len) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_invSqrt64f(const double* src, double* dst, int len) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_invSqrt32f(const float *src, float *dst, int len) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_invSqrt64f(const double *src, double *dst, int len) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 //! @cond IGNORED
 #define cv_hal_invSqrt32f hal_ni_invSqrt32f
 #define cv_hal_invSqrt64f hal_ni_invSqrt64f
 //! @endcond
-
 
 /**
 @param src source array
@@ -436,15 +840,18 @@ inline int hal_ni_invSqrt64f(const double* src, double* dst, int len) { return C
  */
 //! @addtogroup core_hal_interface_sqrt Square root calculation
 //! @{
-inline int hal_ni_sqrt32f(const float* src, float* dst, int len) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_sqrt64f(const double* src, double* dst, int len) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_sqrt32f(const float *src, float *dst, int len) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_sqrt64f(const double *src, double *dst, int len) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 //! @cond IGNORED
 #define cv_hal_sqrt32f hal_ni_sqrt32f
 #define cv_hal_sqrt64f hal_ni_sqrt64f
 //! @endcond
-
 
 /**
 @param src source array
@@ -453,15 +860,18 @@ inline int hal_ni_sqrt64f(const double* src, double* dst, int len) { return CV_H
  */
 //! @addtogroup core_hal_interface_log Natural logarithm calculation
 //! @{
-inline int hal_ni_log32f(const float* src, float* dst, int len) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_log64f(const double* src, double* dst, int len) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_log32f(const float *src, float *dst, int len) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_log64f(const double *src, double *dst, int len) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 //! @cond IGNORED
 #define cv_hal_log32f hal_ni_log32f
 #define cv_hal_log64f hal_ni_log64f
 //! @endcond
-
 
 /**
 @param src source array
@@ -470,8 +880,12 @@ inline int hal_ni_log64f(const double* src, double* dst, int len) { return CV_HA
  */
 //! @addtogroup core_hal_interface_exp Exponent calculation
 //! @{
-inline int hal_ni_exp32f(const float* src, float* dst, int len) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_exp64f(const double* src, double* dst, int len) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_exp32f(const float *src, float *dst, int len) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_exp64f(const double *src, double *dst, int len) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 //! @cond IGNORED
@@ -479,12 +893,12 @@ inline int hal_ni_exp64f(const double* src, double* dst, int len) { return CV_HA
 #define cv_hal_exp64f hal_ni_exp64f
 //! @endcond
 
-
 /**
 @brief Dummy structure storing DFT/DCT context
 
-Users can convert this pointer to any type they want. Initialisation and destruction should be made in Init and Free function implementations correspondingly.
-Example:
+Users can convert this pointer to any type they want. Initialisation and
+destruction should be made in Init and Free function implementations
+correspondingly. Example:
 @code{.cpp}
 int my_hal_dftInit2D(cvhalDFT **context, ...) {
     *context = static_cast<cvhalDFT*>(new MyFilterData());
@@ -504,20 +918,30 @@ struct cvhalDFT {};
 @param len transformed array length
 @param count estimated transformation count
 @param depth array type (CV_32F or CV_64F)
-@param flags algorithm options (combination of CV_HAL_DFT_INVERSE, CV_HAL_DFT_SCALE, ...)
-@param needBuffer pointer to boolean variable, if valid pointer provided, then variable value should be set to true to signal that additional memory buffer is needed for operations
+@param flags algorithm options (combination of CV_HAL_DFT_INVERSE,
+CV_HAL_DFT_SCALE, ...)
+@param needBuffer pointer to boolean variable, if valid pointer provided, then
+variable value should be set to true to signal that additional memory buffer is
+needed for operations
  */
-inline int hal_ni_dftInit1D(cvhalDFT **context, int len, int count, int depth, int flags, bool *needBuffer) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_dftInit1D(cvhalDFT **context, int len, int count, int depth,
+                            int flags, bool *needBuffer) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 /**
 @param context pointer to context storing all necessary data
 @param src source data
 @param dst destination data
  */
-inline int hal_ni_dft1D(cvhalDFT *context, const uchar *src, uchar *dst) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_dft1D(cvhalDFT *context, const uchar *src, uchar *dst) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 /**
 @param context pointer to context storing all necessary data
  */
-inline int hal_ni_dftFree1D(cvhalDFT *context) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_dftFree1D(cvhalDFT *context) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 
 //! @cond IGNORED
 #define cv_hal_dftInit1D hal_ni_dftInit1D
@@ -532,19 +956,29 @@ inline int hal_ni_dftFree1D(cvhalDFT *context) { return CV_HAL_ERROR_NOT_IMPLEME
 @param src_channels number of channels in input image
 @param dst_channels number of channels in output image
 @param flags algorithm options (combination of CV_HAL_DFT_INVERSE, ...)
-@param nonzero_rows number of nonzero rows in image, can be used for optimization
+@param nonzero_rows number of nonzero rows in image, can be used for
+optimization
  */
-inline int hal_ni_dftInit2D(cvhalDFT **context, int width, int height, int depth, int src_channels, int dst_channels, int flags, int nonzero_rows) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_dftInit2D(cvhalDFT **context, int width, int height,
+                            int depth, int src_channels, int dst_channels,
+                            int flags, int nonzero_rows) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 /**
 @param context pointer to context storing all necessary data
 @param src_data,src_step source image data and step
 @param dst_data,dst_step destination image data and step
  */
-inline int hal_ni_dft2D(cvhalDFT *context, const uchar *src_data, size_t src_step, uchar *dst_data, size_t dst_step) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_dft2D(cvhalDFT *context, const uchar *src_data,
+                        size_t src_step, uchar *dst_data, size_t dst_step) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 /**
 @param context pointer to context storing all necessary data
  */
-inline int hal_ni_dftFree2D(cvhalDFT *context) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_dftFree2D(cvhalDFT *context) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 
 //! @cond IGNORED
 #define cv_hal_dftInit2D hal_ni_dftInit2D
@@ -558,17 +992,25 @@ inline int hal_ni_dftFree2D(cvhalDFT *context) { return CV_HAL_ERROR_NOT_IMPLEME
 @param depth image type (CV_32F or CV64F)
 @param flags algorithm options (combination of CV_HAL_DFT_INVERSE, ...)
  */
-inline int hal_ni_dctInit2D(cvhalDFT **context, int width, int height, int depth, int flags) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_dctInit2D(cvhalDFT **context, int width, int height,
+                            int depth, int flags) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 /**
 @param context pointer to context storing all necessary data
 @param src_data,src_step source image data and step
 @param dst_data,dst_step destination image data and step
  */
-inline int hal_ni_dct2D(cvhalDFT *context, const uchar *src_data, size_t src_step, uchar *dst_data, size_t dst_step) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_dct2D(cvhalDFT *context, const uchar *src_data,
+                        size_t src_step, uchar *dst_data, size_t dst_step) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 /**
 @param context pointer to context storing all necessary data
  */
-inline int hal_ni_dctFree2D(cvhalDFT *context) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_dctFree2D(cvhalDFT *context) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 
 //! @cond IGNORED
 #define cv_hal_dctInit2D hal_ni_dctInit2D
@@ -576,51 +1018,80 @@ inline int hal_ni_dctFree2D(cvhalDFT *context) { return CV_HAL_ERROR_NOT_IMPLEME
 #define cv_hal_dctFree2D hal_ni_dctFree2D
 //! @endcond
 
-
 /**
-Performs \f$LU\f$ decomposition of square matrix \f$A=P*L*U\f$ (where \f$P\f$ is permutation matrix) and solves matrix equation \f$A*X=B\f$.
-Function returns the \f$sign\f$ of permutation \f$P\f$ via parameter info.
-@param src1 pointer to input matrix \f$A\f$ stored in row major order. After finish of work src1 contains at least \f$U\f$ part of \f$LU\f$
-decomposition which is appropriate for determainant calculation: \f$det(A)=sign*\prod_{j=1}^{M}a_{jj}\f$.
+Performs \f$LU\f$ decomposition of square matrix \f$A=P*L*U\f$ (where \f$P\f$ is
+permutation matrix) and solves matrix equation \f$A*X=B\f$. Function returns the
+\f$sign\f$ of permutation \f$P\f$ via parameter info.
+@param src1 pointer to input matrix \f$A\f$ stored in row major order. After
+finish of work src1 contains at least \f$U\f$ part of \f$LU\f$ decomposition
+which is appropriate for determainant calculation:
+\f$det(A)=sign*\prod_{j=1}^{M}a_{jj}\f$.
 @param src1_step number of bytes between two consequent rows of matrix \f$A\f$.
 @param m size of square matrix \f$A\f$.
-@param src2 pointer to \f$M\times N\f$ matrix \f$B\f$ which is the right-hand side of system \f$A*X=B\f$. \f$B\f$ stored in row major order.
-If src2 is null pointer only \f$LU\f$ decomposition will be performed. After finish of work src2 contains solution \f$X\f$ of system \f$A*X=B\f$.
+@param src2 pointer to \f$M\times N\f$ matrix \f$B\f$ which is the right-hand
+side of system \f$A*X=B\f$. \f$B\f$ stored in row major order. If src2 is null
+pointer only \f$LU\f$ decomposition will be performed. After finish of work src2
+contains solution \f$X\f$ of system \f$A*X=B\f$.
 @param src2_step number of bytes between two consequent rows of matrix \f$B\f$.
 @param n number of right-hand vectors in \f$M\times N\f$ matrix \f$B\f$.
-@param info indicates success of decomposition. If *info is equals to zero decomposition failed, othervise *info is equals to \f$sign\f$.
+@param info indicates success of decomposition. If *info is equals to zero
+decomposition failed, othervise *info is equals to \f$sign\f$.
  */
 //! @addtogroup core_hal_interface_decomp_lu LU matrix decomposition
 //! @{
-inline int hal_ni_LU32f(float* src1, size_t src1_step, int m, float* src2, size_t src2_step, int n, int* info) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_LU64f(double* src1, size_t src1_step, int m, double* src2, size_t src2_step, int n, int* info) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_LU32f(float *src1, size_t src1_step, int m, float *src2,
+                        size_t src2_step, int n, int *info) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_LU64f(double *src1, size_t src1_step, int m, double *src2,
+                        size_t src2_step, int n, int *info) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 /**
-Performs Cholesky decomposition of matrix \f$A = L*L^T\f$ and solves matrix equation \f$A*X=B\f$.
-@param src1 pointer to input matrix \f$A\f$ stored in row major order. After finish of work src1 contains lower triangular matrix \f$L\f$.
+Performs Cholesky decomposition of matrix \f$A = L*L^T\f$ and solves matrix
+equation \f$A*X=B\f$.
+@param src1 pointer to input matrix \f$A\f$ stored in row major order. After
+finish of work src1 contains lower triangular matrix \f$L\f$.
 @param src1_step number of bytes between two consequent rows of matrix \f$A\f$.
 @param m size of square matrix \f$A\f$.
-@param src2 pointer to \f$M\times N\f$ matrix \f$B\f$ which is the right-hand side of system \f$A*X=B\f$. B stored in row major order.
-If src2 is null pointer only Cholesky decomposition will be performed. After finish of work src2 contains solution \f$X\f$ of system \f$A*X=B\f$.
+@param src2 pointer to \f$M\times N\f$ matrix \f$B\f$ which is the right-hand
+side of system \f$A*X=B\f$. B stored in row major order. If src2 is null pointer
+only Cholesky decomposition will be performed. After finish of work src2
+contains solution \f$X\f$ of system \f$A*X=B\f$.
 @param src2_step number of bytes between two consequent rows of matrix \f$B\f$.
 @param n number of right-hand vectors in \f$M\times N\f$ matrix \f$B\f$.
-@param info indicates success of decomposition. If *info is false decomposition failed.
+@param info indicates success of decomposition. If *info is false decomposition
+failed.
  */
 
 //! @addtogroup core_hal_interface_decomp_cholesky Cholesky matrix decomposition
 //! @{
-inline int hal_ni_Cholesky32f(float* src1, size_t src1_step, int m, float* src2, size_t src2_step, int n, bool* info) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_Cholesky64f(double* src1, size_t src1_step, int m, double* src2, size_t src2_step, int n, bool* info) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_Cholesky32f(float *src1, size_t src1_step, int m, float *src2,
+                              size_t src2_step, int n, bool *info) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_Cholesky64f(double *src1, size_t src1_step, int m,
+                              double *src2, size_t src2_step, int n,
+                              bool *info) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 /**
-Performs singular value decomposition of \f$M\times N\f$(\f$M>N\f$) matrix \f$A = U*\Sigma*V^T\f$.
-@param src pointer to input \f$M\times N\f$ matrix \f$A\f$ stored in column major order.
-After finish of work src will be filled with rows of \f$U\f$ or not modified (depends of flag CV_HAL_SVD_MODIFY_A).
-@param src_step number of bytes between two consequent columns of matrix \f$A\f$.
-@param w pointer to array for singular values of matrix \f$A\f$ (i. e. first \f$N\f$ diagonal elements of matrix \f$\Sigma\f$).
-@param u pointer to output \f$M\times N\f$ or \f$M\times M\f$ matrix \f$U\f$ (size depends of flags). Pointer must be valid if flag CV_HAL_SVD_MODIFY_A not used.
+Performs singular value decomposition of \f$M\times N\f$(\f$M>N\f$) matrix \f$A
+= U*\Sigma*V^T\f$.
+@param src pointer to input \f$M\times N\f$ matrix \f$A\f$ stored in column
+major order. After finish of work src will be filled with rows of \f$U\f$ or not
+modified (depends of flag CV_HAL_SVD_MODIFY_A).
+@param src_step number of bytes between two consequent columns of matrix
+\f$A\f$.
+@param w pointer to array for singular values of matrix \f$A\f$ (i. e. first
+\f$N\f$ diagonal elements of matrix \f$\Sigma\f$).
+@param u pointer to output \f$M\times N\f$ or \f$M\times M\f$ matrix \f$U\f$
+(size depends of flags). Pointer must be valid if flag CV_HAL_SVD_MODIFY_A not
+used.
 @param u_step number of bytes between two consequent rows of matrix \f$U\f$.
 @param vt pointer to array for \f$N\times N\f$ matrix \f$V^T\f$.
 @param vt_step number of bytes between two consequent rows of matrix \f$V^T\f$.
@@ -628,34 +1099,55 @@ After finish of work src will be filled with rows of \f$U\f$ or not modified (de
 @param n number of columns in matrix \f$A\f$.
 @param flags algorithm options (combination of CV_HAL_SVD_FULL_UV, ...).
  */
-//! @addtogroup core_hal_interface_decomp_svd Singular value matrix decomposition
+//! @addtogroup core_hal_interface_decomp_svd Singular value matrix
+//! decomposition
 //! @{
-inline int hal_ni_SVD32f(float* src, size_t src_step, float* w, float* u, size_t u_step, float* vt, size_t vt_step, int m, int n, int flags) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_SVD64f(double* src, size_t src_step, double* w, double* u, size_t u_step, double* vt, size_t vt_step, int m, int n, int flags) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_SVD32f(float *src, size_t src_step, float *w, float *u,
+                         size_t u_step, float *vt, size_t vt_step, int m, int n,
+                         int flags) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_SVD64f(double *src, size_t src_step, double *w, double *u,
+                         size_t u_step, double *vt, size_t vt_step, int m,
+                         int n, int flags) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 /**
-Performs QR decomposition of \f$M\times N\f$(\f$M>N\f$) matrix \f$A = Q*R\f$ and solves matrix equation \f$A*X=B\f$.
-@param src1 pointer to input matrix \f$A\f$ stored in row major order. After finish of work src1 contains upper triangular \f$N\times N\f$ matrix \f$R\f$.
-Lower triangle of src1 will be filled with vectors of elementary reflectors. See @cite VandLec and Lapack's DGEQRF documentation for details.
+Performs QR decomposition of \f$M\times N\f$(\f$M>N\f$) matrix \f$A = Q*R\f$ and
+solves matrix equation \f$A*X=B\f$.
+@param src1 pointer to input matrix \f$A\f$ stored in row major order. After
+finish of work src1 contains upper triangular \f$N\times N\f$ matrix \f$R\f$.
+Lower triangle of src1 will be filled with vectors of elementary reflectors. See
+@cite VandLec and Lapack's DGEQRF documentation for details.
 @param src1_step number of bytes between two consequent rows of matrix \f$A\f$.
 @param m number fo rows in matrix \f$A\f$.
 @param n number of columns in matrix \f$A\f$.
 @param k number of right-hand vectors in \f$M\times K\f$ matrix \f$B\f$.
-@param src2 pointer to \f$M\times K\f$ matrix \f$B\f$ which is the right-hand side of system \f$A*X=B\f$. \f$B\f$ stored in row major order.
-If src2 is null pointer only QR decomposition will be performed. Otherwise system will be solved and src1 will be used as temporary buffer, so
-after finish of work src2 contains solution \f$X\f$ of system \f$A*X=B\f$.
+@param src2 pointer to \f$M\times K\f$ matrix \f$B\f$ which is the right-hand
+side of system \f$A*X=B\f$. \f$B\f$ stored in row major order. If src2 is null
+pointer only QR decomposition will be performed. Otherwise system will be solved
+and src1 will be used as temporary buffer, so after finish of work src2 contains
+solution \f$X\f$ of system \f$A*X=B\f$.
 @param src2_step number of bytes between two consequent rows of matrix \f$B\f$.
-@param dst pointer to continiuos \f$N\times 1\f$ array for scalar factors of elementary reflectors. See @cite VandLec for details.
-@param info indicates success of decomposition. If *info is zero decomposition failed.
+@param dst pointer to continiuos \f$N\times 1\f$ array for scalar factors of
+elementary reflectors. See @cite VandLec for details.
+@param info indicates success of decomposition. If *info is zero decomposition
+failed.
 */
 //! @addtogroup core_hal_interface_decomp_qr QR matrix decomposition
 //! @{
-inline int hal_ni_QR32f(float* src1, size_t src1_step, int m, int n, int k, float* src2, size_t src2_step, float* dst, int* info) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_QR64f(double* src1, size_t src1_step, int m, int n, int k, double* src2, size_t src2_step, double* dst, int* info) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_QR32f(float *src1, size_t src1_step, int m, int n, int k,
+                        float *src2, size_t src2_step, float *dst, int *info) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_QR64f(double *src1, size_t src1_step, int m, int n, int k,
+                        double *src2, size_t src2_step, double *dst,
+                        int *info) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
-
-
 
 //! @cond IGNORED
 #define cv_hal_LU32f hal_ni_LU32f
@@ -668,41 +1160,65 @@ inline int hal_ni_QR64f(double* src1, size_t src1_step, int m, int n, int k, dou
 #define cv_hal_QR64f hal_ni_QR64f
 //! @endcond
 
-
 /**
-The function performs generalized matrix multiplication similar to the gemm functions in BLAS level 3:
-\f$D = \alpha*AB+\beta*C\f$
+The function performs generalized matrix multiplication similar to the gemm
+functions in BLAS level 3: \f$D = \alpha*AB+\beta*C\f$
 
-@param src1 pointer to input \f$M\times N\f$ matrix \f$A\f$ or \f$A^T\f$ stored in row major order.
-@param src1_step number of bytes between two consequent rows of matrix \f$A\f$ or \f$A^T\f$.
-@param src2 pointer to input \f$N\times K\f$ matrix \f$B\f$ or \f$B^T\f$ stored in row major order.
-@param src2_step number of bytes between two consequent rows of matrix \f$B\f$ or \f$B^T\f$.
+@param src1 pointer to input \f$M\times N\f$ matrix \f$A\f$ or \f$A^T\f$ stored
+in row major order.
+@param src1_step number of bytes between two consequent rows of matrix \f$A\f$
+or \f$A^T\f$.
+@param src2 pointer to input \f$N\times K\f$ matrix \f$B\f$ or \f$B^T\f$ stored
+in row major order.
+@param src2_step number of bytes between two consequent rows of matrix \f$B\f$
+or \f$B^T\f$.
 @param alpha \f$\alpha\f$ multiplier before \f$AB\f$
-@param src3 pointer to input \f$M\times K\f$ matrix \f$C\f$ or \f$C^T\f$ stored in row major order.
-@param src3_step number of bytes between two consequent rows of matrix \f$C\f$ or \f$C^T\f$.
+@param src3 pointer to input \f$M\times K\f$ matrix \f$C\f$ or \f$C^T\f$ stored
+in row major order.
+@param src3_step number of bytes between two consequent rows of matrix \f$C\f$
+or \f$C^T\f$.
 @param beta \f$\beta\f$ multiplier before \f$C\f$
-@param dst pointer to input \f$M\times K\f$ matrix \f$D\f$ stored in row major order.
+@param dst pointer to input \f$M\times K\f$ matrix \f$D\f$ stored in row major
+order.
 @param dst_step number of bytes between two consequent rows of matrix \f$D\f$.
-@param m number of rows in matrix \f$A\f$ or \f$A^T\f$, equals to number of rows in matrix \f$D\f$
+@param m number of rows in matrix \f$A\f$ or \f$A^T\f$, equals to number of rows
+in matrix \f$D\f$
 @param n number of columns in matrix \f$A\f$ or \f$A^T\f$
-@param k number of columns in matrix \f$B\f$ or \f$B^T\f$, equals to number of columns in matrix \f$D\f$
+@param k number of columns in matrix \f$B\f$ or \f$B^T\f$, equals to number of
+columns in matrix \f$D\f$
 @param flags algorithm options (combination of CV_HAL_GEMM_1_T, ...).
  */
 
 //! @addtogroup core_hal_interface_matrix_multiplication Matrix multiplication
 //! @{
-inline int hal_ni_gemm32f(const float* src1, size_t src1_step, const float* src2, size_t src2_step,
-                          float alpha, const float* src3, size_t src3_step, float beta, float* dst, size_t dst_step,
-                          int m, int n, int k, int flags) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_gemm64f(const double* src1, size_t src1_step, const double* src2, size_t src2_step,
-                          double alpha, const double* src3, size_t src3_step, double beta, double* dst, size_t dst_step,
-                          int m, int n, int k, int flags) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_gemm32fc(const float* src1, size_t src1_step, const float* src2, size_t src2_step,
-                          float alpha, const float* src3, size_t src3_step, float beta, float* dst, size_t dst_step,
-                          int m, int n, int k, int flags) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
-inline int hal_ni_gemm64fc(const double* src1, size_t src1_step, const double* src2, size_t src2_step,
-                          double alpha, const double* src3, size_t src3_step, double beta, double* dst, size_t dst_step,
-                          int m, int n, int k, int flags) { return CV_HAL_ERROR_NOT_IMPLEMENTED; }
+inline int hal_ni_gemm32f(const float *src1, size_t src1_step,
+                          const float *src2, size_t src2_step, float alpha,
+                          const float *src3, size_t src3_step, float beta,
+                          float *dst, size_t dst_step, int m, int n, int k,
+                          int flags) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_gemm64f(const double *src1, size_t src1_step,
+                          const double *src2, size_t src2_step, double alpha,
+                          const double *src3, size_t src3_step, double beta,
+                          double *dst, size_t dst_step, int m, int n, int k,
+                          int flags) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_gemm32fc(const float *src1, size_t src1_step,
+                           const float *src2, size_t src2_step, float alpha,
+                           const float *src3, size_t src3_step, float beta,
+                           float *dst, size_t dst_step, int m, int n, int k,
+                           int flags) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
+inline int hal_ni_gemm64fc(const double *src1, size_t src1_step,
+                           const double *src2, size_t src2_step, double alpha,
+                           const double *src3, size_t src3_step, double beta,
+                           double *dst, size_t dst_step, int m, int n, int k,
+                           int flags) {
+  return CV_HAL_ERROR_NOT_IMPLEMENTED;
+}
 //! @}
 
 //! @cond IGNORED
@@ -714,37 +1230,39 @@ inline int hal_ni_gemm64fc(const double* src1, size_t src1_step, const double* s
 
 //! @}
 
-
 #if defined __GNUC__
-#  pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 #elif defined _MSC_VER
-#  pragma warning( pop )
+#pragma warning(pop)
 #endif
 
-#include "hal_internal.hpp"
 #include "custom_hal.hpp"
+#include "hal_internal.hpp"
 
 //! @cond IGNORED
-#define CALL_HAL_RET(name, fun, retval, ...) \
-{ \
-    int res = __CV_EXPAND(fun(__VA_ARGS__, &retval)); \
-    if (res == CV_HAL_ERROR_OK) \
-        return retval; \
-    else if (res != CV_HAL_ERROR_NOT_IMPLEMENTED) \
-        CV_Error_(cv::Error::StsInternal, \
-            ("HAL implementation " CVAUX_STR(name) " ==> " CVAUX_STR(fun) " returned %d (0x%08x)", res, res)); \
-}
+#define CALL_HAL_RET(name, fun, retval, ...)                              \
+  {                                                                       \
+    int res = __CV_EXPAND(fun(__VA_ARGS__, &retval));                     \
+    if (res == CV_HAL_ERROR_OK)                                           \
+      return retval;                                                      \
+    else if (res != CV_HAL_ERROR_NOT_IMPLEMENTED)                         \
+      CV_Error_(cv::Error::StsInternal,                                   \
+                ("HAL implementation " CVAUX_STR(name) " ==> " CVAUX_STR( \
+                     fun) " returned %d (0x%08x)",                        \
+                 res, res));                                              \
+  }
 
-
-#define CALL_HAL(name, fun, ...) \
-{ \
-    int res = __CV_EXPAND(fun(__VA_ARGS__)); \
-    if (res == CV_HAL_ERROR_OK) \
-        return; \
-    else if (res != CV_HAL_ERROR_NOT_IMPLEMENTED) \
-        CV_Error_(cv::Error::StsInternal, \
-            ("HAL implementation " CVAUX_STR(name) " ==> " CVAUX_STR(fun) " returned %d (0x%08x)", res, res)); \
-}
+#define CALL_HAL(name, fun, ...)                                          \
+  {                                                                       \
+    int res = __CV_EXPAND(fun(__VA_ARGS__));                              \
+    if (res == CV_HAL_ERROR_OK)                                           \
+      return;                                                             \
+    else if (res != CV_HAL_ERROR_NOT_IMPLEMENTED)                         \
+      CV_Error_(cv::Error::StsInternal,                                   \
+                ("HAL implementation " CVAUX_STR(name) " ==> " CVAUX_STR( \
+                     fun) " returned %d (0x%08x)",                        \
+                 res, res));                                              \
+  }
 //! @endcond
 
 #endif

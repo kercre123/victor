@@ -13,48 +13,39 @@
 #ifndef UTIL_DYNAMIC_SINGLETON_H_
 #define UTIL_DYNAMIC_SINGLETON_H_
 
-namespace Anki{ namespace Util {
+namespace Anki {
+namespace Util {
 
 template <class ClassType>
-class DynamicSingleton
-{
-public:
+class DynamicSingleton {
+ public:
   virtual ~DynamicSingleton() {}
 
   // dynamically allocate the singleton instance once
-  static inline ClassType* getInstance()
-  {
-    if ( nullptr == _instance )
-    {
+  static inline ClassType* getInstance() {
+    if (nullptr == _instance) {
       _instance = new ClassType();
     }
-    
+
     return _instance;
   }
 
-  static bool hasInstance()
-  {
-    return _instance != nullptr;
-  }
-  
+  static bool hasInstance() { return _instance != nullptr; }
+
   // destroy the instance if it exists
-  static inline void removeInstance()
-  {
-    delete _instance;  // c++ does not require checking that !=0 (delete 0 is ok)
+  static inline void removeInstance() {
+    delete _instance;  // c++ does not require checking that !=0 (delete 0 is
+                       // ok)
     _instance = nullptr;
   }
-  
-  static inline bool exists() {
-    return (_instance != nullptr);
-  }
 
-protected:
+  static inline bool exists() { return (_instance != nullptr); }
 
+ protected:
   // default constructor
   DynamicSingleton() = default;
 
-private:
-
+ private:
   // instance
   static ClassType* _instance;
 
@@ -66,10 +57,10 @@ private:
 template <class ClassType>
 ClassType* DynamicSingleton<ClassType>::_instance = nullptr;
 
-#define ANKIUTIL_FRIEND_SINGLETON(CT) friend class Anki::Util::DynamicSingleton<CT>
+#define ANKIUTIL_FRIEND_SINGLETON(CT) \
+  friend class Anki::Util::DynamicSingleton<CT>
 
-
-} // namespace
-} // namespace
+}  // namespace Util
+}  // namespace Anki
 
 #endif

@@ -10,7 +10,6 @@
  *
  **/
 
-
 #pragma once
 #include <functional>
 #include <string>
@@ -18,7 +17,7 @@
 
 namespace Anki {
 
-using ExecCommandCallback = std::function<void (int rc)>;
+using ExecCommandCallback = std::function<void(int rc)>;
 
 void ExecCommandInBackground(const std::vector<std::string>& args,
                              ExecCommandCallback callback,
@@ -28,4 +27,4 @@ int ExecCommand(const std::vector<std::string>& args);
 
 void CancelBackgroundCommands();
 
-} // namespace Anki
+}  // namespace Anki

@@ -119,16 +119,17 @@ std::string Utf8SafeCHexEscape(absl::string_view src);
 
 // Base64Unescape()
 //
-// Converts a `src` std::string encoded in Base64 to its binary equivalent, writing
-// it to a `dest` buffer, returning `true` on success. If `src` contains invalid
-// characters, `dest` is cleared and returns `false`.
+// Converts a `src` std::string encoded in Base64 to its binary equivalent,
+// writing it to a `dest` buffer, returning `true` on success. If `src` contains
+// invalid characters, `dest` is cleared and returns `false`.
 bool Base64Unescape(absl::string_view src, std::string* dest);
 
 // WebSafeBase64Unescape(absl::string_view, std::string*)
 //
-// Converts a `src` std::string encoded in Base64 to its binary equivalent, writing
-// it to a `dest` buffer, but using '-' instead of '+', and '_' instead of '/'.
-// If `src` contains invalid characters, `dest` is cleared and returns `false`.
+// Converts a `src` std::string encoded in Base64 to its binary equivalent,
+// writing it to a `dest` buffer, but using '-' instead of '+', and '_' instead
+// of '/'. If `src` contains invalid characters, `dest` is cleared and returns
+// `false`.
 bool WebSafeBase64Unescape(absl::string_view src, std::string* dest);
 
 // Base64Escape()
@@ -139,7 +140,8 @@ void Base64Escape(absl::string_view src, std::string* dest);
 
 // WebSafeBase64Escape()
 //
-// Encodes a `src` std::string into a `dest` buffer using uses '-' instead of '+' and
+// Encodes a `src` std::string into a `dest` buffer using uses '-' instead of
+// '+' and
 // '_' instead of '/', and without padding. This function conforms with RFC 4648
 // section 5 (base64url).
 void WebSafeBase64Escape(absl::string_view src, std::string* dest);
@@ -152,8 +154,8 @@ std::string HexStringToBytes(absl::string_view from);
 
 // BytesToHexString()
 //
-// Converts binary data into an ASCII text std::string, returning a std::string of size
-// `2*from.size()`.
+// Converts binary data into an ASCII text std::string, returning a std::string
+// of size `2*from.size()`.
 std::string BytesToHexString(absl::string_view from);
 
 }  // namespace absl

@@ -6,9 +6,9 @@
  * @brief Message related helper functions header file.
  *
  * Copyright (C) 2015. Dialog Semiconductor Ltd, unpublished work. This computer
- * program includes Confidential, Proprietary Information and is a Trade Secret of
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited
- * unless authorized in writing. All Rights Reserved.
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -71,8 +71,8 @@ ke_msg_id_t app_easy_msg_modify(ke_msg_id_t msg_util_id, void (*fn)(void));
 
 /**
  ****************************************************************************************
- * @brief Set the callback to be invoked when the wake-up message issued from the 
- *        app_easy_wakeup function is scheduled.
+ * @brief Set the callback to be invoked when the wake-up message issued from
+ *the app_easy_wakeup function is scheduled.
  * @param[in] fn Pointer to the callback function
  * @return void
  ****************************************************************************************
@@ -90,8 +90,8 @@ void app_easy_wakeup_free(void);
 /**
  ****************************************************************************************
  * @brief This function should be called from within the wake-up handler.
- *        It will put a message in the scheduler queue which will be called when the BLE 
- *        stack is fully awake and operationable.
+ *        It will put a message in the scheduler queue which will be called when
+ *the BLE stack is fully awake and operationable.
  * @return void
  ****************************************************************************************
  */
@@ -108,12 +108,10 @@ void app_easy_wakeup(void);
  * @return Returns if the message is handled by the process handler.
  ****************************************************************************************
  */
-enum process_event_response app_msg_utils_api_process_handler(ke_msg_id_t const msgid,
-                                                              void const *param,
-                                                              ke_task_id_t const dest_id,
-                                                              ke_task_id_t const src_id, 
-                                                              enum ke_msg_status_tag *msg_ret);
+enum process_event_response app_msg_utils_api_process_handler(
+    ke_msg_id_t const msgid, void const *param, ke_task_id_t const dest_id,
+    ke_task_id_t const src_id, enum ke_msg_status_tag *msg_ret);
 
- /// @} APP
+/// @} APP
 
-#endif // _APP_EASY_MSG_UTILS_H_
+#endif  // _APP_EASY_MSG_UTILS_H_

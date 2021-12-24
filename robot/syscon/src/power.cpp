@@ -1,38 +1,27 @@
-#include "common.h"
-#include "hardware.h"
-
-#include "comms.h"
 #include "power.h"
+
 #include "analog.h"
-#include "vectors.h"
-#include "flash.h"
-#include "motors.h"
+#include "common.h"
+#include "comms.h"
 #include "encoders.h"
-#include "opto.h"
-#include "mics.h"
+#include "flash.h"
+#include "hardware.h"
 #include "lights.h"
+#include "mics.h"
+#include "motors.h"
+#include "opto.h"
+#include "vectors.h"
 
 extern "C" void SoftReset(bool onCharger);
 
-static const uint32_t APB1_CLOCKS = 0
-              | RCC_APB1ENR_USART2EN
-              | RCC_APB1ENR_TIM3EN
-              | RCC_APB1ENR_TIM6EN
-              | RCC_APB1ENR_TIM14EN
-              | RCC_APB1ENR_I2C2EN
-              | RCC_APB1ENR_SPI2EN
-              ;
+static const uint32_t APB1_CLOCKS =
+    0 | RCC_APB1ENR_USART2EN | RCC_APB1ENR_TIM3EN | RCC_APB1ENR_TIM6EN |
+    RCC_APB1ENR_TIM14EN | RCC_APB1ENR_I2C2EN | RCC_APB1ENR_SPI2EN;
 
-static const uint32_t APB2_CLOCKS = 0
-              | RCC_APB2ENR_USART1EN
-              | RCC_APB2ENR_TIM1EN
-              | RCC_APB2ENR_TIM15EN
-              | RCC_APB2ENR_TIM16EN
-              | RCC_APB2ENR_TIM17EN
-              | RCC_APB2ENR_SPI1EN
-              | RCC_APB2ENR_SYSCFGEN
-              | RCC_APB2ENR_ADC1EN
-              ;
+static const uint32_t APB2_CLOCKS =
+    0 | RCC_APB2ENR_USART1EN | RCC_APB2ENR_TIM1EN | RCC_APB2ENR_TIM15EN |
+    RCC_APB2ENR_TIM16EN | RCC_APB2ENR_TIM17EN | RCC_APB2ENR_SPI1EN |
+    RCC_APB2ENR_SYSCFGEN | RCC_APB2ENR_ADC1EN;
 
 static PowerMode currentState = POWER_UNINIT;
 static PowerMode desiredState = POWER_CALM;
@@ -45,13 +34,11 @@ void Power::init(void) {
   DFU_FLAG = 0;
   RCC->APB1ENR |= APB1_CLOCKS;
   RCC->APB2ENR |= APB2_CLOCKS;
-  
+
   enableHead();
 }
 
-void Power::signalRecovery() {
-  enter_recovery = true;
-}
+void Power::signalRecovery() { enter_recovery = true; }
 
 static inline void enableHead(void) {
   if (IS_WHISKEY) {
@@ -96,42 +83,20 @@ static void enterBootloader(void) {
   DMA1_Channel5->CCR = 0;
 
   // Reset all the perfs (including ones we are not using)
-  RCC->APB1RSTR = 0
-    | RCC_APB1RSTR_TIM2RST
-    | RCC_APB1RSTR_TIM3RST
-    | RCC_APB1RSTR_TIM6RST
-    | RCC_APB1RSTR_TIM7RST
-    | RCC_APB1RSTR_TIM14RST
-    | RCC_APB1RSTR_SPI2RST
-    | RCC_APB1RSTR_USART2RST
-    | RCC_APB1RSTR_USART3RST
-    | RCC_APB1RSTR_USART4RST
-    | RCC_APB1RSTR_USART5RST
-    | RCC_APB1RSTR_I2C1RST
-    | RCC_APB1RSTR_I2C2RST
-    | RCC_APB1RSTR_USBRST
-    | RCC_APB1RSTR_CANRST
-    | RCC_APB1RSTR_CRSRST
-    | RCC_APB1RSTR_PWRRST
-    | RCC_APB1RSTR_DACRST
-    | RCC_APB1RSTR_CECRST
-    ;
+  RCC->APB1RSTR =
+      0 | RCC_APB1RSTR_TIM2RST | RCC_APB1RSTR_TIM3RST | RCC_APB1RSTR_TIM6RST |
+      RCC_APB1RSTR_TIM7RST | RCC_APB1RSTR_TIM14RST | RCC_APB1RSTR_SPI2RST |
+      RCC_APB1RSTR_USART2RST | RCC_APB1RSTR_USART3RST | RCC_APB1RSTR_USART4RST |
+      RCC_APB1RSTR_USART5RST | RCC_APB1RSTR_I2C1RST | RCC_APB1RSTR_I2C2RST |
+      RCC_APB1RSTR_USBRST | RCC_APB1RSTR_CANRST | RCC_APB1RSTR_CRSRST |
+      RCC_APB1RSTR_PWRRST | RCC_APB1RSTR_DACRST | RCC_APB1RSTR_CECRST;
 
-  RCC->APB2RSTR = 0
-    | RCC_APB2RSTR_SYSCFGRST
-    | RCC_APB2RSTR_ADCRST
-    | RCC_APB2RSTR_USART8RST
-    | RCC_APB2RSTR_USART7RST
-    | RCC_APB2RSTR_USART6RST
-    | RCC_APB2RSTR_TIM1RST
-    | RCC_APB2RSTR_SPI1RST
-    | RCC_APB2RSTR_USART1RST
-    | RCC_APB2RSTR_TIM15RST
-    | RCC_APB2RSTR_TIM16RST
-    | RCC_APB2RSTR_TIM17RST
-    | RCC_APB2RSTR_DBGMCURST
-    | RCC_APB2RSTR_ADC1RST
-    ;
+  RCC->APB2RSTR =
+      0 | RCC_APB2RSTR_SYSCFGRST | RCC_APB2RSTR_ADCRST |
+      RCC_APB2RSTR_USART8RST | RCC_APB2RSTR_USART7RST | RCC_APB2RSTR_USART6RST |
+      RCC_APB2RSTR_TIM1RST | RCC_APB2RSTR_SPI1RST | RCC_APB2RSTR_USART1RST |
+      RCC_APB2RSTR_TIM15RST | RCC_APB2RSTR_TIM16RST | RCC_APB2RSTR_TIM17RST |
+      RCC_APB2RSTR_DBGMCURST | RCC_APB2RSTR_ADC1RST;
 
   __asm("nop\nnop\nnop\nnop\nnop");
 
@@ -151,8 +116,8 @@ static void enterBootloader(void) {
 
   // Pass control back to the reset handler
   DFU_FLAG = DFU_ENTRY_POINT;
-  NVIC->ICER[0] = ~0; // Disable all interrupts
-  NVIC->ICPR[0] = ~0; // Clear all pending interrupts
+  NVIC->ICER[0] = ~0;  // Disable all interrupts
+  NVIC->ICPR[0] = ~0;  // Clear all pending interrupts
 
   SoftReset(Analog::on_charger);
 }
@@ -164,16 +129,14 @@ void Power::wakeUp() {
   }
 }
 
-void Power::setMode(PowerMode set) {
-  desiredState = set;
-}
+void Power::setMode(PowerMode set) { desiredState = set; }
 
 void Power::adjustHead() {
   static bool headPowered = true;
   bool wantPower = desiredState != POWER_STOP;
 
   if (headPowered == wantPower) {
-    return ;
+    return;
   }
 
   // If the head is transitioning between power / not-powered
@@ -211,11 +174,11 @@ void Power::tick(void) {
       Encoders::start();
       Opto::start();
       Mics::reduce(false);
-    } 
+    }
 
     if (desired == POWER_ERASE) {
       enterBootloader();
-      return ;
+      return;
     }
 
     currentState = desired;
@@ -224,9 +187,9 @@ void Power::tick(void) {
   switch (currentState) {
     case POWER_STOP:
       Analog::setPower(false);
-      break ;
+      break;
     default:
       Analog::setPower(true);
-      break ;
+      break;
   }
 }

@@ -18,6 +18,7 @@
 
 #include <AVSCommon/AVS/AudioInputStream.h>
 #include <AVSCommon/Utils/AudioFormat.h>
+
 #include "ASRProfile.h"
 
 namespace alexaClientSDK {
@@ -25,101 +26,95 @@ namespace capabilityAgents {
 namespace aip {
 
 /**
- * Wrapper for an audio input @c ByteStream which includes information about the audio format and policies for using
- * it.
+ * Wrapper for an audio input @c ByteStream which includes information about the
+ * audio format and policies for using it.
  */
 struct AudioProvider {
-    /**
-     * Initialization constructor.
-     *
-     * @param stream The @c ByteStream to use for audio input.
-     * @param format The @c AudioFormat of the data in @c byteStream.
-     * @param profile The @c AudioProfile describing the acoustic environment for the audio input.
-     * @param alwaysReadable Whether new audio data can be read at any time from @c byteStream.  This must be @c true
-     *     for a stream to be automatically opened up by an @c ExpectSpeech directive.
-     * @param canOverride Whether this @c AudioProvider should be allowed to interrupt/override another
-     *     @c AudioProvider.
-     * @param canBeOverridden Whether this @c AudioProvider allows another @c AudioProvider to interrupt it.
-     */
-    AudioProvider(
-        std::shared_ptr<avsCommon::avs::AudioInputStream> stream,
-        const avsCommon::utils::AudioFormat& format,
-        ASRProfile profile,
-        bool alwaysReadable,
-        bool canOverride,
-        bool canBeOverridden);
+  /**
+   * Initialization constructor.
+   *
+   * @param stream The @c ByteStream to use for audio input.
+   * @param format The @c AudioFormat of the data in @c byteStream.
+   * @param profile The @c AudioProfile describing the acoustic environment for
+   * the audio input.
+   * @param alwaysReadable Whether new audio data can be read at any time from
+   * @c byteStream.  This must be @c true for a stream to be automatically
+   * opened up by an @c ExpectSpeech directive.
+   * @param canOverride Whether this @c AudioProvider should be allowed to
+   * interrupt/override another
+   *     @c AudioProvider.
+   * @param canBeOverridden Whether this @c AudioProvider allows another @c
+   * AudioProvider to interrupt it.
+   */
+  AudioProvider(std::shared_ptr<avsCommon::avs::AudioInputStream> stream,
+                const avsCommon::utils::AudioFormat& format, ASRProfile profile,
+                bool alwaysReadable, bool canOverride, bool canBeOverridden);
 
-    /**
-     * This function provides an invalid AudioProvider which has no stream associated with it.
-     *
-     * @return An invalid AudioProvider which has no stream associated with it.
-     */
-    static const AudioProvider& null();
+  /**
+   * This function provides an invalid AudioProvider which has no stream
+   * associated with it.
+   *
+   * @return An invalid AudioProvider which has no stream associated with it.
+   */
+  static const AudioProvider& null();
 
-    /**
-     * This function checks whether this is a valid @c AudioProvider.  An @c AudioProvider is valid if it has a stream
-     * associated with it.
-     *
-     * @return @c true if `stream != nullptr`, else @c false.
-     */
-    operator bool() const;
+  /**
+   * This function checks whether this is a valid @c AudioProvider.  An @c
+   * AudioProvider is valid if it has a stream associated with it.
+   *
+   * @return @c true if `stream != nullptr`, else @c false.
+   */
+  operator bool() const;
 
-    /// The @c ByteStream to use for audio input.
-    std::shared_ptr<avsCommon::avs::AudioInputStream> stream;
+  /// The @c ByteStream to use for audio input.
+  std::shared_ptr<avsCommon::avs::AudioInputStream> stream;
 
-    /// The @c AudioFormat of the data in @c byteStream.
-    avsCommon::utils::AudioFormat format;
+  /// The @c AudioFormat of the data in @c byteStream.
+  avsCommon::utils::AudioFormat format;
 
-    /// The @c ASRProfile describing the acoustic environment for the audio input.
-    ASRProfile profile;
+  /// The @c ASRProfile describing the acoustic environment for the audio input.
+  ASRProfile profile;
 
-    /// Whether new audio data can be read at any time from @c byteStream.
-    bool alwaysReadable;
+  /// Whether new audio data can be read at any time from @c byteStream.
+  bool alwaysReadable;
 
-    /// Whether this @c AudioProvider should be allowed to interrupt/override another @c AudioProvider.
-    bool canOverride;
+  /// Whether this @c AudioProvider should be allowed to interrupt/override
+  /// another @c AudioProvider.
+  bool canOverride;
 
-    /// Whether this @c AudioProvider should allow another @c AudioProvider to interrupt it.
-    bool canBeOverridden;
+  /// Whether this @c AudioProvider should allow another @c AudioProvider to
+  /// interrupt it.
+  bool canBeOverridden;
 };
 
 inline AudioProvider::AudioProvider(
     std::shared_ptr<avsCommon::avs::AudioInputStream> stream,
-    const avsCommon::utils::AudioFormat& format,
-    ASRProfile profile,
-    bool alwaysReadable,
-    bool canOverride,
-    bool canBeOverridden)
-        // Note: There is an issue with braced initialization of an aggregate type in GCC 4.8, so parentheses are used
-        //     below to initialize format.
-        :
-        stream{stream},
-        format(format),
-        profile{profile},
-        alwaysReadable{alwaysReadable},
-        canOverride{canOverride},
-        canBeOverridden{canBeOverridden} {
-}
+    const avsCommon::utils::AudioFormat& format, ASRProfile profile,
+    bool alwaysReadable, bool canOverride, bool canBeOverridden)
+    // Note: There is an issue with braced initialization of an aggregate type
+    // in GCC 4.8, so parentheses are used
+    //     below to initialize format.
+    : stream{stream},
+      format(format),
+      profile{profile},
+      alwaysReadable{alwaysReadable},
+      canOverride{canOverride},
+      canBeOverridden{canBeOverridden} {}
 
 inline const AudioProvider& AudioProvider::null() {
-    static AudioProvider nullAudioProvider{nullptr,
-                                           {avsCommon::utils::AudioFormat::Encoding::LPCM,
-                                            avsCommon::utils::AudioFormat::Endianness::LITTLE,
-                                            0,
-                                            0,
-                                            0,
-                                            true,
-                                            avsCommon::utils::AudioFormat::Layout::NON_INTERLEAVED},
-                                           ASRProfile::CLOSE_TALK,
-                                           false,
-                                           false,
-                                           false};
-    return nullAudioProvider;
+  static AudioProvider nullAudioProvider{
+      nullptr,
+      {avsCommon::utils::AudioFormat::Encoding::LPCM,
+       avsCommon::utils::AudioFormat::Endianness::LITTLE, 0, 0, 0, true,
+       avsCommon::utils::AudioFormat::Layout::NON_INTERLEAVED},
+      ASRProfile::CLOSE_TALK,
+      false,
+      false,
+      false};
+  return nullAudioProvider;
 }
 
-inline AudioProvider::operator bool() const {
-    return stream != nullptr;
-}
+inline AudioProvider::operator bool() const { return stream != nullptr; }
 
 }  // namespace aip
 }  // namespace capabilityAgents

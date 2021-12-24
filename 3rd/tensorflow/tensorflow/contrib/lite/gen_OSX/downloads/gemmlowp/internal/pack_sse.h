@@ -18,6 +18,7 @@
 #define GEMMLOWP_INTERNAL_PACK_SSE_H_
 
 #include <smmintrin.h>
+
 #include "pack.h"
 
 namespace gemmlowp {

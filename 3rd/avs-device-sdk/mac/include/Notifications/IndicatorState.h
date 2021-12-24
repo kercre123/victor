@@ -25,7 +25,8 @@ namespace notifications {
 /**
  * An enum class used to represent the state of the notification indicator.
  *
- * @note These values shouldn't be changed before evaluating the effect a change will have on existing databases.
+ * @note These values shouldn't be changed before evaluating the effect a change
+ * will have on existing databases.
  */
 enum class IndicatorState { OFF = 0, ON = 1, UNDEFINED };
 
@@ -36,35 +37,36 @@ enum class IndicatorState { OFF = 0, ON = 1, UNDEFINED };
  * @return The int representation of state
  */
 inline int indicatorStateToInt(IndicatorState state) {
-    return static_cast<int>(state);
+  return static_cast<int>(state);
 }
 
 /**
  * Convert an int into an @c IndicatorState.
  *
  * @param stateNum The int to convert.
- * @return The IndicatorState representation of stateNum or nullptr if stateNum is invalid.
+ * @return The IndicatorState representation of stateNum or nullptr if stateNum
+ * is invalid.
  */
 inline const IndicatorState intToIndicatorState(int stateNum) {
-    if (stateNum < 0 || stateNum >= static_cast<int>(IndicatorState::UNDEFINED)) {
-        return IndicatorState::UNDEFINED;
-    }
-    return static_cast<IndicatorState>(stateNum);
+  if (stateNum < 0 || stateNum >= static_cast<int>(IndicatorState::UNDEFINED)) {
+    return IndicatorState::UNDEFINED;
+  }
+  return static_cast<IndicatorState>(stateNum);
 }
 
 inline std::ostream& operator<<(std::ostream& stream, IndicatorState state) {
-    switch (state) {
-        case IndicatorState::ON:
-            stream << "ON";
-            return stream;
-        case IndicatorState::OFF:
-            stream << "OFF";
-            return stream;
-        case IndicatorState::UNDEFINED:
-            stream << "UNDEFINED";
-            return stream;
-    }
-    return stream << "UNKNOWN STATE";
+  switch (state) {
+    case IndicatorState::ON:
+      stream << "ON";
+      return stream;
+    case IndicatorState::OFF:
+      stream << "OFF";
+      return stream;
+    case IndicatorState::UNDEFINED:
+      stream << "UNDEFINED";
+      return stream;
+  }
+  return stream << "UNKNOWN STATE";
 }
 
 }  // namespace notifications

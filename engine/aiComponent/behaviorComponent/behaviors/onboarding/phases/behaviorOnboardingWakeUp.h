@@ -20,31 +20,36 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorOnboardingWakeUp : public ICozmoBehavior, public IOnboardingPhaseWithProgress
-{
-public: 
+class BehaviorOnboardingWakeUp : public ICozmoBehavior,
+                                 public IOnboardingPhaseWithProgress {
+ public:
   virtual ~BehaviorOnboardingWakeUp();
 
   // IOnboardingPhaseWithProgress
-  virtual int GetPhaseProgressInPercent() const override {return _dVars.persistent.percentComplete;};
-  virtual void ResumeUponNextActivation() override {_dVars.resumeUponActivation = true;}
+  virtual int GetPhaseProgressInPercent() const override {
+    return _dVars.persistent.percentComplete;
+  };
+  virtual void ResumeUponNextActivation() override {
+    _dVars.resumeUponActivation = true;
+  }
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorOnboardingWakeUp(const Json::Value& config);  
+  explicit BehaviorOnboardingWakeUp(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
-  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override {}
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
-  
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override {
+  }
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override {}
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-
+ private:
   void TransitionFromPhoneFace();
   void WakeUp();
   void DriveOffChargerIfNecessary();
@@ -53,7 +58,7 @@ private:
     InstanceConfig();
   };
 
-  enum class WakeUpState{
+  enum class WakeUpState {
     NotStarted,
     TransitionFromPhoneFace,
     WakeUp,
@@ -63,7 +68,7 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     bool resumeUponActivation;
-    struct PersistentVars{
+    struct PersistentVars {
       PersistentVars();
       WakeUpState state;
       int percentComplete;
@@ -72,10 +77,9 @@ private:
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingWakeUp__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingWakeUp__

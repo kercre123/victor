@@ -6,7 +6,8 @@ Created: 2014-10-28
 Recognize faces from an image
 
 Copyright Anki, Inc. 2014
-For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+For internal use only. No part of this code may be used without a signed
+non-disclosure agreement with Anki, inc.
 **/
 
 // Deprecate?
@@ -50,11 +51,11 @@ namespace Anki
         s32 &faceId,
         f64 &confidence,
         MemoryStack scratch);
-#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
+#endif  // #if ANKICORETECH_EMBEDDED_USE_OPENCV
     } // namespace Recognize
   } // namespace Embedded
 } //namespace Anki
 
-#endif // _ANKICORETECHEMBEDDED_VISION_RECOGNIZE_H_
+#endif  // _ANKICORETECHEMBEDDED_VISION_RECOGNIZE_H_
 
-#endif // #if 0
+#endif  // #if 0

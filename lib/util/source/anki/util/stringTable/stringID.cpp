@@ -10,67 +10,44 @@
 
 #include "util/stringTable/stringID.h"
 
-
-namespace Anki{ namespace Util
-{
+namespace Anki {
+namespace Util {
 
 StringID STRID_None;
 
 //----------------------------------------------------------------------------------------------------------------------
-StringTable& StringID::GetStringTable()
-{
+StringTable& StringID::GetStringTable() {
   static StringTable stringTable_;
   return stringTable_;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-StringID::StringID() :
-  id_( StringTable::STRID_INDEX_NONE )
-{
-  
+StringID::StringID() : id_(StringTable::STRID_INDEX_NONE) {}
+
+//----------------------------------------------------------------------------------------------------------------------
+StringID::StringID(const StringID& other) : id_(other.id_) {}
+
+//----------------------------------------------------------------------------------------------------------------------
+StringID::StringID(const std::string& name) { Set(name); }
+
+//----------------------------------------------------------------------------------------------------------------------
+StringID::~StringID() {}
+
+//----------------------------------------------------------------------------------------------------------------------
+void StringID::Set(const std::string& name) {
+  id_ = GetStringTable().AddStringID(name);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-StringID::StringID( const StringID& other ) :
-  id_( other.id_ )
-{
-  
-}
-  
-//----------------------------------------------------------------------------------------------------------------------
-StringID::StringID( const std::string& name )
-{
-  Set( name );
+const std::string& StringID::ToString() const {
+  return GetStringTable().GetString(id_);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-StringID::~StringID()
-{
-  
-}
+const char* StringID::c_str() const { return ToString().c_str(); }
 
-//----------------------------------------------------------------------------------------------------------------------
-void StringID::Set( const std::string& name )
-{
-  id_ = GetStringTable().AddStringID( name );
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-const std::string& StringID::ToString() const
-{
-  return GetStringTable().GetString( id_ );
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-const char* StringID::c_str() const
-{
-  return ToString().c_str();
-}
-
-
-} // namespace Anki
-} //namespace Util
-
+}  // namespace Util
+}  // namespace Anki
 
 //======================================================================================================================
 // C Interface
@@ -78,13 +55,11 @@ const char* StringID::c_str() const
 using namespace Anki::Util;
 
 //----------------------------------------------------------------------------------------------------------------------
-unsigned int StringID_Create( const char* name )
-{
-  return StringID( name ).GetID();
+unsigned int StringID_Create(const char* name) {
+  return StringID(name).GetID();
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-const char* StringID_ToString( unsigned int id )
-{
-  return StringID::GetStringTable().GetString( id ).c_str();
+const char* StringID_ToString(unsigned int id) {
+  return StringID::GetStringTable().GetString(id).c_str();
 }

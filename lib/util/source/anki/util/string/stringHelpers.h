@@ -4,18 +4,18 @@
  * Author: Mark Wesley
  * Created: 05/11/16
  *
- * Description: String helpers functions beyond those provided by standard ANSI C
+ * Description: String helpers functions beyond those provided by standard ANSI
+ *C
  *
  * Copyright: Anki, Inc. 2016
  *
  **/
 
-
 #ifndef __Util_String_StringHelpers_H__
 #define __Util_String_StringHelpers_H__
 
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace Anki {
 namespace Util {
@@ -26,7 +26,7 @@ int stricmp(const char* string1, const char* string2);
 
 std::vector<std::string> SplitString(const std::string& s, char delim);
 
-} // namespace Util
-} // namespace Anki
+}  // namespace Util
+}  // namespace Anki
 
-#endif // __Util_String_StringHelpers_H__
+#endif  // __Util_String_StringHelpers_H__

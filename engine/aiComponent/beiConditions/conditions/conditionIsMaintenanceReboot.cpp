@@ -17,16 +17,15 @@
 namespace Anki {
 namespace Vector {
 
-ConditionIsMaintenanceReboot::ConditionIsMaintenanceReboot(const Json::Value& config)
-  : IBEICondition(config)
-{
-}
-  
-bool ConditionIsMaintenanceReboot::AreConditionsMetInternal(BehaviorExternalInterface& bei) const
-{
+ConditionIsMaintenanceReboot::ConditionIsMaintenanceReboot(
+    const Json::Value& config)
+    : IBEICondition(config) {}
+
+bool ConditionIsMaintenanceReboot::AreConditionsMetInternal(
+    BehaviorExternalInterface& bei) const {
   const bool isReboot = OSState::getInstance()->RebootedForMaintenance();
   return isReboot;
 }
-  
-} // namespace
-} // namespace
+
+}  // namespace Vector
+}  // namespace Anki

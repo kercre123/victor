@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <list>
 #include <memory>
+
 #include "tensorflow/contrib/lite/context.h"
 
 namespace tflite {

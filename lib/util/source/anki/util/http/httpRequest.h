@@ -26,45 +26,48 @@ enum HttpMethod {
   HttpMethodHead
 };
 
-inline const char* HttpMethodToString(const HttpMethod m)
-{
-  switch(m) {
-    case HttpMethodGet: return "GET"; break;
-    case HttpMethodPost: return "POST"; break;
-    case HttpMethodPut: return "PUT"; break;
-    case HttpMethodDelete: return "DELETE"; break;
-    case HttpMethodHead: return "HEAD"; break;
-    default: return nullptr;
+inline const char* HttpMethodToString(const HttpMethod m) {
+  switch (m) {
+    case HttpMethodGet:
+      return "GET";
+      break;
+    case HttpMethodPost:
+      return "POST";
+      break;
+    case HttpMethodPut:
+      return "PUT";
+      break;
+    case HttpMethodDelete:
+      return "DELETE";
+      break;
+    case HttpMethodHead:
+      return "HEAD";
+      break;
+    default:
+      return nullptr;
   }
   return nullptr;
 }
 
-class HttpRequest
-{
-public:
-  explicit HttpRequest()
-  : timeOutMSec(kHttpRequestTimeOutMSec)
-  {}
+class HttpRequest {
+ public:
+  explicit HttpRequest() : timeOutMSec(kHttpRequestTimeOutMSec) {}
 
-  bool operator<(HttpRequest request) const
-  {
-    return uri < request.uri;
-  }
+  bool operator<(HttpRequest request) const { return uri < request.uri; }
 
   std::string uri;
 
   HttpMethod method;
 
-  std::map<std::string,std::string> headers;
+  std::map<std::string, std::string> headers;
 
-  std::map<std::string,std::string> params;
+  std::map<std::string, std::string> params;
 
   std::vector<uint8_t> body;
 
   std::string storageFilePath;
 
   int32_t timeOutMSec;
-
 };
 
 // Error codes borrowed from OSX/iOS NSURLError.h
@@ -85,11 +88,11 @@ static constexpr int kHttpResponseCodeConflict = 409;
 static constexpr int kHttpResponseCodeRequestEntityTooLarge = 413;
 
 inline bool isHttpSuccessCode(int responseCode) {
-  return (responseCode >= kHttpResponseCodeOK
-          && responseCode < kHttpResponseCodeMultipleChoices);
+  return (responseCode >= kHttpResponseCodeOK &&
+          responseCode < kHttpResponseCodeMultipleChoices);
 }
 
-}
-}
+}  // namespace Util
+}  // namespace Anki
 
 #endif

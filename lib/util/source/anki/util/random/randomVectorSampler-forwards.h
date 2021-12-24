@@ -10,16 +10,16 @@
  *
  **/
 
-#ifndef __Util_Random_RandomVectorSampler-Forwards_H__
-#define __Random_RandomVectorSampler-Forwards_H__
+#ifndef __Util_Random_RandomVectorSampler - Forwards_H__
+#define __Random_RandomVectorSampler -Forwards_H__
 
-namespace Anki{
+namespace Anki {
 namespace Util {
 
-template<typename T> class RandomVectorSampler;
+template <typename T>
+class RandomVectorSampler;
 
 }
-}
-
+}  // namespace Anki
 
 #endif

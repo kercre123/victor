@@ -8,17 +8,17 @@
  */
 
 #include "coretech/messaging/shared/SocketUtils.h"
-#include "util/helpers/ankiDefines.h"
 
 #include <fcntl.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
+
+#include "util/helpers/ankiDefines.h"
 
 namespace Anki {
 namespace Messaging {
 
-bool SetNonBlocking(int socket, int enable)
-{
+bool SetNonBlocking(int socket, int enable) {
   int flags = fcntl(socket, F_GETFL, 0);
   if (flags == -1) {
     return false;
@@ -37,27 +37,26 @@ bool SetNonBlocking(int socket, int enable)
   return true;
 }
 
-bool SetReuseAddress(int socket, int enable)
-{
-  const int status = setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable));
+bool SetReuseAddress(int socket, int enable) {
+  const int status =
+      setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable));
   return (status != -1);
 }
 
-bool SetSendBufferSize(int socket, int sndbufsz)
-{
-  const int status = setsockopt(socket, SOL_SOCKET, SO_SNDBUF, &sndbufsz, sizeof(sndbufsz));
+bool SetSendBufferSize(int socket, int sndbufsz) {
+  const int status =
+      setsockopt(socket, SOL_SOCKET, SO_SNDBUF, &sndbufsz, sizeof(sndbufsz));
   return (status != -1);
 }
 
-bool SetRecvBufferSize(int socket, int rcvbufsz)
-{
-  const int status = setsockopt(socket, SOL_SOCKET, SO_RCVBUF, &rcvbufsz, sizeof(rcvbufsz));
+bool SetRecvBufferSize(int socket, int rcvbufsz) {
+  const int status =
+      setsockopt(socket, SOL_SOCKET, SO_RCVBUF, &rcvbufsz, sizeof(rcvbufsz));
   return (status != -1);
 }
 
-int GetIncomingSize(int socket)
-{
-  #if defined(ANKI_PLATFORM_VICOS) || defined(ANKI_PLATFORM_LINUX)
+int GetIncomingSize(int socket) {
+#if defined(ANKI_PLATFORM_VICOS) || defined(ANKI_PLATFORM_LINUX)
   {
     int incoming = 0;
     if (ioctl(socket, FIONREAD, &incoming) != 0) {
@@ -65,26 +64,26 @@ int GetIncomingSize(int socket)
     }
     return incoming;
   }
-  #elif defined(ANKI_PLATFORM_OSX)
+#elif defined(ANKI_PLATFORM_OSX)
   {
     int incoming = 0;
     socklen_t incoming_len = sizeof(incoming);
-    if (getsockopt(socket, SOL_SOCKET, SO_NREAD, &incoming, &incoming_len) != 0) {
+    if (getsockopt(socket, SOL_SOCKET, SO_NREAD, &incoming, &incoming_len) !=
+        0) {
       return -1;
     }
     return incoming;
   }
-  #else
+#else
   {
-    #warning "Unsupported platform"
+#warning "Unsupported platform"
     return -1;
   }
-  #endif
+#endif
 }
 
-int GetOutgoingSize(int socket)
-{
-  #if defined(ANKI_PLATFORM_VICOS) || defined(ANKI_PLATFORM_LINUX)
+int GetOutgoingSize(int socket) {
+#if defined(ANKI_PLATFORM_VICOS) || defined(ANKI_PLATFORM_LINUX)
   {
     int outgoing = 0;
     if (ioctl(socket, TIOCOUTQ, &outgoing) != 0) {
@@ -92,24 +91,23 @@ int GetOutgoingSize(int socket)
     }
     return outgoing;
   }
-  #elif defined(ANKI_PLATFORM_OSX)
+#elif defined(ANKI_PLATFORM_OSX)
   {
     int outgoing = 0;
     socklen_t outgoing_len = sizeof(outgoing);
-    if (getsockopt(socket, SOL_SOCKET, SO_NWRITE, &outgoing, &outgoing_len) != 0) {
+    if (getsockopt(socket, SOL_SOCKET, SO_NWRITE, &outgoing, &outgoing_len) !=
+        0) {
       return -1;
     }
     return outgoing;
   }
-  #else
+#else
   {
-    #warning "Unsupported platform"
+#warning "Unsupported platform"
     return -1;
   }
-  #endif
+#endif
 }
 
-
-
-} // end namespace Messaging
-} // end namespace Anki
+}  // end namespace Messaging
+}  // end namespace Anki

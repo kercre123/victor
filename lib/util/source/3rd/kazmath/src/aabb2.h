@@ -26,8 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef KAZMATH_AABB2D_H_INCLUDED
 #define KAZMATH_AABB2D_H_INCLUDED
 
-#include "vec2.h"
 #include "utility.h"
+#include "vec2.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,23 +38,29 @@ extern "C" {
  * bounding box.
  */
 typedef struct kmAABB2 {
-    kmVec2 min; /** The max corner of the box */
-    kmVec2 max; /** The min corner of the box */
+  kmVec2 min; /** The max corner of the box */
+  kmVec2 max; /** The min corner of the box */
 } kmAABB2;
 
-// rsampedro: kmAABB2Initialize::depth is not used in 2D. Also, this is a pain in the ass for a simple reset()
-kmAABB2* kmAABB2Initialize(kmAABB2* pBox, const kmVec2* centre, const kmScalar width, const kmScalar height, const kmScalar depth);
-kmAABB2* kmAABB2Sanitize(kmAABB2* pOut, const kmAABB2* pIn );
+// rsampedro: kmAABB2Initialize::depth is not used in 2D. Also, this is a pain
+// in the ass for a simple reset()
+kmAABB2* kmAABB2Initialize(kmAABB2* pBox, const kmVec2* centre,
+                           const kmScalar width, const kmScalar height,
+                           const kmScalar depth);
+kmAABB2* kmAABB2Sanitize(kmAABB2* pOut, const kmAABB2* pIn);
 int kmAABB2ContainsPoint(const kmAABB2* pBox, const kmVec2* pPoint);
 kmAABB2* kmAABB2Assign(kmAABB2* pOut, const kmAABB2* pIn);
-kmAABB2* kmAABB2Translate(kmAABB2* pOut, const kmAABB2* pIn, const kmVec2 *translation );
+kmAABB2* kmAABB2Translate(kmAABB2* pOut, const kmAABB2* pIn,
+                          const kmVec2* translation);
 kmAABB2* kmAABB2Scale(kmAABB2* pOut, const kmAABB2* pIn, kmScalar s);
-kmAABB2* kmAABB2ScaleWithPivot( kmAABB2* pOut, const kmAABB2* pIn, const kmVec2 *pivot, kmScalar s );
+kmAABB2* kmAABB2ScaleWithPivot(kmAABB2* pOut, const kmAABB2* pIn,
+                               const kmVec2* pivot, kmScalar s);
 kmEnum kmAABB2ContainsAABB(const kmAABB2* container, const kmAABB2* to_check);
 kmScalar kmAABB2DiameterX(const kmAABB2* aabb);
 kmScalar kmAABB2DiameterY(const kmAABB2* aabb);
 kmVec2* kmAABB2Centre(const kmAABB2* aabb, kmVec2* pOut);
-kmAABB2* kmAABB2ExpandToContain(kmAABB2* pOut, const kmAABB2* pIn, const kmAABB2* other);
+kmAABB2* kmAABB2ExpandToContain(kmAABB2* pOut, const kmAABB2* pIn,
+                                const kmAABB2* other);
 
 #ifdef __cplusplus
 }

@@ -26,44 +26,46 @@ namespace utils {
 namespace timing {
 
 /**
- * A simple utility class that is useful in our SDK to map between ISO-8601 and Unix (epoch) time.
+ * A simple utility class that is useful in our SDK to map between ISO-8601 and
+ * Unix (epoch) time.
  */
 class TimePoint {
-public:
-    /**
-     * Constructor.
-     */
-    TimePoint();
+ public:
+  /**
+   * Constructor.
+   */
+  TimePoint();
 
-    /**
-     * Sets the time with an ISO-8601 formatted string.  This will update the object's Unix time to the relative value.
-     *
-     * @param time_ISO_8601 A string representation of time in ISO-8601 format.
-     */
-    bool setTime_ISO_8601(const std::string& time_ISO_8601);
+  /**
+   * Sets the time with an ISO-8601 formatted string.  This will update the
+   * object's Unix time to the relative value.
+   *
+   * @param time_ISO_8601 A string representation of time in ISO-8601 format.
+   */
+  bool setTime_ISO_8601(const std::string& time_ISO_8601);
 
-    /**
-     * Returns the time managed by this object in ISO-8601 format.
-     *
-     * @return The time managed by this object in ISO-8601 format.
-     */
-    std::string getTime_ISO_8601() const;
+  /**
+   * Returns the time managed by this object in ISO-8601 format.
+   *
+   * @return The time managed by this object in ISO-8601 format.
+   */
+  std::string getTime_ISO_8601() const;
 
-    /**
-     * Returns the time managed by this object in Unix epoch time format.
-     *
-     * @return The time managed by this object in Unix epoch time format.
-     */
-    int64_t getTime_Unix() const;
+  /**
+   * Returns the time managed by this object in Unix epoch time format.
+   *
+   * @return The time managed by this object in Unix epoch time format.
+   */
+  int64_t getTime_Unix() const;
 
-private:
-    /// The scheduled time for the alert in ISO-8601 format.
-    std::string m_time_ISO_8601;
-    /// The scheduled time for the alert in Unix epoch format.
-    int64_t m_time_Unix;
+ private:
+  /// The scheduled time for the alert in ISO-8601 format.
+  std::string m_time_ISO_8601;
+  /// The scheduled time for the alert in Unix epoch format.
+  int64_t m_time_Unix;
 
-    /// Object used to safely access time utilities.
-    TimeUtils m_timeUtils;
+  /// Object used to safely access time utilities.
+  TimeUtils m_timeUtils;
 };
 
 }  // namespace timing

@@ -9,19 +9,23 @@
 
 #pragma GCC diagnostic pop
 
-#include "dasLogFileAppender.h"
-#include "testUtils.h"
-#include "dasPostToServer.h"
-#include <unistd.h>
 #include <stdio.h>
+#include <unistd.h>
+
+#include "dasLogFileAppender.h"
+#include "dasPostToServer.h"
+#include "testUtils.h"
 
 static const std::string testDASLogsDir("./dasTestLogs");
 static const std::string testDASDir("./dasLogs");
-static const std::string testDASURL("https://sqs.us-west-2.amazonaws.com/792379844846/DasInternal-dasinternalSqs-1HN6JX3NZPGNT");
+static const std::string testDASURL(
+    "https://sqs.us-west-2.amazonaws.com/792379844846/"
+    "DasInternal-dasinternalSqs-1HN6JX3NZPGNT");
 
 TEST(DasAmazonTest, DasAppenderFlushWithCallback) {
-  (void) rmrf(testDASDir.c_str());
-  Anki::Das::DasAppender* testAppender = new Anki::Das::DasAppender(testDASDir, testDASURL);
+  (void)rmrf(testDASDir.c_str());
+  Anki::Das::DasAppender* testAppender =
+      new Anki::Das::DasAppender(testDASDir, testDASURL);
   testAppender->SetIsUploadingPaused(false);
   copy_file(testDASLogsDir + "/1_working_upload.das", testDASDir + "/0001.das");
 
@@ -29,19 +33,22 @@ TEST(DasAmazonTest, DasAppenderFlushWithCallback) {
   std::mutex mutex;
   std::unique_lock<std::mutex> lock{mutex};
   std::condition_variable cv;
-  auto const completionFunc = [&finished, &cv, &mutex](const bool lastFlushSucceeded, const std::string lastFlushResponse) {
+  auto const completionFunc = [&finished, &cv, &mutex](
+                                  const bool lastFlushSucceeded,
+                                  const std::string lastFlushResponse) {
     {
       std::lock_guard<std::mutex> lg{mutex};
       finished = true;
     }
-    EXPECT_TRUE(lastFlushResponse.find("MessageId")) <<  "Bad Response";
-    EXPECT_EQ(lastFlushSucceeded, true) <<  "Was not able to roll over file";
+    EXPECT_TRUE(lastFlushResponse.find("MessageId")) << "Bad Response";
+    EXPECT_EQ(lastFlushSucceeded, true) << "Was not able to roll over file";
     cv.notify_one();
   };
 
   testAppender->ForceFlushWithCallback(completionFunc);
   cv.wait(lock, [&finished] { return finished; });
 
-  delete testAppender; testAppender = nullptr;
-  (void) rmrf(testDASDir.c_str());
+  delete testAppender;
+  testAppender = nullptr;
+  (void)rmrf(testDASDir.c_str());
 }

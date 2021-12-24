@@ -51,8 +51,8 @@ namespace strings_internal {
 
 // This class is implicitly constructible from everything that absl::string_view
 // is implicitly constructible from. If it's constructed from a temporary
-// std::string, the data is moved into a data member so its lifetime matches that of
-// the ConvertibleToStringView instance.
+// std::string, the data is moved into a data member so its lifetime matches
+// that of the ConvertibleToStringView instance.
 class ConvertibleToStringView {
  public:
   ConvertibleToStringView(const char* s)  // NOLINT(runtime/explicit)
@@ -64,8 +64,8 @@ class ConvertibleToStringView {
       : value_(s) {}
 
   // Matches rvalue strings and moves their data to a member.
-ConvertibleToStringView(std::string&& s)  // NOLINT(runtime/explicit)
-    : copy_(std::move(s)), value_(copy_) {}
+  ConvertibleToStringView(std::string&& s)  // NOLINT(runtime/explicit)
+      : copy_(std::move(s)), value_(copy_) {}
 
   ConvertibleToStringView(const ConvertibleToStringView& other)
       : copy_(other.copy_),
@@ -96,16 +96,16 @@ ConvertibleToStringView(std::string&& s)  // NOLINT(runtime/explicit)
     }
   }
 
-  // Holds the data moved from temporary std::string arguments. Declared first so
-  // that 'value' can refer to 'copy_'.
+  // Holds the data moved from temporary std::string arguments. Declared first
+  // so that 'value' can refer to 'copy_'.
   std::string copy_;
   absl::string_view value_;
 };
 
-// An iterator that enumerates the parts of a std::string from a Splitter. The text
-// to be split, the Delimiter, and the Predicate are all taken from the given
-// Splitter object. Iterators may only be compared if they refer to the same
-// Splitter instance.
+// An iterator that enumerates the parts of a std::string from a Splitter. The
+// text to be split, the Delimiter, and the Predicate are all taken from the
+// given Splitter object. Iterators may only be compared if they refer to the
+// same Splitter instance.
 //
 // This class is NOT part of the public splitting API.
 template <typename Splitter>
@@ -358,10 +358,10 @@ class Splitter {
 
   // Partial specialization for a std::vector<std::string>.
   //
-  // Optimized for the common case of splitting to a std::vector<std::string>. In
-  // this case we first split the results to a std::vector<absl::string_view> so
-  // the returned std::vector<std::string> can have space reserved to avoid std::string
-  // moves.
+  // Optimized for the common case of splitting to a std::vector<std::string>.
+  // In this case we first split the results to a std::vector<absl::string_view>
+  // so the returned std::vector<std::string> can have space reserved to avoid
+  // std::string moves.
   template <typename A>
   struct ConvertToContainer<std::vector<std::string, A>, std::string, false> {
     std::vector<std::string, A> operator()(const Splitter& splitter) const {

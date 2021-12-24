@@ -20,8 +20,8 @@
  * @ingroup LLC
  * @brief Functions for data pdu transmission/reception handling
  *
- * This module implements the functions allowing the handling of the transmission and
- * reception of the data pdu.
+ * This module implements the functions allowing the handling of the
+ *transmission and reception of the data pdu.
  *
  * @{
  ****************************************************************************************
@@ -45,14 +45,14 @@
  * This function forward the data packet to the host.
  *
  * @param[in] conhdl        Connection handle on which the pdu is received.
- * @param[in] rxdesc        Pointer oh the reception descriptor where the data are
- *                          available.
+ * @param[in] rxdesc        Pointer oh the reception descriptor where the data
+ *are available.
  ****************************************************************************************
  */
 
 void llc_data_rcv(uint16_t conhdl, uint8_t hdl);
 
-#endif // #if (BLE_PERIPHERAL || BLE_CENTRAL)
+#endif  // #if (BLE_PERIPHERAL || BLE_CENTRAL)
 /// @} LLCDATA
 
-#endif // LLC_DATA_H_
+#endif  // LLC_DATA_H_

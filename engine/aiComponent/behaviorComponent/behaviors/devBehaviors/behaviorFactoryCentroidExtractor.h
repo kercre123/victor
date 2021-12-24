@@ -24,35 +24,32 @@
 #include "engine/components/visionComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 
-
 namespace Anki {
 namespace Vector {
-  
-class BehaviorFactoryCentroidExtractor : public ICozmoBehavior
-{
-protected:
-  
+
+class BehaviorFactoryCentroidExtractor : public ICozmoBehavior {
+ protected:
   friend class BehaviorFactory;
   BehaviorFactoryCentroidExtractor(const Json::Value& config);
-  
-public:
-  
-  virtual ~BehaviorFactoryCentroidExtractor() { }
-  
+
+ public:
+  virtual ~BehaviorFactoryCentroidExtractor() {}
+
   virtual bool WantsToBeActivatedBehavior() const override;
-  
-protected:
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+
+ protected:
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
     modifiers.behaviorAlwaysDelegates = false;
   }
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override {}
 
-private:
+ private:
   struct InstanceConfig {
     InstanceConfig();
     FactoryTestLogger factoryTestLogger;
-
   };
 
   struct DynamicVariables {
@@ -62,23 +59,20 @@ private:
     bool liftCalibrated;
   };
 
-  InstanceConfig   _iConfig;
+  InstanceConfig _iConfig;
   DynamicVariables _dVars;
 
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
   virtual void OnBehaviorDeactivated() override;
-  
+
   void TransitionToMovingHead(Robot& robot);
-  
+
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-
-
-#endif // __Cozmo_Basestation_Behaviors_BehaviorFactoryCentroidExtractor_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorFactoryCentroidExtractor_H__

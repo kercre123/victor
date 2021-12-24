@@ -5,20 +5,20 @@
 
 namespace Anki {
 
-  namespace Vector {
+namespace Vector {
 
-    namespace Robot {
+namespace Robot {
 
-      Result Init(const int * shutdownSignal);
+Result Init(const int* shutdownSignal);
 
-      void Destroy();
+void Destroy();
 
-      Result step_MainExecution();
+Result step_MainExecution();
 
-    } // namespace Robot
+}  // namespace Robot
 
-  } // namespace Vector
+}  // namespace Vector
 
-} // namespace Anki
+}  // namespace Anki
 
-#endif // ANKI_COZMOBOT_H
+#endif  // ANKI_COZMOBOT_H

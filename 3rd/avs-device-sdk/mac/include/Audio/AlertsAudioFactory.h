@@ -26,14 +26,16 @@ namespace audio {
 /**
  * A class that delivers a stream to the audio data for the various Alerts.
  */
-class AlertsAudioFactory : public avsCommon::sdkInterfaces::audio::AlertsAudioFactoryInterface {
-public:
-    std::function<std::unique_ptr<std::istream>()> alarmDefault() const override;
-    std::function<std::unique_ptr<std::istream>()> alarmShort() const override;
-    std::function<std::unique_ptr<std::istream>()> timerDefault() const override;
-    std::function<std::unique_ptr<std::istream>()> timerShort() const override;
-    std::function<std::unique_ptr<std::istream>()> reminderDefault() const override;
-    std::function<std::unique_ptr<std::istream>()> reminderShort() const override;
+class AlertsAudioFactory
+    : public avsCommon::sdkInterfaces::audio::AlertsAudioFactoryInterface {
+ public:
+  std::function<std::unique_ptr<std::istream>()> alarmDefault() const override;
+  std::function<std::unique_ptr<std::istream>()> alarmShort() const override;
+  std::function<std::unique_ptr<std::istream>()> timerDefault() const override;
+  std::function<std::unique_ptr<std::istream>()> timerShort() const override;
+  std::function<std::unique_ptr<std::istream>()> reminderDefault()
+      const override;
+  std::function<std::unique_ptr<std::istream>()> reminderShort() const override;
 };
 
 }  // namespace audio

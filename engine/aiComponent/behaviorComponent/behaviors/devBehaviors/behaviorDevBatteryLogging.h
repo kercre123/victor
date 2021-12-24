@@ -4,7 +4,8 @@
  * Author: Kevin Yoon
  * Date:   04/06/2018
  *
- * Description: Behavior for logging battery data under a variety of test conditions
+ * Description: Behavior for logging battery data under a variety of test
+ *conditions
  *
  * Copyright: Anki, Inc. 2018
  **/
@@ -16,43 +17,41 @@
 
 namespace Anki {
 namespace Vector {
-  
+
 class IBEICondition;
-  
-class BehaviorDevBatteryLogging : public ICozmoBehavior
-{
-public:
-  
-  virtual ~BehaviorDevBatteryLogging() { }
+
+class BehaviorDevBatteryLogging : public ICozmoBehavior {
+ public:
+  virtual ~BehaviorDevBatteryLogging() {}
   virtual bool WantsToBeActivatedBehavior() const override;
-  
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = false;
     modifiers.wantsToBeActivatedWhenOffTreads = true;
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.behaviorAlwaysDelegates = false;
   }
-  
-protected:
 
+ protected:
   using BExtI = BehaviorExternalInterface;
-  
+
   friend class BehaviorFactory;
   BehaviorDevBatteryLogging(const Json::Value& config);
-  
+
   void InitBehavior() override;
-  virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override;
-  
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override; 
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
+
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
 
   virtual void OnBehaviorDeactivated() override;
-  
+
   virtual void BehaviorUpdate() override;
 
-private:
-
+ private:
   struct InstanceConfig {
     InstanceConfig();
     f32 wheelSpeed_mmps;
@@ -71,7 +70,7 @@ private:
     ICozmoBehaviorPtr testBehavior;
   };
 
-  InstanceConfig   _iConfig;
+  InstanceConfig _iConfig;
 
   void InitLog();
   void LogData() const;
@@ -79,7 +78,7 @@ private:
   void EnqueueMotorActions();
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorDevBatteryLogging_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorDevBatteryLogging_H__

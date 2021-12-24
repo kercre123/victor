@@ -21,21 +21,22 @@ namespace avsCommon {
 namespace sdkInterfaces {
 
 /**
- * This class allows a client to be notified of changes to an internet connection.
+ * This class allows a client to be notified of changes to an internet
+ * connection.
  */
 class InternetConnectionObserverInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~InternetConnectionObserverInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~InternetConnectionObserverInterface() = default;
 
-    /**
-     * Take necessary actions as a result of an internet connection change.
-     *
-     * @param connected Whether or not we are currently connected to the internet.
-     */
-    virtual void onConnectionStatusChanged(bool connected) = 0;
+  /**
+   * Take necessary actions as a result of an internet connection change.
+   *
+   * @param connected Whether or not we are currently connected to the internet.
+   */
+  virtual void onConnectionStatusChanged(bool connected) = 0;
 };
 
 }  // namespace sdkInterfaces

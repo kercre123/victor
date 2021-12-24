@@ -4,8 +4,8 @@
  * Author: ross
  * Created: Oct 20 2018
  *
- * Description: An implementation of the KeyWordObserverInterface that uses our special AlexaClient
- *              instead of the SDK's client
+ * Description: An implementation of the KeyWordObserverInterface that uses our
+ * special AlexaClient instead of the SDK's client
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -30,11 +30,11 @@
 #ifndef ANIMPROCESS_COZMO_ALEXA_ALEXAKEYWORDOBSERVER_H
 #define ANIMPROCESS_COZMO_ALEXA_ALEXAKEYWORDOBSERVER_H
 
+#include <AIP/AudioProvider.h>
+#include <AVSCommon/SDKInterfaces/KeyWordObserverInterface.h>
+
 #include <memory>
 #include <string>
-
-#include <AVSCommon/SDKInterfaces/KeyWordObserverInterface.h>
-#include <AIP/AudioProvider.h>
 // todo: fwd declare
 #include <AVSCommon/AVS/AudioInputStream.h>
 #include <ESP/ESPDataProviderInterface.h>
@@ -44,23 +44,28 @@ namespace Vector {
 
 class AlexaClient;
 
-class AlexaKeywordObserver : public alexaClientSDK::avsCommon::sdkInterfaces::KeyWordObserverInterface
-{
-public:
-    AlexaKeywordObserver( std::shared_ptr<AlexaClient> client,
-                          alexaClientSDK::capabilityAgents::aip::AudioProvider audioProvider,
-                          std::shared_ptr<alexaClientSDK::esp::ESPDataProviderInterface> espProvider = nullptr );
+class AlexaKeywordObserver : public alexaClientSDK::avsCommon::sdkInterfaces::
+                                 KeyWordObserverInterface {
+ public:
+  AlexaKeywordObserver(
+      std::shared_ptr<AlexaClient> client,
+      alexaClientSDK::capabilityAgents::aip::AudioProvider audioProvider,
+      std::shared_ptr<alexaClientSDK::esp::ESPDataProviderInterface>
+          espProvider = nullptr);
 
-    virtual void onKeyWordDetected( std::shared_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream> stream,
-                                    std::string keyword,
-                                    alexaClientSDK::avsCommon::avs::AudioInputStream::Index beginIndex = UNSPECIFIED_INDEX,
-                                    alexaClientSDK::avsCommon::avs::AudioInputStream::Index endIndex = UNSPECIFIED_INDEX,
-                                    std::shared_ptr<const std::vector<char>> KWDMetadata = nullptr ) override;
+  virtual void onKeyWordDetected(
+      std::shared_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream> stream,
+      std::string keyword,
+      alexaClientSDK::avsCommon::avs::AudioInputStream::Index beginIndex =
+          UNSPECIFIED_INDEX,
+      alexaClientSDK::avsCommon::avs::AudioInputStream::Index endIndex =
+          UNSPECIFIED_INDEX,
+      std::shared_ptr<const std::vector<char>> KWDMetadata = nullptr) override;
 
-private:
-    std::shared_ptr<AlexaClient> _client;
-    alexaClientSDK::capabilityAgents::aip::AudioProvider _audioProvider;
-    std::shared_ptr<alexaClientSDK::esp::ESPDataProviderInterface> _espProvider;
+ private:
+  std::shared_ptr<AlexaClient> _client;
+  alexaClientSDK::capabilityAgents::aip::AudioProvider _audioProvider;
+  std::shared_ptr<alexaClientSDK::esp::ESPDataProviderInterface> _espProvider;
 };
 
 }  // namespace Vector

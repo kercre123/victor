@@ -17,33 +17,31 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorSelfTestMotorCalibration : public IBehaviorSelfTest
-{
-protected:
-  
+class BehaviorSelfTestMotorCalibration : public IBehaviorSelfTest {
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorSelfTestMotorCalibration(const Json::Value& config);
-  
-protected:
-  virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
+
+ protected:
+  virtual void GetBehaviorOperationModifiersInternal(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOnCharger = true;
   }
 
-  virtual Result         OnBehaviorActivatedInternal()   override;
+  virtual Result OnBehaviorActivatedInternal() override;
   virtual SelfTestStatus SelfTestUpdateInternal() override;
-  virtual void           OnBehaviorDeactivated()   override;
-  
-  virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event) override;
-    
-private:
-  
+  virtual void OnBehaviorDeactivated() override;
+
+  virtual void HandleWhileActivatedInternal(
+      const EngineToGameEvent& event) override;
+
+ private:
   bool _liftCalibrated = false;
   bool _headCalibrated = false;
-  
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

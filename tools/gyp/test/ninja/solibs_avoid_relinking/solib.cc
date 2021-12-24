@@ -3,6 +3,6 @@ __declspec(dllexport)
 #else
 __attribute__((visibility("default")))
 #endif
-int foo() {
+    int foo() {
   return 42;
 }

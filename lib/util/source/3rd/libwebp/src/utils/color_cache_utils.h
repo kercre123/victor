@@ -23,7 +23,7 @@ extern "C" {
 
 // Main color cache struct.
 typedef struct {
-  uint32_t *colors_;  // color entries
+  uint32_t* colors_;  // color entries
   int hash_shift_;    // Hash shift: 32 - hash_bits_.
   int hash_bits_;
 } VP8LColorCache;
@@ -34,8 +34,8 @@ static WEBP_INLINE int HashPix(uint32_t argb, int shift) {
   return (int)(((argb * kHashMul) & 0xffffffffu) >> shift);
 }
 
-static WEBP_INLINE uint32_t VP8LColorCacheLookup(
-    const VP8LColorCache* const cc, uint32_t key) {
+static WEBP_INLINE uint32_t VP8LColorCacheLookup(const VP8LColorCache* const cc,
+                                                 uint32_t key) {
   assert((key >> cc->hash_bits_) == 0u);
   return cc->colors_[key];
 }

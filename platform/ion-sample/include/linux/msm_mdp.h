@@ -18,8 +18,8 @@
  ****************************************************************************/
 #ifndef _UAPI_MSM_MDP_H_
 #define _UAPI_MSM_MDP_H_
-#include <linux/types.h>
 #include <linux/fb.h>
+#include <linux/types.h>
 #define MSMFB_IOCTL_MAGIC 'm'
 #define MSMFB_GRP_DISP _IOW(MSMFB_IOCTL_MAGIC, 1, unsigned int)
 #define MSMFB_BLIT _IOW(MSMFB_IOCTL_MAGIC, 2, unsigned int)
@@ -32,49 +32,64 @@
 #define MSMFB_SET_CCS_MATRIX _IOW(MSMFB_IOCTL_MAGIC, 134, struct mdp_ccs)
 #define MSMFB_OVERLAY_SET _IOWR(MSMFB_IOCTL_MAGIC, 135, struct mdp_overlay)
 #define MSMFB_OVERLAY_UNSET _IOW(MSMFB_IOCTL_MAGIC, 136, unsigned int)
-#define MSMFB_OVERLAY_PLAY _IOW(MSMFB_IOCTL_MAGIC, 137, struct msmfb_overlay_data)
+#define MSMFB_OVERLAY_PLAY \
+  _IOW(MSMFB_IOCTL_MAGIC, 137, struct msmfb_overlay_data)
 #define MSMFB_OVERLAY_QUEUE MSMFB_OVERLAY_PLAY
-#define MSMFB_GET_PAGE_PROTECTION _IOR(MSMFB_IOCTL_MAGIC, 138, struct mdp_page_protection)
-#define MSMFB_SET_PAGE_PROTECTION _IOW(MSMFB_IOCTL_MAGIC, 139, struct mdp_page_protection)
+#define MSMFB_GET_PAGE_PROTECTION \
+  _IOR(MSMFB_IOCTL_MAGIC, 138, struct mdp_page_protection)
+#define MSMFB_SET_PAGE_PROTECTION \
+  _IOW(MSMFB_IOCTL_MAGIC, 139, struct mdp_page_protection)
 #define MSMFB_OVERLAY_GET _IOR(MSMFB_IOCTL_MAGIC, 140, struct mdp_overlay)
 #define MSMFB_OVERLAY_PLAY_ENABLE _IOW(MSMFB_IOCTL_MAGIC, 141, unsigned int)
-#define MSMFB_OVERLAY_BLT _IOWR(MSMFB_IOCTL_MAGIC, 142, struct msmfb_overlay_blt)
+#define MSMFB_OVERLAY_BLT \
+  _IOWR(MSMFB_IOCTL_MAGIC, 142, struct msmfb_overlay_blt)
 #define MSMFB_OVERLAY_BLT_OFFSET _IOW(MSMFB_IOCTL_MAGIC, 143, unsigned int)
-#define MSMFB_HISTOGRAM_START _IOR(MSMFB_IOCTL_MAGIC, 144, struct mdp_histogram_start_req)
+#define MSMFB_HISTOGRAM_START \
+  _IOR(MSMFB_IOCTL_MAGIC, 144, struct mdp_histogram_start_req)
 #define MSMFB_HISTOGRAM_STOP _IOR(MSMFB_IOCTL_MAGIC, 145, unsigned int)
 #define MSMFB_NOTIFY_UPDATE _IOWR(MSMFB_IOCTL_MAGIC, 146, unsigned int)
 #define MSMFB_OVERLAY_3D _IOWR(MSMFB_IOCTL_MAGIC, 147, struct msmfb_overlay_3d)
-#define MSMFB_MIXER_INFO _IOWR(MSMFB_IOCTL_MAGIC, 148, struct msmfb_mixer_info_req)
-#define MSMFB_OVERLAY_PLAY_WAIT _IOWR(MSMFB_IOCTL_MAGIC, 149, struct msmfb_overlay_data)
+#define MSMFB_MIXER_INFO \
+  _IOWR(MSMFB_IOCTL_MAGIC, 148, struct msmfb_mixer_info_req)
+#define MSMFB_OVERLAY_PLAY_WAIT \
+  _IOWR(MSMFB_IOCTL_MAGIC, 149, struct msmfb_overlay_data)
 #define MSMFB_WRITEBACK_INIT _IO(MSMFB_IOCTL_MAGIC, 150)
 #define MSMFB_WRITEBACK_START _IO(MSMFB_IOCTL_MAGIC, 151)
 #define MSMFB_WRITEBACK_STOP _IO(MSMFB_IOCTL_MAGIC, 152)
-#define MSMFB_WRITEBACK_QUEUE_BUFFER _IOW(MSMFB_IOCTL_MAGIC, 153, struct msmfb_data)
-#define MSMFB_WRITEBACK_DEQUEUE_BUFFER _IOW(MSMFB_IOCTL_MAGIC, 154, struct msmfb_data)
+#define MSMFB_WRITEBACK_QUEUE_BUFFER \
+  _IOW(MSMFB_IOCTL_MAGIC, 153, struct msmfb_data)
+#define MSMFB_WRITEBACK_DEQUEUE_BUFFER \
+  _IOW(MSMFB_IOCTL_MAGIC, 154, struct msmfb_data)
 #define MSMFB_WRITEBACK_TERMINATE _IO(MSMFB_IOCTL_MAGIC, 155)
 #define MSMFB_MDP_PP _IOWR(MSMFB_IOCTL_MAGIC, 156, struct msmfb_mdp_pp)
 #define MSMFB_OVERLAY_VSYNC_CTRL _IOW(MSMFB_IOCTL_MAGIC, 160, unsigned int)
 #define MSMFB_VSYNC_CTRL _IOW(MSMFB_IOCTL_MAGIC, 161, unsigned int)
 #define MSMFB_BUFFER_SYNC _IOW(MSMFB_IOCTL_MAGIC, 162, struct mdp_buf_sync)
 #define MSMFB_OVERLAY_COMMIT _IO(MSMFB_IOCTL_MAGIC, 163)
-#define MSMFB_DISPLAY_COMMIT _IOW(MSMFB_IOCTL_MAGIC, 164, struct mdp_display_commit)
+#define MSMFB_DISPLAY_COMMIT \
+  _IOW(MSMFB_IOCTL_MAGIC, 164, struct mdp_display_commit)
 #define MSMFB_METADATA_SET _IOW(MSMFB_IOCTL_MAGIC, 165, struct msmfb_metadata)
 #define MSMFB_METADATA_GET _IOW(MSMFB_IOCTL_MAGIC, 166, struct msmfb_metadata)
-#define MSMFB_WRITEBACK_SET_MIRRORING_HINT _IOW(MSMFB_IOCTL_MAGIC, 167, unsigned int)
+#define MSMFB_WRITEBACK_SET_MIRRORING_HINT \
+  _IOW(MSMFB_IOCTL_MAGIC, 167, unsigned int)
 #define MSMFB_ASYNC_BLIT _IOW(MSMFB_IOCTL_MAGIC, 168, unsigned int)
-#define MSMFB_OVERLAY_PREPARE _IOWR(MSMFB_IOCTL_MAGIC, 169, struct mdp_overlay_list)
+#define MSMFB_OVERLAY_PREPARE \
+  _IOWR(MSMFB_IOCTL_MAGIC, 169, struct mdp_overlay_list)
 #define MSMFB_LPM_ENABLE _IOWR(MSMFB_IOCTL_MAGIC, 170, unsigned int)
-#define MSMFB_MDP_PP_GET_FEATURE_VERSION _IOWR(MSMFB_IOCTL_MAGIC, 171, struct mdp_pp_feature_version)
+#define MSMFB_MDP_PP_GET_FEATURE_VERSION \
+  _IOWR(MSMFB_IOCTL_MAGIC, 171, struct mdp_pp_feature_version)
 #define FB_TYPE_3D_PANEL 0x10101010
 #define MDP_IMGTYPE2_START 0x10000
 #define MSMFB_DRIVER_VERSION 0xF9E8D701
 #define MDP_IMGTYPE_END 0x100
 #define MDSS_GET_MAJOR(rev) ((rev) >> 28)
 #define MDSS_GET_MINOR(rev) (((rev) >> 16) & 0xFFF)
-#define MDSS_GET_STEP(rev) ((rev) & 0xFFFF)
+#define MDSS_GET_STEP(rev) ((rev)&0xFFFF)
 #define MDSS_GET_MAJOR_MINOR(rev) ((rev) >> 16)
-#define IS_MDSS_MAJOR_MINOR_SAME(rev1,rev2) (MDSS_GET_MAJOR_MINOR((rev1)) == MDSS_GET_MAJOR_MINOR((rev2)))
-#define MDSS_MDP_REV(major,minor,step) ((((major) & 0x000F) << 28) | (((minor) & 0x0FFF) << 16) | ((step) & 0xFFFF))
+#define IS_MDSS_MAJOR_MINOR_SAME(rev1, rev2) \
+  (MDSS_GET_MAJOR_MINOR((rev1)) == MDSS_GET_MAJOR_MINOR((rev2)))
+#define MDSS_MDP_REV(major, minor, step) \
+  ((((major)&0x000F) << 28) | (((minor)&0x0FFF) << 16) | ((step)&0xFFFF))
 #define MDSS_MDP_HW_REV_100 MDSS_MDP_REV(1, 0, 0)
 #define MDSS_MDP_HW_REV_101 MDSS_MDP_REV(1, 1, 0)
 #define MDSS_MDP_HW_REV_101_1 MDSS_MDP_REV(1, 1, 1)
@@ -234,7 +249,8 @@ enum mdss_mdp_max_bw_mode {
 #define MDP_NO_DMA_BARRIER_END 0x10000000
 #define MDP_NO_BLIT 0x08000000
 #define MDP_BLIT_WITH_DMA_BARRIERS 0x000
-#define MDP_BLIT_WITH_NO_DMA_BARRIERS (MDP_NO_DMA_BARRIER_START | MDP_NO_DMA_BARRIER_END)
+#define MDP_BLIT_WITH_NO_DMA_BARRIERS \
+  (MDP_NO_DMA_BARRIER_START | MDP_NO_DMA_BARRIER_END)
 #define MDP_BLIT_SRC_GEM 0x04000000
 #define MDP_BLIT_DST_GEM 0x02000000
 #define MDP_BLIT_NON_CACHED 0x01000000
@@ -329,7 +345,7 @@ struct msmfb_data {
   uint32_t priv;
   uint32_t iova;
 };
-#define MSMFB_NEW_REQUEST - 1
+#define MSMFB_NEW_REQUEST -1
 struct msmfb_overlay_data {
   uint32_t id;
   struct msmfb_data data;
@@ -363,15 +379,15 @@ struct msmfb_writeback_data {
 #define MDSS_PP_ARG_SHIFT 10
 #define MDSS_PP_LOCATION_MASK 0x0300
 #define MDSS_PP_LOGICAL_MASK 0x00FF
-#define MDSS_PP_ADD_ARG(var,arg) ((var) | (0x1 << (MDSS_PP_ARG_SHIFT + (arg))))
-#define PP_ARG(x,var) ((var) & (0x1 << (MDSS_PP_ARG_SHIFT + (x))))
-#define PP_LOCAT(var) ((var) & MDSS_PP_LOCATION_MASK)
-#define PP_BLOCK(var) ((var) & MDSS_PP_LOGICAL_MASK)
+#define MDSS_PP_ADD_ARG(var, arg) ((var) | (0x1 << (MDSS_PP_ARG_SHIFT + (arg))))
+#define PP_ARG(x, var) ((var) & (0x1 << (MDSS_PP_ARG_SHIFT + (x))))
+#define PP_LOCAT(var) ((var)&MDSS_PP_LOCATION_MASK)
+#define PP_BLOCK(var) ((var)&MDSS_PP_LOGICAL_MASK)
 struct mdp_qseed_cfg {
   uint32_t table_num;
   uint32_t ops;
   uint32_t len;
-  uint32_t * data;
+  uint32_t* data;
 };
 struct mdp_sharp_cfg {
   uint32_t flags;
@@ -465,8 +481,8 @@ struct mdp_pa_v2_data {
   struct mdp_pa_mem_col_cfg fol_cfg;
   uint32_t six_zone_len;
   uint32_t six_zone_thresh;
-  uint32_t * six_zone_curve_p0;
-  uint32_t * six_zone_curve_p1;
+  uint32_t* six_zone_curve_p0;
+  uint32_t* six_zone_curve_p1;
 };
 struct mdp_pa_mem_col_data_v1_7 {
   uint32_t color_adjust_p0;
@@ -494,15 +510,15 @@ struct mdp_pa_data_v1_7 {
   uint8_t six_zone_sat_hold;
   uint8_t six_zone_val_hold;
   uint32_t six_zone_len;
-  uint32_t * six_zone_curve_p0;
-  uint32_t * six_zone_curve_p1;
+  uint32_t* six_zone_curve_p0;
+  uint32_t* six_zone_curve_p1;
 };
 struct mdp_pa_v2_cfg_data {
   uint32_t version;
   uint32_t block;
   uint32_t flags;
   struct mdp_pa_v2_data pa_v2_data;
-  void * cfg_payload;
+  void* cfg_payload;
 };
 enum {
   mdp_igc_rec601 = 1,
@@ -515,15 +531,15 @@ struct mdp_igc_lut_data {
   uint32_t block;
   uint32_t version;
   uint32_t len, ops;
-  uint32_t * c0_c1_data;
-  uint32_t * c2_data;
-  void * cfg_payload;
+  uint32_t* c0_c1_data;
+  uint32_t* c2_data;
+  void* cfg_payload;
 };
 struct mdp_igc_lut_data_v1_7 {
   uint32_t table_fmt;
   uint32_t len;
-  uint32_t * c0_c1_data;
-  uint32_t * c2_data;
+  uint32_t* c0_c1_data;
+  uint32_t* c2_data;
 };
 struct mdp_histogram_cfg {
   uint32_t ops;
@@ -534,7 +550,7 @@ struct mdp_histogram_cfg {
 };
 struct mdp_hist_lut_data_v1_7 {
   uint32_t len;
-  uint32_t * data;
+  uint32_t* data;
 };
 struct mdp_hist_lut_data {
   uint32_t block;
@@ -542,8 +558,8 @@ struct mdp_hist_lut_data {
   uint32_t hist_lut_first;
   uint32_t ops;
   uint32_t len;
-  uint32_t * data;
-  void * cfg_payload;
+  uint32_t* data;
+  void* cfg_payload;
 };
 struct mdp_pcc_coeff {
   uint32_t c, r, g, b, rr, gg, bb, rg, gb, rb, rgb_0, rgb_1;
@@ -559,7 +575,7 @@ struct mdp_pcc_cfg_data {
   uint32_t block;
   uint32_t ops;
   struct mdp_pcc_coeff r, g, b;
-  void * cfg_payload;
+  void* cfg_payload;
 };
 enum {
   mdp_lut_igc,
@@ -588,7 +604,7 @@ enum mdss_mdp_blend_op {
   BLEND_OP_COVERAGE,
   BLEND_OP_MAX,
 };
-#define DECIMATED_DIMENSION(dim,deci) (((dim) + ((1 << (deci)) - 1)) >> (deci))
+#define DECIMATED_DIMENSION(dim, deci) (((dim) + ((1 << (deci)) - 1)) >> (deci))
 #define MAX_PLANES 4
 struct mdp_scale_data {
   uint8_t enable_pxl_ext;
@@ -655,9 +671,9 @@ struct msmfb_overlay_blt {
 struct mdp_histogram {
   uint32_t frame_cnt;
   uint32_t bin_cnt;
-  uint32_t * r;
-  uint32_t * g;
-  uint32_t * b;
+  uint32_t* r;
+  uint32_t* g;
+  uint32_t* b;
 };
 #define MISR_CRC_BATCH_SIZE 32
 enum {
@@ -671,13 +687,7 @@ enum {
   DISPLAY_MISR_DSI_CMD,
   DISPLAY_MISR_MAX
 };
-enum {
-  MISR_OP_NONE,
-  MISR_OP_SFM,
-  MISR_OP_MFM,
-  MISR_OP_BM,
-  MISR_OP_MAX
-};
+enum { MISR_OP_NONE, MISR_OP_SFM, MISR_OP_MFM, MISR_OP_BM, MISR_OP_MAX };
 struct mdp_misr {
   uint32_t block_id;
   uint32_t frame_count;
@@ -710,10 +720,10 @@ struct mdp_histogram_start_req {
 struct mdp_histogram_data {
   uint32_t block;
   uint32_t bin_cnt;
-  uint32_t * c0;
-  uint32_t * c1;
-  uint32_t * c2;
-  uint32_t * extra_info;
+  uint32_t* c0;
+  uint32_t* c1;
+  uint32_t* c2;
+  uint32_t* extra_info;
 };
 #define GC_LUT_ENTRIES_V1_7 512
 struct mdp_ar_gc_lut_data {
@@ -729,17 +739,17 @@ struct mdp_pgc_lut_data {
   uint8_t num_r_stages;
   uint8_t num_g_stages;
   uint8_t num_b_stages;
-  struct mdp_ar_gc_lut_data * r_data;
-  struct mdp_ar_gc_lut_data * g_data;
-  struct mdp_ar_gc_lut_data * b_data;
-  void * cfg_payload;
+  struct mdp_ar_gc_lut_data* r_data;
+  struct mdp_ar_gc_lut_data* g_data;
+  struct mdp_ar_gc_lut_data* b_data;
+  void* cfg_payload;
 };
 #define PGC_LUT_ENTRIES 1024
 struct mdp_pgc_lut_data_v1_7 {
   uint32_t len;
-  uint32_t * c0_data;
-  uint32_t * c1_data;
-  uint32_t * c2_data;
+  uint32_t* c0_data;
+  uint32_t* c1_data;
+  uint32_t* c2_data;
 };
 struct mdp_rgb_lut_data {
   uint32_t flags;
@@ -784,7 +794,7 @@ struct mdp_dither_cfg_data {
   uint32_t g_y_depth;
   uint32_t r_cr_depth;
   uint32_t b_cb_depth;
-  void * cfg_payload;
+  void* cfg_payload;
 };
 #define MDP_GAMUT_TABLE_NUM 8
 #define MDP_GAMUT_TABLE_NUM_V1_7 4
@@ -798,10 +808,10 @@ struct mdp_gamut_cfg_data {
   uint32_t version;
   uint32_t gamut_first;
   uint32_t tbl_size[MDP_GAMUT_TABLE_NUM];
-  uint16_t * r_tbl[MDP_GAMUT_TABLE_NUM];
-  uint16_t * g_tbl[MDP_GAMUT_TABLE_NUM];
-  uint16_t * b_tbl[MDP_GAMUT_TABLE_NUM];
-  void * cfg_payload;
+  uint16_t* r_tbl[MDP_GAMUT_TABLE_NUM];
+  uint16_t* g_tbl[MDP_GAMUT_TABLE_NUM];
+  uint16_t* b_tbl[MDP_GAMUT_TABLE_NUM];
+  void* cfg_payload;
 };
 enum {
   mdp_gamut_fine_mode = 0x1,
@@ -811,10 +821,10 @@ struct mdp_gamut_data_v1_7 {
   uint32_t mode;
   uint32_t map_en;
   uint32_t tbl_size[MDP_GAMUT_TABLE_NUM_V1_7];
-  uint32_t * c0_data[MDP_GAMUT_TABLE_NUM_V1_7];
-  uint32_t * c1_c2_data[MDP_GAMUT_TABLE_NUM_V1_7];
+  uint32_t* c0_data[MDP_GAMUT_TABLE_NUM_V1_7];
+  uint32_t* c1_c2_data[MDP_GAMUT_TABLE_NUM_V1_7];
   uint32_t tbl_scale_off_sz[MDP_GAMUT_SCALE_OFF_TABLE_NUM];
-  uint32_t * scale_off_data[MDP_GAMUT_SCALE_OFF_TABLE_NUM];
+  uint32_t* scale_off_data[MDP_GAMUT_SCALE_OFF_TABLE_NUM];
 };
 struct mdp_calib_config_data {
   uint32_t ops;
@@ -824,7 +834,7 @@ struct mdp_calib_config_data {
 struct mdp_calib_config_buffer {
   uint32_t ops;
   uint32_t size;
-  uint32_t * buffer;
+  uint32_t* buffer;
 };
 struct mdp_calib_dcm_state {
   uint32_t ops;
@@ -875,9 +885,9 @@ struct mdss_ad_init {
   uint32_t al_thresh;
   uint32_t bl_lin_len;
   uint32_t bl_att_len;
-  uint32_t * bl_lin;
-  uint32_t * bl_lin_inv;
-  uint32_t * bl_att_lut;
+  uint32_t* bl_lin;
+  uint32_t* bl_lin_inv;
+  uint32_t* bl_att_lut;
 };
 #define MDSS_AD_BL_CTRL_MODE_EN 1
 #define MDSS_AD_BL_CTRL_MODE_DIS 0
@@ -1014,9 +1024,9 @@ struct mdp_buf_sync {
   uint32_t flags;
   uint32_t acq_fen_fd_cnt;
   uint32_t session_id;
-  int * acq_fen_fd;
-  int * rel_fen_fd;
-  int * retire_fen_fd;
+  int* acq_fen_fd;
+  int* rel_fen_fd;
+  int* retire_fen_fd;
 };
 struct mdp_async_blit_req_list {
   struct mdp_buf_sync sync;
@@ -1033,7 +1043,7 @@ struct mdp_display_commit {
 };
 struct mdp_overlay_list {
   uint32_t num_overlays;
-  struct mdp_overlay * * overlay_list;
+  struct mdp_overlay** overlay_list;
   uint32_t flags;
   uint32_t processed_overlays;
 };
@@ -1108,4 +1118,3 @@ struct mdp_pp_feature_version {
   uint32_t version_info;
 };
 #endif
-

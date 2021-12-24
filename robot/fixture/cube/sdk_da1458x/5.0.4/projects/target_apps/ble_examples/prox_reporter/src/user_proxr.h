@@ -6,9 +6,9 @@
  * @brief Proximity Project application header file.
  *
  * Copyright (C) 2015. Dialog Semiconductor Ltd, unpublished work. This computer
- * program includes Confidential, Proprietary Information and is a Trade Secret of
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited
- * unless authorized in writing. All Rights Reserved.
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -68,7 +68,7 @@ void app_advertise_complete(const uint8_t status);
  ****************************************************************************************
  */
 void on_spotar_status_change(const uint8_t spotar_event);
-#endif // BLE_SPOTA_RECEIVER
+#endif  // BLE_SPOTA_RECEIVER
 
 /**
  ****************************************************************************************
@@ -76,9 +76,9 @@ void on_spotar_status_change(const uint8_t spotar_event);
  * @param[in] param Pointer to GAPC_DISCONNECT_IND message
  * @return void
  ****************************************************************************************
-*/
+ */
 void user_app_on_disconnect(struct gapc_disconnect_ind const *param);
 
 /// @} APP
 
-#endif // _USER_PROXR_H_
+#endif  // _USER_PROXR_H_

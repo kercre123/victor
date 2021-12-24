@@ -17,21 +17,16 @@ extern "C" {
 
     History:
     2011-11-28 ryu split private-public interface
- 
+
     Machine/Compiler:
     (ANSI C)
 **************************************************************************/
 
-void AecWeightsFlatThenExpDecay(float *pWeights,
-                                int lenWeights,
-                                float32 sampleRateHz,
-                                int breakSampIndex, 
-                                float decayDbPerMsec,
-                                float32 minGainDb);
-
+void AecWeightsFlatThenExpDecay(float *pWeights, int lenWeights,
+                                float32 sampleRateHz, int breakSampIndex,
+                                float decayDbPerMsec, float32 minGainDb);
 
 #endif
 #ifdef __cplusplus
 }
 #endif
-

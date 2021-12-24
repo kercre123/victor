@@ -8,9 +8,9 @@
  * File description :   DBASPI INTERFACE
  * Module :             COMMON\DBASPI\
  * File location :      .\common\dbaspi\api\
- * Purpose:             
+ * Purpose:
  * Author:              NM
- * History : 
+ * History :
  *            28/08/2001    Created
  *
  *
@@ -22,14 +22,13 @@
  *
  */
 
-
 #ifndef __DBASPI__BB_DBA_H__
 #define __DBASPI__BB_DBA_H__
 
-#include "defines.h"
 #include "bb_def.h"
-#include "bb_types.h"
 #include "bb_mem.h"
+#include "bb_types.h"
+#include "defines.h"
 
 /**********************************************************************/
 /*   DBASPI CONSTANTS DESCRIPTION                                     */
@@ -37,18 +36,21 @@
 
 #include "ic_dba.h"
 
-
 /**********************************************************************/
 /*   DBASPI OBJECTS DESCRIPTION                                       */
 /**********************************************************************/
 #include "io_dba.h"
-
 
 /**********************************************************************/
 /*   DBASPI FUNCTIONS PROTOTYPES                                      */
 /**********************************************************************/
 #include "if_dba.h"
 
-#define BB_Db_init_file(id,name) { id.link= name; id.type= X_FILE; id.flags=0; }
+#define BB_Db_init_file(id, name) \
+  {                               \
+    id.link = name;               \
+    id.type = X_FILE;             \
+    id.flags = 0;                 \
+  }
 
 #endif /* __DBASPI__BB_DBA_H__ */

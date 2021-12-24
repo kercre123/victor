@@ -11,12 +11,12 @@
 //
 */
 
-#if !defined( __IPPVC_H__ ) || defined( _OWN_BLDPCS )
+#if !defined(__IPPVC_H__) || defined(_OWN_BLDPCS)
 #define __IPPVC_H__
 
-#if defined (_WIN32_WCE) && defined (_M_IX86) && defined (__stdcall)
-  #define _IPP_STDCALL_CDECL
-  #undef __stdcall
+#if defined(_WIN32_WCE) && defined(_M_IX86) && defined(__stdcall)
+#define _IPP_STDCALL_CDECL
+#undef __stdcall
 #endif
 
 #ifndef __IPPDEFS_H__
@@ -27,380 +27,353 @@
 extern "C" {
 #endif
 
-#if !defined( _IPP_NO_DEFAULT_LIB )
-  #if defined( _IPP_PARALLEL_DYNAMIC )
-    #pragma comment( lib, "ippvc" )
-    #pragma comment( lib, "ippcore" )
-  #elif defined( _IPP_PARALLEL_STATIC )
-    #pragma comment( lib, "ippvc_t" )
-    #pragma comment( lib, "ippi_t" )
-    #pragma comment( lib, "ipps_t" )
-    #pragma comment( lib, "ippcore_t" )
-  #elif defined( _IPP_SEQUENTIAL_STATIC )
-    #pragma comment( lib, "ippvc_l" )
-    #pragma comment( lib, "ippi_l" )
-    #pragma comment( lib, "ipps_l" )
-    #pragma comment( lib, "ippcore_l" )
-  #endif
+#if !defined(_IPP_NO_DEFAULT_LIB)
+#if defined(_IPP_PARALLEL_DYNAMIC)
+#pragma comment(lib, "ippvc")
+#pragma comment(lib, "ippcore")
+#elif defined(_IPP_PARALLEL_STATIC)
+#pragma comment(lib, "ippvc_t")
+#pragma comment(lib, "ippi_t")
+#pragma comment(lib, "ipps_t")
+#pragma comment(lib, "ippcore_t")
+#elif defined(_IPP_SEQUENTIAL_STATIC)
+#pragma comment(lib, "ippvc_l")
+#pragma comment(lib, "ippi_l")
+#pragma comment(lib, "ipps_l")
+#pragma comment(lib, "ippcore_l")
+#endif
 #endif
 
 /* ////////////////////////////////////////////////////////////////////////////
 //                      Structures and definitions                          //
 //////////////////////////////////////////////////////////////////////////// */
 
-#if !defined( _OWN_BLDPCS )
+#if !defined(_OWN_BLDPCS)
 /* flags for motion compensation */
 
-#define IPPVC_VLC_FORBIDDEN       0xf0f1
-#define IPPVC_ESCAPE              0x00ff
-#define IPPVC_ENDOFBLOCK          0x00fe
-#define IPPVC_FRAME_PICTURE       0x0003
+#define IPPVC_VLC_FORBIDDEN 0xf0f1
+#define IPPVC_ESCAPE 0x00ff
+#define IPPVC_ENDOFBLOCK 0x00fe
+#define IPPVC_FRAME_PICTURE 0x0003
 
-typedef enum _IPPVC_ESCAPE_FLAG
-{
-  IPPVC_EF_NONE            = 0x0,
-  IPPVC_EF_REVERSIBLE_VLC  = 0x1,
-  IPPVC_EF_SHORT_HEADER    = 0x2
+typedef enum _IPPVC_ESCAPE_FLAG {
+  IPPVC_EF_NONE = 0x0,
+  IPPVC_EF_REVERSIBLE_VLC = 0x1,
+  IPPVC_EF_SHORT_HEADER = 0x2
 
 } IPPVC_ESCAPE_FLAG;
 
-
-typedef enum _IPPVC_MC_APX
-{
-  IPPVC_MC_APX_FF =  0x0,
-  IPPVC_MC_APX_FH =  0x4,
-  IPPVC_MC_APX_HF =  0x8,
-  IPPVC_MC_APX_HH =  0x0c
+typedef enum _IPPVC_MC_APX {
+  IPPVC_MC_APX_FF = 0x0,
+  IPPVC_MC_APX_FH = 0x4,
+  IPPVC_MC_APX_HF = 0x8,
+  IPPVC_MC_APX_HH = 0x0c
 
 } IPPVC_MC_APX;
 
-
-
-typedef enum _IPPVC_MV_TYPE
-{
+typedef enum _IPPVC_MV_TYPE {
   IPPVC_MV_FIELD = 0x0,
   IPPVC_MV_FRAME = 0x1
 
 } IPPVC_MV_TYPE;
 
+typedef enum _IppvcFrameFieldFlag {
+  IPPVC_FRAME = 0x0,
+  IPPVC_TOP_FIELD = 0x1,
+  IPPVC_BOTTOM_FIELD = 0x2
 
-typedef enum _IppvcFrameFieldFlag
-{
-  IPPVC_FRAME           = 0x0,
-  IPPVC_TOP_FIELD       = 0x1,
-  IPPVC_BOTTOM_FIELD    = 0x2
-
-}IppvcFrameFieldFlag;
+} IppvcFrameFieldFlag;
 
 /* VL code longer than 8 bits */
-typedef struct _IppVCHuffmanSpec_32u
-{
+typedef struct _IppVCHuffmanSpec_32u {
   Ipp32u code; /* right justified */
   Ipp32u len;
 } IppVCHuffmanSpec_32u;
 
-
-typedef Ipp32s IppVCHuffmanSpec_32s ;
-
+typedef Ipp32s IppVCHuffmanSpec_32s;
 
 /* Motion Vector */
-typedef struct _IppMotionVector
-{
-  Ipp16s  dx;
-  Ipp16s  dy;
+typedef struct _IppMotionVector {
+  Ipp16s dx;
+  Ipp16s dy;
 } IppMotionVector;
 
+typedef enum {
+  IPP_4x4_VERT = 0,
+  IPP_4x4_HOR = 1,
+  IPP_4x4_DC = 2,
+  IPP_4x4_DIAG_DL = 3,
+  IPP_4x4_DIAG_DR = 4,
+  IPP_4x4_VR = 5,
+  IPP_4x4_HD = 6,
+  IPP_4x4_VL = 7,
+  IPP_4x4_HU = 8,
 
-typedef enum
-{
-  IPP_4x4_VERT          = 0,
-  IPP_4x4_HOR           = 1,
-  IPP_4x4_DC            = 2,
-  IPP_4x4_DIAG_DL       = 3,
-  IPP_4x4_DIAG_DR       = 4,
-  IPP_4x4_VR            = 5,
-  IPP_4x4_HD            = 6,
-  IPP_4x4_VL            = 7,
-  IPP_4x4_HU            = 8,
-
-    /* these modes are not supported by all h264 prediction functions.
-       read the manual for details. */
-  IPP_4x4_DC_TOP        = 9,
-  IPP_4x4_DC_LEFT       = 10,
-  IPP_4x4_DC_128        = 11
+  /* these modes are not supported by all h264 prediction functions.
+     read the manual for details. */
+  IPP_4x4_DC_TOP = 9,
+  IPP_4x4_DC_LEFT = 10,
+  IPP_4x4_DC_128 = 11
 
 } IppIntra4x4PredMode_H264;
 
-typedef enum
-{
-    IPP_8x8_VERT        = 0,
-    IPP_8x8_HOR         = 1,
-    IPP_8x8_DC          = 2,
-    IPP_8x8_DIAG_DL     = 3,
-    IPP_8x8_DIAG_DR     = 4,
-    IPP_8x8_VR          = 5,
-    IPP_8x8_HD          = 6,
-    IPP_8x8_VL          = 7,
-    IPP_8x8_HU          = 8,
+typedef enum {
+  IPP_8x8_VERT = 0,
+  IPP_8x8_HOR = 1,
+  IPP_8x8_DC = 2,
+  IPP_8x8_DIAG_DL = 3,
+  IPP_8x8_DIAG_DR = 4,
+  IPP_8x8_VR = 5,
+  IPP_8x8_HD = 6,
+  IPP_8x8_VL = 7,
+  IPP_8x8_HU = 8,
 
-    /* these modes are not supported by all h264 prediction functions.
-       read the manual for details. */
-    IPP_8x8_DC_TOP      = 9,
-    IPP_8x8_DC_LEFT     = 10,
-    IPP_8x8_DC_128      = 11
+  /* these modes are not supported by all h264 prediction functions.
+     read the manual for details. */
+  IPP_8x8_DC_TOP = 9,
+  IPP_8x8_DC_LEFT = 10,
+  IPP_8x8_DC_128 = 11
 
 } IppIntra8x8PredMode_H264;
 
 typedef IppIntra8x8PredMode_H264 IppIntra8x8PredMode_AVS;
 
-typedef enum
-{
-    IPP_16X16_VERT      = 0,
-    IPP_16X16_HOR       = 1,
-    IPP_16X16_DC        = 2,
-    IPP_16X16_PLANE     = 3,
+typedef enum {
+  IPP_16X16_VERT = 0,
+  IPP_16X16_HOR = 1,
+  IPP_16X16_DC = 2,
+  IPP_16X16_PLANE = 3,
 
-    /* these modes are not supported by all h264 prediction functions.
-       read the manual for details. */
-    IPP_16X16_DC_TOP    = 4,
-    IPP_16X16_DC_LEFT   = 5,
-    IPP_16X16_DC_128    = 6
+  /* these modes are not supported by all h264 prediction functions.
+     read the manual for details. */
+  IPP_16X16_DC_TOP = 4,
+  IPP_16X16_DC_LEFT = 5,
+  IPP_16X16_DC_128 = 6
 
 } IppIntra16x16PredMode_H264;
 
-typedef struct _IppiFilterDeblock_16u
-{
-    Ipp16u*   pSrcDstPlane;         /* Pointer to the left upper pixel of macroblock. and resultant samples. */
-    Ipp32s    srcDstStep;           /* Plane step (pitch). */
-    Ipp16u*   pAlpha;               /* Alpha Thresholds */
-    Ipp16u*   pBeta;                /* Beta Thresholds */
-    Ipp16u*   pThresholds;          /* Thresholds (Tc0) */
-    Ipp8u*    pBs;                  /* BS parameters */
-    Ipp32s    bitDepth;             /* number of bits of plane's sample (range - [8..14]) */
+typedef struct _IppiFilterDeblock_16u {
+  Ipp16u* pSrcDstPlane; /* Pointer to the left upper pixel of macroblock. and
+                           resultant samples. */
+  Ipp32s srcDstStep;    /* Plane step (pitch). */
+  Ipp16u* pAlpha;       /* Alpha Thresholds */
+  Ipp16u* pBeta;        /* Beta Thresholds */
+  Ipp16u* pThresholds;  /* Thresholds (Tc0) */
+  Ipp8u* pBs;           /* BS parameters */
+  Ipp32s bitDepth;      /* number of bits of plane's sample (range - [8..14]) */
 } IppiFilterDeblock_16u;
 
-typedef struct _IppiFilterDeblock_8u
-{
-    Ipp8u*    pSrcDstPlane;         /* Pointer to the left upper pixel of macroblock. and resultant samples. */
-    Ipp32s    srcDstStep;           /* Plane step (pitch). */
-    Ipp8u*    pAlpha;               /* Alpha Thresholds */
-    Ipp8u*    pBeta;                /* Beta Thresholds */
-    Ipp8u*    pThresholds;          /* Thresholds (Tc0) */
-    Ipp8u*    pBs;                  /* BS parameters */
+typedef struct _IppiFilterDeblock_8u {
+  Ipp8u* pSrcDstPlane; /* Pointer to the left upper pixel of macroblock. and
+                          resultant samples. */
+  Ipp32s srcDstStep;   /* Plane step (pitch). */
+  Ipp8u* pAlpha;       /* Alpha Thresholds */
+  Ipp8u* pBeta;        /* Beta Thresholds */
+  Ipp8u* pThresholds;  /* Thresholds (Tc0) */
+  Ipp8u* pBs;          /* BS parameters */
 } IppiFilterDeblock_8u;
 
-typedef struct _IppVCInterpolate_8u
-{
-    const Ipp8u* pSrc;              /* Pointer to the source. */
-    Ipp32s      srcStep;            /* Step of the pointer pSrc (source array) in bytes. */
-    Ipp8u*      pDst;               /* Pointer to the destination. */
-    Ipp32s      dstStep;            /* Step of the pointer pDst (destination array) in bytes. */
+typedef struct _IppVCInterpolate_8u {
+  const Ipp8u* pSrc; /* Pointer to the source. */
+  Ipp32s srcStep;    /* Step of the pointer pSrc (source array) in bytes. */
+  Ipp8u* pDst;       /* Pointer to the destination. */
+  Ipp32s dstStep; /* Step of the pointer pDst (destination array) in bytes. */
 
-    Ipp32s      dx;                 /* Fractional parts of the motion vector */
-    Ipp32s      dy;                 /* in 1/4 pel units (0, 1, 2, or 3). */
+  Ipp32s dx; /* Fractional parts of the motion vector */
+  Ipp32s dy; /* in 1/4 pel units (0, 1, 2, or 3). */
 
-    IppiSize    roiSize;            /* Flag that specifies the region of interest
-                                       (could be 16, 8, 4 or 2 in each dimension).   */
-    Ipp32s      roundControl;       /* Reserved for VC1 using. */
+  IppiSize roiSize;    /* Flag that specifies the region of interest
+                          (could be 16, 8, 4 or 2 in each dimension).   */
+  Ipp32s roundControl; /* Reserved for VC1 using. */
 } IppVCInterpolate_8u;
 
-typedef struct _IppVCInterpolate_16u
-{
-    const Ipp16u* pSrc;             /* Pointer to the source. */
-    Ipp32s      srcStep;            /* Step of the pointer pSrc (source array) in bytes. */
-    Ipp16u*     pDst;               /* Pointer to the destination. */
-    Ipp32s      dstStep;            /* Step of the pointer pDst (destination array) in bytes. */
+typedef struct _IppVCInterpolate_16u {
+  const Ipp16u* pSrc; /* Pointer to the source. */
+  Ipp32s srcStep;     /* Step of the pointer pSrc (source array) in bytes. */
+  Ipp16u* pDst;       /* Pointer to the destination. */
+  Ipp32s dstStep; /* Step of the pointer pDst (destination array) in bytes. */
 
-    Ipp32s      dx;                 /* Fractional parts of the motion vector */
-    Ipp32s      dy;                 /* in 1/4 pel units (0, 1, 2, or 3). */
+  Ipp32s dx; /* Fractional parts of the motion vector */
+  Ipp32s dy; /* in 1/4 pel units (0, 1, 2, or 3). */
 
-    IppiSize    roiSize;            /* Flag that specifies the region of interest
-                                       (could be 16, 8, 4 or 2 in each dimension).   */
-    Ipp32s      bitDepth;           /* Number of significant bits in Ipp16u sample. */
+  IppiSize roiSize; /* Flag that specifies the region of interest
+                       (could be 16, 8, 4 or 2 in each dimension).   */
+  Ipp32s bitDepth;  /* Number of significant bits in Ipp16u sample. */
 } IppVCInterpolate_16u;
 
-typedef struct _IppVCInterpolateBlock_8u
-{
-    const Ipp8u *pSrc[2];           /* pointers to reference image planes */
-    Ipp32s srcStep;                 /* step of the reference image planes */
-    Ipp8u *pDst[2];                 /* pointers to destination image planes */
-    Ipp32s dstStep;                 /* step of the destination image planes */
-    IppiSize sizeFrame;             /* dimensions of the reference image planes */
-    IppiSize sizeBlock;             /* dimensions of the block to be interpolated */
-    IppiPoint pointBlockPos;        /* current position of the block in the being
-                                       interpolated image */
-    IppiPoint pointVector;          /* relative difference between current position
-                                       and reference data to be used */
+typedef struct _IppVCInterpolateBlock_8u {
+  const Ipp8u* pSrc[2];    /* pointers to reference image planes */
+  Ipp32s srcStep;          /* step of the reference image planes */
+  Ipp8u* pDst[2];          /* pointers to destination image planes */
+  Ipp32s dstStep;          /* step of the destination image planes */
+  IppiSize sizeFrame;      /* dimensions of the reference image planes */
+  IppiSize sizeBlock;      /* dimensions of the block to be interpolated */
+  IppiPoint pointBlockPos; /* current position of the block in the being
+                              interpolated image */
+  IppiPoint pointVector;   /* relative difference between current position
+                              and reference data to be used */
 
 } IppVCInterpolateBlock_8u;
 
-typedef struct _IppVCInterpolateBlock_16u
-{
-    const Ipp16u *pSrc[2];          /* pointers to reference image planes */
-    Ipp32s srcStep;                 /* step of the reference image planes */
-    Ipp16u *pDst[2];                /* pointers to destination image planes */
-    Ipp32s dstStep;                 /* step of the destination image planes */
-    IppiSize sizeFrame;             /* dimensions of the reference image planes */
-    IppiSize sizeBlock;             /* dimensions of the block to be interpolated */
-    IppiPoint pointBlockPos;        /* current position of the block in the being
-                                       interpolated image */
-    IppiPoint pointVector;          /* relative difference between current position
-                                       and reference data to be used */
-    Ipp32s bitDepth;                /* data capacity depth in range 8..14 */
+typedef struct _IppVCInterpolateBlock_16u {
+  const Ipp16u* pSrc[2];   /* pointers to reference image planes */
+  Ipp32s srcStep;          /* step of the reference image planes */
+  Ipp16u* pDst[2];         /* pointers to destination image planes */
+  Ipp32s dstStep;          /* step of the destination image planes */
+  IppiSize sizeFrame;      /* dimensions of the reference image planes */
+  IppiSize sizeBlock;      /* dimensions of the block to be interpolated */
+  IppiPoint pointBlockPos; /* current position of the block in the being
+                              interpolated image */
+  IppiPoint pointVector;   /* relative difference between current position
+                              and reference data to be used */
+  Ipp32s bitDepth;         /* data capacity depth in range 8..14 */
 
 } IppVCInterpolateBlock_16u;
 
-typedef struct _IppVCInterpolateBlockIC_8u
-{
-    const Ipp8u *pSrc;               /* Pointer to the source. */
-    Ipp32s srcStep;                  /* Step of the pointer pSrc (source array) in bytes. */
-    Ipp8u *pDst;                     /* Pointer to the destination. */
-    Ipp32s dstStep;                  /* Step of the pointer pDst (destination array) in bytes. */
-    Ipp8u *pLUTTop;                  /* pointer to top Intensity Compensation LUT table */
-    Ipp8u *pLUTBottom;               /* pointer to bottom Intensity Compensation LUT table */
-    IppiSize sizeFrame;              /* dimensions of the reference image plane */
-    IppiSize sizeBlock;              /* dimensions of the block to be interpolated */
-    IppiPoint pointRefBlockPos;      /* position inside reference frame. Which was calculated
-                                     as sum of current position and integer part of motion vector */
-    IppiPoint pointVectorQuarterPix; /* quarter part of MV */
-    Ipp32u oppositePadding;          /* flag that specified padding correspondence between
-                                     current frame and reference frame */
-    Ipp32u fieldPrediction;          /* flag that specified prediction type for current MB progressive or field */
-    Ipp32u roundControl;             /* indicates type of rounding for the current frame */
-    Ipp32u isPredBottom;             /* flag that specified type of reference field in case
-                                     of interlace reference picture - top or bottom */
+typedef struct _IppVCInterpolateBlockIC_8u {
+  const Ipp8u* pSrc; /* Pointer to the source. */
+  Ipp32s srcStep;    /* Step of the pointer pSrc (source array) in bytes. */
+  Ipp8u* pDst;       /* Pointer to the destination. */
+  Ipp32s dstStep; /* Step of the pointer pDst (destination array) in bytes. */
+  Ipp8u* pLUTTop; /* pointer to top Intensity Compensation LUT table */
+  Ipp8u* pLUTBottom;  /* pointer to bottom Intensity Compensation LUT table */
+  IppiSize sizeFrame; /* dimensions of the reference image plane */
+  IppiSize sizeBlock; /* dimensions of the block to be interpolated */
+  IppiPoint
+      pointRefBlockPos; /* position inside reference frame. Which was calculated
+                        as sum of current position and integer part of motion
+                        vector */
+  IppiPoint pointVectorQuarterPix; /* quarter part of MV */
+  Ipp32u oppositePadding; /* flag that specified padding correspondence between
+                          current frame and reference frame */
+  Ipp32u fieldPrediction; /* flag that specified prediction type for current MB
+                             progressive or field */
+  Ipp32u roundControl;    /* indicates type of rounding for the current frame */
+  Ipp32u isPredBottom;    /* flag that specified type of reference field in case
+                          of interlace reference picture - top or bottom */
 
 } IppVCInterpolateBlockIC_8u;
 
-typedef struct _IppiBidir_16u
-{
-    const Ipp16u * pSrc1;
-    Ipp32s   srcStep1;
-    const Ipp16u*  pSrc2;
-    Ipp32s   srcStep2;
-    Ipp16u*  pDst;
-    Ipp32s   dstStep;
-    IppiSize roiSize;
-    Ipp32s   bitDepth;
+typedef struct _IppiBidir_16u {
+  const Ipp16u* pSrc1;
+  Ipp32s srcStep1;
+  const Ipp16u* pSrc2;
+  Ipp32s srcStep2;
+  Ipp16u* pDst;
+  Ipp32s dstStep;
+  IppiSize roiSize;
+  Ipp32s bitDepth;
 } IppVCBidir_16u;
 
-typedef struct _IppVCWeightBlock_8u
-{
-    const Ipp8u * pSrc1;
-    Ipp32s   srcStep1;
-    const Ipp8u*  pSrc2;
-    Ipp32s   srcStep2;
-    Ipp8u*  pDst;
-    Ipp32s   dstStep;
-    IppiSize roiSize;
+typedef struct _IppVCWeightBlock_8u {
+  const Ipp8u* pSrc1;
+  Ipp32s srcStep1;
+  const Ipp8u* pSrc2;
+  Ipp32s srcStep2;
+  Ipp8u* pDst;
+  Ipp32s dstStep;
+  IppiSize roiSize;
 } IppVCWeightBlock_8u;
 
-typedef struct _IppVCWeightParams_8u
-{
-    Ipp32s ulog2wd;    /* log2 weight denominator */
-    Ipp8s iWeight[2];
-    Ipp8s iOffset[2];
+typedef struct _IppVCWeightParams_8u {
+  Ipp32s ulog2wd; /* log2 weight denominator */
+  Ipp8s iWeight[2];
+  Ipp8s iOffset[2];
 } IppVCWeightParams_8u;
 
-typedef struct _IppiMBReconstructHigh_32s16u
-{
-    Ipp32s**  ppSrcDstCoeff;        /* Pointer to the order of blocks of residual coefficients
-                                       for this macroblock */
-    Ipp16u*   pSrcDstPlane;         /* Pointer to macroblock that is reconstructed in current plane. This
-                                       macroblock should contain inter prediction samples if exist.*/
-    Ipp32s    srcDstStep;           /* Plane step. */
-    Ipp32u    cbp;                  /* Coded block pattern. */
-    Ipp32s    qp;                   /* quantizer */
-    Ipp16s*   pQuantTable;          /* Pointer to the quantization table for plane */
-    Ipp32s    bypassFlag;           /* Flag enabling lossless coding (reserved for future use). */
-    Ipp32s    bitDepth;             /* Number of significant bits in Ipp16u sample. */
+typedef struct _IppiMBReconstructHigh_32s16u {
+  Ipp32s** ppSrcDstCoeff; /* Pointer to the order of blocks of residual
+                             coefficients for this macroblock */
+  Ipp16u* pSrcDstPlane;   /* Pointer to macroblock that is reconstructed in
+                             current plane. This   macroblock should contain inter
+                             prediction samples if exist.*/
+  Ipp32s srcDstStep;      /* Plane step. */
+  Ipp32u cbp;             /* Coded block pattern. */
+  Ipp32s qp;              /* quantizer */
+  Ipp16s* pQuantTable;    /* Pointer to the quantization table for plane */
+  Ipp32s
+      bypassFlag; /* Flag enabling lossless coding (reserved for future use). */
+  Ipp32s bitDepth; /* Number of significant bits in Ipp16u sample. */
 } IppiReconstructHighMB_32s16u;
 
-typedef struct _IppiReconstructHighMB_16s8u
-{
-    Ipp16s** ppSrcDstCoeff;         /* Pointer to the order of blocks of residual coefficients
-                                       for this macroblock */
-    Ipp8u*   pSrcDstPlane;          /* Pointer to macroblock that is reconstructed in current plane. This
-                                       macroblock should contain inter prediction samples if exist.*/
-    Ipp32s   srcDstStep;            /* Plane step. */
-    Ipp32u   cbp;                   /* Coded block pattern. */
-    Ipp32s   qp;                    /* quantizer */
-    Ipp16s*  pQuantTable;           /* Pointer to the quantization table for plane */
-    Ipp32s   bypassFlag;            /* Flag enabling lossless coding (reserved for future use). */
+typedef struct _IppiReconstructHighMB_16s8u {
+  Ipp16s** ppSrcDstCoeff; /* Pointer to the order of blocks of residual
+                             coefficients for this macroblock */
+  Ipp8u*
+      pSrcDstPlane;    /* Pointer to macroblock that is reconstructed in current
+                          plane. This    macroblock should contain inter prediction
+                          samples if exist.*/
+  Ipp32s srcDstStep;   /* Plane step. */
+  Ipp32u cbp;          /* Coded block pattern. */
+  Ipp32s qp;           /* quantizer */
+  Ipp16s* pQuantTable; /* Pointer to the quantization table for plane */
+  Ipp32s
+      bypassFlag; /* Flag enabling lossless coding (reserved for future use). */
 } IppiReconstructHighMB_16s8u;
 
-typedef enum
-{
-    IPP_CHROMA_DC       = 0,
-    IPP_CHROMA_HOR      = 1,
-    IPP_CHROMA_VERT     = 2,
-    IPP_CHROMA_PLANE    = 3,
+typedef enum {
+  IPP_CHROMA_DC = 0,
+  IPP_CHROMA_HOR = 1,
+  IPP_CHROMA_VERT = 2,
+  IPP_CHROMA_PLANE = 3,
 
-    /* these modes are not supported by all h264 prediction functions.
-       read the manual for details. */
-    IPP_CHROMA_DC_TOP   = 4,
-    IPP_CHROMA_DC_LEFT  = 5,
-    IPP_CHROMA_DC_128   = 6
+  /* these modes are not supported by all h264 prediction functions.
+     read the manual for details. */
+  IPP_CHROMA_DC_TOP = 4,
+  IPP_CHROMA_DC_LEFT = 5,
+  IPP_CHROMA_DC_128 = 6
 
 } IppIntraChromaPredMode_H264;
 
 typedef IppIntraChromaPredMode_H264 IppIntraChromaPredMode_AVS;
 
-enum
-{
-     IPPVC_LEFT_EDGE    = 0x1,
-     IPPVC_RIGHT_EDGE   = 0x2,
-     IPPVC_TOP_EDGE     = 0x4,
-     IPPVC_BOTTOM_EDGE  = 0x8,
-     IPPVC_TOP_LEFT_EDGE = 0x10,
-     IPPVC_TOP_RIGHT_EDGE = 0x20
+enum {
+  IPPVC_LEFT_EDGE = 0x1,
+  IPPVC_RIGHT_EDGE = 0x2,
+  IPPVC_TOP_EDGE = 0x4,
+  IPPVC_BOTTOM_EDGE = 0x8,
+  IPPVC_TOP_LEFT_EDGE = 0x10,
+  IPPVC_TOP_RIGHT_EDGE = 0x20
 };
 
 #define IPPVC_CBP_1ST_CHROMA_DC_BITPOS 17
 #define IPPVC_CBP_1ST_CHROMA_AC_BITPOS 19
-#define IPPVC_CBP_CHROMA_DC (0x3<<IPPVC_CBP_1ST_CHROMA_DC_BITPOS)
-#define IPPVC_CBP_CHROMA_AC (0xff<<IPPVC_CBP_1ST_CHROMA_AC_BITPOS)
-#define IPPVC_CBP_LUMA_AC (0xffff<<IPPVC_CBP_1ST_LUMA_AC_BITPOS)
+#define IPPVC_CBP_CHROMA_DC (0x3 << IPPVC_CBP_1ST_CHROMA_DC_BITPOS)
+#define IPPVC_CBP_CHROMA_AC (0xff << IPPVC_CBP_1ST_CHROMA_AC_BITPOS)
+#define IPPVC_CBP_LUMA_AC (0xffff << IPPVC_CBP_1ST_LUMA_AC_BITPOS)
 #define IPPVC_CBP_1ST_LUMA_AC_BITPOS 1
 #define IPPVC_CBP_LUMA_DC 1
-#define MAX_CAVLC_LEVEL_VALUE   2063
+#define MAX_CAVLC_LEVEL_VALUE 2063
 
 #define IPPVC_CBP_DC 1
 #define IPPVC_CBP_1ST_AC_BITPOS 1
 
-enum
-{
-  IPPVC_MBTYPE_INTER        = 0,    /* P picture or P-VOP */
-  IPPVC_MBTYPE_INTER_Q      = 1,    /* P picture or P-VOP */
-  IPPVC_MBTYPE_INTER4V      = 2,    /* P picture or P-VOP */
-  IPPVC_MBTYPE_INTRA        = 3,    /* I and P picture, or I- and P-VOP */
-  IPPVC_MBTYPE_INTRA_Q      = 4,    /* I and P picture, or I- and P-VOP */
-  IPPVC_MBTYPE_INTER4V_Q    = 5,    /* P picture or P-VOP(H.263)*/
-  IPPVC_MBTYPE_DIRECT       = 6,    /* B picture or B-VOP (MPEG-4 only) */
-  IPPVC_MBTYPE_INTERPOLATE  = 7,    /* B picture or B-VOP */
-  IPPVC_MBTYPE_BACKWARD     = 8,    /* B picture or B-VOP */
-  IPPVC_MBTYPE_FORWARD      = 9,    /* B picture or B-VOP */
-  IPPVC_MB_STUFFING         = 255
+enum {
+  IPPVC_MBTYPE_INTER = 0,       /* P picture or P-VOP */
+  IPPVC_MBTYPE_INTER_Q = 1,     /* P picture or P-VOP */
+  IPPVC_MBTYPE_INTER4V = 2,     /* P picture or P-VOP */
+  IPPVC_MBTYPE_INTRA = 3,       /* I and P picture, or I- and P-VOP */
+  IPPVC_MBTYPE_INTRA_Q = 4,     /* I and P picture, or I- and P-VOP */
+  IPPVC_MBTYPE_INTER4V_Q = 5,   /* P picture or P-VOP(H.263)*/
+  IPPVC_MBTYPE_DIRECT = 6,      /* B picture or B-VOP (MPEG-4 only) */
+  IPPVC_MBTYPE_INTERPOLATE = 7, /* B picture or B-VOP */
+  IPPVC_MBTYPE_BACKWARD = 8,    /* B picture or B-VOP */
+  IPPVC_MBTYPE_FORWARD = 9,     /* B picture or B-VOP */
+  IPPVC_MB_STUFFING = 255
 };
 
-enum
-{
-  IPPVC_SCAN_NONE        = -1,
-  IPPVC_SCAN_ZIGZAG      = 0,
-  IPPVC_SCAN_VERTICAL    = 1,
-  IPPVC_SCAN_HORIZONTAL  = 2
+enum {
+  IPPVC_SCAN_NONE = -1,
+  IPPVC_SCAN_ZIGZAG = 0,
+  IPPVC_SCAN_VERTICAL = 1,
+  IPPVC_SCAN_HORIZONTAL = 2
 };
 
 /* Block Type */
-enum
-{
-    IPPVC_BLOCK_LUMA   = 0,
-    IPPVC_BLOCK_CHROMA = 1
-};
+enum { IPPVC_BLOCK_LUMA = 0, IPPVC_BLOCK_CHROMA = 1 };
 
 /* Interpolation types */
-enum
-{
+enum {
   IPPVC_INTERP_NONE = 0,
   IPPVC_INTERP_HORIZONTAL = 1,
   IPPVC_INTERP_VERTICAL = 2,
@@ -408,11 +381,7 @@ enum
 };
 
 /* Sprite Type */
-enum
-{
-    IPPVC_SPRITE_STATIC = 1,
-    IPPVC_SPRITE_GMC    = 2
-};
+enum { IPPVC_SPRITE_STATIC = 1, IPPVC_SPRITE_GMC = 2 };
 
 typedef struct WarpSpec_MPEG4 IppiWarpSpec_MPEG4;
 typedef struct QuantInvIntraSpec_MPEG4 IppiQuantInvIntraSpec_MPEG4;
@@ -422,27 +391,22 @@ typedef struct QuantInterSpec_MPEG4 IppiQuantInterSpec_MPEG4;
 
 /* General Color Conversion Enumerated Types */
 enum {
-    IPPVC_ROTATE_DISABLE = 0,
-    IPPVC_ROTATE_90CCW   = 1,
-    IPPVC_ROTATE_90CW    = 2,
-    IPPVC_ROTATE_180     = 3
+  IPPVC_ROTATE_DISABLE = 0,
+  IPPVC_ROTATE_90CCW = 1,
+  IPPVC_ROTATE_90CW = 2,
+  IPPVC_ROTATE_180 = 3
 };
-enum
-{
-    IPPVC_CbYCr422ToBGR565 = 0,
-    IPPVC_CbYCr422ToBGR555 = 1
-};
+enum { IPPVC_CbYCr422ToBGR565 = 0, IPPVC_CbYCr422ToBGR555 = 1 };
 
 /*  enum used in VC1 deblocking and smoothing */
-enum
-{
-    IPPVC_EDGE_QUARTER_1    = 0x01,
-    IPPVC_EDGE_QUARTER_2    = 0x02,
-    IPPVC_EDGE_QUARTER_3    = 0x04,
-    IPPVC_EDGE_QUARTER_4    = 0x08,
-    IPPVC_EDGE_HALF_1       = IPPVC_EDGE_QUARTER_1 + IPPVC_EDGE_QUARTER_2,
-    IPPVC_EDGE_HALF_2       = IPPVC_EDGE_QUARTER_3 + IPPVC_EDGE_QUARTER_4,
-    IPPVC_EDGE_ALL          = IPPVC_EDGE_HALF_1 + IPPVC_EDGE_HALF_2
+enum {
+  IPPVC_EDGE_QUARTER_1 = 0x01,
+  IPPVC_EDGE_QUARTER_2 = 0x02,
+  IPPVC_EDGE_QUARTER_3 = 0x04,
+  IPPVC_EDGE_QUARTER_4 = 0x08,
+  IPPVC_EDGE_HALF_1 = IPPVC_EDGE_QUARTER_1 + IPPVC_EDGE_QUARTER_2,
+  IPPVC_EDGE_HALF_2 = IPPVC_EDGE_QUARTER_3 + IPPVC_EDGE_QUARTER_4,
+  IPPVC_EDGE_ALL = IPPVC_EDGE_HALF_1 + IPPVC_EDGE_HALF_2
 };
 
 /* deinterlacing structure */
@@ -450,14 +414,13 @@ typedef struct DeinterlaceBlendState_8u_C1 IppiDeinterlaceBlendState_8u_C1;
 typedef struct DeinterlaceBlendState_8u_C1 IppiDeinterlaceBlendSpec_8u_C2;
 
 /* denoise structures & enums */
-typedef enum _IppvcNoiseBlurFlag
-{
-  IPPVC_NOISE_BLUR0     = 0x0,
-  IPPVC_NOISE_BLUR1     = 0x1,
-  IPPVC_NOISE_BLUR2     = 0x2,
-  IPPVC_NOISE_BLUR3     = 0x3
+typedef enum _IppvcNoiseBlurFlag {
+  IPPVC_NOISE_BLUR0 = 0x0,
+  IPPVC_NOISE_BLUR1 = 0x1,
+  IPPVC_NOISE_BLUR2 = 0x2,
+  IPPVC_NOISE_BLUR3 = 0x3
 
-}IppvcNoiseBlurFlag;
+} IppvcNoiseBlurFlag;
 
 struct DenoiseSmoothState;
 typedef struct DenoiseSmoothState IppiDenoiseSmoothState_8u_C1;
@@ -469,19 +432,17 @@ struct DenoiseMNRState;
 typedef struct DenoiseMNRState IppiDenoiseMosquitoState_8u_C1;
 
 /* user-open structure */
-typedef
-struct IppDenoiseCAST
-{
-  Ipp8u TemporalDifferenceThreshold;      /* default  16 - range [0, 255] */
-  Ipp8u NumberOfMotionPixelsThreshold;    /* default   0 - range [0,  16] */
-  Ipp8u StrongEdgeThreshold;              /* default   8 - range [0, 255] */
-  Ipp8u BlockWidth;                       /* default   4 - range [1,  16] */
-  Ipp8u BlockHeight;                      /* default   4 - range [1,  16] */
-  Ipp8u EdgePixelWeight;                  /* default 128 - range [0, 255] */
-  Ipp8u NonEdgePixelWeight;               /* default  16 - range [0, 255] */
-  Ipp8u GaussianThresholdY;               /* default  12 */
-  Ipp8u GaussianThresholdUV;              /* default   6 */
-  Ipp8u HistoryWeight;                    /* default 192 - range [0, 255] */
+typedef struct IppDenoiseCAST {
+  Ipp8u TemporalDifferenceThreshold;   /* default  16 - range [0, 255] */
+  Ipp8u NumberOfMotionPixelsThreshold; /* default   0 - range [0,  16] */
+  Ipp8u StrongEdgeThreshold;           /* default   8 - range [0, 255] */
+  Ipp8u BlockWidth;                    /* default   4 - range [1,  16] */
+  Ipp8u BlockHeight;                   /* default   4 - range [1,  16] */
+  Ipp8u EdgePixelWeight;               /* default 128 - range [0, 255] */
+  Ipp8u NonEdgePixelWeight;            /* default  16 - range [0, 255] */
+  Ipp8u GaussianThresholdY;            /* default  12 */
+  Ipp8u GaussianThresholdUV;           /* default   6 */
+  Ipp8u HistoryWeight;                 /* default 192 - range [0, 255] */
 
 } IppDenoiseCAST;
 
@@ -489,9 +450,6 @@ struct _IppvcCABACState;
 typedef struct _IppvcCABACState IppvcCABACState;
 
 #endif /* _OWN_BLDPCS */
-
-
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:       ippvcGetLibVersion
@@ -502,14 +460,11 @@ typedef struct _IppvcCABACState IppvcCABACState;
 //  Notes:      not necessary to release the returned structure
 */
 
-IPPAPI( const IppLibraryVersion*, ippvcGetLibVersion, (void) )
-
-
+IPPAPI(const IppLibraryVersion*, ippvcGetLibVersion, (void))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //                     MPEG-1 and MPEG-2 Video Decoding Functions
 //////////////////////////////////////////////////////////////////////////// */
-
 
 /* Variable Length Decoding Functions */
 
@@ -532,10 +487,8 @@ IPPAPI( const IppLibraryVersion*, ippvcGetLibVersion, (void) )
 //        ippStsMemAllocErr No memory is allocated.
 */
 
-IPPAPI(IppStatus, ippiHuffmanTableInitAlloc_32s, (
-  const Ipp32s*                pSrcTable,
-        IppVCHuffmanSpec_32s** ppDstSpec))
-
+IPPAPI(IppStatus, ippiHuffmanTableInitAlloc_32s,
+       (const Ipp32s* pSrcTable, IppVCHuffmanSpec_32s** ppDstSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -554,10 +507,8 @@ IPPAPI(IppStatus, ippiHuffmanTableInitAlloc_32s, (
 //        ippStsMemAllocErr No memory is allocated.
 */
 
-IPPAPI(IppStatus, ippiHuffmanRunLevelTableInitAlloc_32s, (
-  const Ipp32s*                pSrcTable,
-        IppVCHuffmanSpec_32s** ppDstSpec))
-
+IPPAPI(IppStatus, ippiHuffmanRunLevelTableInitAlloc_32s,
+       (const Ipp32s* pSrcTable, IppVCHuffmanSpec_32s** ppDstSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -579,11 +530,9 @@ IPPAPI(IppStatus, ippiHuffmanRunLevelTableInitAlloc_32s, (
 //   ippStsH263VLCCodeErr  Decoding in accordance with H.263 Standard
 */
 
-IPPAPI(IppStatus, ippiDecodeHuffmanOne_1u32s, (
-        Ipp32u**              ppBitStream,
-        int*                  pOffset,
-        Ipp32s*               pDst,
-  const IppVCHuffmanSpec_32s* pDecodeTable))
+IPPAPI(IppStatus, ippiDecodeHuffmanOne_1u32s,
+       (Ipp32u * *ppBitStream, int* pOffset, Ipp32s* pDst,
+        const IppVCHuffmanSpec_32s* pDecodeTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -606,12 +555,10 @@ IPPAPI(IppStatus, ippiDecodeHuffmanOne_1u32s, (
 //   ippStsH263VLCCodeErr  Decoding in accordance with H.263 Standard
 */
 
-IPPAPI(IppStatus, ippiDecodeHuffmanPair_1u16s, (
-        Ipp32u **ppBitStream,
-        Ipp32s *pOffset,
-  const IppVCHuffmanSpec_32s *pDecodeTable,
-        Ipp8s *pFirst,
-        Ipp16s *pSecond))
+IPPAPI(IppStatus, ippiDecodeHuffmanPair_1u16s,
+       (Ipp32u * *ppBitStream, Ipp32s* pOffset,
+        const IppVCHuffmanSpec_32s* pDecodeTable, Ipp8s* pFirst,
+        Ipp16s* pSecond))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -635,7 +582,8 @@ IPPAPI(IppStatus, ippiDecodeHuffmanPair_1u16s, (
 //   pQPMatrix      Pointer to the weighting matrix imposed by the Standard
 //                  or user-defined
 //   pDstBlock      Pointer to the decoded elements
-//   pDstSize       Pointer to the position of the last non-zero block coefficient
+//   pDstSize       Pointer to the position of the last non-zero block
+coefficient
 //                  in scanning sequence
 //
 // Returns:
@@ -643,18 +591,15 @@ IPPAPI(IppStatus, ippiDecodeHuffmanPair_1u16s, (
 //   ippStsH263VLCCodeErr  Decoding in accordance with H.263 Standard
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiReconstructDCTBlock_MPEG1_32s, (
-        Ipp32u** ppBitStream,
-        int*     pOffset,
-  const Ipp32s*  pDCSizeTable,
-  const Ipp32s*  pACTable,
-        Ipp32s*  pScanMatrix,
-        int      QP,
-        Ipp16s*  pQPMatrix,
-        Ipp16s*  pDstBlock,
-        Ipp32s*     pDstSize))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiReconstructDCTBlock_MPEG1_32s,
+       (Ipp32u * *ppBitStream, int* pOffset, const Ipp32s* pDCSizeTable,
+        const Ipp32s* pACTable, Ipp32s* pScanMatrix, int QP, Ipp16s* pQPMatrix,
+        Ipp16s* pDstBlock, Ipp32s* pDstSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -687,19 +632,15 @@ IPPAPI(IppStatus, ippiReconstructDCTBlock_MPEG1_32s, (
 //   ippStsH263VLCCodeErr  Decoding in accordance with H.263 Standard
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiReconstructDCTBlockIntra_MPEG1_32s, (
-        Ipp32u** ppBitStream,
-        int*     pOffset,
-  const Ipp32s*  pDCSizeTable,
-  const Ipp32s*  pACTable,
-        Ipp32s*  pScanMatrix,
-        int      QP,
-        Ipp16s*  pQPMatrix,
-        Ipp16s*  pDCPred,
-        Ipp16s*  pDstBlock,
-        Ipp32s*  pDstSize))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiReconstructDCTBlockIntra_MPEG1_32s,
+       (Ipp32u * *ppBitStream, int* pOffset, const Ipp32s* pDCSizeTable,
+        const Ipp32s* pACTable, Ipp32s* pScanMatrix, int QP, Ipp16s* pQPMatrix,
+        Ipp16s* pDCPred, Ipp16s* pDstBlock, Ipp32s* pDstSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -731,18 +672,16 @@ IPPAPI(IppStatus, ippiReconstructDCTBlockIntra_MPEG1_32s, (
 //   ippStsH263VLCCodeErr  Decoding in accordance with H.263 Standard
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiReconstructDCTBlock_MPEG2_32s, (
-        Ipp32u**              ppBitStream,
-        int*               pOffset,
-  const IppVCHuffmanSpec_32s* pDCTable,
-  const IppVCHuffmanSpec_32s* pACTable,
-        Ipp32s*               pScanMatrix,
-        int                   QP,
-        Ipp16s*               pQPMatrix,
-        Ipp16s*               pDstBlock,
-        Ipp32s*               pDstSize))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiReconstructDCTBlock_MPEG2_32s,
+       (Ipp32u * *ppBitStream, int* pOffset,
+        const IppVCHuffmanSpec_32s* pDCTable,
+        const IppVCHuffmanSpec_32s* pACTable, Ipp32s* pScanMatrix, int QP,
+        Ipp16s* pQPMatrix, Ipp16s* pDstBlock, Ipp32s* pDstSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -777,20 +716,17 @@ IPPAPI(IppStatus, ippiReconstructDCTBlock_MPEG2_32s, (
 //   ippStsH263VLCCodeErr  Decoding in accordance with H.263 Standard
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiReconstructDCTBlockIntra_MPEG2_32s, (
-        Ipp32u**              ppBitStream,
-        int*                  pOffset,
-  const IppVCHuffmanSpec_32s* pDCSizeTable,
-  const IppVCHuffmanSpec_32s* pACTable,
-        Ipp32s*               pScanMatrix,
-        int                   QP,
-        Ipp16s*               pQPMatrix,
-        Ipp16s*               pDCPred,
-        Ipp32s                shiftDCVal,
-        Ipp16s*               pDstBlock,
-        Ipp32s*               pDstSize))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiReconstructDCTBlockIntra_MPEG2_32s,
+       (Ipp32u * *ppBitStream, int* pOffset,
+        const IppVCHuffmanSpec_32s* pDCSizeTable,
+        const IppVCHuffmanSpec_32s* pACTable, Ipp32s* pScanMatrix, int QP,
+        Ipp16s* pQPMatrix, Ipp16s* pDCPred, Ipp32s shiftDCVal,
+        Ipp16s* pDstBlock, Ipp32s* pDstSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -807,11 +743,13 @@ IPPAPI(IppStatus, ippiReconstructDCTBlockIntra_MPEG2_32s, (
 //   ippStsNullPtrErr      One of the pointers is NULL
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiHuffmanTableFree_32s, (IppVCHuffmanSpec_32s *pDecodeTable))
-
-
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiHuffmanTableFree_32s,
+       (IppVCHuffmanSpec_32s * pDecodeTable))
 
 /* Inverse Quantization */
 
@@ -835,18 +773,11 @@ IPPAPI(IppStatus, ippiHuffmanTableFree_32s, (IppVCHuffmanSpec_32s *pDecodeTable)
 //   ippStsNullPtrErr      One of the pointers is NULL
 */
 
-IPPAPI(IppStatus, ippiQuantInvIntra_MPEG2_16s_C1I, (
-  Ipp16s* pSrcDst,
-  int     QP,
-  Ipp16s* pQPMatrix))
+IPPAPI(IppStatus, ippiQuantInvIntra_MPEG2_16s_C1I,
+       (Ipp16s * pSrcDst, int QP, Ipp16s* pQPMatrix))
 
-IPPAPI(IppStatus, ippiQuantInv_MPEG2_16s_C1I, (
-  Ipp16s* pSrcDst,
-  int     QP,
-  Ipp16s* pQPMatrix))
-
-
-
+IPPAPI(IppStatus, ippiQuantInv_MPEG2_16s_C1I,
+       (Ipp16s * pSrcDst, int QP, Ipp16s* pQPMatrix))
 
 /* Inverse Discrete Cosine Transformation */
 
@@ -871,13 +802,13 @@ IPPAPI(IppStatus, ippiQuantInv_MPEG2_16s_C1I, (
 //    This function is used for non-intra macroblocks
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiDCT8x8Inv_AANTransposed_16s_C1R, (
-  const Ipp16s* pSrc,
-        Ipp16s* pDst,
-        Ipp32s  dstStep,
-        Ipp32s  count))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDCT8x8Inv_AANTransposed_16s_C1R,
+       (const Ipp16s* pSrc, Ipp16s* pDst, Ipp32s dstStep, Ipp32s count))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -901,12 +832,8 @@ IPPAPI(IppStatus,ippiDCT8x8Inv_AANTransposed_16s_C1R, (
 //    This function is used for non-intra macroblocks
 */
 
-IPPAPI(IppStatus,ippiDCT8x8Inv_AANTransposed_16s8u_C1R, (
-  const Ipp16s* pSrc,
-        Ipp8u*  pDst,
-        Ipp32s  dstStep,
-        Ipp32s  count))
-
+IPPAPI(IppStatus, ippiDCT8x8Inv_AANTransposed_16s8u_C1R,
+       (const Ipp16s* pSrc, Ipp8u* pDst, Ipp32s dstStep, Ipp32s count))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -932,15 +859,14 @@ IPPAPI(IppStatus,ippiDCT8x8Inv_AANTransposed_16s8u_C1R, (
 //    This function is used for non-intra macroblocks
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiDCT8x8Inv_AANTransposed_16s_P2C2R, (
-  const Ipp16s* pSrcU,
-  const Ipp16s* pSrcV,
-        Ipp16s* pDstUV,
-        Ipp32s  dstStep,
-        Ipp32s  countU,
-        Ipp32s  countV))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDCT8x8Inv_AANTransposed_16s_P2C2R,
+       (const Ipp16s* pSrcU, const Ipp16s* pSrcV, Ipp16s* pDstUV,
+        Ipp32s dstStep, Ipp32s countU, Ipp32s countV))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -966,14 +892,14 @@ IPPAPI(IppStatus,ippiDCT8x8Inv_AANTransposed_16s_P2C2R, (
 //    This function is used for non-intra macroblocks
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDCT8x8Inv_AANTransposed_16s8u_P2C2R, (
-  const Ipp16s* pSrcU,
-  const Ipp16s* pSrcV,
-        Ipp8u*  pDstUV,
-        Ipp32s  dstStep,
-        Ipp32s  countU,
-        Ipp32s  countV))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDCT8x8Inv_AANTransposed_16s8u_P2C2R,
+       (const Ipp16s* pSrcU, const Ipp16s* pSrcV, Ipp8u* pDstUV, Ipp32s dstStep,
+        Ipp32s countU, Ipp32s countV))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1002,11 +928,8 @@ IPPAPI(IppStatus, ippiDCT8x8Inv_AANTransposed_16s8u_P2C2R, (
 //    ippStsNullPtrErr  One of the pointers is NULL
 */
 
-IPPAPI(IppStatus,ippiDCT8x8Fwd_8u16s_C2P2, (
-       const Ipp8u* pSrc,
-             Ipp32s srcStep,
-             Ipp16s* pDstU,
-             Ipp16s* pDstV ))
+IPPAPI(IppStatus, ippiDCT8x8Fwd_8u16s_C2P2,
+       (const Ipp8u* pSrc, Ipp32s srcStep, Ipp16s* pDstU, Ipp16s* pDstV))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1015,19 +938,23 @@ IPPAPI(IppStatus,ippiDCT8x8Fwd_8u16s_C2P2, (
 //  Purpose:
 //    The function performs inverse discrete cosines transform at block 8x8
 //    and after put results into chrominance part of NV12 plane. Or fill
-//    chrominance part of NV12 plane by constant values depends on flag parameter.
+//    chrominance part of NV12 plane by constant values depends on flag
+parameter.
 //  Parameters:
 //    pSrcU  - the pointer to the source of U(Cb) DCT coefficients
 //    pSrcV  - the pointer to the source of U(Cb) DCT coefficients
-//    pDst  - the pointer to the destination block ( chrominance part of NV12 plane).
+//    pDst  - the pointer to the destination block ( chrominance part of NV12
+plane).
 //      0 UV UV UV UV   UV UV UV UV
 //      1 UV UV UV UV           UV
 //      ...
 //      7  UV UV UV UV  UV UV UV UV
 //
-//    dstStep    Step of the current destination block, specifying width of the plane
+//    dstStep    Step of the current destination block, specifying width of the
+plane
 //               in bytes.negative step works.
-//    flag   - Bits from 2 to 31 are reserved. Take into account only two low bits.
+//    flag   - Bits from 2 to 31 are reserved. Take into account only two low
+bits.
 //      (flag&0x03) == 0x00 - Do iDCT for U and V
 //      (flag&0x03) == 0x01 - Do iDCT for U and SET for V
 //      (flag&0x03) == 0x02 - Do SET for  U and iDCT for V
@@ -1040,13 +967,9 @@ IPPAPI(IppStatus,ippiDCT8x8Fwd_8u16s_C2P2, (
 //    ippStsNullPtrErr  One of the pointers is NULL
 */
 
-IPPAPI(IppStatus, ippiDCT8x8InvOrSet_16s8u_P2C2, (
-       const Ipp16s* pSrcU,
-       const Ipp16s* pSrcV,
-             Ipp8u* pDst,
-             Ipp32s dstStep,
-             Ipp32s flag))
-
+IPPAPI(IppStatus, ippiDCT8x8InvOrSet_16s8u_P2C2,
+       (const Ipp16s* pSrcU, const Ipp16s* pSrcV, Ipp8u* pDst, Ipp32s dstStep,
+        Ipp32s flag))
 
 /* Motion Compensation */
 
@@ -1080,110 +1003,75 @@ IPPAPI(IppStatus, ippiDCT8x8InvOrSet_16s8u_P2C2, (
 //    ippStsNullPtrErr  One of the pointers is NULL
 */
 
-IPPAPI(IppStatus, ippiMC16x16_8u_C1,(
-  const Ipp8u*       pSrcRef,
-        Ipp32s       srcStep,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       mcType,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiMC16x16_8u_C1,
+       (const Ipp8u* pSrcRef, Ipp32s srcStep, const Ipp16s* pSrcYData,
+        Ipp32s srcYDataStep, Ipp8u* pDst, Ipp32s dstStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiMC16x8_8u_C1, (
-  const Ipp8u*       pSrcRef,
-        Ipp32s       srcStep,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       mcType,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiMC16x8_8u_C1,
+       (const Ipp8u* pSrcRef, Ipp32s srcStep, const Ipp16s* pSrcYData,
+        Ipp32s srcYDataStep, Ipp8u* pDst, Ipp32s dstStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiMC8x16_8u_C1, (
-  const Ipp8u*       pSrcRef,
-        Ipp32s       srcStep,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       mcType,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiMC8x16_8u_C1,
+       (const Ipp8u* pSrcRef, Ipp32s srcStep, const Ipp16s* pSrcYData,
+        Ipp32s srcYDataStep, Ipp8u* pDst, Ipp32s dstStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiMC8x8_8u_C1, (
-  const Ipp8u*       pSrcRef,
-        Ipp32s       srcStep,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       mcType,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiMC8x8_8u_C1,
+       (const Ipp8u* pSrcRef, Ipp32s srcStep, const Ipp16s* pSrcYData,
+        Ipp32s srcYDataStep, Ipp8u* pDst, Ipp32s dstStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiMC8x4_8u_C1, (
-  const Ipp8u*       pSrcRef,
-        Ipp32s       srcStep,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       mcType,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiMC8x4_8u_C1,
+       (const Ipp8u* pSrcRef, Ipp32s srcStep, const Ipp16s* pSrcYData,
+        Ipp32s srcYDataStep, Ipp8u* pDst, Ipp32s dstStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiMC4x8_8u_C1, (
-  const Ipp8u*       pSrcRef,
-        Ipp32s       srcStep,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       mcType,
-        Ipp32s       roundControl))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiMC4x8_8u_C1,
+       (const Ipp8u* pSrcRef, Ipp32s srcStep, const Ipp16s* pSrcYData,
+        Ipp32s srcYDataStep, Ipp8u* pDst, Ipp32s dstStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiMC4x4_8u_C1, (
-  const Ipp8u*       pSrcRef,
-        Ipp32s       srcStep,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       mcType,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiMC4x4_8u_C1,
+       (const Ipp8u* pSrcRef, Ipp32s srcStep, const Ipp16s* pSrcYData,
+        Ipp32s srcYDataStep, Ipp8u* pDst, Ipp32s dstStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiMC2x4_8u_C1, (
-  const Ipp8u*       pSrcRef,
-        Ipp32s       srcStep,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       mcType,
-        Ipp32s       roundControl))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiMC2x4_8u_C1,
+       (const Ipp8u* pSrcRef, Ipp32s srcStep, const Ipp16s* pSrcYData,
+        Ipp32s srcYDataStep, Ipp8u* pDst, Ipp32s dstStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiMC4x2_8u_C1, (
-  const Ipp8u*       pSrcRef,
-        Ipp32s       srcStep,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       mcType,
-        Ipp32s       roundControl))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiMC4x2_8u_C1,
+       (const Ipp8u* pSrcRef, Ipp32s srcStep, const Ipp16s* pSrcYData,
+        Ipp32s srcYDataStep, Ipp8u* pDst, Ipp32s dstStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiMC2x2_8u_C1, (
-  const Ipp8u*       pSrcRef,
-        Ipp32s       srcStep,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       mcType,
-        Ipp32s       roundControl))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiMC2x2_8u_C1,
+       (const Ipp8u* pSrcRef, Ipp32s srcStep, const Ipp16s* pSrcYData,
+        Ipp32s srcYDataStep, Ipp8u* pDst, Ipp32s dstStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1213,28 +1101,25 @@ IPPAPI(IppStatus, ippiMC2x2_8u_C1, (
 //    ippStsNullPtrErr  One of the pointers is NULL
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiMC16x4_8u_C1, (
-  const Ipp8u*  pSrcRef,
-        Ipp32s  srcStep,
-  const Ipp16s* pSrcYData,
-        Ipp32s  srcYDataStep,
-        Ipp8u*  pDst,
-        Ipp32s  dstStep,
-        Ipp32s  mcType,
-        Ipp32s  roundControl))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiMC16x4_8u_C1,
+       (const Ipp8u* pSrcRef, Ipp32s srcStep, const Ipp16s* pSrcYData,
+        Ipp32s srcYDataStep, Ipp8u* pDst, Ipp32s dstStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiMC16x8UV_8u_C1, (
-  const Ipp8u*       pSrcRef,
-        Ipp32s       srcStep,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s   mcType,
-        Ipp32s       roundControl))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiMC16x8UV_8u_C1,
+       (const Ipp8u* pSrcRef, Ipp32s srcStep, const Ipp16s* pSrcYData,
+        Ipp32s srcYDataStep, Ipp8u* pDst, Ipp32s dstStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1270,141 +1155,90 @@ IPPAPI(IppStatus, ippiMC16x8UV_8u_C1, (
 //    ippStsNullPtrErr  One of the pointers is NULL
 */
 
-IPPAPI(IppStatus, ippiMC16x16B_8u_C1, (
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcStepB,
-        Ipp32s       mcTypeB,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiMC16x16B_8u_C1,
+       (const Ipp8u* pSrcRefF, Ipp32s srcStepF, Ipp32s mcTypeF,
+        const Ipp8u* pSrcRefB, Ipp32s srcStepB, Ipp32s mcTypeB,
+        const Ipp16s* pSrcYData, Ipp32s srcYDataStep, Ipp8u* pDst,
+        Ipp32s dstStep, Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiMC16x8B_8u_C1, (
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcStepB,
-        Ipp32s       mcTypeB,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiMC16x8B_8u_C1,
+       (const Ipp8u* pSrcRefF, Ipp32s srcStepF, Ipp32s mcTypeF,
+        const Ipp8u* pSrcRefB, Ipp32s srcStepB, Ipp32s mcTypeB,
+        const Ipp16s* pSrcYData, Ipp32s srcYDataStep, Ipp8u* pDst,
+        Ipp32s dstStep, Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiMC8x16B_8u_C1, (
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcStepB,
-        Ipp32s       mcTypeB,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiMC8x16B_8u_C1,
+       (const Ipp8u* pSrcRefF, Ipp32s srcStepF, Ipp32s mcTypeF,
+        const Ipp8u* pSrcRefB, Ipp32s srcStepB, Ipp32s mcTypeB,
+        const Ipp16s* pSrcYData, Ipp32s srcYDataStep, Ipp8u* pDst,
+        Ipp32s dstStep, Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiMC8x8B_8u_C1, (
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcStepB,
-        Ipp32s       mcTypeB,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiMC8x8B_8u_C1,
+       (const Ipp8u* pSrcRefF, Ipp32s srcStepF, Ipp32s mcTypeF,
+        const Ipp8u* pSrcRefB, Ipp32s srcStepB, Ipp32s mcTypeB,
+        const Ipp16s* pSrcYData, Ipp32s srcYDataStep, Ipp8u* pDst,
+        Ipp32s dstStep, Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiMC8x4B_8u_C1, (
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcStepB,
-        Ipp32s       mcTypeB,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiMC8x4B_8u_C1,
+       (const Ipp8u* pSrcRefF, Ipp32s srcStepF, Ipp32s mcTypeF,
+        const Ipp8u* pSrcRefB, Ipp32s srcStepB, Ipp32s mcTypeB,
+        const Ipp16s* pSrcYData, Ipp32s srcYDataStep, Ipp8u* pDst,
+        Ipp32s dstStep, Ipp32s roundControl))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiMC4x8B_8u_C1, (
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcStepB,
-        Ipp32s       mcTypeB,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       roundControl))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiMC4x8B_8u_C1,
+       (const Ipp8u* pSrcRefF, Ipp32s srcStepF, Ipp32s mcTypeF,
+        const Ipp8u* pSrcRefB, Ipp32s srcStepB, Ipp32s mcTypeB,
+        const Ipp16s* pSrcYData, Ipp32s srcYDataStep, Ipp8u* pDst,
+        Ipp32s dstStep, Ipp32s roundControl))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiMC4x4B_8u_C1, (
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcStepB,
-        Ipp32s       mcTypeB,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       roundControl))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiMC4x4B_8u_C1,
+       (const Ipp8u* pSrcRefF, Ipp32s srcStepF, Ipp32s mcTypeF,
+        const Ipp8u* pSrcRefB, Ipp32s srcStepB, Ipp32s mcTypeB,
+        const Ipp16s* pSrcYData, Ipp32s srcYDataStep, Ipp8u* pDst,
+        Ipp32s dstStep, Ipp32s roundControl))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiMC2x4B_8u_C1, (
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcStepB,
-        Ipp32s       mcTypeB,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       roundControl))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiMC2x4B_8u_C1,
+       (const Ipp8u* pSrcRefF, Ipp32s srcStepF, Ipp32s mcTypeF,
+        const Ipp8u* pSrcRefB, Ipp32s srcStepB, Ipp32s mcTypeB,
+        const Ipp16s* pSrcYData, Ipp32s srcYDataStep, Ipp8u* pDst,
+        Ipp32s dstStep, Ipp32s roundControl))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiMC4x2B_8u_C1, (
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcStepB,
-        Ipp32s       mcTypeB,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       roundControl))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiMC4x2B_8u_C1,
+       (const Ipp8u* pSrcRefF, Ipp32s srcStepF, Ipp32s mcTypeF,
+        const Ipp8u* pSrcRefB, Ipp32s srcStepB, Ipp32s mcTypeB,
+        const Ipp16s* pSrcYData, Ipp32s srcYDataStep, Ipp8u* pDst,
+        Ipp32s dstStep, Ipp32s roundControl))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiMC2x2B_8u_C1, (
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcStepB,
-        Ipp32s       mcTypeB,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       roundControl))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiMC2x2B_8u_C1,
+       (const Ipp8u* pSrcRefF, Ipp32s srcStepF, Ipp32s mcTypeF,
+        const Ipp8u* pSrcRefB, Ipp32s srcStepB, Ipp32s mcTypeB,
+        const Ipp16s* pSrcYData, Ipp32s srcYDataStep, Ipp8u* pDst,
+        Ipp32s dstStep, Ipp32s roundControl))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1438,33 +1272,27 @@ IPPAPI(IppStatus, ippiMC2x2B_8u_C1, (
 //    ippStsNullPtrErr  One of the pointers is NULL
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiMC16x4B_8u_C1, (
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcStepB,
-        Ipp32s       mcTypeB,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       roundControl))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiMC16x4B_8u_C1,
+       (const Ipp8u* pSrcRefF, Ipp32s srcStepF, Ipp32s mcTypeF,
+        const Ipp8u* pSrcRefB, Ipp32s srcStepB, Ipp32s mcTypeB,
+        const Ipp16s* pSrcYData, Ipp32s srcYDataStep, Ipp8u* pDst,
+        Ipp32s dstStep, Ipp32s roundControl))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiMC16x8BUV_8u_C1, (
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcStepB,
-        Ipp32s       mcTypeB,
-  const Ipp16s*      pSrcYData,
-        Ipp32s       srcYDataStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       roundControl))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiMC16x8BUV_8u_C1,
+       (const Ipp8u* pSrcRefF, Ipp32s srcStepF, Ipp32s mcTypeF,
+        const Ipp8u* pSrcRefB, Ipp32s srcStepB, Ipp32s mcTypeB,
+        const Ipp16s* pSrcYData, Ipp32s srcYDataStep, Ipp8u* pDst,
+        Ipp32s dstStep, Ipp32s roundControl))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1501,28 +1329,15 @@ IPPAPI(IppStatus, ippiMC16x8BUV_8u_C1, (
 //    ippStsNullPtrErr  One of the pointers is NULL
 */
 
+IPPAPI(IppStatus, ippiMC8x8_16s8u_P2C2R,
+       (const Ipp8u* pSrcRef, Ipp32s srcRefStep, const Ipp16s* pSrcU,
+        const Ipp16s* pSrcV, Ipp32s srcUVStep, Ipp8u* pDst, Ipp32s dstStep,
+        Ipp32s mcType, Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiMC8x8_16s8u_P2C2R, (
-  const Ipp8u*       pSrcRef,
-        Ipp32s       srcRefStep,
-  const Ipp16s*      pSrcU,
-  const Ipp16s*      pSrcV,
-        Ipp32s       srcUVStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       mcType,
-        Ipp32s       roundControl))
-
-IPPAPI(IppStatus, ippiMC8x4_16s8u_P2C2R, (
-  const Ipp8u*       pSrcRef,
-        Ipp32s       srcRefStep,
-  const Ipp16s*      pSrcU,
-  const Ipp16s*      pSrcV,
-        Ipp32s       srcUVStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       mcType,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiMC8x4_16s8u_P2C2R,
+       (const Ipp8u* pSrcRef, Ipp32s srcRefStep, const Ipp16s* pSrcU,
+        const Ipp16s* pSrcV, Ipp32s srcUVStep, Ipp8u* pDst, Ipp32s dstStep,
+        Ipp32s mcType, Ipp32s roundControl))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1552,7 +1367,8 @@ IPPAPI(IppStatus, ippiMC8x4_16s8u_P2C2R, (
 //    roundControl   Type of rounding for half-pixel approximation;
 //                   may be 0 or 1
 //
-//    pSrcRefF, pSrcRefB and pDst - the pointer to the chrominance part of NV12 plane.
+//    pSrcRefF, pSrcRefB and pDst - the pointer to the chrominance part of NV12
+plane.
 //      0  UV UV UV UV UV UV UV UV
 //      1  UV UV UV UV   ...    UV
 //       ...
@@ -1563,40 +1379,21 @@ IPPAPI(IppStatus, ippiMC8x4_16s8u_P2C2R, (
 //    ippStsNullPtrErr  One of the pointers is NULL
 */
 
-IPPAPI(IppStatus, ippiMC8x8B_16s8u_P2C2R, (
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcRefFStep,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcRefBStep,
-        Ipp32s       mcTypeB,
-  const Ipp16s*      pSrcU,
-  const Ipp16s*      pSrcV,
-        Ipp32s       srcUVStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiMC8x8B_16s8u_P2C2R,
+       (const Ipp8u* pSrcRefF, Ipp32s srcRefFStep, Ipp32s mcTypeF,
+        const Ipp8u* pSrcRefB, Ipp32s srcRefBStep, Ipp32s mcTypeB,
+        const Ipp16s* pSrcU, const Ipp16s* pSrcV, Ipp32s srcUVStep, Ipp8u* pDst,
+        Ipp32s dstStep, Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiMC8x4B_16s8u_P2C2R, (
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcRefFStep,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcRefBStep,
-        Ipp32s       mcTypeB,
-  const Ipp16s*      pSrcU,
-  const Ipp16s*      pSrcV,
-        Ipp32s       srcUVStep,
-        Ipp8u*       pDst,
-        Ipp32s       dstStep,
-        Ipp32s       roundControl))
-
-
+IPPAPI(IppStatus, ippiMC8x4B_16s8u_P2C2R,
+       (const Ipp8u* pSrcRefF, Ipp32s srcRefFStep, Ipp32s mcTypeF,
+        const Ipp8u* pSrcRefB, Ipp32s srcRefBStep, Ipp32s mcTypeB,
+        const Ipp16s* pSrcU, const Ipp16s* pSrcV, Ipp32s srcUVStep, Ipp8u* pDst,
+        Ipp32s dstStep, Ipp32s roundControl))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //     MPEG-1 and MPEG-2 Video Encoding Functions
 //////////////////////////////////////////////////////////////////////////// */
-
 
 /* Motion Estimation and Compensation Functions */
 
@@ -1635,65 +1432,35 @@ IPPAPI(IppStatus, ippiMC8x4B_16s8u_P2C2R, (
 //    compensation functions
 */
 
-IPPAPI(IppStatus, ippiGetDiff16x16_8u16s_C1,(
-  const Ipp8u*  pSrcCur,
-        Ipp32s  srcCurStep,
-  const Ipp8u*  pSrcRef,
-        Ipp32s  srcRefStep,
-        Ipp16s* pDstDiff,
-        Ipp32s  dstDiffStep,
-        Ipp16s* pDstPredictor,
-        Ipp32s  dstPredictorStep,
-        Ipp32s  mcType,
-        Ipp32s  roundControl))
+IPPAPI(IppStatus, ippiGetDiff16x16_8u16s_C1,
+       (const Ipp8u* pSrcCur, Ipp32s srcCurStep, const Ipp8u* pSrcRef,
+        Ipp32s srcRefStep, Ipp16s* pDstDiff, Ipp32s dstDiffStep,
+        Ipp16s* pDstPredictor, Ipp32s dstPredictorStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiGetDiff16x8_8u16s_C1, (
-  const Ipp8u*  pSrcCur,
-        Ipp32s  srcCurStep,
-  const Ipp8u*  pSrcRef,
-        Ipp32s  srcRefStep,
-        Ipp16s* pDstDiff,
-        Ipp32s  dstDiffStep,
-        Ipp16s* pDstPredictor,
-        Ipp32s  dstPredictorStep,
-        Ipp32s  mcType,
-        Ipp32s  roundControl))
+IPPAPI(IppStatus, ippiGetDiff16x8_8u16s_C1,
+       (const Ipp8u* pSrcCur, Ipp32s srcCurStep, const Ipp8u* pSrcRef,
+        Ipp32s srcRefStep, Ipp16s* pDstDiff, Ipp32s dstDiffStep,
+        Ipp16s* pDstPredictor, Ipp32s dstPredictorStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiGetDiff8x8_8u16s_C1, (
-  const Ipp8u*  pSrcCur,
-        Ipp32s  srcCurStep,
-  const Ipp8u*  pSrcRef,
-        Ipp32s  srcRefStep,
-        Ipp16s* pDstDiff,
-        Ipp32s  dstDiffStep,
-        Ipp16s* pDstPredictor,
-        Ipp32s  dstPredictorStep,
-        Ipp32s  mcType,
-        Ipp32s  roundControl))
+IPPAPI(IppStatus, ippiGetDiff8x8_8u16s_C1,
+       (const Ipp8u* pSrcCur, Ipp32s srcCurStep, const Ipp8u* pSrcRef,
+        Ipp32s srcRefStep, Ipp16s* pDstDiff, Ipp32s dstDiffStep,
+        Ipp16s* pDstPredictor, Ipp32s dstPredictorStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiGetDiff8x16_8u16s_C1, (
-  const Ipp8u*  pSrcCur,
-        Ipp32s  srcCurStep,
-  const Ipp8u*  pSrcRef,
-        Ipp32s  srcRefStep,
-        Ipp16s* pDstDiff,
-        Ipp32s  dstDiffStep,
-        Ipp16s* pDstPredictor,
-        Ipp32s  dstPredictorStep,
-        Ipp32s  mcType,
-        Ipp32s  roundControl))
+IPPAPI(IppStatus, ippiGetDiff8x16_8u16s_C1,
+       (const Ipp8u* pSrcCur, Ipp32s srcCurStep, const Ipp8u* pSrcRef,
+        Ipp32s srcRefStep, Ipp16s* pDstDiff, Ipp32s dstDiffStep,
+        Ipp16s* pDstPredictor, Ipp32s dstPredictorStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiGetDiff8x4_8u16s_C1, (
-  const Ipp8u*  pSrcCur,
-        Ipp32s  srcCurStep,
-  const Ipp8u*  pSrcRef,
-        Ipp32s  srcRefStep,
-        Ipp16s* pDstDiff,
-        Ipp32s  dstDiffStep,
-        Ipp16s* pDstPredictor,
-        Ipp32s  dstPredictorStep,
-        Ipp32s  mcType,
-        Ipp32s  roundControl))
+IPPAPI(IppStatus, ippiGetDiff8x4_8u16s_C1,
+       (const Ipp8u* pSrcCur, Ipp32s srcCurStep, const Ipp8u* pSrcRef,
+        Ipp32s srcRefStep, Ipp16s* pDstDiff, Ipp32s dstDiffStep,
+        Ipp16s* pDstPredictor, Ipp32s dstPredictorStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
 /* Motion Estimation and Compensation Functions for NV12 chroma format */
 
@@ -1730,17 +1497,17 @@ IPPAPI(IppStatus, ippiGetDiff8x4_8u16s_C1, (
 //     These operations are inverse to that performed by correspondent motion
 //    compensation functions
 */
-IPPAPI(IppStatus, ippiGetDiff8x4_8u16s_C2P2,(const Ipp8u *pSrcCur,Ipp32s srcCurStep,
-                                             const Ipp8u *pSrcRef,Ipp32s srcRefStep,
-                                             Ipp16s *pDstDiffU,Ipp32s dstDiffStepU,
-                                             Ipp16s *pDstDiffV,Ipp32s dstDiffStepV,
-                                             Ipp32s mcType,Ipp32s roundControl))
+IPPAPI(IppStatus, ippiGetDiff8x4_8u16s_C2P2,
+       (const Ipp8u* pSrcCur, Ipp32s srcCurStep, const Ipp8u* pSrcRef,
+        Ipp32s srcRefStep, Ipp16s* pDstDiffU, Ipp32s dstDiffStepU,
+        Ipp16s* pDstDiffV, Ipp32s dstDiffStepV, Ipp32s mcType,
+        Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiGetDiff8x8_8u16s_C2P2,(const Ipp8u *pSrcCur,Ipp32s srcCurStep,
-                                             const Ipp8u *pSrcRef,Ipp32s srcRefStep,
-                                             Ipp16s *pDstDiffU,Ipp32s dstDiffStepU,
-                                             Ipp16s *pDstDiffV,Ipp32s dstDiffStepV,
-                                             Ipp32s mcType,Ipp32s roundControl))
+IPPAPI(IppStatus, ippiGetDiff8x8_8u16s_C2P2,
+       (const Ipp8u* pSrcCur, Ipp32s srcCurStep, const Ipp8u* pSrcRef,
+        Ipp32s srcRefStep, Ipp16s* pDstDiffU, Ipp32s dstDiffStepU,
+        Ipp16s* pDstDiffV, Ipp32s dstDiffStepV, Ipp32s mcType,
+        Ipp32s roundControl))
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiGetDiff4x4_8u16s_C1
@@ -1770,18 +1537,16 @@ IPPAPI(IppStatus, ippiGetDiff8x8_8u16s_C2P2,(const Ipp8u *pSrcCur,Ipp32s srcCurS
 //     These operations are inverse to that performed by correspondent motion
 //    compensation functions
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus,  ippiGetDiff4x4_8u16s_C1,(
-  const Ipp8u*  pSrcCur,
-        Ipp32s  srcCurStep,
-  const Ipp8u*  pSrcRef,
-                Ipp32s  srcRefStep,
-                Ipp16s* pDstDiff,
-                Ipp32s  dstDiffStep,
-                Ipp16s* pDstPredictor,
-                Ipp32s  dstPredictorStep,
-                Ipp32s  mcType,
-                Ipp32s  roundControl))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiGetDiff4x4_8u16s_C1,
+       (const Ipp8u* pSrcCur, Ipp32s srcCurStep, const Ipp8u* pSrcRef,
+        Ipp32s srcRefStep, Ipp16s* pDstDiff, Ipp32s dstDiffStep,
+        Ipp16s* pDstPredictor, Ipp32s dstPredictorStep, Ipp32s mcType,
+        Ipp32s roundControl))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1818,70 +1583,35 @@ IPPAPI( IppStatus,  ippiGetDiff4x4_8u16s_C1,(
 //    compensation functions
 */
 
-IPPAPI(IppStatus, ippiGetDiff16x16B_8u16s_C1, (
-  const Ipp8u*       pSrcCur,
-        Ipp32s       srcCurStep,
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcRefStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcRefStepB,
-        Ipp32s       mcTypeB,
-        Ipp16s*      pDstDiff,
-        Ipp32s       dstDiffStep,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiGetDiff16x16B_8u16s_C1,
+       (const Ipp8u* pSrcCur, Ipp32s srcCurStep, const Ipp8u* pSrcRefF,
+        Ipp32s srcRefStepF, Ipp32s mcTypeF, const Ipp8u* pSrcRefB,
+        Ipp32s srcRefStepB, Ipp32s mcTypeB, Ipp16s* pDstDiff,
+        Ipp32s dstDiffStep, Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiGetDiff16x8B_8u16s_C1, (
-  const Ipp8u*       pSrcCur,
-        Ipp32s       srcCurStep,
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcRefStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcRefStepB,
-        Ipp32s       mcTypeB,
-        Ipp16s*      pDstDiff,
-        Ipp32s       dstDiffStep,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiGetDiff16x8B_8u16s_C1,
+       (const Ipp8u* pSrcCur, Ipp32s srcCurStep, const Ipp8u* pSrcRefF,
+        Ipp32s srcRefStepF, Ipp32s mcTypeF, const Ipp8u* pSrcRefB,
+        Ipp32s srcRefStepB, Ipp32s mcTypeB, Ipp16s* pDstDiff,
+        Ipp32s dstDiffStep, Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiGetDiff8x8B_8u16s_C1, (
-  const Ipp8u*       pSrcCur,
-        Ipp32s       srcCurStep,
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcRefStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcRefStepB,
-        Ipp32s       mcTypeB,
-        Ipp16s*      pDstDiff,
-        Ipp32s       dstDiffStep,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiGetDiff8x8B_8u16s_C1,
+       (const Ipp8u* pSrcCur, Ipp32s srcCurStep, const Ipp8u* pSrcRefF,
+        Ipp32s srcRefStepF, Ipp32s mcTypeF, const Ipp8u* pSrcRefB,
+        Ipp32s srcRefStepB, Ipp32s mcTypeB, Ipp16s* pDstDiff,
+        Ipp32s dstDiffStep, Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiGetDiff8x16B_8u16s_C1, (
-  const Ipp8u*       pSrcCur,
-        Ipp32s       srcCurStep,
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcRefStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcRefStepB,
-        Ipp32s       mcTypeB,
-        Ipp16s*      pDstDiff,
-        Ipp32s       dstDiffStep,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiGetDiff8x16B_8u16s_C1,
+       (const Ipp8u* pSrcCur, Ipp32s srcCurStep, const Ipp8u* pSrcRefF,
+        Ipp32s srcRefStepF, Ipp32s mcTypeF, const Ipp8u* pSrcRefB,
+        Ipp32s srcRefStepB, Ipp32s mcTypeB, Ipp16s* pDstDiff,
+        Ipp32s dstDiffStep, Ipp32s roundControl))
 
-IPPAPI(IppStatus, ippiGetDiff8x4B_8u16s_C1, (
-  const Ipp8u*       pSrcCur,
-        Ipp32s       srcCurStep,
-  const Ipp8u*       pSrcRefF,
-        Ipp32s       srcRefStepF,
-        Ipp32s       mcTypeF,
-  const Ipp8u*       pSrcRefB,
-        Ipp32s       srcRefStepB,
-        Ipp32s       mcTypeB,
-        Ipp16s*      pDstDiff,
-        Ipp32s       dstDiffStep,
-        Ipp32s       roundControl))
+IPPAPI(IppStatus, ippiGetDiff8x4B_8u16s_C1,
+       (const Ipp8u* pSrcCur, Ipp32s srcCurStep, const Ipp8u* pSrcRefF,
+        Ipp32s srcRefStepF, Ipp32s mcTypeF, const Ipp8u* pSrcRefB,
+        Ipp32s srcRefStepB, Ipp32s mcTypeB, Ipp16s* pDstDiff,
+        Ipp32s dstDiffStep, Ipp32s roundControl))
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiGetDiff8x8B_8u16s_C2P2
@@ -1921,22 +1651,18 @@ IPPAPI(IppStatus, ippiGetDiff8x4B_8u16s_C1, (
 //     These operations are inverse to that performed by correspondent motion
 //    compensation functions
 */
-IPPAPI(IppStatus, ippiGetDiff8x4B_8u16s_C2P2, (const Ipp8u *pSrcCur,Ipp32s srcCurStep,
-                                               const Ipp8u *pSrcRefF,Ipp32s srcRefStepF,
-                                               Ipp32s mcTypeF,
-                                               const Ipp8u *pSrcRefB,Ipp32s srcRefStepB,
-                                               Ipp32s mcTypeB,
-                                               Ipp16s *pDstDiffU, Ipp32s dstDiffStepU,
-                                               Ipp16s *pDstDiffV, Ipp32s dstDiffStepV,
-                                               Ipp32s roundControl))
-IPPAPI(IppStatus, ippiGetDiff8x8B_8u16s_C2P2, (const Ipp8u *pSrcCur, Ipp32s srcCurStep,
-                                               const Ipp8u *pSrcRefF,Ipp32s srcRefStepF,
-                                               Ipp32s mcTypeF,
-                                               const Ipp8u *pSrcRefB,Ipp32s srcRefStepB,
-                                               Ipp32s mcTypeB,
-                                               Ipp16s *pDstDiffU, Ipp32s dstDiffStepU,
-                                               Ipp16s *pDstDiffV, Ipp32s dstDiffStepV,
-                                               Ipp32s roundControl))
+IPPAPI(IppStatus, ippiGetDiff8x4B_8u16s_C2P2,
+       (const Ipp8u* pSrcCur, Ipp32s srcCurStep, const Ipp8u* pSrcRefF,
+        Ipp32s srcRefStepF, Ipp32s mcTypeF, const Ipp8u* pSrcRefB,
+        Ipp32s srcRefStepB, Ipp32s mcTypeB, Ipp16s* pDstDiffU,
+        Ipp32s dstDiffStepU, Ipp16s* pDstDiffV, Ipp32s dstDiffStepV,
+        Ipp32s roundControl))
+IPPAPI(IppStatus, ippiGetDiff8x8B_8u16s_C2P2,
+       (const Ipp8u* pSrcCur, Ipp32s srcCurStep, const Ipp8u* pSrcRefF,
+        Ipp32s srcRefStepF, Ipp32s mcTypeF, const Ipp8u* pSrcRefB,
+        Ipp32s srcRefStepB, Ipp32s mcTypeB, Ipp16s* pDstDiffU,
+        Ipp32s dstDiffStepU, Ipp16s* pDstDiffV, Ipp32s dstDiffStepV,
+        Ipp32s roundControl))
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiSAD16x16_8u32s
@@ -1959,13 +1685,9 @@ IPPAPI(IppStatus, ippiGetDiff8x8B_8u16s_C2P2, (const Ipp8u *pSrcCur, Ipp32s srcC
 //    pSAD           Pointer to the result
 */
 
-IPPAPI(IppStatus, ippiSAD16x16_8u32s, (
-  const Ipp8u*  pSrc,
-        Ipp32s  srcStep,
-  const Ipp8u*  pRef,
-        Ipp32s  refStep,
-        Ipp32s* pSAD,
-        Ipp32s  mcType))
+IPPAPI(IppStatus, ippiSAD16x16_8u32s,
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pRef, Ipp32s refStep,
+        Ipp32s* pSAD, Ipp32s mcType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1989,12 +1711,9 @@ IPPAPI(IppStatus, ippiSAD16x16_8u32s, (
 //    pSAD           Pointer to the result
 */
 
-IPPAPI(IppStatus, ippiSAD4x4_8u32s,(const Ipp8u*  pSrc,
-                                    Ipp32s        srcStep,
-                                    const Ipp8u*  pRef,
-                                    Ipp32s        refStep,
-                                    Ipp32s*       pSAD,
-                                    Ipp32s        mcType ))
+IPPAPI(IppStatus, ippiSAD4x4_8u32s,
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pRef, Ipp32s refStep,
+        Ipp32s* pSAD, Ipp32s mcType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2017,13 +1736,14 @@ IPPAPI(IppStatus, ippiSAD4x4_8u32s,(const Ipp8u*  pSrc,
 //              mcType          reserved and must be 0.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSAD16x16Blocks8x8_8u16u,(const   Ipp8u*  pSrc,
-                                               Ipp32s  srcStep,
-                                               const   Ipp8u*  pRef,
-                                               Ipp32s  refStep,
-                                               Ipp16u*  pDstSAD,
-                                               Ipp32s   mcType ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSAD16x16Blocks8x8_8u16u,
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pRef, Ipp32s refStep,
+        Ipp16u* pDstSAD, Ipp32s mcType))
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //              SAD16x16Blocks4x4_8u16u
@@ -2045,13 +1765,14 @@ IPPAPI(IppStatus, ippiSAD16x16Blocks8x8_8u16u,(const   Ipp8u*  pSrc,
 //              mcType          reserved and must be 0.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSAD16x16Blocks4x4_8u16u, (const   Ipp8u*  pSrc,
-                                                Ipp32s  srcStep,
-                                                const   Ipp8u*  pRef,
-                                                Ipp32s  refStep,
-                                                Ipp16u*  pDstSAD,
-                                                Ipp32s   mcType))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSAD16x16Blocks4x4_8u16u,
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pRef, Ipp32s refStep,
+        Ipp16u* pDstSAD, Ipp32s mcType))
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////
 // Name:       ippiSATD16x16_8u32s_C1R
@@ -2071,13 +1792,9 @@ IPPAPI(IppStatus, ippiSAD16x16Blocks4x4_8u16u, (const   Ipp8u*  pSrc,
 //   pDst                      Pointer to result
 */
 
-IPPAPI(IppStatus, ippiSATD16x16_8u32s_C1R, (
-       const Ipp8u  *pSrcCur,
-       int           srcCurStep,
-       const Ipp8u  *pSrcRef,
-       int           srcRefStep,
-       Ipp32s       *pDst))
-
+IPPAPI(IppStatus, ippiSATD16x16_8u32s_C1R,
+       (const Ipp8u* pSrcCur, int srcCurStep, const Ipp8u* pSrcRef,
+        int srcRefStep, Ipp32s* pDst))
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////
 // Name:       ippiSATD16x8_8u32s_C1R
@@ -2097,13 +1814,9 @@ IPPAPI(IppStatus, ippiSATD16x16_8u32s_C1R, (
 //   pDst                      Pointer to result
 */
 
-IPPAPI(IppStatus, ippiSATD16x8_8u32s_C1R, (
-       const Ipp8u  *pSrcCur,
-       int           srcCurStep,
-       const Ipp8u  *pSrcRef,
-       int           srcRefStep,
-       Ipp32s       *pDst))
-
+IPPAPI(IppStatus, ippiSATD16x8_8u32s_C1R,
+       (const Ipp8u* pSrcCur, int srcCurStep, const Ipp8u* pSrcRef,
+        int srcRefStep, Ipp32s* pDst))
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////
 // Name:       ippiSATD8x16_8u32s_C1R
@@ -2123,13 +1836,9 @@ IPPAPI(IppStatus, ippiSATD16x8_8u32s_C1R, (
 //   pDst                      Pointer to result
 */
 
-IPPAPI(IppStatus, ippiSATD8x16_8u32s_C1R, (
-       const Ipp8u  *pSrcCur,
-       int           srcCurStep,
-       const Ipp8u  *pSrcRef,
-       int           srcRefStep,
-       Ipp32s       *pDst))
-
+IPPAPI(IppStatus, ippiSATD8x16_8u32s_C1R,
+       (const Ipp8u* pSrcCur, int srcCurStep, const Ipp8u* pSrcRef,
+        int srcRefStep, Ipp32s* pDst))
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////
 // Name:       ippiSATD8x8_8u32s_C1R
@@ -2149,13 +1858,9 @@ IPPAPI(IppStatus, ippiSATD8x16_8u32s_C1R, (
 //   pDst                      Pointer to result
 */
 
-IPPAPI(IppStatus, ippiSATD8x8_8u32s_C1R, (
-       const Ipp8u  *pSrcCur,
-       int           srcCurStep,
-       const Ipp8u  *pSrcRef,
-       int           srcRefStep,
-       Ipp32s       *pDst))
-
+IPPAPI(IppStatus, ippiSATD8x8_8u32s_C1R,
+       (const Ipp8u* pSrcCur, int srcCurStep, const Ipp8u* pSrcRef,
+        int srcRefStep, Ipp32s* pDst))
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////
 // Name:       ippiSATD8x4_8u32s_C1R
@@ -2175,13 +1880,9 @@ IPPAPI(IppStatus, ippiSATD8x8_8u32s_C1R, (
 //   pDst                      Pointer to result
 */
 
-IPPAPI(IppStatus, ippiSATD8x4_8u32s_C1R, (
-       const Ipp8u  *pSrcCur,
-       int           srcCurStep,
-       const Ipp8u  *pSrcRef,
-       int           srcRefStep,
-       Ipp32s       *pDst))
-
+IPPAPI(IppStatus, ippiSATD8x4_8u32s_C1R,
+       (const Ipp8u* pSrcCur, int srcCurStep, const Ipp8u* pSrcRef,
+        int srcRefStep, Ipp32s* pDst))
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////
 // Name:       ippiSATD4x8_8u32s_C1R
@@ -2201,13 +1902,9 @@ IPPAPI(IppStatus, ippiSATD8x4_8u32s_C1R, (
 //   pDst                      Pointer to result
 */
 
-IPPAPI(IppStatus, ippiSATD4x8_8u32s_C1R, (
-       const Ipp8u  *pSrcCur,
-       int           srcCurStep,
-       const Ipp8u  *pSrcRef,
-       int           srcRefStep,
-       Ipp32s       *pDst))
-
+IPPAPI(IppStatus, ippiSATD4x8_8u32s_C1R,
+       (const Ipp8u* pSrcCur, int srcCurStep, const Ipp8u* pSrcRef,
+        int srcRefStep, Ipp32s* pDst))
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////
 // Name:       ippiSATD4x4_8u32s_C1R
@@ -2227,13 +1924,9 @@ IPPAPI(IppStatus, ippiSATD4x8_8u32s_C1R, (
 //   pDst                      Pointer to result
 */
 
-IPPAPI(IppStatus, ippiSATD4x4_8u32s_C1R, (
-       const Ipp8u  *pSrcCur,
-       int           srcCurStep,
-       const Ipp8u  *pSrcRef,
-       int           srcRefStep,
-       Ipp32s       *pDst))
-
+IPPAPI(IppStatus, ippiSATD4x4_8u32s_C1R,
+       (const Ipp8u* pSrcCur, int srcCurStep, const Ipp8u* pSrcRef,
+        int srcRefStep, Ipp32s* pDst))
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////
 // Name:       ippiSAT8x8D_8u32s_C1R
@@ -2254,13 +1947,9 @@ IPPAPI(IppStatus, ippiSATD4x4_8u32s_C1R, (
 //   pDst                      Pointer to result
 */
 
-IPPAPI(IppStatus, ippiSAT8x8D_8u32s_C1R, (
-       const Ipp8u* pSrcCur,
-       int          srcCurStep,
-       const Ipp8u* pSrcRef,
-       int          srcRefStep,
-       Ipp32s*      pDst))
-
+IPPAPI(IppStatus, ippiSAT8x8D_8u32s_C1R,
+       (const Ipp8u* pSrcCur, int srcCurStep, const Ipp8u* pSrcRef,
+        int srcRefStep, Ipp32s* pDst))
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////
 // Name:       ippiSAT8x8D_16u32s_C1R
@@ -2281,14 +1970,14 @@ IPPAPI(IppStatus, ippiSAT8x8D_8u32s_C1R, (
 //   pDst                      Pointer to result
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSAT8x8D_16u32s_C1R, (
-       const Ipp16u* pSrcCur,
-       int          srcCurStep,
-       const Ipp16u* pSrcRef,
-       int          srcRefStep,
-       Ipp32s*      pDst))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSAT8x8D_16u32s_C1R,
+       (const Ipp16u* pSrcCur, int srcCurStep, const Ipp16u* pSrcRef,
+        int srcRefStep, Ipp32s* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2312,14 +2001,9 @@ IPPAPI(IppStatus, ippiSAT8x8D_16u32s_C1R, (
 //    ippStsStepErr     srcCurStep or srcRefStep is less than or equal to 0
 */
 
-IPPAPI(IppStatus, ippiSqrDiff16x16_8u32s, (
-  const Ipp8u*  pSrc,
-        Ipp32s  srcStep,
-  const Ipp8u*  pRef,
-        Ipp32s  refStep,
-        Ipp32s  mcType,
-        Ipp32s* pSqrDiff))
-
+IPPAPI(IppStatus, ippiSqrDiff16x16_8u32s,
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pRef, Ipp32s refStep,
+        Ipp32s mcType, Ipp32s* pSqrDiff))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2347,18 +2031,15 @@ IPPAPI(IppStatus, ippiSqrDiff16x16_8u32s, (
 //    ippStsStepErr     one of step values is less than or equal to 0
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSqrDiff16x16B_8u32s, (
-  const Ipp8u*  pSrc,
-        Ipp32s  srcStep,
-  const Ipp8u*  pRefF,
-        Ipp32s  refStepF,
-        Ipp32s  mcTypeF,
-  const Ipp8u*  pRefB,
-        Ipp32s  refStepB,
-        Ipp32s  mcTypeB,
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSqrDiff16x16B_8u32s,
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pRefF, Ipp32s refStepF,
+        Ipp32s mcTypeF, const Ipp8u* pRefB, Ipp32s refStepB, Ipp32s mcTypeB,
         Ipp32s* pSqrDiff))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2378,12 +2059,13 @@ IPPAPI(IppStatus, ippiSqrDiff16x16B_8u32s, (
 //    ippStsStepErr     srcStep is less than or equal to 0
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiVariance16x16_8u32s, (
-  const Ipp8u*  pSrc,
-        Ipp32s  srcStep,
-        Ipp32s* pVar))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiVariance16x16_8u32s,
+       (const Ipp8u* pSrc, Ipp32s srcStep, Ipp32s* pVar))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2403,11 +2085,8 @@ IPPAPI(IppStatus, ippiVariance16x16_8u32s, (
 //    ippStsNullPtrErr  pSrc is NULL
 */
 
-IPPAPI(IppStatus, ippiVarSum8x8_8u32s_C1R, (
-  const Ipp8u*  pSrc,
-        Ipp32s  srcStep,
-        Ipp32s* pVar,
-        Ipp32s* pSum))
+IPPAPI(IppStatus, ippiVarSum8x8_8u32s_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, Ipp32s* pVar, Ipp32s* pSum))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2427,11 +2106,8 @@ IPPAPI(IppStatus, ippiVarSum8x8_8u32s_C1R, (
 //    ippStsNullPtrErr  pSrc is NULL
 */
 
-IPPAPI(IppStatus, ippiVarSum8x8_16s32s_C1R, (
-  const Ipp16s* pSrc,
-        Ipp32s  srcStep,
-        Ipp32s* pVar,
-        Ipp32s* pSum))
+IPPAPI(IppStatus, ippiVarSum8x8_16s32s_C1R,
+       (const Ipp16s* pSrc, Ipp32s srcStep, Ipp32s* pVar, Ipp32s* pSum))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2451,12 +2127,13 @@ IPPAPI(IppStatus, ippiVarSum8x8_16s32s_C1R, (
 //    ippStsNullPtrErr  pSrc is NULL
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiVarMean8x8_8u32s_C1R, (
-  const Ipp8u*  pSrc,
-        Ipp32s  srcStep,
-        Ipp32s* pVar,
-        Ipp32s* pMean))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiVarMean8x8_8u32s_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, Ipp32s* pVar, Ipp32s* pMean))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2476,12 +2153,13 @@ IPPAPI(IppStatus, ippiVarMean8x8_8u32s_C1R, (
 //    ippStsNullPtrErr  pSrc is NULL
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiVarMean8x8_16s32s_C1R, (
-  const Ipp16s* pSrc,
-        Ipp32s  srcStep,
-        Ipp32s* pVar,
-        Ipp32s* pMean))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiVarMean8x8_16s32s_C1R,
+       (const Ipp16s* pSrc, Ipp32s srcStep, Ipp32s* pVar, Ipp32s* pMean))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2499,9 +2177,12 @@ IPPAPI(IppStatus, ippiVarMean8x8_16s32s_C1R, (
 //
 //  Parameters:
 //      pSrc                    Pointer to 16x16 block in current plan
-//      srcStep                 Step of the current plan, specifying width of the plane in bytes.
-//      EdgePelDifference       The value for estimation of difference between neighboring elements.
-//      EdgePelCount            The value for estimation of number of pairs with "big difference"
+//      srcStep                 Step of the current plan, specifying width of
+the plane in bytes.
+//      EdgePelDifference       The value for estimation of difference between
+neighboring elements.
+//      EdgePelCount            The value for estimation of number of pairs with
+"big difference"
 //      pRes                    Pointers to output value. (*pRes) is equal 1 in
 //                              the case of edges are detected and it is equal
 //                              0 in the case of edges aren't detected. I
@@ -2512,20 +2193,13 @@ IPPAPI(IppStatus, ippiVarMean8x8_16s32s_C1R, (
 //    ippStsNullPtrErr  one of the input pointers is NULL
 */
 
-IPPAPI(IppStatus, ippiEdgesDetect16x16_8u_C1R, (
-        const Ipp8u *pSrc,
-        Ipp32u srcStep,
-        Ipp8u EdgePelDifference,
-        Ipp8u EdgePelCount,
-        Ipp8u   *pRes
-))
+IPPAPI(IppStatus, ippiEdgesDetect16x16_8u_C1R,
+       (const Ipp8u* pSrc, Ipp32u srcStep, Ipp8u EdgePelDifference,
+        Ipp8u EdgePelCount, Ipp8u* pRes))
 
-IPPAPI(IppStatus, ippiEdgesDetect16x16_16u_C1R, (
- const Ipp16u* pSrc,
-       Ipp32s  srcStep,
-       Ipp32s  EdgePelDifference,
-       Ipp32s  EdgePelCount,
-       Ipp32s* pRes))
+IPPAPI(IppStatus, ippiEdgesDetect16x16_16u_C1R,
+       (const Ipp16u* pSrc, Ipp32s srcStep, Ipp32s EdgePelDifference,
+        Ipp32s EdgePelCount, Ipp32s* pRes))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2550,16 +2224,9 @@ IPPAPI(IppStatus, ippiEdgesDetect16x16_16u_C1R, (
 //    ippStsNullPtrErr  one of the input pointers is NULL
 */
 
-IPPAPI(IppStatus, ippiVarMeanDiff16x16_8u32s_C1R, (
-  const Ipp8u*  pSrc,
-        Ipp32s  srcStep,
-  const Ipp8u*  pRef,
-        Ipp32s  refStep,
-        Ipp32s* pSrcSum,
-        Ipp32s* pVar,
-        Ipp32s* pMean,
-        Ipp32s  mcType))
-
+IPPAPI(IppStatus, ippiVarMeanDiff16x16_8u32s_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pRef, Ipp32s refStep,
+        Ipp32s* pSrcSum, Ipp32s* pVar, Ipp32s* pMean, Ipp32s mcType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2584,30 +2251,29 @@ IPPAPI(IppStatus, ippiVarMeanDiff16x16_8u32s_C1R, (
 //    ippStsNullPtrErr  one of the input pointers is NULL
 */
 
-IPPAPI(IppStatus, ippiVarMeanDiff16x8_8u32s_C1R, (
-  const Ipp8u*  pSrc,
-        Ipp32s  srcStep,
-  const Ipp8u*  pRef,
-        Ipp32s  refStep,
-        Ipp32s* pSrcSum,
-        Ipp32s* pVar,
-        Ipp32s* pMean,
-        Ipp32s  mcType))
+IPPAPI(IppStatus, ippiVarMeanDiff16x8_8u32s_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pRef, Ipp32s refStep,
+        Ipp32s* pSrcSum, Ipp32s* pVar, Ipp32s* pMean, Ipp32s mcType))
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiSumsDiff16x16Blocks4x4_8u16s_C1, ippiSumsDiff16x16Blocks4x4_8u16s_C1
 //
 //  Purpose:
-//      These functions evaluates difference between current and reference 4x4 blocks
+//      These functions evaluates difference between current and reference 4x4
+blocks
 //      and calculates sums of 4x4 residual blocks elements
 //  Parameters:
 //      pSrc    Pointer  block in current plane
-//      srcStep Step of the current plane, specifying width of the plane in bytes.
+//      srcStep Step of the current plane, specifying width of the plane in
+bytes.
 //      pPred   Pointer to  reference block
-//  predStep Step of the reference plane, specifying width of the plane in bytes.
-//      pDiff   If it isn't zero, pointer to array  that contains a sequence of 4x4
+//  predStep Step of the reference plane, specifying width of the plane in
+bytes.
+//      pDiff   If it isn't zero, pointer to array  that contains a sequence of
+4x4
 //      residual blocks.  The array's filled by function if pDiff isn't null.
-//      pSums   Pointer to array that contains sums of 4x4 difference blocks coefficients.
+//      pSums   Pointer to array that contains sums of 4x4 difference blocks
+coefficients.
 //      The array's filled by function.
 //
 //  Returns:
@@ -2615,70 +2281,59 @@ IPPAPI(IppStatus, ippiVarMeanDiff16x8_8u32s_C1R, (
 //    ippStsNullPtrErr  one of the input pointers is NULL
 */
 IPPAPI(IppStatus, ippiSumsDiff16x16Blocks4x4_8u16s_C1,
- (
-  const Ipp8u*          pSrc,
-        Ipp32s          srcStep,
-  const Ipp8u*          pPred,
-        Ipp32s          predStep,
-        Ipp16s* pSums,
-        Ipp16s* pDiff
-))
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pPred, Ipp32s predStep,
+        Ipp16s* pSums, Ipp16s* pDiff))
 
 IPPAPI(IppStatus, ippiSumsDiff8x8Blocks4x4_8u16s_C1,
- (
-  const Ipp8u*          pSrc,
-        Ipp32s          srcStep,
-  const Ipp8u*          pPred,
-        Ipp32s          predStep,
-        Ipp16s* pSums,
-        Ipp16s* pDiff
-))
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pPred, Ipp32s predStep,
+        Ipp16s* pSums, Ipp16s* pDiff))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiSumsDiff8x8Blocks4x4_8u16s_C2P2
 //
 //  Purpose:
-//      These functions evaluates difference between current and reference 4x4 blocks and
-//      calculates sums of 4x4 residual blocks elements. Clone of ippiSumsDiff8x8Blocks4x4_8u16s_C1,
+//      These functions evaluates difference between current and reference 4x4
+blocks and
+//      calculates sums of 4x4 residual blocks elements. Clone of
+ippiSumsDiff8x8Blocks4x4_8u16s_C1,
 //      but source image is chominance part of NV12 plane.
 //      NV12 Plane
 //      YY YY YY YY
 //      YY YY YY YY
 //      UV UV UV UV  -  chominance part of NV12 plane.
 //  Parameters:
-//      pSrcUV the pointer to the source block ( chrominance part of NV12 plane).
+//      pSrcUV the pointer to the source block ( chrominance part of NV12
+plane).
 //      0...UV UV UV UV   UV UV UV UV
 //      1...UV UV UV UV   ...
 //      ...
 //      7...UV UV UV UV  UV UV UV UV
-//      srcStep - Step of the current source block, specifying width of the plane in bytes.negative step works
+//      srcStep - Step of the current source block, specifying width of the
+plane in bytes.negative step works
 //      pPredU -   Pointer to  reference U  block
-//      pPredPitchU - Step of the reference U plane, specifying width of the plane in bytes.
+//      pPredPitchU - Step of the reference U plane, specifying width of the
+plane in bytes.
 //      pPredV -   Pointer to  reference V  block
-//      pPredPitchV - Step of the reference V plane, specifying width of the plane in bytes.
-//      pDiffU - If it isn't zero, pointer to array  that contains a sequence of 4x4  residual blocks.  The array's filled by function if pDifUf isn't null.
-//      pDCU - Pointer to array that contains sums of 4x4 difference blocks coefficients. The array's filled by function.
-//      pDiffV - If it isn't zero, pointer to array  that contains a sequence of 4x4  residual blocks.  The array's filled by function if pDifUf isn't null.
-//      pDCV - Pointer to array that contains sums of 4x4 difference blocks coefficients. The array's filled by function.
+//      pPredPitchV - Step of the reference V plane, specifying width of the
+plane in bytes.
+//      pDiffU - If it isn't zero, pointer to array  that contains a sequence of
+4x4  residual blocks.  The array's filled by function if pDifUf isn't null.
+//      pDCU - Pointer to array that contains sums of 4x4 difference blocks
+coefficients. The array's filled by function.
+//      pDiffV - If it isn't zero, pointer to array  that contains a sequence of
+4x4  residual blocks.  The array's filled by function if pDifUf isn't null.
+//      pDCV - Pointer to array that contains sums of 4x4 difference blocks
+coefficients. The array's filled by function.
 //  Returns:
 //      ippStsNoErr       No error
 //      ippStsNullPtrErr  one of the input pointers is NULL
 */
 
 IPPAPI(IppStatus, ippiSumsDiff8x8Blocks4x4_8u16s_C2P2,
- (
-  const Ipp8u*          pSrcUV,
-        Ipp32s          srcStep,
-  const Ipp8u*          pPredU,
-        Ipp32s          predStepU,
-  const Ipp8u*          pPredV,
-        Ipp32s          predStepV,
-        Ipp16s* pSumsU,
-        Ipp16s* pDiffU,
-        Ipp16s* pSumsV,
-        Ipp16s* pDiffV
-))
+       (const Ipp8u* pSrcUV, Ipp32s srcStep, const Ipp8u* pPredU,
+        Ipp32s predStepU, const Ipp8u* pPredV, Ipp32s predStepV, Ipp16s* pSumsU,
+        Ipp16s* pDiffU, Ipp16s* pSumsV, Ipp16s* pDiffV))
 
 /* Quantization Functions */
 
@@ -2706,12 +2361,8 @@ IPPAPI(IppStatus, ippiSumsDiff8x8Blocks4x4_8u16s_C2P2,
 //    ippStsDivByZeroErr QP is equal to 0
 */
 
-IPPAPI(IppStatus, ippiQuantIntra_MPEG2_16s_C1I, (
-        Ipp16s* pSrcDst,
-        Ipp32s  QP,
-  const Ipp32f* pQPMatrix,
-        Ipp32s* pCount))
-
+IPPAPI(IppStatus, ippiQuantIntra_MPEG2_16s_C1I,
+       (Ipp16s * pSrcDst, Ipp32s QP, const Ipp32f* pQPMatrix, Ipp32s* pCount))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2737,14 +2388,8 @@ IPPAPI(IppStatus, ippiQuantIntra_MPEG2_16s_C1I, (
 //    ippStsDivByZeroErr QP is equal to 0
 */
 
-IPPAPI(IppStatus, ippiQuant_MPEG2_16s_C1I, (
-        Ipp16s* pSrcDst,
-        Ipp32s  QP,
-  const Ipp32f* pQPMatrix,
-        Ipp32s* pCount))
-
-
-
+IPPAPI(IppStatus, ippiQuant_MPEG2_16s_C1I,
+       (Ipp16s * pSrcDst, Ipp32s QP, const Ipp32f* pQPMatrix, Ipp32s* pCount))
 
 /* Huffman Encoding Functions */
 
@@ -2763,10 +2408,8 @@ IPPAPI(IppStatus, ippiQuant_MPEG2_16s_C1I, (
 //    ippStsNoErr     No error
 */
 
-IPPAPI(IppStatus, ippiCreateRLEncodeTable, (
-  const Ipp32s*                pSrcTable,
-        IppVCHuffmanSpec_32s** ppDstSpec))
-
+IPPAPI(IppStatus, ippiCreateRLEncodeTable,
+       (const Ipp32s* pSrcTable, IppVCHuffmanSpec_32s** ppDstSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2794,18 +2437,15 @@ IPPAPI(IppStatus, ippiCreateRLEncodeTable, (
 //    ippStsNoErr     No error
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiPutIntraBlock, (
-  Ipp32u**              ppBitStream,
-  int*                  pOffset,
-  Ipp16s*               pSrcBlock,
-  Ipp32s*               pDCPred,
-  IppVCHuffmanSpec_32u* pDCTable,
-  IppVCHuffmanSpec_32s* pACTable,
-  Ipp32s*               pScanMatrix,
-  Ipp32s                EOBLen,
-  Ipp32s                EOBCode,
-  Ipp32s                count))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiPutIntraBlock,
+       (Ipp32u * *ppBitStream, int* pOffset, Ipp16s* pSrcBlock, Ipp32s* pDCPred,
+        IppVCHuffmanSpec_32u* pDCTable, IppVCHuffmanSpec_32s* pACTable,
+        Ipp32s* pScanMatrix, Ipp32s EOBLen, Ipp32s EOBCode, Ipp32s count))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2829,19 +2469,15 @@ IPPAPI(IppStatus, ippiPutIntraBlock, (
 //    ippStsNoErr     No error
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,  ippiPutNonIntraBlock, (
-  Ipp32u**              pBitStream,
-  int*                  pOffset,
-  Ipp16s*               pSrcBlock,
-  IppVCHuffmanSpec_32s* pACTable,
-  Ipp32s*               pScanMatrix,
-  Ipp32s                EOBLen,
-  Ipp32s                EOBCode,
-  Ipp32s                count))
-
-
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiPutNonIntraBlock,
+       (Ipp32u * *pBitStream, int* pOffset, Ipp16s* pSrcBlock,
+        IppVCHuffmanSpec_32s* pACTable, Ipp32s* pScanMatrix, Ipp32s EOBLen,
+        Ipp32s EOBCode, Ipp32s count))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //            Video Data Decoding Functions for DV
@@ -2866,12 +2502,13 @@ IPPAPI(IppStatus,  ippiPutNonIntraBlock, (
 //    ippStsNullPtrErr  One of the pointers is NULL
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiInitAllocHuffmanTable_DV_32u, (
-  Ipp32s*  pSrcTable1,
-  Ipp32s*  pSrcTable2,
-  Ipp32u** ppHuffTable))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiInitAllocHuffmanTable_DV_32u,
+       (Ipp32s * pSrcTable1, Ipp32s* pSrcTable2, Ipp32u** ppHuffTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2888,9 +2525,13 @@ IPPAPI(IppStatus, ippiInitAllocHuffmanTable_DV_32u, (
 //    ippStsNullPtrErr  pHuffTable is NULL
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFreeHuffmanTable_DV_32u, (Ipp32u* pHuffTable))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFreeHuffmanTable_DV_32u, (Ipp32u * pHuffTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2912,13 +2553,15 @@ IPPAPI(IppStatus, ippiFreeHuffmanTable_DV_32u, (Ipp32u* pHuffTable))
 //    ippStsNullPtrErr   One of the pointers is NULL
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiHuffmanDecodeSegment_DV_8u16s, (
-  const Ipp8u*  pStream,
-  const Ipp32u* pZigzagTables,
-  const Ipp32u* pHuffTable,
-  Ipp16s* pBlock,
-  Ipp32u* pBlockParam))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiHuffmanDecodeSegment_DV_8u16s,
+       (const Ipp8u* pStream, const Ipp32u* pZigzagTables,
+        const Ipp32u* pHuffTable, Ipp16s* pBlock, Ipp32u* pBlockParam))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2941,14 +2584,16 @@ IPPAPI(IppStatus, ippiHuffmanDecodeSegment_DV_8u16s, (
 //    ippStsNullPtrErr   One of the pointers is NULL
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiHuffmanDecodeSegmentOnePass_DV_8u16s, (
-  const Ipp8u*  pStream,
-  const Ipp32u* pZigzagTables,
-  const Ipp32u* pHuffTable,
-  Ipp16s* pBlock,
-  Ipp32u* pBlockParam,
-  Ipp32s nNumCoeffs))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiHuffmanDecodeSegmentOnePass_DV_8u16s,
+       (const Ipp8u* pStream, const Ipp32u* pZigzagTables,
+        const Ipp32u* pHuffTable, Ipp16s* pBlock, Ipp32u* pBlockParam,
+        Ipp32s nNumCoeffs))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2970,13 +2615,15 @@ IPPAPI(IppStatus, ippiHuffmanDecodeSegmentOnePass_DV_8u16s, (
 //    ippStsNullPtrErr   One of the pointers is NULL
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiHuffmanDecodeSegment_DV100_8u16s, (
-  const Ipp8u*  pStream,
-  const Ipp32u* pZigzagTable,
-  const Ipp32u* pHuffTable,
-  Ipp16s* pBlock,
-  Ipp32u* pBlockParam))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiHuffmanDecodeSegment_DV100_8u16s,
+       (const Ipp8u* pStream, const Ipp32u* pZigzagTable,
+        const Ipp32u* pHuffTable, Ipp16s* pBlock, Ipp32u* pBlockParam))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2994,9 +2641,14 @@ IPPAPI(IppStatus, ippiHuffmanDecodeSegment_DV100_8u16s, (
 //    ippStsNullPtrErr   One of the pointers is NULL
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiQuantInv_DV_16s_C1I, (Ipp16s* pSrcDst, Ipp16s* pDequantTable))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiQuantInv_DV_16s_C1I,
+       (Ipp16s * pSrcDst, Ipp16s* pDequantTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3013,11 +2665,13 @@ IPPAPI(IppStatus, ippiQuantInv_DV_16s_C1I, (Ipp16s* pSrcDst, Ipp16s* pDequantTab
 //    ippStsNullPtrErr   pSrcDst is NULL
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDCT2x4x8Inv_16s_C1I, (Ipp16s* pSrcDst))
-
-
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDCT2x4x8Inv_16s_C1I, (Ipp16s * pSrcDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //            Video Data Encoding Functions for DV
@@ -3038,9 +2692,13 @@ IPPAPI(IppStatus, ippiDCT2x4x8Inv_16s_C1I, (Ipp16s* pSrcDst))
 //    ippStsNullPtrErr   pSrcDst is NULL
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDCT2x4x8Frw_16s_C1I, (Ipp16s* pSrcDst))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDCT2x4x8Frw_16s_C1I, (Ipp16s * pSrcDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3058,8 +2716,7 @@ IPPAPI(IppStatus, ippiDCT2x4x8Frw_16s_C1I, (Ipp16s* pSrcDst))
 //    ippStsNullPtrErr   One of the pointers is NULL
 */
 
-IPPAPI(IppStatus, ippiCountZeros8x8_16s_C1, (Ipp16s* pSrc, Ipp32u* pCount))
-
+IPPAPI(IppStatus, ippiCountZeros8x8_16s_C1, (Ipp16s * pSrc, Ipp32u* pCount))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //                             Common Functions
@@ -3082,18 +2739,11 @@ IPPAPI(IppStatus, ippiCountZeros8x8_16s_C1, (Ipp16s* pSrc, Ipp32u* pCount))
 //   pFieldSAD                 Pointer to result of Field SAD
 */
 
-IPPAPI(IppStatus, ippiFrameFieldSAD16x16_8u32s_C1R, (
-    const Ipp8u* pSrc,
-    int          srcStep,
-    Ipp32s*      pFrameSAD,
-    Ipp32s*      pFieldSAD))
+IPPAPI(IppStatus, ippiFrameFieldSAD16x16_8u32s_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp32s* pFrameSAD, Ipp32s* pFieldSAD))
 
-IPPAPI(IppStatus, ippiFrameFieldSAD16x16_16s32s_C1R, (
-    const Ipp16s* pSrc,
-    int           srcStep,
-    Ipp32s*       pFrameSAD,
-    Ipp32s*       pFieldSAD))
-
+IPPAPI(IppStatus, ippiFrameFieldSAD16x16_16s32s_C1R,
+       (const Ipp16s* pSrc, int srcStep, Ipp32s* pFrameSAD, Ipp32s* pFieldSAD))
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////
 // Name:       ippiSAD16x8_8u32s_C1R
@@ -3112,13 +2762,9 @@ IPPAPI(IppStatus, ippiFrameFieldSAD16x16_16s32s_C1R, (
 //   pDst                      Pointer to result
 */
 
-IPPAPI(IppStatus, ippiSAD16x8_8u32s_C1R, (
-    const Ipp8u  *pSrcCur,
-    int           srcCurStep,
-    const Ipp8u  *pSrcRef,
-    int           srcRefStep,
-    Ipp32s       *pDst,
-    Ipp32s        mcType))
+IPPAPI(IppStatus, ippiSAD16x8_8u32s_C1R,
+       (const Ipp8u* pSrcCur, int srcCurStep, const Ipp8u* pSrcRef,
+        int srcRefStep, Ipp32s* pDst, Ipp32s mcType))
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////
 // Name:       ippiSAD8x16_8u32s_C1R
@@ -3137,16 +2783,9 @@ IPPAPI(IppStatus, ippiSAD16x8_8u32s_C1R, (
 //   pDst                      Pointer to result
 */
 
-
-
-IPPAPI(IppStatus, ippiSAD8x16_8u32s_C1R, (
-const Ipp8u  *pSrcCur,
-int           srcCurStep,
-const Ipp8u  *pSrcRef,
-int           srcRefStep,
-Ipp32s       *pDst,
-Ipp32s        mcType))
-
+IPPAPI(IppStatus, ippiSAD8x16_8u32s_C1R,
+       (const Ipp8u* pSrcCur, int srcCurStep, const Ipp8u* pSrcRef,
+        int srcRefStep, Ipp32s* pDst, Ipp32s mcType))
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////
 // Name:       ippiSAD8x4_8u32s_C1R
@@ -3165,14 +2804,9 @@ Ipp32s        mcType))
 //   pDst                      Pointer to result
 */
 
-IPPAPI(IppStatus, ippiSAD8x4_8u32s_C1R, (
-const Ipp8u  *pSrcCur,
-int           srcCurStep,
-const Ipp8u  *pSrcRef,
-int           srcRefStep,
-Ipp32s       *pDst,
-Ipp32s        mcType))
-
+IPPAPI(IppStatus, ippiSAD8x4_8u32s_C1R,
+       (const Ipp8u* pSrcCur, int srcCurStep, const Ipp8u* pSrcRef,
+        int srcRefStep, Ipp32s* pDst, Ipp32s mcType))
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////
 // Name:       ippiSAD4x8_8u32s_C1R
@@ -3191,13 +2825,9 @@ Ipp32s        mcType))
 //   pDst                      Pointer to result
 */
 
-IPPAPI(IppStatus, ippiSAD4x8_8u32s_C1R, (
-const Ipp8u  *pSrcCur,
-int           srcCurStep,
-const Ipp8u  *pSrcRef,
-int           srcRefStep,
-Ipp32s       *pDst,
-Ipp32s        mcType))
+IPPAPI(IppStatus, ippiSAD4x8_8u32s_C1R,
+       (const Ipp8u* pSrcCur, int srcCurStep, const Ipp8u* pSrcRef,
+        int srcRefStep, Ipp32s* pDst, Ipp32s mcType))
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////
 // Name:       ippiSSD8x8_8u32s_C1R
@@ -3216,13 +2846,9 @@ Ipp32s        mcType))
 //   pDst                      Pointer to result
 */
 
-IPPAPI(IppStatus, ippiSSD8x8_8u32s_C1R, (
-    const Ipp8u  *pSrcCur,
-    int           srcCurStep,
-    const Ipp8u  *pSrcRef,
-    int           srcRefStep,
-    Ipp32s       *pDst,
-    Ipp32s        mcType))
+IPPAPI(IppStatus, ippiSSD8x8_8u32s_C1R,
+       (const Ipp8u* pSrcCur, int srcCurStep, const Ipp8u* pSrcRef,
+        int srcRefStep, Ipp32s* pDst, Ipp32s mcType))
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////
 // Name:       ippiSSD4x4_8u32s_C1R
@@ -3241,13 +2867,9 @@ IPPAPI(IppStatus, ippiSSD8x8_8u32s_C1R, (
 //   pDst                      Pointer to result
 */
 
-IPPAPI(IppStatus, ippiSSD4x4_8u32s_C1R, (
-    const Ipp8u  *pSrcCur,
-    int           srcCurStep,
-    const Ipp8u  *pSrcRef,
-    int           srcRefStep,
-    Ipp32s       *pDst,
-    Ipp32s        mcType))
+IPPAPI(IppStatus, ippiSSD4x4_8u32s_C1R,
+       (const Ipp8u* pSrcCur, int srcCurStep, const Ipp8u* pSrcRef,
+        int srcRefStep, Ipp32s* pDst, Ipp32s mcType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3273,12 +2895,14 @@ IPPAPI(IppStatus, ippiSSD4x4_8u32s_C1R, (
 //                        of the range [1, 64].
 //  Notes:
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiScanFwd_16s_C1, (
-       const Ipp16s* pSrc,
-       Ipp16s*       pDst,
-       int           countNonZero,
-       int           scan))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiScanFwd_16s_C1,
+       (const Ipp16s* pSrc, Ipp16s* pDst, int countNonZero, int scan))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3290,7 +2914,8 @@ IPPAPI(IppStatus, ippiScanFwd_16s_C1, (
 //
 //  Parameters:
 //    pSrc            Pointer to input block (coefficients in the scan order).
-//    pDst            Pointer to output block (coefficients in the normal order).
+//    pDst            Pointer to output block (coefficients in the normal
+order).
 //    indxLastNonZero Index of the last non-zero coefficient. Valid within the
 //                    range 0 to 63.
 //    scan            Type of the scan, takes one of the following values:
@@ -3305,13 +2930,14 @@ IPPAPI(IppStatus, ippiScanFwd_16s_C1, (
 //  Notes:
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiScanInv_16s_C1, (
-    const Ipp16s* pSrc,
-    Ipp16s*       pDst,
-    int           indxLastNonZero,
-    int           scan))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiScanInv_16s_C1,
+       (const Ipp16s* pSrc, Ipp16s* pDst, int indxLastNonZero, int scan))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3333,13 +2959,9 @@ IPPAPI(IppStatus, ippiScanInv_16s_C1, (
 //    ippStsNullPtrErr  At least one of the pointers is NULL.
 */
 
-IPPAPI(IppStatus, ippiSAD8x8_8u32s_C1R, (
-  const Ipp8u*  pSrcCur,
-        int     srcCurStep,
-  const Ipp8u*  pSrcRef,
-        int     srcRefStep,
-        Ipp32s* pDst,
-        Ipp32s  mcType))
+IPPAPI(IppStatus, ippiSAD8x8_8u32s_C1R,
+       (const Ipp8u* pSrcCur, int srcCurStep, const Ipp8u* pSrcRef,
+        int srcRefStep, Ipp32s* pDst, Ipp32s mcType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3350,9 +2972,11 @@ IPPAPI(IppStatus, ippiSAD8x8_8u32s_C1R, (
 //
 //  Parameters:
 //    pSrcCur - the pointer to the current 8x8 block
-//    srcCurStep  - Step of the current block, specifying width of the plane in bytes..
+//    srcCurStep  - Step of the current block, specifying width of the plane in
+bytes..
 //    pSrcRef - the pointer to the reference 8x8 block.
-//    srcRefStep  - Step of the reference block, specifying width of the plane in bytes.
+//    srcRefStep  - Step of the reference block, specifying width of the plane
+in bytes.
 //    pDstU    - pointer to return value -  calculated SAD for U(Cb).
 //    pDstV    -  pointer to return value - calculated SAD for V(Cr).
 //    mcType    - type of motion compensation - IPPVC_MC_APX.
@@ -3362,15 +2986,9 @@ IPPAPI(IppStatus, ippiSAD8x8_8u32s_C1R, (
 //    ippStsNullPtrErr  At least one of the pointers is NULL.
 */
 
-IPPAPI(IppStatus, ippiSAD8x8_8u32s_C2R, (
-  const Ipp8u*  pSrcCur,
-        int     srcCurStep,
-  const Ipp8u*  pSrcRef,
-        int     srcRefStep,
-        Ipp32s* pDstU,
-        Ipp32s* pDstV,
-        Ipp32s  mcType))
-
+IPPAPI(IppStatus, ippiSAD8x8_8u32s_C2R,
+       (const Ipp8u* pSrcCur, int srcCurStep, const Ipp8u* pSrcRef,
+        int srcRefStep, Ipp32s* pDstU, Ipp32s* pDstV, Ipp32s mcType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3390,15 +3008,11 @@ IPPAPI(IppStatus, ippiSAD8x8_8u32s_C2R, (
 //    ippStsNullPtrErr   At least one of the pointers is NULL.
 */
 
-IPPAPI(IppStatus, ippiMeanAbsDev16x16_8u32s_C1R, (
-  const Ipp8u*  pSrc,
-        int     srcStep,
-        Ipp32s* pDst))
+IPPAPI(IppStatus, ippiMeanAbsDev16x16_8u32s_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp32s* pDst))
 
-IPPAPI(IppStatus, ippiMeanAbsDev8x8_8u32s_C1R, (
-  const Ipp8u*  pSrc,
-        int     srcStep,
-        Ipp32s* pDst))
+IPPAPI(IppStatus, ippiMeanAbsDev8x8_8u32s_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp32s* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3421,22 +3035,13 @@ IPPAPI(IppStatus, ippiMeanAbsDev8x8_8u32s_C1R, (
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiSub8x8_8u16s_C1R, (
-    const Ipp8u*  pSrc1,
-    int           src1Step,
-    const Ipp8u*  pSrc2,
-    int           src2Step,
-    Ipp16s*       pDst,
-    int           dstStep))
+IPPAPI(IppStatus, ippiSub8x8_8u16s_C1R,
+       (const Ipp8u* pSrc1, int src1Step, const Ipp8u* pSrc2, int src2Step,
+        Ipp16s* pDst, int dstStep))
 
-IPPAPI(IppStatus, ippiSub16x16_8u16s_C1R, (
-    const Ipp8u*  pSrc1,
-    int           src1Step,
-    const Ipp8u*  pSrc2,
-    int           src2Step,
-    Ipp16s*       pDst,
-    int           dstStep))
-
+IPPAPI(IppStatus, ippiSub16x16_8u16s_C1R,
+       (const Ipp8u* pSrc1, int src1Step, const Ipp8u* pSrc2, int src2Step,
+        Ipp16s* pDst, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3460,15 +3065,9 @@ IPPAPI(IppStatus, ippiSub16x16_8u16s_C1R, (
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiSubSAD8x8_8u16s_C1R, (
-    const Ipp8u*  pSrc1,
-    int           src1Step,
-    const Ipp8u*  pSrc2,
-    int           src2Step,
-    Ipp16s*       pDst,
-    int           dstStep,
-    Ipp32s*       pSAD))
-
+IPPAPI(IppStatus, ippiSubSAD8x8_8u16s_C1R,
+       (const Ipp8u* pSrc1, int src1Step, const Ipp8u* pSrc2, int src2Step,
+        Ipp16s* pDst, int dstStep, Ipp32s* pSAD))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3489,19 +3088,11 @@ IPPAPI(IppStatus, ippiSubSAD8x8_8u16s_C1R, (
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiCopy8x8_8u_C1R, (
-    const Ipp8u* pSrc,
-    int          srcStep,
-    Ipp8u*       pDst,
-    int          dstStep))
+IPPAPI(IppStatus, ippiCopy8x8_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep))
 
-IPPAPI(IppStatus, ippiCopy16x16_8u_C1R, (
-    const Ipp8u* pSrc,
-    int          srcStep,
-    Ipp8u*       pDst,
-    int          dstStep))
-
-
+IPPAPI(IppStatus, ippiCopy16x16_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3522,18 +3113,11 @@ IPPAPI(IppStatus, ippiCopy16x16_8u_C1R, (
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiAverage8x8_8u_C1IR, (
-    const Ipp8u*  pSrc,
-    int           srcStep,
-    Ipp8u*        pSrcDst,
-    int           srcDstStep))
+IPPAPI(IppStatus, ippiAverage8x8_8u_C1IR,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pSrcDst, int srcDstStep))
 
-IPPAPI(IppStatus, ippiAverage16x16_8u_C1IR, (
-    const Ipp8u*  pSrc,
-    int           srcStep,
-    Ipp8u*        pSrcDst,
-    int           srcDstStep))
-
+IPPAPI(IppStatus, ippiAverage16x16_8u_C1IR,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pSrcDst, int srcDstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3556,22 +3140,13 @@ IPPAPI(IppStatus, ippiAverage16x16_8u_C1IR, (
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiAverage8x8_8u_C1R, (
-    const Ipp8u*  pSrc1,
-    int           src1Step,
-    const Ipp8u*  pSrc2,
-    int           src2Step,
-    Ipp8u*        pDst,
-    int           dstStep))
+IPPAPI(IppStatus, ippiAverage8x8_8u_C1R,
+       (const Ipp8u* pSrc1, int src1Step, const Ipp8u* pSrc2, int src2Step,
+        Ipp8u* pDst, int dstStep))
 
-IPPAPI(IppStatus, ippiAverage16x16_8u_C1R, (
-    const Ipp8u*  pSrc1,
-    int           src1Step,
-    const Ipp8u*  pSrc2,
-    int           src2Step,
-    Ipp8u*        pDst,
-    int           dstStep))
-
+IPPAPI(IppStatus, ippiAverage16x16_8u_C1R,
+       (const Ipp8u* pSrc1, int src1Step, const Ipp8u* pSrc2, int src2Step,
+        Ipp8u* pDst, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3597,38 +3172,21 @@ IPPAPI(IppStatus, ippiAverage16x16_8u_C1R, (
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiCopy8x4HP_8u_C1R, (
-    const Ipp8u* pSrc,
-    int          srcStep,
-    Ipp8u*       pDst,
-    int          dstStep,
-    int          acc,
-    int          rounding))
+IPPAPI(IppStatus, ippiCopy8x4HP_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep, int acc,
+        int rounding))
 
-IPPAPI(IppStatus, ippiCopy8x8HP_8u_C1R, (
-    const Ipp8u* pSrc,
-    int          srcStep,
-    Ipp8u*       pDst,
-    int          dstStep,
-    int          acc,
-    int          rounding))
+IPPAPI(IppStatus, ippiCopy8x8HP_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep, int acc,
+        int rounding))
 
-IPPAPI(IppStatus, ippiCopy16x8HP_8u_C1R, (
-    const Ipp8u* pSrc,
-    int          srcStep,
-    Ipp8u*       pDst,
-    int          dstStep,
-    int          acc,
-    int          rounding))
+IPPAPI(IppStatus, ippiCopy16x8HP_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep, int acc,
+        int rounding))
 
-IPPAPI(IppStatus, ippiCopy16x16HP_8u_C1R, (
-    const Ipp8u* pSrc,
-    int          srcStep,
-    Ipp8u*       pDst,
-    int          dstStep,
-    int          acc,
-    int          rounding))
-
+IPPAPI(IppStatus, ippiCopy16x16HP_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep, int acc,
+        int rounding))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3655,38 +3213,21 @@ IPPAPI(IppStatus, ippiCopy16x16HP_8u_C1R, (
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiInterpolateAverage8x4_8u_C1IR, (
-    const Ipp8u* pSrc,
-    int          srcStep,
-    Ipp8u*       pSrcDst,
-    int          srcDstStep,
-    int          acc,
-    int          rounding))
+IPPAPI(IppStatus, ippiInterpolateAverage8x4_8u_C1IR,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pSrcDst, int srcDstStep, int acc,
+        int rounding))
 
-IPPAPI(IppStatus, ippiInterpolateAverage8x8_8u_C1IR, (
-    const Ipp8u* pSrc,
-    int          srcStep,
-    Ipp8u*       pDst,
-    int          dstStep,
-    int          acc,
-    int          rounding))
+IPPAPI(IppStatus, ippiInterpolateAverage8x8_8u_C1IR,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep, int acc,
+        int rounding))
 
-IPPAPI(IppStatus, ippiInterpolateAverage16x8_8u_C1IR, (
-    const Ipp8u* pSrc,
-    int          srcStep,
-    Ipp8u*       pDst,
-    int          dstStep,
-    int          acc,
-    int          rounding))
+IPPAPI(IppStatus, ippiInterpolateAverage16x8_8u_C1IR,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep, int acc,
+        int rounding))
 
-IPPAPI(IppStatus, ippiInterpolateAverage16x16_8u_C1IR, (
-    const Ipp8u* pSrc,
-    int          srcStep,
-    Ipp8u*       pDst,
-    int          dstStep,
-    int          acc,
-    int          rounding))
-
+IPPAPI(IppStatus, ippiInterpolateAverage16x16_8u_C1IR,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep, int acc,
+        int rounding))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3706,12 +3247,8 @@ IPPAPI(IppStatus, ippiInterpolateAverage16x16_8u_C1IR, (
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiAdd8x8_16s8u_C1IRS, (
-    const Ipp16s* pSrc,
-    int           srcStep,
-    Ipp8u*        pSrcDst,
-    int           srcDstStep))
-
+IPPAPI(IppStatus, ippiAdd8x8_16s8u_C1IRS,
+       (const Ipp16s* pSrc, int srcStep, Ipp8u* pSrcDst, int srcDstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3734,16 +3271,9 @@ IPPAPI(IppStatus, ippiAdd8x8_16s8u_C1IRS, (
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiAdd8x8HP_16s8u_C1RS, (
-    const Ipp16s* pSrc1,
-    int           src1Step,
-    Ipp8u*        pSrc2,
-    int           src2Step,
-    Ipp8u*        pDst,
-    int           dstStep,
-    int           acc,
-    int           rounding))
-
+IPPAPI(IppStatus, ippiAdd8x8HP_16s8u_C1RS,
+       (const Ipp16s* pSrc1, int src1Step, Ipp8u* pSrc2, int src2Step,
+        Ipp8u* pDst, int dstStep, int acc, int rounding))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3762,11 +3292,8 @@ IPPAPI(IppStatus, ippiAdd8x8HP_16s8u_C1RS, (
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiAddC8x8_16s8u_C1IR, (
-    Ipp16s   value,
-    Ipp8u*   pSrcDst,
-    int      srcDstStep))
-
+IPPAPI(IppStatus, ippiAddC8x8_16s8u_C1IR,
+       (Ipp16s value, Ipp8u* pSrcDst, int srcDstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //                             H.261 Functions
@@ -3790,12 +3317,14 @@ IPPAPI(IppStatus, ippiAddC8x8_16s8u_C1IR, (
 //    ippStsNoErr         No error.
 //    ippStsNullPtrErr    At least one of the pointers is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilter8x8_H261_8u_C1R, (
-    Ipp8u*  pSrc,
-    int     srcStep,
-    Ipp8u*  pDst,
-    int     dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilter8x8_H261_8u_C1R,
+       (Ipp8u * pSrc, int srcStep, Ipp8u* pDst, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3820,7 +3349,8 @@ IPPAPI(IppStatus, ippiFilter8x8_H261_8u_C1R, (
 //                      coefficient is returned in *pIndxLastNonZero.
 //                      *pIndxLastNonZero is set to -1 if there are no correctly
 //                      decoded coefficients in the block.
-//    scan              Type of the inverse scan, takes one of the following values:
+//    scan              Type of the inverse scan, takes one of the following
+values:
 //                      IPPVC_SCAN_ZIGZAG, indicating the classical zigzag scan,
 //                      IPPVC_SCAN_NONE, indicating that no inverse scan is
 //                      performed.
@@ -3832,14 +3362,15 @@ IPPAPI(IppStatus, ippiFilter8x8_H261_8u_C1R, (
 //    ippStsVLCErr        Illegal VL code is detected through the stream
 //                        processing.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeCoeffsIntra_H261_1u16s, (
-  Ipp8u** ppBitStream,
-  int*    pBitOffset,
-  Ipp16s* pCoef,
-  int*    pIndxLastNonZero,
-  int     scan))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeCoeffsIntra_H261_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pCoef,
+        int* pIndxLastNonZero, int scan))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3863,7 +3394,8 @@ IPPAPI(IppStatus, ippiDecodeCoeffsIntra_H261_1u16s, (
 //                      coefficient is returned in *pIndxLastNonZero.
 //                      *pIndxLastNonZero is set to -1 if there are no correctly
 //                      decoded coefficients in the block.
-//    scan              Type of the inverse scan, takes one of the following values:
+//    scan              Type of the inverse scan, takes one of the following
+values:
 //                      IPPVC_SCAN_ZIGZAG, indicating the classical zigzag scan,
 //                      IPPVC_SCAN_NONE, indicating that no inverse scan is
 //                      performed.
@@ -3876,14 +3408,15 @@ IPPAPI(IppStatus, ippiDecodeCoeffsIntra_H261_1u16s, (
 //                        processing.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeCoeffsInter_H261_1u16s, (
-  Ipp8u** ppBitStream,
-  int*    pBitOffset,
-  Ipp16s* pCoef,
-  int*    pIndxLastNonZero,
-  int     scan))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeCoeffsInter_H261_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pCoef,
+        int* pIndxLastNonZero, int scan))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3894,15 +3427,21 @@ IPPAPI(IppStatus, ippiDecodeCoeffsInter_H261_1u16s, (
 //    DCT coefficients for one intra coded block.
 //
 //  Parameters:
-//    ppBitStream       Pointer to pointer to the current byte in the bitstream buffer,
+//    ppBitStream       Pointer to pointer to the current byte in the bitstream
+buffer,
 //                      updated by the function.
-//    pBitOffset        Pointer  to the bit position in the byte pointed by *ppBitStream.
+//    pBitOffset        Pointer  to the bit position in the byte pointed by
+*ppBitStream.
 //                      Valid within the range [0, 7], updated by the function.
 //    pCoef             Pointer to the output coefficients.
-//    pIndxLastNonZero  Pointer to the index of the last non-zero coefficient in the scanning order.
-//                      If an error is detected while decoding a coefficient, the index of the
-//                      last decoded coefficient is returned in *pIndxLastNonZero. *pIndxLastNonZero
-//                      is set to -1 if there are no correctly decoded coefficients in the block.
+//    pIndxLastNonZero  Pointer to the index of the last non-zero coefficient in
+the scanning order.
+//                      If an error is detected while decoding a coefficient,
+the index of the
+//                      last decoded coefficient is returned in
+*pIndxLastNonZero. *pIndxLastNonZero
+//                      is set to -1 if there are no correctly decoded
+coefficients in the block.
 //    QP                Quantization parameter.
 //
 //  Returns:
@@ -3913,13 +3452,15 @@ IPPAPI(IppStatus, ippiDecodeCoeffsInter_H261_1u16s, (
 //    ippStsVLCErr        Illegal VL code is detected through the stream
 //                        processing.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiReconstructCoeffsIntra_H261_1u16s, (
-  Ipp8u** ppBitStream,
-  int*    pBitOffset,
-  Ipp16s* pCoef,
-  int*    pIndxLastNonZero,
-  int     QP))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiReconstructCoeffsIntra_H261_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pCoef,
+        int* pIndxLastNonZero, int QP))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3930,15 +3471,21 @@ IPPAPI(IppStatus, ippiReconstructCoeffsIntra_H261_1u16s, (
 //    DCT coefficients for one inter coded block.
 //
 //  Parameters:
-//    ppBitStream       Pointer to pointer to the current byte in the bitstream buffer,
+//    ppBitStream       Pointer to pointer to the current byte in the bitstream
+buffer,
 //                      updated by the function.
-//    pBitOffset        Pointer  to the bit position in the byte pointed by *ppBitStream.
+//    pBitOffset        Pointer  to the bit position in the byte pointed by
+*ppBitStream.
 //                      Valid within the range [0, 7], updated by the function.
 //    pCoef             Pointer to the output coefficients.
-//    pIndxLastNonZero  Pointer to the index of the last non-zero coefficient in the scanning order.
-//                      If an error is detected while decoding a coefficient, the index of the
-//                      last decoded coefficient is returned in *pIndxLastNonZero. *pIndxLastNonZero
-//                      is set to -1 if there are no correctly decoded coefficients in the block.
+//    pIndxLastNonZero  Pointer to the index of the last non-zero coefficient in
+the scanning order.
+//                      If an error is detected while decoding a coefficient,
+the index of the
+//                      last decoded coefficient is returned in
+*pIndxLastNonZero. *pIndxLastNonZero
+//                      is set to -1 if there are no correctly decoded
+coefficients in the block.
 //    QP                Quantization parameter.
 //
 //  Returns:
@@ -3949,14 +3496,15 @@ IPPAPI(IppStatus, ippiReconstructCoeffsIntra_H261_1u16s, (
 //    ippStsVLCErr        Illegal VL code is detected through the stream
 //                        processing.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiReconstructCoeffsInter_H261_1u16s, (
-  Ipp8u** ppBitStream,
-  int*    pBitOffset,
-  Ipp16s* pCoef,
-  int*    pIndxLastNonZero,
-  int     QP))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiReconstructCoeffsInter_H261_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pCoef,
+        int* pIndxLastNonZero, int QP))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3991,13 +3539,15 @@ IPPAPI(IppStatus, ippiReconstructCoeffsInter_H261_1u16s, (
 //    ippStsOutOfRangeErr  countNonZero is out of the range [1, 64].
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiEncodeCoeffsIntra_H261_16s1u, (
-  Ipp16s* pQCoef,
-  Ipp8u** ppBitStream,
-  int*    pBitOffset,
-  int     countNonZero,
-  int     scan))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiEncodeCoeffsIntra_H261_16s1u,
+       (Ipp16s * pQCoef, Ipp8u** ppBitStream, int* pBitOffset, int countNonZero,
+        int scan))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4031,19 +3581,19 @@ IPPAPI(IppStatus, ippiEncodeCoeffsIntra_H261_16s1u, (
 //    ippStsOutOfRangeErr  countNonZero is out of the range [1, 64].
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiEncodeCoeffsInter_H261_16s1u, (
-  Ipp16s* pQCoef,
-  Ipp8u** ppBitStream,
-  int*    pBitOffset,
-  int     countNonZero,
-  int     scan))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiEncodeCoeffsInter_H261_16s1u,
+       (Ipp16s * pQCoef, Ipp8u** ppBitStream, int* pBitOffset, int countNonZero,
+        int scan))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //                             H.263 Functions
 //////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4069,12 +3619,13 @@ IPPAPI(IppStatus, ippiEncodeCoeffsInter_H261_16s1u, (
 //                        processing.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeDCIntra_H263_1u16s, (
-  Ipp8u** ppBitStream,
-  int*    pBitOffset,
-  Ipp16s* pDC))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeDCIntra_H263_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pDC))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4105,11 +3656,14 @@ IPPAPI(IppStatus, ippiDecodeDCIntra_H263_1u16s, (
 //                      If there are no correctly decoded coefficients in the
 //                      block, *pIndxLastNonZero is set to -1 when in Advanced
 //                      Intra Coding mode, and to 0 otherwise.
-//    advIntraFlag      Flag equal to a non-zero value when Advanced Intra Coding
+//    advIntraFlag      Flag equal to a non-zero value when Advanced Intra
+Coding
 //                      mode is in use, equal to 0 otherwise.
-//    modQuantFlag      Flag equal to a non-zero value when Modified Quantization
+//    modQuantFlag      Flag equal to a non-zero value when Modified
+Quantization
 //                      mode is in use, equal to 0 otherwise.
-//    scan              Type of the inverse scan, takes one of the following values:
+//    scan              Type of the inverse scan, takes one of the following
+values:
 //                      IPPVC_SCAN_ZIGZAG, indicating the classical zigzag scan,
 //                      IPPVC_SCAN_HORIZONTAL - alternate-horizontal scan,
 //                      IPPVC_SCAN_VERTICAL - alternate-vertical scan,
@@ -4124,16 +3678,15 @@ IPPAPI(IppStatus, ippiDecodeDCIntra_H263_1u16s, (
 //                        processing.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeCoeffsIntra_H263_1u16s, (
-  Ipp8u** ppBitStream,
-  int*    pBitOffset,
-  Ipp16s* pCoef,
-  int*    pIndxLastNonZero,
-  int     advIntraFlag,
-  int     modQuantFlag,
-  int     scan))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeCoeffsIntra_H263_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pCoef,
+        int* pIndxLastNonZero, int advIntraFlag, int modQuantFlag, int scan))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4159,9 +3712,11 @@ IPPAPI(IppStatus, ippiDecodeCoeffsIntra_H263_1u16s, (
 //                      coefficient is returned in *pIndxLastNonZero.
 //                      *pIndxLastNonZero is set to -1 if there are no correctly
 //                      decoded coefficients in the block.
-//    modQuantFlag      Flag equal to a non-zero value when Modified Quantization
+//    modQuantFlag      Flag equal to a non-zero value when Modified
+Quantization
 //                      mode is in use, equal to 0 otherwise.
-//    scan              Type of the inverse scan, takes one of the following values:
+//    scan              Type of the inverse scan, takes one of the following
+values:
 //                      IPPVC_SCAN_ZIGZAG, indicating the classical zigzag scan,
 //                      IPPVC_SCAN_NONE, indicating that no inverse scan is
 //                      performed.
@@ -4175,15 +3730,15 @@ IPPAPI(IppStatus, ippiDecodeCoeffsIntra_H263_1u16s, (
 //                        processing.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeCoeffsInter_H263_1u16s, (
-  Ipp8u** ppBitStream,
-  int*    pBitOffset,
-  Ipp16s* pCoef,
-  int*    pIndxLastNonZero,
-  int     modQuantFlag,
-  int     scan))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeCoeffsInter_H263_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pCoef,
+        int* pIndxLastNonZero, int modQuantFlag, int scan))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4219,13 +3774,9 @@ IPPAPI(IppStatus, ippiDecodeCoeffsInter_H263_1u16s, (
 //    Advanced Intra mode).
 */
 
-IPPAPI(IppStatus, ippiQuantInvIntra_H263_16s_C1I, (
-    Ipp16s* pSrcDst,
-    int     indxLastNonZero,
-    int     QP,
-    int     advIntraFlag,
-    int     modQuantFlag))
-
+IPPAPI(IppStatus, ippiQuantInvIntra_H263_16s_C1I,
+       (Ipp16s * pSrcDst, int indxLastNonZero, int QP, int advIntraFlag,
+        int modQuantFlag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4258,12 +3809,8 @@ IPPAPI(IppStatus, ippiQuantInvIntra_H263_16s_C1I, (
 //
 */
 
-IPPAPI(IppStatus, ippiQuantInvInter_H263_16s_C1I, (
-    Ipp16s* pSrcDst,
-    int     indxLastNonZero,
-    int     QP,
-    int     modQuantFlag))
-
+IPPAPI(IppStatus, ippiQuantInvInter_H263_16s_C1I,
+       (Ipp16s * pSrcDst, int indxLastNonZero, int QP, int modQuantFlag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4297,14 +3844,9 @@ IPPAPI(IppStatus, ippiQuantInvInter_H263_16s_C1I, (
 //    ippStsSizeErr       srcRoiSize has a field with zero or negative value.
 */
 
-IPPAPI(IppStatus, ippiAddBackPredPB_H263_8u_C1R, (
-  const Ipp8u* pSrc,
-  int          srcStep,
-  IppiSize     srcRoiSize,
-  Ipp8u*       pSrcDst,
-  int          srcDstStep,
-  int          acc))
-
+IPPAPI(IppStatus, ippiAddBackPredPB_H263_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, IppiSize srcRoiSize, Ipp8u* pSrcDst,
+        int srcDstStep, int acc))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4350,9 +3892,11 @@ IPPAPI(IppStatus, ippiAddBackPredPB_H263_8u_C1R, (
 //               0, indicating color fill mode, the "outside" Y, Cb and Cr
 //                  pixel values are set to  fillColor[0],  fillColor[1], and
 //                  fillColor[2], respectively.
-//               1 - black fill mode, the "outside" pixel values are set as follows:
+//               1 - black fill mode, the "outside" pixel values are set as
+follows:
 //                  Y = 16, Cb = Cr = 128.
-//               2 - gray fill mode, the "outside" pixel values are all set to 128.
+//               2 - gray fill mode, the "outside" pixel values are all set to
+128.
 //               3 - clip fill mode, the "outside" pixel values are extrapolated
 //                  from the values of pixels at the ROI border, as specified in
 //                  "ITU-T Recommendation H.263, Annex D".
@@ -4364,28 +3908,19 @@ IPPAPI(IppStatus, ippiAddBackPredPB_H263_8u_C1R, (
 //    ippStsSizeErr      yRoiSize has a field which is odd or less than 4.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiResample_H263_8u_P3R, (
-  const Ipp8u*    pSrcY,
-  int             srcYStep,
-  IppiSize        ySrcRoiSize,
-  const Ipp8u*    pSrcCb,
-  int             srcCbStep,
-  const Ipp8u*    pSrcCr,
-  int             srcCrStep,
-  Ipp8u*          pDstY,
-  int             dstYStep,
-  IppiSize        yDstRoiSize,
-  Ipp8u*          pDstCb,
-  int             dstCbStep,
-  Ipp8u*          pDstCr,
-  int             dstCrStep,
-  IppMotionVector warpParams[4],
-  int             wda,
-  int             rounding,
-  int             fillMode,
-  int             fillColor[3]))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiResample_H263_8u_P3R,
+       (const Ipp8u* pSrcY, int srcYStep, IppiSize ySrcRoiSize,
+        const Ipp8u* pSrcCb, int srcCbStep, const Ipp8u* pSrcCr, int srcCrStep,
+        Ipp8u* pDstY, int dstYStep, IppiSize yDstRoiSize, Ipp8u* pDstCb,
+        int dstCbStep, Ipp8u* pDstCr, int dstCrStep,
+        IppMotionVector warpParams[4], int wda, int rounding, int fillMode,
+        int fillColor[3]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4405,10 +3940,13 @@ IPPAPI(IppStatus, ippiResample_H263_8u_P3R, (
 //    rounding            Rounding value used in pixel interpolation,
 //                        can be 0 or 1.
 //    fillColor           Fill color value used for the source pixels for which
-//                        the calculated location in the source image lies outside
-//                        of the source image ROI. When negative, "clip" fill-mode
+//                        the calculated location in the source image lies
+outside
+//                        of the source image ROI. When negative, "clip"
+fill-mode
 //                        action is employed -  the "outside" pixel values are
-//                        extrapolated from the values of pixels at the ROI border,
+//                        extrapolated from the values of pixels at the ROI
+border,
 //                        as specified in "ITU-T Recommendation H.263, Annex D".
 //
 //  Returns:
@@ -4417,15 +3955,9 @@ IPPAPI(IppStatus, ippiResample_H263_8u_P3R, (
 //    ippStsSizeErr       srcRoiSize has a field which is odd or less than 4.
 */
 
-IPPAPI(IppStatus, ippiUpsampleFour_H263_8u_C1R, (
-  const Ipp8u* pSrc,
-  int          srcStep,
-  IppiSize     srcRoiSize,
-  Ipp8u*       pDst,
-  int          dstStep,
-  int          rounding,
-  int          fillColor))
-
+IPPAPI(IppStatus, ippiUpsampleFour_H263_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, IppiSize srcRoiSize, Ipp8u* pDst,
+        int dstStep, int rounding, int fillColor))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4450,15 +3982,15 @@ IPPAPI(IppStatus, ippiUpsampleFour_H263_8u_C1R, (
 //    ippStsSizeErr       srcRoiSize has a field with zero or negative value.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDownsampleFour_H263_8u_C1R, (
-  const Ipp8u* pSrc,
-  int          srcStep,
-  IppiSize     srcRoiSize,
-  Ipp8u*       pDst,
-  int          dstStep,
-  int          rounding))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDownsampleFour_H263_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, IppiSize srcRoiSize, Ipp8u* pDst,
+        int dstStep, int rounding))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4486,15 +4018,15 @@ IPPAPI(IppStatus, ippiDownsampleFour_H263_8u_C1R, (
 //    ippStsSizeErr      srcRoiSize has a field which is odd or less than 4.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSpatialInterpolation_H263_8u_C1R, (
-  const Ipp8u* pSrc,
-  int          srcStep,
-  IppiSize     srcRoiSize,
-  Ipp8u*       pDst,
-  int          dstStep,
-  int          interpType))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSpatialInterpolation_H263_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, IppiSize srcRoiSize, Ipp8u* pDst,
+        int dstStep, int interpType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4516,13 +4048,13 @@ IPPAPI(IppStatus, ippiSpatialInterpolation_H263_8u_C1R, (
 //    ippStsNullPtrErr    At least one of the pointers is NULL.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiUpsampleFour8x8_H263_16s_C1R, (
-  const Ipp16s* pSrc,
-  int     srcStep,
-  Ipp16s* pDst,
-  int     dstStep))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiUpsampleFour8x8_H263_16s_C1R,
+       (const Ipp16s* pSrc, int srcStep, Ipp16s* pDst, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4545,13 +4077,13 @@ IPPAPI(IppStatus, ippiUpsampleFour8x8_H263_16s_C1R, (
 //    ippStsNullPtrErr    At least one of the pointers is NULL.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDownsampleFour16x16_H263_16s_C1R, (
-  const Ipp16s* pSrc,
-  int           srcStep,
-  Ipp16s*       pDst,
-  int           dstStep))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDownsampleFour16x16_H263_16s_C1R,
+       (const Ipp16s* pSrc, int srcStep, Ipp16s* pDst, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4575,18 +4107,23 @@ IPPAPI(IppStatus, ippiDownsampleFour16x16_H263_16s_C1R, (
 //    ippStsQPErr        QP is out of the range [1, 31].
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilterDeblocking8x8HorEdge_H263_8u_C1IR, (
-  Ipp8u* pSrcDst,
-  int    srcDstStep,
-  int    QP))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDeblocking8x8HorEdge_H263_8u_C1IR,
+       (Ipp8u * pSrcDst, int srcDstStep, int QP))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilterDeblocking8x8VerEdge_H263_8u_C1IR, (
-  Ipp8u* pSrcDst,
-  int    srcDstStep,
-  int    QP))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDeblocking8x8VerEdge_H263_8u_C1IR,
+       (Ipp8u * pSrcDst, int srcDstStep, int QP))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4608,16 +4145,21 @@ IPPAPI(IppStatus, ippiFilterDeblocking8x8VerEdge_H263_8u_C1IR, (
 //    ippStsNullPtrErr   pSrcDst pointer is NULL.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilterDeblocking16x16HorEdge_H263_8u_C1IR, (
-  Ipp8u* pSrcDst,
-  int    srcDstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDeblocking16x16HorEdge_H263_8u_C1IR,
+       (Ipp8u * pSrcDst, int srcDstStep))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilterDeblocking16x16VerEdge_H263_8u_C1IR, (
-  Ipp8u* pSrcDst,
-  int    srcDstStep))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDeblocking16x16VerEdge_H263_8u_C1IR,
+       (Ipp8u * pSrcDst, int srcDstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4639,16 +4181,21 @@ IPPAPI(IppStatus, ippiFilterDeblocking16x16VerEdge_H263_8u_C1IR, (
 //    ippStsNullPtrErr    The pointer is NULL.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilterBlockBoundaryHorEdge_H263_8u_C1IR, (
-  Ipp8u* pSrcDst,
-  int    srcDstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterBlockBoundaryHorEdge_H263_8u_C1IR,
+       (Ipp8u * pSrcDst, int srcDstStep))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilterBlockBoundaryVerEdge_H263_8u_C1IR, (
-  Ipp8u* pSrcDst,
-  int    srcDstStep))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterBlockBoundaryVerEdge_H263_8u_C1IR,
+       (Ipp8u * pSrcDst, int srcDstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4689,13 +4236,16 @@ IPPAPI(IppStatus, ippiFilterBlockBoundaryVerEdge_H263_8u_C1IR, (
 //    cbp               Coded block pattern, when set to 0 indicates that the
 //                      block contains only Intra DC coefficient.
 //    QP                Quantization parameter.
-//    advIntraFlag      Flag equal to a non-zero value when Advanced Intra Coding
+//    advIntraFlag      Flag equal to a non-zero value when Advanced Intra
+Coding
 //                      mode is in use, equal to 0 otherwise.
-//    scan              Type of the inverse scan, takes one of the following values:
+//    scan              Type of the inverse scan, takes one of the following
+values:
 //                      IPPVC_SCAN_ZIGZAG, indicating the classical zigzag scan,
 //                      IPPVC_SCAN_HORIZONTAL - alternate-horizontal scan,
 //                      IPPVC_SCAN_VERTICAL - alternate-vertical scan.
-//    modQuantFlag      Flag equal to a non-zero value when Modified Quantization
+//    modQuantFlag      Flag equal to a non-zero value when Modified
+Quantization
 //                      mode is in use, equal to 0 otherwise.
 //
 //  Returns:
@@ -4707,17 +4257,10 @@ IPPAPI(IppStatus, ippiFilterBlockBoundaryVerEdge_H263_8u_C1IR, (
 //    ippStsQPErr         QP is out of the range [1, 31].
 */
 
-IPPAPI(IppStatus, ippiReconstructCoeffsIntra_H263_1u16s, (
-  Ipp8u** ppBitStream,
-  int*    pBitOffset,
-  Ipp16s* pCoef,
-  int*    pIndxLastNonZero,
-  int     cbp,
-  int     QP,
-  int     advIntraFlag,
-  int     scan,
-  int     modQuantFlag))
-
+IPPAPI(IppStatus, ippiReconstructCoeffsIntra_H263_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pCoef,
+        int* pIndxLastNonZero, int cbp, int QP, int advIntraFlag, int scan,
+        int modQuantFlag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4747,7 +4290,8 @@ IPPAPI(IppStatus, ippiReconstructCoeffsIntra_H263_1u16s, (
 //                      If there are no correctly decoded coefficients in the
 //                      block, *pIndxLastNonZero is set to -1.
 //    QP                Quantization parameter.
-//    modQuantFlag      Flag equal to a non-zero value when Modified Quantization
+//    modQuantFlag      Flag equal to a non-zero value when Modified
+Quantization
 //                      mode is in use, equal to 0 otherwise.
 //
 //  Returns:
@@ -4759,14 +4303,9 @@ IPPAPI(IppStatus, ippiReconstructCoeffsIntra_H263_1u16s, (
 //    ippStsQPErr         QP is out of the range [1, 31].
 */
 
-IPPAPI(IppStatus, ippiReconstructCoeffsInter_H263_1u16s, (
-  Ipp8u** ppBitStream,
-  int*    pBitOffset,
-  Ipp16s* pCoef,
-  int*    pIndxLastNonZero,
-  int     QP,
-  int     modQuantFlag))
-
+IPPAPI(IppStatus, ippiReconstructCoeffsInter_H263_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pCoef,
+        int* pIndxLastNonZero, int QP, int modQuantFlag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4790,11 +4329,8 @@ IPPAPI(IppStatus, ippiReconstructCoeffsInter_H263_1u16s, (
 //    ippStsBitOffsetErr   *pBitOffset is out of  the range [0, 7].
 */
 
-IPPAPI(IppStatus, ippiEncodeDCIntra_H263_16s1u, (
-  Ipp16s  qDC,
-  Ipp8u** ppBitStream,
-  int*    pBitOffset))
-
+IPPAPI(IppStatus, ippiEncodeDCIntra_H263_16s1u,
+       (Ipp16s qDC, Ipp8u** ppBitStream, int* pBitOffset))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4840,15 +4376,9 @@ IPPAPI(IppStatus, ippiEncodeDCIntra_H263_16s1u, (
 //    ippStsOutOfRangeErr  countNonZero is out of the range [1, 64].
 */
 
-IPPAPI(IppStatus, ippiEncodeCoeffsIntra_H263_16s1u, (
-  Ipp16s* pQCoef,
-  Ipp8u** ppBitStream,
-  int*    pBitOffset,
-  int     countNonZero,
-  int     advIntraFlag,
-  int     modQuantFlag,
-  int     scan))
-
+IPPAPI(IppStatus, ippiEncodeCoeffsIntra_H263_16s1u,
+       (Ipp16s * pQCoef, Ipp8u** ppBitStream, int* pBitOffset, int countNonZero,
+        int advIntraFlag, int modQuantFlag, int scan))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4886,14 +4416,9 @@ IPPAPI(IppStatus, ippiEncodeCoeffsIntra_H263_16s1u, (
 //    ippStsOutOfRangeErr  countNonZero is out of the range [1, 64].
 */
 
-IPPAPI(IppStatus, ippiEncodeCoeffsInter_H263_16s1u, (
-  Ipp16s* pQCoef,
-  Ipp8u** ppBitStream,
-  int*    pBitOffset,
-  int     countNonZero,
-  int     modQuantFlag,
-  int     scan))
-
+IPPAPI(IppStatus, ippiEncodeCoeffsInter_H263_16s1u,
+       (Ipp16s * pQCoef, Ipp8u** ppBitStream, int* pBitOffset, int countNonZero,
+        int modQuantFlag, int scan))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4934,13 +4459,9 @@ IPPAPI(IppStatus, ippiEncodeCoeffsInter_H263_16s1u, (
 //
 */
 
-IPPAPI(IppStatus, ippiQuantIntra_H263_16s_C1I, (
-   Ipp16s* pSrcDst,
-   int     QP,
-   int*    pCountNonZero,
-   int     advIntraFlag,
-   int     modQuantFlag))
-
+IPPAPI(IppStatus, ippiQuantIntra_H263_16s_C1I,
+       (Ipp16s * pSrcDst, int QP, int* pCountNonZero, int advIntraFlag,
+        int modQuantFlag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4971,13 +4492,8 @@ IPPAPI(IppStatus, ippiQuantIntra_H263_16s_C1I, (
 //
 */
 
-IPPAPI(IppStatus, ippiQuantInter_H263_16s_C1I, (
-   Ipp16s* pSrcDst,
-   int     QP,
-   int*    pCountNonZero,
-   int     modQuantFlag))
-
-
+IPPAPI(IppStatus, ippiQuantInter_H263_16s_C1I,
+       (Ipp16s * pSrcDst, int QP, int* pCountNonZero, int modQuantFlag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //                              MPEG-4 Functions
@@ -5003,13 +4519,8 @@ IPPAPI(IppStatus, ippiQuantInter_H263_16s_C1I, (
 //    ippStsQPErr         QP is out of range [1, 31].
 */
 
-IPPAPI(IppStatus, ippiFilterDeblocking8x8HorEdge_MPEG4_8u_C1IR, (
-  Ipp8u*  pSrcDst,
-  int     step,
-  int     QP,
-  int     THR1,
-  int     THR2))
-
+IPPAPI(IppStatus, ippiFilterDeblocking8x8HorEdge_MPEG4_8u_C1IR,
+       (Ipp8u * pSrcDst, int step, int QP, int THR1, int THR2))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5031,13 +4542,8 @@ IPPAPI(IppStatus, ippiFilterDeblocking8x8HorEdge_MPEG4_8u_C1IR, (
 //    ippStsQPErr         QP is out of range [1, 31].
 */
 
-IPPAPI(IppStatus, ippiFilterDeblocking8x8VerEdge_MPEG4_8u_C1IR, (
-  Ipp8u*  pSrcDst,
-  int     step,
-  int     QP,
-  int     THR1,
-  int     THR2))
-
+IPPAPI(IppStatus, ippiFilterDeblocking8x8VerEdge_MPEG4_8u_C1IR,
+       (Ipp8u * pSrcDst, int step, int QP, int THR1, int THR2))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5062,15 +4568,9 @@ IPPAPI(IppStatus, ippiFilterDeblocking8x8VerEdge_MPEG4_8u_C1IR, (
 //    ippStsNullPtrErr One of the specified pointers is NULL.
 */
 
-IPPAPI(IppStatus, ippiFilterDeringingThreshold_MPEG4_8u_P3R, (
-  const Ipp8u*  pSrcY,
-        int     stepY,
-  const Ipp8u*  pSrcCb,
-        int     stepCb,
-  const Ipp8u*  pSrcCr,
-        int     stepCr,
-        int     threshold[6]))
-
+IPPAPI(IppStatus, ippiFilterDeringingThreshold_MPEG4_8u_P3R,
+       (const Ipp8u* pSrcY, int stepY, const Ipp8u* pSrcCb, int stepCb,
+        const Ipp8u* pSrcCr, int stepCr, int threshold[6]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -5094,13 +4594,9 @@ IPPAPI(IppStatus, ippiFilterDeringingThreshold_MPEG4_8u_P3R, (
 //    ippStsQPErr       QP is out of range [1, 31].
 */
 
-IPPAPI(IppStatus, ippiFilterDeringingSmooth8x8_MPEG4_8u_C1R, (
-  const Ipp8u*  pSrc,
-        int     srcStep,
-        Ipp8u*  pDst,
-        int     dstStep,
-        int     QP,
-        int     threshold))
+IPPAPI(IppStatus, ippiFilterDeringingSmooth8x8_MPEG4_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep, int QP,
+        int threshold))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5126,12 +4622,8 @@ IPPAPI(IppStatus, ippiFilterDeringingSmooth8x8_MPEG4_8u_C1R, (
 //    ippStsBitOffsetErr *pBitOffset is out of the range [0, 7].
 */
 
-IPPAPI(IppStatus, ippiEncodeDCIntra_MPEG4_16s1u, (
-    Ipp16s   dcCoeff,
-    Ipp8u**  ppBitStream,
-    int*     pBitOffset,
-    int      blockType))
-
+IPPAPI(IppStatus, ippiEncodeDCIntra_MPEG4_16s1u,
+       (Ipp16s dcCoeff, Ipp8u** ppBitStream, int* pBitOffset, int blockType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5152,11 +4644,13 @@ IPPAPI(IppStatus, ippiEncodeDCIntra_MPEG4_16s1u, (
 //                     when decoding DCT coefficients otherwise the RVLC tables
 //                     B.23, B.24 and B.25 [ISO14496] will be used.
 //    noDCFlag         This is a flag which when set to '0' indicates that
-//                     pCoeffs will be encoded starting with zero element otherwise
+//                     pCoeffs will be encoded starting with zero element
+otherwise
 //                     with first
 //    scan             Type of the scan, takes one of the following values:
 //                       IPPVC_SCAN_NONE, indicating do not perform scan,
-//                       IPPVC_SCAN_ZIGZAG, indicating the classical zigzag scan,
+//                       IPPVC_SCAN_ZIGZAG, indicating the classical zigzag
+scan,
 //                       IPPVC_SCAN_HORIZONTAL - alternate-horizontal scan,
 //                       IPPVC_SCAN_VERTICAL - alternate-vertical scan
 //
@@ -5166,15 +4660,9 @@ IPPAPI(IppStatus, ippiEncodeDCIntra_MPEG4_16s1u, (
 //    ippStsBitOffsetErr *pBitOffset is out of the range [0, 7].
 */
 
-IPPAPI(IppStatus, ippiEncodeCoeffsIntra_MPEG4_16s1u, (
-    const Ipp16s*  pCoeffs,
-    Ipp8u**        ppBitStream,
-    int*           pBitOffset,
-    int            countNonZero,
-    int            rvlcFlag,
-    int            noDCFlag,
-    int            scan))
-
+IPPAPI(IppStatus, ippiEncodeCoeffsIntra_MPEG4_16s1u,
+       (const Ipp16s* pCoeffs, Ipp8u** ppBitStream, int* pBitOffset,
+        int countNonZero, int rvlcFlag, int noDCFlag, int scan))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5198,7 +4686,8 @@ IPPAPI(IppStatus, ippiEncodeCoeffsIntra_MPEG4_16s1u, (
 //                     B.23, B.24 and B.25 [ISO14496] will be used.
 //    scan             Type of the scan, takes one of the following values:
 //                       IPPVC_SCAN_NONE, indicating do not perform scan,
-//                       IPPVC_SCAN_ZIGZAG, indicating the classical zigzag scan,
+//                       IPPVC_SCAN_ZIGZAG, indicating the classical zigzag
+scan,
 //                       IPPVC_SCAN_VERTICAL - alternate-vertical scan
 //
 //  Returns:
@@ -5207,14 +4696,9 @@ IPPAPI(IppStatus, ippiEncodeCoeffsIntra_MPEG4_16s1u, (
 //    ippStsBitOffsetErr *pBitOffset is out of the range [0, 7].
 */
 
-IPPAPI(IppStatus, ippiEncodeCoeffsInter_MPEG4_16s1u, (
-    const Ipp16s*  pCoeffs,
-    Ipp8u**        ppBitStream,
-    int*           pBitOffset,
-    int            countNonZero,
-    int            rvlcFlag,
-    int            scan))
-
+IPPAPI(IppStatus, ippiEncodeCoeffsInter_MPEG4_16s1u,
+       (const Ipp16s* pCoeffs, Ipp8u** ppBitStream, int* pBitOffset,
+        int countNonZero, int rvlcFlag, int scan))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5243,12 +4727,8 @@ IPPAPI(IppStatus, ippiEncodeCoeffsInter_MPEG4_16s1u, (
 //                       DC stream processing.
 */
 
-IPPAPI(IppStatus, ippiDecodeDCIntra_MPEG4_1u16s, (
-    Ipp8u**  ppBitStream,
-    int*     pBitOffset,
-    Ipp16s*  pDst,
-    int      blockType))
-
+IPPAPI(IppStatus, ippiDecodeDCIntra_MPEG4_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pDst, int blockType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5276,8 +4756,10 @@ IPPAPI(IppStatus, ippiDecodeDCIntra_MPEG4_1u16s, (
 //                     pCoeffs will be set starting with zero element otherwise
 //                     with first
 //    scan             Type of the scan, takes one of the following values:
-//                       IPPVC_SCAN_NONE, indicating do not perform inverse scan,
-//                       IPPVC_SCAN_ZIGZAG, indicating the classical zigzag scan,
+//                       IPPVC_SCAN_NONE, indicating do not perform inverse
+scan,
+//                       IPPVC_SCAN_ZIGZAG, indicating the classical zigzag
+scan,
 //                       IPPVC_SCAN_HORIZONTAL - alternate-horizontal scan,
 //                       IPPVC_SCAN_VERTICAL - alternate-vertical scan
 //
@@ -5289,15 +4771,9 @@ IPPAPI(IppStatus, ippiDecodeDCIntra_MPEG4_1u16s, (
 //                       DC stream processing.
 */
 
-IPPAPI(IppStatus, ippiDecodeCoeffsIntra_MPEG4_1u16s, (
-    Ipp8u**  ppBitStream,
-    int*     pBitOffset,
-    Ipp16s*  pCoeffs,
-    int*     pIndxLastNonZero,
-    int      rvlcFlag,
-    int      noDCFlag,
-    int      scan))
-
+IPPAPI(IppStatus, ippiDecodeCoeffsIntra_MPEG4_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pCoeffs,
+        int* pIndxLastNonZero, int rvlcFlag, int noDCFlag, int scan))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5329,13 +4805,9 @@ IPPAPI(IppStatus, ippiDecodeCoeffsIntra_MPEG4_1u16s, (
 //                       DC stream processing.
 */
 
-IPPAPI(IppStatus, ippiDecodeCoeffsIntraRVLCBack_MPEG4_1u16s, (
-    Ipp8u**  ppBitStream,
-    int*     pBitOffset,
-    Ipp16s*  pCoeffs,
-    int*     pIndxLastNonZero,
-    int      noDCFlag))
-
+IPPAPI(IppStatus, ippiDecodeCoeffsIntraRVLCBack_MPEG4_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pCoeffs,
+        int* pIndxLastNonZero, int noDCFlag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5360,8 +4832,10 @@ IPPAPI(IppStatus, ippiDecodeCoeffsIntraRVLCBack_MPEG4_1u16s, (
 //                     when decoding DCT coefficients otherwise the RVLC tables
 //                     B.23, B.24 and B.25 [ISO14496] will be used.
 //    scan             Type of the scan, takes one of the following values:
-//                       IPPVC_SCAN_NONE, indicating do not perform inverse scan,
-//                       IPPVC_SCAN_ZIGZAG, indicating the classical zigzag scan,
+//                       IPPVC_SCAN_NONE, indicating do not perform inverse
+scan,
+//                       IPPVC_SCAN_ZIGZAG, indicating the classical zigzag
+scan,
 //                       IPPVC_SCAN_VERTICAL - alternate-vertical scan
 //
 //  Returns:
@@ -5372,15 +4846,14 @@ IPPAPI(IppStatus, ippiDecodeCoeffsIntraRVLCBack_MPEG4_1u16s, (
 //                       DC stream processing.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeCoeffsInter_MPEG4_1u16s, (
-    Ipp8u**  ppBitStream,
-    int*     pBitOffset,
-    Ipp16s*  pCoeffs,
-    int*     pIndxLastNonZero,
-    int      rvlcFlag,
-    int      scan))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeCoeffsInter_MPEG4_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pCoeffs,
+        int* pIndxLastNonZero, int rvlcFlag, int scan))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5409,13 +4882,14 @@ IPPAPI(IppStatus, ippiDecodeCoeffsInter_MPEG4_1u16s, (
 //                       DC stream processing.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeCoeffsInterRVLCBack_MPEG4_1u16s, (
-    Ipp8u**  ppBitStream,
-    int*     pBitOffset,
-    Ipp16s*  pCoeffs,
-    int*     pIndxLastNonZero))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeCoeffsInterRVLCBack_MPEG4_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pCoeffs,
+        int* pIndxLastNonZero))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5440,7 +4914,8 @@ IPPAPI(IppStatus, ippiDecodeCoeffsInterRVLCBack_MPEG4_1u16s, (
 //                     when decoding DCT coefficients otherwise the RVLC tables
 //                     B.23, B.24 and B.25 [ISO14496] will be used.
 //    scan             Type of the scan, takes one of the following values:
-//                       IPPVC_SCAN_ZIGZAG, indicating the classical zigzag scan,
+//                       IPPVC_SCAN_ZIGZAG, indicating the classical zigzag
+scan,
 //                       IPPVC_SCAN_VERTICAL - alternate-vertical scan
 //    pQuantInvInterSpec Pointer to the structure IppiQuantInterSpec_16s which
 //    QP               Quantization parameter.
@@ -5455,16 +4930,10 @@ IPPAPI(IppStatus, ippiDecodeCoeffsInterRVLCBack_MPEG4_1u16s, (
 //                       range [1; 2^(bitsPerPixel - 3) - 1]
 */
 
-IPPAPI(IppStatus, ippiReconstructCoeffsInter_MPEG4_1u16s, (
-    Ipp8u**                            ppBitStream,
-    int*                               pBitOffset,
-    Ipp16s*                            pCoeffs,
-    int*                               pIndxLastNonZero,
-    int                                rvlcFlag,
-    int                                scan,
-    const IppiQuantInvInterSpec_MPEG4* pQuantInvInterSpec,
-    int                                QP))
-
+IPPAPI(IppStatus, ippiReconstructCoeffsInter_MPEG4_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pCoeffs,
+        int* pIndxLastNonZero, int rvlcFlag, int scan,
+        const IppiQuantInvInterSpec_MPEG4* pQuantInvInterSpec, int QP))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5491,17 +4960,13 @@ IPPAPI(IppStatus, ippiReconstructCoeffsInter_MPEG4_1u16s, (
 //                       the range [4; 12].
 */
 
-IPPAPI(IppStatus, ippiQuantInvIntraInit_MPEG4, (
-    const Ipp8u*                 pQuantMatrix,
-    IppiQuantInvIntraSpec_MPEG4* pSpec,
-    int                          bitsPerPixel))
+IPPAPI(IppStatus, ippiQuantInvIntraInit_MPEG4,
+       (const Ipp8u* pQuantMatrix, IppiQuantInvIntraSpec_MPEG4* pSpec,
+        int bitsPerPixel))
 
-IPPAPI(IppStatus, ippiQuantInvInterInit_MPEG4, (
-    const Ipp8u*                 pQuantMatrix,
-    IppiQuantInvInterSpec_MPEG4* pSpec,
-    int                          bitsPerPixel))
-
-
+IPPAPI(IppStatus, ippiQuantInvInterInit_MPEG4,
+       (const Ipp8u* pQuantMatrix, IppiQuantInvInterSpec_MPEG4* pSpec,
+        int bitsPerPixel))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5520,13 +4985,9 @@ IPPAPI(IppStatus, ippiQuantInvInterInit_MPEG4, (
 //    ippStsNullPtrErr   Indicates an error when pointer pSpecSize is NULL.
 */
 
-IPPAPI(IppStatus, ippiQuantInvIntraGetSize_MPEG4, (
-    int* pSpecSize))
+IPPAPI(IppStatus, ippiQuantInvIntraGetSize_MPEG4, (int* pSpecSize))
 
-IPPAPI(IppStatus, ippiQuantInvInterGetSize_MPEG4, (
-    int* pSpecSize))
-
-
+IPPAPI(IppStatus, ippiQuantInvInterGetSize_MPEG4, (int* pSpecSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5557,20 +5018,13 @@ IPPAPI(IppStatus, ippiQuantInvInterGetSize_MPEG4, (
 //                       range [1; 2^(bitsPerPixel - 3) - 1]
 */
 
-IPPAPI(IppStatus, ippiQuantInvIntra_MPEG4_16s_C1I, (
-    Ipp16s*                            pCoeffs,
-    int                                indxLastNonZero,
-    const IppiQuantInvIntraSpec_MPEG4* pSpec,
-    int                                QP,
-    int                                blockType))
+IPPAPI(IppStatus, ippiQuantInvIntra_MPEG4_16s_C1I,
+       (Ipp16s * pCoeffs, int indxLastNonZero,
+        const IppiQuantInvIntraSpec_MPEG4* pSpec, int QP, int blockType))
 
-IPPAPI(IppStatus, ippiQuantInvInter_MPEG4_16s_C1I, (
-    Ipp16s*                            pCoeffs,
-    int                                indxLastNonZero,
-    const IppiQuantInvInterSpec_MPEG4* pSpec,
-    int                                QP))
-
-
+IPPAPI(IppStatus, ippiQuantInvInter_MPEG4_16s_C1I,
+       (Ipp16s * pCoeffs, int indxLastNonZero,
+        const IppiQuantInvInterSpec_MPEG4* pSpec, int QP))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5597,17 +5051,13 @@ IPPAPI(IppStatus, ippiQuantInvInter_MPEG4_16s_C1I, (
 //                       the range [4; 12].
 */
 
-IPPAPI(IppStatus, ippiQuantIntraInit_MPEG4, (
-    const Ipp8u*              pQuantMatrix,
-    IppiQuantIntraSpec_MPEG4* pSpec,
-    int                       bitsPerPixel))
+IPPAPI(IppStatus, ippiQuantIntraInit_MPEG4,
+       (const Ipp8u* pQuantMatrix, IppiQuantIntraSpec_MPEG4* pSpec,
+        int bitsPerPixel))
 
-IPPAPI(IppStatus, ippiQuantInterInit_MPEG4, (
-    const Ipp8u*              pQuantMatrix,
-    IppiQuantInterSpec_MPEG4* pSpec,
-    int                       bitsPerPixel))
-
-
+IPPAPI(IppStatus, ippiQuantInterInit_MPEG4,
+       (const Ipp8u* pQuantMatrix, IppiQuantInterSpec_MPEG4* pSpec,
+        int bitsPerPixel))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5626,13 +5076,9 @@ IPPAPI(IppStatus, ippiQuantInterInit_MPEG4, (
 //    ippStsNullPtrErr   Indicates an error when pointer pSpecSize is NULL.
 */
 
-IPPAPI(IppStatus, ippiQuantIntraGetSize_MPEG4, (
-    int* pSpecSize))
+IPPAPI(IppStatus, ippiQuantIntraGetSize_MPEG4, (int* pSpecSize))
 
-IPPAPI(IppStatus, ippiQuantInterGetSize_MPEG4, (
-    int* pSpecSize))
-
-
+IPPAPI(IppStatus, ippiQuantInterGetSize_MPEG4, (int* pSpecSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5663,18 +5109,13 @@ IPPAPI(IppStatus, ippiQuantInterGetSize_MPEG4, (
 //                       range [1; 2^(bitsPerPixel - 3) - 1]
 */
 
-IPPAPI(IppStatus, ippiQuantIntra_MPEG4_16s_C1I, (
-    Ipp16s*                         pCoeffs,
-    const IppiQuantIntraSpec_MPEG4* pSpec,
-    int                             QP,
-    int*                            pCountNonZero,
-    int                             blockType))
+IPPAPI(IppStatus, ippiQuantIntra_MPEG4_16s_C1I,
+       (Ipp16s * pCoeffs, const IppiQuantIntraSpec_MPEG4* pSpec, int QP,
+        int* pCountNonZero, int blockType))
 
-IPPAPI(IppStatus, ippiQuantInter_MPEG4_16s_C1I, (
-    Ipp16s*                         pCoeffs,
-    const IppiQuantInterSpec_MPEG4* pSpec,
-    int                             QP,
-    int*                            pCountNonZero))
+IPPAPI(IppStatus, ippiQuantInter_MPEG4_16s_C1I,
+       (Ipp16s * pCoeffs, const IppiQuantInterSpec_MPEG4* pSpec, int QP,
+        int* pCountNonZero))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5714,20 +5155,11 @@ IPPAPI(IppStatus, ippiQuantInter_MPEG4_16s_C1I, (
 //                        warpingAccuracy are out of valid diapason.
 */
 
-IPPAPI(IppStatus, ippiWarpInit_MPEG4, (
-    IppiWarpSpec_MPEG4* pSpec,
-    const int*          pDU,
-    const int*          pDV,
-    int                 numWarpingPoints,
-    int                 spriteType,
-    int                 warpingAccuracy,
-    int                 roundingType,
-    int                 quarterSample,
-    int                 fcode,
-    const IppiRect*     spriteRect,
-    const IppiRect*     vopRect))
-
-
+IPPAPI(IppStatus, ippiWarpInit_MPEG4,
+       (IppiWarpSpec_MPEG4 * pSpec, const int* pDU, const int* pDV,
+        int numWarpingPoints, int spriteType, int warpingAccuracy,
+        int roundingType, int quarterSample, int fcode,
+        const IppiRect* spriteRect, const IppiRect* vopRect))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5744,9 +5176,7 @@ IPPAPI(IppStatus, ippiWarpInit_MPEG4, (
 //    ippStsNullPtrErr   Indicates an error when pointer pSpecSize is NULL.
 */
 
-IPPAPI(IppStatus, ippiWarpGetSize_MPEG4, (
-    int*  pSpecSize))
-
+IPPAPI(IppStatus, ippiWarpGetSize_MPEG4, (int* pSpecSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5768,14 +5198,9 @@ IPPAPI(IppStatus, ippiWarpGetSize_MPEG4, (
 //    ippStsNullPtrErr   Indicates an error when at least one pointer is NULL.
 */
 
-IPPAPI(IppStatus, ippiWarpLuma_MPEG4_8u_C1R, (
-    const Ipp8u*              pSrcY,
-    int                       srcStepY,
-    Ipp8u*                    pDstY,
-    int                       dstStepY,
-    const IppiRect*           dstRect,
-    const IppiWarpSpec_MPEG4* pSpec))
-
+IPPAPI(IppStatus, ippiWarpLuma_MPEG4_8u_C1R,
+       (const Ipp8u* pSrcY, int srcStepY, Ipp8u* pDstY, int dstStepY,
+        const IppiRect* dstRect, const IppiWarpSpec_MPEG4* pSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5801,20 +5226,10 @@ IPPAPI(IppStatus, ippiWarpLuma_MPEG4_8u_C1R, (
 //    ippStsNullPtrErr   Indicates an error when at least one pointer is NULL.
 */
 
-IPPAPI(IppStatus, ippiWarpChroma_MPEG4_8u_P2R, (
-    const Ipp8u*              pSrcCb,
-    int                       srcStepCb,
-    const Ipp8u*              pSrcCr,
-    int                       srcStepCr,
-    Ipp8u*                    pDstCb,
-    int                       dstStepCb,
-    Ipp8u*                    pDstCr,
-    int                       dstStepCr,
-    const IppiRect*           dstRect,
-    const IppiWarpSpec_MPEG4* pSpec))
-
-
-
+IPPAPI(IppStatus, ippiWarpChroma_MPEG4_8u_P2R,
+       (const Ipp8u* pSrcCb, int srcStepCb, const Ipp8u* pSrcCr, int srcStepCr,
+        Ipp8u* pDstCb, int dstStepCb, Ipp8u* pDstCr, int dstStepCr,
+        const IppiRect* dstRect, const IppiWarpSpec_MPEG4* pSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5834,14 +5249,9 @@ IPPAPI(IppStatus, ippiWarpChroma_MPEG4_8u_P2R, (
 //    ippStsNullPtrErr   Indicates an error when at least one pointer is NULL.
 */
 
-IPPAPI(IppStatus, ippiCalcGlobalMV_MPEG4, (
-    int                        xOffset,
-    int                        yOffset,
-    IppMotionVector*           pGMV,
-    const IppiWarpSpec_MPEG4*  pSpec))
-
-
-
+IPPAPI(IppStatus, ippiCalcGlobalMV_MPEG4,
+       (int xOffset, int yOffset, IppMotionVector* pGMV,
+        const IppiWarpSpec_MPEG4* pSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5864,13 +5274,9 @@ IPPAPI(IppStatus, ippiCalcGlobalMV_MPEG4, (
 //                       of valid diapason.
 */
 
-IPPAPI(IppStatus, ippiChangeSpriteBrightness_MPEG4_8u_C1IR, (
-    Ipp8u*  pSrcDst,
-    int     srcDstStep,
-    int     width,
-    int     height,
-    int     brightnessChangeFactor))
-
+IPPAPI(IppStatus, ippiChangeSpriteBrightness_MPEG4_8u_C1IR,
+       (Ipp8u * pSrcDst, int srcDstStep, int width, int height,
+        int brightnessChangeFactor))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5895,30 +5301,17 @@ IPPAPI(IppStatus, ippiChangeSpriteBrightness_MPEG4_8u_C1IR, (
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiCopy8x8QP_MPEG4_8u_C1R, (
-    const Ipp8u* pSrc,
-    int          srcStep,
-    Ipp8u*       pDst,
-    int          dstStep,
-    int          acc,
-    int          rounding))
+IPPAPI(IppStatus, ippiCopy8x8QP_MPEG4_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep, int acc,
+        int rounding))
 
-IPPAPI(IppStatus, ippiCopy16x8QP_MPEG4_8u_C1R, (
-    const Ipp8u* pSrc,
-    int          srcStep,
-    Ipp8u*       pDst,
-    int          dstStep,
-    int          acc,
-    int          rounding))
+IPPAPI(IppStatus, ippiCopy16x8QP_MPEG4_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep, int acc,
+        int rounding))
 
-IPPAPI(IppStatus, ippiCopy16x16QP_MPEG4_8u_C1R, (
-    const Ipp8u* pSrc,
-    int          srcStep,
-    Ipp8u*       pDst,
-    int          dstStep,
-    int          acc,
-    int          rounding))
-
+IPPAPI(IppStatus, ippiCopy16x16QP_MPEG4_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep, int acc,
+        int rounding))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5946,43 +5339,28 @@ IPPAPI(IppStatus, ippiCopy16x16QP_MPEG4_8u_C1R, (
 //    ippStsNullPtrErr  One of the specified pointers is NULL.
 */
 
-IPPAPI(IppStatus, ippiOBMC8x8HP_MPEG4_8u_C1R, (
-  const Ipp8u*              pSrc,
-        int                 srcStep,
-        Ipp8u*              pDst,
-        int                 dstStep,
-  const IppMotionVector*    pMVCur,
-  const IppMotionVector*    pMVLeft,
-  const IppMotionVector*    pMVRight,
-  const IppMotionVector*    pMVAbove,
-  const IppMotionVector*    pMVBelow,
-        int                 rounding))
+IPPAPI(IppStatus, ippiOBMC8x8HP_MPEG4_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep,
+        const IppMotionVector* pMVCur, const IppMotionVector* pMVLeft,
+        const IppMotionVector* pMVRight, const IppMotionVector* pMVAbove,
+        const IppMotionVector* pMVBelow, int rounding))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiOBMC16x16HP_MPEG4_8u_C1R, (
-  const Ipp8u*              pSrc,
-        int                 srcStep,
-        Ipp8u*              pDst,
-        int                 dstStep,
-  const IppMotionVector*    pMVCur,
-  const IppMotionVector*    pMVLeft,
-  const IppMotionVector*    pMVRight,
-  const IppMotionVector*    pMVAbove,
-  const IppMotionVector*    pMVBelow,
-        int                 rounding))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiOBMC16x16HP_MPEG4_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep,
+        const IppMotionVector* pMVCur, const IppMotionVector* pMVLeft,
+        const IppMotionVector* pMVRight, const IppMotionVector* pMVAbove,
+        const IppMotionVector* pMVBelow, int rounding))
 
-IPPAPI(IppStatus, ippiOBMC8x8QP_MPEG4_8u_C1R, (
-  const Ipp8u*              pSrc,
-        int                 srcStep,
-        Ipp8u*              pDst,
-        int                 dstStep,
-  const IppMotionVector*    pMVCur,
-  const IppMotionVector*    pMVLeft,
-  const IppMotionVector*    pMVRight,
-  const IppMotionVector*    pMVAbove,
-  const IppMotionVector*    pMVBelow,
-        int                 rounding))
-
+IPPAPI(IppStatus, ippiOBMC8x8QP_MPEG4_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep,
+        const IppMotionVector* pMVCur, const IppMotionVector* pMVLeft,
+        const IppMotionVector* pMVRight, const IppMotionVector* pMVAbove,
+        const IppMotionVector* pMVBelow, int rounding))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //                     H.264 Video Decoder Functions
@@ -6009,11 +5387,9 @@ IPPAPI(IppStatus, ippiOBMC8x8QP_MPEG4_8u_C1R, (
 //    ippStsOutOfRangeErr  predMode is out of range [0,8]
 */
 
-IPPAPI(IppStatus, ippiPredictIntra_4x4_H264_8u_C1IR, (
-  Ipp8u*                    pSrcDst,
-  Ipp32s                    srcdstStep,
-  IppIntra4x4PredMode_H264  predMode,
-  Ipp32s                    availability))
+IPPAPI(IppStatus, ippiPredictIntra_4x4_H264_8u_C1IR,
+       (Ipp8u * pSrcDst, Ipp32s srcdstStep, IppIntra4x4PredMode_H264 predMode,
+        Ipp32s availability))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6036,12 +5412,9 @@ IPPAPI(IppStatus, ippiPredictIntra_4x4_H264_8u_C1IR, (
 //    ippStsOutOfRangeErr  predMode is out of range [0,3]
 */
 
-IPPAPI(IppStatus, ippiPredictIntra_16x16_H264_8u_C1IR, (
-  Ipp8u*                     pSrcDst,
-  Ipp32s                     srcdstStep,
-  IppIntra16x16PredMode_H264 predMode,
-  Ipp32s                     availability))
-
+IPPAPI(IppStatus, ippiPredictIntra_16x16_H264_8u_C1IR,
+       (Ipp8u * pSrcDst, Ipp32s srcdstStep, IppIntra16x16PredMode_H264 predMode,
+        Ipp32s availability))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6064,12 +5437,9 @@ IPPAPI(IppStatus, ippiPredictIntra_16x16_H264_8u_C1IR, (
 //    ippStsOutOfRangeErr  predMode is out of range [0,3]
 */
 
-IPPAPI(IppStatus, ippiPredictIntraChroma8x8_H264_8u_C1IR, (
-  Ipp8u*                      pSrcDst,
-  Ipp32s                      srcdstStep,
-  IppIntraChromaPredMode_H264 predMode,
-  Ipp32s                      availability))
-
+IPPAPI(IppStatus, ippiPredictIntraChroma8x8_H264_8u_C1IR,
+       (Ipp8u * pSrcDst, Ipp32s srcdstStep,
+        IppIntraChromaPredMode_H264 predMode, Ipp32s availability))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6091,14 +5461,11 @@ IPPAPI(IppStatus, ippiPredictIntraChroma8x8_H264_8u_C1IR, (
 //    ippStsOutOfRangeErr  QP is less than 1 or greater than 51
 */
 
-IPPAPI(IppStatus, ippiTransformDequantLumaDC_H264_16s_C1I, (
-  Ipp16s* pSrcDst,
-  Ipp32s  QP))
+IPPAPI(IppStatus, ippiTransformDequantLumaDC_H264_16s_C1I,
+       (Ipp16s * pSrcDst, Ipp32s QP))
 
-IPPAPI(IppStatus, ippiTransformDequantChromaDC_H264_16s_C1I, (
-  Ipp16s* pSrcDst,
-  Ipp32s  QP))
-
+IPPAPI(IppStatus, ippiTransformDequantChromaDC_H264_16s_C1I,
+       (Ipp16s * pSrcDst, Ipp32s QP))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6127,14 +5494,8 @@ IPPAPI(IppStatus, ippiTransformDequantChromaDC_H264_16s_C1I, (
 //    ippStsStepErr        step is less than 8 respectively
 */
 
-
-IPPAPI(IppStatus, ippiDequantTransformResidual_H264_16s_C1I, (
-  Ipp16s* pSrcDst,
-  Ipp32s  step,
-  Ipp16s* pDC,
-  Ipp32s  AC,
-  Ipp32s  QP))
-
+IPPAPI(IppStatus, ippiDequantTransformResidual_H264_16s_C1I,
+       (Ipp16s * pSrcDst, Ipp32s step, Ipp16s* pDC, Ipp32s AC, Ipp32s QP))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6151,7 +5512,8 @@ IPPAPI(IppStatus, ippiDequantTransformResidual_H264_16s_C1I, (
 //  Parameters:
 //    pPred       -  pointer to the reference 4x4 block, which is used for intra
 //                                       prediction or motion compensation.
-//    pSrcDst     -  pointer to the initial coefficients and resultant residuals (4x4
+//    pSrcDst     -  pointer to the initial coefficients and resultant residuals
+(4x4
 //                                       block) - array of size 16.
 //    pDC         -  pointer to the DC coefficient. In the case of Intra 4x4
 //                                       macroblock type pDC is set to NULL.
@@ -6159,7 +5521,8 @@ IPPAPI(IppStatus, ippiDequantTransformResidual_H264_16s_C1I, (
 //    PredStep    -  reference frame step in bytes.
 //    DstStep     -  destination frame step in bytes.
 //    QP          -  quantization parameter
-//    AC                  -  flag that is not equal to zero, if at least one AC coefficient
+//    AC                  -  flag that is not equal to zero, if at least one AC
+coefficient
 //                                       exists, and is equal to zero otherwise.
 //
 //  Returns:
@@ -6169,17 +5532,14 @@ IPPAPI(IppStatus, ippiDequantTransformResidual_H264_16s_C1I, (
 //
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDequantTransformResidualAndAdd_H264_16s_C1I,(
-    const Ipp8u*  pPred,
-          Ipp16s* pSrcDst,
-          Ipp16s* pDC,
-          Ipp8u*  pDst,
-          Ipp32s  PredStep,
-          Ipp32s  DstStep,
-          Ipp32s  QP,
-          Ipp32s  AC))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDequantTransformResidualAndAdd_H264_16s_C1I,
+       (const Ipp8u* pPred, Ipp16s* pSrcDst, Ipp16s* pDC, Ipp8u* pDst,
+        Ipp32s PredStep, Ipp32s DstStep, Ipp32s QP, Ipp32s AC))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6211,49 +5571,40 @@ IPPAPI(IppStatus, ippiDequantTransformResidualAndAdd_H264_16s_C1I,(
 //    ippStsNullPtrErr     One of the pointers is NULL
 */
 
-IPPAPI(IppStatus, ippiFilterDeblockingLuma_VerEdge_H264_8u_C1IR, (
-        Ipp8u*    pSrcDst,
-        Ipp32s    srcdstStep,
-  const Ipp8u*    pAlpha,
-  const Ipp8u*    pBeta,
-  const Ipp8u*    pThresholds,
-  const Ipp8u*    pBs))
+IPPAPI(IppStatus, ippiFilterDeblockingLuma_VerEdge_H264_8u_C1IR,
+       (Ipp8u * pSrcDst, Ipp32s srcdstStep, const Ipp8u* pAlpha,
+        const Ipp8u* pBeta, const Ipp8u* pThresholds, const Ipp8u* pBs))
 
-  /* ///////////////////////////////////////////////////////////////////////////
-  //  Name:
-  //    ippiFilterDeblockingLuma_VerEdge_MBAFF_H264_8u_C1IR
-  //
-  //  Purpose:
-  //     Performs deblocking filtering on the vertical edges of the
-  //     luma macroblock(16x16) in accordance with 8.7.2. of H.264 standard
-  //
-  //  Parameters:
-  //    pSrcDst    - pointer to the initial and resultant coefficients,
-  //    srcdstStep - step of the arrays,
-  //    nAlpha     - Alpha Threshold (value for external vertical edge)
-  //    nBeta      - Beta  Threshold (value for external vertical edge)
-  //    pTresholds - array of size 16 of Thresholds
-  //    pBS        - array of size 16 of BS parameters
-  //
-  //
-  //  Notes:
-  //    H.264 standard: JVT-G050. ITU-T Recommendation
-  //    and Final Draft International Standard of Joint Video Specification
-  //    (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
-  //
-  //  Returns:
-  //    ippStsNoErr          No error
-  //    ippStsNullPtrErr     One of the pointers is NULL
-  */
+/* ///////////////////////////////////////////////////////////////////////////
+//  Name:
+//    ippiFilterDeblockingLuma_VerEdge_MBAFF_H264_8u_C1IR
+//
+//  Purpose:
+//     Performs deblocking filtering on the vertical edges of the
+//     luma macroblock(16x16) in accordance with 8.7.2. of H.264 standard
+//
+//  Parameters:
+//    pSrcDst    - pointer to the initial and resultant coefficients,
+//    srcdstStep - step of the arrays,
+//    nAlpha     - Alpha Threshold (value for external vertical edge)
+//    nBeta      - Beta  Threshold (value for external vertical edge)
+//    pTresholds - array of size 16 of Thresholds
+//    pBS        - array of size 16 of BS parameters
+//
+//
+//  Notes:
+//    H.264 standard: JVT-G050. ITU-T Recommendation
+//    and Final Draft International Standard of Joint Video Specification
+//    (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
+//
+//  Returns:
+//    ippStsNoErr          No error
+//    ippStsNullPtrErr     One of the pointers is NULL
+*/
 
-IPPAPI(IppStatus, ippiFilterDeblockingLuma_VerEdge_MBAFF_H264_8u_C1IR, (
-        Ipp8u*    pSrcDst,
-        Ipp32s    srcdstStep,
-        Ipp32u    nAlpha,
-        Ipp32u    nBeta,
-  const Ipp8u*    pThresholds,
-  const Ipp8u*    pBs))
-
+IPPAPI(IppStatus, ippiFilterDeblockingLuma_VerEdge_MBAFF_H264_8u_C1IR,
+       (Ipp8u * pSrcDst, Ipp32s srcdstStep, Ipp32u nAlpha, Ipp32u nBeta,
+        const Ipp8u* pThresholds, const Ipp8u* pBs))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6285,14 +5636,9 @@ IPPAPI(IppStatus, ippiFilterDeblockingLuma_VerEdge_MBAFF_H264_8u_C1IR, (
 //    ippStsNullPtrErr     One of the pointers is NULL
 */
 
-IPPAPI(IppStatus, ippiFilterDeblockingLuma_HorEdge_H264_8u_C1IR, (
-        Ipp8u*    pSrcDst,
-        Ipp32s    srcdstStep,
-  const Ipp8u*    pAlpha,
-  const Ipp8u*    pBeta,
-  const Ipp8u*    pThresholds,
-  const Ipp8u*    pBS))
-
+IPPAPI(IppStatus, ippiFilterDeblockingLuma_HorEdge_H264_8u_C1IR,
+       (Ipp8u * pSrcDst, Ipp32s srcdstStep, const Ipp8u* pAlpha,
+        const Ipp8u* pBeta, const Ipp8u* pThresholds, const Ipp8u* pBS))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6324,13 +5670,9 @@ IPPAPI(IppStatus, ippiFilterDeblockingLuma_HorEdge_H264_8u_C1IR, (
 //    ippStsNullPtrErr     One of the pointers is NULL
 */
 
-IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_H264_8u_C1IR, (
-        Ipp8u*       pSrcDst,
-        Ipp32s       srcdstStep,
-  const Ipp8u*       pAlpha,
-  const Ipp8u*       pBeta,
-  const Ipp8u*       pThresholds,
-  const Ipp8u*       pBS))
+IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_H264_8u_C1IR,
+       (Ipp8u * pSrcDst, Ipp32s srcdstStep, const Ipp8u* pAlpha,
+        const Ipp8u* pBeta, const Ipp8u* pThresholds, const Ipp8u* pBS))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6338,17 +5680,22 @@ IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_H264_8u_C1IR, (
 //
 //  Purpose:
 //    Performs deblocking filtering on the vertical edges of the
-//    NV12 chroma macroblock(16x8) in accordance with 8.7.2. of the H.264 standard
+//    NV12 chroma macroblock(16x8) in accordance with 8.7.2. of the H.264
+standard
 //
 //  Parameters:
-//    pSrcDst    - pointer to the initial and resultant coefficients in NV12 format (UV...UV),
+//    pSrcDst    - pointer to the initial and resultant coefficients in NV12
+format (UV...UV),
 //    srcdstStep - step of the arrays,
 //    pAlpha     - array of size 2 of Alpha Thresholds(values for
-//                 external and internal vertical edge) the same Alpha Thresholds for both U and V planes
+//                 external and internal vertical edge) the same Alpha
+Thresholds for both U and V planes
 //    pBeta      - array of size 2 of Beta  Thresholds(values for
-//                 external and internal vertical edge) the same Beta Thresholds for both U and V planes
+//                 external and internal vertical edge) the same Beta Thresholds
+for both U and V planes
 //    pTresholds - array of size 8 of Thresholds (TC0)(values for
-//                 the left edge of each 4x2 block) the same Thresholds for both U and V planes
+//                 the left edge of each 4x2 block) the same Thresholds for both
+U and V planes
 //    pBS        - array of size 16 of BS parameters
 //
 //
@@ -6362,14 +5709,9 @@ IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_H264_8u_C1IR, (
 //    ippStsNullPtrErr     One of the pointers is NULL
 */
 
-IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_H264_8u_C2IR, (
-        Ipp8u*       pSrcDst,
-        Ipp32u       srcdstStep,
-  const Ipp8u*       pAlpha,
-  const Ipp8u*       pBeta,
-  const Ipp8u*       pThresholds,
-  const Ipp8u*       pBS))
-
+IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_H264_8u_C2IR,
+       (Ipp8u * pSrcDst, Ipp32u srcdstStep, const Ipp8u* pAlpha,
+        const Ipp8u* pBeta, const Ipp8u* pThresholds, const Ipp8u* pBS))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6377,18 +5719,23 @@ IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_H264_8u_C2IR, (
 //
 //  Purpose:
 //    Performs deblocking filtering on the vertical edges of the
-//    NV12 chroma macroblock(16x8) in accordance with 8.7.2. of the H.264 standard
+//    NV12 chroma macroblock(16x8) in accordance with 8.7.2. of the H.264
+standard
 //
 //  Parameters:
 //    pDeblockInfo - pointer to the structure, containing:
-//    pSrcDst    - pointer to the initial and resultant coefficients in NV12 format (UV...UV),
+//    pSrcDst    - pointer to the initial and resultant coefficients in NV12
+format (UV...UV),
 //    srcdstStep - step of the arrays,
 //    pAlpha     - array of size 4 of Alpha Thresholds(values for
-//                 external and internal vertical edge) [0,1] for U plane and [2,3] for V plane
+//                 external and internal vertical edge) [0,1] for U plane and
+[2,3] for V plane
 //    pBeta      - array of size 4 of Beta  Thresholds(values for
-//                 external and internal vertical edge) [0,1] for U plane and [2,3] for V plane
+//                 external and internal vertical edge) [0,1] for U plane and
+[2,3] for V plane
 //    pTresholds - array of size 16 of Thresholds (TC0)(values for
-//                 the left edge of each 4x2 block) [0,7] for U plane and [8,15] for V plane
+//                 the left edge of each 4x2 block) [0,7] for U plane and [8,15]
+for V plane
 //    pBS        - array of size 16 of BS parameters
 //
 //
@@ -6402,42 +5749,39 @@ IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_H264_8u_C2IR, (
 //    ippStsNullPtrErr     One of the pointers is NULL
 */
 
-IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_H264_8u_C2I, ( const IppiFilterDeblock_8u * pDeblockInfo))
+IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_H264_8u_C2I,
+       (const IppiFilterDeblock_8u* pDeblockInfo))
 
-  /* ///////////////////////////////////////////////////////////////////////////
-  //  Name:
-  //    ippiFilterDeblockingChroma_VerEdge_MBAFF_H264_8u_C1IR
-  //
-  //  Purpose:
-  //    Performs deblocking filtering on the vertical edges of the
-  //    chroma macroblock(8x8) in accordance with 8.7.2. of the H.264 standard
-  //
-  //  Parameters:
-  //    pSrcDst    - pointer to the initial and resultant coefficients,
-  //    srcdstStep - step of the arrays,
-  //    nAlpha     - Alpha Threshold (value for external vertical edge)
-  //    nBeta      - Beta  Threshold (value for external vertical edge)
-  //    pTresholds - array of size 16 of Thresholds
-  //    pBS        - array of size 16 of BS parameters
-  //
-  //
-  //  Notes:
-  //    H.264 standard: JVT-G050. ITU-T Recommendation and
-  //    Final Draft International Standard of Joint Video Specification
-  //    (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
-  //
-  //  Returns:
-  //    ippStsNoErr          No error
-  //    ippStsNullPtrErr     One of the pointers is NULL
-  */
+/* ///////////////////////////////////////////////////////////////////////////
+//  Name:
+//    ippiFilterDeblockingChroma_VerEdge_MBAFF_H264_8u_C1IR
+//
+//  Purpose:
+//    Performs deblocking filtering on the vertical edges of the
+//    chroma macroblock(8x8) in accordance with 8.7.2. of the H.264 standard
+//
+//  Parameters:
+//    pSrcDst    - pointer to the initial and resultant coefficients,
+//    srcdstStep - step of the arrays,
+//    nAlpha     - Alpha Threshold (value for external vertical edge)
+//    nBeta      - Beta  Threshold (value for external vertical edge)
+//    pTresholds - array of size 16 of Thresholds
+//    pBS        - array of size 16 of BS parameters
+//
+//
+//  Notes:
+//    H.264 standard: JVT-G050. ITU-T Recommendation and
+//    Final Draft International Standard of Joint Video Specification
+//    (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
+//
+//  Returns:
+//    ippStsNoErr          No error
+//    ippStsNullPtrErr     One of the pointers is NULL
+*/
 
-IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_MBAFF_H264_8u_C1IR, (
-        Ipp8u*       pSrcDst,
-        Ipp32s       srcdstStep,
-        Ipp32u       nAlpha,
-        Ipp32u       nBeta,
-  const Ipp8u*       pThresholds,
-  const Ipp8u*       pBS))
+IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_MBAFF_H264_8u_C1IR,
+       (Ipp8u * pSrcDst, Ipp32s srcdstStep, Ipp32u nAlpha, Ipp32u nBeta,
+        const Ipp8u* pThresholds, const Ipp8u* pBS))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6468,13 +5812,9 @@ IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_MBAFF_H264_8u_C1IR, (
 //    ippStsNoErr          No error
 //    ippStsNullPtrErr     One of the pointers is NULL
 */
-IPPAPI(IppStatus, ippiFilterDeblockingChroma_HorEdge_H264_8u_C1IR, (
-        Ipp8u*       pSrcDst,
-        Ipp32s       srcdstStep,
-  const Ipp8u*       pAlpha,
-  const Ipp8u*       pBeta,
-  const Ipp8u*       pThresholds,
-  const Ipp8u*       pBS))
+IPPAPI(IppStatus, ippiFilterDeblockingChroma_HorEdge_H264_8u_C1IR,
+       (Ipp8u * pSrcDst, Ipp32s srcdstStep, const Ipp8u* pAlpha,
+        const Ipp8u* pBeta, const Ipp8u* pThresholds, const Ipp8u* pBS))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6482,17 +5822,22 @@ IPPAPI(IppStatus, ippiFilterDeblockingChroma_HorEdge_H264_8u_C1IR, (
 //
 //  Purpose:
 //     Performs deblocking filtering on the horizontal edges of the
-//     chroma macroblock in NV12 format (16x8) in accordance with 8.7.2. of H.264 standard
+//     chroma macroblock in NV12 format (16x8) in accordance with 8.7.2. of
+H.264 standard
 //
 //  Parameters:
-//    pSrcDst    - pointer to the initial and resultant coefficients in NV12 format (UV...UV),
+//    pSrcDst    - pointer to the initial and resultant coefficients in NV12
+format (UV...UV),
 //    srcdstStep - step of the arrays,
 //    pAlpha     - array of size 2 of Alpha Thresholds (values for
-//                 external and internal horizontal edge) the same Alpha Thresholds for both U and V planes
+//                 external and internal horizontal edge) the same Alpha
+Thresholds for both U and V planes
 //    pBeta      - array of size 2 of Beta  Thresholds (values for
-//                 external and internal horizontal edge) the same Beta Thresholds for both U and V planes
+//                 external and internal horizontal edge) the same Beta
+Thresholds for both U and V planes
 //    pTresholds - array of size 8 of Thresholds (TC0) (values for
-//                 the upper edge of each 4x2 block) the same Thresholds for both U and V planes
+//                 the upper edge of each 4x2 block) the same Thresholds for
+both U and V planes
 //    pBS        - array of size 16 of BS parameters (values for
 //                 external and internal horizontal edge)
 //
@@ -6505,13 +5850,9 @@ IPPAPI(IppStatus, ippiFilterDeblockingChroma_HorEdge_H264_8u_C1IR, (
 //    ippStsNoErr          No error
 //    ippStsNullPtrErr     One of the pointers is NULL
 */
-IPPAPI(IppStatus, ippiFilterDeblockingChroma_HorEdge_H264_8u_C2IR, (
-        Ipp8u*       pSrcDst,
-        Ipp32u       srcdstStep,
-  const Ipp8u*       pAlpha,
-  const Ipp8u*       pBeta,
-  const Ipp8u*       pThresholds,
-  const Ipp8u*       pBS))
+IPPAPI(IppStatus, ippiFilterDeblockingChroma_HorEdge_H264_8u_C2IR,
+       (Ipp8u * pSrcDst, Ipp32u srcdstStep, const Ipp8u* pAlpha,
+        const Ipp8u* pBeta, const Ipp8u* pThresholds, const Ipp8u* pBS))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6519,18 +5860,23 @@ IPPAPI(IppStatus, ippiFilterDeblockingChroma_HorEdge_H264_8u_C2IR, (
 //
 //  Purpose:
 //     Performs deblocking filtering on the horizontal edges of the
-//     chroma macroblock in NV12 format (16x8) in accordance with 8.7.2. of H.264 standard
+//     chroma macroblock in NV12 format (16x8) in accordance with 8.7.2. of
+H.264 standard
 //
 //  Parameters:
 //    pDeblockInfo - pointer to the structure, containing:
-//    pSrcDst    - pointer to the initial and resultant coefficients in NV12 format (UV...UV),
+//    pSrcDst    - pointer to the initial and resultant coefficients in NV12
+format (UV...UV),
 //    srcdstStep - step of the arrays,
 //    pAlpha     - array of size 4 of Alpha Thresholds (values for
-//                 external and internal horizontal edge)  [0],[1] for U plane and [2],[3] for V plane
+//                 external and internal horizontal edge)  [0],[1] for U plane
+and [2],[3] for V plane
 //    pBeta      - array of size 4 of Beta  Thresholds (values for
-//                 external and internal horizontal edge)  [0],[1] for U plane and [2],[3] for V plane
+//                 external and internal horizontal edge)  [0],[1] for U plane
+and [2],[3] for V plane
 //    pTresholds - array of size 16 of Thresholds (TC0) (values for
-//                 the upper edge of each 4x2 block) [0,7] for U plane and [8,15] for V plane
+//                 the upper edge of each 4x2 block) [0,7] for U plane and
+[8,15] for V plane
 //    pBS        - array of size 16 of BS parameters (values for
 //                 external and internal horizontal edge)
 //
@@ -6543,39 +5889,38 @@ IPPAPI(IppStatus, ippiFilterDeblockingChroma_HorEdge_H264_8u_C2IR, (
 //    ippStsNoErr          No error
 //    ippStsNullPtrErr     One of the pointers is NULL
 */
-IPPAPI(IppStatus, ippiFilterDeblockingChroma_HorEdge_H264_8u_C2I, (const IppiFilterDeblock_8u * pDeblockInfo))
+IPPAPI(IppStatus, ippiFilterDeblockingChroma_HorEdge_H264_8u_C2I,
+       (const IppiFilterDeblock_8u* pDeblockInfo))
 
-IPPAPI(IppStatus, ippiFilterDeblockingLumaVerEdge_H264_16u_C1IR, (
-            const IppiFilterDeblock_16u * pDeblockInfo))
+IPPAPI(IppStatus, ippiFilterDeblockingLumaVerEdge_H264_16u_C1IR,
+       (const IppiFilterDeblock_16u* pDeblockInfo))
 
-IPPAPI(IppStatus, ippiFilterDeblockingLumaVerEdgeMBAFF_H264_16u_C1IR, (
-            const IppiFilterDeblock_16u * pDeblockInfo))
+IPPAPI(IppStatus, ippiFilterDeblockingLumaVerEdgeMBAFF_H264_16u_C1IR,
+       (const IppiFilterDeblock_16u* pDeblockInfo))
 
-IPPAPI(IppStatus, ippiFilterDeblockingLumaHorEdge_H264_16u_C1IR, (
-            const IppiFilterDeblock_16u * pDeblockInfo))
+IPPAPI(IppStatus, ippiFilterDeblockingLumaHorEdge_H264_16u_C1IR,
+       (const IppiFilterDeblock_16u* pDeblockInfo))
 
-IPPAPI(IppStatus, ippiFilterDeblockingChromaVerEdge_H264_16u_C1IR, (
-            const IppiFilterDeblock_16u * pDeblockInfo))
+IPPAPI(IppStatus, ippiFilterDeblockingChromaVerEdge_H264_16u_C1IR,
+       (const IppiFilterDeblock_16u* pDeblockInfo))
 
-IPPAPI(IppStatus, ippiFilterDeblockingChromaVerEdgeMBAFF_H264_16u_C1IR, (
-            const IppiFilterDeblock_16u * pDeblockInfo))
+IPPAPI(IppStatus, ippiFilterDeblockingChromaVerEdgeMBAFF_H264_16u_C1IR,
+       (const IppiFilterDeblock_16u* pDeblockInfo))
 
-IPPAPI(IppStatus, ippiFilterDeblockingChromaHorEdge_H264_16u_C1IR, (
-            const IppiFilterDeblock_16u * pDeblockInfo))
+IPPAPI(IppStatus, ippiFilterDeblockingChromaHorEdge_H264_16u_C1IR,
+       (const IppiFilterDeblock_16u* pDeblockInfo))
 
-IPPAPI(IppStatus, ippiFilterDeblockingChroma422VerEdge_H264_16u_C1IR, (
-            const IppiFilterDeblock_16u * pDeblockInfo))
+IPPAPI(IppStatus, ippiFilterDeblockingChroma422VerEdge_H264_16u_C1IR,
+       (const IppiFilterDeblock_16u* pDeblockInfo))
 
-IPPAPI(IppStatus, ippiFilterDeblockingChroma422HorEdge_H264_16u_C1IR, (
-            const IppiFilterDeblock_16u * pDeblockInfo))
+IPPAPI(IppStatus, ippiFilterDeblockingChroma422HorEdge_H264_16u_C1IR,
+       (const IppiFilterDeblock_16u* pDeblockInfo))
 
-IPPAPI(IppStatus, ippiFilterDeblockingChroma422VerEdge_H264_8u_C1IR, (
-            const IppiFilterDeblock_8u * pDeblockInfo))
+IPPAPI(IppStatus, ippiFilterDeblockingChroma422VerEdge_H264_8u_C1IR,
+       (const IppiFilterDeblock_8u* pDeblockInfo))
 
-IPPAPI(IppStatus, ippiFilterDeblockingChroma422HorEdge_H264_8u_C1IR, (
-            const IppiFilterDeblock_8u * pDeblockInfo))
-
-
+IPPAPI(IppStatus, ippiFilterDeblockingChroma422HorEdge_H264_8u_C1IR,
+       (const IppiFilterDeblock_8u* pDeblockInfo))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6597,7 +5942,8 @@ IPPAPI(IppStatus, ippiFilterDeblockingChroma422HorEdge_H264_8u_C1IR, (
 //    dstStep   - step of the destination buffer in bytes,
 //    dx, dy    - fractional parts of the motion vector in
 //               1/4 pel units (0, 1, 2, or 3),
-//    outPixels - Number of pixels by which the data specified by pSrc reaches over the
+//    outPixels - Number of pixels by which the data specified by pSrc reaches
+over the
 //                frame top boundary.
 //    roiSize   - flag that specifies the dimensions of
 //               the ROI(could be 16, 8 or 4 in each dimension).
@@ -6605,7 +5951,8 @@ IPPAPI(IppStatus, ippiFilterDeblockingChroma422HorEdge_H264_8u_C1IR, (
 //    or
 //
 //    interpolateInfo - pointer on IppVCInterpolate_16u structure.
-//    outPixels       - Number of pixels by which the data specified by pSrc reaches over the
+//    outPixels       - Number of pixels by which the data specified by pSrc
+reaches over the
 //                      frame top boundary.
 //
 //  Returns:
@@ -6615,53 +5962,30 @@ IPPAPI(IppStatus, ippiFilterDeblockingChroma422HorEdge_H264_8u_C1IR, (
 //    ippStsSizeErr        roi.width or roi.height is not equal to 16, 8, or 4
 */
 
-IPPAPI(IppStatus, ippiInterpolateLuma_H264_8u_C1R, (
-  const Ipp8u*   pSrc,
-        Ipp32s   srcStep,
-        Ipp8u*   pDst,
-        Ipp32s   dstStep,
-        Ipp32s   dx,
-        Ipp32s   dy,
-        IppiSize roiSize))
+IPPAPI(IppStatus, ippiInterpolateLuma_H264_8u_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, Ipp8u* pDst, Ipp32s dstStep,
+        Ipp32s dx, Ipp32s dy, IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiInterpolateLumaTop_H264_8u_C1R, (
-        const Ipp8u*   pSrc,
-        Ipp32s   srcStep,
-        Ipp8u*   pDst,
-        Ipp32s   dstStep,
-        Ipp32s   dx,
-        Ipp32s   dy,
-        Ipp32s   outPixels,
-        IppiSize roiSize))
+IPPAPI(IppStatus, ippiInterpolateLumaTop_H264_8u_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, Ipp8u* pDst, Ipp32s dstStep,
+        Ipp32s dx, Ipp32s dy, Ipp32s outPixels, IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiInterpolateLumaBottom_H264_8u_C1R, (
-       const Ipp8u*   pSrc,
-       Ipp32s   srcStep,
-       Ipp8u*   pDst,
-       Ipp32s   dstStep,
-       Ipp32s   dx,
-       Ipp32s   dy,
-       Ipp32s   outPixels,
-       IppiSize roiSize))
+IPPAPI(IppStatus, ippiInterpolateLumaBottom_H264_8u_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, Ipp8u* pDst, Ipp32s dstStep,
+        Ipp32s dx, Ipp32s dy, Ipp32s outPixels, IppiSize roiSize))
 
+IPPAPI(IppStatus, ippiInterpolateLuma_H264_16u_C1R,
+       (const IppVCInterpolate_16u* interpolateInfo))
 
-IPPAPI(IppStatus, ippiInterpolateLuma_H264_16u_C1R, (
-       const IppVCInterpolate_16u * interpolateInfo))
+IPPAPI(IppStatus, ippiInterpolateLumaTop_H264_16u_C1R,
+       (const IppVCInterpolate_16u* interpolateInfo, Ipp32s outPixels))
 
-IPPAPI(IppStatus, ippiInterpolateLumaTop_H264_16u_C1R, (
-       const IppVCInterpolate_16u * interpolateInfo, Ipp32s  outPixels))
+IPPAPI(IppStatus, ippiInterpolateLumaBottom_H264_16u_C1R,
+       (const IppVCInterpolate_16u* interpolateInfo, Ipp32s outPixels))
 
-IPPAPI(IppStatus, ippiInterpolateLumaBottom_H264_16u_C1R, (
-       const IppVCInterpolate_16u * interpolateInfo, Ipp32s  outPixels))
-
-IPPAPI(IppStatus, ippiInterpolateBlock_H264_8u_P2P1R, (
-  const Ipp8u *pSrc1,
-  const Ipp8u *pSrc2,
-        Ipp8u *pDst,
-        Ipp32u uWidth,
-        Ipp32u uHeight,
-        Ipp32s pitch))
-
+IPPAPI(IppStatus, ippiInterpolateBlock_H264_8u_P2P1R,
+       (const Ipp8u* pSrc1, const Ipp8u* pSrc2, Ipp8u* pDst, Ipp32u uWidth,
+        Ipp32u uHeight, Ipp32s pitch))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6681,10 +6005,11 @@ IPPAPI(IppStatus, ippiInterpolateBlock_H264_8u_P2P1R, (
 //    ippStsSizeErr        roi.width or roi.height is not equal to 16, 8, or 4
 */
 
-IPPAPI(IppStatus, ippiInterpolateLumaBlock_H264_8u_P1R, (const IppVCInterpolateBlock_8u *interpolateInfo))
+IPPAPI(IppStatus, ippiInterpolateLumaBlock_H264_8u_P1R,
+       (const IppVCInterpolateBlock_8u* interpolateInfo))
 
-IPPAPI(IppStatus, ippiInterpolateLumaBlock_H264_16u_P1R, (const IppVCInterpolateBlock_16u *interpolateInfo))
-
+IPPAPI(IppStatus, ippiInterpolateLumaBlock_H264_16u_P1R,
+       (const IppVCInterpolateBlock_16u* interpolateInfo))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6706,7 +6031,8 @@ IPPAPI(IppStatus, ippiInterpolateLumaBlock_H264_16u_P1R, (const IppVCInterpolate
 //    dstStep   - step of the destination buffer in bytes,
 //    dx, dy    - fractional parts of the motion vector in
 //               1/8 pel units (0, 1, .., 7),
-//    outPixels - Number of pixels by which the data specified by pSrc reaches over the
+//    outPixels - Number of pixels by which the data specified by pSrc reaches
+over the
 //                frame top boundary.
 //    roiSiaze  - flag that specifies the dimensions of
 //               the ROI(could be 16, 8, 4 or 2 in each dimension).
@@ -6714,7 +6040,8 @@ IPPAPI(IppStatus, ippiInterpolateLumaBlock_H264_16u_P1R, (const IppVCInterpolate
 //    or
 //
 //    interpolateInfo - pointer on IppVCInterpolate_16u structure.
-//    outPixels       - Number of pixels by which the data specified by pSrc reaches over the
+//    outPixels       - Number of pixels by which the data specified by pSrc
+reaches over the
 //                      frame top boundary.
 //
 //  Returns:
@@ -6724,51 +6051,36 @@ IPPAPI(IppStatus, ippiInterpolateLumaBlock_H264_16u_P1R, (const IppVCInterpolate
 //    ippStsSizeErr        roi.width or roi.height is not equal to 16, 8, 4 or 2
 */
 
-IPPAPI(IppStatus, ippiInterpolateChroma_H264_8u_C1R, (
-  const Ipp8u*   pSrc,
-        Ipp32s   srcStep,
-        Ipp8u*   pDst,
-        Ipp32s   dstStep,
-        Ipp32s   dx,
-        Ipp32s   dy,
-        IppiSize roiSize))
+IPPAPI(IppStatus, ippiInterpolateChroma_H264_8u_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, Ipp8u* pDst, Ipp32s dstStep,
+        Ipp32s dx, Ipp32s dy, IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiInterpolateChromaTop_H264_8u_C1R, (
-  const Ipp8u*   pSrc,
-        Ipp32s   srcStep,
-        Ipp8u*   pDst,
-        Ipp32s   dstStep,
-        Ipp32s   dx,
-        Ipp32s   dy,
-        Ipp32s   outPixels,
-        IppiSize roiSize))
+IPPAPI(IppStatus, ippiInterpolateChromaTop_H264_8u_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, Ipp8u* pDst, Ipp32s dstStep,
+        Ipp32s dx, Ipp32s dy, Ipp32s outPixels, IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiInterpolateChromaBottom_H264_8u_C1R, (
-  const Ipp8u*   pSrc,
-        Ipp32s   srcStep,
-        Ipp8u*   pDst,
-        Ipp32s   dstStep,
-        Ipp32s   dx,
-        Ipp32s   dy,
-        Ipp32s   outPixels,
-        IppiSize roiSize))
+IPPAPI(IppStatus, ippiInterpolateChromaBottom_H264_8u_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, Ipp8u* pDst, Ipp32s dstStep,
+        Ipp32s dx, Ipp32s dy, Ipp32s outPixels, IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiInterpolateChroma_H264_16u_C1R, (
-       const IppVCInterpolate_16u * interpolateInfo))
+IPPAPI(IppStatus, ippiInterpolateChroma_H264_16u_C1R,
+       (const IppVCInterpolate_16u* interpolateInfo))
 
-IPPAPI(IppStatus, ippiInterpolateChromaTop_H264_16u_C1R, (
-       const IppVCInterpolate_16u * interpolateInfo, Ipp32s  outPixels))
+IPPAPI(IppStatus, ippiInterpolateChromaTop_H264_16u_C1R,
+       (const IppVCInterpolate_16u* interpolateInfo, Ipp32s outPixels))
 
-IPPAPI(IppStatus, ippiInterpolateChromaBottom_H264_16u_C1R, (
-       const IppVCInterpolate_16u * interpolateInfo, Ipp32s  outPixels))
+IPPAPI(IppStatus, ippiInterpolateChromaBottom_H264_16u_C1R,
+       (const IppVCInterpolate_16u* interpolateInfo, Ipp32s outPixels))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiInterpolateChroma_H264_8u_C2P2R
 //
 //  Purpose:
-//      The function performs interpolation for motion estimation of the chrominance
-//      component according H.264 standart. Clone of ippiInterpolateChroma_H264_8u_C1R,
+//      The function performs interpolation for motion estimation of the
+chrominance
+//      component according H.264 standart. Clone of
+ippiInterpolateChroma_H264_8u_C1R,
 //      but source image is chominance part of NV12 plane
 //      NV12 Plane
 //      YY YY YY YY
@@ -6778,26 +6090,23 @@ IPPAPI(IppStatus, ippiInterpolateChromaBottom_H264_16u_C1R, (
 //  Parameters:
 //    pSrcUV      - pointer to the source (chrominance part of NV12 plane).
 //    srcStep   - step of the source buffer in bytes
-//    pDstU - the pointer to the destination buffer for interpolated U coefficients
-//    pDstV  - the pointer to the destination buffer for interpolated V coefficients
+//    pDstU - the pointer to the destination buffer for interpolated U
+coefficients
+//    pDstV  - the pointer to the destination buffer for interpolated V
+coefficients
 //    dstStep   - step of the destination U & V buffers in bytes,
 //    dx, dy    - fractional parts of the motion vector in
 //               1/8 pel units (0, 1, .., 7),
-//    outPixels - Number of pixels by which the data specified by pSrc reaches over the
+//    outPixels - Number of pixels by which the data specified by pSrc reaches
+over the
 //                frame top boundary.
 //    roi  - value that specifies the dimensions of
 //               the ROI(could be 16, 8, 4 or 2 in each dimension).
 */
 
-IPPAPI(IppStatus, ippiInterpolateChroma_H264_8u_C2P2R, (
-   const Ipp8u *pSrcUV,
-         Ipp32s srcStep,
-         Ipp8u *pDstU,
-         Ipp8u *pDstV,
-         Ipp32s dstStep,
-         Ipp32s dx,
-         Ipp32s dy,
-         IppiSize roi))
+IPPAPI(IppStatus, ippiInterpolateChroma_H264_8u_C2P2R,
+       (const Ipp8u* pSrcUV, Ipp32s srcStep, Ipp8u* pDstU, Ipp8u* pDstV,
+        Ipp32s dstStep, Ipp32s dx, Ipp32s dy, IppiSize roi))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6817,17 +6126,21 @@ IPPAPI(IppStatus, ippiInterpolateChroma_H264_8u_C2P2R, (
 //    ippStsSizeErr        roi.width or roi.height is not equal to 16, 8, 4 or 2
 */
 
-IPPAPI(IppStatus, ippiInterpolateChromaBlock_H264_8u_P2R, (const IppVCInterpolateBlock_8u *interpolateInfo))
+IPPAPI(IppStatus, ippiInterpolateChromaBlock_H264_8u_P2R,
+       (const IppVCInterpolateBlock_8u* interpolateInfo))
 
-IPPAPI(IppStatus, ippiInterpolateChromaBlock_H264_16u_P2R, (const IppVCInterpolateBlock_16u *interpolateInfo))
+IPPAPI(IppStatus, ippiInterpolateChromaBlock_H264_16u_P2R,
+       (const IppVCInterpolateBlock_16u* interpolateInfo))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiInterpolateChromaBlock_H264_8u_C2P2R
 //
 //  Purpose:
-//    The function performs interpolation for motion estimation of the chrominance
-//    component according H.264 standart. Clone of ippiInterpolateChromaBlock_H264_8u_P2R,
+//    The function performs interpolation for motion estimation of the
+chrominance
+//    component according H.264 standart. Clone of
+ippiInterpolateChromaBlock_H264_8u_P2R,
 //    but source image is chominance part of NV12 plane.
 //    NV12 Plane
 //    YY YY YY YY
@@ -6838,15 +6151,18 @@ IPPAPI(IppStatus, ippiInterpolateChromaBlock_H264_16u_P2R, (const IppVCInterpola
 //    interpolateInfo - pointer to a structure having interpolation parameters
 //    Note:
 //      (in the IppVCInterpolateBlock_8u structure)
-//      pSrc[0] the pointer to the source block ( chrominance part of NV12 plane).
+//      pSrc[0] the pointer to the source block ( chrominance part of NV12
+plane).
 //      pSrc[1]  ignored.
 //      0...UV UV UV UV
 //      1...UV UV UV UV
 //      ...
 //      4...UV UV UV UV
 //
-//      pDst[0] = pDstU - the pointer to the destination buffer for interpolated U coefficients.
-//      pDst[1] = pDstV - the pointer to the destination buffer for interpolated V coefficients.
+//      pDst[0] = pDstU - the pointer to the destination buffer for interpolated
+U coefficients.
+//      pDst[1] = pDstV - the pointer to the destination buffer for interpolated
+V coefficients.
 //
 //  Returns:
 //    ippStsNoErr          No error
@@ -6854,15 +6170,18 @@ IPPAPI(IppStatus, ippiInterpolateChromaBlock_H264_16u_P2R, (const IppVCInterpola
 //    ippStsSizeErr        roi.width or roi.height is not equal to 16, 8, 4 or 2
 */
 
-IPPAPI(IppStatus, ippiInterpolateChromaBlock_H264_8u_C2P2R, (const IppVCInterpolateBlock_8u *interpolateInfo))
+IPPAPI(IppStatus, ippiInterpolateChromaBlock_H264_8u_C2P2R,
+       (const IppVCInterpolateBlock_8u* interpolateInfo))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiInterpolateChromaBlock_H264_8u_C2C2R
 //
 //  Purpose:
-//    The function performs interpolation for motion estimation of the chrominance
-//    component according H.264 standart. Clone of ippiInterpolateChromaBlock_H264_8u_P2R,
+//    The function performs interpolation for motion estimation of the
+chrominance
+//    component according H.264 standart. Clone of
+ippiInterpolateChromaBlock_H264_8u_P2R,
 //    but source and destination imagea are chominance part of NV12 plane.
 //    NV12 Plane
 //    YY YY YY YY
@@ -6873,14 +6192,16 @@ IPPAPI(IppStatus, ippiInterpolateChromaBlock_H264_8u_C2P2R, (const IppVCInterpol
 //    interpolateInfo - pointer to a structure having interpolation parameters
 //    Note:
 //      (in the IppVCInterpolateBlock_8u structure)
-//      pSrc[0] the pointer to the source block ( chrominance part of NV12 plane).
+//      pSrc[0] the pointer to the source block ( chrominance part of NV12
+plane).
 //      pSrc[1]  ignored.
 //      0...UV UV UV UV
 //      1...UV UV UV UV
 //      ...
 //      4...UV UV UV UV
 //
-//      pDst[0] - the pointer to the destination block ( chrominance part of NV12 plane).
+//      pDst[0] - the pointer to the destination block ( chrominance part of
+NV12 plane).
 //      pDst[1] - ignored
 //
 //  Returns:
@@ -6889,7 +6210,8 @@ IPPAPI(IppStatus, ippiInterpolateChromaBlock_H264_8u_C2P2R, (const IppVCInterpol
 //    ippStsSizeErr        roi.width or roi.height is not equal to 16, 8, 4 or 2
 */
 
-IPPAPI(IppStatus, ippiInterpolateChromaBlock_H264_8u_C2C2R, (const IppVCInterpolateBlock_8u *interpolateInfo))
+IPPAPI(IppStatus, ippiInterpolateChromaBlock_H264_8u_C2C2R,
+       (const IppVCInterpolateBlock_8u* interpolateInfo))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6921,99 +6243,73 @@ IPPAPI(IppStatus, ippiInterpolateChromaBlock_H264_8u_C2C2R, (const IppVCInterpol
 //    (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiWeightedAverage_H264_8u_C1IR, (
-  const Ipp8u*   pSrc1,
-        Ipp8u*   pSrc2Dst,
-        Ipp32s   srcDstStep,
-        Ipp32s   weight1,
-        Ipp32s   weight2,
-        Ipp32s   shift,
-        Ipp32s   offset,
-        IppiSize roiSize))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiWeightedAverage_H264_8u_C1IR,
+       (const Ipp8u* pSrc1, Ipp8u* pSrc2Dst, Ipp32s srcDstStep, Ipp32s weight1,
+        Ipp32s weight2, Ipp32s shift, Ipp32s offset, IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiUniDirWeightBlock_H264_8u_C1R, (
-        Ipp8u *pSrcDst,
-        Ipp32u srcDstStep,
-        Ipp32u ulog2wd,
-        Ipp32s iWeight,
-        Ipp32s iOffset,
-        IppiSize roi
-        ))
-IPPAPI(IppStatus, ippiUniDirWeightBlock_H264_8u_C1IR, (
-        Ipp8u *pSrcDst,
-        Ipp32u srcDstStep,
-        Ipp32u ulog2wd,
-        Ipp32s iWeight,
-        Ipp32s iOffset,
-        IppiSize roi
-        ))
+IPPAPI(IppStatus, ippiUniDirWeightBlock_H264_8u_C1R,
+       (Ipp8u * pSrcDst, Ipp32u srcDstStep, Ipp32u ulog2wd, Ipp32s iWeight,
+        Ipp32s iOffset, IppiSize roi))
+IPPAPI(IppStatus, ippiUniDirWeightBlock_H264_8u_C1IR,
+       (Ipp8u * pSrcDst, Ipp32u srcDstStep, Ipp32u ulog2wd, Ipp32s iWeight,
+        Ipp32s iOffset, IppiSize roi))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiBiDirWeightBlock_H264_8u_P2P1R,(
-  const Ipp8u *pSrc1,
-  const Ipp8u *pSrc2,
-        Ipp8u *pDst,
-        Ipp32u srcStep,
-        Ipp32u dstStep,
-        Ipp32u ulog2wd,
-        Ipp32s iWeight1,
-        Ipp32s iOffset1,
-        Ipp32s iWeight2,
-        Ipp32s iOffset2,
-        IppiSize roi
-        ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBiDirWeightBlock_H264_8u_P2P1R,
+       (const Ipp8u* pSrc1, const Ipp8u* pSrc2, Ipp8u* pDst, Ipp32u srcStep,
+        Ipp32u dstStep, Ipp32u ulog2wd, Ipp32s iWeight1, Ipp32s iOffset1,
+        Ipp32s iWeight2, Ipp32s iOffset2, IppiSize roi))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiBiDirWeightBlockImplicit_H264_8u_P2P1R, (
-  const Ipp8u *pSrc1,
-  const Ipp8u *pSrc2,
-        Ipp8u *pDst,
-        Ipp32u srcStep,
-        Ipp32u dstStep,
-        Ipp32s iWeight1,
-        Ipp32s iWeight2,
-        IppiSize roi
-        ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBiDirWeightBlockImplicit_H264_8u_P2P1R,
+       (const Ipp8u* pSrc1, const Ipp8u* pSrc2, Ipp8u* pDst, Ipp32u srcStep,
+        Ipp32u dstStep, Ipp32s iWeight1, Ipp32s iWeight2, IppiSize roi))
 
-IPPAPI(IppStatus, ippiBidir_H264_16u_P2P1R, (
-            const IppVCBidir_16u * bidirInfo))
+IPPAPI(IppStatus, ippiBidir_H264_16u_P2P1R, (const IppVCBidir_16u* bidirInfo))
 
-IPPAPI(IppStatus, ippiBidirWeightImplicit_H264_16u_P2P1R, (
-            const IppVCBidir_16u * bidirInfo,
-            Ipp32s iWeight1,
-            Ipp32s iWeight2))
+IPPAPI(IppStatus, ippiBidirWeightImplicit_H264_16u_P2P1R,
+       (const IppVCBidir_16u* bidirInfo, Ipp32s iWeight1, Ipp32s iWeight2))
 
-IPPAPI(IppStatus, ippiBidirWeight_H264_16u_P2P1R, (
-            const IppVCBidir_16u * bidirInfo,
-            Ipp32u ulog2wd,
-            Ipp32s iWeight1,
-            Ipp32s iOffset1,
-            Ipp32s iWeight2,
-            Ipp32s iOffset2))
+IPPAPI(IppStatus, ippiBidirWeight_H264_16u_P2P1R,
+       (const IppVCBidir_16u* bidirInfo, Ipp32u ulog2wd, Ipp32s iWeight1,
+        Ipp32s iOffset1, Ipp32s iWeight2, Ipp32s iOffset2))
 
-IPPAPI(IppStatus, ippiUnidirWeight_H264_16u_IP2P1R, (
-            Ipp16u *pSrcDst,
-            Ipp32u srcDstStep,
-            Ipp32u ulog2wd,
-            Ipp32s iWeight,
-            Ipp32s iOffset,
-            IppiSize roi,
-            Ipp32s bitDepth))
+IPPAPI(IppStatus, ippiUnidirWeight_H264_16u_IP2P1R,
+       (Ipp16u * pSrcDst, Ipp32u srcDstStep, Ipp32u ulog2wd, Ipp32s iWeight,
+        Ipp32s iOffset, IppiSize roi, Ipp32s bitDepth))
 
 /*NV12 variants of weighting*/
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiUniDirWeightBlock_H264_8u_C2R, (
-            IppVCWeightBlock_8u* pIppVCWeightBlock,
-      const IppVCWeightParams_8u* pIppVCWeightParams))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiUniDirWeightBlock_H264_8u_C2R,
+       (IppVCWeightBlock_8u * pIppVCWeightBlock,
+        const IppVCWeightParams_8u* pIppVCWeightParams))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiBiDirWeightBlock_H264_8u_C2R,(
-            IppVCWeightBlock_8u* pIppVCWeightBlock,
-      const IppVCWeightParams_8u* pIppVCWeightParamsP1,
-      const IppVCWeightParams_8u* pIppVCWeightParamsP2 ))
-
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBiDirWeightBlock_H264_8u_C2R,
+       (IppVCWeightBlock_8u * pIppVCWeightBlock,
+        const IppVCWeightParams_8u* pIppVCWeightParamsP1,
+        const IppVCWeightParams_8u* pIppVCWeightParamsP2))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7036,11 +6332,13 @@ IPPAPI(IppStatus, ippiBiDirWeightBlock_H264_8u_C2R,(
 //    (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiTransformPrediction_H264_8u16s_C1, (
-  const Ipp8u   *pSrc,
-        Ipp32s  step,
-        Ipp16s  *pDst))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiTransformPrediction_H264_8u16s_C1,
+       (const Ipp8u* pSrc, Ipp32s step, Ipp16s* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7067,15 +6365,14 @@ IPPAPI(IppStatus, ippiTransformPrediction_H264_8u16s_C1, (
 //    (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDequantTransformResidual_SISP_H264_16s_C1I, (
-        Ipp16s* pSrcDst,
-  const Ipp16s* pPredictBlock,
-  const Ipp16s* pDC,
-        Ipp32s  AC,
-        Ipp32s  qp,
-        Ipp32s  qs,
-        Ipp32s  Switch))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDequantTransformResidual_SISP_H264_16s_C1I,
+       (Ipp16s * pSrcDst, const Ipp16s* pPredictBlock, const Ipp16s* pDC,
+        Ipp32s AC, Ipp32s qp, Ipp32s qs, Ipp32s Switch))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7103,12 +6400,13 @@ IPPAPI(IppStatus, ippiDequantTransformResidual_SISP_H264_16s_C1I, (
 //    (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiTransformDequantChromaDC_SISP_H264_16s_C1I, (
-        Ipp16s* pSrcDst,
-  const Ipp16s* pDCpredict,
-        Ipp32s qp,
-        Ipp32s qs,
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiTransformDequantChromaDC_SISP_H264_16s_C1I,
+       (Ipp16s * pSrcDst, const Ipp16s* pDCpredict, Ipp32s qp, Ipp32s qs,
         Ipp32s Switch))
 
 /* ///////////////////////////////////////////////////////////////////////////
@@ -7119,7 +6417,8 @@ IPPAPI(IppStatus, ippiTransformDequantChromaDC_SISP_H264_16s_C1I, (
 //      Reconstruct Intra Luma macroblock
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
+//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
 //      pSrcDstYPlane       - pointer to current MB which will be reconstructed
 //      srcdstYStep         - plane step
 //      pMBIntraTypes       - pointer to intra types for each subblock
@@ -7138,14 +6437,10 @@ IPPAPI(IppStatus, ippiTransformDequantChromaDC_SISP_H264_16s_C1I, (
 //      (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
 
-IPPAPI(IppStatus, ippiReconstructLumaIntraMB_H264_16s8u_C1R, (Ipp16s **ppSrcCoeff,
-                                                              Ipp8u *pSrcDstYPlane,
-                                                              Ipp32s srcdstYStep,
-                                                              const IppIntra4x4PredMode_H264 *pMBIntraTypes,
-                                                              const Ipp32u cbp4x4,
-                                                              const Ipp32u QP,
-                                                              const Ipp8u edgeType))
-
+IPPAPI(IppStatus, ippiReconstructLumaIntraMB_H264_16s8u_C1R,
+       (Ipp16s * *ppSrcCoeff, Ipp8u* pSrcDstYPlane, Ipp32s srcdstYStep,
+        const IppIntra4x4PredMode_H264* pMBIntraTypes, const Ipp32u cbp4x4,
+        const Ipp32u QP, const Ipp8u edgeType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7155,9 +6450,12 @@ IPPAPI(IppStatus, ippiReconstructLumaIntraMB_H264_16s8u_C1R, (Ipp16s **ppSrcCoef
 //      Reconstruct Inter Chroma macroblock
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstUPlane       - pointer to current U plane which will be reconstructed
-//      pSrcDstVPlane       - pointer to current V plane which will be reconstructed
+//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstUPlane       - pointer to current U plane which will be
+reconstructed
+//      pSrcDstVPlane       - pointer to current V plane which will be
+reconstructed
 //      srcdstUVStep        - plane step
 //      cbp4x4              - coded block pattern
 //      ChromaQP            - chroma quantizer
@@ -7173,13 +6471,14 @@ IPPAPI(IppStatus, ippiReconstructLumaIntraMB_H264_16s8u_C1R, (Ipp16s **ppSrcCoef
 //      (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiReconstructChromaInterMB_H264_16s8u_P2R, (Ipp16s **ppSrcCoeff,
-                                                                Ipp8u *pSrcDstUPlane,
-                                                                Ipp8u *pSrcDstVPlane,
-                                                                const Ipp32u srcdstStep,
-                                                                const Ipp32u cbp4x4,
-                                                                const Ipp32u ChromaQP))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiReconstructChromaInterMB_H264_16s8u_P2R,
+       (Ipp16s * *ppSrcCoeff, Ipp8u* pSrcDstUPlane, Ipp8u* pSrcDstVPlane,
+        const Ipp32u srcdstStep, const Ipp32u cbp4x4, const Ipp32u ChromaQP))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7189,8 +6488,10 @@ IPPAPI(IppStatus, ippiReconstructChromaInterMB_H264_16s8u_P2R, (Ipp16s **ppSrcCo
 //      Reconstruct Inter Chroma macroblock for NV12 chroma format
 //
 //  Parameters:
-//      ppSrcDstCoeff       - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstUVPlane      - pointer to current UV plane which will be reconstructed
+//      ppSrcDstCoeff       - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstUVPlane      - pointer to current UV plane which will be
+reconstructed
 //      srcDstUVStep        - plane step
 //      cbp4x4              - coded block pattern
 //      ChromaQP            - chroma quantizer
@@ -7207,49 +6508,36 @@ IPPAPI(IppStatus, ippiReconstructChromaInterMB_H264_16s8u_P2R, (Ipp16s **ppSrcCo
 //      Final Draft International Standard of Joint Video Specification
 //      (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
-IPPAPI(IppStatus, ippiReconstructChromaInterMB_H264_16s8u_C2R, (Ipp16s **ppSrcDstCoeff,
-                                                                Ipp8u *pSrcDstUVPlane,
-                                                                Ipp32s srcDstUVStep,
-                                                                Ipp32u cbp4x4,
-                                                                Ipp32u ChromaQP))
+IPPAPI(IppStatus, ippiReconstructChromaInterMB_H264_16s8u_C2R,
+       (Ipp16s * *ppSrcDstCoeff, Ipp8u* pSrcDstUVPlane, Ipp32s srcDstUVStep,
+        Ipp32u cbp4x4, Ipp32u ChromaQP))
 
-IPPAPI(IppStatus, ippiReconstructLumaIntraHalfMB_H264_16s8u_C1R, (Ipp16s **ppSrcCoeff,
-                                                                Ipp8u *pSrcDstYPlane,
-                                                                Ipp32s srcdstYStep,
-                                                                IppIntra4x4PredMode_H264 *pMBIntraTypes,
-                                                                Ipp32u cbp4x2,
-                                                                Ipp32u QP,
-                                                                Ipp8u edgeType))
+IPPAPI(IppStatus, ippiReconstructLumaIntraHalfMB_H264_16s8u_C1R,
+       (Ipp16s * *ppSrcCoeff, Ipp8u* pSrcDstYPlane, Ipp32s srcdstYStep,
+        IppIntra4x4PredMode_H264* pMBIntraTypes, Ipp32u cbp4x2, Ipp32u QP,
+        Ipp8u edgeType))
 
-IPPAPI(IppStatus, ippiReconstructChromaIntraHalfsMB_H264_16s8u_P2R, (Ipp16s **ppSrcCoeff,
-                                                                Ipp8u *pSrcDstUPlane,
-                                                                Ipp8u *pSrcDstVPlane,
-                                                                Ipp32u srcdstUVStep,
-                                                                IppIntraChromaPredMode_H264 intra_chroma_mode,
-                                                                Ipp32u cbp4x4,
-                                                                Ipp32u ChromaQP,
-                                                                Ipp8u edge_type_top,
-                                                                Ipp8u edge_type_bottom))
+IPPAPI(IppStatus, ippiReconstructChromaIntraHalfsMB_H264_16s8u_P2R,
+       (Ipp16s * *ppSrcCoeff, Ipp8u* pSrcDstUPlane, Ipp8u* pSrcDstVPlane,
+        Ipp32u srcdstUVStep, IppIntraChromaPredMode_H264 intra_chroma_mode,
+        Ipp32u cbp4x4, Ipp32u ChromaQP, Ipp8u edge_type_top,
+        Ipp8u edge_type_bottom))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiReconstructChromaIntraHalvesMB_H264_16s8u_P2R, (Ipp16s **ppSrcCoeff,
-                                                                Ipp8u *pSrcDstUPlane,
-                                                                Ipp8u *pSrcDstVPlane,
-                                                                Ipp32u srcdstUVStep,
-                                                                IppIntraChromaPredMode_H264 intra_chroma_mode,
-                                                                Ipp32u cbp4x4,
-                                                                Ipp32u ChromaQP,
-                                                                Ipp8u edge_type_top,
-                                                                Ipp8u edge_type_bottom))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiReconstructChromaIntraHalvesMB_H264_16s8u_P2R,
+       (Ipp16s * *ppSrcCoeff, Ipp8u* pSrcDstUPlane, Ipp8u* pSrcDstVPlane,
+        Ipp32u srcdstUVStep, IppIntraChromaPredMode_H264 intra_chroma_mode,
+        Ipp32u cbp4x4, Ipp32u ChromaQP, Ipp8u edge_type_top,
+        Ipp8u edge_type_bottom))
 
-IPPAPI(IppStatus, ippiReconstructChromaIntraHalvesMB_H264_16s8u_C2R, (Ipp16s **ppSrcDstCoeff,
-                                                                Ipp8u *pSrcDstUVPlane,
-                                                                Ipp32s srcdstUVStep,
-                                                                IppIntraChromaPredMode_H264 intraChromaMode,
-                                                                Ipp32u cbp4x4,
-                                                                Ipp32u ChromaQP,
-                                                                Ipp32u edgeTypeTop,
-                                                                Ipp32u edgeTypeBottom))
+IPPAPI(IppStatus, ippiReconstructChromaIntraHalvesMB_H264_16s8u_C2R,
+       (Ipp16s * *ppSrcDstCoeff, Ipp8u* pSrcDstUVPlane, Ipp32s srcdstUVStep,
+        IppIntraChromaPredMode_H264 intraChromaMode, Ipp32u cbp4x4,
+        Ipp32u ChromaQP, Ipp32u edgeTypeTop, Ipp32u edgeTypeBottom))
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //      ippiReconstructChromaIntraMB_H264_16s8u_P2R
@@ -7258,9 +6546,12 @@ IPPAPI(IppStatus, ippiReconstructChromaIntraHalvesMB_H264_16s8u_C2R, (Ipp16s **p
 //      Reconstruct Intra Chroma macroblock
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstUPlane       - pointer to current U plane which will be reconstructed
-//      pSrcDstVPlane       - pointer to current V plane which will be reconstructed
+//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstUPlane       - pointer to current U plane which will be
+reconstructed
+//      pSrcDstVPlane       - pointer to current V plane which will be
+reconstructed
 //      srcdstUVStep        - plane step
 //      intra_chroma_mode   - intra mode
 //      cbp4x4              - coded block pattern
@@ -7278,15 +6569,16 @@ IPPAPI(IppStatus, ippiReconstructChromaIntraHalvesMB_H264_16s8u_C2R, (Ipp16s **p
 //      (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiReconstructChromaIntraMB_H264_16s8u_P2R, (Ipp16s **ppSrcCoeff,
-                                                                Ipp8u *pSrcDstUPlane,
-                                                                Ipp8u *pSrcDstVPlane,
-                                                                const Ipp32u srcdstUVStep,
-                                                                const IppIntraChromaPredMode_H264 intra_chroma_mode,
-                                                                const Ipp32u cbp4x4,
-                                                                const Ipp32u ChromaQP,
-                                                                const Ipp8u edge_type))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiReconstructChromaIntraMB_H264_16s8u_P2R,
+       (Ipp16s * *ppSrcCoeff, Ipp8u* pSrcDstUPlane, Ipp8u* pSrcDstVPlane,
+        const Ipp32u srcdstUVStep,
+        const IppIntraChromaPredMode_H264 intra_chroma_mode,
+        const Ipp32u cbp4x4, const Ipp32u ChromaQP, const Ipp8u edge_type))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7296,8 +6588,10 @@ IPPAPI(IppStatus, ippiReconstructChromaIntraMB_H264_16s8u_P2R, (Ipp16s **ppSrcCo
 //      Reconstruct Intra Chroma macroblock for NV12 chroma format
 //
 //  Parameters:
-//      ppSrcDstCoeff       - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstUVPlane       - pointer to current UV plane which will be reconstructed
+//      ppSrcDstCoeff       - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstUVPlane       - pointer to current UV plane which will be
+reconstructed
 //      srcDstUVStep        - plane step
 //      intraChromaMode   - intra mode
 //      cbp4x4              - coded block pattern
@@ -7315,13 +6609,10 @@ IPPAPI(IppStatus, ippiReconstructChromaIntraMB_H264_16s8u_P2R, (Ipp16s **ppSrcCo
 //      Final Draft International Standard of Joint Video Specification
 //      (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
-IPPAPI(IppStatus, ippiReconstructChromaIntraMB_H264_16s8u_C2R, (Ipp16s **ppSrcDstCoeff,
-                                                                Ipp8u *pSrcDstUVPlane,
-                                                                Ipp32s srcdstUVStep,
-                                                                IppIntraChromaPredMode_H264 intraChromaMode,
-                                                                Ipp32u cbp4x4,
-                                                                Ipp32u ChromaQP,
-                                                                Ipp32u edgeType))
+IPPAPI(IppStatus, ippiReconstructChromaIntraMB_H264_16s8u_C2R,
+       (Ipp16s * *ppSrcDstCoeff, Ipp8u* pSrcDstUVPlane, Ipp32s srcdstUVStep,
+        IppIntraChromaPredMode_H264 intraChromaMode, Ipp32u cbp4x4,
+        Ipp32u ChromaQP, Ipp32u edgeType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7331,8 +6622,10 @@ IPPAPI(IppStatus, ippiReconstructChromaIntraMB_H264_16s8u_C2R, (Ipp16s **ppSrcDs
 //      Reconstruct Inter Luma macroblock
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstYPlane       - pointer to current Y plane which will be reconstructed
+//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstYPlane       - pointer to current Y plane which will be
+reconstructed
 //      srcdsYStep          - plane step
 //      cbp4x4              - coded block pattern
 //      QP                  - quantizer
@@ -7348,11 +6641,9 @@ IPPAPI(IppStatus, ippiReconstructChromaIntraMB_H264_16s8u_C2R, (Ipp16s **ppSrcDs
 //      (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
 
-IPPAPI(IppStatus, ippiReconstructLumaInterMB_H264_16s8u_C1R, (Ipp16s **ppSrcCoeff,
-                                                              Ipp8u *pSrcDstYPlane,
-                                                              Ipp32u srcdstYStep,
-                                                              Ipp32u cbp4x4,
-                                                              Ipp32s QP))
+IPPAPI(IppStatus, ippiReconstructLumaInterMB_H264_16s8u_C1R,
+       (Ipp16s * *ppSrcCoeff, Ipp8u* pSrcDstYPlane, Ipp32u srcdstYStep,
+        Ipp32u cbp4x4, Ipp32s QP))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7362,8 +6653,10 @@ IPPAPI(IppStatus, ippiReconstructLumaInterMB_H264_16s8u_C1R, (Ipp16s **ppSrcCoef
 //      Reconstruct Intra 16x16 Luma macroblock
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstYPlane       - pointer to current Y plane which will be reconstructed
+//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstYPlane       - pointer to current Y plane which will be
+reconstructed
 //      srcdstYStep         - plane step
 //      intra_luma_mode     - intra mode
 //      cbp4x4              - coded block pattern
@@ -7381,13 +6674,10 @@ IPPAPI(IppStatus, ippiReconstructLumaInterMB_H264_16s8u_C1R, (Ipp16s **ppSrcCoef
 //      (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
 
-IPPAPI(IppStatus, ippiReconstructLumaIntra16x16MB_H264_16s8u_C1R, (Ipp16s **ppSrcCoeff,
-                                                                   Ipp8u *pSrcDstYPlane,
-                                                                   Ipp32u srcdstYStep,
-                                                                   const IppIntra16x16PredMode_H264 intra_luma_mode,
-                                                                   const Ipp32u cbp4x4,
-                                                                   const Ipp32u QP,
-                                                                   const Ipp8u edge_type))
+IPPAPI(IppStatus, ippiReconstructLumaIntra16x16MB_H264_16s8u_C1R,
+       (Ipp16s * *ppSrcCoeff, Ipp8u* pSrcDstYPlane, Ipp32u srcdstYStep,
+        const IppIntra16x16PredMode_H264 intra_luma_mode, const Ipp32u cbp4x4,
+        const Ipp32u QP, const Ipp8u edge_type))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7397,8 +6687,10 @@ IPPAPI(IppStatus, ippiReconstructLumaIntra16x16MB_H264_16s8u_C1R, (Ipp16s **ppSr
 //      Reconstruct Intra 16x16 Luma macroblock for high profile
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstYPlane       - pointer to current Y plane which will be reconstructed
+//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstYPlane       - pointer to current Y plane which will be
+reconstructed
 //      srcdstYStep         - plane step
 //      intra_luma_mode     - intra mode
 //      cbp4x4              - coded block pattern
@@ -7416,15 +6708,10 @@ IPPAPI(IppStatus, ippiReconstructLumaIntra16x16MB_H264_16s8u_C1R, (Ipp16s **ppSr
 //
 */
 
-IPPAPI(IppStatus, ippiReconstructLumaIntra_16x16MB_H264_16s8u_C1R, (Ipp16s **ppSrcDstCoeff,
-        Ipp8u *pSrcDstYPlane,
-        Ipp32u srcdstYStep,
-        IppIntra16x16PredMode_H264 intra_luma_mode,
-        Ipp32u cbp4x4,
-        Ipp32u QP,
-        Ipp8u edge_type,
-  const Ipp16s *pQuantTable,
-        Ipp8u bypass_flag))
+IPPAPI(IppStatus, ippiReconstructLumaIntra_16x16MB_H264_16s8u_C1R,
+       (Ipp16s * *ppSrcDstCoeff, Ipp8u* pSrcDstYPlane, Ipp32u srcdstYStep,
+        IppIntra16x16PredMode_H264 intra_luma_mode, Ipp32u cbp4x4, Ipp32u QP,
+        Ipp8u edge_type, const Ipp16s* pQuantTable, Ipp8u bypass_flag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7434,8 +6721,10 @@ IPPAPI(IppStatus, ippiReconstructLumaIntra_16x16MB_H264_16s8u_C1R, (Ipp16s **ppS
 //      Reconstruct Intra 4x4 Luma macroblock for high profile
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstYPlane       - pointer to current Y plane which will be reconstructed
+//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstYPlane       - pointer to current Y plane which will be
+reconstructed
 //      srcdstYStep         - plane step
 //      pMBIntraTypes       - pointer to intra types for each subblock
 //      cbp4x4              - coded block pattern
@@ -7452,15 +6741,10 @@ IPPAPI(IppStatus, ippiReconstructLumaIntra_16x16MB_H264_16s8u_C1R, (Ipp16s **ppS
 //  Notes:
 //
 */
-IPPAPI(IppStatus, ippiReconstructLumaIntra4x4MB_H264_16s8u_C1R, (Ipp16s **ppSrcDstCoeff,
-        Ipp8u *pSrcDstYPlane,
-        Ipp32s srcdstYStep,
-        IppIntra4x4PredMode_H264 *pMBIntraTypes,
-        Ipp32u cbp4x4,
-        Ipp32u QP,
-        Ipp8u edgeType,
-  const Ipp16s *pQuantTable,
-        Ipp8u bypass_flag))
+IPPAPI(IppStatus, ippiReconstructLumaIntra4x4MB_H264_16s8u_C1R,
+       (Ipp16s * *ppSrcDstCoeff, Ipp8u* pSrcDstYPlane, Ipp32s srcdstYStep,
+        IppIntra4x4PredMode_H264* pMBIntraTypes, Ipp32u cbp4x4, Ipp32u QP,
+        Ipp8u edgeType, const Ipp16s* pQuantTable, Ipp8u bypass_flag))
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //      ippiReconstructLumaInter4x4MB_H264_16s8u_C1R
@@ -7469,8 +6753,10 @@ IPPAPI(IppStatus, ippiReconstructLumaIntra4x4MB_H264_16s8u_C1R, (Ipp16s **ppSrcD
 //      Reconstruct Inter 4x4 Luma macroblock for high profile
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstYPlane       - pointer to current Y plane which will be reconstructed
+//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstYPlane       - pointer to current Y plane which will be
+reconstructed
 //      srcdstYStep         - plane step
 //      cbp4x4              - coded block pattern
 //      QP                  - quantizer
@@ -7485,24 +6771,24 @@ IPPAPI(IppStatus, ippiReconstructLumaIntra4x4MB_H264_16s8u_C1R, (Ipp16s **ppSrcD
 //  Notes:
 //
 */
-IPPAPI(IppStatus, ippiReconstructLumaInter4x4MB_H264_16s8u_C1R, (Ipp16s **ppSrcDstCoeff,
-        Ipp8u *pSrcDstYPlane,
-        Ipp32u srcdstYStep,
-        Ipp32u cbp4x4,
-        Ipp32s QP,
-  const Ipp16s *pQuantTable,
-        Ipp8u bypass_flag))
+IPPAPI(IppStatus, ippiReconstructLumaInter4x4MB_H264_16s8u_C1R,
+       (Ipp16s * *ppSrcDstCoeff, Ipp8u* pSrcDstYPlane, Ipp32u srcdstYStep,
+        Ipp32u cbp4x4, Ipp32s QP, const Ipp16s* pQuantTable, Ipp8u bypass_flag))
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //      ippiReconstructChromaInter4x4MB_H264_16s8u_P2R
 //
 //  Purpose:
-//      Reconstruct Inter Chroma 4x4 macroblock for high profile yv12 chroma format
+//      Reconstruct Inter Chroma 4x4 macroblock for high profile yv12 chroma
+format
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstUPlane       - pointer to current U plane which will be reconstructed
-//      pSrcDstVPlane       - pointer to current V plane which will be reconstructed
+//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstUPlane       - pointer to current U plane which will be
+reconstructed
+//      pSrcDstVPlane       - pointer to current V plane which will be
+reconstructed
 //      srcdstUVStep        - plane step
 //      cbp4x4              - coded block pattern
 //      chromaQPU           - chroma quantizer for U plane
@@ -7520,15 +6806,10 @@ IPPAPI(IppStatus, ippiReconstructLumaInter4x4MB_H264_16s8u_C1R, (Ipp16s **ppSrcD
 //
 */
 
-IPPAPI(IppStatus, ippiReconstructChromaInter4x4MB_H264_16s8u_P2R, (Ipp16s **ppSrcDstCoeff,
-        Ipp8u *pSrcDstUPlane,
-        Ipp8u *pSrcDstVPlane,
-        Ipp32u srcdstUVStep,
-        Ipp32u cbp4x4,
-        Ipp32u chromaQPU,
-        Ipp32u chromaQPV,
-  const Ipp16s *pQuantTableU,
-  const Ipp16s *pQuantTableV,
+IPPAPI(IppStatus, ippiReconstructChromaInter4x4MB_H264_16s8u_P2R,
+       (Ipp16s * *ppSrcDstCoeff, Ipp8u* pSrcDstUPlane, Ipp8u* pSrcDstVPlane,
+        Ipp32u srcdstUVStep, Ipp32u cbp4x4, Ipp32u chromaQPU, Ipp32u chromaQPV,
+        const Ipp16s* pQuantTableU, const Ipp16s* pQuantTableV,
         Ipp8u bypass_flag))
 
 /* ///////////////////////////////////////////////////////////////////////////
@@ -7536,11 +6817,14 @@ IPPAPI(IppStatus, ippiReconstructChromaInter4x4MB_H264_16s8u_P2R, (Ipp16s **ppSr
 //      ippiReconstructChromaInter4x4MB_H264_16s8u_C2R
 //
 //  Purpose:
-//      Reconstruct Inter Chroma 4x4 macroblock for high profile nv12 chroma format
+//      Reconstruct Inter Chroma 4x4 macroblock for high profile nv12 chroma
+format
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstUVPlane      - pointer to current UV plane which will be reconstructed
+//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstUVPlane      - pointer to current UV plane which will be
+reconstructed
 //      srcdstUVStep        - plane step
 //      cbp4x4              - coded block pattern
 //      chromaQPU           - chroma quantizer for U plane
@@ -7557,14 +6841,10 @@ IPPAPI(IppStatus, ippiReconstructChromaInter4x4MB_H264_16s8u_P2R, (Ipp16s **ppSr
 //  Notes:
 //
 */
-IPPAPI(IppStatus, ippiReconstructChromaInter4x4MB_H264_16s8u_C2R, (Ipp16s **ppSrcDstCoeff,
-        Ipp8u *pSrcDstUVPlane,
-        Ipp32u srcdstUVStep,
-        Ipp32u cbp4x4,
-        Ipp32u chromaQPU,
-        Ipp32u chromaQPV,
-        const Ipp16s *pQuantTableU,
-        const Ipp16s *pQuantTableV,
+IPPAPI(IppStatus, ippiReconstructChromaInter4x4MB_H264_16s8u_C2R,
+       (Ipp16s * *ppSrcDstCoeff, Ipp8u* pSrcDstUVPlane, Ipp32u srcdstUVStep,
+        Ipp32u cbp4x4, Ipp32u chromaQPU, Ipp32u chromaQPV,
+        const Ipp16s* pQuantTableU, const Ipp16s* pQuantTableV,
         Ipp32u bypassFlag))
 
 /* ///////////////////////////////////////////////////////////////////////////
@@ -7572,12 +6852,16 @@ IPPAPI(IppStatus, ippiReconstructChromaInter4x4MB_H264_16s8u_C2R, (Ipp16s **ppSr
 //      ippiReconstructChromaIntra4x4MB_H264_16s8u_P2R
 //
 //  Purpose:
-//      Reconstruct Intra Chroma 4x4 macroblock for high profile yv12 chroma format
+//      Reconstruct Intra Chroma 4x4 macroblock for high profile yv12 chroma
+format
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstUPlane       - pointer to current U plane which will be reconstructed
-//      pSrcDstVPlane       - pointer to current V plane which will be reconstructed
+//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstUPlane       - pointer to current U plane which will be
+reconstructed
+//      pSrcDstVPlane       - pointer to current V plane which will be
+reconstructed
 //      srcdstUVStep        - plane step
 //      intra_chroma_mode   - intra mode
 //      cbp4x4              - coded block pattern
@@ -7595,18 +6879,16 @@ IPPAPI(IppStatus, ippiReconstructChromaInter4x4MB_H264_16s8u_C2R, (Ipp16s **ppSr
 //
 //  Notes:
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiReconstructChromaIntra4x4MB_H264_16s8u_P2R, (Ipp16s **ppSrcDstCoeff,
-        Ipp8u *pSrcDstUPlane,
-        Ipp8u *pSrcDstVPlane,
-        Ipp32u srcdstUVStep,
-        IppIntraChromaPredMode_H264 intra_chroma_mode,
-        Ipp32u cbp4x4,
-        Ipp32u chromaQPU,
-        Ipp32u chromaQPV,
-        Ipp8u edge_type,
-  const Ipp16s *pQuantTableU,
-  const Ipp16s *pQuantTableV,
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiReconstructChromaIntra4x4MB_H264_16s8u_P2R,
+       (Ipp16s * *ppSrcDstCoeff, Ipp8u* pSrcDstUPlane, Ipp8u* pSrcDstVPlane,
+        Ipp32u srcdstUVStep, IppIntraChromaPredMode_H264 intra_chroma_mode,
+        Ipp32u cbp4x4, Ipp32u chromaQPU, Ipp32u chromaQPV, Ipp8u edge_type,
+        const Ipp16s* pQuantTableU, const Ipp16s* pQuantTableV,
         Ipp8u bypass_flag))
 
 /* ///////////////////////////////////////////////////////////////////////////
@@ -7614,11 +6896,14 @@ IPPAPI(IppStatus, ippiReconstructChromaIntra4x4MB_H264_16s8u_P2R, (Ipp16s **ppSr
 //      ippiReconstructChromaIntra4x4MB_H264_16s8u_C2R
 //
 //  Purpose:
-//      Reconstruct Intra Chroma 4x4 macroblock for high profile nv12 chroma format
+//      Reconstruct Intra Chroma 4x4 macroblock for high profile nv12 chroma
+format
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstUVPlane       - pointer to current UV plane which will be reconstructed
+//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstUVPlane       - pointer to current UV plane which will be
+reconstructed
 //      srcdstUVStep        - plane step
 //      intra_chroma_mode   - intra mode
 //      cbp4x4              - coded block pattern
@@ -7636,16 +6921,11 @@ IPPAPI(IppStatus, ippiReconstructChromaIntra4x4MB_H264_16s8u_P2R, (Ipp16s **ppSr
 //
 //  Notes:
 */
-IPPAPI(IppStatus, ippiReconstructChromaIntra4x4MB_H264_16s8u_C2R, (Ipp16s **ppSrcDstCoeff,
-        Ipp8u *pSrcDstUVPlane,
-        Ipp32u srcdstUVStep,
-        IppIntraChromaPredMode_H264 intraChromaMode,
-        Ipp32u cbp4x4,
-        Ipp32u chromaQPU,
-        Ipp32u chromaQPV,
-        Ipp32u edgeType,
-        const Ipp16s *pQuantTableU,
-        const Ipp16s *pQuantTableV,
+IPPAPI(IppStatus, ippiReconstructChromaIntra4x4MB_H264_16s8u_C2R,
+       (Ipp16s * *ppSrcDstCoeff, Ipp8u* pSrcDstUVPlane, Ipp32u srcdstUVStep,
+        IppIntraChromaPredMode_H264 intraChromaMode, Ipp32u cbp4x4,
+        Ipp32u chromaQPU, Ipp32u chromaQPV, Ipp32u edgeType,
+        const Ipp16s* pQuantTableU, const Ipp16s* pQuantTableV,
         Ipp32u bypassFlag))
 
 /* ///////////////////////////////////////////////////////////////////////////
@@ -7656,8 +6936,10 @@ IPPAPI(IppStatus, ippiReconstructChromaIntra4x4MB_H264_16s8u_C2R, (Ipp16s **ppSr
 //      Reconstruct Intra 8x8 Luma macroblock for high profile
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 8x8 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstYPlane       - pointer to current Y plane which will be reconstructed
+//      ppSrcCoeff          - pointer to 8x8 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstYPlane       - pointer to current Y plane which will be
+reconstructed
 //      srcdstYStep         - plane step
 //      pMBIntraTypes       - pointer to intra types for each subblock
 //      cbp8x8              - coded block pattern
@@ -7674,15 +6956,10 @@ IPPAPI(IppStatus, ippiReconstructChromaIntra4x4MB_H264_16s8u_C2R, (Ipp16s **ppSr
 //  Notes:
 //
 */
-IPPAPI(IppStatus, ippiReconstructLumaIntra8x8MB_H264_16s8u_C1R, (Ipp16s **ppSrcDstCoeff,
-        Ipp8u *pSrcDstYPlane,
-        Ipp32s srcdstYStep,
-        IppIntra8x8PredMode_H264 *pMBIntraTypes,
-        Ipp32u cbp8x8,
-        Ipp32u QP,
-        Ipp8u edgeType,
-  const Ipp16s *pQuantTable,
-        Ipp8u bypass_flag))
+IPPAPI(IppStatus, ippiReconstructLumaIntra8x8MB_H264_16s8u_C1R,
+       (Ipp16s * *ppSrcDstCoeff, Ipp8u* pSrcDstYPlane, Ipp32s srcdstYStep,
+        IppIntra8x8PredMode_H264* pMBIntraTypes, Ipp32u cbp8x8, Ipp32u QP,
+        Ipp8u edgeType, const Ipp16s* pQuantTable, Ipp8u bypass_flag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7692,8 +6969,10 @@ IPPAPI(IppStatus, ippiReconstructLumaIntra8x8MB_H264_16s8u_C1R, (Ipp16s **ppSrcD
 //      Reconstruct Inter 8x8 Luma macroblock for high profile
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 8x8 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstYPlane       - pointer to current Y plane which will be reconstructed
+//      ppSrcCoeff          - pointer to 8x8 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstYPlane       - pointer to current Y plane which will be
+reconstructed
 //      srcdstYStep         - plane step
 //      cbp8x8              - coded block pattern
 //      QP                  - quantizer
@@ -7708,13 +6987,9 @@ IPPAPI(IppStatus, ippiReconstructLumaIntra8x8MB_H264_16s8u_C1R, (Ipp16s **ppSrcD
 //  Notes:
 //
 */
-IPPAPI(IppStatus, ippiReconstructLumaInter8x8MB_H264_16s8u_C1R, (Ipp16s **ppSrcDstCoeff,
-        Ipp8u *pSrcDstYPlane,
-        Ipp32u srcdstYStep,
-        Ipp32u cbp8x8,
-        Ipp32s QP,
-  const Ipp16s *pQuantTable,
-        Ipp8u bypass_flag))
+IPPAPI(IppStatus, ippiReconstructLumaInter8x8MB_H264_16s8u_C1R,
+       (Ipp16s * *ppSrcDstCoeff, Ipp8u* pSrcDstYPlane, Ipp32u srcdstYStep,
+        Ipp32u cbp8x8, Ipp32s QP, const Ipp16s* pQuantTable, Ipp8u bypass_flag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7724,8 +6999,10 @@ IPPAPI(IppStatus, ippiReconstructLumaInter8x8MB_H264_16s8u_C1R, (Ipp16s **ppSrcD
 //      Reconstruct Intra 4x4 Luma macroblock for high profile in MBAFF mode
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstYPlane       - pointer to current Y plane which will be reconstructed
+//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstYPlane       - pointer to current Y plane which will be
+reconstructed
 //      pMBIntraTypes       - pointer to intra types for each subblock
 //      cbp4x2              - coded block pattern
 //      QP                  - quantizer
@@ -7741,15 +7018,10 @@ IPPAPI(IppStatus, ippiReconstructLumaInter8x8MB_H264_16s8u_C1R, (Ipp16s **ppSrcD
 //  Notes:
 //
 */
-IPPAPI(IppStatus, ippiReconstructLumaIntraHalf4x4MB_H264_16s8u_C1R, (Ipp16s **ppSrcDstCoeff,
-        Ipp8u *pSrcDstYPlane,
-        Ipp32s srcdstYStep,
-        IppIntra4x4PredMode_H264 *pMBIntraTypes,
-        Ipp32u cbp4x2,
-        Ipp32u QP,
-        Ipp8u edgeType,
-  const Ipp16s *pQuantTable,
-        Ipp8u bypass_flag))
+IPPAPI(IppStatus, ippiReconstructLumaIntraHalf4x4MB_H264_16s8u_C1R,
+       (Ipp16s * *ppSrcDstCoeff, Ipp8u* pSrcDstYPlane, Ipp32s srcdstYStep,
+        IppIntra4x4PredMode_H264* pMBIntraTypes, Ipp32u cbp4x2, Ipp32u QP,
+        Ipp8u edgeType, const Ipp16s* pQuantTable, Ipp8u bypass_flag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7759,8 +7031,10 @@ IPPAPI(IppStatus, ippiReconstructLumaIntraHalf4x4MB_H264_16s8u_C1R, (Ipp16s **pp
 //      Reconstruct Intra 8x8 Luma macroblock for high profile in MBAFF mode
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstYPlane       - pointer to current Y plane which will be reconstructed
+//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstYPlane       - pointer to current Y plane which will be
+reconstructed
 //      pMBIntraTypes       - pointer to intra types for each subblock
 //      cbp8x2              - coded block pattern
 //      QP                  - quantizer
@@ -7776,15 +7050,10 @@ IPPAPI(IppStatus, ippiReconstructLumaIntraHalf4x4MB_H264_16s8u_C1R, (Ipp16s **pp
 //  Notes:
 //
 */
-IPPAPI(IppStatus, ippiReconstructLumaIntraHalf8x8MB_H264_16s8u_C1R, (Ipp16s **ppSrcDstCoeff,
-        Ipp8u *pSrcDstYPlane,
-        Ipp32s srcdstYStep,
-        IppIntra8x8PredMode_H264 *pMBIntraTypes,
-        Ipp32u cbp8x2,
-        Ipp32u QP,
-        Ipp8u edgeType,
-  const Ipp16s *pQuantTable,
-        Ipp8u bypass_flag))
+IPPAPI(IppStatus, ippiReconstructLumaIntraHalf8x8MB_H264_16s8u_C1R,
+       (Ipp16s * *ppSrcDstCoeff, Ipp8u* pSrcDstYPlane, Ipp32s srcdstYStep,
+        IppIntra8x8PredMode_H264* pMBIntraTypes, Ipp32u cbp8x2, Ipp32u QP,
+        Ipp8u edgeType, const Ipp16s* pQuantTable, Ipp8u bypass_flag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7794,9 +7063,12 @@ IPPAPI(IppStatus, ippiReconstructLumaIntraHalf8x8MB_H264_16s8u_C1R, (Ipp16s **pp
 //      Reconstruct Intra Chroma 4x4 macroblock for high profile in MBAFF mode
 //
 //  Parameters:
-//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
-//      pSrcDstUPlane       - pointer to current U plane which will be reconstructed
-//      pSrcDstVPlane       - pointer to current V plane which will be reconstructed
+//      ppSrcCoeff          - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
+//      pSrcDstUPlane       - pointer to current U plane which will be
+reconstructed
+//      pSrcDstVPlane       - pointer to current V plane which will be
+reconstructed
 //      srcdstUVStep        - plane step
 //      intra_chroma_mode   - intra mode
 //      cbp4x4              - coded block pattern
@@ -7815,119 +7087,90 @@ IPPAPI(IppStatus, ippiReconstructLumaIntraHalf8x8MB_H264_16s8u_C1R, (Ipp16s **pp
 //
 //  Notes:
 */
-IPPAPI(IppStatus, ippiReconstructChromaIntraHalfs4x4MB_H264_16s8u_P2R, (Ipp16s **ppSrcDstCoeff,
-        Ipp8u *pSrcDstUPlane,
-        Ipp8u *pSrcDstVPlane,
-        Ipp32u srcdstUVStep,
-        IppIntraChromaPredMode_H264 intra_chroma_mode,
-        Ipp32u cbp4x4,
-        Ipp32u chromaQPU,
-        Ipp32u chromaQPV,
-        Ipp8u edge_type_top,
-        Ipp8u edge_type_bottom,
-  const Ipp16s *pQuantTableU,
-  const Ipp16s *pQuantTableV,
-        Ipp8u bypass_flag))
+IPPAPI(IppStatus, ippiReconstructChromaIntraHalfs4x4MB_H264_16s8u_P2R,
+       (Ipp16s * *ppSrcDstCoeff, Ipp8u* pSrcDstUPlane, Ipp8u* pSrcDstVPlane,
+        Ipp32u srcdstUVStep, IppIntraChromaPredMode_H264 intra_chroma_mode,
+        Ipp32u cbp4x4, Ipp32u chromaQPU, Ipp32u chromaQPV, Ipp8u edge_type_top,
+        Ipp8u edge_type_bottom, const Ipp16s* pQuantTableU,
+        const Ipp16s* pQuantTableV, Ipp8u bypass_flag))
 
-IPPAPI(IppStatus, ippiReconstructChromaIntraHalves4x4MB_H264_16s8u_P2R, (Ipp16s **ppSrcDstCoeff,
-        Ipp8u *pSrcDstUPlane,
-        Ipp8u *pSrcDstVPlane,
-        Ipp32u srcdstUVStep,
-        IppIntraChromaPredMode_H264 intra_chroma_mode,
-        Ipp32u cbp4x4,
-        Ipp32u chromaQPU,
-        Ipp32u chromaQPV,
-        Ipp8u edge_type_top,
-        Ipp8u edge_type_bottom,
-  const Ipp16s *pQuantTableU,
-  const Ipp16s *pQuantTableV,
-        Ipp8u bypass_flag))
+IPPAPI(IppStatus, ippiReconstructChromaIntraHalves4x4MB_H264_16s8u_P2R,
+       (Ipp16s * *ppSrcDstCoeff, Ipp8u* pSrcDstUPlane, Ipp8u* pSrcDstVPlane,
+        Ipp32u srcdstUVStep, IppIntraChromaPredMode_H264 intra_chroma_mode,
+        Ipp32u cbp4x4, Ipp32u chromaQPU, Ipp32u chromaQPV, Ipp8u edge_type_top,
+        Ipp8u edge_type_bottom, const Ipp16s* pQuantTableU,
+        const Ipp16s* pQuantTableV, Ipp8u bypass_flag))
 
-IPPAPI(IppStatus, ippiReconstructChromaIntra4x4_H264High_32s16u_IP2R, (
-            const IppiReconstructHighMB_32s16u * pReconstructInfo[2],
-            IppIntraChromaPredMode_H264 intraChromaMode,
-            Ipp32u edgeType))
+IPPAPI(IppStatus, ippiReconstructChromaIntra4x4_H264High_32s16u_IP2R,
+       (const IppiReconstructHighMB_32s16u* pReconstructInfo[2],
+        IppIntraChromaPredMode_H264 intraChromaMode, Ipp32u edgeType))
 
-IPPAPI(IppStatus, ippiReconstructChromaIntraHalf4x4_H264High_32s16u_IP2R, (
-            const IppiReconstructHighMB_32s16u * pReconstructInfo[2],
-            IppIntraChromaPredMode_H264 intraChromaMode,
-            Ipp32u edgeTypeTop,
-            Ipp32u edgeTypeBottom))
+IPPAPI(IppStatus, ippiReconstructChromaIntraHalf4x4_H264High_32s16u_IP2R,
+       (const IppiReconstructHighMB_32s16u* pReconstructInfo[2],
+        IppIntraChromaPredMode_H264 intraChromaMode, Ipp32u edgeTypeTop,
+        Ipp32u edgeTypeBottom))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiReconstructChromaInter4x4_H264High_32s16u_IP2R, (
-            const IppiReconstructHighMB_32s16u * pReconstructInfo[2]))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiReconstructChromaInter4x4_H264High_32s16u_IP2R,
+       (const IppiReconstructHighMB_32s16u* pReconstructInfo[2]))
 
-IPPAPI(IppStatus, ippiReconstructChroma422Intra4x4_H264High_32s16u_IP2R, (
-            const IppiReconstructHighMB_32s16u * pReconstructInfo[2],
-            IppIntraChromaPredMode_H264 intraChromaMode,
-            Ipp32u edgeType,
-            Ipp32u levelScaleDCU,
-            Ipp32u levelScaleDCV))
+IPPAPI(IppStatus, ippiReconstructChroma422Intra4x4_H264High_32s16u_IP2R,
+       (const IppiReconstructHighMB_32s16u* pReconstructInfo[2],
+        IppIntraChromaPredMode_H264 intraChromaMode, Ipp32u edgeType,
+        Ipp32u levelScaleDCU, Ipp32u levelScaleDCV))
 
-IPPAPI(IppStatus, ippiReconstructChroma422IntraHalf4x4_H264High_32s16u_IP2R, (
-            const IppiReconstructHighMB_32s16u * pReconstructInfo[2],
-            IppIntraChromaPredMode_H264 intraChromaMode,
-            Ipp32u edgeTypeTop,
-            Ipp32u edgeTypeBottom,
-            Ipp32u levelScaleDCU,
-            Ipp32u levelScaleDCV))
+IPPAPI(IppStatus, ippiReconstructChroma422IntraHalf4x4_H264High_32s16u_IP2R,
+       (const IppiReconstructHighMB_32s16u* pReconstructInfo[2],
+        IppIntraChromaPredMode_H264 intraChromaMode, Ipp32u edgeTypeTop,
+        Ipp32u edgeTypeBottom, Ipp32u levelScaleDCU, Ipp32u levelScaleDCV))
 
-IPPAPI(IppStatus, ippiReconstructChroma422Inter4x4_H264High_32s16u_IP2R, (
-            const IppiReconstructHighMB_32s16u * pReconstructInfo[2],
-            Ipp32u levelScaleDCU,
-            Ipp32u levelScaleDCV))
+IPPAPI(IppStatus, ippiReconstructChroma422Inter4x4_H264High_32s16u_IP2R,
+       (const IppiReconstructHighMB_32s16u* pReconstructInfo[2],
+        Ipp32u levelScaleDCU, Ipp32u levelScaleDCV))
 
-IPPAPI(IppStatus, ippiReconstructLumaIntra4x4_H264High_32s16u_IP1R, (
-            const IppiReconstructHighMB_32s16u * pReconstructInfo,
-            const IppIntra4x4PredMode_H264 *pMBIntraTypes,
-            Ipp32s edgeType))
+IPPAPI(IppStatus, ippiReconstructLumaIntra4x4_H264High_32s16u_IP1R,
+       (const IppiReconstructHighMB_32s16u* pReconstructInfo,
+        const IppIntra4x4PredMode_H264* pMBIntraTypes, Ipp32s edgeType))
 
-IPPAPI(IppStatus, ippiReconstructLumaIntraHalf4x4_H264High_32s16u_IP1R, (
-            const IppiReconstructHighMB_32s16u * pReconstructInfo,
-            const IppIntra4x4PredMode_H264 *pMBIntraTypes,
-            Ipp32u edgeType))
+IPPAPI(IppStatus, ippiReconstructLumaIntraHalf4x4_H264High_32s16u_IP1R,
+       (const IppiReconstructHighMB_32s16u* pReconstructInfo,
+        const IppIntra4x4PredMode_H264* pMBIntraTypes, Ipp32u edgeType))
 
-IPPAPI(IppStatus, ippiReconstructLumaIntra8x8_H264High_32s16u_IP1R, (
-            const IppiReconstructHighMB_32s16u * pReconstructInfo,
-            IppIntra8x8PredMode_H264 *pMBIntraTypes,
-            Ipp32u edgeType))
+IPPAPI(IppStatus, ippiReconstructLumaIntra8x8_H264High_32s16u_IP1R,
+       (const IppiReconstructHighMB_32s16u* pReconstructInfo,
+        IppIntra8x8PredMode_H264* pMBIntraTypes, Ipp32u edgeType))
 
-IPPAPI(IppStatus, ippiReconstructLumaIntraHalf8x8_H264High_32s16u_IP1R, (
-            const IppiReconstructHighMB_32s16u * pReconstructInfo,
-            IppIntra8x8PredMode_H264 *pMBIntraTypes,
-            Ipp32u edgeType))
+IPPAPI(IppStatus, ippiReconstructLumaIntraHalf8x8_H264High_32s16u_IP1R,
+       (const IppiReconstructHighMB_32s16u* pReconstructInfo,
+        IppIntra8x8PredMode_H264* pMBIntraTypes, Ipp32u edgeType))
 
-IPPAPI(IppStatus, ippiReconstructLumaIntra16x16_H264High_32s16u_IP1R, (
-            const IppiReconstructHighMB_32s16u * pReconstructInfo,
-            IppIntra16x16PredMode_H264 intraLumaMode,
-            Ipp32u edgeType))
+IPPAPI(IppStatus, ippiReconstructLumaIntra16x16_H264High_32s16u_IP1R,
+       (const IppiReconstructHighMB_32s16u* pReconstructInfo,
+        IppIntra16x16PredMode_H264 intraLumaMode, Ipp32u edgeType))
 
-IPPAPI(IppStatus, ippiReconstructLumaInter4x4_H264High_32s16u_IP1R, (
-            const IppiReconstructHighMB_32s16u * pReconstructInfo))
+IPPAPI(IppStatus, ippiReconstructLumaInter4x4_H264High_32s16u_IP1R,
+       (const IppiReconstructHighMB_32s16u* pReconstructInfo))
 
-IPPAPI(IppStatus, ippiReconstructLumaInter8x8_H264High_32s16u_IP1R, (
-            const IppiReconstructHighMB_32s16u * pReconstructInfo))
+IPPAPI(IppStatus, ippiReconstructLumaInter8x8_H264High_32s16u_IP1R,
+       (const IppiReconstructHighMB_32s16u* pReconstructInfo))
 
-IPPAPI(IppStatus, ippiReconstructChroma422Intra4x4_H264High_16s8u_IP2R, (
-            const IppiReconstructHighMB_16s8u * pReconstructInfo[2],
-            IppIntraChromaPredMode_H264 intraChromaMode,
-            Ipp32u edgeType,
-            Ipp32u levelScaleDCU,
-            Ipp32u levelScaleDCV))
+IPPAPI(IppStatus, ippiReconstructChroma422Intra4x4_H264High_16s8u_IP2R,
+       (const IppiReconstructHighMB_16s8u* pReconstructInfo[2],
+        IppIntraChromaPredMode_H264 intraChromaMode, Ipp32u edgeType,
+        Ipp32u levelScaleDCU, Ipp32u levelScaleDCV))
 
-IPPAPI(IppStatus, ippiReconstructChroma422IntraHalf4x4_H264High_16s8u_IP2R, (
-            const IppiReconstructHighMB_16s8u * pReconstructInfo[2],
-            IppIntraChromaPredMode_H264 intraChromaMode,
-            Ipp32u edgeTypeTop,
-            Ipp32u edgeTypeBottom,
-            Ipp32u levelScaleDCU,
-            Ipp32u levelScaleDCV))
+IPPAPI(IppStatus, ippiReconstructChroma422IntraHalf4x4_H264High_16s8u_IP2R,
+       (const IppiReconstructHighMB_16s8u* pReconstructInfo[2],
+        IppIntraChromaPredMode_H264 intraChromaMode, Ipp32u edgeTypeTop,
+        Ipp32u edgeTypeBottom, Ipp32u levelScaleDCU, Ipp32u levelScaleDCV))
 
-IPPAPI(IppStatus, ippiReconstructChroma422Inter4x4_H264High_16s8u_IP2R, (
-            const IppiReconstructHighMB_16s8u * pReconstructInfo[2],
-            Ipp32u levelScaleDCU,
-            Ipp32u levelScaleDCV))
+IPPAPI(IppStatus, ippiReconstructChroma422Inter4x4_H264High_16s8u_IP2R,
+       (const IppiReconstructHighMB_16s8u* pReconstructInfo[2],
+        Ipp32u levelScaleDCU, Ipp32u levelScaleDCV))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7952,15 +7195,9 @@ IPPAPI(IppStatus, ippiReconstructChroma422Inter4x4_H264High_16s8u_IP2R, (
 //  Notes:
 //
 */
-IPPAPI(IppStatus, ippiInterpolateBlock_H264_8u_P3P1R, (
-  const Ipp8u *pSrc1,
-  const Ipp8u *pSrc2,
-        Ipp8u *pDst,
-        Ipp32u uWidth,
-        Ipp32u uHeight,
-        Ipp32s iPitchSrc1,
-        Ipp32s iPitchSrc2,
-        Ipp32s iPitchDst))
+IPPAPI(IppStatus, ippiInterpolateBlock_H264_8u_P3P1R,
+       (const Ipp8u* pSrc1, const Ipp8u* pSrc2, Ipp8u* pDst, Ipp32u uWidth,
+        Ipp32u uHeight, Ipp32s iPitchSrc1, Ipp32s iPitchSrc2, Ipp32s iPitchDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7993,19 +7230,10 @@ IPPAPI(IppStatus, ippiInterpolateBlock_H264_8u_P3P1R, (
 //  Notes:
 //
 */
-IPPAPI(IppStatus, ippiBiDirWeightBlock_H264_8u_P3P1R,( const Ipp8u *pSrc1,
-       const Ipp8u *pSrc2,
-       Ipp8u *pDst,
-       Ipp32u nSrcPitch1,
-       Ipp32u nSrcPitch2,
-       Ipp32u nDstPitch,
-       Ipp32u ulog2wd,
-       Ipp32s iWeight1,
-       Ipp32s iOffset1,
-       Ipp32s iWeight2,
-       Ipp32s iOffset2,
-       IppiSize roi
-    ))
+IPPAPI(IppStatus, ippiBiDirWeightBlock_H264_8u_P3P1R,
+       (const Ipp8u* pSrc1, const Ipp8u* pSrc2, Ipp8u* pDst, Ipp32u nSrcPitch1,
+        Ipp32u nSrcPitch2, Ipp32u nDstPitch, Ipp32u ulog2wd, Ipp32s iWeight1,
+        Ipp32s iOffset1, Ipp32s iWeight2, Ipp32s iOffset2, IppiSize roi))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -8033,17 +7261,10 @@ IPPAPI(IppStatus, ippiBiDirWeightBlock_H264_8u_P3P1R,( const Ipp8u *pSrc1,
 //  Notes:
 //
 */
-IPPAPI(IppStatus, ippiBiDirWeightBlockImplicit_H264_8u_P3P1R,(const Ipp8u *pSrc1,
-       const Ipp8u *pSrc2,
-       Ipp8u *pDst,
-       Ipp32u nSrcPitch1,
-       Ipp32u nSrcPitch2,
-       Ipp32u nDstPitch,
-       Ipp32s iWeight1,
-       Ipp32s iWeight2,
-       IppiSize roi
-    ))
-
+IPPAPI(IppStatus, ippiBiDirWeightBlockImplicit_H264_8u_P3P1R,
+       (const Ipp8u* pSrc1, const Ipp8u* pSrc2, Ipp8u* pDst, Ipp32u nSrcPitch1,
+        Ipp32u nSrcPitch2, Ipp32u nDstPitch, Ipp32s iWeight1, Ipp32s iWeight2,
+        IppiSize roi))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -8052,10 +7273,13 @@ IPPAPI(IppStatus, ippiBiDirWeightBlockImplicit_H264_8u_P3P1R,(const Ipp8u *pSrc1
 //  Purpose: Decode Chroma DC coefficients CAVLC coded
 //
 //  Parameters:
-//          ppBitStream         - double pointer to current dword in bitstream(will be updated by function)
-//              pOffset                 - pointer to offset in current dword(will be updated by function)
+//          ppBitStream         - double pointer to current dword in
+bitstream(will be updated by function)
+//              pOffset                 - pointer to offset in current
+dword(will be updated by function)
 //              pNumCoeff               - output number of coefficients
-//              ppPosCoefbuf    - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
+//              ppPosCoefbuf    - pointer to 4x4 block of coefficients, if it's
+non zero(will be update by function)
 //              pTblCoeffToken  - chroma DC CoeffToken Table
 //              ppTblTotalZerosCR - chroma DC TotalZeros Tables
 //              ppTblRunBefore  - RunBefore Tables
@@ -8070,13 +7294,10 @@ IPPAPI(IppStatus, ippiBiDirWeightBlockImplicit_H264_8u_P3P1R,(const Ipp8u *pSrc1
 //    (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
 
-IPPAPI(IppStatus, ippiDecodeCAVLCChromaDcCoeffs_H264_1u16s, (Ipp32u **ppBitStream,
-                                                             Ipp32s *pOffset,
-                                                             Ipp16s *pNumCoeff,
-                                                             Ipp16s **ppDstCoeffs,
-                                                             const Ipp32s *pTblCoeffToken,
-                                                             const Ipp32s **ppTblTotalZerosCR,
-                                                             const Ipp32s **ppTblRunBefore))
+IPPAPI(IppStatus, ippiDecodeCAVLCChromaDcCoeffs_H264_1u16s,
+       (Ipp32u * *ppBitStream, Ipp32s* pOffset, Ipp16s* pNumCoeff,
+        Ipp16s** ppDstCoeffs, const Ipp32s* pTblCoeffToken,
+        const Ipp32s** ppTblTotalZerosCR, const Ipp32s** ppTblRunBefore))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -8086,12 +7307,16 @@ IPPAPI(IppStatus, ippiDecodeCAVLCChromaDcCoeffs_H264_1u16s, (Ipp32u **ppBitStrea
 //      Decode any non Chroma DC coefficients CAVLC coded
 //
 //  Parameters:
-//      ppBitStream     - double pointer to current dword in bitstream(will be updated by function)
-//      pOffset         - pointer to offset in current dword(will be updated by function)
+//      ppBitStream     - double pointer to current dword in bitstream(will be
+updated by function)
+//      pOffset         - pointer to offset in current dword(will be updated by
+function)
 //      pNumCoeff       - output number of coefficients
-//      ppPosCoefbuf    - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
+//      ppPosCoefbuf    - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
 //      uVLCSelect      - predictor on number of CoeffToken Table
-//      uMaxNumCoeff    - maximum coefficients in block(16 for Intra16x16, 15 for the rest)
+//      uMaxNumCoeff    - maximum coefficients in block(16 for Intra16x16, 15
+for the rest)
 //      pTblCoeffToken  - CoeffToken Tables
 //      ppTblTotalZeros - TotalZeros Tables
 //      ppTblRunBefore  - RunBefore Tables
@@ -8107,69 +7332,49 @@ IPPAPI(IppStatus, ippiDecodeCAVLCChromaDcCoeffs_H264_1u16s, (Ipp32u **ppBitStrea
 //      (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
 
-IPPAPI(IppStatus, ippiDecodeCAVLCCoeffs_H264_1u16s, (Ipp32u **ppBitStream,
-                                                     Ipp32s *pOffset,
-                                                     Ipp16s *pNumCoeff,
-                                                     Ipp16s **ppDstCoeffs,
-                                                     Ipp32u uVLCSelect,
-                                                     Ipp16s uMaxNumCoeff,
-                                                     const Ipp32s **ppTblCoeffToken,
-                                                     const Ipp32s **ppTblTotalZeros,
-                                                     const Ipp32s **ppTblRunBefore,
-                                                     const Ipp32s *pScanMatrix))
+IPPAPI(IppStatus, ippiDecodeCAVLCCoeffs_H264_1u16s,
+       (Ipp32u * *ppBitStream, Ipp32s* pOffset, Ipp16s* pNumCoeff,
+        Ipp16s** ppDstCoeffs, Ipp32u uVLCSelect, Ipp16s uMaxNumCoeff,
+        const Ipp32s** ppTblCoeffToken, const Ipp32s** ppTblTotalZeros,
+        const Ipp32s** ppTblRunBefore, const Ipp32s* pScanMatrix))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeExpGolombOne_H264_1u16s, (Ipp32u **ppBitStream,
-                                                      Ipp32s *pBitOffset,
-                                                      Ipp16s *pDst,
-                                                      Ipp8u isSigned))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeExpGolombOne_H264_1u16s,
+       (Ipp32u * *ppBitStream, Ipp32s* pBitOffset, Ipp16s* pDst,
+        Ipp8u isSigned))
 
-IPPAPI(IppStatus, ippiDecodeExpGolombOne_H264_1u32s, (Ipp32u **ppBitStream,
-                                                      Ipp32s *pBitOffset,
-                                                      Ipp32s *pDst,
-                                                      Ipp32s isSigned))
+IPPAPI(IppStatus, ippiDecodeExpGolombOne_H264_1u32s,
+       (Ipp32u * *ppBitStream, Ipp32s* pBitOffset, Ipp32s* pDst,
+        Ipp32s isSigned))
 
-IPPAPI(IppStatus,ippiDecodeCAVLCChroma422DcCoeffs_H264_1u16s,(Ipp32u **ppBitStream,
-                                                            Ipp32s *pBitOffset,
-                                                            Ipp16s *pNumCoeff,
-                                                            Ipp16s **ppDstCoeffs,
-                                                            const Ipp32s *pTblCoeffToken,
-                                                            const Ipp32s **ppTblTotalZerosCR,
-                                                            const Ipp32s **ppTblRunBefore))
+IPPAPI(IppStatus, ippiDecodeCAVLCChroma422DcCoeffs_H264_1u16s,
+       (Ipp32u * *ppBitStream, Ipp32s* pBitOffset, Ipp16s* pNumCoeff,
+        Ipp16s** ppDstCoeffs, const Ipp32s* pTblCoeffToken,
+        const Ipp32s** ppTblTotalZerosCR, const Ipp32s** ppTblRunBefore))
 
-IPPAPI(IppStatus, ippiDecodeCAVLCCoeffs_H264_1u32s, (Ipp32u **ppBitStream,
-                                                     Ipp32s *pBitOffset,
-                                                     Ipp16s *pNumCoeff,
-                                                     Ipp32s **ppDstCoeffs,
-                                                     Ipp32u uVLCSelect,
-                                                     Ipp16s uMaxNumCoeff,
-                                                     const Ipp32s **ppTblCoeffToken,
-                                                     const Ipp32s **ppTblTotalZeros,
-                                                     const Ipp32s **ppTblRunBefore,
-                                                     const Ipp32s *pScanMatrix))
+IPPAPI(IppStatus, ippiDecodeCAVLCCoeffs_H264_1u32s,
+       (Ipp32u * *ppBitStream, Ipp32s* pBitOffset, Ipp16s* pNumCoeff,
+        Ipp32s** ppDstCoeffs, Ipp32u uVLCSelect, Ipp16s uMaxNumCoeff,
+        const Ipp32s** ppTblCoeffToken, const Ipp32s** ppTblTotalZeros,
+        const Ipp32s** ppTblRunBefore, const Ipp32s* pScanMatrix))
 
-IPPAPI(IppStatus, ippiDecodeCAVLCChromaDcCoeffs_H264_1u32s, (Ipp32u **ppBitStream,
-                                                             Ipp32s *pBitOffset,
-                                                             Ipp16s *pNumCoeff,
-                                                             Ipp32s **ppDstCoeffs,
-                                                             const Ipp32s *pTblCoeffToken,
-                                                             const Ipp32s **ppTblTotalZerosCR,
-                                                             const Ipp32s **ppTblRunBefore))
+IPPAPI(IppStatus, ippiDecodeCAVLCChromaDcCoeffs_H264_1u32s,
+       (Ipp32u * *ppBitStream, Ipp32s* pBitOffset, Ipp16s* pNumCoeff,
+        Ipp32s** ppDstCoeffs, const Ipp32s* pTblCoeffToken,
+        const Ipp32s** ppTblTotalZerosCR, const Ipp32s** ppTblRunBefore))
 
-IPPAPI(IppStatus, ippiDecodeCAVLCChroma422DcCoeffs_H264_1u32s,(Ipp32u **ppBitStream,
-                                                                 Ipp32s *pBitOffset,
-                                                                 Ipp16s *pNumCoeff,
-                                                                 Ipp32s **ppDstCoeffs,
-                                                                 const Ipp32s *pTblCoeffToken,
-                                                                 const Ipp32s **ppTblTotalZerosCR,
-                                                                 const Ipp32s **ppTblRunBefore))
+IPPAPI(IppStatus, ippiDecodeCAVLCChroma422DcCoeffs_H264_1u32s,
+       (Ipp32u * *ppBitStream, Ipp32s* pBitOffset, Ipp16s* pNumCoeff,
+        Ipp32s** ppDstCoeffs, const Ipp32s* pTblCoeffToken,
+        const Ipp32s** ppTblTotalZerosCR, const Ipp32s** ppTblRunBefore))
 
-IPPAPI(IppStatus, ippiExpandPlane_H264_8u_C1R,   ( Ipp8u *StartPtr,
-                                                    Ipp32u uFrameWidth,
-                                                    Ipp32u uFrameHeight,
-                                                    Ipp32u uPitch,
-                                                    Ipp32u uPels,
-                                                    IppvcFrameFieldFlag uFrameFieldFlag))
+IPPAPI(IppStatus, ippiExpandPlane_H264_8u_C1R,
+       (Ipp8u * StartPtr, Ipp32u uFrameWidth, Ipp32u uFrameHeight,
+        Ipp32u uPitch, Ipp32u uPels, IppvcFrameFieldFlag uFrameFieldFlag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //                     H.264 Video Encoder Functions
@@ -8183,28 +7388,45 @@ IPPAPI(IppStatus, ippiExpandPlane_H264_8u_C1R,   ( Ipp8u *StartPtr,
 //
 //  Parameters:
 //    pSrc                 Pointer to 4x4 block - array of size 16.
-//    AC                   Flag, equal to zero in the cases of Luma Intra 16x16 AC block
-//                         or Chroma AC block, and is not equal to zero otherwise.
-//    pScanMatrix          Scan matrix for coefficients in block (array of size 16).
-//    Count                Position of the last non-zero block coefficient in the scanning sequence.
-//    Traling_One          The number of trailing ones transform coefficient levels
-//                         in a range[0;3]. This argument is calculated by the function.
+//    AC                   Flag, equal to zero in the cases of Luma Intra 16x16
+AC block
+//                         or Chroma AC block, and is not equal to zero
+otherwise.
+//    pScanMatrix          Scan matrix for coefficients in block (array of size
+16).
+//    Count                Position of the last non-zero block coefficient in
+the scanning sequence.
+//    Traling_One          The number of trailing ones transform coefficient
+levels
+//                         in a range[0;3]. This argument is calculated by the
+function.
 //    Traling_One_Signs    Code that describes signs of trailing ones.
-//                         (Trailing_One 1 -      i)-bit in this code corresponds to a sign
-//                         of i-trailing one in the current block. In this code 1 indicates
-//                         negative value, 0 positive value. This  argument is calculated
+//                         (Trailing_One 1 -      i)-bit in this code
+corresponds to a sign
+//                         of i-trailing one in the current block. In this code
+1 indicates
+//                         negative value, 0 positive value. This  argument is
+calculated
 //                         by the function.
-//    NumOutCoeffs         The number of non-zero coefficients in block (including trailing
+//    NumOutCoeffs         The number of non-zero coefficients in block
+(including trailing
 //                         ones). This argument is calculated by the function.
-//    TotalZeros           The number of zero coefficients in block (except trailing zeros). This
+//    TotalZeros           The number of zero coefficients in block (except
+trailing zeros). This
 //                         argument is calculated by the function.
-//    pLevels              Pointer to an array of size 16 that contains non-zero quantized
-//                         coefficients of the current block (except trailing ones) in reverse scan
+//    pLevels              Pointer to an array of size 16 that contains non-zero
+quantized
+//                         coefficients of the current block (except trailing
+ones) in reverse scan
 //                         matrix order.
-//    pRuns                Pointer to an array of size 16 that contains runs before non-zero
-//                         quantized coefficients (including trailing ones) of the current block in
-//                         reverse scan matrix order (except run before the first non-zero
-//                         coefficient in block, which can be calculated using TotalZeros).
+//    pRuns                Pointer to an array of size 16 that contains runs
+before non-zero
+//                         quantized coefficients (including trailing ones) of
+the current block in
+//                         reverse scan matrix order (except run before the
+first non-zero
+//                         coefficient in block, which can be calculated using
+TotalZeros).
 //
 //  Returns:
 //    ippStsNoErr          No error
@@ -8215,31 +7437,15 @@ IPPAPI(IppStatus, ippiExpandPlane_H264_8u_C1R,   ( Ipp8u *StartPtr,
 //    Final Draft International Standard of Joint Video Specification
 //    (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
-IPPAPI(IppStatus, ippiEncodeCoeffsCAVLC_H264_16s, (
-  const Ipp16s  *pSrc,
-        Ipp8u   AC,
-  const Ipp32s  *pScanMatrix,
-        Ipp8u   Count,
-        Ipp8u   *Trailing_Ones,
-        Ipp8u   *Trailing_One_Signs,
-        Ipp8u   *NumOutCoeffs,
-        Ipp8u   *TotalZeros,
-        Ipp16s  *Levels,
-        Ipp8u   *Runs))
+IPPAPI(IppStatus, ippiEncodeCoeffsCAVLC_H264_16s,
+       (const Ipp16s* pSrc, Ipp8u AC, const Ipp32s* pScanMatrix, Ipp8u Count,
+        Ipp8u* Trailing_Ones, Ipp8u* Trailing_One_Signs, Ipp8u* NumOutCoeffs,
+        Ipp8u* TotalZeros, Ipp16s* Levels, Ipp8u* Runs))
 
-IPPAPI(IppStatus, ippiEncodeCoeffsCAVLC_H264_32s ,(
- const Ipp32s* pSrc,
-       Ipp32s  AC,
- const Ipp32s* pScanMatrix,
-       Ipp32s  Count,
-       Ipp8u*  Trailing_Ones,
-       Ipp8u*  Trailing_One_Signs,
-       Ipp8u*  NumOutCoeffs,
-       Ipp8u*  TotalZeroes,
-       Ipp32s* Levels,
-       Ipp8u*  Runs))
-
-
+IPPAPI(IppStatus, ippiEncodeCoeffsCAVLC_H264_32s,
+       (const Ipp32s* pSrc, Ipp32s AC, const Ipp32s* pScanMatrix, Ipp32s Count,
+        Ipp8u* Trailing_Ones, Ipp8u* Trailing_One_Signs, Ipp8u* NumOutCoeffs,
+        Ipp8u* TotalZeroes, Ipp32s* Levels, Ipp8u* Runs))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -8248,25 +7454,42 @@ IPPAPI(IppStatus, ippiEncodeCoeffsCAVLC_H264_32s ,(
 //  Purpose: Calculates characteristics of 2X2 Chroma DC for CAVLC encoding.
 //
 //  Parameters:
-//              pSrc                            Pointer to 2x2 block - array of size 4.
-//              Traling_One                     The number of trailing ones transform coefficient levels
-//                                                      in a range[0;3]. This argument is calculated by the function.
-//              Traling_One_Signs       Code that describes signs of trailing ones.
-//                                                      (Trailing_One 1 -      i)-bit in this code corresponds to a sign
-//                                                      of i-trailing one in the current block. In this code 1 indicates
-//                                                      negative value, 0  positive value. This  argument is calculated
+//              pSrc                            Pointer to 2x2 block - array of
+size 4.
+//              Traling_One                     The number of trailing ones
+transform coefficient levels
+//                                                      in a range[0;3]. This
+argument is calculated by the function.
+//              Traling_One_Signs       Code that describes signs of trailing
+ones.
+//                                                      (Trailing_One 1 - i)-bit
+in this code corresponds to a sign
+//                                                      of i-trailing one in the
+current block. In this code 1 indicates
+//                                                      negative value, 0
+positive value. This  argument is calculated
 //                                                      by the function.
-//              NumOutCoeffs            The number of non-zero coefficients in block (including trailing
-//                                                      ones). This argument is calculated by the function.
-//              TotalZeros                      The number of zero coefficients in block (except trailing zeros). This
-//                                                      argument is calculated by the function.
-//              pLevels                         Pointer to an array of size 4 that contains non-zero quantized
-//                                                      coefficients of the current block (except trailing ones) in reverse scan
+//              NumOutCoeffs            The number of non-zero coefficients in
+block (including trailing
+//                                                      ones). This argument is
+calculated by the function.
+//              TotalZeros                      The number of zero coefficients
+in block (except trailing zeros). This
+//                                                      argument is calculated
+by the function.
+//              pLevels                         Pointer to an array of size 4
+that contains non-zero quantized
+//                                                      coefficients of the
+current block (except trailing ones) in reverse scan
 //                                                      matrix order.
-//              pRuns                           Pointer to an array of size 4 that contains runs before non-zero
-//                                                      quantized coefficients (including trailing ones) of the current block in
-//                                                      reverse scan matrix order (except run before the first non-zero
-//                                                      coefficient in block, which can be calculated using TotalZeros).
+//              pRuns                           Pointer to an array of size 4
+that contains runs before non-zero
+//                                                      quantized coefficients
+(including trailing ones) of the current block in
+//                                                      reverse scan matrix
+order (except run before the first non-zero
+//                                                      coefficient in block,
+which can be calculated using TotalZeros).
 //
 //  Returns:
 //    ippStsNoErr          No error
@@ -8278,133 +7501,157 @@ IPPAPI(IppStatus, ippiEncodeCoeffsCAVLC_H264_32s ,(
 //    (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
 
-IPPAPI(IppStatus, ippiEncodeChromaDcCoeffsCAVLC_H264_16s, (
-  const Ipp16s  *pSrc,
-        Ipp8u   *pTrailingOnes,
-        Ipp8u   *pTrailingOneSigns,
-        Ipp8u   *pNumOutCoeffs,
-        Ipp8u   *pTotalZeros,
-        Ipp16s  *pLevels,
-        Ipp8u   *pRuns))
+IPPAPI(IppStatus, ippiEncodeChromaDcCoeffsCAVLC_H264_16s,
+       (const Ipp16s* pSrc, Ipp8u* pTrailingOnes, Ipp8u* pTrailingOneSigns,
+        Ipp8u* pNumOutCoeffs, Ipp8u* pTotalZeros, Ipp16s* pLevels,
+        Ipp8u* pRuns))
 
 /*
 //  Name:
 //    ippiTransformQuantChromaDC_H264_16s_C1I
 //
-//  Purpose: This function performs forward transform (if it's necessary) and quantization
+//  Purpose: This function performs forward transform (if it's necessary) and
+quantization
 //  for 2x2 DC Croma block
 //
 //  Parameters:
-//      pSrcDst                 Pointer to 2x2 chroma DC block - source & destination array of size 4
-//      pTBlock                 Pointer to 2x2 transformed chroma DC block - source or destination array of size 4
-//      QPCroma                 Quantization parameter for chroma. It's in range [0,39]
-//      NumLevels               Pointer to value, which contains:  a negative value of a number of non-zero
-//                              elements in block after quantization (in the case of the first quantized element
+//      pSrcDst                 Pointer to 2x2 chroma DC block - source &
+destination array of size 4
+//      pTBlock                 Pointer to 2x2 transformed chroma DC block -
+source or destination array of size 4
+//      QPCroma                 Quantization parameter for chroma. It's in range
+[0,39]
+//      NumLevels               Pointer to value, which contains:  a negative
+value of a number of non-zero
+//                              elements in block after quantization (in the
+case of the first quantized element
 //                              in block is not equal zero)
-//                              a number of non-zero elements in block after quantization (in the case of the
+//                              a number of non-zero elements in block after
+quantization (in the case of the
 //                              first quantized element in block is equal zero)
 //                              This value is calculated by function.
-//      Intra                   Flag that is equal 1 in the case of Intra slice, 0 otherwise.
-//      NeedTransform           Flag that is equal 1 if transforming process is used. This flag is equal 0
+//      Intra                   Flag that is equal 1 in the case of Intra slice,
+0 otherwise.
+//      NeedTransform           Flag that is equal 1 if transforming process is
+used. This flag is equal 0
 //                              if transforming process is not used.
 //
 //  Returns:
 //              ippStsNoErr                     No error
 //              ippStsNullPtrErr                pointers are NULL
 //              ippStsOutOfRangeErr             QPCroma >39
-//              ippStsScaleRangeErr                     if any coefficient after quantization > MAX_CAVLC_LEVEL_VALUE
+//              ippStsScaleRangeErr                     if any coefficient after
+quantization > MAX_CAVLC_LEVEL_VALUE
 
 
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiTransformQuantChromaDC_H264_16s_C1I, (
-        Ipp16s* pSrcDst,
-        Ipp16s* pTBlock,
-        Ipp32s  QPCroma,
-        Ipp8s*  pNumLevels,
-        Ipp8u   intra,
-        Ipp8u   needTransform))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiTransformQuantChromaDC_H264_16s_C1I,
+       (Ipp16s * pSrcDst, Ipp16s* pTBlock, Ipp32s QPCroma, Ipp8s* pNumLevels,
+        Ipp8u intra, Ipp8u needTransform))
 
 /*
 //  Name:
 //    ippiTransformQuantLumaDC_H264_16s_C1I
 //
 //  Purpose:
-//    This function performs forward transform (if it's necessary) and quantization
+//    This function performs forward transform (if it's necessary) and
+quantization
 //    for 4x4 DC Luma block.
 //
 //  Parameters:
-//    pSrcDst       Pointer to 4x4 luma DC block - source & destination array of size 4
-//    pTBlock       Pointer to 4x4 transformed luma DC block - source or destination array of size 4
+//    pSrcDst       Pointer to 4x4 luma DC block - source & destination array of
+size 4
+//    pTBlock       Pointer to 4x4 transformed luma DC block - source or
+destination array of size 4
 //    QP            Quantization parameter for luma. It's in range [0,51]
 //    NumLevels     Pointer to value, which contains:
-//                  a negative value of a number of non-zero elements in block after
-//                  quantization (in the case of the first quantized element in block is not equal zero)
-//                  a number of non-zero elements in block after quantization (in the case
+//                  a negative value of a number of non-zero elements in block
+after
+//                  quantization (in the case of the first quantized element in
+block is not equal zero)
+//                  a number of non-zero elements in block after quantization
+(in the case
 //                  of the first quantized element in block is equal zero)
 //                  This value is calculated by function.
-//    NeedTransform Flag that is equal 1 if transforming process is used. This flag is equal 0 if transforming process is not used.
+//    NeedTransform Flag that is equal 1 if transforming process is used. This
+flag is equal 0 if transforming process is not used.
 //    pScanMatrix   Scan matrix for coefficients in block (array of size 16)
-//    LastCoeff     Position of the last non-zero coefficient in block after quantization. This value is calculated by function.
+//    LastCoeff     Position of the last non-zero coefficient in block after
+quantization. This value is calculated by function.
 //
 //
 //  Returns:
 //              ippStsNoErr                     No error
 //              ippStsNullPtrErr                pointers are NULL
 //              ippStsOutOfRangeErr             QP >51 or QP<0
-//              ippStsScaleRangeErr                     if any coefficient after quantization > MAX_CAVLC_LEVEL_VALUE
+//              ippStsScaleRangeErr                     if any coefficient after
+quantization > MAX_CAVLC_LEVEL_VALUE
 
 
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiTransformQuantLumaDC_H264_16s_C1I, (
-        Ipp16s* pSrcDst,
-        Ipp16s* pTBlock,
-        Ipp32s  QP,
-        Ipp8s*  pNumLevels,
-        Ipp8u   needTransform,
-  const Ipp16s* pScanMatrix,
-        Ipp8u*  pLastCoeff))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiTransformQuantLumaDC_H264_16s_C1I,
+       (Ipp16s * pSrcDst, Ipp16s* pTBlock, Ipp32s QP, Ipp8s* pNumLevels,
+        Ipp8u needTransform, const Ipp16s* pScanMatrix, Ipp8u* pLastCoeff))
 
 /*
 //  Name:
 //    ippiTransformQuantResidual_H264_16s_C1I
 //
 //  Purpose:
-//    This function performs forward transform and quantization for 4x4 residual block.
+//    This function performs forward transform and quantization for 4x4 residual
+block.
 //
 //  Parameters:
-//    pSrcDst       Pointer to 4x4 residual block - source & destination array of size 16
-//    QP            Quantization parameter for luma or for chroma. It's in range [0,51] or [0,39]
+//    pSrcDst       Pointer to 4x4 residual block - source & destination array
+of size 16
+//    QP            Quantization parameter for luma or for chroma. It's in range
+[0,51] or [0,39]
 //    NumLevels     Pointer to value, which contains:
-//                  a negative value of a number of non-zero elements in block after quantization
-//                  (in the case of the first quantized element in block is not equal zero)
-//                  a number of non-zero elements in block after quantization (in the case
+//                  a negative value of a number of non-zero elements in block
+after quantization
+//                  (in the case of the first quantized element in block is not
+equal zero)
+//                  a number of non-zero elements in block after quantization
+(in the case
 //                  of the first quantized element in block is equal zero)
 //                  This value is calculated by function.
-//    Intra                   Flag that is equal 1 in the case of Intra slice, 0 otherwise.
-//    pScanMatrix         Scan matrix for coefficients in block (array of size 16)
-//    LastCoeff           Position of the last non-zero coefficient in block after quantization. This value is calculated by function.
+//    Intra                   Flag that is equal 1 in the case of Intra slice, 0
+otherwise.
+//    pScanMatrix         Scan matrix for coefficients in block (array of size
+16)
+//    LastCoeff           Position of the last non-zero coefficient in block
+after quantization. This value is calculated by function.
 //
 //
 //  Returns:
 //              ippStsNoErr                     No error
 //              ippStsNullPtrErr                pointers are NULL
 //              ippStsOutOfRangeErr             QP >51 or QP<0
-//              ippStsScaleRangeErr                     if any coefficient after quantization > MAX_CAVLC_LEVEL_VALUE
+//              ippStsScaleRangeErr                     if any coefficient after
+quantization > MAX_CAVLC_LEVEL_VALUE
 
 
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiTransformQuantResidual_H264_16s_C1I , (
-        Ipp16s* pSrcDst,
-        Ipp32s  QP,
-        Ipp8s*  pNumLevels,
-        Ipp8u   intra,
-  const Ipp16s* pScanMatrix,
-        Ipp8u*  pLastCoeff))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiTransformQuantResidual_H264_16s_C1I,
+       (Ipp16s * pSrcDst, Ipp32s QP, Ipp8s* pNumLevels, Ipp8u intra,
+        const Ipp16s* pScanMatrix, Ipp8u* pLastCoeff))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -8427,16 +7674,45 @@ IPPAPI(IppStatus, ippiTransformQuantResidual_H264_16s_C1I , (
 //    ippStsNoErr       No error
 //    ippStsNullPtrErr  One of the pSrc pDst is NULL
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_5MBDV_16s8u_P3C2R,(const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_ZoomOut2_5MBDV_16s8u_P3C2R,(const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_ZoomOut4_5MBDV_16s8u_P3C2R,(const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_ZoomOut8_5MBDV_16s8u_P3C2R,(const Ipp16s* pSrc[5], Ipp8u* pDst[5] ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_16x4x5MB_DV_16s8u_P3C2R,(const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstPitch ) )
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_5MBDV_16s8u_P3C2R,
+       (const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_ZoomOut2_5MBDV_16s8u_P3C2R,
+       (const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_ZoomOut4_5MBDV_16s8u_P3C2R,
+       (const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_ZoomOut8_5MBDV_16s8u_P3C2R,
+       (const Ipp16s* pSrc[5], Ipp8u* pDst[5]))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_16x4x5MB_DV_16s8u_P3C2R,
+       (const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstPitch))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -8447,7 +7723,8 @@ IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_16x4x5MB_DV_16s8u_P3C2R,(const Ipp16s* 
 //    ippiYCrCb411ToYCbCr422_8x8MB_DV_16s8u_P3C2R
 //
 //  Purpose:
-//    Converts a YCrCb411 macro block to the YCbCr422 macro block at the right edge of destination image.
+//    Converts a YCrCb411 macro block to the YCbCr422 macro block at the right
+edge of destination image.
 //    Reduce size of dst image in 1/2/4/8 times accordingly.
 //
 //  Parameters:
@@ -8459,16 +7736,45 @@ IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_16x4x5MB_DV_16s8u_P3C2R,(const Ipp16s* 
 //    ippStsNoErr       No error
 //    ippStsNullPtrErr  One of the pSrc pDst is NULL
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_EdgeDV_16s8u_P3C2R,(const Ipp16s* pSrc, Ipp8u* pDst, int dstStep ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_ZoomOut2_EdgeDV_16s8u_P3C2R,(const Ipp16s* pSrc, Ipp8u* pDst, int dstStep ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_ZoomOut4_EdgeDV_16s8u_P3C2R,(const Ipp16s* pSrc, Ipp8u* pDst, int dstStep ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_ZoomOut8_EdgeDV_16s8u_P3C2R,(const Ipp16s* pSrc, Ipp8u* pDst, int dstStep ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_8x8MB_DV_16s8u_P3C2R,(const Ipp16s* pSrc, Ipp8u* pDst, int dstPitch ) )
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_EdgeDV_16s8u_P3C2R,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_ZoomOut2_EdgeDV_16s8u_P3C2R,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_ZoomOut4_EdgeDV_16s8u_P3C2R,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_ZoomOut8_EdgeDV_16s8u_P3C2R,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_8x8MB_DV_16s8u_P3C2R,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int dstPitch))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -8491,16 +7797,45 @@ IPPAPI(IppStatus, ippiYCrCb411ToYCbCr422_8x8MB_DV_16s8u_P3C2R,(const Ipp16s* pSr
 //    ippStsNoErr       No error
 //    ippStsNullPtrErr  One of the pSrc pDst is NULL
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb420ToYCbCr422_5MBDV_16s8u_P3C2R,(const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb420ToYCbCr422_ZoomOut2_5MBDV_16s8u_P3C2R,(const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb420ToYCbCr422_ZoomOut4_5MBDV_16s8u_P3C2R,(const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb420ToYCbCr422_ZoomOut8_5MBDV_16s8u_P3C2R,(const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb420ToYCbCr422_8x8x5MB_DV_16s8u_P3C2R,(const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstPitch ) )
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb420ToYCbCr422_5MBDV_16s8u_P3C2R,
+       (const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb420ToYCbCr422_ZoomOut2_5MBDV_16s8u_P3C2R,
+       (const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb420ToYCbCr422_ZoomOut4_5MBDV_16s8u_P3C2R,
+       (const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb420ToYCbCr422_ZoomOut8_5MBDV_16s8u_P3C2R,
+       (const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb420ToYCbCr422_8x8x5MB_DV_16s8u_P3C2R,
+       (const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstPitch))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -8524,25 +7859,59 @@ IPPAPI(IppStatus, ippiYCrCb420ToYCbCr422_8x8x5MB_DV_16s8u_P3C2R,(const Ipp16s* p
 //    ippStsNoErr       No error
 //    ippStsNullPtrErr  One of the pSrc pDst is NULL
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb422ToYCbCr422_5MBDV_16s8u_P3C2R,(const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb422ToYCbCr422_ZoomOut2_5MBDV_16s8u_P3C2R,(const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb422ToYCbCr422_ZoomOut4_5MBDV_16s8u_P3C2R,(const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb422ToYCbCr422_ZoomOut8_5MBDV_16s8u_P3C2R,(const Ipp16s* pSrc[5], Ipp8u* pDst[5] ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb422ToYCbCr422_8x4x5MB_DV_16s8u_P3C2R,(const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep ) )
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCrCb422ToYCbCr422_10HalvesMB16x8_DV100_16s8u_P3C2R, (const Ipp16s* pSrc, Ipp8u* pDst[10], int dstStep ) )
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb422ToYCbCr422_5MBDV_16s8u_P3C2R,
+       (const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb422ToYCbCr422_ZoomOut2_5MBDV_16s8u_P3C2R,
+       (const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb422ToYCbCr422_ZoomOut4_5MBDV_16s8u_P3C2R,
+       (const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb422ToYCbCr422_ZoomOut8_5MBDV_16s8u_P3C2R,
+       (const Ipp16s* pSrc[5], Ipp8u* pDst[5]))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb422ToYCbCr422_8x4x5MB_DV_16s8u_P3C2R,
+       (const Ipp16s* pSrc[5], Ipp8u* pDst[5], int dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCrCb422ToYCbCr422_10HalvesMB16x8_DV100_16s8u_P3C2R,
+       (const Ipp16s* pSrc, Ipp8u* pDst[10], int dstStep))
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //      ippiDeinterlaceFilterTriangle_8u_C1R
 //
 //  Purpose:
 //      This function deinterlaces video plane.
-//      The function performs triangle filtering of the image to remove interlacing
+//      The function performs triangle filtering of the image to remove
+interlacing
 //      flicker effect that arises when analogue interlaced TV data is
 //      viewed on a computer monitor.
 //
@@ -8552,29 +7921,29 @@ IPPAPI(IppStatus, ippiYCrCb422ToYCbCr422_10HalvesMB16x8_DV100_16s8u_P3C2R, (cons
 //      pDst            Pointer to the destination video plane.
 //      dstStep         Step through the destination video plane.
 //      roiSize         Size of ROI. Height should be greater than 3.
-//      centerWeight    Weight of filtered pixel, must lie within the range from 0 to 256.
-//      layout          Plane layout, required when the plane is only a part of the frame.
+//      centerWeight    Weight of filtered pixel, must lie within the range from
+0 to 256.
+//      layout          Plane layout, required when the plane is only a part of
+the frame.
 //                      Takes the following values:
 //                      IPP_UPPER for the first slice
 //                      IPP_CENTER for the middle slices
 //                      IPP_LOWER for the last slice
-//                      IPP_LOWER && IPP_UPPER && IPP_CENTER for the image that is not  sliced.
+//                      IPP_LOWER && IPP_UPPER && IPP_CENTER for the image that
+is not  sliced.
 //
 //  Returns:
 //      ippStsNoErr     Indicates no error.
-//      ippStsNullPtrErr Indicates an error when at least one input pointer is NULL.
-//      ippStsSizeErr   Indicates an error when roiSize  has a field with zero or negative value.
+//      ippStsNullPtrErr Indicates an error when at least one input pointer is
+NULL.
+//      ippStsSizeErr   Indicates an error when roiSize  has a field with zero
+or negative value.
 //      ippStsBadArgErr Indicates invalid argument.
 */
 
-IPPAPI(IppStatus, ippiDeinterlaceFilterTriangle_8u_C1R, (
-  const Ipp8u*   pSrc,
-        Ipp32s   srcStep,
-        Ipp8u*   pDst,
-        Ipp32s   dstStep,
-        IppiSize roiSize,
-        Ipp32u   centerWeight,
-        Ipp32u   layout))
+IPPAPI(IppStatus, ippiDeinterlaceFilterTriangle_8u_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, Ipp8u* pDst, Ipp32s dstStep,
+        IppiSize roiSize, Ipp32u centerWeight, Ipp32u layout))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -8582,39 +7951,45 @@ IPPAPI(IppStatus, ippiDeinterlaceFilterTriangle_8u_C1R, (
 //
 //  Purpose:
 //      This function deinterlaces UV video plane (nv12 chroma format).
-//      The function performs triangle filtering of the image to remove interlacing
+//      The function performs triangle filtering of the image to remove
+interlacing
 //      flicker effect that arises when analogue interlaced TV data is
 //      viewed on a computer monitor.
 //
 //  Parameters:
 //      pSrc            Pointer to the source video plane (nv12 chroma format).
 //      srcStep         Step through the source video plane.
-//      pDst            Pointer to the destination video plane(nv12 chroma format).
+//      pDst            Pointer to the destination video plane(nv12 chroma
+format).
 //      dstStep         Step through the destination video plane.
 //      roiSize         Size of ROI. Height should be greater than 3.
-//      centerWeight    Weight of filtered pixel, must lie within the range from 0 to 256.
-//      layout          Plane layout, required when the plane is only a part of the frame.
+//      centerWeight    Weight of filtered pixel, must lie within the range from
+0 to 256.
+//      layout          Plane layout, required when the plane is only a part of
+the frame.
 //                      Takes the following values:
 //                      IPP_UPPER for the first slice
 //                      IPP_CENTER for the middle slices
 //                      IPP_LOWER for the last slice
-//                      IPP_LOWER && IPP_UPPER && IPP_CENTER for the image that is not  sliced.
+//                      IPP_LOWER && IPP_UPPER && IPP_CENTER for the image that
+is not  sliced.
 //
 //  Returns:
 //      ippStsNoErr     Indicates no error.
-//      ippStsNullPtrErr Indicates an error when at least one input pointer is NULL.
-//      ippStsSizeErr   Indicates an error when roiSize  has a field with zero or negative value.
+//      ippStsNullPtrErr Indicates an error when at least one input pointer is
+NULL.
+//      ippStsSizeErr   Indicates an error when roiSize  has a field with zero
+or negative value.
 //      ippStsBadArgErr Indicates invalid argument.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDeinterlaceFilterTriangle_8u_C2R, (
-  const Ipp8u*   pSrc,
-        Ipp32s   srcStep,
-        Ipp8u*   pDst,
-        Ipp32s   dstStep,
-        IppiSize roiSize,
-        Ipp32u   centerWeight,
-        Ipp32u   layout))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDeinterlaceFilterTriangle_8u_C2R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, Ipp8u* pDst, Ipp32s dstStep,
+        IppiSize roiSize, Ipp32u centerWeight, Ipp32u layout))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //                   General Color Conversion
@@ -8626,26 +8001,40 @@ IPPAPI(IppStatus, ippiDeinterlaceFilterTriangle_8u_C2R, (
 //    ippStsNoErr              Ok
 //    ippStsNullPtrErr         One or more pointers are NULL
 //    ippStsSizeErr            if srcRoi.width < 2 || srcRoi.height < 2
-//    ippStsDoubleSize         If srcRoi.width and srcRoi.height are not multiples of 2,
-//                             the function reduces the values to the nearest multiples of 2.
+//    ippStsDoubleSize         If srcRoi.width and srcRoi.height are not
+multiples of 2,
+//                             the function reduces the values to the nearest
+multiples of 2.
 //  Arguments:
 //    pSrc                    pointer to the source image
 //    srcStep                 step for the source image
-//    pDst                    array of pointers to the components of the destination image
+//    pDst                    array of pointers to the components of the
+destination image
 //    dstStep                 array of steps values for every component
-//    srcRoi                  region of interest of src image to be processed, in pixels,
+//    srcRoi                  region of interest of src image to be processed,
+in pixels,
 //                            and roi of dst image you must calculate.
 //    rotation                rotation control parameter; must be of
 //                            the following pre-defined values:
 //                            IPPVC_ROTATE_90CCW, IPPVC_ROTATE_90CW,
 //                            IPPVC_ROTATE_180 or IPPVC_ROTATE_DISABLE,
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiCbYCr422ToYCbCr420_Rotate_8u_C2P3R,(const Ipp8u* pSrc, int srcStep, IppiSize srcRoi,Ipp8u *pDst[3], int dstStep[3],
-           int rotation ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiCbYCr422ToYCbCr420_Rotate_8u_P3R,(const Ipp8u* pSrc[3], int srcStep[3], IppiSize srcRoi,Ipp8u *pDst[3], int dstStep[3],
-           int rotation ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiCbYCr422ToYCbCr420_Rotate_8u_C2P3R,
+       (const Ipp8u* pSrc, int srcStep, IppiSize srcRoi, Ipp8u* pDst[3],
+        int dstStep[3], int rotation))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiCbYCr422ToYCbCr420_Rotate_8u_P3R,
+       (const Ipp8u* pSrc[3], int srcStep[3], IppiSize srcRoi, Ipp8u* pDst[3],
+        int dstStep[3], int rotation))
 /* ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Name:            ippiResizeCCRotate_8u_C2R
 // Description:      synthesizes a low-resolution preview image for
@@ -8653,17 +8042,21 @@ IPPAPI(IppStatus,ippiCbYCr422ToYCbCr420_Rotate_8u_P3R,(const Ipp8u* pSrc[3], int
 //                   combines scale reduction(2:1,4:1 or 8:1), color space
 //                   conversion and rotation into a a single function
 // Input Arguments:
-//                   pSrc            pointer to the source image. Input byte ordering is Cb Y Cr Y.
+//                   pSrc            pointer to the source image. Input byte
+ordering is Cb Y Cr Y.
 //                   srcStep         step for the source image
 //                   pDst            pointer to the destination image
 //                   dstStep         step for the destination image
-//                   srcRoi          region of interest of src image to be processed, in pixels,
+//                   srcRoi          region of interest of src image to be
+processed, in pixels,
 //                                   and roi of dst image you must calculate.
-//                   zoomFactor      parameter, indicating downscale factor, takes values 2, 4 or 8 for 2:1,4:1,and 8:1 downscale respectively.
+//                   zoomFactor      parameter, indicating downscale factor,
+takes values 2, 4 or 8 for 2:1,4:1,and 8:1 downscale respectively.
 //                   interpolation   type of interpolation to
 //                                     perform resampling of the input image
 //                                     The following are currently supported:
-//                                     IPPI_INTER_NN      nearest neighbor interpolation
+//                                     IPPI_INTER_NN      nearest neighbor
+interpolation
 //                                     IPPI_INTER_LINEAR  linear interpolation
 //                   colorConversion color conversion control parameter,
 //                                     must be set to one of the following
@@ -8683,15 +8076,25 @@ IPPAPI(IppStatus,ippiCbYCr422ToYCbCr420_Rotate_8u_P3R,(const Ipp8u* pSrc[3], int
 //    ippStsNullPtrErr         one or more pointers are NULL
 //    ippStsSizeErr            srcRoi.width  < zoomFactor
 //      ippStsSizeErr            srcRoi.height < zoomFactor
-//    ippStsInterpolationErr   invalid values of the interpolation control parameter.
-//    ippStsResizeFactorErr    invalid values of the zoomFactor control parameter.
+//    ippStsInterpolationErr   invalid values of the interpolation control
+parameter.
+//    ippStsResizeFactorErr    invalid values of the zoomFactor control
+parameter.
 //    ippStsBadArgErr          invalid values of the rotation control parameter.
-//    ippStsDoubleSize         if srcRoi.width and srcRoi.height are not multiples of 2,
-//                             the function reduces the values to the nearest multiples of 2.
+//    ippStsDoubleSize         if srcRoi.width and srcRoi.height are not
+multiples of 2,
+//                             the function reduces the values to the nearest
+multiples of 2.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiResizeCCRotate_8u_C2R,(const Ipp8u* pSrc, int srcStep, IppiSize srcRoi,
-       Ipp16u *pDst,int dstStep, int zoomFactor,int interpolation,int colorConversion,int rotation ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiResizeCCRotate_8u_C2R,
+       (const Ipp8u* pSrc, int srcStep, IppiSize srcRoi, Ipp16u* pDst,
+        int dstStep, int zoomFactor, int interpolation, int colorConversion,
+        int rotation))
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiGenScaleLevel8x8_H264_8u16s_D2
@@ -8700,11 +8103,15 @@ IPPAPI(IppStatus, ippiResizeCCRotate_8u_C2R,(const Ipp8u* pSrc, int srcStep, Ipp
 //  Performs quantization including 8x8 transform normalization
 //
 //  Parameters:
-//  pSrcInvScaleMatrix   - Pointer to an original inverse scaling matrix for 8x8 transform.
+//  pSrcInvScaleMatrix   - Pointer to an original inverse scaling matrix for 8x8
+transform.
 //  SrcStep              - Step of the pSrcInvScaleMatrix in bytes.
-//  pDstInvScaleMatrix   - Pointer to a destination inverse scaling matrix -- array of size 64.
-//  pDstScaleMatrix      - Pointer to a destination forward scaling matrix - array of size 64.
-//  Qp_rem               - Reminder from an integer division of quantization parameter by 6.
+//  pDstInvScaleMatrix   - Pointer to a destination inverse scaling matrix --
+array of size 64.
+//  pDstScaleMatrix      - Pointer to a destination forward scaling matrix -
+array of size 64.
+//  Qp_rem               - Reminder from an integer division of quantization
+parameter by 6.
 //
 //  Returns:
 //    ippStsNoErr          No error
@@ -8713,12 +8120,9 @@ IPPAPI(IppStatus, ippiResizeCCRotate_8u_C2R,(const Ipp8u* pSrc, int srcStep, Ipp
 //
 */
 
-IPPAPI(IppStatus, ippiGenScaleLevel8x8_H264_8u16s_D2, (
-    const Ipp8u  *pSrcInvScaleMatrix,
-    int           SrcStep,
-    Ipp16s       *pDstInvScaleMatrix,
-    Ipp16s       *pDstScaleMatrix,
-    int           Qp_rem))
+IPPAPI(IppStatus, ippiGenScaleLevel8x8_H264_8u16s_D2,
+       (const Ipp8u* pSrcInvScaleMatrix, int SrcStep,
+        Ipp16s* pDstInvScaleMatrix, Ipp16s* pDstScaleMatrix, int Qp_rem))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -8728,14 +8132,19 @@ IPPAPI(IppStatus, ippiGenScaleLevel8x8_H264_8u16s_D2, (
 //  Performs forward 8x8 transform for a 8x8 Luma block without normalization.
 //
 //  Parameters:
-//    pSrcDst     -  pointer to the initial 8x8 Luma block and resultant coefficients
+//    pSrcDst     -  pointer to the initial 8x8 Luma block and resultant
+coefficients
 //                   (array of size 64).
 //  Returns:
 //    ippStsNoErr          No error
 //    ippStsNullPtrErr     at least one of the pointers is NULL
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiTransformLuma8x8Fwd_H264_16s_C1I, (Ipp16s  *pSrcDst))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiTransformLuma8x8Fwd_H264_16s_C1I, (Ipp16s * pSrcDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -8751,18 +8160,26 @@ IPPAPI(IppStatus, ippiTransformLuma8x8Fwd_H264_16s_C1I, (Ipp16s  *pSrcDst))
 //                        array of size 64.
 //    Qp6              -  Quantization parameter divided by 6
 //    Intra            -  Flag, 1 if the slice is intra and 0 otherwise.
-//    pScanMatrix      -  Pointer to a scan matrix for the coefficients in the block (array
+//    pScanMatrix      -  Pointer to a scan matrix for the coefficients in the
+block (array
 //                        of size 64)
-//    pScaleLevels     -  Pointer to a scale level matrix taking into account 8x8 transform
+//    pScaleLevels     -  Pointer to a scale level matrix taking into account
+8x8 transform
 //                        normalization.
 //    pNumLevels       -  Pointer to a value which contains:
-//                         - a negative value of a number of non-zero elements in block after
-//                           quantization (when the first quantized element in block is not equal
+//                         - a negative value of a number of non-zero elements
+in block after
+//                           quantization (when the first quantized element in
+block is not equal
 //                           to zero),
-//                         - a number of non-zero elements in block after quantization (when
-//                           the first quantized element in block is equal to zero).
-//    pLastCoeff       -  Position of the last (in order of pScanMatrix) non-zero coefficient
-//                        in block after quantization. This value is calculated by the function.
+//                         - a number of non-zero elements in block after
+quantization (when
+//                           the first quantized element in block is equal to
+zero).
+//    pLastCoeff       -  Position of the last (in order of pScanMatrix)
+non-zero coefficient
+//                        in block after quantization. This value is calculated
+by the function.
 //
 //  Returns:
 //    ippStsNoErr          No error
@@ -8772,25 +8189,15 @@ IPPAPI(IppStatus, ippiTransformLuma8x8Fwd_H264_16s_C1I, (Ipp16s  *pSrcDst))
 //  NOTE:
 //    pSrc and pDst will usually point to the same memory region!
 */
-IPPAPI(IppStatus, ippiQuantLuma8x8_H264_16s_C1, (
-    const Ipp16s *pSrc,
-    Ipp16s       *pDst,
-    int           Qp6,
-    int           Intra,
-    const Ipp16s *pScanMatrix,
-    const Ipp16s *pScaleLevels,
-    int          *pNumLevels,
-    int          *pLastCoeff))
+IPPAPI(IppStatus, ippiQuantLuma8x8_H264_16s_C1,
+       (const Ipp16s* pSrc, Ipp16s* pDst, int Qp6, int Intra,
+        const Ipp16s* pScanMatrix, const Ipp16s* pScaleLevels, int* pNumLevels,
+        int* pLastCoeff))
 
-IPPAPI(IppStatus, ippiQuantLuma8x8_H264_32s_C1, (
- const Ipp32s* pSrc,
-       Ipp32s* pDst,
-       Ipp32s  Qp6,
-       Ipp32s  Intra,
- const Ipp16s* pScanMatrix,
- const Ipp16s* pScaleLevels,
-       Ipp32s* pNumLevels,
-       Ipp32s* pLastCoeff))
+IPPAPI(IppStatus, ippiQuantLuma8x8_H264_32s_C1,
+       (const Ipp32s* pSrc, Ipp32s* pDst, Ipp32s Qp6, Ipp32s Intra,
+        const Ipp16s* pScanMatrix, const Ipp16s* pScaleLevels,
+        Ipp32s* pNumLevels, Ipp32s* pLastCoeff))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -8801,7 +8208,8 @@ IPPAPI(IppStatus, ippiQuantLuma8x8_H264_32s_C1, (
 //  Performs dequantization including inverse 8x8 transform normalization
 //
 //  Parameters:
-//    pSrcDst          -  Pointer to a Luma block coefficients - source and destination
+//    pSrcDst          -  Pointer to a Luma block coefficients - source and
+destination
 //                        array of size 64.
 //    Qp6              -  Quantization parameter divided by 6
 //    pInvLevelScale   -  Pointer to an inverse scale levels matrix.
@@ -8812,16 +8220,11 @@ IPPAPI(IppStatus, ippiQuantLuma8x8_H264_32s_C1, (
 //    ippStsQPErr          Qp6 is less than 0 or greater than 8 or
 //
 */
-IPPAPI(IppStatus, ippiQuantLuma8x8Inv_H264_16s_C1I, (
-    Ipp16s       *pSrcDst,
-    int           Qp6,
-    const Ipp16s *pInvLevelScale))
+IPPAPI(IppStatus, ippiQuantLuma8x8Inv_H264_16s_C1I,
+       (Ipp16s * pSrcDst, int Qp6, const Ipp16s* pInvLevelScale))
 
-IPPAPI(IppStatus, ippiQuantInvLuma8x8_H264_32s_C1I, (
-       Ipp32s* pSrcDst,
-       Ipp32s  Qp6,
- const Ipp16s* pInvLevelScale))
-
+IPPAPI(IppStatus, ippiQuantInvLuma8x8_H264_32s_C1I,
+       (Ipp32s * pSrcDst, Ipp32s Qp6, const Ipp16s* pInvLevelScale))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -8829,13 +8232,15 @@ IPPAPI(IppStatus, ippiQuantInvLuma8x8_H264_32s_C1I, (
 //
 //  Purpose:
 //  Performs inverse 8x8 transform for a 8x8 Luma block with subsequent intra
-//  prediction or motion compensation, coefficients are assumed to be pre-normalized.
+//  prediction or motion compensation, coefficients are assumed to be
+pre-normalized.
 //
 //  Parameters:
 //    pPred       -  pointer to the reference 8x8 block, which is used for intra
 //                   prediction or motion compensation.
 //    PredStep    -  reference frame step in bytes.
-//    pSrcDst     -  pointer to the initial coefficients and buffer for the computations
+//    pSrcDst     -  pointer to the initial coefficients and buffer for the
+computations
 //                   (8x8 block) - array of size 64.
 //    pDst        -  pointer to the destination 8x8 block.
 //    DstStep     -  destination frame step in bytes.
@@ -8845,70 +8250,82 @@ IPPAPI(IppStatus, ippiQuantInvLuma8x8_H264_32s_C1I, (
 //    ippStsNullPtrErr     at least one of the pointers is NULL
 //
 */
-IPPAPI(IppStatus, ippiTransformLuma8x8InvAddPred_H264_16s8u_C1R, (
-    const Ipp8u *pPred,
-    int          PredStep,
-    Ipp16s      *pSrcDst,
-    Ipp8u       *pDst,
-    int          DstStep))
+IPPAPI(IppStatus, ippiTransformLuma8x8InvAddPred_H264_16s8u_C1R,
+       (const Ipp8u* pPred, int PredStep, Ipp16s* pSrcDst, Ipp8u* pDst,
+        int DstStep))
 
 /*///////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiQuantWeightBlockInv_DV_16s_C1I
 //
 //  Purpose:
-//  The function performs de quantization and de weighting at one block according to DV standard.
+//  The function performs de quantization and de weighting at one block
+according to DV standard.
 //
 //  Parameters:
 //    pSrcDs           -  pointer to the source & destination 8x8 block.
-//    pQuantInvTable   -  pointer to an array that contains values of quantification table for the
-                          current block.
-//    pWeightInvTable  -  Pointer to an array that contains values of weight table for the current block.
+//    pQuantInvTable   -  pointer to an array that contains values of
+quantification table for the current block.
+//    pWeightInvTable  -  Pointer to an array that contains values of weight
+table for the current block.
 //
 //  Returns:
 //    ippStsNoErr          No error
 //    ippStsNullPtrErr     at least one of the pointers is NULL
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiQuantWeightBlockInv_DV_16s_C1I, (
-       Ipp16s       *pSrcDst,
-       const Ipp16s *pQuantInvTable,
-       const Ipp16s *pWeightInvTable))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiQuantWeightBlockInv_DV_16s_C1I,
+       (Ipp16s * pSrcDst, const Ipp16s* pQuantInvTable,
+        const Ipp16s* pWeightInvTable))
 
 /*///////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiQuantWeightBlockInv_DV100_16s_C1I
 //
 //  Purpose:
-//  The function performs de quantization and de weighting at one block according to DV100 standard.
+//  The function performs de quantization and de weighting at one block
+according to DV100 standard.
 //
 //  Parameters:
 //    pSrcDs           -  pointer to the source & destination 8x8 block.
-//    pWeightInvTable  -  Pointer to an array that contains values of weight table for the current block.
-//    quantValue        -  value of quantization parameter for the current block.
+//    pWeightInvTable  -  Pointer to an array that contains values of weight
+table for the current block.
+//    quantValue        -  value of quantization parameter for the current
+block.
 //
 //  Returns:
 //    ippStsNoErr          No error
 //    ippStsNullPtrErr     at least one of the pointers is NULL
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiQuantWeightBlockInv_DV100_16s_C1I, (
-       Ipp16s       *pSrcDst,
-       const Ipp16s *pWeightInvTable,
-       Ipp32s quantValue))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiQuantWeightBlockInv_DV100_16s_C1I,
+       (Ipp16s * pSrcDst, const Ipp16s* pWeightInvTable, Ipp32s quantValue))
 
 /*///////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiDCT8x4x2To4x4Inv_DV_16s_C1I
 //
-//  Purpose: The function performs inverse discrete cosines transform at 2x4x8 block. After
-//             that create block 4x4: first, values in rows are average in pairs;
-//             second, values in columns are average in pairs too. And we got new values
+//  Purpose: The function performs inverse discrete cosines transform at 2x4x8
+block. After
+//             that create block 4x4: first, values in rows are average in
+pairs;
+//             second, values in columns are average in pairs too. And we got
+new values
 //             of block 4x4.
-//             Values calculated for new 4x4 block stored in series (in a row) in memory.
+//             Values calculated for new 4x4 block stored in series (in a row)
+in memory.
 //
 //
 //  Parameters:
@@ -8919,10 +8336,13 @@ IPPAPI(IppStatus, ippiQuantWeightBlockInv_DV100_16s_C1I, (
 //    ippStsNullPtrErr     at least one of the pointers is NULL
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDCT8x4x2To4x4Inv_DV_16s_C1I, (
-       Ipp16s       *pSrcDst))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDCT8x4x2To4x4Inv_DV_16s_C1I, (Ipp16s * pSrcDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -8952,54 +8372,33 @@ IPPAPI(IppStatus, ippiDCT8x4x2To4x4Inv_DV_16s_C1I, (
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiTransform8x8Inv_VC1_16s_C1R, (
- const Ipp16s *pSrc,
-       int     srcStep,
-       Ipp16s *pDst,
-       int     dstStep,
-       IppiSize srcSizeNZ))
+IPPAPI(IppStatus, ippiTransform8x8Inv_VC1_16s_C1R,
+       (const Ipp16s* pSrc, int srcStep, Ipp16s* pDst, int dstStep,
+        IppiSize srcSizeNZ))
 
-IPPAPI(IppStatus, ippiTransform4x4Inv_VC1_16s_C1R, (
- const Ipp16s *pSrc,
-       int     srcStep,
-       Ipp16s *pDst,
-       int     dstStep,
-       IppiSize srcSizeNZ))
+IPPAPI(IppStatus, ippiTransform4x4Inv_VC1_16s_C1R,
+       (const Ipp16s* pSrc, int srcStep, Ipp16s* pDst, int dstStep,
+        IppiSize srcSizeNZ))
 
-IPPAPI(IppStatus, ippiTransform8x4Inv_VC1_16s_C1R, (
- const Ipp16s *pSrc,
-       int     srcStep,
-       Ipp16s *pDst,
-       int     dstStep,
-       IppiSize srcSizeNZ))
+IPPAPI(IppStatus, ippiTransform8x4Inv_VC1_16s_C1R,
+       (const Ipp16s* pSrc, int srcStep, Ipp16s* pDst, int dstStep,
+        IppiSize srcSizeNZ))
 
-IPPAPI(IppStatus, ippiTransform4x8Inv_VC1_16s_C1R, (
- const Ipp16s *pSrc,
-       int     srcStep,
-       Ipp16s *pDst,
-       int     dstStep,
-       IppiSize srcSizeNZ))
+IPPAPI(IppStatus, ippiTransform4x8Inv_VC1_16s_C1R,
+       (const Ipp16s* pSrc, int srcStep, Ipp16s* pDst, int dstStep,
+        IppiSize srcSizeNZ))
 
-IPPAPI(IppStatus, ippiTransform8x8Inv_VC1_16s_C1IR, (
-       Ipp16s *pSrcDst,
-       int     srcDstStep,
-       IppiSize srcSizeNZ))
+IPPAPI(IppStatus, ippiTransform8x8Inv_VC1_16s_C1IR,
+       (Ipp16s * pSrcDst, int srcDstStep, IppiSize srcSizeNZ))
 
-IPPAPI(IppStatus, ippiTransform4x4Inv_VC1_16s_C1IR, (
-       Ipp16s *pSrcDst,
-       int     srcDstStep,
-       IppiSize srcSizeNZ))
+IPPAPI(IppStatus, ippiTransform4x4Inv_VC1_16s_C1IR,
+       (Ipp16s * pSrcDst, int srcDstStep, IppiSize srcSizeNZ))
 
-IPPAPI(IppStatus, ippiTransform8x4Inv_VC1_16s_C1IR, (
-       Ipp16s *pSrcDst,
-       int     srcDstStep,
-       IppiSize srcSizeNZ))
+IPPAPI(IppStatus, ippiTransform8x4Inv_VC1_16s_C1IR,
+       (Ipp16s * pSrcDst, int srcDstStep, IppiSize srcSizeNZ))
 
-IPPAPI(IppStatus, ippiTransform4x8Inv_VC1_16s_C1IR, (
-       Ipp16s *pSrcDst,
-       int     srcDstStep,
-       IppiSize srcSizeNZ))
-
+IPPAPI(IppStatus, ippiTransform4x8Inv_VC1_16s_C1IR,
+       (Ipp16s * pSrcDst, int srcDstStep, IppiSize srcSizeNZ))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9010,7 +8409,8 @@ IPPAPI(IppStatus, ippiTransform4x8Inv_VC1_16s_C1IR, (
 //      accordance with 8.3.6.5.1 of VC-1 standard
 //
 //  Parameters:
-//    pParams         Pointer to structure which contains parameters for interpolation:
+//    pParams         Pointer to structure which contains parameters for
+interpolation:
 //      pSrc          Pointer to the source block.
 //      srcStep       Step in bytes through the source plane.
 //      pDst          Pointer to the destination block.
@@ -9026,8 +8426,8 @@ IPPAPI(IppStatus, ippiTransform4x8Inv_VC1_16s_C1IR, (
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiInterpolateQPBilinear_VC1_8u_C1R, (
-  const IppVCInterpolate_8u* pParams))
+IPPAPI(IppStatus, ippiInterpolateQPBilinear_VC1_8u_C1R,
+       (const IppVCInterpolate_8u* pParams))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9038,7 +8438,8 @@ IPPAPI(IppStatus, ippiInterpolateQPBilinear_VC1_8u_C1R, (
 //      accordance with 8.3.6.5.1 of VC-1 standard for NV12 chroma format
 //
 //  Parameters:
-//      pParams       Pointer to structure which contains parameters for interpolation:
+//      pParams       Pointer to structure which contains parameters for
+interpolation:
 //      pSrc          Pointer to the source block.
 //      srcStep       Step in bytes through the source plane.
 //      pDst          Pointer to the destination block.
@@ -9054,84 +8455,118 @@ IPPAPI(IppStatus, ippiInterpolateQPBilinear_VC1_8u_C1R, (
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiInterpolateQPBilinear_VC1_8u_C2R, (
-  const IppVCInterpolate_8u* pParams))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiInterpolateQPBilinear_VC1_8u_C2R,
+       (const IppVCInterpolate_8u* pParams))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiInterpolateICBilinearBlock_VC1_8u_C1R
 //
 //  Purpose:
-//  Performs intensity compensation and bilinear quarter-pel interpolation for motion estimation of the
+//  Performs intensity compensation and bilinear quarter-pel interpolation for
+motion estimation of the
 //  luma or chroma component using entire motion vector.
 //
 //  Parameters:
-//  interpolateInfo  Pointer to an instance of the structure holding interpolation
+//  interpolateInfo  Pointer to an instance of the structure holding
+interpolation
 //  parameters.
-//   pSrc      pointer to start of reference field (or pointer to start of reference frame in the case of reference frame)
+//   pSrc      pointer to start of reference field (or pointer to start of
+reference frame in the case of reference frame)
 //   srcStep   step of the reference frame
 //   pDst      pointer to destination MB
 //   dstStep   step of destination buffer
 //   sizeFrame   dimensions of the reference image planes
-//   sizeBlock   dimensions of the block to be interpolated. Maximum size is 16 in all dimensions.
-//   pointRefBlockPos  position inside reference frame. Which was calculated as sum of current position and integer part of motion vector
+//   sizeBlock   dimensions of the block to be interpolated. Maximum size is 16
+in all dimensions.
+//   pointRefBlockPos  position inside reference frame. Which was calculated as
+sum of current position and integer part of motion vector
 //   pointVectorQuarterPix  quarter part of MV
-//   pLUTTop  pointer to Intensity Compensation LUT table. This table is calculated in accordance 8.3.8 and 10.3.7 of [SMPTE 421M]
-//  and applied for pixels of top field. If this pointer is equal to 0, then Intensity Compensation is not applied for this field.
-//  If both pointers are equal to 0, no then Intensity Compensation is applied for this field.
-//   pLUTBottom  pointer to Intensity Compensation LUT table. This table is calculated in accordance 8.3.8 and 10.3.7 of [SMPTE 421M]
-//  and applied for pixels of bottom field. If this pointer is equal to 0, then Intensity Compensation is not applied for this field
+//   pLUTTop  pointer to Intensity Compensation LUT table. This table is
+calculated in accordance 8.3.8 and 10.3.7 of [SMPTE 421M]
+//  and applied for pixels of top field. If this pointer is equal to 0, then
+Intensity Compensation is not applied for this field.
+//  If both pointers are equal to 0, no then Intensity Compensation is applied
+for this field.
+//   pLUTBottom  pointer to Intensity Compensation LUT table. This table is
+calculated in accordance 8.3.8 and 10.3.7 of [SMPTE 421M]
+//  and applied for pixels of bottom field. If this pointer is equal to 0, then
+Intensity Compensation is not applied for this field
 //
-//   OppositePadding  flag that specified padding correspondence between current frame and reference frame.
+//   OppositePadding  flag that specified padding correspondence between current
+frame and reference frame.
 //   fieldPrediction  flag that specified Prediction type for current MB.
-//   RoundControl  indicate type of rounding for the current frame. Defined according to 8.3.7 of [SMPTE 421M]. RoundControl can be equal 0 or 1.
-//   isPredBottom  flag that specified type of reference field in case of interlace reference picture.
+//   RoundControl  indicate type of rounding for the current frame. Defined
+according to 8.3.7 of [SMPTE 421M]. RoundControl can be equal 0 or 1.
+//   isPredBottom  flag that specified type of reference field in case of
+interlace reference picture.
 //
 //  Returns:
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
-IPPAPI(IppStatus, ippiInterpolateICBilinearBlock_VC1_8u_C1R,(
-  const IppVCInterpolateBlockIC_8u* pParams))
+IPPAPI(IppStatus, ippiInterpolateICBilinearBlock_VC1_8u_C1R,
+       (const IppVCInterpolateBlockIC_8u* pParams))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiInterpolateICBilinearBlock_VC1_8u_C2R
 //
 //  Purpose:
-//  Performs intensity compensation and bilinear quarter-pel interpolation for motion estimation of the
+//  Performs intensity compensation and bilinear quarter-pel interpolation for
+motion estimation of the
 //  chroma component in NV12 format using entire motion vector.
 //
 //  Parameters:
-//  interpolateInfo  Pointer to an instance of the structure holding interpolation
+//  interpolateInfo  Pointer to an instance of the structure holding
+interpolation
 //  parameters.
-//   pSrc      pointer to start of reference field (or pointer to start of reference frame in the case of reference frame)
+//   pSrc      pointer to start of reference field (or pointer to start of
+reference frame in the case of reference frame)
 //   srcStep   step of the reference frame
 //   pDst      pointer to destination MB
 //   dstStep   step of destination buffer
 //   sizeFrame   dimensions of the reference image planes
-//   sizeBlock   dimensions of the block to be interpolated. Maximum size is 16x8 (in NV12 format, that means 8x8 for each chroma plane).
-//   pointRefBlockPos  position inside reference frame. Which was calculated as sum of current position and integer part of motion vector
+//   sizeBlock   dimensions of the block to be interpolated. Maximum size is
+16x8 (in NV12 format, that means 8x8 for each chroma plane).
+//   pointRefBlockPos  position inside reference frame. Which was calculated as
+sum of current position and integer part of motion vector
 //   pointVectorQuarterPix  quarter part of MV
-//   pLUTTop  pointer to Intensity Compensation LUT table. This table is calculated in accordance 8.3.8 and 10.3.7 of [SMPTE 421M]
-//  and applied for pixels of top field. If this pointer is equal to 0, then Intensity Compensation is not applied for this field.
-//  If both pointers are equal to 0, no then Intensity Compensation is applied for this field.
-//   pLUTBottom  pointer to Intensity Compensation LUT table. This table is calculated in accordance 8.3.8 and 10.3.7 of [SMPTE 421M]
-//  and applied for pixels of bottom field. If this pointer is equal to 0, then Intensity Compensation is not applied for this field
+//   pLUTTop  pointer to Intensity Compensation LUT table. This table is
+calculated in accordance 8.3.8 and 10.3.7 of [SMPTE 421M]
+//  and applied for pixels of top field. If this pointer is equal to 0, then
+Intensity Compensation is not applied for this field.
+//  If both pointers are equal to 0, no then Intensity Compensation is applied
+for this field.
+//   pLUTBottom  pointer to Intensity Compensation LUT table. This table is
+calculated in accordance 8.3.8 and 10.3.7 of [SMPTE 421M]
+//  and applied for pixels of bottom field. If this pointer is equal to 0, then
+Intensity Compensation is not applied for this field
 //
-//   OppositePadding  flag that specified padding correspondence between current frame and reference frame.
+//   OppositePadding  flag that specified padding correspondence between current
+frame and reference frame.
 //   fieldPrediction  flag that specified Prediction type for current MB.
-//   RoundControl  indicate type of rounding for the current frame. Defined according to 8.3.7 of [SMPTE 421M]. RoundControl can be equal 0 or 1.
-//   isPredBottom  flag that specified type of reference field in case of interlace reference picture.
+//   RoundControl  indicate type of rounding for the current frame. Defined
+according to 8.3.7 of [SMPTE 421M]. RoundControl can be equal 0 or 1.
+//   isPredBottom  flag that specified type of reference field in case of
+interlace reference picture.
 //
 //  Returns:
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiInterpolateICBilinearBlock_VC1_8u_C2R,(
-  const IppVCInterpolateBlockIC_8u* pParams))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiInterpolateICBilinearBlock_VC1_8u_C2R,
+       (const IppVCInterpolateBlockIC_8u* pParams))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9142,7 +8577,8 @@ IPPAPI(IppStatus, ippiInterpolateICBilinearBlock_VC1_8u_C2R,(
 //      accordance with 8.3.6.5.2 of VC-1 standard
 //
 //  Parameters:
-//    pParams         Pointer to structure which contains parameters for interpolation:
+//    pParams         Pointer to structure which contains parameters for
+interpolation:
 //      pSrc          Pointer to the source block.
 //      srcStep       Step in bytes through the source plane.
 //      pDst          Pointer to the destination block.
@@ -9158,46 +8594,58 @@ IPPAPI(IppStatus, ippiInterpolateICBilinearBlock_VC1_8u_C2R,(
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiInterpolateQPBicubic_VC1_8u_C1R, (
-  const IppVCInterpolate_8u* pParams))
-
+IPPAPI(IppStatus, ippiInterpolateQPBicubic_VC1_8u_C1R,
+       (const IppVCInterpolate_8u* pParams))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiInterpolateICBicubicBlock_VC1_8u_C1R
 //
 //  Purpose:
-//  Performs intensity compensation and bicubic quarter-pel interpolation for motion estimation of the
+//  Performs intensity compensation and bicubic quarter-pel interpolation for
+motion estimation of the
 //  luma component using entire motion vector.
 //
 //  Parameters:
-//  interpolateInfo  Pointer to an instance of the structure holding interpolation
+//  interpolateInfo  Pointer to an instance of the structure holding
+interpolation
 //  parameters.
-//   pSrc      pointer to start of reference field (or pointer to start of reference frame in the case of reference frame)
+//   pSrc      pointer to start of reference field (or pointer to start of
+reference frame in the case of reference frame)
 //   srcStep   step of the reference frame
 //   pDst      pointer to destination MB
 //   dstStep   step of destination buffer
 //   sizeFrame   dimensions of the reference image planes
-//   sizeBlock   dimensions of the block to be interpolated. Maximum size is 16 in all dimensions.
-//   pointRefBlockPos  position inside reference frame. Which was calculated as sum of current position and integer part of motion vector
+//   sizeBlock   dimensions of the block to be interpolated. Maximum size is 16
+in all dimensions.
+//   pointRefBlockPos  position inside reference frame. Which was calculated as
+sum of current position and integer part of motion vector
 //   pointVectorQuarterPix  quarter part of MV
-//   pLUTTop  pointer to Intensity Compensation LUT table. This table is calculated in accordance 8.3.8 and 10.3.7 of [SMPTE 421M]
-//  and applied for pixels of top field. If this pointer is equal to 0, then Intensity Compensation is not applied for this field.
-//  If both pointers are equal to 0, no then Intensity Compensation is applied for this field.
-//   pLUTBottom  pointer to Intensity Compensation LUT table. This table is calculated in accordance 8.3.8 and 10.3.7 of [SMPTE 421M]
-//  and applied for pixels of bottom field. If this pointer is equal to 0, then Intensity Compensation is not applied for this field
+//   pLUTTop  pointer to Intensity Compensation LUT table. This table is
+calculated in accordance 8.3.8 and 10.3.7 of [SMPTE 421M]
+//  and applied for pixels of top field. If this pointer is equal to 0, then
+Intensity Compensation is not applied for this field.
+//  If both pointers are equal to 0, no then Intensity Compensation is applied
+for this field.
+//   pLUTBottom  pointer to Intensity Compensation LUT table. This table is
+calculated in accordance 8.3.8 and 10.3.7 of [SMPTE 421M]
+//  and applied for pixels of bottom field. If this pointer is equal to 0, then
+Intensity Compensation is not applied for this field
 //
-//   OppositePadding  flag that specified padding correspondence between current frame and reference frame.
+//   OppositePadding  flag that specified padding correspondence between current
+frame and reference frame.
 //   fieldPrediction  flag that specified Prediction type for current MB.
-//   RoundControl  indicate type of rounding for the current frame. Defined according to 8.3.7 of [SMPTE 421M]. RoundControl can be equal 0 or 1.
-//   isPredBottom  flag that specified type of reference field in case of interlace reference picture.
+//   RoundControl  indicate type of rounding for the current frame. Defined
+according to 8.3.7 of [SMPTE 421M]. RoundControl can be equal 0 or 1.
+//   isPredBottom  flag that specified type of reference field in case of
+interlace reference picture.
 //
 //  Returns:
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
-IPPAPI(IppStatus, ippiInterpolateICBicubicBlock_VC1_8u_C1R, (
-   const IppVCInterpolateBlockIC_8u* pParams))
+IPPAPI(IppStatus, ippiInterpolateICBicubicBlock_VC1_8u_C1R,
+       (const IppVCInterpolateBlockIC_8u* pParams))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9208,29 +8656,35 @@ IPPAPI(IppStatus, ippiInterpolateICBicubicBlock_VC1_8u_C1R, (
 //    of the luma 16X16 macroblocks. (SMPTE 421M, 8.5)
 //
 //    Parameters:
-//    pSrcLeft      Pointer to the first pixel of the column of the left top block of the left macroblock, from which the smoothing will start.
+//    pSrcLeft      Pointer to the first pixel of the column of the left top
+block of the left macroblock, from which the smoothing will start.
 //    srcLeftStep   Step for transfer to the next row in the left macroblock
-//    pSrcRight     Pointer to the first pixel of the top left block of the right macroblock
+//    pSrcRight     Pointer to the first pixel of the top left block of the
+right macroblock
 //    srcRightStep  Step for transfer to the next row in the right macroblock
-//    pDst          Pointer to the first pixel of the right macroblock in the Y-Plane.
+//    pDst          Pointer to the first pixel of the right macroblock in the
+Y-Plane.
 //    dstStep       Y-plane step (in bytes).
 //    fieldNeighbourFlag    Indicates the field macroblock property(2 bits):
-//    if (fieldNeighbourFlag & VC1_FIELD_LEFT_MB) - the left macroblock is field decoded
-//    if (fieldNeighbourFlag & VC1_FIELD_RIGHT_MB) - the right macroblock is field decoded
+//    if (fieldNeighbourFlag & VC1_FIELD_LEFT_MB) - the left macroblock is field
+decoded
+//    if (fieldNeighbourFlag & VC1_FIELD_RIGHT_MB) - the right macroblock is
+field decoded
 //    edgeDisableFlag   flag which indicates:
-//    if (edgeDisableFlag & VC1_EDGE_HALF_1)  then the upper vertical edge is disabled for smoothing
-//    if (edgeDisableFlag & VC1_EDGE_HALF_2) then the bottom vertical edge is disabled for smoothing
+//    if (edgeDisableFlag & VC1_EDGE_HALF_1)  then the upper vertical edge is
+disabled for smoothing
+//    if (edgeDisableFlag & VC1_EDGE_HALF_2) then the bottom vertical edge is
+disabled for smoothing
 //
 //  Returns:
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiSmoothingLuma_VerEdge_VC1_16s8u_C1R, (Ipp16s* pSrcLeft, Ipp32s srcLeftStep,
-                                                          Ipp16s* pSrcRight, Ipp32s srcRightStep,
-                                                          Ipp8u* pDst, Ipp32s dstStep,
-                                                          Ipp32u fieldNeighbourFlag,
-                                                          Ipp32u edgeDisableFlag))
+IPPAPI(IppStatus, ippiSmoothingLuma_VerEdge_VC1_16s8u_C1R,
+       (Ipp16s * pSrcLeft, Ipp32s srcLeftStep, Ipp16s* pSrcRight,
+        Ipp32s srcRightStep, Ipp8u* pDst, Ipp32s dstStep,
+        Ipp32u fieldNeighbourFlag, Ipp32u edgeDisableFlag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9241,25 +8695,30 @@ IPPAPI(IppStatus, ippiSmoothingLuma_VerEdge_VC1_16s8u_C1R, (Ipp16s* pSrcLeft, Ip
 //    of the luma 16X16 macroblocks. (SMPTE 421M, 8.5)
 //
 //    Parameters:
-//    pSrcUpper     The pointer to the first pixel of the left bottom block row of the upper macroblock, from which the smoothing will start
+//    pSrcUpper     The pointer to the first pixel of the left bottom block row
+of the upper macroblock, from which the smoothing will start
 //    srcUpperStep  Step for transfer to the next row in the upper macroblock
-//    pSrcBottom        Pointer to the first pixel of the top left block of the bottom macroblock
+//    pSrcBottom        Pointer to the first pixel of the top left block of the
+bottom macroblock
 //    srcBottomStep Step for transfer to the next row in the bottom macroblock
-//    pDst      Pointer to the first pixel of the bottom macroblock in the Y-Plane.
+//    pDst      Pointer to the first pixel of the bottom macroblock in the
+Y-Plane.
 //    dstStep       Y-plane step (in bytes).
 //    edgeDisableFlag   flag which indicates:
-//    if (edgeDisableFlag & VC1_EDGE_HALF_1)  then the left horizontal edge is disabled for smoothing
-//    if (edgeDisableFlag & VC1_EDGE_HALF_2) then the right horizontal edge is disabled for smoothing
+//    if (edgeDisableFlag & VC1_EDGE_HALF_1)  then the left horizontal edge is
+disabled for smoothing
+//    if (edgeDisableFlag & VC1_EDGE_HALF_2) then the right horizontal edge is
+disabled for smoothing
 //
 //  Returns:
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiSmoothingLuma_HorEdge_VC1_16s8u_C1R, (Ipp16s* pSrcUpper, Ipp32s srcUpperStep,
-                                                   Ipp16s* pSrcBottom, Ipp32s srcBottomStep,
-                                                   Ipp8u* pDst, Ipp32s dstStep,
-                                                   Ipp32u edgeDisableFlag))
+IPPAPI(IppStatus, ippiSmoothingLuma_HorEdge_VC1_16s8u_C1R,
+       (Ipp16s * pSrcUpper, Ipp32s srcUpperStep, Ipp16s* pSrcBottom,
+        Ipp32s srcBottomStep, Ipp8u* pDst, Ipp32s dstStep,
+        Ipp32u edgeDisableFlag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9270,11 +8729,14 @@ IPPAPI(IppStatus, ippiSmoothingLuma_HorEdge_VC1_16s8u_C1R, (Ipp16s* pSrcUpper, I
 //    of the chroma 8x8 blocks. (SMPTE 421M, 8.5)
 //
 //    Parameters:
-//    pSrcUpper     The pointer to the first pixel of the left bottom block row of the upper macroblock, from which the smoothing will start
+//    pSrcUpper     The pointer to the first pixel of the left bottom block row
+of the upper macroblock, from which the smoothing will start
 //    srcUpperStep  Step for transfer to the next row in the upper macroblock
-//    pSrcBottom    Pointer to the first pixel of the top left block of the bottom macroblock
+//    pSrcBottom    Pointer to the first pixel of the top left block of the
+bottom macroblock
 //    srcBottomStep Step for transfer to the next row in the bottom macroblock
-//    pDst          Pointer to the first pixel of the bottom macroblock in the U- or V-Plane.
+//    pDst          Pointer to the first pixel of the bottom macroblock in the
+U- or V-Plane.
 //    dstStep       U- or V-plane step (in bytes).
 //
 //  Returns:
@@ -9282,9 +8744,9 @@ IPPAPI(IppStatus, ippiSmoothingLuma_HorEdge_VC1_16s8u_C1R, (Ipp16s* pSrcUpper, I
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiSmoothingChroma_HorEdge_VC1_16s8u_C1R, (Ipp16s* pSrcUpper, Ipp32s srcUpperStep,
-                                                     Ipp16s* pSrcBottom, Ipp32s srcBottomStep,
-                                                     Ipp8u* pDst, Ipp32s dstStep))
+IPPAPI(IppStatus, ippiSmoothingChroma_HorEdge_VC1_16s8u_C1R,
+       (Ipp16s * pSrcUpper, Ipp32s srcUpperStep, Ipp16s* pSrcBottom,
+        Ipp32s srcBottomStep, Ipp8u* pDst, Ipp32s dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9297,25 +8759,34 @@ IPPAPI(IppStatus, ippiSmoothingChroma_HorEdge_VC1_16s8u_C1R, (Ipp16s* pSrcUpper,
 //    Parameters:
 //    pSrcUpperU     The pointer to the first pixel of the upper U block row
 //    srcUpperStepU  Step for transfer to the next row in the upper U block
-//    pSrcBottomU    Pointer to the first pixel of the top U block of the bottom macroblock
-//    srcBottomStepU Step for transfer to the next row in the U bottom macroblock
+//    pSrcBottomU    Pointer to the first pixel of the top U block of the bottom
+macroblock
+//    srcBottomStepU Step for transfer to the next row in the U bottom
+macroblock
 //    pSrcUpperV     The pointer to the first pixel of the upper V block row
 //    srcUpperStepV  Step for transfer to the next row in the upper V block
-//    pSrcBottomV    Pointer to the first pixel of the top V block of the bottom macroblock
-//    srcBottomStepV Step for transfer to the next row in the V bottom macroblock
-//    pDst           Pointer to the first pixel of the bottom macroblock in the UV-Plane in nv12 format.
+//    pSrcBottomV    Pointer to the first pixel of the top V block of the bottom
+macroblock
+//    srcBottomStepV Step for transfer to the next row in the V bottom
+macroblock
+//    pDst           Pointer to the first pixel of the bottom macroblock in the
+UV-Plane in nv12 format.
 //    dstStep        nv12 UV-plane step (in bytes).
 //
 //  Returns:
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiSmoothingChroma_HorEdge_VC1_16s8u_P2C2R,(Ipp16s* pSrcUpperU, Ipp32u srcUpperStepU,
-                                                               Ipp16s* pSrcBottomU, Ipp32u srcBottomStepU,
-                                                               Ipp16s* pSrcUpperV, Ipp32u srcUpperStepV,
-                                                               Ipp16s* pSrcBottomV, Ipp32u srcBottomStepV,
-                                                               Ipp8u* pDst, Ipp32u dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSmoothingChroma_HorEdge_VC1_16s8u_P2C2R,
+       (Ipp16s * pSrcUpperU, Ipp32u srcUpperStepU, Ipp16s* pSrcBottomU,
+        Ipp32u srcBottomStepU, Ipp16s* pSrcUpperV, Ipp32u srcUpperStepV,
+        Ipp16s* pSrcBottomV, Ipp32u srcBottomStepV, Ipp8u* pDst,
+        Ipp32u dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9325,11 +8796,13 @@ IPPAPI(IppStatus,ippiSmoothingChroma_HorEdge_VC1_16s8u_P2C2R,(Ipp16s* pSrcUpperU
 //    Performs smoothing filtering on the vertical edge (internal or external)
 //    of the chroma 8X8 blocks. (SMPTE 421M, 8.5)
 //
-//    pSrcLeft      Pointer to the first pixel of the column of the left block, from which the smoothing will start.
+//    pSrcLeft      Pointer to the first pixel of the column of the left block,
+from which the smoothing will start.
 //    srcLeftStep   Step for transfer to the next row in the left block
 //    pSrcRight     Pointer to the first pixel of the right block
 //    srcRightStep  Step for transfer to the next row in the right block
-//    pDst          Pointer to the first pixel of the right block in the U- or V-Plane.
+//    pDst          Pointer to the first pixel of the right block in the U- or
+V-Plane.
 //    dstStep       U- or V-plane step (in bytes).
 //
 //  Returns:
@@ -9337,9 +8810,9 @@ IPPAPI(IppStatus,ippiSmoothingChroma_HorEdge_VC1_16s8u_P2C2R,(Ipp16s* pSrcUpperU
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiSmoothingChroma_VerEdge_VC1_16s8u_C1R, (Ipp16s* pSrcLeft, Ipp32s srcLeftStep,
-                                                     Ipp16s* pSrcRight, Ipp32s srcRightStep,
-                                                     Ipp8u* pDst, Ipp32s dstStep))
+IPPAPI(IppStatus, ippiSmoothingChroma_VerEdge_VC1_16s8u_C1R,
+       (Ipp16s * pSrcLeft, Ipp32s srcLeftStep, Ipp16s* pSrcRight,
+        Ipp32s srcRightStep, Ipp8u* pDst, Ipp32s dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9349,27 +8822,37 @@ IPPAPI(IppStatus, ippiSmoothingChroma_VerEdge_VC1_16s8u_C1R, (Ipp16s* pSrcLeft, 
 //    Performs smoothing filtering on the vertical edge (internal or external)
 //    of the chroma 8X8 blocks in nv12 chroma format. (SMPTE 421M, 8.5)
 //
-//    pSrcLeftU     Pointer to the first pixel of the column of the left U difference block.
-//    srcLeftStepU  Step for transfer to the next row in the left U difference block
+//    pSrcLeftU     Pointer to the first pixel of the column of the left U
+difference block.
+//    srcLeftStepU  Step for transfer to the next row in the left U difference
+block
 //    pSrcRightU    Pointer to the first pixel of the right U difference block
-//    srcRightStepU Step for transfer to the next row in the right U difference block
-//    pSrcLeftV     Pointer to the first pixel of the column of the left U difference block.
-//    srcLeftStepV  Step for transfer to the next row in the left U difference block
+//    srcRightStepU Step for transfer to the next row in the right U difference
+block
+//    pSrcLeftV     Pointer to the first pixel of the column of the left U
+difference block.
+//    srcLeftStepV  Step for transfer to the next row in the left U difference
+block
 //    pSrcRightV    Pointer to the first pixel of the right U difference block
-//    srcRightStepV Step for transfer to the next row in the right U difference block
-//    pDst          Pointer to the first pixel of the right block in the UV-Plane in nv12 chroma format.
+//    srcRightStepV Step for transfer to the next row in the right U difference
+block
+//    pDst          Pointer to the first pixel of the right block in the
+UV-Plane in nv12 chroma format.
 //    dstStep       nv12 format UV-plane step (in bytes).
 //
 //  Returns:
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiSmoothingChroma_VerEdge_VC1_16s8u_P2C2R, (Ipp16s* pSrcLeftU,  Ipp32u srcLeftStepU,
-                                                             Ipp16s* pSrcRightU, Ipp32u srcRightStepU,
-                                                             Ipp16s* pSrcLeftV,  Ipp32u srcLeftStepV,
-                                                             Ipp16s* pSrcRightV, Ipp32u srcRightStepV,
-                                                             Ipp8u* pDst, Ipp32u dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSmoothingChroma_VerEdge_VC1_16s8u_P2C2R,
+       (Ipp16s * pSrcLeftU, Ipp32u srcLeftStepU, Ipp16s* pSrcRightU,
+        Ipp32u srcRightStepU, Ipp16s* pSrcLeftV, Ipp32u srcLeftStepV,
+        Ipp16s* pSrcRightV, Ipp32u srcRightStepV, Ipp8u* pDst, Ipp32u dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9384,18 +8867,21 @@ IPPAPI(IppStatus,ippiSmoothingChroma_VerEdge_VC1_16s8u_P2C2R, (Ipp16s* pSrcLeftU
 //    pSrcDst   - the pointer to the source & destination  block.
 //    srcDstStep    - the step of the source & destination block.
 //    doubleQuant   - dequant coefficient. It should be in the range [2,62]
-//    pDstSizeNZ    -  the pointer to a size of top left subblock with non-zero coefficients. This value is calculated by this function and could be used for inverse transformation.
+//    pDstSizeNZ    -  the pointer to a size of top left subblock with non-zero
+coefficients. This value is calculated by this function and could be used for
+inverse transformation.
 //
 //  Returns:
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   pSrcDst is NULL
 */
-IPPAPI(IppStatus, ippiQuantInvIntraUniform_VC1_16s_C1IR, (Ipp16s* pSrcDst, Ipp32s srcDstStep,
-                                                  Ipp32s doubleQuant, IppiSize* pDstSizeNZ))
+IPPAPI(IppStatus, ippiQuantInvIntraUniform_VC1_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32s srcDstStep, Ipp32s doubleQuant,
+        IppiSize* pDstSizeNZ))
 
-
-IPPAPI(IppStatus, ippiQuantInvIntraNonuniform_VC1_16s_C1IR,(Ipp16s* pSrcDst, Ipp32s srcDstStep,
-                                                          Ipp32s doubleQuant, IppiSize* pDstSizeNZ))
+IPPAPI(IppStatus, ippiQuantInvIntraNonuniform_VC1_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32s srcDstStep, Ipp32s doubleQuant,
+        IppiSize* pDstSizeNZ))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9410,21 +8896,22 @@ IPPAPI(IppStatus, ippiQuantInvIntraNonuniform_VC1_16s_C1IR,(Ipp16s* pSrcDst, Ipp
 //    srcDstStep  - the step of the source & destination block.
 //    doubleQuant - dequant coefficient. It should be in the range [2,62]
 //    roiSize     - the intra block size. It should be: 8x8, 8x4, 4x8 or 4x4.
-//    pDstSizeNZ  -  the pointer to a size of top left subblock with non-zero coefficients. This value is calculated by this function and can be used for inverse transformation.
+//    pDstSizeNZ  -  the pointer to a size of top left subblock with non-zero
+coefficients. This value is calculated by this function and can be used for
+inverse transformation.
 //
 //  Returns:
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   pSrcDst pointer is NULL
 //    ippStsSizeErr      width or height is not equal with 8 or 4
 */
-IPPAPI(IppStatus, ippiQuantInvInterUniform_VC1_16s_C1IR,(Ipp16s* pSrcDst, Ipp32s srcDstStep,
-                                                       Ipp32s doubleQuant, IppiSize roiSize,
-                                                       IppiSize* pDstSizeNZ))
+IPPAPI(IppStatus, ippiQuantInvInterUniform_VC1_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32s srcDstStep, Ipp32s doubleQuant,
+        IppiSize roiSize, IppiSize* pDstSizeNZ))
 
-
-IPPAPI(IppStatus, ippiQuantInvInterNonuniform_VC1_16s_C1IR,(Ipp16s* pSrcDst, Ipp32s srcDstStep,
-                                                          Ipp32s doubleQuant, IppiSize roiSize,
-                                                          IppiSize* pDstSizeNZ))
+IPPAPI(IppStatus, ippiQuantInvInterNonuniform_VC1_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32s srcDstStep, Ipp32s doubleQuant,
+        IppiSize roiSize, IppiSize* pDstSizeNZ))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9441,18 +8928,21 @@ IPPAPI(IppStatus, ippiQuantInvInterNonuniform_VC1_16s_C1IR,(Ipp16s* pSrcDst, Ipp
 //    srcStep    - the step of the source block.
 //    dstStep    - the step of the destination block.
 //    doubleQuant   - dequant coefficient. It should be in the range [2,62]
-//    pDstSizeNZ    -  the pointer to a size of top left subblock with non-zero coefficients. This value is calculated by this function and could be used for inverse transformation.
+//    pDstSizeNZ    -  the pointer to a size of top left subblock with non-zero
+coefficients. This value is calculated by this function and could be used for
+inverse transformation.
 //
 //  Returns:
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
-IPPAPI(IppStatus, ippiQuantInvIntraUniform_VC1_16s_C1R, (const Ipp16s* pSrc, Ipp32s srcStep, Ipp16s* pDst, Ipp32s dstStep,
-                                                               Ipp32s doubleQuant, IppiSize *pDstSizeNZ))
+IPPAPI(IppStatus, ippiQuantInvIntraUniform_VC1_16s_C1R,
+       (const Ipp16s* pSrc, Ipp32s srcStep, Ipp16s* pDst, Ipp32s dstStep,
+        Ipp32s doubleQuant, IppiSize* pDstSizeNZ))
 
-
-IPPAPI(IppStatus, ippiQuantInvIntraNonuniform_VC1_16s_C1R,(const Ipp16s* pSrc, Ipp32s srcStep, Ipp16s* pDst, Ipp32s dstStep,
-                                                                 Ipp32s doubleQuant, IppiSize *pDstSizeNZ ))
+IPPAPI(IppStatus, ippiQuantInvIntraNonuniform_VC1_16s_C1R,
+       (const Ipp16s* pSrc, Ipp32s srcStep, Ipp16s* pDst, Ipp32s dstStep,
+        Ipp32s doubleQuant, IppiSize* pDstSizeNZ))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9469,19 +8959,22 @@ IPPAPI(IppStatus, ippiQuantInvIntraNonuniform_VC1_16s_C1R,(const Ipp16s* pSrc, I
 //    dstStep    - the step of the destination block.
 //    doubleQuant   - dequant coefficient. It should be in the range [2,62]
 //    roiSize     - the inter block size. It should be: 8x8, 8x4, 4x8 or 4x4
-//    pDstSizeNZ    -  the pointer to a size of top left subblock with non-zero coefficients. This value is calculated by this function and could be used for inverse transformation.
+//    pDstSizeNZ    -  the pointer to a size of top left subblock with non-zero
+coefficients. This value is calculated by this function and could be used for
+inverse transformation.
 //
 //  Returns:
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   At least one input pointer is NULL
 //    ippStsSizeErr      width or height is not equal with 8 or 4
 */
-IPPAPI(IppStatus, ippiQuantInvInterUniform_VC1_16s_C1R,(const Ipp16s* pSrc, Ipp32s srcStep, Ipp16s* pDst, Ipp32s dstStep,
-                                                       Ipp32s doubleQuant, IppiSize roiSize, IppiSize* pDstSizeNZ))
+IPPAPI(IppStatus, ippiQuantInvInterUniform_VC1_16s_C1R,
+       (const Ipp16s* pSrc, Ipp32s srcStep, Ipp16s* pDst, Ipp32s dstStep,
+        Ipp32s doubleQuant, IppiSize roiSize, IppiSize* pDstSizeNZ))
 
-
-IPPAPI(IppStatus, ippiQuantInvInterNonuniform_VC1_16s_C1R,(const Ipp16s* pSrc, Ipp32s srcStep, Ipp16s* pDst, Ipp32s dstStep,
-                                                          Ipp32s doubleQuant, IppiSize roiSize, IppiSize* pDstSizeNZ))
+IPPAPI(IppStatus, ippiQuantInvInterNonuniform_VC1_16s_C1R,
+       (const Ipp16s* pSrc, Ipp32s srcStep, Ipp16s* pDst, Ipp32s dstStep,
+        Ipp32s doubleQuant, IppiSize roiSize, IppiSize* pDstSizeNZ))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9492,13 +8985,16 @@ IPPAPI(IppStatus, ippiQuantInvInterNonuniform_VC1_16s_C1R,(const Ipp16s* pSrc, I
 //
 //  Purpose:
 //    Luma deblocking functions perform deblocking filtering on the horizontal
-//    and vertical edge  (inner or external) of the luma 16x16 macroblock. (SMPTE 421M, 8.6)
+//    and vertical edge  (inner or external) of the luma 16x16 macroblock.
+(SMPTE 421M, 8.6)
 //
 //    Chroma deblocking functions perform deblocking filtering on the horizontal
-//    and vertical edge (inner or external) of the chroma 8x8 macroblock. (SMPTE 421M, 8.6)
+//    and vertical edge (inner or external) of the chroma 8x8 macroblock. (SMPTE
+421M, 8.6)
 //
 //  Parameters:
-//    pSrcDst -  Pointer to the first pixel of right block in the Y-Plane or U or V-Plane.
+//    pSrcDst -  Pointer to the first pixel of right block in the Y-Plane or U
+or V-Plane.
 //    srcdstStep - Y-plane or U or V-Plane step (in bytes).
 //    pQuant - Picture quantizer scale
 //    EdgeDisableFlag - flag which indicates what part of block edge
@@ -9509,25 +9005,21 @@ IPPAPI(IppStatus, ippiQuantInvInterNonuniform_VC1_16s_C1R,(const Ipp16s* pSrc, I
 //    ippStsNullPtrErr   Input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiFilterDeblockingLuma_VerEdge_VC1_8u_C1IR,(Ipp8u* pSrcDst,
-                                                                Ipp32s pQuant,
-                                                                Ipp32s srcdstStep,
-                                                                Ipp32s edgeDisabledFlag))
+IPPAPI(IppStatus, ippiFilterDeblockingLuma_VerEdge_VC1_8u_C1IR,
+       (Ipp8u * pSrcDst, Ipp32s pQuant, Ipp32s srcdstStep,
+        Ipp32s edgeDisabledFlag))
 
-IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_VC1_8u_C1IR,(Ipp8u* pSrcDst,
-                                                                  Ipp32s pQuant,
-                                                                  Ipp32s srcdstStep,
-                                                                  Ipp32s edgeDisabledFlag))
+IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_VC1_8u_C1IR,
+       (Ipp8u * pSrcDst, Ipp32s pQuant, Ipp32s srcdstStep,
+        Ipp32s edgeDisabledFlag))
 
-IPPAPI(IppStatus,ippiFilterDeblockingLuma_HorEdge_VC1_8u_C1IR,(Ipp8u* pSrcDst,
-                                                               Ipp32s pQuant,
-                                                               Ipp32s srcdstStep,
-                                                               Ipp32s edgeDisabledFlag))
+IPPAPI(IppStatus, ippiFilterDeblockingLuma_HorEdge_VC1_8u_C1IR,
+       (Ipp8u * pSrcDst, Ipp32s pQuant, Ipp32s srcdstStep,
+        Ipp32s edgeDisabledFlag))
 
-IPPAPI(IppStatus,ippiFilterDeblockingChroma_HorEdge_VC1_8u_C1IR,(Ipp8u* pSrcDst,
-                                                                 Ipp32s pQuant,
-                                                                 Ipp32s srcdstStep,
-                                                                 Ipp32s edgeDisabledFlag))
+IPPAPI(IppStatus, ippiFilterDeblockingChroma_HorEdge_VC1_8u_C1IR,
+       (Ipp8u * pSrcDst, Ipp32s pQuant, Ipp32s srcdstStep,
+        Ipp32s edgeDisabledFlag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9537,7 +9029,8 @@ IPPAPI(IppStatus,ippiFilterDeblockingChroma_HorEdge_VC1_8u_C1IR,(Ipp8u* pSrcDst,
 //  Purpose:
 //
 //    Chroma deblocking functions perform deblocking filtering on the horizontal
-//    and vertical edge (inner or external) of the chroma macroblock in NV12 format. (SMPTE 421M, 8.6)
+//    and vertical edge (inner or external) of the chroma macroblock in NV12
+format. (SMPTE 421M, 8.6)
 //      0  UV UV UV UV UV UV UV UV
 //      1  UV UV UV UV   ...    UV
 //       ...
@@ -9553,12 +9046,22 @@ IPPAPI(IppStatus,ippiFilterDeblockingChroma_HorEdge_VC1_8u_C1IR,(Ipp8u* pSrcDst,
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   Input pointer is NULL
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_VC1_8u_C2IR,(Ipp8u* pSrcDst,Ipp32u pQuant, Ipp32s srcdstStep,
-                                                                  Ipp32u uEdgeDisabledFlag, Ipp32u vEdgeDisabledFlag))
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilterDeblockingChroma_HorEdge_VC1_8u_C2IR,(Ipp8u* pSrcDst,Ipp32u pQuant, Ipp32s srcdstStep,
-                                                                  Ipp32u uEdgeDisabledFlag, Ipp32u vEdgeDisabledFlag))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_VC1_8u_C2IR,
+       (Ipp8u * pSrcDst, Ipp32u pQuant, Ipp32s srcdstStep,
+        Ipp32u uEdgeDisabledFlag, Ipp32u vEdgeDisabledFlag))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDeblockingChroma_HorEdge_VC1_8u_C2IR,
+       (Ipp8u * pSrcDst, Ipp32u pQuant, Ipp32s srcdstStep,
+        Ipp32u uEdgeDisabledFlag, Ipp32u vEdgeDisabledFlag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9568,7 +9071,8 @@ IPPAPI(IppStatus, ippiFilterDeblockingChroma_HorEdge_VC1_8u_C2IR,(Ipp8u* pSrcDst
 //    Performs range map transformation according to VC-1 standard (6.2.15.1)
 //
 //  Parameters:
-//    pSrc - the pointer to the source block. Block coefficient could be in the range [0, 255]
+//    pSrc - the pointer to the source block. Block coefficient could be in the
+range [0, 255]
 //    srcStep - the step of the source block
 //    pDst    - the pointer to the destination block.
 //    dstStep - the step of the destination block
@@ -9578,12 +9082,12 @@ IPPAPI(IppStatus, ippiFilterDeblockingChroma_HorEdge_VC1_8u_C2IR,(Ipp8u* pSrcDst
 //  Returns:
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   At least one input pointer is NULL
-//    ippStsOutOfRangeErr Indicates an error if rangeMapParam is out of the range [0,7].
+//    ippStsOutOfRangeErr Indicates an error if rangeMapParam is out of the
+range [0,7].
 */
-IPPAPI(IppStatus, ippiRangeMapping_VC1_8u_C1R ,(Ipp8u* pSrc, Ipp32s srcStep,
-                             Ipp8u* pDst, Ipp32s dstStep,
-                             IppiSize roiSize, Ipp32s rangeMapParam))
-
+IPPAPI(IppStatus, ippiRangeMapping_VC1_8u_C1R,
+       (Ipp8u * pSrc, Ipp32s srcStep, Ipp8u* pDst, Ipp32s dstStep,
+        IppiSize roiSize, Ipp32s rangeMapParam))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9603,12 +9107,11 @@ IPPAPI(IppStatus, ippiRangeMapping_VC1_8u_C1R ,(Ipp8u* pSrc, Ipp32s srcStep,
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
-IPPAPI(IppStatus, ippiQuantIntraUniform_VC1_16s_C1IR, (Ipp16s* pSrcDst, Ipp32s srcDstStep,
-                                                  Ipp32s doubleQuant))
+IPPAPI(IppStatus, ippiQuantIntraUniform_VC1_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32s srcDstStep, Ipp32s doubleQuant))
 
-
-IPPAPI(IppStatus, ippiQuantIntraNonuniform_VC1_16s_C1IR,(Ipp16s* pSrcDst, Ipp32s srcDstStep,
-                                                          Ipp32s doubleQuant))
+IPPAPI(IppStatus, ippiQuantIntraNonuniform_VC1_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32s srcDstStep, Ipp32s doubleQuant))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9628,13 +9131,13 @@ IPPAPI(IppStatus, ippiQuantIntraNonuniform_VC1_16s_C1IR,(Ipp16s* pSrcDst, Ipp32s
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
-IPPAPI(IppStatus, ippiQuantInterUniform_VC1_16s_C1IR,(Ipp16s* pSrcDst, Ipp32s srcDstStep,
-                                                       Ipp32s doubleQuant, IppiSize roiSize))
+IPPAPI(IppStatus, ippiQuantInterUniform_VC1_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32s srcDstStep, Ipp32s doubleQuant,
+        IppiSize roiSize))
 
-
-IPPAPI(IppStatus, ippiQuantInterNonuniform_VC1_16s_C1IR,(Ipp16s* pSrcDst, Ipp32s srcDstStep,
-                                                          Ipp32s doubleQuant, IppiSize roiSize))
-
+IPPAPI(IppStatus, ippiQuantInterNonuniform_VC1_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32s srcDstStep, Ipp32s doubleQuant,
+        IppiSize roiSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9662,20 +9165,23 @@ IPPAPI(IppStatus, ippiQuantInterNonuniform_VC1_16s_C1IR,(Ipp16s* pSrcDst, Ipp32s
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
 
-IPPAPI(IppStatus, ippiTransform8x8Fwd_VC1_16s_C1R, (const Ipp16s *pSrc, Ipp32s srcStep,
-                                                    Ipp16s *pDst, Ipp32s dstStep))
-IPPAPI(IppStatus, ippiTransform4x4Fwd_VC1_16s_C1R, (const Ipp16s *pSrc, Ipp32s srcStep,
-                                                    Ipp16s *pDst, Ipp32s dstStep))
-IPPAPI(IppStatus, ippiTransform8x4Fwd_VC1_16s_C1R, (const Ipp16s *pSrc, Ipp32s srcStep,
-                                                    Ipp16s *pDst, Ipp32s dstStep))
-IPPAPI(IppStatus, ippiTransform4x8Fwd_VC1_16s_C1R, (const Ipp16s *pSrc, Ipp32s srcStep,
-                                                    Ipp16s *pDst, Ipp32s dstStep))
+IPPAPI(IppStatus, ippiTransform8x8Fwd_VC1_16s_C1R,
+       (const Ipp16s* pSrc, Ipp32s srcStep, Ipp16s* pDst, Ipp32s dstStep))
+IPPAPI(IppStatus, ippiTransform4x4Fwd_VC1_16s_C1R,
+       (const Ipp16s* pSrc, Ipp32s srcStep, Ipp16s* pDst, Ipp32s dstStep))
+IPPAPI(IppStatus, ippiTransform8x4Fwd_VC1_16s_C1R,
+       (const Ipp16s* pSrc, Ipp32s srcStep, Ipp16s* pDst, Ipp32s dstStep))
+IPPAPI(IppStatus, ippiTransform4x8Fwd_VC1_16s_C1R,
+       (const Ipp16s* pSrc, Ipp32s srcStep, Ipp16s* pDst, Ipp32s dstStep))
 
-IPPAPI(IppStatus, ippiTransform8x8Fwd_VC1_16s_C1IR, (Ipp16s *pSrcDst, Ipp32s srcDstStep))
-IPPAPI(IppStatus, ippiTransform4x4Fwd_VC1_16s_C1IR, (Ipp16s *pSrcDst, Ipp32s srcDstStep))
-IPPAPI(IppStatus, ippiTransform8x4Fwd_VC1_16s_C1IR, (Ipp16s *pSrcDst, Ipp32s srcDstStep))
-IPPAPI(IppStatus, ippiTransform4x8Fwd_VC1_16s_C1IR, (Ipp16s *pSrcDst, Ipp32s srcDstStep))
-
+IPPAPI(IppStatus, ippiTransform8x8Fwd_VC1_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32s srcDstStep))
+IPPAPI(IppStatus, ippiTransform4x4Fwd_VC1_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32s srcDstStep))
+IPPAPI(IppStatus, ippiTransform8x4Fwd_VC1_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32s srcDstStep))
+IPPAPI(IppStatus, ippiTransform4x8Fwd_VC1_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32s srcDstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9683,26 +9189,38 @@ IPPAPI(IppStatus, ippiTransform4x8Fwd_VC1_16s_C1IR, (Ipp16s *pSrcDst, Ipp32s src
 //    ippiHadamard8x8Sum_VC1_16s
 //
 //  Purpose:
-//    Performs Hadamard transform H S H, were H - 8x8 Hadamard matrix, S - source 8x8 block
+//    Performs Hadamard transform H S H, were H - 8x8 Hadamard matrix, S -
+source 8x8 block
 //    and calculates the sum of absolute values of transformed coefficients
 //    (*pSum) = SUM(ABS(pDst[0]), ABS(pDst[1]),..,ABS(pDst[63]))
 //
 //  Parameters:
 //    pSrc      Pointer to the source block.
 //    srcStep   Step in bytes through the source plane.
-//    pDst      Pointer to the destination block of the transformed coefficients. dstStep has the fixed lenght of 16 bytes
-//    pSum      Pointer to the sum of absolute values of transformed coefficients.
+//    pDst      Pointer to the destination block of the transformed
+coefficients. dstStep has the fixed lenght of 16 bytes
+//    pSum      Pointer to the sum of absolute values of transformed
+coefficients.
 //
 //  Returns:
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiHadamard8x8Sum_VC1_8u16s,(Ipp8u* pSrc, Ipp32u srcStep, Ipp16s* pDst, Ipp32s* pSum))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiHadamard8x8Sum_VC1_8u16s,
+       (Ipp8u * pSrc, Ipp32u srcStep, Ipp16s* pDst, Ipp32s* pSum))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiHadamard8x8Sum_VC1_16s,(Ipp16s* pSrc, Ipp32u srcStep, Ipp16s* pDst, Ipp32s* pSum))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiHadamard8x8Sum_VC1_16s,
+       (Ipp16s * pSrc, Ipp32u srcStep, Ipp16s* pDst, Ipp32s* pSum))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9726,26 +9244,17 @@ IPPAPI(IppStatus, ippiHadamard8x8Sum_VC1_16s,(Ipp16s* pSrc, Ipp32u srcStep, Ipp1
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   At least one input pointer is NULL
 */
-IPPAPI( IppStatus, ippiSub4x4_8u16s_C1R, ( const Ipp8u* pSrc1,
-       int src1Step,
-       const Ipp8u* pSrc2,
-       int src2Step,
-       Ipp16s* pDst,
-       int  dstStep))
+IPPAPI(IppStatus, ippiSub4x4_8u16s_C1R,
+       (const Ipp8u* pSrc1, int src1Step, const Ipp8u* pSrc2, int src2Step,
+        Ipp16s* pDst, int dstStep))
 
-IPPAPI( IppStatus, ippiSub4x4_16u16s_C1R, ( const Ipp16u* pSrc1,
-       int src1Step,
-       const Ipp16u* pSrc2,
-       int src2Step,
-       Ipp16s* pDst,
-       int  dstStep))
+IPPAPI(IppStatus, ippiSub4x4_16u16s_C1R,
+       (const Ipp16u* pSrc1, int src1Step, const Ipp16u* pSrc2, int src2Step,
+        Ipp16s* pDst, int dstStep))
 
-IPPAPI( IppStatus, ippiSub8x8_16u16s_C1R, (const Ipp16u* pSrc1,
-                                              Ipp32s  src1Step,
-                                        const Ipp16u* pSrc2,
-                                              Ipp32s  src2Step,
-                                              Ipp16s* pDst,
-                                              Ipp32s  dstStep))
+IPPAPI(IppStatus, ippiSub8x8_16u16s_C1R,
+       (const Ipp16u* pSrc1, Ipp32s src1Step, const Ipp16u* pSrc2,
+        Ipp32s src2Step, Ipp16s* pDst, Ipp32s dstStep))
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //
@@ -9759,21 +9268,21 @@ IPPAPI( IppStatus, ippiSub8x8_16u16s_C1R, (const Ipp16u* pSrc1,
 //    pSrc    Pointer to the current block of specified size.
 //    srcStep Step of the current block, specifying width of the block in bytes.
 //    pRef    Pointer to the reference block of specified size.
-//    refStep Step of the reference block, specifying width of the block in bytes.
+//    refStep Step of the reference block, specifying width of the block in
+bytes.
 //    pSAD    Pointer to the destination integer.
 //    mcType  MC type IPPVC_MC_APX.
 //
 //  Returns:
 //    ippStsNoErr Indicates no error.
-//    ippStsNullPtrErr Indicates an error when at least one input pointer is NULL.
-//    ippStsStepErr Indicates an error when srcCurStep or srcRefStep is less or equal to zero.
+//    ippStsNullPtrErr Indicates an error when at least one input pointer is
+NULL.
+//    ippStsStepErr Indicates an error when srcCurStep or srcRefStep is less or
+equal to zero.
 */
-IPPAPI( IppStatus, ippiSAD16x16_16u32s_C1R, (const Ipp16u* pSrc,
-                                               Ipp32s  srcStep,
-                                         const Ipp16u* pRef,
-                                               Ipp32s  refStep,
-                                               Ipp32s* pSAD,
-                                               Ipp32s  mcType))
+IPPAPI(IppStatus, ippiSAD16x16_16u32s_C1R,
+       (const Ipp16u* pSrc, Ipp32s srcStep, const Ipp16u* pRef, Ipp32s refStep,
+        Ipp32s* pSAD, Ipp32s mcType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9794,14 +9303,12 @@ IPPAPI( IppStatus, ippiSAD16x16_16u32s_C1R, (const Ipp16u* pSrc,
 //
 //  Returns:
 //   ippStsNoErr Indicates no error.
-//   ippStsNullPtrErr Indicates an error when at least one input pointer is NULL.
+//   ippStsNullPtrErr Indicates an error when at least one input pointer is
+NULL.
 */
-IPPAPI( IppStatus, ippiSAD4x4_16u32s_C1R, (const Ipp16u* pSrc,
-                                             Ipp32s  srcStep,
-                                       const Ipp16u* pRef,
-                                             Ipp32s  refStep,
-                                             Ipp32s* pSAD,
-                                             Ipp32s  mcType))
+IPPAPI(IppStatus, ippiSAD4x4_16u32s_C1R,
+       (const Ipp16u* pSrc, Ipp32s srcStep, const Ipp16u* pRef, Ipp32s refStep,
+        Ipp32s* pSAD, Ipp32s mcType))
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //
@@ -9821,15 +9328,12 @@ IPPAPI( IppStatus, ippiSAD4x4_16u32s_C1R, (const Ipp16u* pSrc,
 //
 //  Returns:
 //   ippStsNoErr Indicates no error.
-//   ippStsNullPtrErr Indicates an error when at least one input pointer is NULL.
+//   ippStsNullPtrErr Indicates an error when at least one input pointer is
+NULL.
 */
-IPPAPI( IppStatus, ippiSAD8x8_16u32s_C1R, (const Ipp16u* pSrcCur,
-                                                 Ipp32s  srcCurStep,
-                                           const Ipp16u* pSrcRef,
-                                                 Ipp32s  srcRefStep,
-                                                 Ipp32s* pDst,
-                                                 Ipp32s  mcType))
-
+IPPAPI(IppStatus, ippiSAD8x8_16u32s_C1R,
+       (const Ipp16u* pSrcCur, Ipp32s srcCurStep, const Ipp16u* pSrcRef,
+        Ipp32s srcRefStep, Ipp32s* pDst, Ipp32s mcType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9837,20 +9341,27 @@ IPPAPI( IppStatus, ippiSAD8x8_16u32s_C1R, (const Ipp16u* pSrcCur,
 //    ippiTransformQuantFwd4x4_H264_16s32s_C1
 //
 //  Purpose:
-//    This function performs forward transform and quantization for 4x4 residual block.
+//    This function performs forward transform and quantization for 4x4 residual
+block.
 //
 //  Parameters:
-//    pSrcDst       Pointer to 4x4 residual block - source & destination array of size 16
+//    pSrcDst       Pointer to 4x4 residual block - source & destination array
+of size 16
 //    QP            Quantization parameter.
 //    pNumCoeffs    Pointer to value, which contains:
-//                  a negative value of a number of non-zero elements in block after quantization
-//                  (in the case of the first quantized element in block is not equal zero)
-//                  a number of non-zero elements in block after quantization (in the case
+//                  a negative value of a number of non-zero elements in block
+after quantization
+//                  (in the case of the first quantized element in block is not
+equal zero)
+//                  a number of non-zero elements in block after quantization
+(in the case
 //                  of the first quantized element in block is equal zero)
 //                  This value is calculated by function.
-//    Intra         Flag that is equal 1 in the case of Intra slice, 0 otherwise.
+//    Intra         Flag that is equal 1 in the case of Intra slice, 0
+otherwise.
 //    pScanMatrix   Scan matrix for coefficients in block (array of size 16)
-//    pLastCoeff    Position of the last non-zero coefficient in block after quantization.
+//    pLastCoeff    Position of the last non-zero coefficient in block after
+quantization.
 //                  This value is calculated by function.
 //    pScaleLevels  pointer to Scale levels, if NULL, default is applied
 //
@@ -9860,26 +9371,15 @@ IPPAPI( IppStatus, ippiSAD8x8_16u32s_C1R, (const Ipp16u* pSrcCur,
 //              ippStsOutOfRangeErr             QP >51 (87 for 16s32s) or QP<0
 */
 
-IPPAPI(IppStatus, ippiTransformQuantFwd4x4_H264_16s_C1, (
- const Ipp16s *pSrc,
-       Ipp16s *pDst,
-       Ipp32s  Qp6,
-       Ipp32s *pNumCoeffs,
-       Ipp32s  Intra,
- const Ipp16s *pScanMatrix,
-       Ipp32s *pLastCoeff,
- const Ipp16s *pScaleLevels))
+IPPAPI(IppStatus, ippiTransformQuantFwd4x4_H264_16s_C1,
+       (const Ipp16s* pSrc, Ipp16s* pDst, Ipp32s Qp6, Ipp32s* pNumCoeffs,
+        Ipp32s Intra, const Ipp16s* pScanMatrix, Ipp32s* pLastCoeff,
+        const Ipp16s* pScaleLevels))
 
-IPPAPI(IppStatus, ippiTransformQuantFwd4x4_H264_16s32s_C1, (
- const Ipp16s* pSrc,
-       Ipp32s* pDst,
-       Ipp32s  QP,
-       Ipp32s* pNumCoeffs,
-       Ipp32s  Intra,
- const Ipp16s* pScanMatrix,
-       Ipp32s* pLastCoeff,
- const Ipp16s* pScaleLevels))
-
+IPPAPI(IppStatus, ippiTransformQuantFwd4x4_H264_16s32s_C1,
+       (const Ipp16s* pSrc, Ipp32s* pDst, Ipp32s QP, Ipp32s* pNumCoeffs,
+        Ipp32s Intra, const Ipp16s* pScanMatrix, Ipp32s* pLastCoeff,
+        const Ipp16s* pScaleLevels))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -9898,14 +9398,16 @@ IPPAPI(IppStatus, ippiTransformQuantFwd4x4_H264_16s32s_C1, (
 //    pPred       -  pointer to the reference 4x4 block, which is used for intra
 //                   prediction or motion compensation.
 //    predStep    -  reference frame step in bytes.
-//    pSrcDst     -  pointer to the initial coefficients and resultant residuals (4x4
+//    pSrcDst     -  pointer to the initial coefficients and resultant residuals
+(4x4
 //                   block) - array of size 16.
 //    pDC         -  pointer to the DC coefficient. In the case of Intra 4x4
 //                   macroblock type pDC is set to NULL.
 //    pDst        -  pointer to the destination 4x4 block.
 //    dstStep     -  destination frame step in bytes.
 //    QP          -  quantization parameter
-//    AC          -  flag that is not equal to zero, if at least one AC coefficient
+//    AC          -  flag that is not equal to zero, if at least one AC
+coefficient
 //                   exists, and is equal to zero otherwise.
 //    bitDepth    -  bit depth of pPred in range [1..14]
 //    pScaleLevelsInv  pointer to Scale levels, if NULL, default is applied
@@ -9918,29 +9420,15 @@ IPPAPI(IppStatus, ippiTransformQuantFwd4x4_H264_16s32s_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiTransformQuantInvAddPred4x4_H264_16s_C1IR, (
- const Ipp8u*  pPred,
-       Ipp32s  predStep,
-       Ipp16s* pSrcDst,
- const Ipp16s* pDC,
-       Ipp8u*  pDst,
-       Ipp32s  dstStep,
-       Ipp32s  QP,
-       Ipp32s  AC,
- const Ipp16s* pScaleLevelsInv))
+IPPAPI(IppStatus, ippiTransformQuantInvAddPred4x4_H264_16s_C1IR,
+       (const Ipp8u* pPred, Ipp32s predStep, Ipp16s* pSrcDst, const Ipp16s* pDC,
+        Ipp8u* pDst, Ipp32s dstStep, Ipp32s QP, Ipp32s AC,
+        const Ipp16s* pScaleLevelsInv))
 
-IPPAPI(IppStatus, ippiTransformQuantInvAddPred4x4_H264_32s_C1IR, (
- const Ipp16u* pPred,
-       Ipp32s  predStep,
-       Ipp32s* pSrcDst,
- const Ipp32s* pDC,
-       Ipp16u* pDst,
-       Ipp32s  dstStep,
-       Ipp32s  QP,
-       Ipp32s  AC,
-       Ipp32s  bitDepth,
- const Ipp16s* pScaleLevelsInv))
-
+IPPAPI(IppStatus, ippiTransformQuantInvAddPred4x4_H264_32s_C1IR,
+       (const Ipp16u* pPred, Ipp32s predStep, Ipp32s* pSrcDst,
+        const Ipp32s* pDC, Ipp16u* pDst, Ipp32s dstStep, Ipp32s QP, Ipp32s AC,
+        Ipp32s bitDepth, const Ipp16s* pScaleLevelsInv))
 
 /*
 //  Name:
@@ -9948,22 +9436,30 @@ IPPAPI(IppStatus, ippiTransformQuantInvAddPred4x4_H264_32s_C1IR, (
 //    ippiTransformQuantFwdLumaDC4x4_H264_32s_C1I
 //
 //  Purpose:
-//    This function performs forward transform (if it's necessary) and quantization
+//    This function performs forward transform (if it's necessary) and
+quantization
 //    for 4x4 DC Luma block.
 //
 //  Parameters:
-//    pDCBuf        Pointer to 4x4 luma DC block - source & destination array of size 4
-//    pTBuf         Pointer to 4x4 transformed luma DC block - source or destination array of size 4
+//    pDCBuf        Pointer to 4x4 luma DC block - source & destination array of
+size 4
+//    pTBuf         Pointer to 4x4 transformed luma DC block - source or
+destination array of size 4
 //    QP            Quantization parameter for luma
 //    pNumCoeffs    Pointer to value, which contains:
-//                  a negative value of a number of non-zero elements in block after
-//                  quantization (in the case of the first quantized element in block is not equal zero)
-//                  a number of non-zero elements in block after quantization (in the case
+//                  a negative value of a number of non-zero elements in block
+after
+//                  quantization (in the case of the first quantized element in
+block is not equal zero)
+//                  a number of non-zero elements in block after quantization
+(in the case
 //                  of the first quantized element in block is equal zero)
 //                  This value is calculated by function.
-//    NeedTransform Flag that is equal 1 if transforming process is used. This flag is equal 0 if transforming process is not used.
+//    NeedTransform Flag that is equal 1 if transforming process is used. This
+flag is equal 0 if transforming process is not used.
 //    pScanMatrix   Scan matrix for coefficients in block (array of size 16)
-//    pLastCoeff    Position of the last non-zero coefficient in block after quantization. This value is calculated by function.
+//    pLastCoeff    Position of the last non-zero coefficient in block after
+quantization. This value is calculated by function.
 //    pScaleLevels  pointer to Scale levels, if NULL, default is applied
 //
 //  Returns:
@@ -9972,26 +9468,15 @@ IPPAPI(IppStatus, ippiTransformQuantInvAddPred4x4_H264_32s_C1IR, (
 //              ippStsOutOfRangeErr     QP >51 (87 for 32s) or QP<0
 */
 
-IPPAPI(IppStatus, ippiTransformQuantFwdLumaDC4x4_H264_16s_C1I, (
-       Ipp16s* pDCBuf,
-       Ipp16s* pTBuf,
-       Ipp32s  QP,
-       Ipp32s* pNumCoeffs,
-       Ipp32s  NeedTransform,
- const Ipp16s* pScanMatrix,
-       Ipp32s* LastCoeff,
- const Ipp16s* pScaleLevels))
+IPPAPI(IppStatus, ippiTransformQuantFwdLumaDC4x4_H264_16s_C1I,
+       (Ipp16s * pDCBuf, Ipp16s* pTBuf, Ipp32s QP, Ipp32s* pNumCoeffs,
+        Ipp32s NeedTransform, const Ipp16s* pScanMatrix, Ipp32s* LastCoeff,
+        const Ipp16s* pScaleLevels))
 
-IPPAPI(IppStatus, ippiTransformQuantFwdLumaDC4x4_H264_32s_C1I, (
-       Ipp32s* pDCBuf,
-       Ipp32s* pQBuf,
-       Ipp32s  QP,
-       Ipp32s* NumCoeffs,
-       Ipp32s  Intra,
- const Ipp16s* pScanMatrix,
-       Ipp32s* pLastCoeff,
- const Ipp16s* pScaleLevels))
-
+IPPAPI(IppStatus, ippiTransformQuantFwdLumaDC4x4_H264_32s_C1I,
+       (Ipp32s * pDCBuf, Ipp32s* pQBuf, Ipp32s QP, Ipp32s* NumCoeffs,
+        Ipp32s Intra, const Ipp16s* pScanMatrix, Ipp32s* pLastCoeff,
+        const Ipp16s* pScaleLevels))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -10013,16 +9498,11 @@ IPPAPI(IppStatus, ippiTransformQuantFwdLumaDC4x4_H264_32s_C1I, (
 //              ippStsOutOfRangeErr     QP >51 (87 for 32s) or QP<0
 */
 
-IPPAPI(IppStatus, ippiTransformQuantInvLumaDC4x4_H264_16s_C1I, (
-       Ipp16s* pSrcDst,
-       Ipp32s  QP,
- const Ipp16s* pScaleLevelsInv))
+IPPAPI(IppStatus, ippiTransformQuantInvLumaDC4x4_H264_16s_C1I,
+       (Ipp16s * pSrcDst, Ipp32s QP, const Ipp16s* pScaleLevelsInv))
 
-IPPAPI(IppStatus, ippiTransformQuantInvLumaDC4x4_H264_32s_C1I, (
-       Ipp32s* pSrcDst,
-       Ipp32s  QP,
- const Ipp16s* pScaleLevels))
-
+IPPAPI(IppStatus, ippiTransformQuantInvLumaDC4x4_H264_32s_C1I,
+       (Ipp32s * pSrcDst, Ipp32s QP, const Ipp16s* pScaleLevels))
 
 /*
 //  Name:
@@ -10030,21 +9510,29 @@ IPPAPI(IppStatus, ippiTransformQuantInvLumaDC4x4_H264_32s_C1I, (
 //    ippiTransformQuantFwdChromaDC2x2_H264_32s_C1I
 //
 //  Purpose:
-//    This function performs forward transform (if it's necessary) and quantization
+//    This function performs forward transform (if it's necessary) and
+quantization
 //    for 2x2 DC chroma block.
 //
 //  Parameters:
-//    pDCBuf        Pointer to 2x2 chroma DC block - source & destination array of size 4
-//    pTBuf         Pointer to 2x2 transformed chroma DC block - source or destination array of size 4
+//    pDCBuf        Pointer to 2x2 chroma DC block - source & destination array
+of size 4
+//    pTBuf         Pointer to 2x2 transformed chroma DC block - source or
+destination array of size 4
 //    QP            Quantization parameter for chroma
 //    pNumCoeffs    Pointer to value, which contains:
-//                  a negative value of a number of non-zero elements in block after
-//                  quantization (in the case of the first quantized element in block is not equal zero)
-//                  a number of non-zero elements in block after quantization (in the case
+//                  a negative value of a number of non-zero elements in block
+after
+//                  quantization (in the case of the first quantized element in
+block is not equal zero)
+//                  a number of non-zero elements in block after quantization
+(in the case
 //                  of the first quantized element in block is equal zero)
 //                  This value is calculated by function.
-//    Intra         Flag that is equal 1 in the case of Intra slice, 0 otherwise.
-//    NeedTransform Flag that is equal 1 if transforming process is used. This flag is equal 0 if transforming process is not used.
+//    Intra         Flag that is equal 1 in the case of Intra slice, 0
+otherwise.
+//    NeedTransform Flag that is equal 1 if transforming process is used. This
+flag is equal 0 if transforming process is not used.
 //    pScaleLevels  pointer to Scale levels, if NULL, default is applied
 //
 //  Returns:
@@ -10053,24 +9541,13 @@ IPPAPI(IppStatus, ippiTransformQuantInvLumaDC4x4_H264_32s_C1I, (
 //              ippStsOutOfRangeErr     QP >51 (87 for 32s) or QP<0
 */
 
-IPPAPI(IppStatus, ippiTransformQuantFwdChromaDC2x2_H264_16s_C1I, (
-       Ipp16s *pDCBuf,
-       Ipp16s *pTBuf,
-       Ipp32s  QP,
-       Ipp32s* pNumCoeffs,
-       Ipp32s  Intra,
-       Ipp32s  NeedTransform,
- const Ipp16s* pScaleLevels))
+IPPAPI(IppStatus, ippiTransformQuantFwdChromaDC2x2_H264_16s_C1I,
+       (Ipp16s * pDCBuf, Ipp16s* pTBuf, Ipp32s QP, Ipp32s* pNumCoeffs,
+        Ipp32s Intra, Ipp32s NeedTransform, const Ipp16s* pScaleLevels))
 
-IPPAPI(IppStatus, ippiTransformQuantFwdChromaDC2x2_H264_32s_C1I, (
-       Ipp32s* pSrcDst,
-       Ipp32s* pTBlock,
-       Ipp32s  QPChroma,
-       Ipp32s* NumCoeffs,
-       Ipp32s  Intra,
-       Ipp32s  NeedTransform,
- const Ipp16s* pScaleLevels))
-
+IPPAPI(IppStatus, ippiTransformQuantFwdChromaDC2x2_H264_32s_C1I,
+       (Ipp32s * pSrcDst, Ipp32s* pTBlock, Ipp32s QPChroma, Ipp32s* NumCoeffs,
+        Ipp32s Intra, Ipp32s NeedTransform, const Ipp16s* pScaleLevels))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -10092,15 +9569,11 @@ IPPAPI(IppStatus, ippiTransformQuantFwdChromaDC2x2_H264_32s_C1I, (
 //              ippStsOutOfRangeErr     QP >51 (87 for 32s) or QP<0
 */
 
-IPPAPI(IppStatus, ippiTransformQuantInvChromaDC2x2_H264_16s_C1I, (
-       Ipp16s* pSrcDst,
-       Ipp32s  QP,
- const Ipp16s *pScaleLevels))
+IPPAPI(IppStatus, ippiTransformQuantInvChromaDC2x2_H264_16s_C1I,
+       (Ipp16s * pSrcDst, Ipp32s QP, const Ipp16s* pScaleLevels))
 
-IPPAPI(IppStatus, ippiTransformQuantInvChromaDC2x2_H264_32s_C1I, (
-       Ipp32s* pSrcDst,
-       Ipp32s  QP,
- const Ipp16s *pScaleLevels))
+IPPAPI(IppStatus, ippiTransformQuantInvChromaDC2x2_H264_32s_C1I,
+       (Ipp32s * pSrcDst, Ipp32s QP, const Ipp16s* pScaleLevels))
 
 /*
 //  Name:
@@ -10108,21 +9581,29 @@ IPPAPI(IppStatus, ippiTransformQuantInvChromaDC2x2_H264_32s_C1I, (
 //    ippiTransformQuantFwdChromaDC2x4_H264_32s_C1I
 //
 //  Purpose:
-//    This function performs forward transform (if it's necessary) and quantization
+//    This function performs forward transform (if it's necessary) and
+quantization
 //    for 2x4 DC chroma block.
 //
 //  Parameters:
-//    pDCBuf        Pointer to 2x4 chroma DC block - source & destination array of size 6
-//    pTBuf         Pointer to 2x4 transformed chroma DC block - source or destination array of size 6
+//    pDCBuf        Pointer to 2x4 chroma DC block - source & destination array
+of size 6
+//    pTBuf         Pointer to 2x4 transformed chroma DC block - source or
+destination array of size 6
 //    QP            Quantization parameter for chroma
 //    pNumCoeffs    Pointer to value, which contains:
-//                  a negative value of a number of non-zero elements in block after
-//                  quantization (in the case of the first quantized element in block is not equal zero)
-//                  a number of non-zero elements in block after quantization (in the case
+//                  a negative value of a number of non-zero elements in block
+after
+//                  quantization (in the case of the first quantized element in
+block is not equal zero)
+//                  a number of non-zero elements in block after quantization
+(in the case
 //                  of the first quantized element in block is equal zero)
 //                  This value is calculated by function.
-//    Intra         Flag that is equal 1 in the case of Intra slice, 0 otherwise.
-//    NeedTransform Flag that is equal 1 if transforming process is used. This flag is equal 0 if transforming process is not used.
+//    Intra         Flag that is equal 1 in the case of Intra slice, 0
+otherwise.
+//    NeedTransform Flag that is equal 1 if transforming process is used. This
+flag is equal 0 if transforming process is not used.
 //    pScaleLevels  pointer to Scale levels, if NULL, default is applied
 //
 //  Returns:
@@ -10131,23 +9612,13 @@ IPPAPI(IppStatus, ippiTransformQuantInvChromaDC2x2_H264_32s_C1I, (
 //              ippStsOutOfRangeErr     QP >51 (87 for 32s) or QP<0
 */
 
-IPPAPI(IppStatus, ippiTransformQuantFwdChromaDC2x4_H264_16s_C1I, (
-       Ipp16s *pDCBuf,
-       Ipp16s *pTBuf,
-       Ipp32s  QPChroma,
-       Ipp32s* NumCoeffs,
-       Ipp32s  Intra,
-       Ipp32s  NeedTransform,
- const Ipp16s* pScaleLevels))
+IPPAPI(IppStatus, ippiTransformQuantFwdChromaDC2x4_H264_16s_C1I,
+       (Ipp16s * pDCBuf, Ipp16s* pTBuf, Ipp32s QPChroma, Ipp32s* NumCoeffs,
+        Ipp32s Intra, Ipp32s NeedTransform, const Ipp16s* pScaleLevels))
 
-IPPAPI(IppStatus, ippiTransformQuantFwdChromaDC2x4_H264_32s_C1I, (
-       Ipp32s *pDCBuf,
-       Ipp32s *pTBuf,
-       Ipp32s  QPChroma,
-       Ipp32s* NumCoeffs,
-       Ipp32s  Intra,
-       Ipp32s  NeedTransform,
- const Ipp16s* pScaleLevels))
+IPPAPI(IppStatus, ippiTransformQuantFwdChromaDC2x4_H264_32s_C1I,
+       (Ipp32s * pDCBuf, Ipp32s* pTBuf, Ipp32s QPChroma, Ipp32s* NumCoeffs,
+        Ipp32s Intra, Ipp32s NeedTransform, const Ipp16s* pScaleLevels))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -10169,16 +9640,11 @@ IPPAPI(IppStatus, ippiTransformQuantFwdChromaDC2x4_H264_32s_C1I, (
 //              ippStsOutOfRangeErr     QP >51 (87 for 32s) or QP<0
 */
 
-IPPAPI(IppStatus, ippiTransformQuantInvChromaDC2x4_H264_16s_C1I, (
-       Ipp16s* pSrcDst,
-       Ipp32s  QPChroma,
- const Ipp16s* pScaleLevels))
+IPPAPI(IppStatus, ippiTransformQuantInvChromaDC2x4_H264_16s_C1I,
+       (Ipp16s * pSrcDst, Ipp32s QPChroma, const Ipp16s* pScaleLevels))
 
-IPPAPI(IppStatus, ippiTransformQuantInvChromaDC2x4_H264_32s_C1I, (
-       Ipp32s *pSrcDst,
-       Ipp32s  QPChroma,
- const Ipp16s* pScaleLevelsInv))
-
+IPPAPI(IppStatus, ippiTransformQuantInvChromaDC2x4_H264_32s_C1I,
+       (Ipp32s * pSrcDst, Ipp32s QPChroma, const Ipp16s* pScaleLevelsInv))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -10188,10 +9654,14 @@ IPPAPI(IppStatus, ippiTransformQuantInvChromaDC2x4_H264_32s_C1I, (
 //    Performs generation of scale matrix
 //
 //  Parameters:
-//    pSrcScaleMatrix      - Pointer to an original scaling matrix for 4x4 transform.
-//    pDstInvScaleMatrix   - Pointer to a destination inverse scaling matrix -- array of size 16.
-//    pDstScaleMatrix      - Pointer to a destination forward scaling matrix - array of size 16.
-//    QpRem                - Reminder from an integer division of quantization parameter by 6.
+//    pSrcScaleMatrix      - Pointer to an original scaling matrix for 4x4
+transform.
+//    pDstInvScaleMatrix   - Pointer to a destination inverse scaling matrix --
+array of size 16.
+//    pDstScaleMatrix      - Pointer to a destination forward scaling matrix -
+array of size 16.
+//    QpRem                - Reminder from an integer division of quantization
+parameter by 6.
 //
 //  Returns:
 //    ippStsNoErr          No error
@@ -10200,13 +9670,14 @@ IPPAPI(IppStatus, ippiTransformQuantInvChromaDC2x4_H264_32s_C1I, (
 //
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiGenScaleLevel4x4_H264_8u16s_C1, (
- const Ipp8u  *pSrcScaleMatrix,
-       Ipp16s *pDstInvScaleMatrix,
-       Ipp16s *pDstScaleMatrix,
-       Ipp32s  QpRem))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiGenScaleLevel4x4_H264_8u16s_C1,
+       (const Ipp8u* pSrcScaleMatrix, Ipp16s* pDstInvScaleMatrix,
+        Ipp16s* pDstScaleMatrix, Ipp32s QpRem))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -10222,7 +9693,8 @@ IPPAPI(IppStatus, ippiGenScaleLevel4x4_H264_8u16s_C1, (
 //      srcStep         Pitch of the source plane (in bytes).
 //      pRef            Pointer to 16x16 block in the reference plane.
 //      refStep         Pitch of the reference plane (in bytes).
-//      pDstSAD         Pointer to array of size 16(for 4x4) or 4(for 8x8) to store SAD values.
+//      pDstSAD         Pointer to array of size 16(for 4x4) or 4(for 8x8) to
+store SAD values.
 //      mcType          reserved and must be 0.
 //  Returns:
 //      ippStsNoErr       No error
@@ -10230,24 +9702,23 @@ IPPAPI(IppStatus, ippiGenScaleLevel4x4_H264_8u16s_C1, (
 //
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSAD16x16Blocks4x4_16u32u_C1R, (
- const Ipp16u* pSrc,
-       Ipp32s  srcStep,
- const Ipp16u* pRef,
-       Ipp32s  refStep,
-       Ipp32u* pDstSAD,
-       Ipp32s  mcType))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSAD16x16Blocks4x4_16u32u_C1R,
+       (const Ipp16u* pSrc, Ipp32s srcStep, const Ipp16u* pRef, Ipp32s refStep,
+        Ipp32u* pDstSAD, Ipp32s mcType))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSAD16x16Blocks8x8_16u32u_C1R, (
- const Ipp16u* pSrc,
-       Ipp32s  srcStep,
- const Ipp16u* pRef,
-       Ipp32s  refStep,
-       Ipp32u* pDstSAD,
-       Ipp32s  mcType))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSAD16x16Blocks8x8_16u32u_C1R,
+       (const Ipp16u* pSrc, Ipp32s srcStep, const Ipp16u* pRef, Ipp32s refStep,
+        Ipp32u* pDstSAD, Ipp32s mcType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -10272,7 +9743,8 @@ IPPAPI(IppStatus, ippiSAD16x16Blocks8x8_16u32u_C1R, (
 //      pRef            Pointer to a block in the reference plane.
 //      refStep         Pitch of the reference plane (in bytes).
 //      pSAD            Pointer to array of size of numSAD to store SAD values.
-//      numSAD          Number of SAD values to evaluate. Should be product of 8.
+//      numSAD          Number of SAD values to evaluate. Should be product
+of 8.
 //      pMinSADIndex    Index of the lowest SAD value in the given array.
 //  Returns:
 //      ippStsNoErr       No error
@@ -10280,70 +9752,58 @@ IPPAPI(IppStatus, ippiSAD16x16Blocks8x8_16u32u_C1R, (
 //      ippStsSizeErr     numSAD is less than 8
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSAD2x2xN_8u16u_C1R, (
- const Ipp8u *pSrc,
-       Ipp32s srcStep,
- const Ipp8u *pRef,
-       Ipp32s refStep,
-       Ipp16u *pSAD,
-       Ipp32s numSAD))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSAD2x2xN_8u16u_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pRef, Ipp32s refStep,
+        Ipp16u* pSAD, Ipp32s numSAD))
 
-IPPAPI(IppStatus, ippiSAD4x4xN_8u16u_C1R, (
- const Ipp8u *pSrc,
-       Ipp32s srcStep,
- const Ipp8u *pRef,
-       Ipp32s refStep,
-       Ipp16u *pSAD,
-       Ipp32s numSAD))
+IPPAPI(IppStatus, ippiSAD4x4xN_8u16u_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pRef, Ipp32s refStep,
+        Ipp16u* pSAD, Ipp32s numSAD))
 
-IPPAPI(IppStatus, ippiSAD4x4xNI_8u16u_C1R, (
- const Ipp8u *pSrc,
-       Ipp32s srcStep,
- const Ipp8u *pRef,
-       Ipp32s refStep,
-       Ipp16u *pSAD,
-       Ipp32s numSAD,
-       Ipp32u *pMinSADIndex))
+IPPAPI(IppStatus, ippiSAD4x4xNI_8u16u_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pRef, Ipp32s refStep,
+        Ipp16u* pSAD, Ipp32s numSAD, Ipp32u* pMinSADIndex))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSAD8x8xN_8u16u_C1R, (
- const Ipp8u *pSrc,
-       Ipp32s srcStep,
- const Ipp8u *pRef,
-       Ipp32s refStep,
-       Ipp16u *pSAD,
-       Ipp32s numSAD))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSAD8x8xN_8u16u_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pRef, Ipp32s refStep,
+        Ipp16u* pSAD, Ipp32s numSAD))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSAD8x8xNI_8u16u_C1R, (
- const Ipp8u *pSrc,
-       Ipp32s srcStep,
- const Ipp8u *pRef,
-       Ipp32s refStep,
-       Ipp16u *pSAD,
-       Ipp32s numSAD,
-       Ipp32u *pMinSADIndex))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSAD8x8xNI_8u16u_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pRef, Ipp32s refStep,
+        Ipp16u* pSAD, Ipp32s numSAD, Ipp32u* pMinSADIndex))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSAD16x16xN_8u16u_C1R, (
- const Ipp8u *pSrc,
-       Ipp32s srcStep,
- const Ipp8u *pRef,
-       Ipp32s refStep,
-       Ipp16u *pSAD,
-       Ipp32s numSAD))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSAD16x16xN_8u16u_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pRef, Ipp32s refStep,
+        Ipp16u* pSAD, Ipp32s numSAD))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSAD16x16xNI_8u16u_C1R, (
- const Ipp8u *pSrc,
-       Ipp32s srcStep,
- const Ipp8u *pRef,
-       Ipp32s refStep,
-       Ipp16u *pSAD,
-       Ipp32s numSAD,
-       Ipp32u *pMinSADIndex))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSAD16x16xNI_8u16u_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, const Ipp8u* pRef, Ipp32s refStep,
+        Ipp16u* pSAD, Ipp32s numSAD, Ipp32u* pMinSADIndex))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -10351,38 +9811,34 @@ IPPAPI(IppStatus, ippiSAD16x16xNI_8u16u_C1R, (
 //    ippiSumsDiff8x8Blocks4x4_16u32s_C1R
 //
 //  Purpose:
-//      These functions evaluates difference between current and reference 4x4 blocks
+//      These functions evaluates difference between current and reference 4x4
+blocks
 //      and calculates sums of 4x4 residual blocks elements
 //  Parameters:
 //      pSrc     Pointer  block in current plane
-//      srcStep  Step of the current plane, specifying width of the plane in bytes.
+//      srcStep  Step of the current plane, specifying width of the plane in
+bytes.
 //      pPred    Pointer to  reference block
-//      predStep Step of the reference plane, specifying width of the plane in bytes.
-//      pSums    Pointer to array that contains sums of 4x4 difference blocks coefficients.
+//      predStep Step of the reference plane, specifying width of the plane in
+bytes.
+//      pSums    Pointer to array that contains sums of 4x4 difference blocks
+coefficients.
 //               The array's filled by function.
-//      pDiff    If it isn't zero, pointer to array that will contain a sequence of 4x4
+//      pDiff    If it isn't zero, pointer to array that will contain a sequence
+of 4x4
 //               residual blocks.
 //
 //  Returns:
 //    ippStsNoErr       No error
 //    ippStsNullPtrErr  one of the input pointers is NULL
 */
-IPPAPI(IppStatus, ippiSumsDiff16x16Blocks4x4_16u32s_C1R, (
- const Ipp16u* pSrc,
-       Ipp32s  srcStep,
- const Ipp16u* pPred,
-       Ipp32s  predStep,
-       Ipp32s* pSums,
-       Ipp16s* pDiff))
+IPPAPI(IppStatus, ippiSumsDiff16x16Blocks4x4_16u32s_C1R,
+       (const Ipp16u* pSrc, Ipp32s srcStep, const Ipp16u* pPred,
+        Ipp32s predStep, Ipp32s* pSums, Ipp16s* pDiff))
 
-IPPAPI(IppStatus, ippiSumsDiff8x8Blocks4x4_16u32s_C1R, (
- const Ipp16u* pSrc,
-       Ipp32s  srcStep,
- const Ipp16u* pPred,
-       Ipp32s  predStep,
-       Ipp32s* pSums,
-       Ipp16s* pDiff))
-
+IPPAPI(IppStatus, ippiSumsDiff8x8Blocks4x4_16u32s_C1R,
+       (const Ipp16u* pSrc, Ipp32s srcStep, const Ipp16u* pPred,
+        Ipp32s predStep, Ipp32s* pSums, Ipp16s* pDiff))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -10393,7 +9849,8 @@ IPPAPI(IppStatus, ippiSumsDiff8x8Blocks4x4_16u32s_C1R, (
 //  Performs forward 8x8 transform for a 8x8 Luma block without normalization.
 //
 //  Parameters:
-//    pSrc     -  pointer to the initial 8x8 Luma block and resultant coefficients
+//    pSrc     -  pointer to the initial 8x8 Luma block and resultant
+coefficients
 //               (array of size 64).
 //    pDst     -  pointer to the resultant coefficients (array of size 64).
 //  Returns:
@@ -10401,14 +9858,11 @@ IPPAPI(IppStatus, ippiSumsDiff8x8Blocks4x4_16u32s_C1R, (
 //    ippStsNullPtrErr     at least one of the pointers is NULL
 */
 
-IPPAPI(IppStatus, ippiTransformFwdLuma8x8_H264_16s32s_C1, (
- const Ipp16s* pSrc,
-       Ipp32s* pDst))
+IPPAPI(IppStatus, ippiTransformFwdLuma8x8_H264_16s32s_C1,
+       (const Ipp16s* pSrc, Ipp32s* pDst))
 
-IPPAPI(IppStatus, ippiTransformFwdLuma8x8_H264_16s_C1, (
- const Ipp16s*  pSrc,
-       Ipp16s*  pDst))
-
+IPPAPI(IppStatus, ippiTransformFwdLuma8x8_H264_16s_C1,
+       (const Ipp16s* pSrc, Ipp16s* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -10416,13 +9870,15 @@ IPPAPI(IppStatus, ippiTransformFwdLuma8x8_H264_16s_C1, (
 //
 //  Purpose:
 //  Performs inverse 8x8 transform for a 8x8 Luma block with subsequent intra
-//  prediction or motion compensation, coefficients are assumed to be pre-normalized.
+//  prediction or motion compensation, coefficients are assumed to be
+pre-normalized.
 //
 //  Parameters:
 //    pPred       -  pointer to the reference 8x8 block, which is used for intra
 //                   prediction or motion compensation.
 //    predStep    -  reference frame step in bytes.
-//    pSrcDst     -  pointer to the initial coefficients and buffer for the computations
+//    pSrcDst     -  pointer to the initial coefficients and buffer for the
+computations
 //                   (8x8 block) - array of size 64.
 //    pDst        -  pointer to the destination 8x8 block.
 //    dstStep     -  destination frame step in bytes.
@@ -10433,14 +9889,9 @@ IPPAPI(IppStatus, ippiTransformFwdLuma8x8_H264_16s_C1, (
 //    ippStsNullPtrErr     pointers are NULL
 //
 */
-IPPAPI(IppStatus, ippiTransformInvAddPredLuma8x8_H264_32s16u_C1R, (
- const Ipp16u*  pPred,
-       Ipp32s   predStep,
-       Ipp32s*  pSrcDst,
-       Ipp16u*  pDst,
-       Ipp32s   dstStep,
-       Ipp32s   bitDepth))
-
+IPPAPI(IppStatus, ippiTransformInvAddPredLuma8x8_H264_32s16u_C1R,
+       (const Ipp16u* pPred, Ipp32s predStep, Ipp32s* pSrcDst, Ipp16u* pDst,
+        Ipp32s dstStep, Ipp32s bitDepth))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -10448,28 +9899,42 @@ IPPAPI(IppStatus, ippiTransformInvAddPredLuma8x8_H264_32s16u_C1R, (
 //    ippiEncodeCoeffsCAVLCChromaDC2x4_H264_16s
 //    ippiEncodeCoeffsCAVLCChromaDC2x4_H264_32s
 //
-//  Purpose: Calculates characteristics of 2x2 or 2X4 Chroma DC for CAVLC encoding.
+//  Purpose: Calculates characteristics of 2x2 or 2X4 Chroma DC for CAVLC
+encoding.
 //
 //  Parameters:
 //    pSrc                 Pointer to 2x2 or 2x4 block - array of size 4 or 6.
-//    pTraling_One         The number of trailing ones transform coefficient levels
-//                         in a range[0;3]. This argument is calculated by the function.
+//    pTraling_One         The number of trailing ones transform coefficient
+levels
+//                         in a range[0;3]. This argument is calculated by the
+function.
 //    pTraling_One_Signs   Code that describes signs of trailing ones.
-//                         (Trailing_One 1 -      i)-bit in this code corresponds to a sign
-//                         of i-trailing one in the current block. In this code 1 indicates
-//                         negative value, 0  positive value. This  argument is calculated
+//                         (Trailing_One 1 -      i)-bit in this code
+corresponds to a sign
+//                         of i-trailing one in the current block. In this code
+1 indicates
+//                         negative value, 0  positive value. This  argument is
+calculated
 //                         by the function.
-//    pNumOutCoeffs        The number of non-zero coefficients in block (including trailing
+//    pNumOutCoeffs        The number of non-zero coefficients in block
+(including trailing
 //                         ones). This argument is calculated by the function.
-//    pTotalZeros          The number of zero coefficients in block (except trailing zeros). This
+//    pTotalZeros          The number of zero coefficients in block (except
+trailing zeros). This
 //                         argument is calculated by the function.
-//    pLevels              Pointer to an array of size 4 that contains non-zero quantized
-//                         coefficients of the current block (except trailing ones) in reverse scan
+//    pLevels              Pointer to an array of size 4 that contains non-zero
+quantized
+//                         coefficients of the current block (except trailing
+ones) in reverse scan
 //                         matrix order.
-//    pRuns                Pointer to an array of size 4 that contains runs before non-zero
-//                         quantized coefficients (including trailing ones) of the current block in
-//                         reverse scan matrix order (except run before the first non-zero
-//                         coefficient in block, which can be calculated using TotalZeros).
+//    pRuns                Pointer to an array of size 4 that contains runs
+before non-zero
+//                         quantized coefficients (including trailing ones) of
+the current block in
+//                         reverse scan matrix order (except run before the
+first non-zero
+//                         coefficient in block, which can be calculated using
+TotalZeros).
 //
 //  Returns:
 //    ippStsNoErr          No error
@@ -10480,59 +9945,56 @@ IPPAPI(IppStatus, ippiTransformInvAddPredLuma8x8_H264_32s16u_C1R, (
 //    Final Draft International Standard of Joint Video Specification
 //    (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
-IPPAPI(IppStatus, ippiEncodeCoeffsCAVLCChromaDC2x2_H264_32s, (
- const Ipp32s* pSrc,
-       Ipp8u*  pTrailingOnes,
-       Ipp8u*  pTrailingOneSigns,
-       Ipp8u*  pNumOutCoeffs,
-       Ipp8u*  pTotalZeroes,
-       Ipp32s* pLevels,
-       Ipp8u*  pRuns))
+IPPAPI(IppStatus, ippiEncodeCoeffsCAVLCChromaDC2x2_H264_32s,
+       (const Ipp32s* pSrc, Ipp8u* pTrailingOnes, Ipp8u* pTrailingOneSigns,
+        Ipp8u* pNumOutCoeffs, Ipp8u* pTotalZeroes, Ipp32s* pLevels,
+        Ipp8u* pRuns))
 
-IPPAPI(IppStatus, ippiEncodeCoeffsCAVLCChromaDC2x4_H264_16s, (
- const Ipp16s *pSrc,
-       Ipp8u  *pTrailing_Ones,
-       Ipp8u  *pTrailing_One_Signs,
-       Ipp8u  *pNumOutCoeffs,
-       Ipp8u  *pTotalZeros,
-       Ipp16s *pLevels,
-       Ipp8u  *pRuns))
+IPPAPI(IppStatus, ippiEncodeCoeffsCAVLCChromaDC2x4_H264_16s,
+       (const Ipp16s* pSrc, Ipp8u* pTrailing_Ones, Ipp8u* pTrailing_One_Signs,
+        Ipp8u* pNumOutCoeffs, Ipp8u* pTotalZeros, Ipp16s* pLevels,
+        Ipp8u* pRuns))
 
-IPPAPI(IppStatus, ippiEncodeCoeffsCAVLCChromaDC2x4_H264_32s, (
- const Ipp32s *pSrc,
-       Ipp8u  *pTrailing_Ones,
-       Ipp8u  *pTrailing_One_Signs,
-       Ipp8u  *pNumOutCoeffs,
-       Ipp8u  *pTotalZeros,
-       Ipp32s *pLevels,
-       Ipp8u  *Runs))
+IPPAPI(IppStatus, ippiEncodeCoeffsCAVLCChromaDC2x4_H264_32s,
+       (const Ipp32s* pSrc, Ipp8u* pTrailing_Ones, Ipp8u* pTrailing_One_Signs,
+        Ipp8u* pNumOutCoeffs, Ipp8u* pTotalZeros, Ipp32s* pLevels, Ipp8u* Runs))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiInterpolateLumaBlock_AVS_8u_P1R
 //
-//  Purpose: Performs interpolation for motion estimation of the luminance component.
+//  Purpose: Performs interpolation for motion estimation of the luminance
+component.
 //
 //  Parameters:
 //    interpolateInfo - pointer to a structure having interpolation parameters
 //
 //  Returns:
 //    ippStsNoErr          No error
-//    ippStsNullPtrErr     One of the pointers in the interpolateInfo structure is NULL
-//    ippStsSizeErr        if roi.width or roi.height take values other than 16 or 8
+//    ippStsNullPtrErr     One of the pointers in the interpolateInfo structure
+is NULL
+//    ippStsSizeErr        if roi.width or roi.height take values other than 16
+or 8
 //
 //  Notes:
 //    AVS China standard : GB/T 20090.2 - 2006
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiInterpolateLumaBlock_AVS_8u_P1R,(const IppVCInterpolateBlock_8u *interpolateInfo))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiInterpolateLumaBlock_AVS_8u_P1R,
+       (const IppVCInterpolateBlock_8u* interpolateInfo))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiWeightPrediction_AVS_8u_C1R
 //
-//    The function performs weighting of an interpolated block. The formulae is the following:
+//    The function performs weighting of an interpolated block. The formulae is
+the following:
 //    pDst[x] = (Ipp8u) Clip1(((pSrc[x] * scale + 16) >> 5) + shift);
 //    where Clip1 is saturating to the Ipp8u range.
 //
@@ -10547,22 +10009,24 @@ IPPAPI(IppStatus, ippiInterpolateLumaBlock_AVS_8u_P1R,(const IppVCInterpolateBlo
 //
 //  Returns:
 //    ippStsNoErr          No error
-//    ippStsNullPtrErr     One of the pointers in the interpolateInfo structure is NULL
-//    ippStsSizeErr        if sizeBlock.width or sizeBlock.height take values other than 16 or 8
+//    ippStsNullPtrErr     One of the pointers in the interpolateInfo structure
+is NULL
+//    ippStsSizeErr        if sizeBlock.width or sizeBlock.height take values
+other than 16 or 8
 //
 //  Notes:
 //    AVS China standard : GB/T 20090.2 - 2006
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiWeightPrediction_AVS_8u_C1R,(const Ipp8u *pSrc,
-                                                         Ipp32s srcStep,
-                                                         Ipp8u *pDst,
-                                                         Ipp32s dstStep,
-                                                         Ipp32u scale,
-                                                         Ipp32s shift,
-                                                         IppiSize sizeBlock))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiWeightPrediction_AVS_8u_C1R,
+       (const Ipp8u* pSrc, Ipp32s srcStep, Ipp8u* pDst, Ipp32s dstStep,
+        Ipp32u scale, Ipp32s shift, IppiSize sizeBlock))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -10572,30 +10036,36 @@ IPPAPI(IppStatus, ippiWeightPrediction_AVS_8u_C1R,(const Ipp8u *pSrc,
 //
 //  Parameters:
 //    ppSrcCoeff    pointer to the order of 8x8 blocks of residual coefficients
-//    pSrcDstYPlane pointer to the current macroblock that is reconstructed in Y-plane
+//    pSrcDstYPlane pointer to the current macroblock that is reconstructed in
+Y-plane
 //    srcDstYStep   Y-Plane step
 //    pMBIntraTypes array of Intra_8x8 luma prediction modes for each subblock
 //    pSrcNumCoeffs array of indices of the last coefficient in each subblock
 //    cbp8x8        coded block pattern
 //    QP            quantization parameter
-//    edgeType      specifies the availability of the macroblocks used for prediction
+//    edgeType      specifies the availability of the macroblocks used for
+prediction
 //
 //  Returns:
 //    ippStsNoErr Indicates no error.
-//    ippStsNullPtrErr Indicates an error condition if at least one of the specified pointers is NULL.
+//    ippStsNullPtrErr Indicates an error condition if at least one of the
+specified pointers is NULL.
 //    ippStsOutOfRangeErr QP is less than 0 or greater than 63
 //
 //  Notes:
 //    AVS China standard : GB/T 20090.2 - 2006
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiReconstructLumaIntra_AVS_16s8u_C1R,(Ipp16s **ppSrcCoeff,
-                                                        Ipp8u *pSrcDstYPlane,
-                                                        Ipp32s srcDstYStep,
-                                                        const IppIntra8x8PredMode_AVS *pMBIntraTypes,
-                                                        const Ipp32s *pSrcNumCoeffs,
-                                                        Ipp32u cbp8x8, Ipp32u QP, Ipp32u edgeType))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiReconstructLumaIntra_AVS_16s8u_C1R,
+       (Ipp16s * *ppSrcCoeff, Ipp8u* pSrcDstYPlane, Ipp32s srcDstYStep,
+        const IppIntra8x8PredMode_AVS* pMBIntraTypes,
+        const Ipp32s* pSrcNumCoeffs, Ipp32u cbp8x8, Ipp32u QP, Ipp32u edgeType))
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiReconstructLumaInter_AVS_16s8u_C1R
@@ -10604,7 +10074,8 @@ IPPAPI(IppStatus,ippiReconstructLumaIntra_AVS_16s8u_C1R,(Ipp16s **ppSrcCoeff,
 //
 //  Parameters:
 //    ppSrcCoeff    pointer to the order of 8x8 blocks of residual coefficients
-//    pSrcDstYPlane pointer to the current macroblock that is reconstructed in Y-plane
+//    pSrcDstYPlane pointer to the current macroblock that is reconstructed in
+Y-plane
 //    srcDstYStep   Y-Plane step
 //    pSrcNumCoeffs array of indices of the last coefficient in each subblock
 //    cbp8x8        coded block pattern
@@ -10612,19 +10083,23 @@ IPPAPI(IppStatus,ippiReconstructLumaIntra_AVS_16s8u_C1R,(Ipp16s **ppSrcCoeff,
 //
 //  Returns:
 //    ippStsNoErr Indicates no error.
-//    ippStsNullPtrErr Indicates an error condition if at least one of the specified pointers is NULL.
+//    ippStsNullPtrErr Indicates an error condition if at least one of the
+specified pointers is NULL.
 //    ippStsOutOfRangeErr QP is less than 0 or greater than 63
 //
 //  Notes:
 //    AVS China standard : GB/T 20090.2 - 2006
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiReconstructLumaInter_AVS_16s8u_C1R,(Ipp16s **ppSrcCoeff,
-                                                         Ipp8u *pSrcDstYPlane,
-                                                         Ipp32s srcDstYStep,
-                                                         const Ipp32s *pSrcNumCoeffs,
-                                                         Ipp32u cbp8x8, Ipp32u QP))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiReconstructLumaInter_AVS_16s8u_C1R,
+       (Ipp16s * *ppSrcCoeff, Ipp8u* pSrcDstYPlane, Ipp32s srcDstYStep,
+        const Ipp32s* pSrcNumCoeffs, Ipp32u cbp8x8, Ipp32u QP))
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiReconstructChromaIntra_AVS_16s8u_C1R
@@ -10633,33 +10108,39 @@ IPPAPI(IppStatus,ippiReconstructLumaInter_AVS_16s8u_C1R,(Ipp16s **ppSrcCoeff,
 //
 //  Parameters:
 //    ppSrcCoeff    pointer to the order of 8x8 blocks of residual coefficients
-//    pSrcDstUPlane pointer to the current macroblock that is reconstructed in U-plane
-//    pSrcDstVPlane pointer to the current macroblock that is reconstructed in V-plane
+//    pSrcDstUPlane pointer to the current macroblock that is reconstructed in
+U-plane
+//    pSrcDstVPlane pointer to the current macroblock that is reconstructed in
+V-plane
 //    srcDstUVStep  chrominance planes step
 //    predMode      chrominance prediction mode for both subblock
 //    pSrcNumCoeffs array of indices of the last coefficient in each subblock
 //    cbp8x8        coded block pattern
 //    chromaQP      quantization parameter
-//    edgeType      specifies the availability of the macroblocks used for prediction
+//    edgeType      specifies the availability of the macroblocks used for
+prediction
 //
 //  Returns:
 //    ippStsNoErr Indicates no error.
-//    ippStsNullPtrErr Indicates an error condition if at least one of the specified pointers is NULL.
+//    ippStsNullPtrErr Indicates an error condition if at least one of the
+specified pointers is NULL.
 //    ippStsOutOfRangeErr QP is less than 0 or greater than 51
 //
 //  Notes:
 //    AVS China standard : GB/T 20090.2 - 2006
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiReconstructChromaIntra_AVS_16s8u_C1R,(Ipp16s **ppSrcCoeff,
-                                                           Ipp8u *pSrcDstUPlane,
-                                                           Ipp8u *pSrcDstVPlane,
-                                                           Ipp32s srcDstUVStep,
-                                                           const IppIntraChromaPredMode_AVS predMode,
-                                                           const Ipp32s *pSrcNumCoeffs,
-                                                           Ipp32u cbp8x8, Ipp32u chromaQP,
-                                                           Ipp32u edgeType))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiReconstructChromaIntra_AVS_16s8u_C1R,
+       (Ipp16s * *ppSrcCoeff, Ipp8u* pSrcDstUPlane, Ipp8u* pSrcDstVPlane,
+        Ipp32s srcDstUVStep, const IppIntraChromaPredMode_AVS predMode,
+        const Ipp32s* pSrcNumCoeffs, Ipp32u cbp8x8, Ipp32u chromaQP,
+        Ipp32u edgeType))
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiReconstructChromaInter_AVS_16s8u_C1R
@@ -10668,8 +10149,10 @@ IPPAPI(IppStatus,ippiReconstructChromaIntra_AVS_16s8u_C1R,(Ipp16s **ppSrcCoeff,
 //
 //  Parameters:
 //    ppSrcCoeff    pointer to the order of 8x8 blocks of residual coefficients
-//    pSrcDstUPlane pointer to the current macroblock that is reconstructed in U-plane
-//    pSrcDstVPlane pointer to the current macroblock that is reconstructed in V-plane
+//    pSrcDstUPlane pointer to the current macroblock that is reconstructed in
+U-plane
+//    pSrcDstVPlane pointer to the current macroblock that is reconstructed in
+V-plane
 //    srcDstUVStep  chrominance planes step
 //    pSrcNumCoeffs array of indices of the last coefficient in each subblock
 //    cbp8x8        coded block pattern
@@ -10677,20 +10160,24 @@ IPPAPI(IppStatus,ippiReconstructChromaIntra_AVS_16s8u_C1R,(Ipp16s **ppSrcCoeff,
 //
 //  Returns:
 //    ippStsNoErr Indicates no error.
-//    ippStsNullPtrErr Indicates an error condition if at least one of the specified pointers is NULL.
+//    ippStsNullPtrErr Indicates an error condition if at least one of the
+specified pointers is NULL.
 //    ippStsOutOfRangeErr QP is less than 0 or greater than 51
 //
 //  Notes:
 //    AVS China standard : GB/T 20090.2 - 2006
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiReconstructChromaInter_AVS_16s8u_C1R,(Ipp16s **ppSrcCoeff,
-                                                           Ipp8u *pSrcDstUPlane,
-                                                           Ipp8u *pSrcDstVPlane,
-                                                           Ipp32s srcDstUVStep,
-                                                           const Ipp32s *pSrcNumCoeffs,
-                                                           Ipp32u cbp8x8, Ipp32u chromaQP))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiReconstructChromaInter_AVS_16s8u_C1R,
+       (Ipp16s * *ppSrcCoeff, Ipp8u* pSrcDstUPlane, Ipp8u* pSrcDstVPlane,
+        Ipp32s srcDstUVStep, const Ipp32s* pSrcNumCoeffs, Ipp32u cbp8x8,
+        Ipp32u chromaQP))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -10698,7 +10185,8 @@ IPPAPI(IppStatus,ippiReconstructChromaInter_AVS_16s8u_C1R,(Ipp16s **ppSrcCoeff,
 //    ippiFilterDeblockingLuma_HorEdge_AVS_8u_C1IR
 //
 //  Purpose:
-//    Perform deblocking filtering on the vertical and horizontal edges of the luma 16x16 macroblock
+//    Perform deblocking filtering on the vertical and horizontal edges of the
+luma 16x16 macroblock
 //
 //  Parameters:
 //  pDeblockInfo - Pointer to deblocking parameters, where,
@@ -10717,10 +10205,22 @@ IPPAPI(IppStatus,ippiReconstructChromaInter_AVS_16s8u_C1R,(Ipp16s **ppSrcCoeff,
 //    ippStsNoErr          No error
 //    ippStsNullPtrErr     One of the pointers is NULL
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiFilterDeblockingLuma_VerEdge_AVS_8u_C1IR,(const IppiFilterDeblock_8u *pDeblockInfo))
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiFilterDeblockingLuma_HorEdge_AVS_8u_C1IR,(const IppiFilterDeblock_8u *pDeblockInfo))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDeblockingLuma_VerEdge_AVS_8u_C1IR,
+       (const IppiFilterDeblock_8u* pDeblockInfo))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDeblockingLuma_HorEdge_AVS_8u_C1IR,
+       (const IppiFilterDeblock_8u* pDeblockInfo))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -10728,7 +10228,8 @@ IPPAPI(IppStatus,ippiFilterDeblockingLuma_HorEdge_AVS_8u_C1IR,(const IppiFilterD
 //    ippiFilterDeblockingChroma_HorEdge_AVS_8u_C1IR
 //
 //  Purpose:
-//    Perform deblocking filtering on the vertical and horizontal edges of the chroma 8x8 macroblock
+//    Perform deblocking filtering on the vertical and horizontal edges of the
+chroma 8x8 macroblock
 //
 //  Parameters:
 //  pDeblockInfo - Pointer to deblocking parameters.
@@ -10746,10 +10247,22 @@ IPPAPI(IppStatus,ippiFilterDeblockingLuma_HorEdge_AVS_8u_C1IR,(const IppiFilterD
 //    ippStsNoErr          No error
 //    ippStsNullPtrErr     One of the pointers is NULL
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiFilterDeblockingChroma_VerEdge_AVS_8u_C1IR,(const IppiFilterDeblock_8u *pDeblockInfo))
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiFilterDeblockingChroma_HorEdge_AVS_8u_C1IR,(const IppiFilterDeblock_8u *pDeblockInfo))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDeblockingChroma_VerEdge_AVS_8u_C1IR,
+       (const IppiFilterDeblock_8u* pDeblockInfo))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDeblockingChroma_HorEdge_AVS_8u_C1IR,
+       (const IppiFilterDeblock_8u* pDeblockInfo))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -10775,18 +10288,22 @@ IPPAPI(IppStatus,ippiFilterDeblockingChroma_HorEdge_AVS_8u_C1IR,(const IppiFilte
 //    ippStsNoErr          No error
 //    ippStsNullPtrErr     One of the pointers is NULL
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeLumaBlockIntra_AVS_1u16s,(Ipp32u **ppBitStream,
-                                                      Ipp32s *pBitOffset,
-                                                      Ipp32s *pNumCoeff,
-                                                      Ipp16s *pDstCoeffs,
-                                                      Ipp32u scanType))
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeLumaBlockInter_AVS_1u16s,(Ipp32u **ppBitStream,
-                                                      Ipp32s *pBitOffset,
-                                                      Ipp32s *pNumCoeff,
-                                                      Ipp16s *pDstCoeffs,
-                                                      Ipp32u scanType))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeLumaBlockIntra_AVS_1u16s,
+       (Ipp32u * *ppBitStream, Ipp32s* pBitOffset, Ipp32s* pNumCoeff,
+        Ipp16s* pDstCoeffs, Ipp32u scanType))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeLumaBlockInter_AVS_1u16s,
+       (Ipp32u * *ppBitStream, Ipp32s* pBitOffset, Ipp32s* pNumCoeff,
+        Ipp16s* pDstCoeffs, Ipp32u scanType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -10811,12 +10328,15 @@ IPPAPI(IppStatus, ippiDecodeLumaBlockInter_AVS_1u16s,(Ipp32u **ppBitStream,
 //    ippStsNoErr          No error
 //    ippStsNullPtrErr     One of the pointers is NULL
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeChromaBlock_AVS_1u16s,(Ipp32u **ppBitStream,
-                                                   Ipp32s *pBitOffset,
-                                                   Ipp32s *pNumCoeff,
-                                                   Ipp16s *pDstCoeffs,
-                                                   Ipp32u scanType))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeChromaBlock_AVS_1u16s,
+       (Ipp32u * *ppBitStream, Ipp32s* pBitOffset, Ipp32s* pNumCoeff,
+        Ipp16s* pDstCoeffs, Ipp32u scanType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //                     Deinterlacing filter functions
@@ -10829,7 +10349,8 @@ IPPAPI(IppStatus, ippiDecodeChromaBlock_AVS_1u16s,(Ipp32u **ppBitStream,
 //
 //   For each pixel (x, y) in the ROI:
 //
-//   if ((y & 1) != fieldNum || ((y == 0 || y == size.height - 1) && bCopyBorder)) {
+//   if ((y & 1) != fieldNum || ((y == 0 || y == size.height - 1) &&
+bCopyBorder)) {
 //     pDst[x + y * dstStep] = pSrc[x + y * srcStep];
 //   } else {
 //     m = MEDIAN(pSrc[x + (y - 1) * srcStep],
@@ -10854,20 +10375,19 @@ IPPAPI(IppStatus, ippiDecodeChromaBlock_AVS_1u16s,(Ipp32u **ppBitStream,
 //                  zero value means process border line like internal lines.
 //
 // Returns:
-//   ippStsNoErr        Indicates no error. Any other value indicates an error or a warning.
-//   ippStsNullPtrErr   Indicates an error if one of the specified pointers is NULL.
-//   ippStsStepErr      Indicates an error condition if step through the source/destination image buffer has a zero or negative value.
-//   ippStsSizeErr      Indicates an error condition if size has a field with zero or negative
+//   ippStsNoErr        Indicates no error. Any other value indicates an error
+or a warning.
+//   ippStsNullPtrErr   Indicates an error if one of the specified pointers is
+NULL.
+//   ippStsStepErr      Indicates an error condition if step through the
+source/destination image buffer has a zero or negative value.
+//   ippStsSizeErr      Indicates an error condition if size has a field with
+zero or negative
 //
 */
-IPPAPI(IppStatus, ippiDeinterlaceMedianThreshold_8u_C1R, (const Ipp8u *pSrc,
-                                                          int srcStep,
-                                                          Ipp8u *pDst,
-                                                          int dstStep,
-                                                          IppiSize size,
-                                                          int threshold,
-                                                          int fieldNum,
-                                                          int bCopyBorder))
+IPPAPI(IppStatus, ippiDeinterlaceMedianThreshold_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep, IppiSize size,
+        int threshold, int fieldNum, int bCopyBorder))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -10877,7 +10397,8 @@ IPPAPI(IppStatus, ippiDeinterlaceMedianThreshold_8u_C1R, (const Ipp8u *pSrc,
 //   Generates image field using EdgeDetect filter.
 //   For each pixel (x, y) in the ROI:
 //
-//    if (((y == 0 && fieldNum == 0) || (y == size.height - 1 && fieldNum == 1)) && bCopyBound) {
+//    if (((y == 0 && fieldNum == 0) || (y == size.height - 1 && fieldNum == 1))
+&& bCopyBound) {
 //      pDst[x + y * dstStep] = pSrc[x + y * srcStep];
 //    } else {
 //      y0 = y + fieldNum - 1;
@@ -10916,19 +10437,19 @@ IPPAPI(IppStatus, ippiDeinterlaceMedianThreshold_8u_C1R, (const Ipp8u *pSrc,
 //                 value means process border line like internal lines.
 //
 // Returns:
-//   ippStsNoErr        Indicates no error. Any other value indicates an error or a warning.
-//   ippStsNullPtrErr   Indicates an error if one of the specified pointers is NULL.
-//   ippStsStepErr      Indicates an error condition if step through the source/destination image buffer has a zero or negative value.
-//   ippStsSizeErr      Indicates an error condition if size has a field with zero or negative value.
+//   ippStsNoErr        Indicates no error. Any other value indicates an error
+or a warning.
+//   ippStsNullPtrErr   Indicates an error if one of the specified pointers is
+NULL.
+//   ippStsStepErr      Indicates an error condition if step through the
+source/destination image buffer has a zero or negative value.
+//   ippStsSizeErr      Indicates an error condition if size has a field with
+zero or negative value.
 //
 */
-IPPAPI(IppStatus, ippiDeinterlaceEdgeDetect_8u_C1R, (const Ipp8u *pSrc,
-                                                     int srcStep,
-                                                     Ipp8u *pDst,
-                                                     int dstStep,
-                                                     IppiSize size,
-                                                     int fieldNum,
-                                                     int bCopyBorder))
+IPPAPI(IppStatus, ippiDeinterlaceEdgeDetect_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep, IppiSize size,
+        int fieldNum, int bCopyBorder))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -10938,41 +10459,48 @@ IPPAPI(IppStatus, ippiDeinterlaceEdgeDetect_8u_C1R, (const Ipp8u *pSrc,
 //   Motion adaptive de-interlacing filter. Requires 4 input frames.
 //
 // Parameters:
-//   pSrc                   - pointer to array of pointers to frames - 4 source plane pointers from subsequent frames
+//   pSrc                   - pointer to array of pointers to frames - 4 source
+plane pointers from subsequent frames
 //   srcStep                - distance between source plane rows, in bytes
 //   pDst                   - pointer to destination plane
 //   dstStep                - distance between destination plane rows, in bytes
 //   planeSize              - size of the image plane in pixels
-//   threshold              - (default value: 12) tradeoff between flickering and residual combing
-//                            artifacts. Decrease the value of the threshold to reduce combing artifacts
-//                            on moving objects, but the flickering on the static region is increased.
+//   threshold              - (default value: 12) tradeoff between flickering
+and residual combing
+//                            artifacts. Decrease the value of the threshold to
+reduce combing artifacts
+//                            on moving objects, but the flickering on the
+static region is increased.
 //                            Zero value corresponds to the bob-deinterlacing
-//   topFirst               - [range is 0, 1] - defines the field order of the videosequence.
+//   topFirst               - [range is 0, 1] - defines the field order of the
+videosequence.
 //                            Usage:
 //                                  isTopFirst = 0 for bottom field first (bff);
 //                                  isTopFirst = 1 for top field first (tff).
-//   topField               - [range is 0, 1] - defines the destination field that will be used to store processed interpolated field
-//   copyField              - [range is 0, 1] - copy unprocessed field from the source frame to the destination
-//   artifactProtection     - [range is 0, 1] - sets of the additional artifact protection, to suppress distortion.
+//   topField               - [range is 0, 1] - defines the destination field
+that will be used to store processed interpolated field
+//   copyField              - [range is 0, 1] - copy unprocessed field from the
+source frame to the destination
+//   artifactProtection     - [range is 0, 1] - sets of the additional artifact
+protection, to suppress distortion.
 //
 // Returns:
-//   ippStsNoErr        Indicates no error. Any other value indicates an error or a warning.
+//   ippStsNoErr        Indicates no error. Any other value indicates an error
+or a warning.
 //   ippStsSizeErr      Incorrect input roiSize of the image
 //   ippStsNullPtrErr   Incorrect memory address
 //
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDeinterlaceMotionAdaptive_8u_C1, (const Ipp8u *pSrcPlane[4],
-                                                        int srcStep,
-                                                        Ipp8u *pDst,
-                                                        int dstStep,
-                                                        IppiSize planeSize,
-                                                        int threshold,
-                                                        int topFirst,
-                                                        int topField,
-                                                        int copyField,
-                                                        int artifactProtection))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDeinterlaceMotionAdaptive_8u_C1,
+       (const Ipp8u* pSrcPlane[4], int srcStep, Ipp8u* pDst, int dstStep,
+        IppiSize planeSize, int threshold, int topFirst, int topField,
+        int copyField, int artifactProtection))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -10983,12 +10511,17 @@ IPPAPI(IppStatus, ippiDeinterlaceMotionAdaptive_8u_C1, (const Ipp8u *pSrcPlane[4
 //
 // Parameters:
 //   planeSize                  - size of the image plane in pixels
-//   blendThresh                - array of 2 thresholds to determine "alpha" coefficients;
-//                                must be 0 <= blendThresh[0] <= blendThresh[1] <= 255
+//   blendThresh                - array of 2 thresholds to determine "alpha"
+coefficients;
+//                                must be 0 <= blendThresh[0] <= blendThresh[1]
+<= 255
 //   blendConstants             - array of 2 values for "alpha";
-//                                blendConstants[i] corresponds to blendTresh[i],
-//                                must be 0.0 <= blendConstants[i] <= 1.0 for i=0,1
-//   ppState                    - pointer to pointer to an instance of the IppiDeinterlaceBlendState_8u_C1 structure, containing temporary buffer
+//                                blendConstants[i] corresponds to
+blendTresh[i],
+//                                must be 0.0 <= blendConstants[i] <= 1.0 for
+i=0,1
+//   ppState                    - pointer to pointer to an instance of the
+IppiDeinterlaceBlendState_8u_C1 structure, containing temporary buffer
 //
 // Returns:
 //   ippStsOk           No error, Ok
@@ -10997,11 +10530,14 @@ IPPAPI(IppStatus, ippiDeinterlaceMotionAdaptive_8u_C1, (const Ipp8u *pSrcPlane[4
 //   ippStsMemAllocErr  Memory allocation error
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDeinterlaceBlendInitAlloc_8u_C1, (IppiSize planeSize,
-                                                        int blendThresh[2],
-                                                        double blendConstants[2],
-                                                        IppiDeinterlaceBlendState_8u_C1 **ppState))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDeinterlaceBlendInitAlloc_8u_C1,
+       (IppiSize planeSize, int blendThresh[2], double blendConstants[2],
+        IppiDeinterlaceBlendState_8u_C1** ppState))
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
 //   ippiDeinterlaceBlendInit_8u_C1
@@ -11011,13 +10547,20 @@ IPPAPI(IppStatus, ippiDeinterlaceBlendInitAlloc_8u_C1, (IppiSize planeSize,
 //
 // Parameters:
 //   size                       - size of the image plane in pixels
-//   blendThresh                - array of 2 thresholds to determine "alpha" coefficients;
-//                                must be 0 <= blendThresh[0] <= blendThresh[1] <= 255
+//   blendThresh                - array of 2 thresholds to determine "alpha"
+coefficients;
+//                                must be 0 <= blendThresh[0] <= blendThresh[1]
+<= 255
 //   blendConstants             - array of 2 values for "alpha";
-//                                blendConstants[i] corresponds to blendTresh[i],
-//                                must be 0.0 <= blendConstants[i] <= 1.0 for i=0,1
-//   ppState                    - pointer to pointer to an instance of the IppiDeinterlaceBlendState_8u_C1 structure, containing temporary buffer
-//   pMemState                  - pointer to array allocated by user,the size of this array should be calculated by calling function ippiDeinterlaceBlendGetSize_8u_C1
+//                                blendConstants[i] corresponds to
+blendTresh[i],
+//                                must be 0.0 <= blendConstants[i] <= 1.0 for
+i=0,1
+//   ppState                    - pointer to pointer to an instance of the
+IppiDeinterlaceBlendState_8u_C1 structure, containing temporary buffer
+//   pMemState                  - pointer to array allocated by user,the size of
+this array should be calculated by calling function
+ippiDeinterlaceBlendGetSize_8u_C1
 //
 // Returns:
 //   ippStsOk           No error, Ok
@@ -11025,16 +10568,14 @@ IPPAPI(IppStatus, ippiDeinterlaceBlendInitAlloc_8u_C1, (IppiSize planeSize,
 //   ippStsNullPtrErr   Incorrect memory address
 //
 */
-IPPAPI(IppStatus, ippiDeinterlaceBlendInit_8u_C1, (IppiSize size,
-                                                   int blendThresh[2],
-                                                   double blendConstants[2],
-                                                   IppiDeinterlaceBlendState_8u_C1 **ppState,
-                                                   Ipp8u *pMemState))
-
+IPPAPI(IppStatus, ippiDeinterlaceBlendInit_8u_C1,
+       (IppiSize size, int blendThresh[2], double blendConstants[2],
+        IppiDeinterlaceBlendState_8u_C1** ppState, Ipp8u* pMemState))
 
 /* //////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Purpose:
-//    Return the size of buffer in bytes which is needed to allocate IppiDeinterlaceBlendState_8u_C1 structure.
+//    Return the size of buffer in bytes which is needed to allocate
+IppiDeinterlaceBlendState_8u_C1 structure.
 //
 //  Parameters:
 //    pStateSize Pointer to the resulting size of the structure
@@ -11043,7 +10584,7 @@ IPPAPI(IppStatus, ippiDeinterlaceBlendInit_8u_C1, (IppiSize size,
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   Indicates an error when pointer pStateSize is NULL.
 */
-IPPAPI(IppStatus, ippiDeinterlaceBlendGetSize_8u_C1, (int *pStateSize))
+IPPAPI(IppStatus, ippiDeinterlaceBlendGetSize_8u_C1, (int* pStateSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -11054,12 +10595,17 @@ IPPAPI(IppStatus, ippiDeinterlaceBlendGetSize_8u_C1, (int *pStateSize))
 //
 // Parameters:
 //   size                       - size of the image plane in pixels
-//   blendThresh                - array of 2 thresholds to determine "alpha" coefficients;
-//                                must be 0 <= blendThresh[0] <= blendThresh[1] <= 255
+//   blendThresh                - array of 2 thresholds to determine "alpha"
+coefficients;
+//                                must be 0 <= blendThresh[0] <= blendThresh[1]
+<= 255
 //   blendConstants             - array of 2 values for "alpha";
-//                                blendConstants[i] corresponds to blendTresh[i],
-//                                must be 0.0 <= blendConstants[i] <= 1.0 for i=0,1
-//   ppSpec                     - pointer to pointer to an instance of the IppiDeinterlaceBlendSpec_8u_C2 structure, containing temporary buffer
+//                                blendConstants[i] corresponds to
+blendTresh[i],
+//                                must be 0.0 <= blendConstants[i] <= 1.0 for
+i=0,1
+//   ppSpec                     - pointer to pointer to an instance of the
+IppiDeinterlaceBlendSpec_8u_C2 structure, containing temporary buffer
 //
 // Returns:
 //   ippStsOk           No error, Ok
@@ -11068,11 +10614,14 @@ IPPAPI(IppStatus, ippiDeinterlaceBlendGetSize_8u_C1, (int *pStateSize))
 //   ippStsMemAllocErr  Memory allocation error
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDeinterlaceBlendInitAlloc_8u_C2, (IppiSize size,
-                                                        int blendThresh[2],
-                                                        double blendConstants[2],
-                                                        IppiDeinterlaceBlendSpec_8u_C2 **ppSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDeinterlaceBlendInitAlloc_8u_C2,
+       (IppiSize size, int blendThresh[2], double blendConstants[2],
+        IppiDeinterlaceBlendSpec_8u_C2** ppSpec))
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
 //   ippiDeinterlaceBlendInit_8u_C2
@@ -11082,13 +10631,20 @@ IPPAPI(IppStatus, ippiDeinterlaceBlendInitAlloc_8u_C2, (IppiSize size,
 //
 // Parameters:
 //   size                       - size of the image plane in pixels
-//   blendThresh                - array of 2 thresholds to determine "alpha" coefficients;
-//                                must be 0 <= blendThresh[0] <= blendThresh[1] <= 255
+//   blendThresh                - array of 2 thresholds to determine "alpha"
+coefficients;
+//                                must be 0 <= blendThresh[0] <= blendThresh[1]
+<= 255
 //   blendConstants             - array of 2 values for "alpha";
-//                                blendConstants[i] corresponds to blendTresh[i],
-//                                must be 0.0 <= blendConstants[i] <= 1.0 for i=0,1
-//   ppSpec                     - pointer to pointer to an instance of the IppiDeinterlaceBlendState_8u_C1 structure, containing temporary buffer
-//   pMemState                  - pointer to array allocated by user,the size of this array should be calculated by calling function ippiDeinterlaceBlendGetSize_8u_C2
+//                                blendConstants[i] corresponds to
+blendTresh[i],
+//                                must be 0.0 <= blendConstants[i] <= 1.0 for
+i=0,1
+//   ppSpec                     - pointer to pointer to an instance of the
+IppiDeinterlaceBlendState_8u_C1 structure, containing temporary buffer
+//   pMemState                  - pointer to array allocated by user,the size of
+this array should be calculated by calling function
+ippiDeinterlaceBlendGetSize_8u_C2
 //
 // Returns:
 //   ippStsOk           No error, Ok
@@ -11096,15 +10652,14 @@ IPPAPI(IppStatus, ippiDeinterlaceBlendInitAlloc_8u_C2, (IppiSize size,
 //   ippStsNullPtrErr   Incorrect memory address
 //
 */
-IPPAPI(IppStatus, ippiDeinterlaceBlendInit_8u_C2, (IppiSize size,
-                                                   int blendThresh[2],
-                                                   double blendConstants[2],
-                                                   IppiDeinterlaceBlendSpec_8u_C2 **ppSpec,
-                                                   Ipp8u *pMemState))
+IPPAPI(IppStatus, ippiDeinterlaceBlendInit_8u_C2,
+       (IppiSize size, int blendThresh[2], double blendConstants[2],
+        IppiDeinterlaceBlendSpec_8u_C2** ppSpec, Ipp8u* pMemState))
 
 /* //////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Purpose:
-//    Return the size of buffer in bytes which is needed to allocate IppiDeinterlaceBlendSpec_8u_C2 structure.
+//    Return the size of buffer in bytes which is needed to allocate
+IppiDeinterlaceBlendSpec_8u_C2 structure.
 //
 //  Parameters:
 //    pSpecSize Pointer to the resulting size of the structure
@@ -11113,29 +10668,35 @@ IPPAPI(IppStatus, ippiDeinterlaceBlendInit_8u_C2, (IppiSize size,
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   Indicates an error when pointer pSpecSize is NULL.
 */
-IPPAPI(IppStatus, ippiDeinterlaceBlendGetSize_8u_C2, (int *pSpecSize))
+IPPAPI(IppStatus, ippiDeinterlaceBlendGetSize_8u_C2, (int* pSpecSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
 //   ippiDeinterlaceBlend_8u_C1
 //
 // Purpose:
-//   Motion adaptive de-interlacing filter. Requires 3 input frames: previous, current, next.
+//   Motion adaptive de-interlacing filter. Requires 3 input frames: previous,
+current, next.
 //
 // Parameters:
 //   pSrcPlane                  - array of pointers to frames: [previous,
 //                                current, next] - 3 source plane pointers
 //   srcStep                    - distance between source plane rows, in bytes
 //   pDst                       - pointer to destination plane
-//   dstStep                    - distance between destination plane rows, in bytes
+//   dstStep                    - distance between destination plane rows, in
+bytes
 //   planeSize                  - size of the image plane in pixels
-//   topFirst                   - [range is 0, 1] - defines the field order of the videosequence.
+//   topFirst                   - [range is 0, 1] - defines the field order of
+the videosequence.
 //                                Usage:
 //                                  topFirst = 0 for bottom field first (bff);
 //                                  topFirst = 1 for top field first (tff).
-//   topField                   - [range is 0, 1] - defines the destination field that will be used to store processed interpolated field
-//   copyField                  - [range is 0, 1] - copy unprocessed field from the source frame to the destination
-//   pState                     - pointer to an instance of the IppiDeinterlaceBlendState_8u_C1 structure, containing temporary buffer
+//   topField                   - [range is 0, 1] - defines the destination
+field that will be used to store processed interpolated field
+//   copyField                  - [range is 0, 1] - copy unprocessed field from
+the source frame to the destination
+//   pState                     - pointer to an instance of the
+IppiDeinterlaceBlendState_8u_C1 structure, containing temporary buffer
 //
 // Returns:
 //   ippStsOk           No error, Ok
@@ -11144,39 +10705,46 @@ IPPAPI(IppStatus, ippiDeinterlaceBlendGetSize_8u_C2, (int *pSpecSize))
 //
 */
 
-IPPAPI(IppStatus, ippiDeinterlaceBlend_8u_C1, (const Ipp8u *pSrcPlane[3],
-                                               int srcStep,
-                                               Ipp8u *pDst,
-                                               int dstStep,
-                                               IppiSize planeSize,
-                                               int topFirst,
-                                               int topField,
-                                               int copyField,
-                                               IppiDeinterlaceBlendState_8u_C1 *pState))
+IPPAPI(IppStatus, ippiDeinterlaceBlend_8u_C1,
+       (const Ipp8u* pSrcPlane[3], int srcStep, Ipp8u* pDst, int dstStep,
+        IppiSize planeSize, int topFirst, int topField, int copyField,
+        IppiDeinterlaceBlendState_8u_C1* pState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
 //   ippiDeinterlaceBlend_8u_C2
 // Purpose:
-//   Motion adaptive de-interlacing filter for chroma panes in nv12 format. Requires 3 input frames: previous, current, next.
+//   Motion adaptive de-interlacing filter for chroma panes in nv12 format.
+Requires 3 input frames: previous, current, next.
 //
 // Parameters:
 //   pSrcPrev                   - pointer to previous plane
-//   srcStepPrev                - distance between source plane rows of previous frame, in bytes
+//   srcStepPrev                - distance between source plane rows of previous
+frame, in bytes
 //   pSrcCur                    - pointer to current plane
-//   srcStepCur                 - distance between source plane rows of current frame, in bytes
+//   srcStepCur                 - distance between source plane rows of current
+frame, in bytes
 //   pSrcNext                   - pointer to next plane
-//   srcStepNext                - distance between source plane rows of next frame, in bytes
+//   srcStepNext                - distance between source plane rows of next
+frame, in bytes
 //   pDst                       - pointer to destination plane
-//   dstStep                    - distance between destination plane rows, in bytes
+//   dstStep                    - distance between destination plane rows, in
+bytes
 //   size                       - size of the image plane in pixels
-//   fieldFirst                 - [range is IPPVC_BOTTOM_FIELD, IPPVC_TOP_FIELD] - defines the field order of the videosequence.
+//   fieldFirst                 - [range is IPPVC_BOTTOM_FIELD, IPPVC_TOP_FIELD]
+- defines the field order of the videosequence.
 //                                Usage:
-//                                  fieldFirst = IPPVC_BOTTOM_FIELD for bottom field first (bff);
-//                                  fieldFirst = IPPVC_TOP_FIELD for top field first (tff).
-//   fieldProcess               - [range is IPPVC_BOTTOM_FIELD, IPPVC_TOP_FIELD] - defines the destination field that will be used to store processed interpolated field
-//   fieldCopy                  - [range is ippFalse, ippTrue] - copy unprocessed field from the source frame to the destination
-//   pSpec                      - pointer to an instance of the IppiDeinterlaceBlendSpec_8u_C2 structure, containing temporary buffer
+//                                  fieldFirst = IPPVC_BOTTOM_FIELD for bottom
+field first (bff);
+//                                  fieldFirst = IPPVC_TOP_FIELD for top field
+first (tff).
+//   fieldProcess               - [range is IPPVC_BOTTOM_FIELD, IPPVC_TOP_FIELD]
+- defines the destination field that will be used to store processed
+interpolated field
+//   fieldCopy                  - [range is ippFalse, ippTrue] - copy
+unprocessed field from the source frame to the destination
+//   pSpec                      - pointer to an instance of the
+IppiDeinterlaceBlendSpec_8u_C2 structure, containing temporary buffer
 //
 // Returns:
 //   ippStsOk           No error, Ok
@@ -11184,15 +10752,12 @@ IPPAPI(IppStatus, ippiDeinterlaceBlend_8u_C1, (const Ipp8u *pSrcPlane[3],
 //   ippStsNullPtrErr   Incorrect memory address
 //
 */
-IPPAPI(IppStatus, ippiDeinterlaceBlend_8u_C2, (const Ipp8u* pSrcPrev, int srcStepPrev,
-                                               const Ipp8u* pSrcCur, int srcStepCur,
-                                               const Ipp8u* pSrcNext, int srcStepNext,
-                                               Ipp8u* pDst, int dstStep,
-                                               IppiSize size,
-                                               IppvcFrameFieldFlag fieldFirst,
-                                               IppvcFrameFieldFlag fieldProcess,
-                                               IppBool fieldCopy,
-                                               IppiDeinterlaceBlendSpec_8u_C2* pSpec))
+IPPAPI(IppStatus, ippiDeinterlaceBlend_8u_C2,
+       (const Ipp8u* pSrcPrev, int srcStepPrev, const Ipp8u* pSrcCur,
+        int srcStepCur, const Ipp8u* pSrcNext, int srcStepNext, Ipp8u* pDst,
+        int dstStep, IppiSize size, IppvcFrameFieldFlag fieldFirst,
+        IppvcFrameFieldFlag fieldProcess, IppBool fieldCopy,
+        IppiDeinterlaceBlendSpec_8u_C2* pSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -11202,16 +10767,23 @@ IPPAPI(IppStatus, ippiDeinterlaceBlend_8u_C2, (const Ipp8u* pSrcPrev, int srcSte
 //   Free of memory, allocated by init function.
 //
 // Parameters:
-//   pState - pointer to an instance of the IppiDeinterlaceBlendState_8u_C1 structure, containing temporary buffer
+//   pState - pointer to an instance of the IppiDeinterlaceBlendState_8u_C1
+structure, containing temporary buffer
 //
 // Returns:
 //   ippStsOk              No error, Ok
 //   ippStsNullPtrErr      Incorrect memory address
-//   ippStsContextMatchErr Memory was allocated externally, not by ippiDeinterlaceBlendInitAlloc_8u_C1
+//   ippStsContextMatchErr Memory was allocated externally, not by
+ippiDeinterlaceBlendInitAlloc_8u_C1
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDeinterlaceBlendFree_8u_C1, (IppiDeinterlaceBlendState_8u_C1 *pState))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDeinterlaceBlendFree_8u_C1,
+       (IppiDeinterlaceBlendState_8u_C1 * pState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -11221,16 +10793,23 @@ IPPAPI(IppStatus, ippiDeinterlaceBlendFree_8u_C1, (IppiDeinterlaceBlendState_8u_
 //   Free of memory, allocated by init function.
 //
 // Parameters:
-//   pSpec - pointer to an instance of the IppiDeinterlaceBlendSpec_8u_C2 structure, containing temporary buffer
+//   pSpec - pointer to an instance of the IppiDeinterlaceBlendSpec_8u_C2
+structure, containing temporary buffer
 //
 // Returns:
 //   ippStsOk              No error, Ok
 //   ippStsNullPtrErr      Incorrect memory address
-//   ippStsContextMatchErr Memory was allocated externally, not by ippiDeinterlaceBlendInitAlloc_8u_C2
+//   ippStsContextMatchErr Memory was allocated externally, not by
+ippiDeinterlaceBlendInitAlloc_8u_C2
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDeinterlaceBlendFree_8u_C2, (IppiDeinterlaceBlendSpec_8u_C2 *pSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDeinterlaceBlendFree_8u_C2,
+       (IppiDeinterlaceBlendSpec_8u_C2 * pSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -11242,15 +10821,20 @@ IPPAPI(IppStatus, ippiDeinterlaceBlendFree_8u_C2, (IppiDeinterlaceBlendSpec_8u_C
 //
 // Parameters:
 //   pSrc      - pointer to source image origin
-//   srcStep   - distance in bytes between starts of consecutive lines in the source image.
+//   srcStep   - distance in bytes between starts of consecutive lines in the
+source image.
 //   pDst      - pointer to destination image origin
-//   dstStep   - Distance in bytes between starts of consecutive lines in the destination image
+//   dstStep   - Distance in bytes between starts of consecutive lines in the
+destination image
 //   size      - size of the source image in pixels.
 //   roi       - Region of interest in the source image (of the IppiRest type).
 //               Destination image has the same ROI
-//   threshold - parameter of denoise algorithm describes what is detected as detail and
-//               so keep from removing. Increasing of this parameter enlarges the filtration area.
-//   pWorkBuffer- pointer to the external work buffer, has to be 2*(roi.height*roi.width)
+//   threshold - parameter of denoise algorithm describes what is detected as
+detail and
+//               so keep from removing. Increasing of this parameter enlarges
+the filtration area.
+//   pWorkBuffer- pointer to the external work buffer, has to be
+2*(roi.height*roi.width)
 //
 //
 // Returns:
@@ -11259,19 +10843,19 @@ IPPAPI(IppStatus, ippiDeinterlaceBlendFree_8u_C2, (IppiDeinterlaceBlendSpec_8u_C
 //   ippStsNullPtrErr   Incorrect memory address
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilterDenoiseSmooth_8u_C1R, (const Ipp8u* pSrc,
-                                                   int           srcStep,
-                                                   Ipp8u*        pDst,
-                                                   int           dstStep,
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDenoiseSmooth_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep,
 
-                                                   IppiSize      size,
-                                                   IppiRect      roi,
+        IppiSize size, IppiRect roi,
 
-                                                   int           threshold,
+        int threshold,
 
-                                                   Ipp8u*        pWorkBuffer))
-
+        Ipp8u* pWorkBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -11281,91 +10865,107 @@ IPPAPI(IppStatus, ippiFilterDenoiseSmooth_8u_C1R, (const Ipp8u* pSrc,
 //  Creates and initializes denoise specification structure.
 //
 // Parameters:
-//   ppState  - Pointer to pointer to the analysis specification structure to be created
+//   ppState  - Pointer to pointer to the analysis specification structure to be
+created
 //   roiSize  - Size of the source image ROI in pixels which will be processed.
-//   maskSize - parameter defines the region, which is used in current pixel transformation.
+//   maskSize - parameter defines the region, which is used in current pixel
+transformation.
 //
 // Returns:
 //   ippStsOk           Indicates no error. Any other value indicates an error
-//   ippStsSizeErr      Indicates an error condition if roiSize or maskSize have a field with zero or
+//   ippStsSizeErr      Indicates an error condition if roiSize or maskSize have
+a field with zero or
 //                      negative value
 //   ippStsNullPtrErr   Indicates an error when the specified
 //                      pointer is NULL
 //   ippStsMemAllocErr  Indicates an error when no memory is allocated.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilterDenoiseAdaptiveInitAlloc_8u_C1, (IppiDenoiseAdaptiveState_8u_C1 **ppState,
-                                                             IppiSize roiSize,
-                                                             IppiSize maskSize))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDenoiseAdaptiveInitAlloc_8u_C1,
+       (IppiDenoiseAdaptiveState_8u_C1 * *ppState, IppiSize roiSize,
+        IppiSize maskSize))
 
- /* ///////////////////////////////////////////////////////////////////////////
- // Name:
- //   ippiFilterDenoiseAdaptive_8u_C1R
- //
- // Purpose:
- //    Perform Spatio-Temporal Adaptive Noise Reduction filtering.
- //    The filter operates with previous, current and next frames
- //
- // Parameters:
- //   pSrcPlane - array of pointers to frame:
- //               pSrcPlane[0] - point to previous source image origin
- //               pSrcPlane[1] - point to current  source image origin
- //               pSrcPlane[2] - point to next     source image origin
- //   srcStep   - distance in bytes between starts of consecutive lines in the source image.
- //   pDst      - pointer to destination image origin
- //   dstStep   - Distance in bytes between starts of consecutive lines in the destination image
- //   size      - size of the source image in pixels. Destination image has the same size.
- //   roi       - Region of interest in the source image (of the IppiRect type).
- //               Destination image has the same ROI.
- //   maskSize  - Size of the mask in pixels.
- //   threshold - parameter of denoise algorithm describes what is detected as detail
- //               and so keep from removing
- //   blurType  - type of blurring of noised pixel. Possible modes are
- //               IPPVC_NOISE_BLUR0,
- //               IPPVC_NOISE_BLUR1,
- //               IPPVC_NOISE_BLUR2,
- //               IPPVC_NOISE_BLUR3. See details in description.
- //   pState    - Pointer to the IppiDenoiseAdaptiveState_8u_C1 specification structure
- //
- // Returns:
- //   ippStsOk           No error, Ok
- //   ippStsSizeErr      Incorrect input size of the image origin or roi.
- //   ippStsNullPtrErr   Incorrect memory address
- //
- */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
- IPPAPI(IppStatus, ippiFilterDenoiseAdaptive_8u_C1R, (const Ipp8u* pSrcPlane[3],
-                                                     int           srcStep,
-                                                     Ipp8u*        pDst,
-                                                     int           dstStep,
+/* ///////////////////////////////////////////////////////////////////////////
+// Name:
+//   ippiFilterDenoiseAdaptive_8u_C1R
+//
+// Purpose:
+//    Perform Spatio-Temporal Adaptive Noise Reduction filtering.
+//    The filter operates with previous, current and next frames
+//
+// Parameters:
+//   pSrcPlane - array of pointers to frame:
+//               pSrcPlane[0] - point to previous source image origin
+//               pSrcPlane[1] - point to current  source image origin
+//               pSrcPlane[2] - point to next     source image origin
+//   srcStep   - distance in bytes between starts of consecutive lines in the
+source image.
+//   pDst      - pointer to destination image origin
+//   dstStep   - Distance in bytes between starts of consecutive lines in the
+destination image
+//   size      - size of the source image in pixels. Destination image has the
+same size.
+//   roi       - Region of interest in the source image (of the IppiRect type).
+//               Destination image has the same ROI.
+//   maskSize  - Size of the mask in pixels.
+//   threshold - parameter of denoise algorithm describes what is detected as
+detail
+//               and so keep from removing
+//   blurType  - type of blurring of noised pixel. Possible modes are
+//               IPPVC_NOISE_BLUR0,
+//               IPPVC_NOISE_BLUR1,
+//               IPPVC_NOISE_BLUR2,
+//               IPPVC_NOISE_BLUR3. See details in description.
+//   pState    - Pointer to the IppiDenoiseAdaptiveState_8u_C1 specification
+structure
+//
+// Returns:
+//   ippStsOk           No error, Ok
+//   ippStsSizeErr      Incorrect input size of the image origin or roi.
+//   ippStsNullPtrErr   Incorrect memory address
+//
+*/
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDenoiseAdaptive_8u_C1R,
+       (const Ipp8u* pSrcPlane[3], int srcStep, Ipp8u* pDst, int dstStep,
 
-                                                     IppiSize      size,
-                                                     IppiRect      roi,
+        IppiSize size, IppiRect roi,
 
-                                                     IppiSize      maskSize,
-                                                     int           threshold,
-                                                     IppvcNoiseBlurFlag  blurFlag,
+        IppiSize maskSize, int threshold, IppvcNoiseBlurFlag blurFlag,
 
-                                                     IppiDenoiseAdaptiveState_8u_C1 *pState))
+        IppiDenoiseAdaptiveState_8u_C1* pState))
 
- /* ///////////////////////////////////////////////////////////////////////////
- // Name:
- //   ippiFilterDenoiseAdaptiveFree
- //
- // Purpose:
- //   Closes denoise specification structure.
- //
- // Parameters:
- //   pState   - Pointer to the denoise specification structure to be closed.
- //
- // Returns:
- //   ippStsNoErr        Indicates no error
- //   ippStsNullPtrErr   Indicates an error when the specified pointer is NULL.
- //
- */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilterDenoiseAdaptiveFree_8u_C1, (IppiDenoiseAdaptiveState_8u_C1 *pState))
+/* ///////////////////////////////////////////////////////////////////////////
+// Name:
+//   ippiFilterDenoiseAdaptiveFree
+//
+// Purpose:
+//   Closes denoise specification structure.
+//
+// Parameters:
+//   pState   - Pointer to the denoise specification structure to be closed.
+//
+// Returns:
+//   ippStsNoErr        Indicates no error
+//   ippStsNullPtrErr   Indicates an error when the specified pointer is NULL.
+//
+*/
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDenoiseAdaptiveFree_8u_C1,
+       (IppiDenoiseAdaptiveState_8u_C1 * pState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -11375,20 +10975,27 @@ IPPAPI(IppStatus, ippiFilterDenoiseAdaptiveFree_8u_C1, (IppiDenoiseAdaptiveState
 //   Creates and initializes denoise specification structure.
 //
 // Parameters:
-//   ppState  - Pointer to pointer to the analysis specification structure to be created
+//   ppState  - Pointer to pointer to the analysis specification structure to be
+created
 //   roiSize  - Size of the ROI in pixels.
 //
 // Returns:
 //   ippStsOk           Indicates no error. Any other value indicates an error
-//   ippStsSizeErr      Indicates an error condition if size has a field with zero or
+//   ippStsSizeErr      Indicates an error condition if size has a field with
+zero or
 //                      negative value
 //   ippStsNullPtrErr   Indicates an error when the specified
 //                      pointer is NULL
 //   ippStsMemAllocErr  Indicates an error when no memory is allocated.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilterDenoiseMosquitoInitAlloc_8u_C1, (IppiDenoiseMosquitoState_8u_C1 **ppState, IppiSize roiSize))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDenoiseMosquitoInitAlloc_8u_C1,
+       (IppiDenoiseMosquitoState_8u_C1 * *ppState, IppiSize roiSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -11405,8 +11012,13 @@ IPPAPI(IppStatus, ippiFilterDenoiseMosquitoInitAlloc_8u_C1, (IppiDenoiseMosquito
 //   ippStsNullPtrErr   Indicates an error when the specified pointer is NULL.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilterDenoiseMosquitoFree_8u_C1, (IppiDenoiseMosquitoState_8u_C1 *pState))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDenoiseMosquitoFree_8u_C1,
+       (IppiDenoiseMosquitoState_8u_C1 * pState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -11419,10 +11031,13 @@ IPPAPI(IppStatus, ippiFilterDenoiseMosquitoFree_8u_C1, (IppiDenoiseMosquitoState
 //   pSrcPlane - array of pointers to source image origin plane
 //               pSrcPlane[0] - point to previous source image origin
 //               pSrcPlane[1] - point to current source image origin
-//   srcStep   - distance in bytes between starts of consecutive lines in the source image.
+//   srcStep   - distance in bytes between starts of consecutive lines in the
+source image.
 //   pDst      - pointer to destination image origin
-//   dstStep   - Distance in bytes between starts of consecutive lines in the destination image
-//   size      - size of the source image in pixels. Destination image has the same size.
+//   dstStep   - Distance in bytes between starts of consecutive lines in the
+destination image
+//   size      - size of the source image in pixels. Destination image has the
+same size.
 //   roi       - Region of interest in the source image (of the IppiRest type)
 //   pState    - Pointer to the denoise specification structure
 //
@@ -11432,34 +11047,47 @@ IPPAPI(IppStatus, ippiFilterDenoiseMosquitoFree_8u_C1, (IppiDenoiseMosquitoState
 //   ippStsNullPtrErr   Incorrect memory address
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilterDenoiseMosquito_8u_C1R, (const Ipp8u *pSrcPlane[2],
-                                                     int           srcStep,
-                                                     Ipp8u*        pDst,
-                                                     int           dstStep,
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDenoiseMosquito_8u_C1R,
+       (const Ipp8u* pSrcPlane[2], int srcStep, Ipp8u* pDst, int dstStep,
 
-                                                     IppiSize      size,
-                                                     IppiRect      roi,
+        IppiSize size, IppiRect roi,
 
-                                                     IppiDenoiseMosquitoState_8u_C1 *pState))
+        IppiDenoiseMosquitoState_8u_C1* pState))
 
 /* CAST */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilterDenoiseCASTInit, (IppDenoiseCAST *pInParam))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDenoiseCASTInit, (IppDenoiseCAST * pInParam))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiFilterDenoiseCASTYUV422_8u_C2R,(const Ipp8u* pSrcCur, const Ipp8u* pSrcPrev, int srcStep,
-                                                     const Ipp8u* pSrcEdge, int srcEdgeStep,
-                                                     IppiSize srcRoiSize,
-                                                     Ipp8u* pDst, int dstStep,
-                                                     Ipp8u* pHistoryWeight, IppDenoiseCAST *pInParam))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDenoiseCASTYUV422_8u_C2R,
+       (const Ipp8u* pSrcCur, const Ipp8u* pSrcPrev, int srcStep,
+        const Ipp8u* pSrcEdge, int srcEdgeStep, IppiSize srcRoiSize,
+        Ipp8u* pDst, int dstStep, Ipp8u* pHistoryWeight,
+        IppDenoiseCAST* pInParam))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiFilterDenoiseCAST_8u_C1R, (const Ipp8u* pSrcCur, const Ipp8u* pSrcPrev, int srcStep,
-                                                 const Ipp8u* pSrcEdge, int srcEdgeStep,
-                                                 IppiSize srcRoiSize,
-                                                 Ipp8u* pDst, int dstStep,
-                                                 Ipp8u* pHistoryWeight, IppDenoiseCAST *pInParam))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiFilterDenoiseCAST_8u_C1R,
+       (const Ipp8u* pSrcCur, const Ipp8u* pSrcPrev, int srcStep,
+        const Ipp8u* pSrcEdge, int srcEdgeStep, IppiSize srcRoiSize,
+        Ipp8u* pDst, int dstStep, Ipp8u* pHistoryWeight,
+        IppDenoiseCAST* pInParam))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -11477,12 +11105,20 @@ IPPAPI(IppStatus, ippiFilterDenoiseCAST_8u_C1R, (const Ipp8u* pSrcCur, const Ipp
 //    ippStsNullPtrErr     One of the pointers is NULL
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiTransformResidual4x4Fwd_H264_16s_C1, (const Ipp16s *pSrc,
-                                                            Ipp16s *pDst))
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiTransformResidual4x4Fwd_H264_32s_C1, (const Ipp32s *pSrc,
-                                                            Ipp32s *pDst))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiTransformResidual4x4Fwd_H264_16s_C1,
+       (const Ipp16s* pSrc, Ipp16s* pDst))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiTransformResidual4x4Fwd_H264_32s_C1,
+       (const Ipp32s* pSrc, Ipp32s* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -11500,12 +11136,20 @@ IPPAPI(IppStatus, ippiTransformResidual4x4Fwd_H264_32s_C1, (const Ipp32s *pSrc,
 //    ippStsNullPtrErr     One of the pointers is NULL
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiTransformResidual4x4Inv_H264_16s_C1, (const Ipp16s *pSrc,
-                                                            Ipp16s *pDst))
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiTransformResidual4x4Inv_H264_32s_C1, (const Ipp32s *pSrc,
-                                                            Ipp32s *pDst))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiTransformResidual4x4Inv_H264_16s_C1,
+       (const Ipp16s* pSrc, Ipp16s* pDst))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiTransformResidual4x4Inv_H264_32s_C1,
+       (const Ipp32s* pSrc, Ipp32s* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -11520,7 +11164,8 @@ IPPAPI(IppStatus, ippiTransformResidual4x4Inv_H264_32s_C1, (const Ipp32s *pSrc,
 //    pNumCoeffs - pointer to a variable to return number of coefficients
 //                 in the regular scan order.
 //    QP         - quantization parameter.
-//    roundMode  - flag specifies the round mode. 1 means rounding for intra blocks,
+//    roundMode  - flag specifies the round mode. 1 means rounding for intra
+blocks,
 //                 all others mean rounding for inter block.
 //
 //  Returns:
@@ -11532,12 +11177,15 @@ IPPAPI(IppStatus, ippiTransformResidual4x4Inv_H264_32s_C1, (const Ipp32s *pSrc,
 //    AVS China standard : GB/T 20090.2 - 2006
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiTransformQuant8x8Fwd_AVS_16s_C1, (const Ipp16s *pSrc,
-                                                        Ipp16s *pDst,
-                                                        Ipp32u *pNumCoeffs,
-                                                        Ipp32u QP,
-                                                        Ipp32u roundMode))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiTransformQuant8x8Fwd_AVS_16s_C1,
+       (const Ipp16s* pSrc, Ipp16s* pDst, Ipp32u* pNumCoeffs, Ipp32u QP,
+        Ipp32u roundMode))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -11578,14 +11226,17 @@ IPPAPI(IppStatus, ippiTransformQuant8x8Fwd_AVS_16s_C1, (const Ipp16s *pSrc,
 //    AVS China standard : GB/T 20090.2 - 2006
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDisassembleLumaIntra_AVS_16s8u_C1R, (const Ipp8u *pSrcPlane, Ipp32s srcStep,
-                                                           Ipp8u *pDstPlane, Ipp32s dstStep,
-                                                           Ipp16s **ppDstCoeff,
-                                                           IppIntra8x8PredMode_AVS *pPredModes,
-                                                           Ipp32u *pLumaCBP,
-                                                           Ipp32u QP,
-                                                           Ipp32u edgeType))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDisassembleLumaIntra_AVS_16s8u_C1R,
+       (const Ipp8u* pSrcPlane, Ipp32s srcStep, Ipp8u* pDstPlane,
+        Ipp32s dstStep, Ipp16s** ppDstCoeff,
+        IppIntra8x8PredMode_AVS* pPredModes, Ipp32u* pLumaCBP, Ipp32u QP,
+        Ipp32u edgeType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -11626,12 +11277,17 @@ IPPAPI(IppStatus, ippiDisassembleLumaIntra_AVS_16s8u_C1R, (const Ipp8u *pSrcPlan
 //    AVS China standard : GB/T 20090.2 - 2006
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs  will be removed in one of the future IPP releases.Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDisassembleChroma420Intra_AVS_16s8u_C1R, (const Ipp8u *pSrcPlane[2], Ipp32s srcStep,
-                                                                Ipp8u *pDstPlane[2], Ipp32s dstStep,
-                                                                Ipp16s **ppDstCoeff,
-                                                                IppIntraChromaPredMode_AVS *pPredMode,
-                                                                Ipp32u *pChromaCBP, Ipp32u chromaQP, Ipp32u edgeType))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and DV, H.263, H.261, AVS codecs "
+    " will be removed in one of the future IPP releases.Use the following link "
+    "for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDisassembleChroma420Intra_AVS_16s8u_C1R,
+       (const Ipp8u* pSrcPlane[2], Ipp32s srcStep, Ipp8u* pDstPlane[2],
+        Ipp32s dstStep, Ipp16s** ppDstCoeff,
+        IppIntraChromaPredMode_AVS* pPredMode, Ipp32u* pChromaCBP,
+        Ipp32u chromaQP, Ipp32u edgeType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -11653,7 +11309,8 @@ IPPAPI(IppStatus, ippiDisassembleChroma420Intra_AVS_16s8u_C1R, (const Ipp8u *pSr
 //                  is applied
 //    pScanMatrix   Scan matrix for coefficients in block (array of size 16)
 //    QP            Quantization parameter.
-//    roundMode     Flag that is equal 1 in the case of Intra slice, 0 otherwise.
+//    roundMode     Flag that is equal 1 in the case of Intra slice, 0
+otherwise.
 //
 //  Returns:
 //              ippStsNoErr                     No error
@@ -11661,35 +11318,35 @@ IPPAPI(IppStatus, ippiDisassembleChroma420Intra_AVS_16s8u_C1R, (const Ipp8u *pSr
 //              ippStsOutOfRangeErr             QP > 51 (87 for 32s) or QP < 0
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiQuantizeResidual4x4Fwd_H264_16s_C1, (const Ipp16s *pSrc,
-                                                           Ipp16s *pDst,
-                                                           Ipp32u *pNumNonZeros,
-                                                           Ipp32u *pLastNonZero,
-                                                           const Ipp16s *pQuantTable,
-                                                           const Ipp16s *pScanMatrix,
-                                                           Ipp32s QP,
-                                                           Ipp32s  roundMode))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiQuantizeResidual4x4Fwd_H264_16s_C1,
+       (const Ipp16s* pSrc, Ipp16s* pDst, Ipp32u* pNumNonZeros,
+        Ipp32u* pLastNonZero, const Ipp16s* pQuantTable,
+        const Ipp16s* pScanMatrix, Ipp32s QP, Ipp32s roundMode))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiQuantizeResidual4x4Fwd_H264_16s32s_C1, (const Ipp16s *pSrc,
-                                                              Ipp16s *pDst,
-                                                              Ipp32u *pNumNonZeros,
-                                                              Ipp32u *pLastNonZero,
-                                                              const Ipp32s *pQuantTable,
-                                                              const Ipp16s *pScanMatrix,
-                                                              Ipp32s QP,
-                                                              Ipp32s  roundMode))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiQuantizeResidual4x4Fwd_H264_16s32s_C1,
+       (const Ipp16s* pSrc, Ipp16s* pDst, Ipp32u* pNumNonZeros,
+        Ipp32u* pLastNonZero, const Ipp32s* pQuantTable,
+        const Ipp16s* pScanMatrix, Ipp32s QP, Ipp32s roundMode))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiQuantizeResidual4x4Fwd_H264_32s_C1, (const Ipp32s *pSrc,
-                                                           Ipp32s *pDst,
-                                                           Ipp32u *pNumNonZeros,
-                                                           Ipp32u *pLastNonZero,
-                                                           const Ipp32s *pQuantTable,
-                                                           const Ipp16s *pScanMatrix,
-                                                           Ipp32s QP,
-                                                           Ipp32s  roundMode))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiQuantizeResidual4x4Fwd_H264_32s_C1,
+       (const Ipp32s* pSrc, Ipp32s* pDst, Ipp32u* pNumNonZeros,
+        Ipp32u* pLastNonZero, const Ipp32s* pQuantTable,
+        const Ipp16s* pScanMatrix, Ipp32s QP, Ipp32s roundMode))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -11706,25 +11363,33 @@ IPPAPI(IppStatus, ippiQuantizeResidual4x4Fwd_H264_32s_C1, (const Ipp32s *pSrc,
 //    ippStsNullPtrErr    pSize is NULL.
 */
 
-IPPAPI(IppStatus, ippiCABACGetSize_H264, (
-    Ipp32u* pSize))
+IPPAPI(IppStatus, ippiCABACGetSize_H264, (Ipp32u * pSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiCABACInit_H264
 //
 //  Purpose:
-//    Initializes CABAC state and alignes bitstream to byte boundary by writing 1s.
+//    Initializes CABAC state and alignes bitstream to byte boundary by writing
+1s.
 //
 //  Parameters:
-//    pCabacState          Pointer to CABAC state to be initialized. Size of this state can be retrieved by ippiGetSizeCABAC_H264 function.
-//    pBitStream           Pointer to bitstream to write to. Must be aligned by 4.
-//    nBitStreamOffsetBits Number of bits from the pBitStream to the first unwritten bit in a bitstream.
-//    nBitStreamSize       Size of the allocated memory for the bitstream in bytes.
-//    SliceQPy             SliceQPy parameter. See equation 7-28 from H.264 standard.
-//                         This parameter will be clipped to range [1; 51] (See clause 9.3.1.1 of H.264 standard).
-//    cabacInitIdc         Index (in range [0; 2]) for determining the initialisation table used in the initialisation process
-//                         for context variables (for inter slices) or -1 (for intra slices). See variable cabac_init_idc from H.264 standard.
+//    pCabacState          Pointer to CABAC state to be initialized. Size of
+this state can be retrieved by ippiGetSizeCABAC_H264 function.
+//    pBitStream           Pointer to bitstream to write to. Must be aligned
+by 4.
+//    nBitStreamOffsetBits Number of bits from the pBitStream to the first
+unwritten bit in a bitstream.
+//    nBitStreamSize       Size of the allocated memory for the bitstream in
+bytes.
+//    SliceQPy             SliceQPy parameter. See equation 7-28 from H.264
+standard.
+//                         This parameter will be clipped to range [1; 51] (See
+clause 9.3.1.1 of H.264 standard).
+//    cabacInitIdc         Index (in range [0; 2]) for determining the
+initialisation table used in the initialisation process
+//                         for context variables (for inter slices) or -1 (for
+intra slices). See variable cabac_init_idc from H.264 standard.
 //
 //  Returns:
 //    ippStsNoErr              No error.
@@ -11733,55 +11398,67 @@ IPPAPI(IppStatus, ippiCABACGetSize_H264, (
 //    ippStsOutOfRangeErr      cabac_init_idc parameter is out of range [-1; 2].
 //    ippStsMisalignedBuf      pBitStream is not 4-byte aligned.
 //    ippStsH264BufferFullErr  Not enough free space in the bitstream.
-//                             This error code can be returned if there remains less then 8 free bytes in the bitstream.
+//                             This error code can be returned if there remains
+less then 8 free bytes in the bitstream.
 */
 
-IPPAPI(IppStatus, ippiCABACInit_H264, (
-    IppvcCABACState* pCabacState,
-    Ipp8u*          pBitStream,
-    Ipp32u          nBitStreamOffsetBits,
-    Ipp32u          nBitStreamSize,
-    Ipp32s          SliceQPy,
-    Ipp32s          cabacInitIdc))
+IPPAPI(IppStatus, ippiCABACInit_H264,
+       (IppvcCABACState * pCabacState, Ipp8u* pBitStream,
+        Ipp32u nBitStreamOffsetBits, Ipp32u nBitStreamSize, Ipp32s SliceQPy,
+        Ipp32s cabacInitIdc))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiCABACInitAlloc_H264
 //
 //  Purpose:
-//    Allocates and initializes CABAC state and alignes bitstream to byte boundary by writing 1s.
+//    Allocates and initializes CABAC state and alignes bitstream to byte
+boundary by writing 1s.
 //
 //  Parameters:
-//    ppCabacState         On successful return from function, the pointer pointed by ppCabacState will be pointer to CABAC state.
-//                         This case after encoding is finished, CABAC state must be released by call to ippFreeCABAC_H264.
-//                         In case of error, pointer pointed by ppCabacState remains unchanged.
-//    pBitStream           Pointer to bitstream to write to. Must be aligned by 4.
-//    nBitStreamOffsetBits Number of bits from the pBitStream to the first unwritten bit in a bitstream.
-//    nBitStreamSize       Size of the allocated memory for the bitstream in bytes.
-//    SliceQPy             SliceQPy parameter. See equation 7-28 from H.264 standard.
-//                         This parameter will be clipped to range [1; 51] (See clause 9.3.1.1 of H.264 standard).
-//    cabacInitIdc         Index (in range [0; 2]) for determining the initialisation table used in the initialisation process
-//                         for context variables (for inter slices) or -1 (for intra slices).
+//    ppCabacState         On successful return from function, the pointer
+pointed by ppCabacState will be pointer to CABAC state.
+//                         This case after encoding is finished, CABAC state
+must be released by call to ippFreeCABAC_H264.
+//                         In case of error, pointer pointed by ppCabacState
+remains unchanged.
+//    pBitStream           Pointer to bitstream to write to. Must be aligned
+by 4.
+//    nBitStreamOffsetBits Number of bits from the pBitStream to the first
+unwritten bit in a bitstream.
+//    nBitStreamSize       Size of the allocated memory for the bitstream in
+bytes.
+//    SliceQPy             SliceQPy parameter. See equation 7-28 from H.264
+standard.
+//                         This parameter will be clipped to range [1; 51] (See
+clause 9.3.1.1 of H.264 standard).
+//    cabacInitIdc         Index (in range [0; 2]) for determining the
+initialisation table used in the initialisation process
+//                         for context variables (for inter slices) or -1 (for
+intra slices).
 //
 //  Returns:
 //    ippStsNoErr              No error.
 //    ippStsNullPtrErr         One of the pointers is NULL.
 //    ippStsOutOfRangeErr      cabac_init_idc parameter is out of range [-1; 2].
 //    ippStsSizeErr            nBitStreamSize is 0.
-//    ippStsNoMemErr           No enough memory to allocate space for CABAC state.
+//    ippStsNoMemErr           No enough memory to allocate space for CABAC
+state.
 //    ippStsMisalignedBuf      pBitStream is not 4-byte aligned
 //    ippStsH264BufferFullErr  Not enough free space in the bitstream.
-//                             This error code can be returned if there remains less then 8 free bytes in the bitstream.
+//                             This error code can be returned if there remains
+less then 8 free bytes in the bitstream.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiCABACInitAlloc_H264, (
-    IppvcCABACState** ppCabacState,
-    Ipp8u*           pBitStream,
-    Ipp32u           nBitStreamOffsetBits,
-    Ipp32u           nBitStreamSize,
-    Ipp32s           SliceQPy,
-    Ipp32s           cabacInitIdc))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiCABACInitAlloc_H264,
+       (IppvcCABACState * *ppCabacState, Ipp8u* pBitStream,
+        Ipp32u nBitStreamOffsetBits, Ipp32u nBitStreamSize, Ipp32s SliceQPy,
+        Ipp32s cabacInitIdc))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -11791,44 +11468,58 @@ IPPAPI(IppStatus, ippiCABACInitAlloc_H264, (
 //    Releases CABAC state, allocated by ippiCABACInitAlloc_H264
 //
 //  Parameters:
-//    pCabacState        Pointer to CABAC state, allocated by ippiCABACInitAlloc_H264.
+//    pCabacState        Pointer to CABAC state, allocated by
+ippiCABACInitAlloc_H264.
 //
 //  Returns:
 //    ippStsNoErr         No error.
 //    ippStsNullPtrErr    pCabacState is NULL.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiCABACFree_H264, (
-    IppvcCABACState* pCabacState))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiCABACFree_H264, (IppvcCABACState * pCabacState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiCABACSetStream_H264
 //
 //  Purpose:
-//    Sets the new pointer for output stream. This function should be called after reallocation of output stream
+//    Sets the new pointer for output stream. This function should be called
+after reallocation of output stream
 //
 //  Parameters:
-//    pBitStream          Pointer to the new location of a bitstream. This pointer must be aligned by 4.
-//                        User is responsible for copying the content of the bitstream to the new location before calling this function.
-//    nBitStreamSize      Size of the allocated memory for the bitstream in bytes. This size must be more then the previous size of the stream.
-//    pCabacState         Pointer to CABAC state initialized with ippiCABACInit_H264 or ippiCABACInitAlloc_H264.
+//    pBitStream          Pointer to the new location of a bitstream. This
+pointer must be aligned by 4.
+//                        User is responsible for copying the content of the
+bitstream to the new location before calling this function.
+//    nBitStreamSize      Size of the allocated memory for the bitstream in
+bytes. This size must be more then the previous size of the stream.
+//    pCabacState         Pointer to CABAC state initialized with
+ippiCABACInit_H264 or ippiCABACInitAlloc_H264.
 //
 //  Returns:
 //    ippStsNoErr              No error.
 //    ippStsNullPtrErr         Either pCabacState or pBitStream is NULL.
-//    ippStsSizeErr            nBitStreamSize is not more than previous size of the stream.
+//    ippStsSizeErr            nBitStreamSize is not more than previous size of
+the stream.
 //    ippStsMisalignedBuf      pBitStream is not 4-byte aligned
 //    ippStsH264BufferFullErr  Not enough free space in the bitstream.
-//                             This error code can be returned if there remains less then 8 free bytes in the bitstream.
+//                             This error code can be returned if there remains
+less then 8 free bytes in the bitstream.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiCABACSetStream_H264, (
-    Ipp8u*          pBitStream,
-    Ipp32u          uBitStreamSize,
-    IppvcCABACState* pCabacState))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiCABACSetStream_H264,
+       (Ipp8u * pBitStream, Ipp32u uBitStreamSize,
+        IppvcCABACState* pCabacState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -11838,18 +11529,23 @@ IPPAPI(IppStatus, ippiCABACSetStream_H264, (
 //    Returns the number of bits in the bitstream.
 //
 //  Parameters:
-//    pBitStreamBits      Pointer to a variable to recieve the number of bits written to the stream by CABAC.
-//    pCabacState         Pointer to CABAC state initialized with ippiCABACInit_H264 or ippiCABACInitAlloc_H264.
+//    pBitStreamBits      Pointer to a variable to recieve the number of bits
+written to the stream by CABAC.
+//    pCabacState         Pointer to CABAC state initialized with
+ippiCABACInit_H264 or ippiCABACInitAlloc_H264.
 //
 //  Returns:
 //    ippStsNoErr        No error.
 //    ippStsNullPtrErr   Either pCabacState or pBitStream is NULL.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiCABACGetStreamSize_H264, (
-    Ipp32u*         pBitStreamBits,
-    IppvcCABACState* pCabacState))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiCABACGetStreamSize_H264,
+       (Ipp32u * pBitStreamBits, IppvcCABACState* pCabacState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -11859,45 +11555,49 @@ IPPAPI(IppStatus, ippiCABACGetStreamSize_H264, (
 //    Encodes one bin with CABAC and writes it to the stream
 //
 //  Parameters:
-//    ctxIdx              Index of CABAC context to encode this bin. Must be in range 0 to 459. See clause 9.3.3.1 of H.264 standard.
+//    ctxIdx              Index of CABAC context to encode this bin. Must be in
+range 0 to 459. See clause 9.3.3.1 of H.264 standard.
 //    code                Value of bin to be encoded. Must be either 0 or 1.
-//    pCabacState         Pointer to CABAC state initialized with ippiCABACInit_H264 or ippiCABACInitAlloc_H264.
+//    pCabacState         Pointer to CABAC state initialized with
+ippiCABACInit_H264 or ippiCABACInitAlloc_H264.
 //
 //  Returns:
 //    ippStsNoErr               No error.
 //    ippStsNullPtrErr          pCabacState is NULL.
-//    ippStsOutOfRangeErr       Either ctxIdx is not in range [0; 459] or code is out of range [0; 1].
+//    ippStsOutOfRangeErr       Either ctxIdx is not in range [0; 459] or code
+is out of range [0; 1].
 //    ippStsH264BufferFullErr   Not enough free space in the bitstream.
-//                              This error code can be returned if there remains less then 8 free bytes in the bitstream.
+//                              This error code can be returned if there remains
+less then 8 free bytes in the bitstream.
 */
 
-IPPAPI(IppStatus, ippiCABACEncodeBin_H264, (
-    Ipp32u          ctxIdx,
-    Ipp32u          code,
-    IppvcCABACState* pCabacState))
+IPPAPI(IppStatus, ippiCABACEncodeBin_H264,
+       (Ipp32u ctxIdx, Ipp32u code, IppvcCABACState* pCabacState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiCABACEncodeBinBypass_H264
 //
 //  Purpose:
-//    Encodes bin with CABAC using bypass encoding process and writes it to the stream
+//    Encodes bin with CABAC using bypass encoding process and writes it to the
+stream
 //
 //  Parameters:
 //    code                Value of bin to be encoded. Must be either 0 or 1.
-//    pCabacState         Pointer to CABAC state initialized with ippiCABACInit_H264 or ippiCABACInitAlloc_H264.
+//    pCabacState         Pointer to CABAC state initialized with
+ippiCABACInit_H264 or ippiCABACInitAlloc_H264.
 //
 //  Returns:
 //    ippStsNoErr               No error
 //    ippStsNullPtrErr          pCabacState is NULL
 //    ippStsOutOfRangeErr       code is out of range [0; 1]
 //    ippStsH264BufferFullErr   Not enough free space in the bitstream.
-//                              This error code can be returned if there remains less then 8 free bytes in the bitstream.
+//                              This error code can be returned if there remains
+less then 8 free bytes in the bitstream.
 */
 
-IPPAPI(IppStatus, ippiCABACEncodeBinBypass_H264, (
-    Ipp32u          code,
-    IppvcCABACState* pCabacState))
+IPPAPI(IppStatus, ippiCABACEncodeBinBypass_H264,
+       (Ipp32u code, IppvcCABACState* pCabacState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -11907,19 +11607,21 @@ IPPAPI(IppStatus, ippiCABACEncodeBinBypass_H264, (
 //    Terminates encoding slice with CABAC
 //
 //  Parameters:
-//    pBitStreamBytes     Pointer to a variable to recieve a number of bytes in a bitstream
-//    pCabacState         Pointer to CABAC state initialized with ippiCABACInit_H264 or ippiCABACInitAlloc_H264.
+//    pBitStreamBytes     Pointer to a variable to recieve a number of bytes in
+a bitstream
+//    pCabacState         Pointer to CABAC state initialized with
+ippiCABACInit_H264 or ippiCABACInitAlloc_H264.
 //
 //  Returns:
 //    ippStsNoErr               No error.
 //    ippStsNullPtrErr          pCabacState is NULL.
 //    ippStsH264BufferFullErr   Not enough free space in the bitstream.
-//                              This error code can be returned if there remains less then 8 free bytes in the bitstream.
+//                              This error code can be returned if there remains
+less then 8 free bytes in the bitstream.
 */
 
-IPPAPI(IppStatus, ippiCABACTerminateSlice_H264, (
-    Ipp32u*          pBitStreamBytes,
-    IppvcCABACState* pCabacState))
+IPPAPI(IppStatus, ippiCABACTerminateSlice_H264,
+       (Ipp32u * pBitStreamBytes, IppvcCABACState* pCabacState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -11930,66 +11632,78 @@ IPPAPI(IppStatus, ippiCABACTerminateSlice_H264, (
 //    Encodes block of residual coefficients with CABAC
 //
 //  Parameters:
-//    pResidualCoeffs     Pointer to an array of residual coefficients to encode. Size of an array
-//                        must correspond ctxBlockCat and NumC8x8 parameters (see Table 9-42 of H.264 standard).
-//    nLastNonZeroCoeff   Index of the last non-zero coefficient in the array, pointed by pResidualCoeffs.
-//    ctxBlockCat         Variable ctxBlockCat from H.264 standard (for details, see Table 9-42 of H.264 standard).
-//    log2NumC8x8         For ctxBlockCat = 3, base 2 logarithm of NumC8x8 variable from H.264 stadard; 0 for other values of ctxBlockCat.
-//    bFrameBlock         Boolean value, that specifies whether the frame (bFrameBlock = 1) or field (bFrameBlock = 0) is being encoded.
-//    pCabacState         Pointer to CABAC state initialized with ippiCABACInit_H264 or ippiCABACInitAlloc_H264.
+//    pResidualCoeffs     Pointer to an array of residual coefficients to
+encode. Size of an array
+//                        must correspond ctxBlockCat and NumC8x8 parameters
+(see Table 9-42 of H.264 standard).
+//    nLastNonZeroCoeff   Index of the last non-zero coefficient in the array,
+pointed by pResidualCoeffs.
+//    ctxBlockCat         Variable ctxBlockCat from H.264 standard (for details,
+see Table 9-42 of H.264 standard).
+//    log2NumC8x8         For ctxBlockCat = 3, base 2 logarithm of NumC8x8
+variable from H.264 stadard; 0 for other values of ctxBlockCat.
+//    bFrameBlock         Boolean value, that specifies whether the frame
+(bFrameBlock = 1) or field (bFrameBlock = 0) is being encoded.
+//    pCabacState         Pointer to CABAC state initialized with
+ippiCABACInit_H264 or ippiCABACInitAlloc_H264.
 //
 //  Returns:
 //    ippStsNoErr               No error.
 //    ippStsNullPtrErr          Some of the pointers is NULL.
-//    ippStsOutOfRangeErr       Either ctxBlockCat is not in range [0; 5] or bFrameBlock is not in range [0; 1].
+//    ippStsOutOfRangeErr       Either ctxBlockCat is not in range [0; 5] or
+bFrameBlock is not in range [0; 1].
 //    ippStsBadArgErr           NumC8x8 is not zero while ctxBlockCat is not 3.
 //    ippStsH264BufferFullErr   Not enough free space in the bitstream.
-//                              This error code can be returned if there remains less then 8 free bytes in the bitstream.
+//                              This error code can be returned if there remains
+less then 8 free bytes in the bitstream.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiCABACEncodeResidualBlock_H264_16s, (
-      const Ipp16s*   pResidualCoeffs,
-      Ipp32u          nLastNonZeroCoeff,
-      Ipp32u          ctxBlockCat,
-      Ipp32u          log2NumC8x8,
-      Ipp32u          bFrameBlock,
-      IppvcCABACState* pCabacState))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiCABACEncodeResidualBlock_H264_16s,
+       (const Ipp16s* pResidualCoeffs, Ipp32u nLastNonZeroCoeff,
+        Ipp32u ctxBlockCat, Ipp32u log2NumC8x8, Ipp32u bFrameBlock,
+        IppvcCABACState* pCabacState))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiCABACEncodeResidualBlock_H264_32s, (
-      const Ipp32s*   pResidualCoeffs,
-      Ipp32u          nLastNonZeroCoeff,
-      Ipp32u          ctxBlockCat,
-      Ipp32u          log2NumC8x8,
-      Ipp32u          bFrameBlock,
-      IppvcCABACState* pCabacState))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiCABACEncodeResidualBlock_H264_32s,
+       (const Ipp32s* pResidualCoeffs, Ipp32u nLastNonZeroCoeff,
+        Ipp32u ctxBlockCat, Ipp32u log2NumC8x8, Ipp32u bFrameBlock,
+        IppvcCABACState* pCabacState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippiCABACGetContexts_H264
 //
 //  Purpose:
-//    Copies nContexts contexts from pCabacState structure to destination pContexts array.
+//    Copies nContexts contexts from pCabacState structure to destination
+pContexts array.
 //
 //  Parameters:
 //    pCabacState pointer to source IppvcCABACState structure
-//    offset      offset from the begining element of contexts array inside pCabacState structure.
+//    offset      offset from the begining element of contexts array inside
+pCabacState structure.
 //    pContexts   pointer to destination Ipp8u array
 //    nContexts   number of contexts to copy.
 //
 //  Returns:
 //    ippStsNoErr         No error.
-//    ippStsNullPtrErr    Indicates an error condition if at least one of the specified pointers is NULL.
-//    ippStsOutOfRangeErr Indicates an error if (offset + nContexts) is greater than 460.
+//    ippStsNullPtrErr    Indicates an error condition if at least one of the
+specified pointers is NULL.
+//    ippStsOutOfRangeErr Indicates an error if (offset + nContexts) is greater
+than 460.
 */
 
-IPPAPI(IppStatus, ippiCABACGetContexts_H264, (
-    const IppvcCABACState* pCabacState,
-    Ipp32u           offset,
-    Ipp8u*           pContexts,
-    Ipp32u           nContexts))
-
+IPPAPI(IppStatus, ippiCABACGetContexts_H264,
+       (const IppvcCABACState* pCabacState, Ipp32u offset, Ipp8u* pContexts,
+        Ipp32u nContexts))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -11999,23 +11713,30 @@ IPPAPI(IppStatus, ippiCABACGetContexts_H264, (
 //      Decode CAVLC coded coefficients
 //
 //  Parameters:
-//      ppBitStream     - double pointer to current dword in bitstream(will be updated by function)
-//      pOffset         - pointer to offset in current dword(will be updated by function)
+//      ppBitStream     - double pointer to current dword in bitstream(will be
+updated by function)
+//      pOffset         - pointer to offset in current dword(will be updated by
+function)
 //      pNumCoeff       - output number of coefficients
-//      ppPosCoefbuf    - pointer to 4x4 block of coefficients, if it's non zero(will be update by function)
+//      ppPosCoefbuf    - pointer to 4x4 block of coefficients, if it's non
+zero(will be update by function)
 //      uVLCSelect      - predictor on number of CoeffToken Table
-//      uMaxNumCoeff    - maximum coefficients in block(16 for Intra16x16, 15 for the rest)
+//      uMaxNumCoeff    - maximum coefficients in block(16 for Intra16x16, 15
+for the rest)
 //      pTblCoeffToken  - CoeffToken Tables
 //      ppTblTotalZeros - TotalZeros Tables
 //      ppTblRunBefore  - RunBefore Tables
 //      pScanMatrix     - inverse scan matrix for coefficients in block
-//      scanIdxStart    - the first scanning position for the transform coefficient levels
-//      scanIdxEnd      - the last scanning position for the transform coefficient levels
+//      scanIdxStart    - the first scanning position for the transform
+coefficient levels
+//      scanIdxEnd      - the last scanning position for the transform
+coefficient levels
 //
 //  Returns:
 //      ippStsNoErr         No error
 //      ippStsNullPtrErr    if a pointer is NULL
-//      ippStsOutOfRangeErr scanIdxStart or scanIdxEnd is out of the range [0, 15]
+//      ippStsOutOfRangeErr scanIdxStart or scanIdxEnd is out of the range [0,
+15]
 //      ippStsRangeErr      scanIdxStart is greater than scanIdxEnd
 //
 //  Notes:
@@ -12024,26 +11745,20 @@ IPPAPI(IppStatus, ippiCABACGetContexts_H264, (
 //      (ITU-T Rec. H.264 | ISO/IEC 14496-10 AVC) March, 2003.
 */
 
-IPPAPI(IppStatus, ippiDecodeCAVLCCoeffsIdxs_H264_1u16s, (Ipp32u **ppBitStream,
-    Ipp32s *pOffset,
-    Ipp16s *pNumCoeff,
-    Ipp16s **ppPosCoefbuf,
-    Ipp32u uVLCSelect,
-    Ipp16s uMaxNumCoeff,
-    const Ipp32s **ppTblCoeffToken,
-    const Ipp32s **ppTblTotalZeros,
-    const Ipp32s **ppTblRunBefore,
-    const Ipp32s *pScanMatrix,
-    Ipp32s scanIdxStart,
-    Ipp32s scanIdxEnd))
+IPPAPI(IppStatus, ippiDecodeCAVLCCoeffsIdxs_H264_1u16s,
+       (Ipp32u * *ppBitStream, Ipp32s* pOffset, Ipp16s* pNumCoeff,
+        Ipp16s** ppPosCoefbuf, Ipp32u uVLCSelect, Ipp16s uMaxNumCoeff,
+        const Ipp32s** ppTblCoeffToken, const Ipp32s** ppTblTotalZeros,
+        const Ipp32s** ppTblRunBefore, const Ipp32s* pScanMatrix,
+        Ipp32s scanIdxStart, Ipp32s scanIdxEnd))
 
 #if defined __cplusplus
 }
 #endif
 
-#if defined (_IPP_STDCALL_CDECL)
-  #undef  _IPP_STDCALL_CDECL
-  #define __stdcall __cdecl
+#if defined(_IPP_STDCALL_CDECL)
+#undef _IPP_STDCALL_CDECL
+#define __stdcall __cdecl
 #endif
 
 #endif /* __IPPVC_H__ */

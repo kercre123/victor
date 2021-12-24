@@ -40,24 +40,23 @@
 
 #include <string>
 
-#include "processor/simple_serializer.h"
-#include "map_serializers-inl.h"
-
 #include "google_breakpad/processor/basic_source_line_resolver.h"
+#include "map_serializers-inl.h"
 #include "processor/basic_source_line_resolver_types.h"
 #include "processor/linked_ptr.h"
+#include "processor/simple_serializer.h"
 #include "processor/windows_frame_info.h"
 
 namespace google_breakpad {
 
 // Specializations of SimpleSerializer: bool
-template<>
+template <>
 class SimpleSerializer<bool> {
  public:
   static size_t SizeOf(bool boolean) { return 1; }
 
   static char *Write(bool boolean, char *dest) {
-    *dest = static_cast<char>(boolean? 255 : 0);
+    *dest = static_cast<char>(boolean ? 255 : 0);
     return ++dest;
   }
 
@@ -68,7 +67,7 @@ class SimpleSerializer<bool> {
 };
 
 // Specializations of SimpleSerializer: string
-template<>
+template <>
 class SimpleSerializer<string> {
  public:
   static size_t SizeOf(const string &str) { return str.size() + 1; }
@@ -80,12 +79,10 @@ class SimpleSerializer<string> {
 };
 
 // Specializations of SimpleSerializer: C-string
-template<>
-class SimpleSerializer<const char*> {
+template <>
+class SimpleSerializer<const char *> {
  public:
-  static size_t SizeOf(const char *cstring) {
-    return strlen(cstring) + 1;
-  }
+  static size_t SizeOf(const char *cstring) { return strlen(cstring) + 1; }
 
   static char *Write(const char *cstring, char *dest) {
     strcpy(dest, cstring);
@@ -94,15 +91,16 @@ class SimpleSerializer<const char*> {
 };
 
 // Specializations of SimpleSerializer: Line
-template<>
+template <>
 class SimpleSerializer<BasicSourceLineResolver::Line> {
   typedef BasicSourceLineResolver::Line Line;
+
  public:
   static size_t SizeOf(const Line &line) {
-    return SimpleSerializer<MemAddr>::SizeOf(line.address)
-         + SimpleSerializer<MemAddr>::SizeOf(line.size)
-         + SimpleSerializer<int32_t>::SizeOf(line.source_file_id)
-         + SimpleSerializer<int32_t>::SizeOf(line.line);
+    return SimpleSerializer<MemAddr>::SizeOf(line.address) +
+           SimpleSerializer<MemAddr>::SizeOf(line.size) +
+           SimpleSerializer<int32_t>::SizeOf(line.source_file_id) +
+           SimpleSerializer<int32_t>::SizeOf(line.line);
   }
   static char *Write(const Line &line, char *dest) {
     dest = SimpleSerializer<MemAddr>::Write(line.address, dest);
@@ -114,14 +112,15 @@ class SimpleSerializer<BasicSourceLineResolver::Line> {
 };
 
 // Specializations of SimpleSerializer: PublicSymbol
-template<>
+template <>
 class SimpleSerializer<BasicSourceLineResolver::PublicSymbol> {
   typedef BasicSourceLineResolver::PublicSymbol PublicSymbol;
+
  public:
   static size_t SizeOf(const PublicSymbol &pubsymbol) {
-    return SimpleSerializer<string>::SizeOf(pubsymbol.name)
-         + SimpleSerializer<MemAddr>::SizeOf(pubsymbol.address)
-         + SimpleSerializer<int32_t>::SizeOf(pubsymbol.parameter_size);
+    return SimpleSerializer<string>::SizeOf(pubsymbol.name) +
+           SimpleSerializer<MemAddr>::SizeOf(pubsymbol.address) +
+           SimpleSerializer<int32_t>::SizeOf(pubsymbol.parameter_size);
   }
   static char *Write(const PublicSymbol &pubsymbol, char *dest) {
     dest = SimpleSerializer<string>::Write(pubsymbol.name, dest);
@@ -132,7 +131,7 @@ class SimpleSerializer<BasicSourceLineResolver::PublicSymbol> {
 };
 
 // Specializations of SimpleSerializer: WindowsFrameInfo
-template<>
+template <>
 class SimpleSerializer<WindowsFrameInfo> {
  public:
   static size_t SizeOf(const WindowsFrameInfo &wfi) {
@@ -166,9 +165,10 @@ class SimpleSerializer<WindowsFrameInfo> {
 
 // Specializations of SimpleSerializer: Linked_ptr version of
 // Line, Function, PublicSymbol, WindowsFrameInfo.
-template<>
-class SimpleSerializer< linked_ptr<BasicSourceLineResolver::Line> > {
+template <>
+class SimpleSerializer<linked_ptr<BasicSourceLineResolver::Line> > {
   typedef BasicSourceLineResolver::Line Line;
+
  public:
   static size_t SizeOf(const linked_ptr<Line> &lineptr) {
     if (lineptr.get() == NULL) return 0;
@@ -181,11 +181,12 @@ class SimpleSerializer< linked_ptr<BasicSourceLineResolver::Line> > {
   }
 };
 
-template<>
+template <>
 class SimpleSerializer<BasicSourceLineResolver::Function> {
   // Convenient type names.
   typedef BasicSourceLineResolver::Function Function;
   typedef BasicSourceLineResolver::Line Line;
+
  public:
   static size_t SizeOf(const Function &func) {
     unsigned int size = 0;
@@ -205,14 +206,16 @@ class SimpleSerializer<BasicSourceLineResolver::Function> {
     dest = range_map_serializer_.Write(func.lines, dest);
     return dest;
   }
+
  private:
   // This static member is defined in module_serializer.cc.
-  static RangeMapSerializer< MemAddr, linked_ptr<Line> > range_map_serializer_;
+  static RangeMapSerializer<MemAddr, linked_ptr<Line> > range_map_serializer_;
 };
 
-template<>
-class SimpleSerializer< linked_ptr<BasicSourceLineResolver::Function> > {
+template <>
+class SimpleSerializer<linked_ptr<BasicSourceLineResolver::Function> > {
   typedef BasicSourceLineResolver::Function Function;
+
  public:
   static size_t SizeOf(const linked_ptr<Function> &func) {
     if (!func.get()) return 0;
@@ -226,9 +229,10 @@ class SimpleSerializer< linked_ptr<BasicSourceLineResolver::Function> > {
   }
 };
 
-template<>
-class SimpleSerializer< linked_ptr<BasicSourceLineResolver::PublicSymbol> > {
+template <>
+class SimpleSerializer<linked_ptr<BasicSourceLineResolver::PublicSymbol> > {
   typedef BasicSourceLineResolver::PublicSymbol PublicSymbol;
+
  public:
   static size_t SizeOf(const linked_ptr<PublicSymbol> &pubsymbol) {
     if (pubsymbol.get() == NULL) return 0;
@@ -241,8 +245,8 @@ class SimpleSerializer< linked_ptr<BasicSourceLineResolver::PublicSymbol> > {
   }
 };
 
-template<>
-class SimpleSerializer< linked_ptr<WindowsFrameInfo> > {
+template <>
+class SimpleSerializer<linked_ptr<WindowsFrameInfo> > {
  public:
   static size_t SizeOf(const linked_ptr<WindowsFrameInfo> &wfi) {
     if (wfi.get() == NULL) return 0;

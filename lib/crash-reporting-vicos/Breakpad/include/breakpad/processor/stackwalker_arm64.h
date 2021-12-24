@@ -36,7 +36,6 @@
 //
 // Author: Mark Mentovai, Ted Mielczarek, Colin Blundell
 
-
 #ifndef PROCESSOR_STACKWALKER_ARM64_H__
 #define PROCESSOR_STACKWALKER_ARM64_H__
 
@@ -55,8 +54,7 @@ class StackwalkerARM64 : public Stackwalker {
   // included in the stack.  The other arguments are passed directly through
   // to the base Stackwalker constructor.
   StackwalkerARM64(const SystemInfo* system_info,
-                   const MDRawContextARM64* context,
-                   MemoryRegion* memory,
+                   const MDRawContextARM64* context, MemoryRegion* memory,
                    const CodeModules* modules,
                    StackFrameSymbolizer* frame_symbolizer);
 
@@ -76,16 +74,16 @@ class StackwalkerARM64 : public Stackwalker {
   // Use cfi_frame_info (derived from STACK CFI records) to construct
   // the frame that called frames.back(). The caller takes ownership
   // of the returned frame. Return NULL on failure.
-  StackFrameARM64* GetCallerByCFIFrameInfo(const vector<StackFrame*> &frames,
+  StackFrameARM64* GetCallerByCFIFrameInfo(const vector<StackFrame*>& frames,
                                            CFIFrameInfo* cfi_frame_info);
 
   // Use the frame pointer. The caller takes ownership of the returned frame.
   // Return NULL on failure.
-  StackFrameARM64* GetCallerByFramePointer(const vector<StackFrame*> &frames);
+  StackFrameARM64* GetCallerByFramePointer(const vector<StackFrame*>& frames);
 
   // Scan the stack for plausible return addresses. The caller takes ownership
   // of the returned frame. Return NULL on failure.
-  StackFrameARM64* GetCallerByStackScan(const vector<StackFrame*> &frames);
+  StackFrameARM64* GetCallerByStackScan(const vector<StackFrame*>& frames);
 
   // Stores the CPU context corresponding to the youngest stack frame, to
   // be returned by GetContextFrame.
@@ -97,8 +95,6 @@ class StackwalkerARM64 : public Stackwalker {
   uint64_t context_frame_validity_;
 };
 
-
 }  // namespace google_breakpad
-
 
 #endif  // PROCESSOR_STACKWALKER_ARM64_H__

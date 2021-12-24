@@ -36,23 +36,22 @@
 #ifndef COMMON_LINUX_SYNTH_ELF_H_
 #define COMMON_LINUX_SYNTH_ELF_H_
 
-#include "common/test_assembler.h"
-
 #include <list>
-#include <vector>
 #include <map>
 #include <string>
 #include <utility>
+#include <vector>
 
+#include "common/test_assembler.h"
 #include "common/using_std_string.h"
 
 namespace google_breakpad {
 namespace synth_elf {
 
 using std::list;
-using std::vector;
 using std::map;
 using std::pair;
+using std::vector;
 using test_assembler::Endianness;
 using test_assembler::kLittleEndian;
 using test_assembler::kUnsetEndian;
@@ -62,9 +61,8 @@ using test_assembler::Section;
 // String tables are common in ELF headers, so subclass Section
 // to make them easy to generate.
 class StringTable : public Section {
-public:
-  StringTable(Endianness endianness = kUnsetEndian)
-  : Section(endianness) {
+ public:
+  StringTable(Endianness endianness = kUnsetEndian) : Section(endianness) {
     start() = 0;
     empty_string = Add("");
   }
@@ -73,8 +71,7 @@ public:
   // a label containing the offset into the string table
   // at which it was added.
   Label Add(const string& s) {
-    if (strings_.find(s) != strings_.end())
-      return strings_[s];
+    if (strings_.find(s) != strings_.end()) return strings_[s];
 
     Label string_label(Here());
     AppendCString(s);
@@ -87,7 +84,7 @@ public:
   Label empty_string;
 
   // Avoid inserting duplicate strings.
-  map<string,Label> strings_;
+  map<string, Label> strings_;
 };
 
 // A Section representing an entire ELF file.
@@ -100,10 +97,10 @@ class ELF : public Section {
   // Add the Section section to the section header table and append it
   // to the file. Returns the index of the section in the section
   // header table.
-  int AddSection(const string& name, const Section& section,
-                 uint32_t type, uint32_t flags = 0, uint64_t addr = 0,
-                 uint32_t link = 0, uint64_t entsize = 0, uint64_t offset = 0);
-                  
+  int AddSection(const string& name, const Section& section, uint32_t type,
+                 uint32_t flags = 0, uint64_t addr = 0, uint32_t link = 0,
+                 uint64_t entsize = 0, uint64_t offset = 0);
+
   // Add a segment containing from section index start to section index end.
   // The indexes must have been gotten from AddSection.
   void AddSegment(int start, int end, uint32_t type, uint32_t flags = 0);
@@ -141,9 +138,12 @@ class ELF : public Section {
   struct ElfSection : public Section {
     ElfSection(const Section& section, uint32_t type, uint32_t addr,
                uint32_t offset, Label offset_label, uint32_t size)
-    : Section(section), type_(type), addr_(addr), offset_(offset)
-    , offset_label_(offset_label), size_(size) {
-    }
+        : Section(section),
+          type_(type),
+          addr_(addr),
+          offset_(offset),
+          offset_label_(offset_label),
+          size_(size) {}
 
     uint32_t type_;
     uint32_t addr_;
@@ -154,7 +154,7 @@ class ELF : public Section {
 
   vector<ElfSection> sections_;
 
-  void AppendSection(ElfSection &section);
+  void AppendSection(ElfSection& section);
 };
 
 // A class to build .symtab or .dynsym sections.
@@ -166,11 +166,11 @@ class SymbolTable : public Section {
   SymbolTable(Endianness endianness, size_t addr_size, StringTable& table);
 
   // Add an Elf32_Sym.
-  void AddSymbol(const string& name, uint32_t value,
-                 uint32_t size, unsigned info, uint16_t shndx);
+  void AddSymbol(const string& name, uint32_t value, uint32_t size,
+                 unsigned info, uint16_t shndx);
   // Add an Elf64_Sym.
-  void AddSymbol(const string& name, uint64_t value,
-                 uint64_t size, unsigned info, uint16_t shndx);
+  void AddSymbol(const string& name, uint64_t value, uint64_t size,
+                 unsigned info, uint16_t shndx);
 
  private:
 #ifndef NDEBUG
@@ -181,13 +181,11 @@ class SymbolTable : public Section {
 
 // A class for note sections
 class Notes : public Section {
-public:
-  Notes(Endianness endianness)
-  : Section(endianness) {
-  }
+ public:
+  Notes(Endianness endianness) : Section(endianness) {}
 
   // Add a note.
-  void AddNote(int type, const string &name, const uint8_t* desc_bytes,
+  void AddNote(int type, const string& name, const uint8_t* desc_bytes,
                size_t desc_size);
 };
 

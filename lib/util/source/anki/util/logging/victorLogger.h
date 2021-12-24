@@ -1,11 +1,11 @@
 /**
-* File: util/logging/victorLogger.h
-*
-* Description: Platform-independent wrapper for VictorLogger
-*
-* Copyright: Anki, inc. 2018
-*
-*/
+ * File: util/logging/victorLogger.h
+ *
+ * Description: Platform-independent wrapper for VictorLogger
+ *
+ * Copyright: Anki, inc. 2018
+ *
+ */
 #ifndef __util_logging_victorLogger_h
 #define __util_logging_victorLogger_h
 
@@ -15,4 +15,4 @@
 #error "This class (VictorLogger) is not supported on this platform"
 #endif
 
-#endif //__util_logging_victorLogger_h
+#endif  //__util_logging_victorLogger_h

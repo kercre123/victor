@@ -4,8 +4,8 @@
  * Author: raul
  * Created: 07/15/14
  *
- * Description: Set of functions and structs to add 'Steps' whose time will be measured and can be printed 
- * for performance evaluations.
+ * Description: Set of functions and structs to add 'Steps' whose time will be
+ *measured and can be printed for performance evaluations.
  *
  * Copyright: Anki, Inc. 2014
  *
@@ -14,22 +14,24 @@
 #ifndef __Util_StepTimers_H__
 #define __Util_StepTimers_H__
 
-#include "util/helpers/noncopyable.h"
-#include "util/global/globalDefinitions.h"
 #include <string>
 
+#include "util/global/globalDefinitions.h"
+#include "util/helpers/noncopyable.h"
 
 // Set this to 1 to test timings in Release mode. Defaults to DEBUG only
-#define ANKI_RUN_STEP_TIMERS 0 // ANKI_DEVELOPER_CODE
+#define ANKI_RUN_STEP_TIMERS 0  // ANKI_DEVELOPER_CODE
 
-namespace Anki{ namespace Util {
+namespace Anki {
+namespace Util {
 namespace Time {
 #if ANKI_RUN_STEP_TIMERS
 
 // adds a step whose time starts counting immediately
 void PushTimedStep(const char* name);
 
-// pops all timed steps up to the given one (the deepest one that matches the name)
+// pops all timed steps up to the given one (the deepest one that matches the
+// name)
 void PopTimedStep(const char* name);
 
 // pops last step
@@ -49,37 +51,35 @@ void PrintTimedSteps();
 void ClearSteps();
 
 // This step removes itself automatically when it goes out of scope
-struct ScopedStep : Anki::Util::noncopyable
-{
+struct ScopedStep : Anki::Util::noncopyable {
   // constructor
   inline ScopedStep(const char* name) : _name(name) { PushTimedStep(name); }
   inline virtual ~ScopedStep() { PopTimedStep(_name.c_str()); }
-  
-private:
+
+ private:
   std::string _name;
 };
 
-#else // ANKI_RUN_STEP_TIMERS
+#else  // ANKI_RUN_STEP_TIMERS
 
 inline void PushTimedStep(const char*) {}
 inline void PopTimedStep(const char*) {}
 inline void PopTimedStep() {}
-inline double GetTimeMillis() {return -1.0;}
+inline double GetTimeMillis() { return -1.0; }
 inline void PrintTimedSteps(int) {}
 inline void PrintTimedSteps() {}
 inline void ClearSteps() {}
 
-struct ScopedStep : Anki::Util::noncopyable
-{
+struct ScopedStep : Anki::Util::noncopyable {
   // constructor
   inline ScopedStep(const char*) {}
   inline virtual ~ScopedStep() {}
 };
 
-#endif // ANKI_RUN_STEP_TIMERS
+#endif  // ANKI_RUN_STEP_TIMERS
 
-};
-};
-} // namespace
+};  // namespace Time
+};  // namespace Util
+}  // namespace Anki
 
-#endif // __Util_StepTimers_H__
+#endif  // __Util_StepTimers_H__

@@ -10,6 +10,7 @@
  *
  **/
 
+#include "engine/robotTest.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -20,13 +21,11 @@
 #include "engine/perfMetricEngine.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
-#include "engine/robotTest.h"
 #include "osState/osState.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/string/stringUtils.h"
-
 #include "webServerProcess/src/webService.h"
 
 #define LOG_CHANNEL "RobotTest"
@@ -38,81 +37,71 @@ const std::string RobotTest::kInactiveScriptName = "(NONE)";
 
 #if ANKI_ROBOT_TEST_ENABLED
 
-namespace
-{
-  RobotTest* s_RobotTest = nullptr;
+namespace {
+RobotTest* s_RobotTest = nullptr;
 
-  const char* kScriptCommandsKey = "scriptCommands";
-  const char* kCommandKey = "command";
-  const char* kParametersKey = "parameters";
+const char* kScriptCommandsKey = "scriptCommands";
+const char* kCommandKey = "command";
+const char* kParametersKey = "parameters";
 
-  static const int kNumCPUStatLines = 5;
+static const int kNumCPUStatLines = 5;
 
 #if REMOTE_CONSOLE_ENABLED
 
-  static const char* kConsoleGroup = "RobotTest";
+static const char* kConsoleGroup = "RobotTest";
 
-  void Status(ConsoleFunctionContextRef context)
-  {
-    std::string response;
-    s_RobotTest->ExecuteWebCommandStatus(&response);
-    context->channel->WriteLog("%s", response.c_str());
-  }
-  CONSOLE_FUNC(Status, kConsoleGroup);
+void Status(ConsoleFunctionContextRef context) {
+  std::string response;
+  s_RobotTest->ExecuteWebCommandStatus(&response);
+  context->channel->WriteLog("%s", response.c_str());
+}
+CONSOLE_FUNC(Status, kConsoleGroup);
 
-  void RunScript(ConsoleFunctionContextRef context)
-  {
-    const std::string& scriptName = ConsoleArg_Get_String(context, "scriptName");
-    std::string response;
-    s_RobotTest->ExecuteWebCommandRun(scriptName, &response);
-    context->channel->WriteLog("%s", response.c_str());
-  }
-  CONSOLE_FUNC(RunScript, kConsoleGroup, const char* scriptName);
+void RunScript(ConsoleFunctionContextRef context) {
+  const std::string& scriptName = ConsoleArg_Get_String(context, "scriptName");
+  std::string response;
+  s_RobotTest->ExecuteWebCommandRun(scriptName, &response);
+  context->channel->WriteLog("%s", response.c_str());
+}
+CONSOLE_FUNC(RunScript, kConsoleGroup, const char* scriptName);
 
-  void StopScript(ConsoleFunctionContextRef context)
-  {
-    std::string response;
-    s_RobotTest->ExecuteWebCommandStop(&response);
-    context->channel->WriteLog("%s", response.c_str());
-  }
-  CONSOLE_FUNC(StopScript, kConsoleGroup);
+void StopScript(ConsoleFunctionContextRef context) {
+  std::string response;
+  s_RobotTest->ExecuteWebCommandStop(&response);
+  context->channel->WriteLog("%s", response.c_str());
+}
+CONSOLE_FUNC(StopScript, kConsoleGroup);
 
-  void ListScripts(ConsoleFunctionContextRef context)
-  {
-    std::string response;
-    s_RobotTest->ExecuteWebCommandListScripts(&response);
-    context->channel->WriteLog("%s", response.c_str());
-  }
-  CONSOLE_FUNC(ListScripts, kConsoleGroup);
+void ListScripts(ConsoleFunctionContextRef context) {
+  std::string response;
+  s_RobotTest->ExecuteWebCommandListScripts(&response);
+  context->channel->WriteLog("%s", response.c_str());
+}
+CONSOLE_FUNC(ListScripts, kConsoleGroup);
 
-  void GetScript(ConsoleFunctionContextRef context)
-  {
-    const std::string& scriptName = ConsoleArg_Get_String(context, "scriptName");
-    std::string response;
-    s_RobotTest->ExecuteWebCommandGetScript(scriptName, &response);
-    context->channel->WriteLog("%s", response.c_str());
-  }
-  CONSOLE_FUNC(GetScript, kConsoleGroup, const char* scriptName);
+void GetScript(ConsoleFunctionContextRef context) {
+  const std::string& scriptName = ConsoleArg_Get_String(context, "scriptName");
+  std::string response;
+  s_RobotTest->ExecuteWebCommandGetScript(scriptName, &response);
+  context->channel->WriteLog("%s", response.c_str());
+}
+CONSOLE_FUNC(GetScript, kConsoleGroup, const char* scriptName);
 
-  void RefreshUploadedScripts(ConsoleFunctionContextRef context)
-  {
-    std::string response;
-    s_RobotTest->ExecuteWebCommandRefreshUploadedScripts(&response);
-    context->channel->WriteLog("%s", response.c_str());
-  }
-  CONSOLE_FUNC(RefreshUploadedScripts, kConsoleGroup);
+void RefreshUploadedScripts(ConsoleFunctionContextRef context) {
+  std::string response;
+  s_RobotTest->ExecuteWebCommandRefreshUploadedScripts(&response);
+  context->channel->WriteLog("%s", response.c_str());
+}
+CONSOLE_FUNC(RefreshUploadedScripts, kConsoleGroup);
 
 #endif  // REMOTE_CONSOLE_ENABLED
-}
+}  // namespace
 
-
-static int RoboTestWebServerImpl(WebService::WebService::Request* request)
-{
+static int RoboTestWebServerImpl(WebService::WebService::Request* request) {
   auto* robotTest = static_cast<RobotTest*>(request->_cbdata);
 
   int returnCode = robotTest->ParseWebCommands(request->_param1);
-  if (returnCode != 0)
-  {
+  if (returnCode != 0) {
     // If there were no errors, attempt to execute the commands, and output
     // string messages/results so that they can be returned in the web request
     robotTest->ExecuteQueuedWebCommands(&request->_result);
@@ -122,61 +111,52 @@ static int RoboTestWebServerImpl(WebService::WebService::Request* request)
 }
 
 // Note that this can be called at any arbitrary time, from a webservice thread
-static int RobotTestWebServerHandler(struct mg_connection *conn, void *cbdata)
-{
+static int RobotTestWebServerHandler(struct mg_connection* conn, void* cbdata) {
   const mg_request_info* info = mg_get_request_info(conn);
   auto* robotTest = static_cast<RobotTest*>(cbdata);
 
   std::string commands;
-  if (info->content_length > 0)
-  {
+  if (info->content_length > 0) {
     char buf[info->content_length + 1];
     mg_read(conn, buf, sizeof(buf));
     buf[info->content_length] = 0;
     commands = buf;
-  }
-  else if (info->query_string)
-  {
+  } else if (info->query_string) {
     commands = info->query_string;
   }
 
   auto ws = robotTest->GetWebService();
-  const int returnCode = ws->ProcessRequestExternal(conn, cbdata, RoboTestWebServerImpl, commands);
+  const int returnCode =
+      ws->ProcessRequestExternal(conn, cbdata, RoboTestWebServerImpl, commands);
 
   return returnCode;
 }
 
+RobotTest::RobotTest(const CozmoContext* context) : _context(context) {}
 
-RobotTest::RobotTest(const CozmoContext* context)
-  : _context(context)
-{
-}
+RobotTest::~RobotTest() { s_RobotTest = nullptr; }
 
-RobotTest::~RobotTest()
-{
-  s_RobotTest = nullptr;
-}
-
-void RobotTest::Init(Util::Data::DataPlatform* dataPlatform, WebService::WebService* webService)
-{
+void RobotTest::Init(Util::Data::DataPlatform* dataPlatform,
+                     WebService::WebService* webService) {
   s_RobotTest = this;
 
   _webService = webService;
-  _webService->RegisterRequestHandler("/robottest", RobotTestWebServerHandler, this);
+  _webService->RegisterRequestHandler("/robottest", RobotTestWebServerHandler,
+                                      this);
 
   _platform = dataPlatform;
-  _uploadedScriptsPath = _platform->pathToResource(Util::Data::Scope::Persistent,
-                                                   "robotTestScripts");
-  if (!Util::FileUtils::CreateDirectory(_uploadedScriptsPath))
-  {
-    LOG_ERROR("RobotTest.Init", "Failed to create folder %s", _uploadedScriptsPath.c_str());
+  _uploadedScriptsPath = _platform->pathToResource(
+      Util::Data::Scope::Persistent, "robotTestScripts");
+  if (!Util::FileUtils::CreateDirectory(_uploadedScriptsPath)) {
+    LOG_ERROR("RobotTest.Init", "Failed to create folder %s",
+              _uploadedScriptsPath.c_str());
     return;
   }
 
   {
     // Find and load all scripts in the resources folder
-    std::string scriptsPath = _platform->pathToResource(Util::Data::Scope::Resources,
-                                                        "config/engine/robotTestFramework");
+    std::string scriptsPath = _platform->pathToResource(
+        Util::Data::Scope::Resources, "config/engine/robotTestFramework");
     static const bool kisUploadedScriptsFolder = false;
     LoadScripts(scriptsPath, kisUploadedScriptsFolder);
   }
@@ -190,116 +170,88 @@ void RobotTest::Init(Util::Data::DataPlatform* dataPlatform, WebService::WebServ
   _prevCPUTime.resize(kNumCPUStatLines);
 }
 
-
 // This is called near the start of the tick
-void RobotTest::Update()
-{
+void RobotTest::Update() {
   ANKI_CPU_PROFILE("RobotTest::Update");
 
-  while (_state == RobotTestState::RUNNING)
-  {
+  while (_state == RobotTestState::RUNNING) {
     const bool commandCompleted = ExecuteScriptCommand(_nextScriptCommand);
-    if (commandCompleted)
-    {
+    if (commandCompleted) {
       _curScriptCommandIndex++;
       FetchNextScriptCommand();
-    }
-    else
-    {
-      // If the command is not completed (e.g. waiting for a signal), we're done with this tick
+    } else {
+      // If the command is not completed (e.g. waiting for a signal), we're done
+      // with this tick
       break;
     }
   }
 }
 
-
 // Parse commands out of the query string, and only if there are no errors,
 // add them to the queue
-int RobotTest::ParseWebCommands(std::string& queryString)
-{
+int RobotTest::ParseWebCommands(std::string& queryString) {
   queryString = Util::StringToLower(queryString);
 
   std::vector<RobotTestWebCommand> cmds;
   std::string current;
 
-  while (!queryString.empty())
-  {
+  while (!queryString.empty()) {
     size_t amp = queryString.find('&');
-    if (amp == std::string::npos)
-    {
+    if (amp == std::string::npos) {
       current = queryString;
       queryString = "";
-    }
-    else
-    {
+    } else {
       current = queryString.substr(0, amp);
       queryString = queryString.substr(amp + 1);
     }
 
-    if (current == "stop")
-    {
+    if (current == "stop") {
       RobotTestWebCommand cmd(WebCommandType::STOP);
       cmds.push_back(cmd);
-    }
-    else if (current == "status")
-    {
+    } else if (current == "status") {
       RobotTestWebCommand cmd(WebCommandType::STATUS);
       cmds.push_back(cmd);
-    }
-    else if (current == "listscripts")
-    {
+    } else if (current == "listscripts") {
       RobotTestWebCommand cmd(WebCommandType::LIST_SCRIPTS);
       cmds.push_back(cmd);
-    }
-    else if (current == "refreshuploadedscripts")
-    {
+    } else if (current == "refreshuploadedscripts") {
       RobotTestWebCommand cmd(WebCommandType::REFRESH_UPLOADED_SCRIPTS);
       cmds.push_back(cmd);
-    }
-    else
-    {
+    } else {
       // Commands that have arguments:
       static const std::string cmdKeywordRun("run=");
       static const std::string cmdKeywordGetScript("getscript=");
-      
-      if (current.substr(0, cmdKeywordRun.size()) == cmdKeywordRun)
-      {
+
+      if (current.substr(0, cmdKeywordRun.size()) == cmdKeywordRun) {
         std::string argumentValue = current.substr(cmdKeywordRun.size());
         RobotTestWebCommand cmd(WebCommandType::RUN, argumentValue);
         cmds.push_back(cmd);
-      }
-      else if (current.substr(0, cmdKeywordGetScript.size()) == cmdKeywordGetScript)
-      {
+      } else if (current.substr(0, cmdKeywordGetScript.size()) ==
+                 cmdKeywordGetScript) {
         std::string argumentValue = current.substr(cmdKeywordGetScript.size());
         RobotTestWebCommand cmd(WebCommandType::GET_SCRIPT, argumentValue);
         cmds.push_back(cmd);
-      }
-      else
-      {
-        LOG_ERROR("RobotTest.ParseWebCommands", "Error parsing robot test web command: %s", current.c_str());
+      } else {
+        LOG_ERROR("RobotTest.ParseWebCommands",
+                  "Error parsing robot test web command: %s", current.c_str());
         return 0;
       }
     }
   }
 
   // Now that there are no errors, add all parsed commands to queue
-  for (auto& cmd : cmds)
-  {
+  for (auto& cmd : cmds) {
     _queuedWebCommands.push(cmd);
   }
   return 1;
 }
 
-
-void RobotTest::ExecuteQueuedWebCommands(std::string* resultStr)
-{
+void RobotTest::ExecuteQueuedWebCommands(std::string* resultStr) {
   // Execute queued web commands
-  while (!_queuedWebCommands.empty())
-  {
+  while (!_queuedWebCommands.empty()) {
     const RobotTestWebCommand cmd = _queuedWebCommands.front();
     _queuedWebCommands.pop();
-    switch (cmd._webCommand)
-    {
+    switch (cmd._webCommand) {
       case WebCommandType::RUN:
         ExecuteWebCommandRun(cmd._paramString, resultStr);
         break;
@@ -322,53 +274,41 @@ void RobotTest::ExecuteQueuedWebCommands(std::string* resultStr)
   }
 }
 
-
-void RobotTest::ExecuteWebCommandRun(const std::string& scriptName, std::string* resultStr)
-{
+void RobotTest::ExecuteWebCommandRun(const std::string& scriptName,
+                                     std::string* resultStr) {
   const bool success = StartScript(scriptName);
-  if (success)
-  {
+  if (success) {
     *resultStr += "Started";
-  }
-  else
-  {
+  } else {
     *resultStr += "Failed to start";
   }
   *resultStr += (" running script \"" + scriptName + "\"\n");
 }
 
-
-void RobotTest::ExecuteWebCommandStop(std::string* resultStr)
-{
+void RobotTest::ExecuteWebCommandStop(std::string* resultStr) {
   StopScript();
   *resultStr += "No script running\n";
 }
 
-
-void RobotTest::ExecuteWebCommandStatus(std::string* resultStr)
-{
-  *resultStr += (_state == RobotTestState::INACTIVE ?
-                 "Inactive" : "Running: " + _curScriptName);
+void RobotTest::ExecuteWebCommandStatus(std::string* resultStr) {
+  *resultStr +=
+      (_state == RobotTestState::INACTIVE ? "Inactive"
+                                          : "Running: " + _curScriptName);
   *resultStr += "\n";
 }
 
-
-void RobotTest::ExecuteWebCommandListScripts(std::string* resultStr)
-{
-  for (const auto& script : _scripts)
-  {
+void RobotTest::ExecuteWebCommandListScripts(std::string* resultStr) {
+  for (const auto& script : _scripts) {
     *resultStr += (script.second._wasUploaded ? "Uploaded: " : "Resource: ");
     *resultStr += (script.second._name + "\n");
   }
   *resultStr += (std::to_string(_scripts.size()) + " scripts total\n");
 }
 
-
-void RobotTest::ExecuteWebCommandGetScript(const std::string& scriptName, std::string* resultStr)
-{
+void RobotTest::ExecuteWebCommandGetScript(const std::string& scriptName,
+                                           std::string* resultStr) {
   const auto it = _scripts.find(scriptName);
-  if (it == _scripts.end())
-  {
+  if (it == _scripts.end()) {
     *resultStr += ("Script '" + scriptName + "' not found");
     return;
   }
@@ -379,54 +319,46 @@ void RobotTest::ExecuteWebCommandGetScript(const std::string& scriptName, std::s
   *resultStr += stringifiedJSON;
 }
 
-
-void RobotTest::ExecuteWebCommandRefreshUploadedScripts(std::string* resultStr)
-{
+void RobotTest::ExecuteWebCommandRefreshUploadedScripts(
+    std::string* resultStr) {
   static const bool kisUploadedScriptsFolder = true;
   LoadScripts(_uploadedScriptsPath, kisUploadedScriptsFolder, resultStr);
 }
 
-
-void RobotTest::LoadScripts(const std::string& path, const bool isUploadedScriptsFolder,
-                            std::string* resultStr)
-{
+void RobotTest::LoadScripts(const std::string& path,
+                            const bool isUploadedScriptsFolder,
+                            std::string* resultStr) {
   static const bool kUseFullPath = true;
   static const bool kRecurse = true;
-  auto fileList = Util::FileUtils::FilesInDirectory(path, kUseFullPath, "json", kRecurse);
+  auto fileList =
+      Util::FileUtils::FilesInDirectory(path, kUseFullPath, "json", kRecurse);
   int numValidScripts = 0;
-  for (const auto& scriptFilePath : fileList)
-  {
+  for (const auto& scriptFilePath : fileList) {
     Json::Value scriptJson;
     const bool success = _platform->readAsJson(scriptFilePath, scriptJson);
-    if (!success)
-    {
+    if (!success) {
       LOG_ERROR("RobotTest.LoadScripts.ScriptLoadError",
                 "Robot test script file %s failed to parse as JSON",
                 scriptFilePath.c_str());
-    }
-    else
-    {
+    } else {
       const bool isValid = ValidateScript(scriptJson);
-      if (!isValid)
-      {
+      if (!isValid) {
         LOG_ERROR("RobotTest.LoadScripts.ScriptValidationError",
-                  "Robot test script file %s is valid JSON but has one or more errors",
+                  "Robot test script file %s is valid JSON but has one or more "
+                  "errors",
                   scriptFilePath.c_str());
-      }
-      else
-      {
+      } else {
         static const bool kMustHaveExtension = true;
         static const bool kRemoveExtension = true;
-        const std::string name = Util::FileUtils::GetFileName(scriptFilePath, kMustHaveExtension, kRemoveExtension);
+        const std::string name = Util::FileUtils::GetFileName(
+            scriptFilePath, kMustHaveExtension, kRemoveExtension);
         ScriptsMap::const_iterator it = _scripts.find(name);
-        if (it != _scripts.end() && !isUploadedScriptsFolder)
-        {
+        if (it != _scripts.end() && !isUploadedScriptsFolder) {
           LOG_ERROR("RobotTest.LoadScripts.DuplicateScriptName",
-                    "Duplicate test script file name %s in resources; ignoring script with duplicate name",
+                    "Duplicate test script file name %s in resources; ignoring "
+                    "script with duplicate name",
                     scriptFilePath.c_str());
-        }
-        else
-        {
+        } else {
           RobotTestScript script;
           script._name = name;
           script._wasUploaded = isUploadedScriptsFolder;
@@ -439,42 +371,37 @@ void RobotTest::LoadScripts(const std::string& path, const bool isUploadedScript
   }
 
   LOG_INFO("RobotTest.LoadScripts",
-           "Successfully loaded and validated %i robot test scripts out of %i found in %s folder",
+           "Successfully loaded and validated %i robot test scripts out of %i "
+           "found in %s folder",
            numValidScripts, static_cast<int>(fileList.size()),
            isUploadedScriptsFolder ? "persistent" : "resources");
 
-  if (resultStr)
-  {
-    *resultStr += "Loaded " + std::to_string(numValidScripts) + " valid robot test scripts from persistent folder";
+  if (resultStr) {
+    *resultStr += "Loaded " + std::to_string(numValidScripts) +
+                  " valid robot test scripts from persistent folder";
   }
 }
 
-
-bool RobotTest::ValidateScript(const Json::Value& scriptJson)
-{
+bool RobotTest::ValidateScript(const Json::Value& scriptJson) {
   bool valid = true;
 
   const auto perfMetric = _context->GetPerfMetric();
 
-  if (!scriptJson.isMember(kScriptCommandsKey))
-  {
+  if (!scriptJson.isMember(kScriptCommandsKey)) {
     LOG_ERROR("RobotTest.ValidateScript", "Script missing 'scriptCommands'");
     return false;
   }
 
   const auto& commandsJson = scriptJson[kScriptCommandsKey];
-  if (!commandsJson.isArray())
-  {
+  if (!commandsJson.isArray()) {
     LOG_ERROR("RobotTest.ValidateScript", "'scriptCommands' must be an array");
     return false;
   }
 
   const auto numCommands = commandsJson.size();
-  for (int i = 0; i < numCommands; i++)
-  {
+  for (int i = 0; i < numCommands; i++) {
     const auto& commandJson = commandsJson[i];
-    if (!commandJson.isMember(kCommandKey))
-    {
+    if (!commandJson.isMember(kCommandKey)) {
       LOG_ERROR("RobotTest.ValidateScript",
                 "Script command at index %i is missing 'command' key", i);
       valid = false;
@@ -484,39 +411,38 @@ bool RobotTest::ValidateScript(const Json::Value& scriptJson)
     ScriptCommandType cmd;
     const bool success = StringToScriptCommand(commandStr, cmd);
     valid = valid && success;
-    if (!success)
-    {
+    if (!success) {
       LOG_ERROR("RobotTest.ValidateScript",
-                "'%s' at index %i is not a valid script command", commandStr.c_str(), i);
+                "'%s' at index %i is not a valid script command",
+                commandStr.c_str(), i);
       continue;
     }
 
-    switch (cmd)
-    {
+    switch (cmd) {
       case ScriptCommandType::EXIT:
         break;
-      case ScriptCommandType::PERFMETRIC:
-        {
-          if (!commandJson.isMember(kParametersKey))
-          {
-            LOG_ERROR("RobotTest.ValidateScript",
-                      "'perfMetric' script command at index %i is missing 'parameters' key", i);
-            valid = false;
-            continue;
-          }
-          const auto& paramsStr = commandJson[kParametersKey].asString();
-          static const bool kQueueForExecution = false;
-          const bool success = perfMetric->ParseCommands(paramsStr, kQueueForExecution);
-          valid = valid && success;
-          if (!success)
-          {
-            LOG_ERROR("RobotTest.ValidateScript",
-                      "Error parsing 'perfMetric' script command parameters at index %i ('%s')",
-                      i, paramsStr.c_str());
-            continue;
-          }
+      case ScriptCommandType::PERFMETRIC: {
+        if (!commandJson.isMember(kParametersKey)) {
+          LOG_ERROR("RobotTest.ValidateScript",
+                    "'perfMetric' script command at index %i is missing "
+                    "'parameters' key",
+                    i);
+          valid = false;
+          continue;
         }
-        break;
+        const auto& paramsStr = commandJson[kParametersKey].asString();
+        static const bool kQueueForExecution = false;
+        const bool success =
+            perfMetric->ParseCommands(paramsStr, kQueueForExecution);
+        valid = valid && success;
+        if (!success) {
+          LOG_ERROR("RobotTest.ValidateScript",
+                    "Error parsing 'perfMetric' script command parameters at "
+                    "index %i ('%s')",
+                    i, paramsStr.c_str());
+          continue;
+        }
+      } break;
       case ScriptCommandType::CLOUD_INTENT:
         break;
       case ScriptCommandType::WAIT_CLOUD_INTENT:
@@ -537,17 +463,14 @@ bool RobotTest::ValidateScript(const Json::Value& scriptJson)
   return valid;
 }
 
-
-bool RobotTest::StartScript(const std::string& scriptName)
-{
-  if (_state == RobotTestState::RUNNING)
-  {
+bool RobotTest::StartScript(const std::string& scriptName) {
+  if (_state == RobotTestState::RUNNING) {
     StopScript();
   }
   const ScriptsMap::const_iterator it = _scripts.find(scriptName);
-  if (it == _scripts.end())
-  {
-    LOG_INFO("RobotTest.StartScript", "Start requested for script %s but script not found",
+  if (it == _scripts.end()) {
+    LOG_INFO("RobotTest.StartScript",
+             "Start requested for script %s but script not found",
              scriptName.c_str());
     return false;
   }
@@ -565,61 +488,57 @@ bool RobotTest::StartScript(const std::string& scriptName)
   return true;
 }
 
-
-void RobotTest::StopScript()
-{
-  if (_state != RobotTestState::RUNNING)
-  {
-    LOG_INFO("RobotTest.StopScript", "Stop command given but no script was running");
+void RobotTest::StopScript() {
+  if (_state != RobotTestState::RUNNING) {
+    LOG_INFO("RobotTest.StopScript",
+             "Stop command given but no script was running");
     return;
   }
-  LOG_INFO("RobotTest.StopScript", "Stopping script %s", _curScriptName.c_str());
+  LOG_INFO("RobotTest.StopScript", "Stopping script %s",
+           _curScriptName.c_str());
   _state = RobotTestState::INACTIVE;
   _curScriptName = kInactiveScriptName;
   _curScriptCommandsJson = nullptr;
 }
 
-
-void RobotTest::FetchNextScriptCommand()
-{
-  if (_curScriptCommandIndex >= _curScriptCommandsJson->size())
-  {
-    // Script had no instructions, or we're pointing beyond the end of the script
+void RobotTest::FetchNextScriptCommand() {
+  if (_curScriptCommandIndex >= _curScriptCommandsJson->size()) {
+    // Script had no instructions, or we're pointing beyond the end of the
+    // script
     _nextScriptCommand = ScriptCommandType::EXIT;
-  }
-  else
-  {
+  } else {
     const auto& commandJson = (*_curScriptCommandsJson)[_curScriptCommandIndex];
     const auto& commandStr = commandJson[kCommandKey].asString();
     const bool success = StringToScriptCommand(commandStr, _nextScriptCommand);
-    if (!success)
-    {
-      // This should not happen once we start validating scripts when they are loaded
-      LOG_ERROR("RobotText.FetchNextScriptCommand", "Error fetching next script command");
+    if (!success) {
+      // This should not happen once we start validating scripts when they are
+      // loaded
+      LOG_ERROR("RobotText.FetchNextScriptCommand",
+                "Error fetching next script command");
     }
   }
 }
 
-
-bool RobotTest::StringToScriptCommand(const std::string& commandStr, ScriptCommandType& command)
-{
-  // todo: probably convert the ScriptCommandType to a CLAD enum, so we get the conversion code automatically
-  static const std::unordered_map<std::string, RobotTest::ScriptCommandType> stringToEnumMap =
-  {
-    {"exit", RobotTest::ScriptCommandType::EXIT},
-    {"perfMetric", RobotTest::ScriptCommandType::PERFMETRIC},
-    {"cloudIntent", RobotTest::ScriptCommandType::CLOUD_INTENT},
-    {"waitCloudIntent", RobotTest::ScriptCommandType::WAIT_CLOUD_INTENT},
-    {"waitUntilEngineTickCount", RobotTest::ScriptCommandType::WAIT_UNTIL_ENGINE_TICK_COUNT},
-    {"waitTicks", RobotTest::ScriptCommandType::WAIT_TICKS},
-    {"waitSeconds", RobotTest::ScriptCommandType::WAIT_SECONDS},
-    {"cpuStart", RobotTest::ScriptCommandType::CPU_START},
-    {"cpuStop", RobotTest::ScriptCommandType::CPU_STOP},
-  };
+bool RobotTest::StringToScriptCommand(const std::string& commandStr,
+                                      ScriptCommandType& command) {
+  // todo: probably convert the ScriptCommandType to a CLAD enum, so we get the
+  // conversion code automatically
+  static const std::unordered_map<std::string, RobotTest::ScriptCommandType>
+      stringToEnumMap = {
+          {"exit", RobotTest::ScriptCommandType::EXIT},
+          {"perfMetric", RobotTest::ScriptCommandType::PERFMETRIC},
+          {"cloudIntent", RobotTest::ScriptCommandType::CLOUD_INTENT},
+          {"waitCloudIntent", RobotTest::ScriptCommandType::WAIT_CLOUD_INTENT},
+          {"waitUntilEngineTickCount",
+           RobotTest::ScriptCommandType::WAIT_UNTIL_ENGINE_TICK_COUNT},
+          {"waitTicks", RobotTest::ScriptCommandType::WAIT_TICKS},
+          {"waitSeconds", RobotTest::ScriptCommandType::WAIT_SECONDS},
+          {"cpuStart", RobotTest::ScriptCommandType::CPU_START},
+          {"cpuStop", RobotTest::ScriptCommandType::CPU_STOP},
+      };
 
   auto it = stringToEnumMap.find(commandStr);
-  if (it == stringToEnumMap.end())
-  {
+  if (it == stringToEnumMap.end()) {
     return false;
   }
 
@@ -627,40 +546,36 @@ bool RobotTest::StringToScriptCommand(const std::string& commandStr, ScriptComma
   return true;
 }
 
-
-bool RobotTest::ExecuteScriptCommand(ScriptCommandType command)
-{
+bool RobotTest::ExecuteScriptCommand(ScriptCommandType command) {
   bool commandCompleted = true;
 
-  switch (command)
-  {
-    case ScriptCommandType::EXIT:
-    {
+  switch (command) {
+    case ScriptCommandType::EXIT: {
       // If we've gone past the last instruction, or we've
       // reached an exit command, it's time to stop
       StopScript();
       commandCompleted = false;
-    }
-    break;
+    } break;
 
-    case ScriptCommandType::PERFMETRIC:
-    {
-      const auto& paramsStr = (*_curScriptCommandsJson)[_curScriptCommandIndex][kParametersKey].asString();
+    case ScriptCommandType::PERFMETRIC: {
+      const auto& paramsStr =
+          (*_curScriptCommandsJson)[_curScriptCommandIndex][kParametersKey]
+              .asString();
       const auto perfMetric = _context->GetPerfMetric();
       const bool success = perfMetric->ParseCommands(paramsStr);
-      if (success)
-      {
+      if (success) {
         perfMetric->ExecuteQueuedCommands();
       }
-    }
-    break;
+    } break;
 
-    case ScriptCommandType::CLOUD_INTENT:
-    {
+    case ScriptCommandType::CLOUD_INTENT: {
       Robot* robot = _context->GetRobotManager()->GetRobot();
-      auto& uic = robot->GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
+      auto& uic = robot->GetAIComponent()
+                      .GetComponent<BehaviorComponent>()
+                      .GetComponent<UserIntentComponent>();
 
-      const auto& params = (*_curScriptCommandsJson)[_curScriptCommandIndex][kParametersKey];
+      const auto& params =
+          (*_curScriptCommandsJson)[_curScriptCommandIndex][kParametersKey];
 
       Json::StyledWriter writer;
       std::string stringifiedJSON;
@@ -669,131 +584,113 @@ bool RobotTest::ExecuteScriptCommand(ScriptCommandType command)
       uic.SetCloudIntentPendingFromString(stringifiedJSON);
 
       _waitingForCloudIntent = true;
-    }
-    break;
+    } break;
 
-    case ScriptCommandType::WAIT_CLOUD_INTENT:
-    {
-      if (_waitingForCloudIntent)
-      {
+    case ScriptCommandType::WAIT_CLOUD_INTENT: {
+      if (_waitingForCloudIntent) {
         commandCompleted = false;
       }
-    }
-    break;
+    } break;
 
-    case ScriptCommandType::WAIT_UNTIL_ENGINE_TICK_COUNT:
-    {
+    case ScriptCommandType::WAIT_UNTIL_ENGINE_TICK_COUNT: {
       const auto curTickCount = BaseStationTimer::getInstance()->GetTickCount();
-      if (_waitTickCount <= 0)
-      {
-        _waitTickCount = (*_curScriptCommandsJson)[_curScriptCommandIndex][kParametersKey].asInt();
+      if (_waitTickCount <= 0) {
+        _waitTickCount =
+            (*_curScriptCommandsJson)[_curScriptCommandIndex][kParametersKey]
+                .asInt();
       }
       commandCompleted = (curTickCount >= _waitTickCount);
-    }
-    break;
+    } break;
 
-    case ScriptCommandType::WAIT_TICKS:
-    {
-      if (_waitTickCount <= 0)
-      {
-        _waitTickCount = (*_curScriptCommandsJson)[_curScriptCommandIndex][kParametersKey].asInt();
+    case ScriptCommandType::WAIT_TICKS: {
+      if (_waitTickCount <= 0) {
+        _waitTickCount =
+            (*_curScriptCommandsJson)[_curScriptCommandIndex][kParametersKey]
+                .asInt();
         commandCompleted = (_waitTickCount <= 0);
-      }
-      else
-      {
-        if (--_waitTickCount > 0)
-        {
+      } else {
+        if (--_waitTickCount > 0) {
           commandCompleted = false;
         }
       }
-    }
-    break;
+    } break;
 
-    case ScriptCommandType::WAIT_SECONDS:
-    {
-      const auto curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      if (_waitTimeToExpire == 0.0f)
-      {
-        const auto secondsToWait = (*_curScriptCommandsJson)[_curScriptCommandIndex][kParametersKey].asFloat();
-        if (secondsToWait > 0.0f)
-        {
+    case ScriptCommandType::WAIT_SECONDS: {
+      const auto curTime =
+          BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if (_waitTimeToExpire == 0.0f) {
+        const auto secondsToWait =
+            (*_curScriptCommandsJson)[_curScriptCommandIndex][kParametersKey]
+                .asFloat();
+        if (secondsToWait > 0.0f) {
           commandCompleted = false;
           _waitTimeToExpire = curTime + secondsToWait;
         }
-      }
-      else
-      {
-        if (curTime >= _waitTimeToExpire)
-        {
+      } else {
+        if (curTime >= _waitTimeToExpire) {
           _waitTimeToExpire = 0.0f;
-        }
-        else
-        {
+        } else {
           commandCompleted = false;
         }
       }
-    }
-    break;
+    } break;
 
-    case ScriptCommandType::CPU_START:
-    {
+    case ScriptCommandType::CPU_START: {
       _cpuStartCommandExecuted = true;
       static const bool kCalculateUsage = false;
       SampleCPU(kCalculateUsage);
-    }
-    break;
+    } break;
 
-    case ScriptCommandType::CPU_STOP:
-    {
-      if (!_cpuStartCommandExecuted)
-      {
+    case ScriptCommandType::CPU_STOP: {
+      if (!_cpuStartCommandExecuted) {
         LOG_ERROR("RobotTest.ExecuteScriptCommand",
-                  "Error: cpuStop script command attempted but there has been no cpuStart script command");
+                  "Error: cpuStop script command attempted but there has been "
+                  "no cpuStart script command");
         StopScript();
         commandCompleted = false;
         break;
       }
       static const bool kCalculateUsage = true;
       SampleCPU(kCalculateUsage);
-    }
-    break;
+    } break;
   }
 
   return commandCompleted;
 }
 
-
-void RobotTest::SampleCPU(const bool calculateUsage)
-{
+void RobotTest::SampleCPU(const bool calculateUsage) {
   ANKI_CPU_PROFILE("RobotTest::SampleCPU");
 
   std::vector<std::string> cpuTimeStatsStrings;
   {
     ANKI_CPU_PROFILE("RobotTest::SampleCPUCallOS");
-    // Request CPU time data from the OS; this gets five strings containing time data;
-    // one is for overall CPU, and the other four are for each of the four cores
+    // Request CPU time data from the OS; this gets five strings containing time
+    // data; one is for overall CPU, and the other four are for each of the four
+    // cores
     const auto& osState = OSState::getInstance();
     osState->UpdateCPUTimeStats();
     osState->GetCPUTimeStats(cpuTimeStatsStrings);
-    DEV_ASSERT_MSG(cpuTimeStatsStrings.size() >= kNumCPUStatLines, "RobotTest.SampleCPU",
-                   "Insufficient number of cpu time stats lines (%i) returned from osState; should be %i",
-                   static_cast<int>(cpuTimeStatsStrings.size()), kNumCPUStatLines);
+    DEV_ASSERT_MSG(
+        cpuTimeStatsStrings.size() >= kNumCPUStatLines, "RobotTest.SampleCPU",
+        "Insufficient number of cpu time stats lines (%i) returned from "
+        "osState; should be %i",
+        static_cast<int>(cpuTimeStatsStrings.size()), kNumCPUStatLines);
   }
 
-  for (int lineIndex = 0; lineIndex < kNumCPUStatLines; lineIndex++)
-  {
+  for (int lineIndex = 0; lineIndex < kNumCPUStatLines; lineIndex++) {
     auto& line = cpuTimeStatsStrings[lineIndex];
     static const int kOffsetForCoreIndicator = 3;
     const char coreIndicator = line[kOffsetForCoreIndicator];
-    const int infoIndex = (coreIndicator == ' ' ? 0 : (coreIndicator - '0') + 1);
+    const int infoIndex =
+        (coreIndicator == ' ' ? 0 : (coreIndicator - '0') + 1);
 
     // Parse out the time values
     static const int kNumCPUTimeValues = 8;
-    size_t indexInString = kOffsetForCoreIndicator + 2;  // Skip core indicator char and space char
+    size_t indexInString =
+        kOffsetForCoreIndicator + 2;  // Skip core indicator char and space char
     int totalTimeCounter = 0;
     std::array<int, kNumCPUTimeValues> times;
-    for (int i = 0; i < kNumCPUTimeValues; i++)
-    {
+    for (int i = 0; i < kNumCPUTimeValues; i++) {
       line = line.substr(indexInString);
       const int val = std::stoi(line, &indexInString);
       times[i] = val;
@@ -801,22 +698,25 @@ void RobotTest::SampleCPU(const bool calculateUsage)
     }
 
     // Calculate idle time and used time
-    const int idleTimeCounter = times[3] + times[4]; // 'idle' + 'iowait'
+    const int idleTimeCounter = times[3] + times[4];  // 'idle' + 'iowait'
     const int usedTimeCounter = totalTimeCounter - idleTimeCounter;
 
     auto& prevCPUTime = _prevCPUTime[infoIndex];
 
-    if (calculateUsage)
-    {
-      const int deltaUsedTime  = usedTimeCounter  - prevCPUTime._usedTimeCounter;
-      const int deltaTotalTime = totalTimeCounter - prevCPUTime._totalTimeCounter;
+    if (calculateUsage) {
+      const int deltaUsedTime = usedTimeCounter - prevCPUTime._usedTimeCounter;
+      const int deltaTotalTime =
+          totalTimeCounter - prevCPUTime._totalTimeCounter;
       float usedPercent = 0.0f;
-      if (deltaTotalTime > 0)
-      {
-        usedPercent = ((static_cast<float>(deltaUsedTime) * 100.0f) / static_cast<float>(deltaTotalTime));
+      if (deltaTotalTime > 0) {
+        usedPercent = ((static_cast<float>(deltaUsedTime) * 100.0f) /
+                       static_cast<float>(deltaTotalTime));
       }
-      LOG_INFO("RobotTest.SampleCPU", "CPU used = %.2f%% (%s)\n", usedPercent,
-               lineIndex == 0 ? "Overall" : std::string("Core " + std::to_string(lineIndex - 1)).c_str());
+      LOG_INFO(
+          "RobotTest.SampleCPU", "CPU used = %.2f%% (%s)\n", usedPercent,
+          lineIndex == 0
+              ? "Overall"
+              : std::string("Core " + std::to_string(lineIndex - 1)).c_str());
     }
 
     prevCPUTime._usedTimeCounter = usedTimeCounter;
@@ -824,22 +724,18 @@ void RobotTest::SampleCPU(const bool calculateUsage)
   }
 }
 
-
 #else  // ANKI_ROBOT_TEST_ENABLED
 
 RobotTest::RobotTest(const CozmoContext* context) {}
 
 RobotTest::~RobotTest() {}
 
-void RobotTest::Init(Util::Data::DataPlatform* dataPlatform, WebService::WebService* webService)
-{
-}
+void RobotTest::Init(Util::Data::DataPlatform* dataPlatform,
+                     WebService::WebService* webService) {}
 
-void RobotTest::Update()
-{
-}
+void RobotTest::Update() {}
 
 #endif  // (else) ANKI_ROBOT_TEST_ENABLED
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki

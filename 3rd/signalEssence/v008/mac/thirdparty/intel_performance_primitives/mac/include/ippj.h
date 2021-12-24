@@ -11,12 +11,12 @@
 //
 */
 
-#if !defined( __IPPJ_H__ ) || defined( _OWN_BLDPCS )
+#if !defined(__IPPJ_H__) || defined(_OWN_BLDPCS)
 #define __IPPJ_H__
 
-#if defined (_WIN32_WCE) && defined (_M_IX86) && defined (__stdcall)
-  #define _IPP_STDCALL_CDECL
-  #undef __stdcall
+#if defined(_WIN32_WCE) && defined(_M_IX86) && defined(__stdcall)
+#define _IPP_STDCALL_CDECL
+#undef __stdcall
 #endif
 
 #ifndef __IPPDEFS_H__
@@ -27,25 +27,24 @@
 extern "C" {
 #endif
 
-#if !defined( _IPP_NO_DEFAULT_LIB )
-  #if defined( _IPP_PARALLEL_DYNAMIC )
-    #pragma comment( lib, "ippj" )
-    #pragma comment( lib, "ippcore" )
-  #elif defined( _IPP_PARALLEL_STATIC )
-    #pragma comment( lib, "ippj_t" )
-    #pragma comment( lib, "ippi_t" )
-    #pragma comment( lib, "ipps_t" )
-    #pragma comment( lib, "ippcore_t" )
-  #elif defined( _IPP_SEQUENTIAL_STATIC )
-    #pragma comment( lib, "ippj_l" )
-    #pragma comment( lib, "ippi_l" )
-    #pragma comment( lib, "ipps_l" )
-    #pragma comment( lib, "ippcore_l" )
-  #endif
+#if !defined(_IPP_NO_DEFAULT_LIB)
+#if defined(_IPP_PARALLEL_DYNAMIC)
+#pragma comment(lib, "ippj")
+#pragma comment(lib, "ippcore")
+#elif defined(_IPP_PARALLEL_STATIC)
+#pragma comment(lib, "ippj_t")
+#pragma comment(lib, "ippi_t")
+#pragma comment(lib, "ipps_t")
+#pragma comment(lib, "ippcore_t")
+#elif defined(_IPP_SEQUENTIAL_STATIC)
+#pragma comment(lib, "ippj_l")
+#pragma comment(lib, "ippi_l")
+#pragma comment(lib, "ipps_l")
+#pragma comment(lib, "ippcore_l")
+#endif
 #endif
 
-#if !defined( _OWN_BLDPCS )
-
+#if !defined(_OWN_BLDPCS)
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -62,7 +61,6 @@ struct EncodeHuffmanSpec;
 
 typedef struct EncodeHuffmanSpec IppiEncodeHuffmanSpec;
 
-
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    IppiDecodeHuffmanSpec
@@ -77,7 +75,6 @@ typedef struct EncodeHuffmanSpec IppiEncodeHuffmanSpec;
 struct DecodeHuffmanSpec;
 
 typedef struct DecodeHuffmanSpec IppiDecodeHuffmanSpec;
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -94,7 +91,6 @@ struct EncodeHuffmanState;
 
 typedef struct EncodeHuffmanState IppiEncodeHuffmanState;
 
-
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    IppiDecodeHuffmanState
@@ -109,9 +105,6 @@ typedef struct EncodeHuffmanState IppiEncodeHuffmanState;
 struct DecodeHuffmanState;
 
 typedef struct DecodeHuffmanState IppiDecodeHuffmanState;
-
-
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -128,7 +121,6 @@ struct iEncodeState_JPEG2K;
 
 typedef struct iEncodeState_JPEG2K IppiEncodeState_JPEG2K;
 
-
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    IppiDecodeCBProgrState_JPEG2K
@@ -144,7 +136,6 @@ struct iDecodeCBProgrState_JPEG2K;
 
 typedef struct iDecodeCBProgrState_JPEG2K IppiDecodeCBProgrState_JPEG2K;
 
-
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    IppiWTFilterFirst
@@ -157,13 +148,11 @@ typedef struct iDecodeCBProgrState_JPEG2K IppiDecodeCBProgrState_JPEG2K;
 //
 */
 
-typedef enum
-{
+typedef enum {
   ippWTFilterFirstLow,
   ippWTFilterFirstHigh
 
 } IppiWTFilterFirst;
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -184,15 +173,13 @@ typedef enum
 //
 */
 
-typedef enum
-{
+typedef enum {
   ippWTSubbandLxLy,
   ippWTSubbandLxHy,
   ippWTSubbandHxLy,
   ippWTSubbandHxHy
 
 } IppiWTSubband;
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -212,14 +199,12 @@ typedef enum
 //
 */
 
-typedef enum
-{
+typedef enum {
   ippMQTermSimple,
   ippMQTermNearOptimal,
   ippMQTermPredictable
 
 } IppiMQTermination;
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -236,12 +221,10 @@ typedef enum
 //
 */
 
-typedef enum
-{
+typedef enum {
   ippMQRateApprGood
 
 } IppiMQRateAppr;
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -280,22 +263,20 @@ typedef enum
 //
 */
 
-enum
-{
+enum {
   IPP_JPEG2K_VERTICALLY_CAUSAL_CONTEXT = 1,
-  IPP_JPEG2K_SELECTIVE_MQ_BYPASS       = 1 << 1,
-  IPP_JPEG2K_TERMINATE_ON_EVERY_PASS   = 1 << 2,
-  IPP_JPEG2K_RESETCTX_ON_EVERY_PASS    = 1 << 3,
-  IPP_JPEG2K_USE_SEGMENTATION_SYMBOLS  = 1 << 4,
-  IPP_JPEG2K_LOSSLESS_MODE             = 1 << 5,
+  IPP_JPEG2K_SELECTIVE_MQ_BYPASS = 1 << 1,
+  IPP_JPEG2K_TERMINATE_ON_EVERY_PASS = 1 << 2,
+  IPP_JPEG2K_RESETCTX_ON_EVERY_PASS = 1 << 3,
+  IPP_JPEG2K_USE_SEGMENTATION_SYMBOLS = 1 << 4,
+  IPP_JPEG2K_LOSSLESS_MODE = 1 << 5,
 
-  IPP_JPEG2K_DEC_CONCEAL_ERRORS        = 1 << 16,
-  IPP_JPEG2K_DEC_DO_NOT_CLEAR_CB       = 1 << 17,
+  IPP_JPEG2K_DEC_CONCEAL_ERRORS = 1 << 16,
+  IPP_JPEG2K_DEC_DO_NOT_CLEAR_CB = 1 << 17,
   IPP_JPEG2K_DEC_DO_NOT_RESET_LOW_BITS = 1 << 18,
   IPP_JPEG2K_DEC_DO_NOT_CLEAR_SFBUFFER = 1 << 19,
-  IPP_JPEG2K_DEC_CHECK_PRED_TERM       = 1 << 20
+  IPP_JPEG2K_DEC_CHECK_PRED_TERM = 1 << 20
 };
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -305,8 +286,7 @@ enum
 //
 */
 
-enum
-{
+enum {
   PRED1 = 1,
   PRED2 = 2,
   PRED3 = 3,
@@ -316,28 +296,21 @@ enum
   PRED7 = 7
 };
 
-typedef enum {
-    ippVLCAdaptLowpass,
-    ippVLCAdaptHighpass
-}IppiVLCAdaptType;
+typedef enum { ippVLCAdaptLowpass, ippVLCAdaptHighpass } IppiVLCAdaptType;
 
 typedef enum {
-    ippVLCScanVert,
-    ippVLCScanHoriz,
-    ippVLCScanRaster
-}IppiVLCScanType;
+  ippVLCScanVert,
+  ippVLCScanHoriz,
+  ippVLCScanRaster
+} IppiVLCScanType;
 
 typedef struct _jxrType_VLCState IppiVLCState_JPEGXR;
 
 #endif /* _OWN_BLDPCS */
 
-
-
-
 /* ///////////////////////////////////////////////////////////////////////////
 //        Miscelenauos functions
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -355,15 +328,11 @@ typedef struct _jxrType_VLCState IppiVLCState_JPEGXR;
 //    don't free the pointer to IppLibraryVersion
 */
 
-IPPAPI( const IppLibraryVersion*, ippjGetLibVersion, (void) )
-
-
-
+IPPAPI(const IppLibraryVersion*, ippjGetLibVersion, (void))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        Huffman Encoding Functions (Baseline)
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -387,11 +356,8 @@ IPPAPI( const IppLibraryVersion*, ippjGetLibVersion, (void) )
 //    of HUFFVAL, as specified in ISO/IEC 10918-1, Figure B.7
 */
 
-IPPAPI(IppStatus, ippiEncodeHuffmanRawTableInit_JPEG_8u, (
-  const int    pStatistics[256],
-        Ipp8u* pListBits,
-        Ipp8u* pListVals))
-
+IPPAPI(IppStatus, ippiEncodeHuffmanRawTableInit_JPEG_8u,
+       (const int pStatistics[256], Ipp8u* pListBits, Ipp8u* pListVals))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -410,9 +376,7 @@ IPPAPI(IppStatus, ippiEncodeHuffmanRawTableInit_JPEG_8u, (
 //
 */
 
-IPPAPI(IppStatus, ippiEncodeHuffmanSpecGetBufSize_JPEG_8u, (
-  int* size))
-
+IPPAPI(IppStatus, ippiEncodeHuffmanSpecGetBufSize_JPEG_8u, (int* size))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -435,11 +399,9 @@ IPPAPI(IppStatus, ippiEncodeHuffmanSpecGetBufSize_JPEG_8u, (
 //    of HUFFVAL, as specified in ISO/IEC 10918-1, Figure B.7
 */
 
-IPPAPI(IppStatus, ippiEncodeHuffmanSpecInit_JPEG_8u, (
-  const Ipp8u*                 pListBits,
-  const Ipp8u*                 pListVals,
+IPPAPI(IppStatus, ippiEncodeHuffmanSpecInit_JPEG_8u,
+       (const Ipp8u* pListBits, const Ipp8u* pListVals,
         IppiEncodeHuffmanSpec* pEncHuffSpec))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -463,12 +425,14 @@ IPPAPI(IppStatus, ippiEncodeHuffmanSpecInit_JPEG_8u, (
 //    list of HUFFVAL, as specified in ISO/IEC 10918-1, Figure B.7
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiEncodeHuffmanSpecInitAlloc_JPEG_8u, (
-  const Ipp8u*                  pListBits,
-  const Ipp8u*                  pListVals,
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiEncodeHuffmanSpecInitAlloc_JPEG_8u,
+       (const Ipp8u* pListBits, const Ipp8u* pListVals,
         IppiEncodeHuffmanSpec** ppEncHuffSpec))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -487,10 +451,13 @@ IPPAPI(IppStatus, ippiEncodeHuffmanSpecInitAlloc_JPEG_8u, (
 //
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiEncodeHuffmanSpecFree_JPEG_8u, (
-  IppiEncodeHuffmanSpec*  pEncHuffSpec))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiEncodeHuffmanSpecFree_JPEG_8u,
+       (IppiEncodeHuffmanSpec * pEncHuffSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -509,9 +476,7 @@ IPPAPI(IppStatus, ippiEncodeHuffmanSpecFree_JPEG_8u, (
 //
 */
 
-IPPAPI(IppStatus, ippiEncodeHuffmanStateGetBufSize_JPEG_8u, (
-  int*  size))
-
+IPPAPI(IppStatus, ippiEncodeHuffmanStateGetBufSize_JPEG_8u, (int* size))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -530,9 +495,8 @@ IPPAPI(IppStatus, ippiEncodeHuffmanStateGetBufSize_JPEG_8u, (
 //
 */
 
-IPPAPI(IppStatus, ippiEncodeHuffmanStateInit_JPEG_8u, (
-  IppiEncodeHuffmanState*  pEncHuffState))
-
+IPPAPI(IppStatus, ippiEncodeHuffmanStateInit_JPEG_8u,
+       (IppiEncodeHuffmanState * pEncHuffState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -552,10 +516,13 @@ IPPAPI(IppStatus, ippiEncodeHuffmanStateInit_JPEG_8u, (
 //
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiEncodeHuffmanStateInitAlloc_JPEG_8u, (
-  IppiEncodeHuffmanState**  ppEncHuffState))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiEncodeHuffmanStateInitAlloc_JPEG_8u,
+       (IppiEncodeHuffmanState * *ppEncHuffState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -574,10 +541,13 @@ IPPAPI(IppStatus, ippiEncodeHuffmanStateInitAlloc_JPEG_8u, (
 //
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiEncodeHuffmanStateFree_JPEG_8u, (
-  IppiEncodeHuffmanState*  pEncHuffState))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiEncodeHuffmanStateFree_JPEG_8u,
+       (IppiEncodeHuffmanState * pEncHuffState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -610,17 +580,11 @@ IPPAPI(IppStatus, ippiEncodeHuffmanStateFree_JPEG_8u, (
 //    Annex F, F.1.2 - Baseline Huffman encoding procedures.
 */
 
-IPPAPI(IppStatus, ippiEncodeHuffman8x8_JPEG_16s1u_C1, (
-  const Ipp16s*                 pSrc,
-        Ipp8u*                  pDst,
-        int                     dstLenBytes,
-        int*                    pDstCurrPos,
-        Ipp16s*                 pLastDC,
-  const IppiEncodeHuffmanSpec*  pDcTable,
-  const IppiEncodeHuffmanSpec*  pAcTable,
-        IppiEncodeHuffmanState* pEncHuffState,
-        int                     bFlushState))
-
+IPPAPI(IppStatus, ippiEncodeHuffman8x8_JPEG_16s1u_C1,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int dstLenBytes, int* pDstCurrPos,
+        Ipp16s* pLastDC, const IppiEncodeHuffmanSpec* pDcTable,
+        const IppiEncodeHuffmanSpec* pAcTable,
+        IppiEncodeHuffmanState* pEncHuffState, int bFlushState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -647,14 +611,10 @@ IPPAPI(IppStatus, ippiEncodeHuffman8x8_JPEG_16s1u_C1, (
 //    Annex F, F.1.2 - Baseline Huffman encoding procedures.
 */
 
-IPPAPI(IppStatus, ippiEncodeHuffman8x8_Direct_JPEG_16s1u_C1, (
-  const Ipp16s*                 pSrc,
-        Ipp8u*                  pDst,
-        int*                    pDstBitsLen,
-        Ipp16s*                 pLastDC,
-  const IppiEncodeHuffmanSpec*  pDcTable,
-  const IppiEncodeHuffmanSpec*  pAcTable))
-
+IPPAPI(IppStatus, ippiEncodeHuffman8x8_Direct_JPEG_16s1u_C1,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int* pDstBitsLen, Ipp16s* pLastDC,
+        const IppiEncodeHuffmanSpec* pDcTable,
+        const IppiEncodeHuffmanSpec* pAcTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -676,19 +636,13 @@ IPPAPI(IppStatus, ippiEncodeHuffman8x8_Direct_JPEG_16s1u_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiGetHuffmanStatistics8x8_JPEG_16s_C1, (
-  const Ipp16s* pSrc,
-        int     pDcStatistics[256],
-        int     pAcStatistics[256],
+IPPAPI(IppStatus, ippiGetHuffmanStatistics8x8_JPEG_16s_C1,
+       (const Ipp16s* pSrc, int pDcStatistics[256], int pAcStatistics[256],
         Ipp16s* pLastDC))
-
-
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        Huffman Encoding Functions (Progressive)
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -711,12 +665,8 @@ IPPAPI(IppStatus, ippiGetHuffmanStatistics8x8_JPEG_16s_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiGetHuffmanStatistics8x8_DCFirst_JPEG_16s_C1, (
-  const Ipp16s* pSrc,
-        int     pDcStatistics[256],
-        Ipp16s* pLastDC,
-        int     Al))
-
+IPPAPI(IppStatus, ippiGetHuffmanStatistics8x8_DCFirst_JPEG_16s_C1,
+       (const Ipp16s* pSrc, int pDcStatistics[256], Ipp16s* pLastDC, int Al))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -743,17 +693,9 @@ IPPAPI(IppStatus, ippiGetHuffmanStatistics8x8_DCFirst_JPEG_16s_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiGetHuffmanStatistics8x8_ACFirst_JPEG_16s_C1, (
-  const Ipp16s*                 pSrc,
-        int                     pAcStatistics[256],
-        int                     Ss,
-        int                     Se,
-        int                     Al,
-        IppiEncodeHuffmanState* pEncHuffState,
-        int                     bFlushState))
-
-
-
+IPPAPI(IppStatus, ippiGetHuffmanStatistics8x8_ACFirst_JPEG_16s_C1,
+       (const Ipp16s* pSrc, int pAcStatistics[256], int Ss, int Se, int Al,
+        IppiEncodeHuffmanState* pEncHuffState, int bFlushState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -780,15 +722,9 @@ IPPAPI(IppStatus, ippiGetHuffmanStatistics8x8_ACFirst_JPEG_16s_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiGetHuffmanStatistics8x8_ACRefine_JPEG_16s_C1, (
-  const Ipp16s*                 pSrc,
-        int                     pAcStatistics[256],
-        int                     Ss,
-        int                     Se,
-        int                     Al,
-        IppiEncodeHuffmanState* pEncHuffState,
-        int                     bFlushState))
-
+IPPAPI(IppStatus, ippiGetHuffmanStatistics8x8_ACRefine_JPEG_16s_C1,
+       (const Ipp16s* pSrc, int pAcStatistics[256], int Ss, int Se, int Al,
+        IppiEncodeHuffmanState* pEncHuffState, int bFlushState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -819,17 +755,10 @@ IPPAPI(IppStatus, ippiGetHuffmanStatistics8x8_ACRefine_JPEG_16s_C1, (
 //    Annex G, G.1.2 - Progressive encoding procedures with Huffman.
 */
 
-IPPAPI(IppStatus, ippiEncodeHuffman8x8_DCFirst_JPEG_16s1u_C1, (
-  const Ipp16s*                 pSrc,
-        Ipp8u*                  pDst,
-        int                     dstLenBytes,
-        int*                    pDstCurrPos,
-        Ipp16s*                 pLastDC,
-        int                     Al,
-  const IppiEncodeHuffmanSpec*  pDcTable,
-        IppiEncodeHuffmanState* pEncHuffState,
-        int                     bFlushState))
-
+IPPAPI(IppStatus, ippiEncodeHuffman8x8_DCFirst_JPEG_16s1u_C1,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int dstLenBytes, int* pDstCurrPos,
+        Ipp16s* pLastDC, int Al, const IppiEncodeHuffmanSpec* pDcTable,
+        IppiEncodeHuffmanState* pEncHuffState, int bFlushState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -858,15 +787,9 @@ IPPAPI(IppStatus, ippiEncodeHuffman8x8_DCFirst_JPEG_16s1u_C1, (
 //    Annex G, G.1.2 - Progressive encoding procedures with Huffman.
 */
 
-IPPAPI(IppStatus, ippiEncodeHuffman8x8_DCRefine_JPEG_16s1u_C1, (
-  const Ipp16s*                 pSrc,
-        Ipp8u*                  pDst,
-        int                     dstLenBytes,
-        int*                    pDstCurrPos,
-        int                     Al,
-        IppiEncodeHuffmanState* pEncHuffState,
-        int                     bFlushState))
-
+IPPAPI(IppStatus, ippiEncodeHuffman8x8_DCRefine_JPEG_16s1u_C1,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int dstLenBytes, int* pDstCurrPos,
+        int Al, IppiEncodeHuffmanState* pEncHuffState, int bFlushState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -898,20 +821,10 @@ IPPAPI(IppStatus, ippiEncodeHuffman8x8_DCRefine_JPEG_16s1u_C1, (
 //    Annex G, G.1.2 - Progressive encoding procedures with Huffman.
 */
 
-IPPAPI(IppStatus, ippiEncodeHuffman8x8_ACFirst_JPEG_16s1u_C1, (
-  const Ipp16s*                 pSrc,
-        Ipp8u*                  pDst,
-        int                     dstLenBytes,
-        int*                    pDstCurrPos,
-        int                     Ss,
-        int                     Se,
-        int                     Al,
-  const IppiEncodeHuffmanSpec*  pAcTable,
-        IppiEncodeHuffmanState* pEncHuffState,
-        int                     bFlushState))
-
-
-
+IPPAPI(IppStatus, ippiEncodeHuffman8x8_ACFirst_JPEG_16s1u_C1,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int dstLenBytes, int* pDstCurrPos,
+        int Ss, int Se, int Al, const IppiEncodeHuffmanSpec* pAcTable,
+        IppiEncodeHuffmanState* pEncHuffState, int bFlushState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -943,25 +856,14 @@ IPPAPI(IppStatus, ippiEncodeHuffman8x8_ACFirst_JPEG_16s1u_C1, (
 //    Annex G, G.1.2 - Progressive encoding procedures with Huffman.
 */
 
-IPPAPI(IppStatus, ippiEncodeHuffman8x8_ACRefine_JPEG_16s1u_C1, (
-  const Ipp16s*                 pSrc,
-        Ipp8u*                  pDst,
-        int                     dstLenBytes,
-        int*                    pDstCurrPos,
-        int                     Ss,
-        int                     Se,
-        int                     Al,
-  const IppiEncodeHuffmanSpec*  pAcTable,
-        IppiEncodeHuffmanState* pEncHuffState,
-        int                     bFlushState))
-
-
-
+IPPAPI(IppStatus, ippiEncodeHuffman8x8_ACRefine_JPEG_16s1u_C1,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int dstLenBytes, int* pDstCurrPos,
+        int Ss, int Se, int Al, const IppiEncodeHuffmanSpec* pAcTable,
+        IppiEncodeHuffmanState* pEncHuffState, int bFlushState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        Huffman Encoding Functions (Lossless)
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -986,15 +888,10 @@ IPPAPI(IppStatus, ippiEncodeHuffman8x8_ACRefine_JPEG_16s1u_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiEncodeHuffmanOne_JPEG_16s1u_C1, (
-  const Ipp16s*                 pSrc,
-        Ipp8u*                  pDst,
-        int                     nDstLenBytes,
-        int*                    pDstCurrPos,
-  const IppiEncodeHuffmanSpec*  pEncHuffTable,
-        IppiEncodeHuffmanState* pEncHuffState,
-        int                     bFlushState))
-
+IPPAPI(IppStatus, ippiEncodeHuffmanOne_JPEG_16s1u_C1,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int nDstLenBytes, int* pDstCurrPos,
+        const IppiEncodeHuffmanSpec* pEncHuffTable,
+        IppiEncodeHuffmanState* pEncHuffState, int bFlushState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1019,17 +916,11 @@ IPPAPI(IppStatus, ippiEncodeHuffmanOne_JPEG_16s1u_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiEncodeHuffmanRow_JPEG_16s1u_P4C1, (
-  const Ipp16s*                 pSrc[4],
-        int                     nSrcLen,
-        int                     nSrcRows,
-        Ipp8u*                  pDst,
-        int                     nDstLenBytes,
-        int*                    pDstCurrPos,
-  const IppiEncodeHuffmanSpec*  pEncHuffTable[4],
-        IppiEncodeHuffmanState* pEncHuffState,
-        int                     bFlushState))
-
+IPPAPI(IppStatus, ippiEncodeHuffmanRow_JPEG_16s1u_P4C1,
+       (const Ipp16s* pSrc[4], int nSrcLen, int nSrcRows, Ipp8u* pDst,
+        int nDstLenBytes, int* pDstCurrPos,
+        const IppiEncodeHuffmanSpec* pEncHuffTable[4],
+        IppiEncodeHuffmanState* pEncHuffState, int bFlushState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1049,17 +940,12 @@ IPPAPI(IppStatus, ippiEncodeHuffmanRow_JPEG_16s1u_P4C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiGetHuffmanStatisticsOne_JPEG_16s_C1, (
-  const Ipp16s* pSrc,
-        int     pHuffStatistics[256]))
-
-
-
+IPPAPI(IppStatus, ippiGetHuffmanStatisticsOne_JPEG_16s_C1,
+       (const Ipp16s* pSrc, int pHuffStatistics[256]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        Huffman Decoding Functions (Baseline)
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1078,9 +964,7 @@ IPPAPI(IppStatus, ippiGetHuffmanStatisticsOne_JPEG_16s_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiDecodeHuffmanSpecGetBufSize_JPEG_8u, (
-  int*  size))
-
+IPPAPI(IppStatus, ippiDecodeHuffmanSpecGetBufSize_JPEG_8u, (int* size))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1103,11 +987,9 @@ IPPAPI(IppStatus, ippiDecodeHuffmanSpecGetBufSize_JPEG_8u, (
 //    list of HUFFVAL, as specified in ISO/IEC 10918-1, Figure B.7
 */
 
-IPPAPI(IppStatus, ippiDecodeHuffmanSpecInit_JPEG_8u, (
-  const Ipp8u*                  pListBits,
-  const Ipp8u*                  pListVals,
-        IppiDecodeHuffmanSpec*  pDecHuffSpec))
-
+IPPAPI(IppStatus, ippiDecodeHuffmanSpecInit_JPEG_8u,
+       (const Ipp8u* pListBits, const Ipp8u* pListVals,
+        IppiDecodeHuffmanSpec* pDecHuffSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1131,12 +1013,14 @@ IPPAPI(IppStatus, ippiDecodeHuffmanSpecInit_JPEG_8u, (
 //    list of HUFFVAL, as specified in ISO/IEC 10918-1, Figure B.7
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeHuffmanSpecInitAlloc_JPEG_8u, (
-  const Ipp8u*                   pListBits,
-  const Ipp8u*                   pListVals,
-        IppiDecodeHuffmanSpec**  ppDecHuffSpec))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeHuffmanSpecInitAlloc_JPEG_8u,
+       (const Ipp8u* pListBits, const Ipp8u* pListVals,
+        IppiDecodeHuffmanSpec** ppDecHuffSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1155,10 +1039,13 @@ IPPAPI(IppStatus, ippiDecodeHuffmanSpecInitAlloc_JPEG_8u, (
 //
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeHuffmanSpecFree_JPEG_8u, (
-  IppiDecodeHuffmanSpec*  pDecHuffSpec))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeHuffmanSpecFree_JPEG_8u,
+       (IppiDecodeHuffmanSpec * pDecHuffSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1177,9 +1064,7 @@ IPPAPI(IppStatus, ippiDecodeHuffmanSpecFree_JPEG_8u, (
 //
 */
 
-IPPAPI(IppStatus, ippiDecodeHuffmanStateGetBufSize_JPEG_8u, (
-  int*  size))
-
+IPPAPI(IppStatus, ippiDecodeHuffmanStateGetBufSize_JPEG_8u, (int* size))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1199,9 +1084,8 @@ IPPAPI(IppStatus, ippiDecodeHuffmanStateGetBufSize_JPEG_8u, (
 //
 */
 
-IPPAPI(IppStatus, ippiDecodeHuffmanStateInit_JPEG_8u, (
-  IppiDecodeHuffmanState*  pDecHuffState))
-
+IPPAPI(IppStatus, ippiDecodeHuffmanStateInit_JPEG_8u,
+       (IppiDecodeHuffmanState * pDecHuffState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1221,10 +1105,13 @@ IPPAPI(IppStatus, ippiDecodeHuffmanStateInit_JPEG_8u, (
 //
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeHuffmanStateInitAlloc_JPEG_8u, (
-  IppiDecodeHuffmanState**  ppDecHuffState))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeHuffmanStateInitAlloc_JPEG_8u,
+       (IppiDecodeHuffmanState * *ppDecHuffState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1243,10 +1130,13 @@ IPPAPI(IppStatus, ippiDecodeHuffmanStateInitAlloc_JPEG_8u, (
 //
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeHuffmanStateFree_JPEG_8u, (
-  IppiDecodeHuffmanState*  pDecHuffState))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeHuffmanStateFree_JPEG_8u,
+       (IppiDecodeHuffmanState * pDecHuffState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1276,17 +1166,11 @@ IPPAPI(IppStatus, ippiDecodeHuffmanStateFree_JPEG_8u, (
 //    Annex F, F.2.2 - Baseline Huffman Decoding procedures
 */
 
-IPPAPI(IppStatus, ippiDecodeHuffman8x8_JPEG_1u16s_C1, (
-  const Ipp8u*                  pSrc,
-        int                     srcLenBytes,
-        int*                    pSrcCurrPos,
-        Ipp16s*                 pDst,
-        Ipp16s*                 pLastDC,
-        int*                    pMarker,
-  const IppiDecodeHuffmanSpec*  pDcTable,
-  const IppiDecodeHuffmanSpec*  pAcTable,
+IPPAPI(IppStatus, ippiDecodeHuffman8x8_JPEG_1u16s_C1,
+       (const Ipp8u* pSrc, int srcLenBytes, int* pSrcCurrPos, Ipp16s* pDst,
+        Ipp16s* pLastDC, int* pMarker, const IppiDecodeHuffmanSpec* pDcTable,
+        const IppiDecodeHuffmanSpec* pAcTable,
         IppiDecodeHuffmanState* pDecHuffState))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1321,22 +1205,15 @@ IPPAPI(IppStatus, ippiDecodeHuffman8x8_JPEG_1u16s_C1, (
 //    IppStatus
 */
 
-IPPAPI(IppStatus, ippiDecodeHuffman8x8_Direct_JPEG_1u16s_C1, (
-  const Ipp8u*                 pSrc,
-        int*                   pSrcBitsLen,
-        Ipp16s*                pDst,
-        Ipp16s*                pLastDC,
-        int*                   pMarker,
-        Ipp32u*                pPrefetchedBits,
-        int*                   pNumValidPrefetchedBits,
-  const IppiDecodeHuffmanSpec* pDcTable,
-  const IppiDecodeHuffmanSpec* pAcTable))
-
+IPPAPI(IppStatus, ippiDecodeHuffman8x8_Direct_JPEG_1u16s_C1,
+       (const Ipp8u* pSrc, int* pSrcBitsLen, Ipp16s* pDst, Ipp16s* pLastDC,
+        int* pMarker, Ipp32u* pPrefetchedBits, int* pNumValidPrefetchedBits,
+        const IppiDecodeHuffmanSpec* pDcTable,
+        const IppiDecodeHuffmanSpec* pAcTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        Huffman Decoding Functions (Progressive)
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1366,17 +1243,11 @@ IPPAPI(IppStatus, ippiDecodeHuffman8x8_Direct_JPEG_1u16s_C1, (
 //    Annex G, G.2 - Progressive decoding of the DCT.
 */
 
-IPPAPI(IppStatus, ippiDecodeHuffman8x8_DCFirst_JPEG_1u16s_C1, (
-  const Ipp8u*                  pSrc,
-        int                     srcLenBytes,
-        int*                    pSrcCurrPos,
-        Ipp16s*                 pDst,
-        Ipp16s*                 pLastDC,
-        int*                    pMarker,
-        int                     Al,
-  const IppiDecodeHuffmanSpec*  pDcTable,
+IPPAPI(IppStatus, ippiDecodeHuffman8x8_DCFirst_JPEG_1u16s_C1,
+       (const Ipp8u* pSrc, int srcLenBytes, int* pSrcCurrPos, Ipp16s* pDst,
+        Ipp16s* pLastDC, int* pMarker, int Al,
+        const IppiDecodeHuffmanSpec* pDcTable,
         IppiDecodeHuffmanState* pDecHuffState))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1403,15 +1274,9 @@ IPPAPI(IppStatus, ippiDecodeHuffman8x8_DCFirst_JPEG_1u16s_C1, (
 //    Annex G, G.2 - Progressive decoding of the DCT.
 */
 
-IPPAPI(IppStatus, ippiDecodeHuffman8x8_DCRefine_JPEG_1u16s_C1, (
-  const Ipp8u*                   pSrc,
-        int                      srcLenBytes,
-        int*                     pSrcCurrPos,
-        Ipp16s*                  pDst,
-        int*                     pMarker,
-        int                      Al,
-        IppiDecodeHuffmanState*  pDecHuffState))
-
+IPPAPI(IppStatus, ippiDecodeHuffman8x8_DCRefine_JPEG_1u16s_C1,
+       (const Ipp8u* pSrc, int srcLenBytes, int* pSrcCurrPos, Ipp16s* pDst,
+        int* pMarker, int Al, IppiDecodeHuffmanState* pDecHuffState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1441,18 +1306,11 @@ IPPAPI(IppStatus, ippiDecodeHuffman8x8_DCRefine_JPEG_1u16s_C1, (
 //    Annex G, G.2 - Progressive decoding of the DCT.
 */
 
-IPPAPI(IppStatus, ippiDecodeHuffman8x8_ACFirst_JPEG_1u16s_C1, (
-  const Ipp8u*                  pSrc,
-        int                     srcLenBytes,
-        int*                    pSrcCurrPos,
-        Ipp16s*                 pDst,
-        int*                    pMarker,
-        int                     Ss,
-        int                     Se,
-        int                     Al,
-  const IppiDecodeHuffmanSpec*  pAcTable,
+IPPAPI(IppStatus, ippiDecodeHuffman8x8_ACFirst_JPEG_1u16s_C1,
+       (const Ipp8u* pSrc, int srcLenBytes, int* pSrcCurrPos, Ipp16s* pDst,
+        int* pMarker, int Ss, int Se, int Al,
+        const IppiDecodeHuffmanSpec* pAcTable,
         IppiDecodeHuffmanState* pDecHuffState))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1482,25 +1340,15 @@ IPPAPI(IppStatus, ippiDecodeHuffman8x8_ACFirst_JPEG_1u16s_C1, (
 //    Annex G, G.2 - Progressive decoding of the DCT.
 */
 
-IPPAPI(IppStatus, ippiDecodeHuffman8x8_ACRefine_JPEG_1u16s_C1, (
-  const Ipp8u*                  pSrc,
-        int                     srcLenBytes,
-        int*                    pSrcCurrPos,
-        Ipp16s*                 pDst,
-        int*                    pMarker,
-        int                     Ss,
-        int                     Se,
-        int                     Al,
-  const IppiDecodeHuffmanSpec*  pAcTable,
+IPPAPI(IppStatus, ippiDecodeHuffman8x8_ACRefine_JPEG_1u16s_C1,
+       (const Ipp8u* pSrc, int srcLenBytes, int* pSrcCurrPos, Ipp16s* pDst,
+        int* pMarker, int Ss, int Se, int Al,
+        const IppiDecodeHuffmanSpec* pAcTable,
         IppiDecodeHuffmanState* pDecHuffState))
-
-
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        Huffman Decoding Functions (Lossless)
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1525,15 +1373,10 @@ IPPAPI(IppStatus, ippiDecodeHuffman8x8_ACRefine_JPEG_1u16s_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiDecodeHuffmanOne_JPEG_1u16s_C1, (
-  const Ipp8u*                  pSrc,
-        int                     nSrcLenBytes,
-        int*                    pSrcCurrPos,
-        Ipp16s*                 pDst,
-        int*                    pMarker,
-  const IppiDecodeHuffmanSpec*  pDecHuffTable,
+IPPAPI(IppStatus, ippiDecodeHuffmanOne_JPEG_1u16s_C1,
+       (const Ipp8u* pSrc, int nSrcLenBytes, int* pSrcCurrPos, Ipp16s* pDst,
+        int* pMarker, const IppiDecodeHuffmanSpec* pDecHuffTable,
         IppiDecodeHuffmanState* pDecHuffState))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1560,24 +1403,15 @@ IPPAPI(IppStatus, ippiDecodeHuffmanOne_JPEG_1u16s_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiDecodeHuffmanRow_JPEG_1u16s_C1P4, (
-  const Ipp8u*                  pSrc,
-        int                     nSrcLenBytes,
-        int*                    pSrcCurrPos,
-        Ipp16s*                 pDst[4],
-        int                     nDstLen,
-        int                     nDstRows,
-        int*                    pMarker,
-  const IppiDecodeHuffmanSpec*  pDecHuffTable[4],
+IPPAPI(IppStatus, ippiDecodeHuffmanRow_JPEG_1u16s_C1P4,
+       (const Ipp8u* pSrc, int nSrcLenBytes, int* pSrcCurrPos, Ipp16s* pDst[4],
+        int nDstLen, int nDstRows, int* pMarker,
+        const IppiDecodeHuffmanSpec* pDecHuffTable[4],
         IppiDecodeHuffmanState* pDecHuffState))
-
-
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        Quantization Functions for encoder
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1598,10 +1432,8 @@ IPPAPI(IppStatus, ippiDecodeHuffmanRow_JPEG_1u16s_C1P4, (
 //    in ISO/IEC 10918-1, Figure B.6
 */
 
-IPPAPI(IppStatus, ippiQuantFwdRawTableInit_JPEG_8u, (
-  Ipp8u* pQuantRawTable,
-  int    qualityFactor))
-
+IPPAPI(IppStatus, ippiQuantFwdRawTableInit_JPEG_8u,
+       (Ipp8u * pQuantRawTable, int qualityFactor))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1623,10 +1455,8 @@ IPPAPI(IppStatus, ippiQuantFwdRawTableInit_JPEG_8u, (
 //    in ISO/IEC 10918-1, Figure B.6 in zigzag order
 */
 
-IPPAPI(IppStatus, ippiQuantFwdTableInit_JPEG_8u16u, (
-  const Ipp8u*  pQuantRawTable,
-        Ipp16u* pQuantFwdTable))
-
+IPPAPI(IppStatus, ippiQuantFwdTableInit_JPEG_8u16u,
+       (const Ipp8u* pQuantRawTable, Ipp16u* pQuantFwdTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1648,17 +1478,12 @@ IPPAPI(IppStatus, ippiQuantFwdTableInit_JPEG_8u16u, (
 //    Annex A, A.3.4 DCT coefficient quantization and dequantization.
 */
 
-IPPAPI(IppStatus, ippiQuantFwd8x8_JPEG_16s_C1I, (
-        Ipp16s* pSrcDst,
-  const Ipp16u* pQuantFwdTable))
-
-
-
+IPPAPI(IppStatus, ippiQuantFwd8x8_JPEG_16s_C1I,
+       (Ipp16s * pSrcDst, const Ipp16u* pQuantFwdTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        Quantization Functions for decoder
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1680,10 +1505,8 @@ IPPAPI(IppStatus, ippiQuantFwd8x8_JPEG_16s_C1I, (
 //    in ISO/IEC 10918-1, Figure B.6 in zigzag order
 */
 
-IPPAPI(IppStatus, ippiQuantInvTableInit_JPEG_8u16u, (
-  const Ipp8u*  pQuantRawTable,
-        Ipp16u* pQuantInvTable))
-
+IPPAPI(IppStatus, ippiQuantInvTableInit_JPEG_8u16u,
+       (const Ipp8u* pQuantRawTable, Ipp16u* pQuantInvTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1705,17 +1528,12 @@ IPPAPI(IppStatus, ippiQuantInvTableInit_JPEG_8u16u, (
 //    Annex A, A.3.4 DCT coefficient quantization and dequantization.
 */
 
-IPPAPI(IppStatus, ippiQuantInv8x8_JPEG_16s_C1I, (
-        Ipp16s* pSrcDst,
-  const Ipp16u* pQuantInvTable))
-
-
-
+IPPAPI(IppStatus, ippiQuantInv8x8_JPEG_16s_C1I,
+       (Ipp16s * pSrcDst, const Ipp16u* pQuantInvTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        Functions for color conversion for encoder
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1741,13 +1559,9 @@ IPPAPI(IppStatus, ippiQuantInv8x8_JPEG_16s_C1I, (
 //    Y = 0.299*R + 0.587*G + 0.114*B
 */
 
-IPPAPI(IppStatus, ippiRGBToY_JPEG_8u_P3C1R, (
-  const Ipp8u*   pSrcRGB[3],
-        int      srcStep,
-        Ipp8u*   pDstY,
-        int      dstStep,
+IPPAPI(IppStatus, ippiRGBToY_JPEG_8u_P3C1R,
+       (const Ipp8u* pSrcRGB[3], int srcStep, Ipp8u* pDstY, int dstStep,
         IppiSize roiSize))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1778,13 +1592,9 @@ IPPAPI(IppStatus, ippiRGBToY_JPEG_8u_P3C1R, (
 //    Cr =  0.50000*R - 0.41869*G - 0.08131*B + 128
 */
 
-IPPAPI(IppStatus, ippiRGBToYCbCr_JPEG_8u_P3R, (
-  const Ipp8u*   pSrcRGB[3],
-        int      srcStep,
-        Ipp8u*   pDstYCbCr[3],
-        int      dstStep,
+IPPAPI(IppStatus, ippiRGBToYCbCr_JPEG_8u_P3R,
+       (const Ipp8u* pSrcRGB[3], int srcStep, Ipp8u* pDstYCbCr[3], int dstStep,
         IppiSize roiSize))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1809,20 +1619,13 @@ IPPAPI(IppStatus, ippiRGBToYCbCr_JPEG_8u_P3R, (
 //
 */
 
-IPPAPI(IppStatus, ippiRGBToY_JPEG_8u_C3C1R, (
-  const Ipp8u*   pSrcRGB,
-        int      srcStep,
-        Ipp8u*   pDstY,
-        int      dstStep,
+IPPAPI(IppStatus, ippiRGBToY_JPEG_8u_C3C1R,
+       (const Ipp8u* pSrcRGB, int srcStep, Ipp8u* pDstY, int dstStep,
         IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiBGRToY_JPEG_8u_C3C1R, (
-  const Ipp8u*   pSrcBGR,
-        int      srcStep,
-        Ipp8u*   pDstY,
-        int      dstStep,
+IPPAPI(IppStatus, ippiBGRToY_JPEG_8u_C3C1R,
+       (const Ipp8u* pSrcBGR, int srcStep, Ipp8u* pDstY, int dstStep,
         IppiSize roiSize))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1855,52 +1658,49 @@ IPPAPI(IppStatus, ippiBGRToY_JPEG_8u_C3C1R, (
 //    Cr =  0.50000*R - 0.41869*G - 0.08131*B + 128
 */
 
-IPPAPI(IppStatus, ippiRGBToYCbCr_JPEG_8u_C3P3R, (
-  const Ipp8u*   pSrcRGB,
-        int      srcStep,
-        Ipp8u*   pDstYCbCr[3],
-        int      dstStep,
+IPPAPI(IppStatus, ippiRGBToYCbCr_JPEG_8u_C3P3R,
+       (const Ipp8u* pSrcRGB, int srcStep, Ipp8u* pDstYCbCr[3], int dstStep,
         IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiBGRToYCbCr_JPEG_8u_C3P3R, (
-  const Ipp8u*   pSrcBGR,
-        int      srcStep,
-        Ipp8u*   pDstYCbCr[3],
-        int      dstStep,
+IPPAPI(IppStatus, ippiBGRToYCbCr_JPEG_8u_C3P3R,
+       (const Ipp8u* pSrcBGR, int srcStep, Ipp8u* pDstYCbCr[3], int dstStep,
         IppiSize roiSize))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiRGBToYCbCr422_JPEG_8u_C3P3R,(
-  const Ipp8u*   pRGB,
-        int      srcStep,
-        Ipp8u*   pYCbCr[3],
-        int      dstStep[3],
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiRGBToYCbCr422_JPEG_8u_C3P3R,
+       (const Ipp8u* pRGB, int srcStep, Ipp8u* pYCbCr[3], int dstStep[3],
         IppiSize roiSize))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiBGRToYCbCr422_JPEG_8u_C3P3R,(
-  const Ipp8u*   pBGR,
-        int      srcStep,
-        Ipp8u*   pYCbCr[3],
-        int      dstStep[3],
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBGRToYCbCr422_JPEG_8u_C3P3R,
+       (const Ipp8u* pBGR, int srcStep, Ipp8u* pYCbCr[3], int dstStep[3],
         IppiSize roiSize))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiRGBToYCbCr411_JPEG_8u_C3P3R,(
-  const Ipp8u*   pRGB,
-        int      srcStep,
-        Ipp8u*   pYCbCr[3],
-        int      dstStep[3],
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiRGBToYCbCr411_JPEG_8u_C3P3R,
+       (const Ipp8u* pRGB, int srcStep, Ipp8u* pYCbCr[3], int dstStep[3],
         IppiSize roiSize))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiBGRToYCbCr411_JPEG_8u_C3P3R,(
-  const Ipp8u*   pBGR,
-        int      srcStep,
-        Ipp8u*   pYCbCr[3],
-        int      dstStep[3],
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBGRToYCbCr411_JPEG_8u_C3P3R,
+       (const Ipp8u* pBGR, int srcStep, Ipp8u* pYCbCr[3], int dstStep[3],
         IppiSize roiSize))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1933,53 +1733,54 @@ IPPAPI(IppStatus,ippiBGRToYCbCr411_JPEG_8u_C3P3R,(
 //    Cr =  0.50000*R - 0.41869*G - 0.08131*B + 128
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiRGBToYCbCr_JPEG_8u_C4P3R,(
-  const Ipp8u*   pRGBA,
-        int      srcStep,
-        Ipp8u*   pYCbCr[3],
-        int      dstStep,
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiRGBToYCbCr_JPEG_8u_C4P3R,
+       (const Ipp8u* pRGBA, int srcStep, Ipp8u* pYCbCr[3], int dstStep,
         IppiSize roiSize))
 
-IPPAPI(IppStatus,ippiBGRToYCbCr_JPEG_8u_C4P3R,(
-  const Ipp8u*   pBGRA,
-        int      srcStep,
-        Ipp8u*   pYCbCr[3],
-        int      dstStep,
+IPPAPI(IppStatus, ippiBGRToYCbCr_JPEG_8u_C4P3R,
+       (const Ipp8u* pBGRA, int srcStep, Ipp8u* pYCbCr[3], int dstStep,
         IppiSize roiSize))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiRGBToYCbCr422_JPEG_8u_C4P3R,(
-  const Ipp8u*   pRGBA,
-        int      srcStep,
-        Ipp8u*   pYCbCr[3],
-        int      dstStep[3],
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiRGBToYCbCr422_JPEG_8u_C4P3R,
+       (const Ipp8u* pRGBA, int srcStep, Ipp8u* pYCbCr[3], int dstStep[3],
         IppiSize roiSize))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiBGRToYCbCr422_JPEG_8u_C4P3R,(
-  const Ipp8u*   pBGRA,
-        int      srcStep,
-        Ipp8u*   pYCbCr[3],
-        int      dstStep[3],
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBGRToYCbCr422_JPEG_8u_C4P3R,
+       (const Ipp8u* pBGRA, int srcStep, Ipp8u* pYCbCr[3], int dstStep[3],
         IppiSize roiSize))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiRGBToYCbCr411_JPEG_8u_C4P3R,(
-  const Ipp8u*   pRGBA,
-        int      srcStep,
-        Ipp8u*   pYCbCr[3],
-        int      dstStep[3],
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiRGBToYCbCr411_JPEG_8u_C4P3R,
+       (const Ipp8u* pRGBA, int srcStep, Ipp8u* pYCbCr[3], int dstStep[3],
         IppiSize roiSize))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiBGRToYCbCr411_JPEG_8u_C4P3R,(
-  const Ipp8u*   pBGRA,
-        int      srcStep,
-        Ipp8u*   pYCbCr[3],
-        int      dstStep[3],
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBGRToYCbCr411_JPEG_8u_C4P3R,
+       (const Ipp8u* pBGRA, int srcStep, Ipp8u* pYCbCr[3], int dstStep[3],
         IppiSize roiSize))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2011,21 +1812,18 @@ IPPAPI(IppStatus,ippiBGRToYCbCr411_JPEG_8u_C4P3R,(
 //
 */
 
-IPPAPI(IppStatus, ippiRGB555ToYCbCr_JPEG_16u8u_C3P3R, (
-  const Ipp16u*  pSrcRGB,
-        int      srcStep,
-        Ipp8u*   pDstYCbCr[3],
-        int      dstStep,
+IPPAPI(IppStatus, ippiRGB555ToYCbCr_JPEG_16u8u_C3P3R,
+       (const Ipp16u* pSrcRGB, int srcStep, Ipp8u* pDstYCbCr[3], int dstStep,
         IppiSize roiSize))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiBGR555ToYCbCr_JPEG_16u8u_C3P3R, (
-  const Ipp16u*  pSrcBGR,
-        int      srcStep,
-        Ipp8u*   pDstYCbCr[3],
-        int      dstStep,
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBGR555ToYCbCr_JPEG_16u8u_C3P3R,
+       (const Ipp16u* pSrcBGR, int srcStep, Ipp8u* pDstYCbCr[3], int dstStep,
         IppiSize roiSize))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2057,21 +1855,18 @@ IPPAPI(IppStatus, ippiBGR555ToYCbCr_JPEG_16u8u_C3P3R, (
 //
 */
 
-IPPAPI(IppStatus, ippiRGB565ToYCbCr_JPEG_16u8u_C3P3R, (
-  const Ipp16u*  pSrcRGB,
-        int      srcStep,
-        Ipp8u*   pDstYCbCr[3],
-        int      dstStep,
+IPPAPI(IppStatus, ippiRGB565ToYCbCr_JPEG_16u8u_C3P3R,
+       (const Ipp16u* pSrcRGB, int srcStep, Ipp8u* pDstYCbCr[3], int dstStep,
         IppiSize roiSize))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiBGR565ToYCbCr_JPEG_16u8u_C3P3R, (
-  const Ipp16u*  pSrc,
-        int      srcStep,
-        Ipp8u*   pDst[3],
-        int      dstStep,
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBGR565ToYCbCr_JPEG_16u8u_C3P3R,
+       (const Ipp16u* pSrc, int srcStep, Ipp8u* pDst[3], int dstStep,
         IppiSize roiSize))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2104,13 +1899,9 @@ IPPAPI(IppStatus, ippiBGR565ToYCbCr_JPEG_16u8u_C3P3R, (
 //    while K (black) channel is unchanged.
 */
 
-IPPAPI(IppStatus, ippiCMYKToYCCK_JPEG_8u_P4R, (
-  const Ipp8u*   pSrcCMYK[4],
-        int      srcStep,
-        Ipp8u*   pDstYCCK[4],
-        int      dstStep,
+IPPAPI(IppStatus, ippiCMYKToYCCK_JPEG_8u_P4R,
+       (const Ipp8u* pSrcCMYK[4], int srcStep, Ipp8u* pDstYCCK[4], int dstStep,
         IppiSize roiSize))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2139,20 +1930,13 @@ IPPAPI(IppStatus, ippiCMYKToYCCK_JPEG_8u_P4R, (
 //    while K (black) channel is unchanged.
 */
 
-IPPAPI(IppStatus, ippiCMYKToYCCK_JPEG_8u_C4P4R, (
-  const Ipp8u*   pSrcCMYK,
-        int      srcStep,
-        Ipp8u*   pDstYCCK[4],
-        int      dstStep,
+IPPAPI(IppStatus, ippiCMYKToYCCK_JPEG_8u_C4P4R,
+       (const Ipp8u* pSrcCMYK, int srcStep, Ipp8u* pDstYCCK[4], int dstStep,
         IppiSize roiSize))
-
-
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        Shift level functions for encoder/decoder
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2176,13 +1960,9 @@ IPPAPI(IppStatus, ippiCMYKToYCCK_JPEG_8u_C4P4R, (
 //    Appendix A - Requrements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPPAPI(IppStatus, ippiSub128_JPEG_8u16s_C1R, (
-  const Ipp8u*   pSrc,
-        int      srcStep,
-        Ipp16s*  pDst,
-        int      dstStep,
+IPPAPI(IppStatus, ippiSub128_JPEG_8u16s_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp16s* pDst, int dstStep,
         IppiSize roiSize))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2206,21 +1986,18 @@ IPPAPI(IppStatus, ippiSub128_JPEG_8u16s_C1R, (
 //    Appendix A - Requrements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiAdd128_JPEG_16s8u_C1R, (
-  const Ipp16s*  pSrc,
-        int      srcStep,
-        Ipp8u*   pDst,
-        int      dstStep,
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiAdd128_JPEG_16s8u_C1R,
+       (const Ipp16s* pSrc, int srcStep, Ipp8u* pDst, int dstStep,
         IppiSize roiSize))
-
-
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        Downsampling functions for encoder
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2244,14 +2021,9 @@ IPPAPI(IppStatus, ippiAdd128_JPEG_16s8u_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiSampleDownH2V1_JPEG_8u_C1R, (
-  const Ipp8u*   pSrc,
-        int      srcStep,
-        IppiSize srcRoiSize,
-        Ipp8u*   pDst,
-        int      dstStep,
-        IppiSize dstRoiSize))
-
+IPPAPI(IppStatus, ippiSampleDownH2V1_JPEG_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, IppiSize srcRoiSize, Ipp8u* pDst,
+        int dstStep, IppiSize dstRoiSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2275,14 +2047,9 @@ IPPAPI(IppStatus, ippiSampleDownH2V1_JPEG_8u_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiSampleDownH2V2_JPEG_8u_C1R, (
-  const Ipp8u*   pSrc,
-        int      srcStep,
-        IppiSize srcRoiSize,
-        Ipp8u*   pDst,
-        int      dstStep,
-        IppiSize dstRoiSize))
-
+IPPAPI(IppStatus, ippiSampleDownH2V2_JPEG_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, IppiSize srcRoiSize, Ipp8u* pDst,
+        int dstStep, IppiSize dstRoiSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2303,11 +2070,8 @@ IPPAPI(IppStatus, ippiSampleDownH2V2_JPEG_8u_C1R, (
 //    Downsampling is performed as simple "Box" filter
 */
 
-IPPAPI(IppStatus, ippiSampleDownRowH2V1_Box_JPEG_8u_C1, (
-  const Ipp8u*   pSrc,
-        int      srcWidth,
-        Ipp8u*   pDst))
-
+IPPAPI(IppStatus, ippiSampleDownRowH2V1_Box_JPEG_8u_C1,
+       (const Ipp8u* pSrc, int srcWidth, Ipp8u* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2329,19 +2093,12 @@ IPPAPI(IppStatus, ippiSampleDownRowH2V1_Box_JPEG_8u_C1, (
 //    Downsampling is performed as simple "Box" filter
 */
 
-IPPAPI(IppStatus, ippiSampleDownRowH2V2_Box_JPEG_8u_C1, (
-  const Ipp8u*   pSrc1,
-  const Ipp8u*   pSrc2,
-        int      srcWidth,
-        Ipp8u*   pDst))
-
-
-
+IPPAPI(IppStatus, ippiSampleDownRowH2V2_Box_JPEG_8u_C1,
+       (const Ipp8u* pSrc1, const Ipp8u* pSrc2, int srcWidth, Ipp8u* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        Upsampling functions for decoder
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2366,14 +2123,9 @@ IPPAPI(IppStatus, ippiSampleDownRowH2V2_Box_JPEG_8u_C1, (
 //    so we need leftmost and rightmost values outside the data boundary.
 */
 
-IPPAPI(IppStatus, ippiSampleUpH2V1_JPEG_8u_C1R, (
-  const Ipp8u*   pSrc,
-        int      srcStep,
-        IppiSize srcRoiSize,
-        Ipp8u*   pDst,
-        int      dstStep,
-        IppiSize dstRoiSize))
-
+IPPAPI(IppStatus, ippiSampleUpH2V1_JPEG_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, IppiSize srcRoiSize, Ipp8u* pDst,
+        int dstStep, IppiSize dstRoiSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2399,14 +2151,9 @@ IPPAPI(IppStatus, ippiSampleUpH2V1_JPEG_8u_C1R, (
 //    outside the data boundary.
 */
 
-IPPAPI(IppStatus, ippiSampleUpH2V2_JPEG_8u_C1R, (
-  const Ipp8u*   pSrc,
-        int      srcStep,
-        IppiSize srcRoiSize,
-        Ipp8u*   pDst,
-        int      dstStep,
-        IppiSize dstRoiSize))
-
+IPPAPI(IppStatus, ippiSampleUpH2V2_JPEG_8u_C1R,
+       (const Ipp8u* pSrc, int srcStep, IppiSize srcRoiSize, Ipp8u* pDst,
+        int dstStep, IppiSize dstRoiSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2427,11 +2174,8 @@ IPPAPI(IppStatus, ippiSampleUpH2V2_JPEG_8u_C1R, (
 //    Triangle filter used there (3/4 * nearer pixel + 1/4 * further pixel)
 */
 
-IPPAPI(IppStatus, ippiSampleUpRowH2V1_Triangle_JPEG_8u_C1, (
-  const Ipp8u*   pSrc,
-        int      srcWidth,
-        Ipp8u*   pDst))
-
+IPPAPI(IppStatus, ippiSampleUpRowH2V1_Triangle_JPEG_8u_C1,
+       (const Ipp8u* pSrc, int srcWidth, Ipp8u* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2453,19 +2197,12 @@ IPPAPI(IppStatus, ippiSampleUpRowH2V1_Triangle_JPEG_8u_C1, (
 //    Triangle filter used there (3/4 * nearer pixel + 1/4 * further pixel),
 */
 
-IPPAPI(IppStatus, ippiSampleUpRowH2V2_Triangle_JPEG_8u_C1, (
-  const Ipp8u*   pSrc1,
-  const Ipp8u*   pSrc2,
-        int      srcWidth,
-        Ipp8u*   pDst))
-
-
-
+IPPAPI(IppStatus, ippiSampleUpRowH2V2_Triangle_JPEG_8u_C1,
+       (const Ipp8u* pSrc1, const Ipp8u* pSrc2, int srcWidth, Ipp8u* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        Sampling and color conversion functions for encoder
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2513,12 +2250,13 @@ IPPAPI(IppStatus, ippiSampleUpRowH2V2_Triangle_JPEG_8u_C1, (
 //  Appendix A - Requrements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiRGBToYCbCr444LS_MCU_8u16s_C3P3R, (
-  const Ipp8u*  pSrcRGB,
-        int     srcStep,
-        Ipp16s* pDstMCU[3]))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiRGBToYCbCr444LS_MCU_8u16s_C3P3R,
+       (const Ipp8u* pSrcRGB, int srcStep, Ipp16s* pDstMCU[3]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2571,12 +2309,13 @@ IPPAPI(IppStatus, ippiRGBToYCbCr444LS_MCU_8u16s_C3P3R, (
 //  Appendix A - Requrements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiRGBToYCbCr422LS_MCU_8u16s_C3P3R, (
-  const Ipp8u*  pSrcRGB,
-        int     srcStep,
-        Ipp16s* pDstMCU[3]))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiRGBToYCbCr422LS_MCU_8u16s_C3P3R,
+       (const Ipp8u* pSrcRGB, int srcStep, Ipp16s* pDstMCU[3]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2638,12 +2377,13 @@ IPPAPI(IppStatus, ippiRGBToYCbCr422LS_MCU_8u16s_C3P3R, (
 //  Appendix A - Requrements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiRGBToYCbCr411LS_MCU_8u16s_C3P3R, (
-  const Ipp8u*  pSrcRGB,
-        int     srcStep,
-        Ipp16s* pDstMCU[3]))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiRGBToYCbCr411LS_MCU_8u16s_C3P3R,
+       (const Ipp8u* pSrcRGB, int srcStep, Ipp16s* pDstMCU[3]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2691,11 +2431,8 @@ IPPAPI(IppStatus, ippiRGBToYCbCr411LS_MCU_8u16s_C3P3R, (
 //  Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPPAPI(IppStatus, ippiBGRToYCbCr444LS_MCU_8u16s_C3P3R, (
-  const Ipp8u*  pSrcBGR,
-        int     srcStep,
-        Ipp16s* pDstMCU[3]))
-
+IPPAPI(IppStatus, ippiBGRToYCbCr444LS_MCU_8u16s_C3P3R,
+       (const Ipp8u* pSrcBGR, int srcStep, Ipp16s* pDstMCU[3]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2748,12 +2485,13 @@ IPPAPI(IppStatus, ippiBGRToYCbCr444LS_MCU_8u16s_C3P3R, (
 //  Appendix A - Requrements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiBGRToYCbCr422LS_MCU_8u16s_C3P3R, (
-  const Ipp8u*  pSrcBGR,
-        int     srcStep,
-        Ipp16s* pDstMCU[3]))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBGRToYCbCr422LS_MCU_8u16s_C3P3R,
+       (const Ipp8u* pSrcBGR, int srcStep, Ipp16s* pDstMCU[3]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2815,12 +2553,13 @@ IPPAPI(IppStatus, ippiBGRToYCbCr422LS_MCU_8u16s_C3P3R, (
 //  Appendix A - Requrements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiBGRToYCbCr411LS_MCU_8u16s_C3P3R, (
-  const Ipp8u*  pSrcBGR,
-        int     srcStep,
-        Ipp16s* pDstMCU[3]))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBGRToYCbCr411LS_MCU_8u16s_C3P3R,
+       (const Ipp8u* pSrcBGR, int srcStep, Ipp16s* pDstMCU[3]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2864,12 +2603,13 @@ IPPAPI(IppStatus, ippiBGRToYCbCr411LS_MCU_8u16s_C3P3R, (
 //  Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSampleDown444LS_MCU_8u16s_C3P3R, (
-  const Ipp8u*  pSrc,
-        int     srcStep,
-        Ipp16s* pDstMCU[3]))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSampleDown444LS_MCU_8u16s_C3P3R,
+       (const Ipp8u* pSrc, int srcStep, Ipp16s* pDstMCU[3]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2918,12 +2658,13 @@ IPPAPI(IppStatus, ippiSampleDown444LS_MCU_8u16s_C3P3R, (
 //  Appendix A - Requrements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSampleDown422LS_MCU_8u16s_C3P3R, (
-  const Ipp8u*  pSrc,
-        int     srcStep,
-        Ipp16s* pDstMCU[3]))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSampleDown422LS_MCU_8u16s_C3P3R,
+       (const Ipp8u* pSrc, int srcStep, Ipp16s* pDstMCU[3]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2981,12 +2722,13 @@ IPPAPI(IppStatus, ippiSampleDown422LS_MCU_8u16s_C3P3R, (
 //  Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSampleDown411LS_MCU_8u16s_C3P3R, (
-  const Ipp8u*  pSrc,
-        int     srcStep,
-        Ipp16s* pDstMCU[3]))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSampleDown411LS_MCU_8u16s_C3P3R,
+       (const Ipp8u* pSrc, int srcStep, Ipp16s* pDstMCU[3]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3008,12 +2750,13 @@ IPPAPI(IppStatus, ippiSampleDown411LS_MCU_8u16s_C3P3R, (
 //  Notes:
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiSplit422LS_MCU_8u16s_C2P3R,(
-  const Ipp8u*  pSrc,
-        int     srcStep,
-        Ipp16s* pDstMCU[3]))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSplit422LS_MCU_8u16s_C2P3R,
+       (const Ipp8u* pSrc, int srcStep, Ipp16s* pDstMCU[3]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3062,12 +2805,13 @@ IPPAPI(IppStatus,ippiSplit422LS_MCU_8u16s_C2P3R,(
 //  Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiCMYKToYCCK444LS_MCU_8u16s_C4P4R, (
-  const Ipp8u*  pSrcCMYK,
-        int     srcStep,
-        Ipp16s* pDstYCCK[4]))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiCMYKToYCCK444LS_MCU_8u16s_C4P4R,
+       (const Ipp8u* pSrcCMYK, int srcStep, Ipp16s* pDstYCCK[4]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3120,12 +2864,13 @@ IPPAPI(IppStatus, ippiCMYKToYCCK444LS_MCU_8u16s_C4P4R, (
 //  Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiCMYKToYCCK422LS_MCU_8u16s_C4P4R, (
-  const Ipp8u*  pSrcCMYK,
-        int     srcStep,
-        Ipp16s* pDstYCCK[4]))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiCMYKToYCCK422LS_MCU_8u16s_C4P4R,
+       (const Ipp8u* pSrcCMYK, int srcStep, Ipp16s* pDstYCCK[4]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3188,12 +2933,13 @@ IPPAPI(IppStatus, ippiCMYKToYCCK422LS_MCU_8u16s_C4P4R, (
 //  Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiCMYKToYCCK411LS_MCU_8u16s_C4P4R, (
-  const Ipp8u*  pSrcCMYK,
-        int     srcStep,
-        Ipp16s* pDstYCCK[4]))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiCMYKToYCCK411LS_MCU_8u16s_C4P4R,
+       (const Ipp8u* pSrcCMYK, int srcStep, Ipp16s* pDstYCCK[4]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3231,49 +2977,57 @@ IPPAPI(IppStatus, ippiCMYKToYCCK411LS_MCU_8u16s_C4P4R, (
 //
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiBGR555ToYCbCr444LS_MCU_16u16s_C3P3R, (
-  const Ipp16u* pSrcBGR,
-        int     srcStep,
-        Ipp16s* pDstMCU[3]))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBGR555ToYCbCr444LS_MCU_16u16s_C3P3R,
+       (const Ipp16u* pSrcBGR, int srcStep, Ipp16s* pDstMCU[3]))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiBGR555ToYCbCr422LS_MCU_16u16s_C3P3R, (
-  const Ipp16u* pSrcBGR,
-        int     srcStep,
-        Ipp16s* pDstMCU[3]))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBGR555ToYCbCr422LS_MCU_16u16s_C3P3R,
+       (const Ipp16u* pSrcBGR, int srcStep, Ipp16s* pDstMCU[3]))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiBGR555ToYCbCr411LS_MCU_16u16s_C3P3R, (
-  const Ipp16u* pSrcBGR,
-        int     srcStep,
-        Ipp16s* pDstMCU[3]))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBGR555ToYCbCr411LS_MCU_16u16s_C3P3R,
+       (const Ipp16u* pSrcBGR, int srcStep, Ipp16s* pDstMCU[3]))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiBGR565ToYCbCr444LS_MCU_16u16s_C3P3R, (
-  const Ipp16u* pSrcBGR,
-        int     srcStep,
-        Ipp16s* pDstMCU[3]))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBGR565ToYCbCr444LS_MCU_16u16s_C3P3R,
+       (const Ipp16u* pSrcBGR, int srcStep, Ipp16s* pDstMCU[3]))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiBGR565ToYCbCr422LS_MCU_16u16s_C3P3R, (
-  const Ipp16u* pSrcBGR,
-        int     srcStep,
-        Ipp16s* pDstMCU[3]))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBGR565ToYCbCr422LS_MCU_16u16s_C3P3R,
+       (const Ipp16u* pSrcBGR, int srcStep, Ipp16s* pDstMCU[3]))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiBGR565ToYCbCr411LS_MCU_16u16s_C3P3R, (
-  const Ipp16u* pSrcBGR,
-        int     srcStep,
-        Ipp16s* pDstMCU[3]))
-
-
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiBGR565ToYCbCr411LS_MCU_16u16s_C3P3R,
+       (const Ipp16u* pSrcBGR, int srcStep, Ipp16s* pDstMCU[3]))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        Functions for color conversion for decoder
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3304,13 +3058,9 @@ IPPAPI(IppStatus, ippiBGR565ToYCbCr411LS_MCU_16u16s_C3P3R, (
 //    B = Y + 1.77200*Cb              - 226.816
 */
 
-IPPAPI(IppStatus, ippiYCbCrToRGB_JPEG_8u_P3R, (
-  const Ipp8u*   pSrcYCbCr[3],
-        int      srcStep,
-        Ipp8u*   pDstRGB[3],
-        int      dstStep,
+IPPAPI(IppStatus, ippiYCbCrToRGB_JPEG_8u_P3R,
+       (const Ipp8u* pSrcYCbCr[3], int srcStep, Ipp8u* pDstRGB[3], int dstStep,
         IppiSize roiSize))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3343,52 +3093,49 @@ IPPAPI(IppStatus, ippiYCbCrToRGB_JPEG_8u_P3R, (
 //    B = Y + 1.77200*Cb              - 226.816
 */
 
-IPPAPI(IppStatus, ippiYCbCrToRGB_JPEG_8u_P3C3R, (
-  const Ipp8u*   pSrcYCbCr[3],
-        int      srcStep,
-        Ipp8u*   pDstRGB,
-        int      dstStep,
+IPPAPI(IppStatus, ippiYCbCrToRGB_JPEG_8u_P3C3R,
+       (const Ipp8u* pSrcYCbCr[3], int srcStep, Ipp8u* pDstRGB, int dstStep,
         IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiYCbCrToBGR_JPEG_8u_P3C3R, (
-  const Ipp8u*   pSrcYCbCr[3],
-        int      srcStep,
-        Ipp8u*   pDstBGR,
-        int      dstStep,
+IPPAPI(IppStatus, ippiYCbCrToBGR_JPEG_8u_P3C3R,
+       (const Ipp8u* pSrcYCbCr[3], int srcStep, Ipp8u* pDstBGR, int dstStep,
         IppiSize roiSize))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiYCbCr422ToRGB_JPEG_8u_P3C3R,(
-  const Ipp8u*   pSrcYCbCr[3],
-        int      srcStep[3],
-        Ipp8u*   pDstRGB,
-        int      dstStep,
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr422ToRGB_JPEG_8u_P3C3R,
+       (const Ipp8u* pSrcYCbCr[3], int srcStep[3], Ipp8u* pDstRGB, int dstStep,
         IppiSize roiSize))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiYCbCr422ToBGR_JPEG_8u_P3C3R,(
-  const Ipp8u*   pSrcYCbCr[3],
-        int      srcStep[3],
-        Ipp8u*   pDstBGR,
-        int      dstStep,
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr422ToBGR_JPEG_8u_P3C3R,
+       (const Ipp8u* pSrcYCbCr[3], int srcStep[3], Ipp8u* pDstBGR, int dstStep,
         IppiSize roiSize))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiYCbCr411ToRGB_JPEG_8u_P3C3R,(
-  const Ipp8u*   pSrcYCbCr[3],
-        int      srcStep[3],
-        Ipp8u*   pDstRGB,
-        int      dstStep,
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr411ToRGB_JPEG_8u_P3C3R,
+       (const Ipp8u* pSrcYCbCr[3], int srcStep[3], Ipp8u* pDstRGB, int dstStep,
         IppiSize roiSize))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiYCbCr411ToBGR_JPEG_8u_P3C3R,(
-  const Ipp8u*   pSrcYCbCr[3],
-        int      srcStep[3],
-        Ipp8u*   pDstBGR,
-        int      dstStep,
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr411ToBGR_JPEG_8u_P3C3R,
+       (const Ipp8u* pSrcYCbCr[3], int srcStep[3], Ipp8u* pDstBGR, int dstStep,
         IppiSize roiSize))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3423,58 +3170,49 @@ IPPAPI(IppStatus,ippiYCbCr411ToBGR_JPEG_8u_P3C3R,(
 //    B = Y + 1.77200*Cb              - 226.816
 */
 
-IPPAPI(IppStatus,ippiYCbCrToRGB_JPEG_8u_P3C4R,(
-  const Ipp8u*   pYCbCr[3],
-        int      srcStep,
-        Ipp8u*   pRGB,
-        int      dstStep,
-        IppiSize roiSize,
-        Ipp8u    aval))
+IPPAPI(IppStatus, ippiYCbCrToRGB_JPEG_8u_P3C4R,
+       (const Ipp8u* pYCbCr[3], int srcStep, Ipp8u* pRGB, int dstStep,
+        IppiSize roiSize, Ipp8u aval))
 
-IPPAPI(IppStatus,ippiYCbCrToBGR_JPEG_8u_P3C4R,(
-  const Ipp8u*   pYCbCr[3],
-        int      srcStep,
-        Ipp8u*   pBGR,
-        int      dstStep,
-        IppiSize roiSize,
-        Ipp8u    aval))
+IPPAPI(IppStatus, ippiYCbCrToBGR_JPEG_8u_P3C4R,
+       (const Ipp8u* pYCbCr[3], int srcStep, Ipp8u* pBGR, int dstStep,
+        IppiSize roiSize, Ipp8u aval))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiYCbCr422ToRGB_JPEG_8u_P3C4R,(
-  const Ipp8u*   pYCbCr[3],
-        int      srcStep[3],
-        Ipp8u*   pRGB,
-        int      dstStep,
-        IppiSize roiSize,
-        Ipp8u    aval))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr422ToRGB_JPEG_8u_P3C4R,
+       (const Ipp8u* pYCbCr[3], int srcStep[3], Ipp8u* pRGB, int dstStep,
+        IppiSize roiSize, Ipp8u aval))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiYCbCr422ToBGR_JPEG_8u_P3C4R,(
-  const Ipp8u*   pYCbCr[3],
-        int      srcStep[3],
-        Ipp8u*   pBGR,
-        int      dstStep,
-        IppiSize roiSize,
-        Ipp8u    aval))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr422ToBGR_JPEG_8u_P3C4R,
+       (const Ipp8u* pYCbCr[3], int srcStep[3], Ipp8u* pBGR, int dstStep,
+        IppiSize roiSize, Ipp8u aval))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiYCbCr411ToRGB_JPEG_8u_P3C4R,(
-  const Ipp8u*   pYCbCr[3],
-        int      srcStep[3],
-        Ipp8u*   pRGB,
-        int      dstStep,
-        IppiSize roiSize,
-        Ipp8u    aval))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr411ToRGB_JPEG_8u_P3C4R,
+       (const Ipp8u* pYCbCr[3], int srcStep[3], Ipp8u* pRGB, int dstStep,
+        IppiSize roiSize, Ipp8u aval))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus,ippiYCbCr411ToBGR_JPEG_8u_P3C4R,(
-  const Ipp8u*   pYCbCr[3],
-        int      srcStep[3],
-        Ipp8u*   pBGR,
-        int      dstStep,
-        IppiSize roiSize,
-        Ipp8u    aval))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr411ToBGR_JPEG_8u_P3C4R,
+       (const Ipp8u* pYCbCr[3], int srcStep[3], Ipp8u* pBGR, int dstStep,
+        IppiSize roiSize, Ipp8u aval))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3501,13 +3239,9 @@ IPPAPI(IppStatus,ippiYCbCr411ToBGR_JPEG_8u_P3C4R,(
 //    B = Y + 1.77200*Cb              - 226.816
 */
 
-IPPAPI(IppStatus, ippiYCbCr422ToRGB_JPEG_8u_C2C3R, (
-  const Ipp8u*   pSrc,
-        int      srcStep,
-        Ipp8u*   pDst,
-        int      dstStep,
+IPPAPI(IppStatus, ippiYCbCr422ToRGB_JPEG_8u_C2C3R,
+       (const Ipp8u* pSrc, int srcStep, Ipp8u* pDst, int dstStep,
         IppiSize roiSize))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3539,20 +3273,13 @@ IPPAPI(IppStatus, ippiYCbCr422ToRGB_JPEG_8u_C2C3R, (
 //
 */
 
-IPPAPI(IppStatus, ippiYCbCrToRGB555_JPEG_8u16u_P3C3R, (
-  const Ipp8u*   pSrcYCbCr[3],
-        int      srcStep,
-        Ipp16u*  pDstRGB,
-        int      dstStep,
+IPPAPI(IppStatus, ippiYCbCrToRGB555_JPEG_8u16u_P3C3R,
+       (const Ipp8u* pSrcYCbCr[3], int srcStep, Ipp16u* pDstRGB, int dstStep,
         IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiYCbCrToBGR555_JPEG_8u16u_P3C3R, (
-  const Ipp8u*   pSrcYCbCr[3],
-        int      srcStep,
-        Ipp16u*  pDstBGR,
-        int      dstStep,
+IPPAPI(IppStatus, ippiYCbCrToBGR555_JPEG_8u16u_P3C3R,
+       (const Ipp8u* pSrcYCbCr[3], int srcStep, Ipp16u* pDstBGR, int dstStep,
         IppiSize roiSize))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3584,20 +3311,13 @@ IPPAPI(IppStatus, ippiYCbCrToBGR555_JPEG_8u16u_P3C3R, (
 //
 */
 
-IPPAPI(IppStatus, ippiYCbCrToRGB565_JPEG_8u16u_P3C3R, (
-  const Ipp8u*   pSrcYCbCr[3],
-        int      srcStep,
-        Ipp16u*  pDstRGB,
-        int      dstStep,
+IPPAPI(IppStatus, ippiYCbCrToRGB565_JPEG_8u16u_P3C3R,
+       (const Ipp8u* pSrcYCbCr[3], int srcStep, Ipp16u* pDstRGB, int dstStep,
         IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiYCbCrToBGR565_JPEG_8u16u_P3C3R, (
-  const Ipp8u*   pSrcYCbCr[3],
-        int      srcStep,
-        Ipp16u*  pDstBGR,
-        int      dstStep,
+IPPAPI(IppStatus, ippiYCbCrToBGR565_JPEG_8u16u_P3C3R,
+       (const Ipp8u* pSrcYCbCr[3], int srcStep, Ipp16u* pDstBGR, int dstStep,
         IppiSize roiSize))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3630,13 +3350,9 @@ IPPAPI(IppStatus, ippiYCbCrToBGR565_JPEG_8u16u_P3C3R, (
 //    while K (black) channel is unchanged.
 */
 
-IPPAPI(IppStatus, ippiYCCKToCMYK_JPEG_8u_P4R, (
-  const Ipp8u*   pSrcYCCK[4],
-        int      srcStep,
-        Ipp8u*   pDstCMYK[4],
-        int      dstStep,
+IPPAPI(IppStatus, ippiYCCKToCMYK_JPEG_8u_P4R,
+       (const Ipp8u* pSrcYCCK[4], int srcStep, Ipp8u* pDstCMYK[4], int dstStep,
         IppiSize roiSize))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3665,20 +3381,13 @@ IPPAPI(IppStatus, ippiYCCKToCMYK_JPEG_8u_P4R, (
 //    while K (black) channel is unchanged.
 */
 
-IPPAPI(IppStatus, ippiYCCKToCMYK_JPEG_8u_P4C4R, (
-  const Ipp8u*   pSrcYCCK[4],
-        int      srcStep,
-        Ipp8u*   pDstCMYK,
-        int      dstStep,
+IPPAPI(IppStatus, ippiYCCKToCMYK_JPEG_8u_P4C4R,
+       (const Ipp8u* pSrcYCCK[4], int srcStep, Ipp8u* pDstCMYK, int dstStep,
         IppiSize roiSize))
-
-
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        Sampling and color conversion functions for decoder
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3726,12 +3435,13 @@ IPPAPI(IppStatus, ippiYCCKToCMYK_JPEG_8u_P4C4R, (
 //    Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCbCr444ToRGBLS_MCU_16s8u_P3C3R, (
-  const Ipp16s* pSrcMCU[3],
-        Ipp8u*  pDstRGB,
-        int     dstStep))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr444ToRGBLS_MCU_16s8u_P3C3R,
+       (const Ipp16s* pSrcMCU[3], Ipp8u* pDstRGB, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3781,12 +3491,13 @@ IPPAPI(IppStatus, ippiYCbCr444ToRGBLS_MCU_16s8u_P3C3R, (
 //    Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCbCr422ToRGBLS_MCU_16s8u_P3C3R, (
-  const Ipp16s* pSrcMCU[3],
-        Ipp8u*  pDstRGB,
-        int     dstStep))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr422ToRGBLS_MCU_16s8u_P3C3R,
+       (const Ipp16s* pSrcMCU[3], Ipp8u* pDstRGB, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3845,12 +3556,13 @@ IPPAPI(IppStatus, ippiYCbCr422ToRGBLS_MCU_16s8u_P3C3R, (
 //    Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCbCr411ToRGBLS_MCU_16s8u_P3C3R, (
-  const Ipp16s* pSrcMCU[3],
-        Ipp8u*  pDstRGB,
-        int     dstStep))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr411ToRGBLS_MCU_16s8u_P3C3R,
+       (const Ipp16s* pSrcMCU[3], Ipp8u* pDstRGB, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3898,12 +3610,13 @@ IPPAPI(IppStatus, ippiYCbCr411ToRGBLS_MCU_16s8u_P3C3R, (
 //    Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCbCr444ToBGRLS_MCU_16s8u_P3C3R, (
-  const Ipp16s* pSrcMCU[3],
-        Ipp8u*  pDstBGR,
-        int     dstStep))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr444ToBGRLS_MCU_16s8u_P3C3R,
+       (const Ipp16s* pSrcMCU[3], Ipp8u* pDstBGR, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3953,12 +3666,13 @@ IPPAPI(IppStatus, ippiYCbCr444ToBGRLS_MCU_16s8u_P3C3R, (
 //    Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCbCr422ToBGRLS_MCU_16s8u_P3C3R, (
-  const Ipp16s* pSrcMCU[3],
-        Ipp8u*  pDstBGR,
-        int     dstStep))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr422ToBGRLS_MCU_16s8u_P3C3R,
+       (const Ipp16s* pSrcMCU[3], Ipp8u* pDstBGR, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4017,12 +3731,13 @@ IPPAPI(IppStatus, ippiYCbCr422ToBGRLS_MCU_16s8u_P3C3R, (
 //    Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCbCr411ToBGRLS_MCU_16s8u_P3C3R, (
-  const Ipp16s* pSrcMCU[3],
-        Ipp8u*  pDstBGR,
-        int     dstStep))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr411ToBGRLS_MCU_16s8u_P3C3R,
+       (const Ipp16s* pSrcMCU[3], Ipp8u* pDstBGR, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4061,42 +3776,53 @@ IPPAPI(IppStatus, ippiYCbCr411ToBGRLS_MCU_16s8u_P3C3R, (
 //
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCbCr444ToBGR555LS_MCU_16s16u_P3C3R, (
-  const Ipp16s* pSrcMCU[3],
-        Ipp16u* pDstBGR,
-        int     dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr444ToBGR555LS_MCU_16s16u_P3C3R,
+       (const Ipp16s* pSrcMCU[3], Ipp16u* pDstBGR, int dstStep))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCbCr422ToBGR555LS_MCU_16s16u_P3C3R, (
-  const Ipp16s* pSrcMCU[3],
-        Ipp16u* pDstBGR,
-        int     dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr422ToBGR555LS_MCU_16s16u_P3C3R,
+       (const Ipp16s* pSrcMCU[3], Ipp16u* pDstBGR, int dstStep))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCbCr411ToBGR555LS_MCU_16s16u_P3C3R, (
-  const Ipp16s* pSrcMCU[3],
-        Ipp16u* pDstBGR,
-        int     dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr411ToBGR555LS_MCU_16s16u_P3C3R,
+       (const Ipp16s* pSrcMCU[3], Ipp16u* pDstBGR, int dstStep))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCbCr444ToBGR565LS_MCU_16s16u_P3C3R, (
-  const Ipp16s* pSrcMCU[3],
-        Ipp16u* pDstBGR,
-        int     dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr444ToBGR565LS_MCU_16s16u_P3C3R,
+       (const Ipp16s* pSrcMCU[3], Ipp16u* pDstBGR, int dstStep))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCbCr422ToBGR565LS_MCU_16s16u_P3C3R, (
-  const Ipp16s* pSrcMCU[3],
-        Ipp16u* pDstBGR,
-        int     dstStep))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr422ToBGR565LS_MCU_16s16u_P3C3R,
+       (const Ipp16s* pSrcMCU[3], Ipp16u* pDstBGR, int dstStep))
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCbCr411ToBGR565LS_MCU_16s16u_P3C3R, (
-  const Ipp16s* pSrcMCU[3],
-        Ipp16u* pDstBGR,
-        int     dstStep))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCbCr411ToBGR565LS_MCU_16s16u_P3C3R,
+       (const Ipp16s* pSrcMCU[3], Ipp16u* pDstBGR, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4140,12 +3866,13 @@ IPPAPI(IppStatus, ippiYCbCr411ToBGR565LS_MCU_16s16u_P3C3R, (
 //    Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSampleUp444LS_MCU_16s8u_P3C3R, (
-  const Ipp16s* pSrcMCU[3],
-        Ipp8u*  pDst,
-        int     dstStep))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSampleUp444LS_MCU_16s8u_P3C3R,
+       (const Ipp16s* pSrcMCU[3], Ipp8u* pDst, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4192,12 +3919,13 @@ IPPAPI(IppStatus, ippiSampleUp444LS_MCU_16s8u_P3C3R, (
 //    Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSampleUp422LS_MCU_16s8u_P3C3R, (
-  const Ipp16s* pSrcMCU[3],
-        Ipp8u*  pDst,
-        int     dstStep))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSampleUp422LS_MCU_16s8u_P3C3R,
+       (const Ipp16s* pSrcMCU[3], Ipp8u* pDst, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4253,12 +3981,13 @@ IPPAPI(IppStatus, ippiSampleUp422LS_MCU_16s8u_P3C3R, (
 //    Appendix A - Requrements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiSampleUp411LS_MCU_16s8u_P3C3R, (
-  const Ipp16s* pSrcMCU[3],
-        Ipp8u*  pDst,
-        int     dstStep))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiSampleUp411LS_MCU_16s8u_P3C3R,
+       (const Ipp16s* pSrcMCU[3], Ipp8u* pDst, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4300,11 +4029,8 @@ IPPAPI(IppStatus, ippiSampleUp411LS_MCU_16s8u_P3C3R, (
 //  Notes:
 */
 
-IPPAPI(IppStatus, ippiJoin422LS_MCU_16s8u_P3C2R, (
-  const Ipp16s* pSrcMCU[3],
-        Ipp8u*  pDst,
-        int     dstStep))
-
+IPPAPI(IppStatus, ippiJoin422LS_MCU_16s8u_P3C2R,
+       (const Ipp16s* pSrcMCU[3], Ipp8u* pDst, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4351,12 +4077,13 @@ IPPAPI(IppStatus, ippiJoin422LS_MCU_16s8u_P3C2R, (
 //    Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCCK444ToCMYKLS_MCU_16s8u_P4C4R, (
-  const Ipp16s* pSrcMCU[4],
-        Ipp8u*  pDstCMYK,
-        int     dstStep))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCCK444ToCMYKLS_MCU_16s8u_P4C4R,
+       (const Ipp16s* pSrcMCU[4], Ipp8u* pDstCMYK, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4404,12 +4131,13 @@ IPPAPI(IppStatus, ippiYCCK444ToCMYKLS_MCU_16s8u_P4C4R, (
 //    Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCCK422ToCMYKLS_MCU_16s8u_P4C4R, (
-  const Ipp16s* pSrcMCU[4],
-        Ipp8u*  pDstCMYK,
-        int     dstStep))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCCK422ToCMYKLS_MCU_16s8u_P4C4R,
+       (const Ipp16s* pSrcMCU[4], Ipp8u* pDstCMYK, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4467,18 +4195,17 @@ IPPAPI(IppStatus, ippiYCCK422ToCMYKLS_MCU_16s8u_P4C4R, (
 //    Appendix A - Requirements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiYCCK411ToCMYKLS_MCU_16s8u_P4C4R, (
-  const Ipp16s* pSrcMCU[4],
-        Ipp8u*  pDstCMYK,
-        int     dstStep))
-
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiYCCK411ToCMYKLS_MCU_16s8u_P4C4R,
+       (const Ipp16s* pSrcMCU[4], Ipp8u* pDstCMYK, int dstStep))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        DCT + Quantization + Level Shift Functions for encoder
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4507,12 +4234,9 @@ IPPAPI(IppStatus, ippiYCCK411ToCMYKLS_MCU_16s8u_P4C4R, (
 //    Appendix A - Requrements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPPAPI(IppStatus, ippiDCTQuantFwd8x8LS_JPEG_8u16s_C1R, (
-  const Ipp8u*  pSrc,
-        int     srcStep,
-        Ipp16s* pDst,
-  const Ipp16u* pQuantFwdTable))
-
+IPPAPI(IppStatus, ippiDCTQuantFwd8x8LS_JPEG_8u16s_C1R,
+       (const Ipp8u* pSrc, int srcStep, Ipp16s* pDst,
+        const Ipp16u* pQuantFwdTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4533,17 +4257,13 @@ IPPAPI(IppStatus, ippiDCTQuantFwd8x8LS_JPEG_8u16s_C1R, (
 //    IppStatus
 */
 
-IPPAPI(IppStatus, ippiDCTQuantFwd8x8LS_JPEG_16u16s_C1R, (
-  const Ipp16u* pSrc,
-        int     srcStep,
-        Ipp16s* pDst,
-  const Ipp32f* pQuantFwdTable))
-
+IPPAPI(IppStatus, ippiDCTQuantFwd8x8LS_JPEG_16u16s_C1R,
+       (const Ipp16u* pSrc, int srcStep, Ipp16s* pDst,
+        const Ipp32f* pQuantFwdTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        DCT + Quantization Functions for encoder
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4564,11 +4284,8 @@ IPPAPI(IppStatus, ippiDCTQuantFwd8x8LS_JPEG_16u16s_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiDCTQuantFwd8x8_JPEG_16s_C1, (
-  const Ipp16s* pSrc,
-        Ipp16s* pDst,
-  const Ipp16u* pQuantFwdTable))
-
+IPPAPI(IppStatus, ippiDCTQuantFwd8x8_JPEG_16s_C1,
+       (const Ipp16s* pSrc, Ipp16s* pDst, const Ipp16u* pQuantFwdTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4588,17 +4305,12 @@ IPPAPI(IppStatus, ippiDCTQuantFwd8x8_JPEG_16s_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiDCTQuantFwd8x8_JPEG_16s_C1I, (
-        Ipp16s* pSrcDst,
-  const Ipp16u* pQuantFwdTable))
-
-
-
+IPPAPI(IppStatus, ippiDCTQuantFwd8x8_JPEG_16s_C1I,
+       (Ipp16s * pSrcDst, const Ipp16u* pQuantFwdTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        DCT + Dequantization + Level Shift Functions for decoder
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4634,32 +4346,21 @@ IPPAPI(IppStatus, ippiDCTQuantFwd8x8_JPEG_16s_C1I, (
 //    Appendix A - Requrements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPPAPI(IppStatus, ippiDCTQuantInv8x8LS_JPEG_16s8u_C1R, (
-  const Ipp16s* pSrc,
-        Ipp8u*  pDst,
-        int     dstStep,
-  const Ipp16u* pQuantInvTable))
+IPPAPI(IppStatus, ippiDCTQuantInv8x8LS_JPEG_16s8u_C1R,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int dstStep,
+        const Ipp16u* pQuantInvTable))
 
-IPPAPI(IppStatus, ippiDCTQuantInv8x8LS_4x4_JPEG_16s8u_C1R,(
-  const Ipp16s* pSrc,
-        Ipp8u*  pDst,
-        int     dstStep,
-  const Ipp16u* pQuantInvTable))
+IPPAPI(IppStatus, ippiDCTQuantInv8x8LS_4x4_JPEG_16s8u_C1R,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int dstStep,
+        const Ipp16u* pQuantInvTable))
 
-IPPAPI(IppStatus, ippiDCTQuantInv8x8LS_2x2_JPEG_16s8u_C1R,(
-  const Ipp16s* pSrc,
-        Ipp8u*  pDst,
-        int     dstStep,
-  const Ipp16u* pQuantInvTable))
+IPPAPI(IppStatus, ippiDCTQuantInv8x8LS_2x2_JPEG_16s8u_C1R,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int dstStep,
+        const Ipp16u* pQuantInvTable))
 
-IPPAPI(IppStatus, ippiDCTQuantInv8x8LS_1x1_JPEG_16s8u_C1R,(
-  const Ipp16s* pSrc,
-        Ipp8u*  pDst,
-        int     dstStep,
-  const Ipp16u* pQuantInvTable))
-
-
-
+IPPAPI(IppStatus, ippiDCTQuantInv8x8LS_1x1_JPEG_16s8u_C1R,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int dstStep,
+        const Ipp16u* pQuantInvTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4690,19 +4391,13 @@ IPPAPI(IppStatus, ippiDCTQuantInv8x8LS_1x1_JPEG_16s8u_C1R,(
 //    Appendix A - Requrements and guidelines, Annex A, A.3.1 - Level Shift.
 */
 
-IPPAPI(IppStatus, ippiDCTQuantInv8x8To4x4LS_JPEG_16s8u_C1R,(
-  const Ipp16s* pSrc,
-        Ipp8u*  pDst,
-        int     dstStep,
-  const Ipp16u* pQuantInvTable))
+IPPAPI(IppStatus, ippiDCTQuantInv8x8To4x4LS_JPEG_16s8u_C1R,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int dstStep,
+        const Ipp16u* pQuantInvTable))
 
-IPPAPI(IppStatus, ippiDCTQuantInv8x8To2x2LS_JPEG_16s8u_C1R,(
-  const Ipp16s* pSrc,
-        Ipp8u*  pDst,
-        int     dstStep,
-  const Ipp16u* pQuantInvTable))
-
-
+IPPAPI(IppStatus, ippiDCTQuantInv8x8To2x2LS_JPEG_16s8u_C1R,
+       (const Ipp16s* pSrc, Ipp8u* pDst, int dstStep,
+        const Ipp16u* pQuantInvTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4722,19 +4417,13 @@ IPPAPI(IppStatus, ippiDCTQuantInv8x8To2x2LS_JPEG_16s8u_C1R,(
 //    IppStatus
 */
 
-IPPAPI(IppStatus, ippiDCTQuantInv8x8LS_JPEG_16s16u_C1R, (
-  const Ipp16s* pSrc,
-        Ipp16u* pDst,
-        int     dstStep,
-  const Ipp32f* pQuantInvTable))
-
-
-
+IPPAPI(IppStatus, ippiDCTQuantInv8x8LS_JPEG_16s16u_C1R,
+       (const Ipp16s* pSrc, Ipp16u* pDst, int dstStep,
+        const Ipp32f* pQuantInvTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        DCT + DeQuantization Functions for decoder
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4755,11 +4444,8 @@ IPPAPI(IppStatus, ippiDCTQuantInv8x8LS_JPEG_16s16u_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiDCTQuantInv8x8_JPEG_16s_C1, (
-  const Ipp16s* pSrc,
-        Ipp16s* pDst,
-  const Ipp16u* pQuantInvTable))
-
+IPPAPI(IppStatus, ippiDCTQuantInv8x8_JPEG_16s_C1,
+       (const Ipp16s* pSrc, Ipp16s* pDst, const Ipp16u* pQuantInvTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4779,17 +4465,12 @@ IPPAPI(IppStatus, ippiDCTQuantInv8x8_JPEG_16s_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiDCTQuantInv8x8_JPEG_16s_C1I, (
-        Ipp16s* pSrcDst,
-  const Ipp16u* pQuantInvTable))
-
-
-
+IPPAPI(IppStatus, ippiDCTQuantInv8x8_JPEG_16s_C1I,
+       (Ipp16s * pSrcDst, const Ipp16u* pQuantInvTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        lossless JPEG specific functions
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4812,12 +4493,8 @@ IPPAPI(IppStatus, ippiDCTQuantInv8x8_JPEG_16s_C1I, (
 //
 */
 
-IPPAPI(IppStatus, ippiDiffPredFirstRow_JPEG_16s_C1, (
-  const Ipp16s*  pSrc,
-        Ipp16s*  pDst,
-        int      width,
-        int      P,
-        int      Pt))
+IPPAPI(IppStatus, ippiDiffPredFirstRow_JPEG_16s_C1,
+       (const Ipp16s* pSrc, Ipp16s* pDst, int width, int P, int Pt))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4841,13 +4518,9 @@ IPPAPI(IppStatus, ippiDiffPredFirstRow_JPEG_16s_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiDiffPredRow_JPEG_16s_C1, (
-  const Ipp16s*  pSrc,
-  const Ipp16s*  pPrevRow,
-        Ipp16s*  pDst,
-        int      width,
-        int      predictor))
-
+IPPAPI(IppStatus, ippiDiffPredRow_JPEG_16s_C1,
+       (const Ipp16s* pSrc, const Ipp16s* pPrevRow, Ipp16s* pDst, int width,
+        int predictor))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4870,13 +4543,8 @@ IPPAPI(IppStatus, ippiDiffPredRow_JPEG_16s_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiReconstructPredFirstRow_JPEG_16s_C1, (
-  const Ipp16s*  pSrc,
-        Ipp16s*  pDst,
-        int      width,
-        int      P,
-        int      Pt))
-
+IPPAPI(IppStatus, ippiReconstructPredFirstRow_JPEG_16s_C1,
+       (const Ipp16s* pSrc, Ipp16s* pDst, int width, int P, int Pt))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4900,20 +4568,13 @@ IPPAPI(IppStatus, ippiReconstructPredFirstRow_JPEG_16s_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiReconstructPredRow_JPEG_16s_C1, (
-  const Ipp16s*  pSrc,
-  const Ipp16s*  pPrevRow,
-        Ipp16s*  pDst,
-        int      width,
-        int      predictor))
-
-
-
+IPPAPI(IppStatus, ippiReconstructPredRow_JPEG_16s_C1,
+       (const Ipp16s* pSrc, const Ipp16s* pPrevRow, Ipp16s* pDst, int width,
+        int predictor))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        JPEG 2000 specific functions
 /////////////////////////////////////////////////////////////////////////// */
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4959,26 +4620,15 @@ IPPAPI(IppStatus, ippiReconstructPredRow_JPEG_16s_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTFwdRow_B53_JPEG2K_16s_C1R, (
-  const Ipp16s*           pSrc,
-        int               srcStep,
-        Ipp16s*           pDstLow,
-        int               dstLowStep,
-        Ipp16s*           pDstHigh,
-        int               dstHighStep,
-        IppiSize          dstRoiSize,
+IPPAPI(IppStatus, ippiWTFwdRow_B53_JPEG2K_16s_C1R,
+       (const Ipp16s* pSrc, int srcStep, Ipp16s* pDstLow, int dstLowStep,
+        Ipp16s* pDstHigh, int dstHighStep, IppiSize dstRoiSize,
         IppiWTFilterFirst phase))
 
-IPPAPI(IppStatus, ippiWTFwdRow_B53_JPEG2K_32s_C1R, (
-  const Ipp32s*           pSrc,
-        int               srcStep,
-        Ipp32s*           pDstLow,
-        int               dstLowStep,
-        Ipp32s*           pDstHigh,
-        int               dstHighStep,
-        IppiSize          dstRoiSize,
+IPPAPI(IppStatus, ippiWTFwdRow_B53_JPEG2K_32s_C1R,
+       (const Ipp32s* pSrc, int srcStep, Ipp32s* pDstLow, int dstLowStep,
+        Ipp32s* pDstHigh, int dstHighStep, IppiSize dstRoiSize,
         IppiWTFilterFirst phase))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5024,26 +4674,15 @@ IPPAPI(IppStatus, ippiWTFwdRow_B53_JPEG2K_32s_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTFwdCol_B53_JPEG2K_16s_C1R, (
-  const Ipp16s*           pSrc,
-        int               srcStep,
-        Ipp16s*           pDstLow,
-        int               dstLowStep,
-        Ipp16s*           pDstHigh,
-        int               dstHighStep,
-        IppiSize          dstRoiSize,
+IPPAPI(IppStatus, ippiWTFwdCol_B53_JPEG2K_16s_C1R,
+       (const Ipp16s* pSrc, int srcStep, Ipp16s* pDstLow, int dstLowStep,
+        Ipp16s* pDstHigh, int dstHighStep, IppiSize dstRoiSize,
         IppiWTFilterFirst phase))
 
-IPPAPI(IppStatus, ippiWTFwdCol_B53_JPEG2K_32s_C1R, (
-  const Ipp32s*           pSrc,
-        int               srcStep,
-        Ipp32s*           pDstLow,
-        int               dstLowStep,
-        Ipp32s*           pDstHigh,
-        int               dstHighStep,
-        IppiSize          dstRoiSize,
+IPPAPI(IppStatus, ippiWTFwdCol_B53_JPEG2K_32s_C1R,
+       (const Ipp32s* pSrc, int srcStep, Ipp32s* pDstLow, int dstLowStep,
+        Ipp32s* pDstHigh, int dstHighStep, IppiSize dstRoiSize,
         IppiWTFilterFirst phase))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5080,24 +4719,15 @@ IPPAPI(IppStatus, ippiWTFwdCol_B53_JPEG2K_32s_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTFwdColLift_B53_JPEG2K_16s_C1, (
-  const Ipp16s* pSrc0,
-  const Ipp16s* pSrc1,
-  const Ipp16s* pSrc2,
-        Ipp16s* pDstLow0,
-  const Ipp16s* pSrcHigh0,
-        Ipp16s* pDstHigh1,
-        int     width))
+IPPAPI(IppStatus, ippiWTFwdColLift_B53_JPEG2K_16s_C1,
+       (const Ipp16s* pSrc0, const Ipp16s* pSrc1, const Ipp16s* pSrc2,
+        Ipp16s* pDstLow0, const Ipp16s* pSrcHigh0, Ipp16s* pDstHigh1,
+        int width))
 
-IPPAPI(IppStatus, ippiWTFwdColLift_B53_JPEG2K_32s_C1, (
-  const Ipp32s* pSrc0,
-  const Ipp32s* pSrc1,
-  const Ipp32s* pSrc2,
-        Ipp32s* pDstLow0,
-  const Ipp32s* pSrcHigh0,
-        Ipp32s* pDstHigh1,
-        int     width))
-
+IPPAPI(IppStatus, ippiWTFwdColLift_B53_JPEG2K_32s_C1,
+       (const Ipp32s* pSrc0, const Ipp32s* pSrc1, const Ipp32s* pSrc2,
+        Ipp32s* pDstLow0, const Ipp32s* pSrcHigh0, Ipp32s* pDstHigh1,
+        int width))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5148,26 +4778,15 @@ IPPAPI(IppStatus, ippiWTFwdColLift_B53_JPEG2K_32s_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTInvRow_B53_JPEG2K_16s_C1R, (
-  const Ipp16s*           pSrcLow,
-        int               srcLowStep,
-  const Ipp16s*           pSrcHigh,
-        int               srcHighStep,
-        IppiSize          srcRoiSize,
-        Ipp16s*           pDst,
-        int               dstStep,
+IPPAPI(IppStatus, ippiWTInvRow_B53_JPEG2K_16s_C1R,
+       (const Ipp16s* pSrcLow, int srcLowStep, const Ipp16s* pSrcHigh,
+        int srcHighStep, IppiSize srcRoiSize, Ipp16s* pDst, int dstStep,
         IppiWTFilterFirst phase))
 
-IPPAPI(IppStatus, ippiWTInvRow_B53_JPEG2K_32s_C1R, (
-  const Ipp32s*           pSrcLow,
-        int               srcLowStep,
-  const Ipp32s*           pSrcHigh,
-        int               srcHighStep,
-        IppiSize          srcRoiSize,
-        Ipp32s*           pDst,
-        int               dstStep,
+IPPAPI(IppStatus, ippiWTInvRow_B53_JPEG2K_32s_C1R,
+       (const Ipp32s* pSrcLow, int srcLowStep, const Ipp32s* pSrcHigh,
+        int srcHighStep, IppiSize srcRoiSize, Ipp32s* pDst, int dstStep,
         IppiWTFilterFirst phase))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5218,26 +4837,15 @@ IPPAPI(IppStatus, ippiWTInvRow_B53_JPEG2K_32s_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTInvCol_B53_JPEG2K_16s_C1R, (
-  const Ipp16s*           pSrcLow,
-        int               srcLowStep,
-  const Ipp16s*           pSrcHigh,
-        int               srcHighStep,
-        IppiSize          srcRoiSize,
-        Ipp16s*           pDst,
-        int               dstStep,
+IPPAPI(IppStatus, ippiWTInvCol_B53_JPEG2K_16s_C1R,
+       (const Ipp16s* pSrcLow, int srcLowStep, const Ipp16s* pSrcHigh,
+        int srcHighStep, IppiSize srcRoiSize, Ipp16s* pDst, int dstStep,
         IppiWTFilterFirst phase))
 
-IPPAPI(IppStatus, ippiWTInvCol_B53_JPEG2K_32s_C1R, (
-  const Ipp32s*           pSrcLow,
-        int               srcLowStep,
-  const Ipp32s*           pSrcHigh,
-        int               srcHighStep,
-        IppiSize          srcRoiSize,
-        Ipp32s*           pDst,
-        int               dstStep,
+IPPAPI(IppStatus, ippiWTInvCol_B53_JPEG2K_32s_C1R,
+       (const Ipp32s* pSrcLow, int srcLowStep, const Ipp32s* pSrcHigh,
+        int srcHighStep, IppiSize srcRoiSize, Ipp32s* pDst, int dstStep,
         IppiWTFilterFirst phase))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5274,24 +4882,15 @@ IPPAPI(IppStatus, ippiWTInvCol_B53_JPEG2K_32s_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTInvColLift_B53_JPEG2K_16s_C1, (
-  const Ipp16s* pSrcLow0,
-  const Ipp16s* pSrcHigh0,
-  const Ipp16s* pSrcHigh1,
-  const Ipp16s* pSrc0,
-        Ipp16s* pDst1,
-        Ipp16s* pDst2,
-        int     width))
+IPPAPI(IppStatus, ippiWTInvColLift_B53_JPEG2K_16s_C1,
+       (const Ipp16s* pSrcLow0, const Ipp16s* pSrcHigh0,
+        const Ipp16s* pSrcHigh1, const Ipp16s* pSrc0, Ipp16s* pDst1,
+        Ipp16s* pDst2, int width))
 
-IPPAPI(IppStatus, ippiWTInvColLift_B53_JPEG2K_32s_C1, (
-  const Ipp32s* pSrcLow0,
-  const Ipp32s* pSrcHigh0,
-  const Ipp32s* pSrcHigh1,
-  const Ipp32s* pSrc0,
-        Ipp32s* pDst1,
-        Ipp32s* pDst2,
-        int     width))
-
+IPPAPI(IppStatus, ippiWTInvColLift_B53_JPEG2K_32s_C1,
+       (const Ipp32s* pSrcLow0, const Ipp32s* pSrcHigh0,
+        const Ipp32s* pSrcHigh1, const Ipp32s* pSrc0, Ipp32s* pDst1,
+        Ipp32s* pDst2, int width))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5338,36 +4937,20 @@ IPPAPI(IppStatus, ippiWTInvColLift_B53_JPEG2K_32s_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTFwdRow_D97_JPEG2K_16s_C1R, (
-  const Ipp16s*           pSrc,
-        int               srcStep,
-        Ipp16s*           pDstLow,
-        int               dstLowStep,
-        Ipp16s*           pDstHigh,
-        int               dstHighStep,
-        IppiSize          dstRoiSize,
+IPPAPI(IppStatus, ippiWTFwdRow_D97_JPEG2K_16s_C1R,
+       (const Ipp16s* pSrc, int srcStep, Ipp16s* pDstLow, int dstLowStep,
+        Ipp16s* pDstHigh, int dstHighStep, IppiSize dstRoiSize,
         IppiWTFilterFirst phase))
 
-IPPAPI(IppStatus, ippiWTFwdRow_D97_JPEG2K_32s_C1R, (
-  const Ipp32s*           pSrc,
-        int               srcStep,
-        Ipp32s*           pDstLow,
-        int               dstLowStep,
-        Ipp32s*           pDstHigh,
-        int               dstHighStep,
-        IppiSize          dstRoiSize,
+IPPAPI(IppStatus, ippiWTFwdRow_D97_JPEG2K_32s_C1R,
+       (const Ipp32s* pSrc, int srcStep, Ipp32s* pDstLow, int dstLowStep,
+        Ipp32s* pDstHigh, int dstHighStep, IppiSize dstRoiSize,
         IppiWTFilterFirst phase))
 
-IPPAPI(IppStatus, ippiWTFwdRow_D97_JPEG2K_32f_C1R, (
-  const Ipp32f*           pSrc,
-        int               srcStep,
-        Ipp32f*           pDstLow,
-        int               dstLowStep,
-        Ipp32f*           pDstHigh,
-        int               dstHighStep,
-        IppiSize          dstRoiSize,
+IPPAPI(IppStatus, ippiWTFwdRow_D97_JPEG2K_32f_C1R,
+       (const Ipp32f* pSrc, int srcStep, Ipp32f* pDstLow, int dstLowStep,
+        Ipp32f* pDstHigh, int dstHighStep, IppiSize dstRoiSize,
         IppiWTFilterFirst phase))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5412,16 +4995,10 @@ IPPAPI(IppStatus, ippiWTFwdRow_D97_JPEG2K_32f_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTFwdCol_D97_JPEG2K_32f_C1R, (
-  const Ipp32f*           pSrc,
-        int               srcStep,
-        Ipp32f*           pDstLow,
-        int               dstLowStep,
-        Ipp32f*           pDstHigh,
-        int               dstHighStep,
-        IppiSize          dstRoiSize,
+IPPAPI(IppStatus, ippiWTFwdCol_D97_JPEG2K_32f_C1R,
+       (const Ipp32f* pSrc, int srcStep, Ipp32f* pDstLow, int dstLowStep,
+        Ipp32f* pDstHigh, int dstHighStep, IppiSize dstRoiSize,
         IppiWTFilterFirst phase))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5465,39 +5042,20 @@ IPPAPI(IppStatus, ippiWTFwdCol_D97_JPEG2K_32f_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTFwdColLift_D97_JPEG2K_16s_C1, (
-  const Ipp16s* pSrc0,
-  const Ipp16s* pSrc1,
-  const Ipp16s* pSrc2,
-        Ipp16s* pSrcDstLow0,
-        Ipp16s* pDstLow1,
-        Ipp16s* pSrcDstHigh0,
-        Ipp16s* pSrcDstHigh1,
-        Ipp16s* pDstHigh2,
-        int     width))
+IPPAPI(IppStatus, ippiWTFwdColLift_D97_JPEG2K_16s_C1,
+       (const Ipp16s* pSrc0, const Ipp16s* pSrc1, const Ipp16s* pSrc2,
+        Ipp16s* pSrcDstLow0, Ipp16s* pDstLow1, Ipp16s* pSrcDstHigh0,
+        Ipp16s* pSrcDstHigh1, Ipp16s* pDstHigh2, int width))
 
-IPPAPI(IppStatus, ippiWTFwdColLift_D97_JPEG2K_32s_C1, (
-  const Ipp32s* pSrc0,
-  const Ipp32s* pSrc1,
-  const Ipp32s* pSrc2,
-        Ipp32s* pSrcDstLow0,
-        Ipp32s* pDstLow1,
-        Ipp32s* pSrcDstHigh0,
-        Ipp32s* pSrcDstHigh1,
-        Ipp32s* pDstHigh2,
-        int     width))
+IPPAPI(IppStatus, ippiWTFwdColLift_D97_JPEG2K_32s_C1,
+       (const Ipp32s* pSrc0, const Ipp32s* pSrc1, const Ipp32s* pSrc2,
+        Ipp32s* pSrcDstLow0, Ipp32s* pDstLow1, Ipp32s* pSrcDstHigh0,
+        Ipp32s* pSrcDstHigh1, Ipp32s* pDstHigh2, int width))
 
-IPPAPI(IppStatus, ippiWTFwdColLift_D97_JPEG2K_32f_C1, (
-  const Ipp32f* pSrc0,
-  const Ipp32f* pSrc1,
-  const Ipp32f* pSrc2,
-        Ipp32f* pSrcDstLow0,
-        Ipp32f* pDstLow1,
-        Ipp32f* pSrcDstHigh0,
-        Ipp32f* pSrcDstHigh1,
-        Ipp32f* pDstHigh2,
-        int     width))
-
+IPPAPI(IppStatus, ippiWTFwdColLift_D97_JPEG2K_32f_C1,
+       (const Ipp32f* pSrc0, const Ipp32f* pSrc1, const Ipp32f* pSrc2,
+        Ipp32f* pSrcDstLow0, Ipp32f* pDstLow1, Ipp32f* pSrcDstHigh0,
+        Ipp32f* pSrcDstHigh1, Ipp32f* pDstHigh2, int width))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5549,37 +5107,20 @@ IPPAPI(IppStatus, ippiWTFwdColLift_D97_JPEG2K_32f_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTInvRow_D97_JPEG2K_16s_C1R, (
-  const Ipp16s*           pSrcLow,
-        int               srcLowStep,
-  const Ipp16s*           pSrcHigh,
-        int               srcHighStep,
-        IppiSize          srcRoiSize,
-        Ipp16s*           pDst,
-        int               dstStep,
+IPPAPI(IppStatus, ippiWTInvRow_D97_JPEG2K_16s_C1R,
+       (const Ipp16s* pSrcLow, int srcLowStep, const Ipp16s* pSrcHigh,
+        int srcHighStep, IppiSize srcRoiSize, Ipp16s* pDst, int dstStep,
         IppiWTFilterFirst phase))
 
-IPPAPI(IppStatus, ippiWTInvRow_D97_JPEG2K_32s_C1R, (
-  const Ipp32s*           pSrcLow,
-        int               srcLowStep,
-  const Ipp32s*           pSrcHigh,
-        int               srcHighStep,
-        IppiSize          srcRoiSize,
-        Ipp32s*           pDst,
-        int               dstStep,
+IPPAPI(IppStatus, ippiWTInvRow_D97_JPEG2K_32s_C1R,
+       (const Ipp32s* pSrcLow, int srcLowStep, const Ipp32s* pSrcHigh,
+        int srcHighStep, IppiSize srcRoiSize, Ipp32s* pDst, int dstStep,
         IppiWTFilterFirst phase))
 
-IPPAPI(IppStatus, ippiWTInvRow_D97_JPEG2K_32f_C1R, (
-  const Ipp32f*           pSrcLow,
-        int               srcLowStep,
-  const Ipp32f*           pSrcHigh,
-        int               srcHighStep,
-        IppiSize          srcRoiSize,
-        Ipp32f*           pDst,
-        int               dstStep,
+IPPAPI(IppStatus, ippiWTInvRow_D97_JPEG2K_32f_C1R,
+       (const Ipp32f* pSrcLow, int srcLowStep, const Ipp32f* pSrcHigh,
+        int srcHighStep, IppiSize srcRoiSize, Ipp32f* pDst, int dstStep,
         IppiWTFilterFirst phase))
-
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5629,16 +5170,10 @@ IPPAPI(IppStatus, ippiWTInvRow_D97_JPEG2K_32f_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTInvCol_D97_JPEG2K_32f_C1R, (
-  const Ipp32f*           pSrcLow,
-        int               srcLowStep,
-  const Ipp32f*           pSrcHigh,
-        int               srcHighStep,
-        IppiSize          srcRoiSize,
-        Ipp32f*           pDst,
-        int               dstStep,
+IPPAPI(IppStatus, ippiWTInvCol_D97_JPEG2K_32f_C1R,
+       (const Ipp32f* pSrcLow, int srcLowStep, const Ipp32f* pSrcHigh,
+        int srcHighStep, IppiSize srcRoiSize, Ipp32f* pDst, int dstStep,
         IppiWTFilterFirst phase))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5673,48 +5208,29 @@ IPPAPI(IppStatus, ippiWTInvCol_D97_JPEG2K_32f_C1R, (
 //  Notes:
 //
 //  For each row point this function calculates:
-//    pDst4   [i]  = pSrcLow0 [i] * K      - DELTA * 1. / K * (pSrcHigh0[i] + pSrcHigh1[i]);
-//    pDst3   [i]  = pSrcHigh0[i] * 1. / K - GAMMA          * (pSrcDst2 [i] + pDst4    [i]);
+//    pDst4   [i]  = pSrcLow0 [i] * K      - DELTA * 1. / K * (pSrcHigh0[i] +
+pSrcHigh1[i]);
+//    pDst3   [i]  = pSrcHigh0[i] * 1. / K - GAMMA          * (pSrcDst2 [i] +
+pDst4    [i]);
 //    pSrcDst2[i] -= BETA  * (pSrcDst1[i] + pDst3   [i]);
 //    pSrcDst1[i] -= ALPHA * (pSrc0   [i] + pSrcDst2[i]);
 //
 */
 
-IPPAPI(IppStatus, ippiWTInvColLift_D97_JPEG2K_16s_C1, (
-  const Ipp16s* pSrcLow0,
-  const Ipp16s* pSrcHigh0,
-  const Ipp16s* pSrcHigh1,
-  const Ipp16s* pSrc0,
-        Ipp16s* pSrcDst1,
-        Ipp16s* pSrcDst2,
-        Ipp16s* pDst3,
-        Ipp16s* pDst4,
-        int     width))
+IPPAPI(IppStatus, ippiWTInvColLift_D97_JPEG2K_16s_C1,
+       (const Ipp16s* pSrcLow0, const Ipp16s* pSrcHigh0,
+        const Ipp16s* pSrcHigh1, const Ipp16s* pSrc0, Ipp16s* pSrcDst1,
+        Ipp16s* pSrcDst2, Ipp16s* pDst3, Ipp16s* pDst4, int width))
 
-IPPAPI(IppStatus, ippiWTInvColLift_D97_JPEG2K_32s_C1, (
-  const Ipp32s* pSrcLow0,
-  const Ipp32s* pSrcHigh0,
-  const Ipp32s* pSrcHigh1,
-  const Ipp32s* pSrc0,
-        Ipp32s* pSrcDst1,
-        Ipp32s* pSrcDst2,
-        Ipp32s* pDst3,
-        Ipp32s* pDst4,
-        int     width))
+IPPAPI(IppStatus, ippiWTInvColLift_D97_JPEG2K_32s_C1,
+       (const Ipp32s* pSrcLow0, const Ipp32s* pSrcHigh0,
+        const Ipp32s* pSrcHigh1, const Ipp32s* pSrc0, Ipp32s* pSrcDst1,
+        Ipp32s* pSrcDst2, Ipp32s* pDst3, Ipp32s* pDst4, int width))
 
-IPPAPI(IppStatus, ippiWTInvColLift_D97_JPEG2K_32f_C1, (
-  const Ipp32f* pSrcLow0,
-  const Ipp32f* pSrcHigh0,
-  const Ipp32f* pSrcHigh1,
-  const Ipp32f* pSrc0,
-        Ipp32f* pSrcDst1,
-        Ipp32f* pSrcDst2,
-        Ipp32f* pDst3,
-        Ipp32f* pDst4,
-        int     width))
-
-
-
+IPPAPI(IppStatus, ippiWTInvColLift_D97_JPEG2K_32f_C1,
+       (const Ipp32f* pSrcLow0, const Ipp32f* pSrcHigh0,
+        const Ipp32f* pSrcHigh1, const Ipp32f* pSrc0, Ipp32f* pSrcDst1,
+        Ipp32f* pSrcDst2, Ipp32f* pDst3, Ipp32f* pDst4, int width))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5735,14 +5251,11 @@ IPPAPI(IppStatus, ippiWTInvColLift_D97_JPEG2K_32f_C1, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTGetBufSize_B53_JPEG2K_16s_C1IR, (
-  const IppiRect* pTileRect,
-        int*      pSize))
+IPPAPI(IppStatus, ippiWTGetBufSize_B53_JPEG2K_16s_C1IR,
+       (const IppiRect* pTileRect, int* pSize))
 
-IPPAPI(IppStatus, ippiWTGetBufSize_B53_JPEG2K_32s_C1IR, (
-  const IppiRect* pTileRect,
-        int*      pSize))
-
+IPPAPI(IppStatus, ippiWTGetBufSize_B53_JPEG2K_32s_C1IR,
+       (const IppiRect* pTileRect, int* pSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5765,18 +5278,13 @@ IPPAPI(IppStatus, ippiWTGetBufSize_B53_JPEG2K_32s_C1IR, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTFwd_B53_JPEG2K_16s_C1IR, (
-        Ipp16s*   pSrcDstTile,
-        int       srcDstStep,
-  const IppiRect* pTileRect,
-        Ipp8u*    pBuffer))
+IPPAPI(IppStatus, ippiWTFwd_B53_JPEG2K_16s_C1IR,
+       (Ipp16s * pSrcDstTile, int srcDstStep, const IppiRect* pTileRect,
+        Ipp8u* pBuffer))
 
-IPPAPI(IppStatus, ippiWTFwd_B53_JPEG2K_32s_C1IR, (
-        Ipp32s*   pSrcDstTile,
-        int       srcDstStep,
-  const IppiRect* pTileRect,
-        Ipp8u*    pBuffer))
-
+IPPAPI(IppStatus, ippiWTFwd_B53_JPEG2K_32s_C1IR,
+       (Ipp32s * pSrcDstTile, int srcDstStep, const IppiRect* pTileRect,
+        Ipp8u* pBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5799,18 +5307,13 @@ IPPAPI(IppStatus, ippiWTFwd_B53_JPEG2K_32s_C1IR, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTInv_B53_JPEG2K_16s_C1IR, (
-        Ipp16s*   pSrcDstTile,
-        int       srcDstStep,
-  const IppiRect* pTileRect,
-        Ipp8u*    pBuffer))
+IPPAPI(IppStatus, ippiWTInv_B53_JPEG2K_16s_C1IR,
+       (Ipp16s * pSrcDstTile, int srcDstStep, const IppiRect* pTileRect,
+        Ipp8u* pBuffer))
 
-IPPAPI(IppStatus, ippiWTInv_B53_JPEG2K_32s_C1IR, (
-        Ipp32s*   pSrcDstTile,
-        int       srcDstStep,
-  const IppiRect* pTileRect,
-        Ipp8u*    pBuffer))
-
+IPPAPI(IppStatus, ippiWTInv_B53_JPEG2K_32s_C1IR,
+       (Ipp32s * pSrcDstTile, int srcDstStep, const IppiRect* pTileRect,
+        Ipp8u* pBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5831,14 +5334,11 @@ IPPAPI(IppStatus, ippiWTInv_B53_JPEG2K_32s_C1IR, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTGetBufSize_D97_JPEG2K_16s_C1IR, (
-  const IppiRect* pTileRect,
-        int*      pSize))
+IPPAPI(IppStatus, ippiWTGetBufSize_D97_JPEG2K_16s_C1IR,
+       (const IppiRect* pTileRect, int* pSize))
 
-IPPAPI(IppStatus, ippiWTGetBufSize_D97_JPEG2K_32s_C1IR, (
-  const IppiRect* pTileRect,
-        int*      pSize))
-
+IPPAPI(IppStatus, ippiWTGetBufSize_D97_JPEG2K_32s_C1IR,
+       (const IppiRect* pTileRect, int* pSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5861,18 +5361,13 @@ IPPAPI(IppStatus, ippiWTGetBufSize_D97_JPEG2K_32s_C1IR, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTFwd_D97_JPEG2K_16s_C1IR, (
-        Ipp16s*   pSrcDstTile,
-        int       srcDstStep,
-  const IppiRect* pTileRect,
-        Ipp8u*    pBuffer))
+IPPAPI(IppStatus, ippiWTFwd_D97_JPEG2K_16s_C1IR,
+       (Ipp16s * pSrcDstTile, int srcDstStep, const IppiRect* pTileRect,
+        Ipp8u* pBuffer))
 
-IPPAPI(IppStatus, ippiWTFwd_D97_JPEG2K_32s_C1IR, (
-        Ipp32s*   pSrcDstTile,
-        int       srcDstStep,
-  const IppiRect* pTileRect,
-        Ipp8u*    pBuffer))
-
+IPPAPI(IppStatus, ippiWTFwd_D97_JPEG2K_32s_C1IR,
+       (Ipp32s * pSrcDstTile, int srcDstStep, const IppiRect* pTileRect,
+        Ipp8u* pBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5895,18 +5390,13 @@ IPPAPI(IppStatus, ippiWTFwd_D97_JPEG2K_32s_C1IR, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTInv_D97_JPEG2K_16s_C1IR, (
-        Ipp16s*   pSrcDstTile,
-        int       srcDstStep,
-  const IppiRect* pTileRect,
-        Ipp8u*    pBuffer))
+IPPAPI(IppStatus, ippiWTInv_D97_JPEG2K_16s_C1IR,
+       (Ipp16s * pSrcDstTile, int srcDstStep, const IppiRect* pTileRect,
+        Ipp8u* pBuffer))
 
-IPPAPI(IppStatus, ippiWTInv_D97_JPEG2K_32s_C1IR, (
-        Ipp32s*   pSrcDstTile,
-        int       srcDstStep,
-  const IppiRect* pTileRect,
-        Ipp8u*    pBuffer))
-
+IPPAPI(IppStatus, ippiWTInv_D97_JPEG2K_32s_C1IR,
+       (Ipp32s * pSrcDstTile, int srcDstStep, const IppiRect* pTileRect,
+        Ipp8u* pBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5927,14 +5417,11 @@ IPPAPI(IppStatus, ippiWTInv_D97_JPEG2K_32s_C1IR, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTGetBufSize_B53_JPEG2K_16s_C1R, (
-  const IppiRect* pTileRect,
-        int*      pSize))
+IPPAPI(IppStatus, ippiWTGetBufSize_B53_JPEG2K_16s_C1R,
+       (const IppiRect* pTileRect, int* pSize))
 
-IPPAPI(IppStatus, ippiWTGetBufSize_B53_JPEG2K_32s_C1R, (
-  const IppiRect* pTileRect,
-        int*      pSize))
-
+IPPAPI(IppStatus, ippiWTGetBufSize_B53_JPEG2K_32s_C1R,
+       (const IppiRect* pTileRect, int* pSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5961,22 +5448,13 @@ IPPAPI(IppStatus, ippiWTGetBufSize_B53_JPEG2K_32s_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTFwd_B53_JPEG2K_16s_C1R, (
-  const Ipp16s*   pSrc,
-        int       srcStep,
-  const IppiRect* pTileRect,
-        Ipp16s*   pDst[4],
-        int       dstStep[4],
-        Ipp8u*    pBuffer))
+IPPAPI(IppStatus, ippiWTFwd_B53_JPEG2K_16s_C1R,
+       (const Ipp16s* pSrc, int srcStep, const IppiRect* pTileRect,
+        Ipp16s* pDst[4], int dstStep[4], Ipp8u* pBuffer))
 
-IPPAPI(IppStatus, ippiWTFwd_B53_JPEG2K_32s_C1R, (
-  const Ipp32s*   pSrc,
-        int       srcStep,
-  const IppiRect* pTileRect,
-        Ipp32s*   pDst[4],
-        int       dstStep[4],
-        Ipp8u*    pBuffer))
-
+IPPAPI(IppStatus, ippiWTFwd_B53_JPEG2K_32s_C1R,
+       (const Ipp32s* pSrc, int srcStep, const IppiRect* pTileRect,
+        Ipp32s* pDst[4], int dstStep[4], Ipp8u* pBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6003,22 +5481,13 @@ IPPAPI(IppStatus, ippiWTFwd_B53_JPEG2K_32s_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTInv_B53_JPEG2K_16s_C1R, (
-  const Ipp16s*   pSrc[4],
-        int       srcStep[4],
-        Ipp16s*   pDst,
-        int       dstStep,
-  const IppiRect* pTileRect,
-        Ipp8u*    pBuffer))
+IPPAPI(IppStatus, ippiWTInv_B53_JPEG2K_16s_C1R,
+       (const Ipp16s* pSrc[4], int srcStep[4], Ipp16s* pDst, int dstStep,
+        const IppiRect* pTileRect, Ipp8u* pBuffer))
 
-IPPAPI(IppStatus, ippiWTInv_B53_JPEG2K_32s_C1R, (
-  const Ipp32s*   pSrc[4],
-        int       srcStep[4],
-        Ipp32s*   pDst,
-        int       dstStep,
-  const IppiRect* pTileRect,
-        Ipp8u*    pBuffer))
-
+IPPAPI(IppStatus, ippiWTInv_B53_JPEG2K_32s_C1R,
+       (const Ipp32s* pSrc[4], int srcStep[4], Ipp32s* pDst, int dstStep,
+        const IppiRect* pTileRect, Ipp8u* pBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6039,14 +5508,11 @@ IPPAPI(IppStatus, ippiWTInv_B53_JPEG2K_32s_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTGetBufSize_D97_JPEG2K_16s_C1R, (
-  const IppiRect* pTileRect,
-        int*      pSize))
+IPPAPI(IppStatus, ippiWTGetBufSize_D97_JPEG2K_16s_C1R,
+       (const IppiRect* pTileRect, int* pSize))
 
-IPPAPI(IppStatus, ippiWTGetBufSize_D97_JPEG2K_32s_C1R, (
-  const IppiRect* pTileRect,
-        int*      pSize))
-
+IPPAPI(IppStatus, ippiWTGetBufSize_D97_JPEG2K_32s_C1R,
+       (const IppiRect* pTileRect, int* pSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6073,22 +5539,13 @@ IPPAPI(IppStatus, ippiWTGetBufSize_D97_JPEG2K_32s_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTFwd_D97_JPEG2K_16s_C1R, (
-  const Ipp16s*   pSrc,
-        int       srcStep,
-  const IppiRect* pTileRect,
-        Ipp16s*   pDst[4],
-        int       dstStep[4],
-        Ipp8u*    pBuffer))
+IPPAPI(IppStatus, ippiWTFwd_D97_JPEG2K_16s_C1R,
+       (const Ipp16s* pSrc, int srcStep, const IppiRect* pTileRect,
+        Ipp16s* pDst[4], int dstStep[4], Ipp8u* pBuffer))
 
-IPPAPI(IppStatus, ippiWTFwd_D97_JPEG2K_32s_C1R, (
-  const Ipp32s*   pSrc,
-        int       srcStep,
-  const IppiRect* pTileRect,
-        Ipp32s*   pDst[4],
-        int       dstStep[4],
-        Ipp8u*    pBuffer))
-
+IPPAPI(IppStatus, ippiWTFwd_D97_JPEG2K_32s_C1R,
+       (const Ipp32s* pSrc, int srcStep, const IppiRect* pTileRect,
+        Ipp32s* pDst[4], int dstStep[4], Ipp8u* pBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6115,24 +5572,13 @@ IPPAPI(IppStatus, ippiWTFwd_D97_JPEG2K_32s_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiWTInv_D97_JPEG2K_16s_C1R, (
-  const Ipp16s*   pSrc[4],
-        int       srcStep[4],
-        Ipp16s*   pDst,
-        int       dstStep,
-  const IppiRect* pTileRect,
-        Ipp8u*    pBuffer))
+IPPAPI(IppStatus, ippiWTInv_D97_JPEG2K_16s_C1R,
+       (const Ipp16s* pSrc[4], int srcStep[4], Ipp16s* pDst, int dstStep,
+        const IppiRect* pTileRect, Ipp8u* pBuffer))
 
-IPPAPI(IppStatus, ippiWTInv_D97_JPEG2K_32s_C1R, (
-  const Ipp32s*   pSrc[4],
-        int       srcStep[4],
-        Ipp32s*   pDst,
-        int       dstStep,
-  const IppiRect* pTileRect,
-        Ipp8u*    pBuffer))
-
-
-
+IPPAPI(IppStatus, ippiWTInv_D97_JPEG2K_32s_C1R,
+       (const Ipp32s* pSrc[4], int srcStep[4], Ipp32s* pDst, int dstStep,
+        const IppiRect* pTileRect, Ipp8u* pBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6143,7 +5589,8 @@ IPPAPI(IppStatus, ippiWTInv_D97_JPEG2K_32s_C1R, (
 //
 //  Parameters:
 //    pState           - pointer to the variable that returns the pointer
-//                       to the allocated and initialized encoder state structure,
+//                       to the allocated and initialized encoder state
+structure,
 //    codeBlockMaxSize - maximal size of codeblock for coding.
 //
 //  Returns:
@@ -6153,10 +5600,8 @@ IPPAPI(IppStatus, ippiWTInv_D97_JPEG2K_32s_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiEncodeInitAlloc_JPEG2K, (
-  IppiEncodeState_JPEG2K** pState,
-  IppiSize                 codeBlockMaxSize))
-
+IPPAPI(IppStatus, ippiEncodeInitAlloc_JPEG2K,
+       (IppiEncodeState_JPEG2K * *pState, IppiSize codeBlockMaxSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6175,9 +5620,7 @@ IPPAPI(IppStatus, ippiEncodeInitAlloc_JPEG2K, (
 //
 */
 
-IPPAPI(IppStatus, ippiEncodeFree_JPEG2K, (
-  IppiEncodeState_JPEG2K* pState))
-
+IPPAPI(IppStatus, ippiEncodeFree_JPEG2K, (IppiEncodeState_JPEG2K * pState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6198,9 +5641,12 @@ IPPAPI(IppStatus, ippiEncodeFree_JPEG2K, (
 //    codeStyleFlags - options for coding,
 //    mqTermType     - termination mode for MQ coder,
 //    mqRateAppr     - rate estimation model,
-//    pSfBits        - pointer to variable that returns a number of significant bit planes,
-//    pNOfPasses     - pointer to variable that returns a number of coding passes,
-//    pNOfTermPasses - pointer to variable that returns a number of terminated coding passes.
+//    pSfBits        - pointer to variable that returns a number of significant
+bit planes,
+//    pNOfPasses     - pointer to variable that returns a number of coding
+passes,
+//    pNOfTermPasses - pointer to variable that returns a number of terminated
+coding passes.
 //
 //  Returns:
 //    ippStsNoErr            - Ok,
@@ -6221,20 +5667,11 @@ IPPAPI(IppStatus, ippiEncodeFree_JPEG2K, (
 //
 */
 
-IPPAPI(IppStatus, ippiEncodeLoadCodeBlock_JPEG2K_32s_C1R, (
-  const Ipp32s*                 pSrc,
-        int                     srcStep,
-        IppiSize                codeBlockSize,
-        IppiEncodeState_JPEG2K* pState,
-        IppiWTSubband           subband,
-        int                     magnBits,
-        IppiMQTermination       mqTermType,
-        IppiMQRateAppr          mqRateAppr,
-        int                     codeStyleFlags,
-        int*                    pSfBits,
-        int*                    pNOfPasses,
-        int*                    pNOfTermPasses))
-
+IPPAPI(IppStatus, ippiEncodeLoadCodeBlock_JPEG2K_32s_C1R,
+       (const Ipp32s* pSrc, int srcStep, IppiSize codeBlockSize,
+        IppiEncodeState_JPEG2K* pState, IppiWTSubband subband, int magnBits,
+        IppiMQTermination mqTermType, IppiMQRateAppr mqRateAppr,
+        int codeStyleFlags, int* pSfBits, int* pNOfPasses, int* pNOfTermPasses))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6273,12 +5710,9 @@ IPPAPI(IppStatus, ippiEncodeLoadCodeBlock_JPEG2K_32s_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiEncodeStoreBits_JPEG2K_1u, (
-  Ipp8u*                  pDst,
-  int*                    pDstLen,
-  IppiEncodeState_JPEG2K* pState,
-  int*                    pIsNotFinish))
-
+IPPAPI(IppStatus, ippiEncodeStoreBits_JPEG2K_1u,
+       (Ipp8u * pDst, int* pDstLen, IppiEncodeState_JPEG2K* pState,
+        int* pIsNotFinish))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6303,11 +5737,8 @@ IPPAPI(IppStatus, ippiEncodeStoreBits_JPEG2K_1u, (
 //
 */
 
-IPPAPI(IppStatus, ippiEncodeGetTermPassLen_JPEG2K, (
-  IppiEncodeState_JPEG2K* pState,
-  int                     passNumber,
-  int*                    pPassLen))
-
+IPPAPI(IppStatus, ippiEncodeGetTermPassLen_JPEG2K,
+       (IppiEncodeState_JPEG2K * pState, int passNumber, int* pPassLen))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6330,11 +5761,8 @@ IPPAPI(IppStatus, ippiEncodeGetTermPassLen_JPEG2K, (
 //
 */
 
-IPPAPI(IppStatus, ippiEncodeGetRate_JPEG2K, (
-  IppiEncodeState_JPEG2K* pState,
-  int                     passNumber,
-  int*                    pRate))
-
+IPPAPI(IppStatus, ippiEncodeGetRate_JPEG2K,
+       (IppiEncodeState_JPEG2K * pState, int passNumber, int* pRate))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6357,13 +5785,8 @@ IPPAPI(IppStatus, ippiEncodeGetRate_JPEG2K, (
 //
 */
 
-IPPAPI(IppStatus, ippiEncodeGetDist_JPEG2K, (
-  IppiEncodeState_JPEG2K* pState,
-  int                     passNumber,
-  Ipp64f*                 pDist))
-
-
-
+IPPAPI(IppStatus, ippiEncodeGetDist_JPEG2K,
+       (IppiEncodeState_JPEG2K * pState, int passNumber, Ipp64f* pDist))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6384,9 +5807,8 @@ IPPAPI(IppStatus, ippiEncodeGetDist_JPEG2K, (
 //
 */
 
-IPPAPI(IppStatus, ippiDecodeCBProgrGetStateSize_JPEG2K, (
-  IppiSize  codeBlockMaxSize,
-  int      *pStateSize))
+IPPAPI(IppStatus, ippiDecodeCBProgrGetStateSize_JPEG2K,
+       (IppiSize codeBlockMaxSize, int* pStateSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6405,8 +5827,8 @@ IPPAPI(IppStatus, ippiDecodeCBProgrGetStateSize_JPEG2K, (
 //
 */
 
-IPPAPI(IppStatus, ippiDecodeCBProgrInit_JPEG2K, (
-  IppiDecodeCBProgrState_JPEG2K *pState))
+IPPAPI(IppStatus, ippiDecodeCBProgrInit_JPEG2K,
+       (IppiDecodeCBProgrState_JPEG2K * pState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6418,7 +5840,8 @@ IPPAPI(IppStatus, ippiDecodeCBProgrInit_JPEG2K, (
 //
 //  Parameters:
 //    pState           - pointer to the variable that returns the pointer
-//                       to the allocated and initialized encoder state structure,
+//                       to the allocated and initialized encoder state
+structure,
 //    codeBlockMaxSize - the maximal size of the code-block.
 //
 //  Returns:
@@ -6428,10 +5851,13 @@ IPPAPI(IppStatus, ippiDecodeCBProgrInit_JPEG2K, (
 //
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeCBProgrInitAlloc_JPEG2K, (
-  IppiDecodeCBProgrState_JPEG2K **pState,
-  IppiSize                        codeBlockMaxSize))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeCBProgrInitAlloc_JPEG2K,
+       (IppiDecodeCBProgrState_JPEG2K * *pState, IppiSize codeBlockMaxSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6450,10 +5876,13 @@ IPPAPI(IppStatus, ippiDecodeCBProgrInitAlloc_JPEG2K, (
 //
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeCBProgrFree_JPEG2K, (
-  IppiDecodeCBProgrState_JPEG2K *pState))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeCBProgrFree_JPEG2K,
+       (IppiDecodeCBProgrState_JPEG2K * pState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6484,14 +5913,10 @@ IPPAPI(IppStatus, ippiDecodeCBProgrFree_JPEG2K, (
 //
 */
 
-IPPAPI(IppStatus, ippiDecodeCBProgrAttach_JPEG2K_32s_C1R, (
-  Ipp32s                        *pDst,
-  int                            dstStep,
-  IppiSize                       codeBlockSize,
-  IppiDecodeCBProgrState_JPEG2K *pState,
-  IppiWTSubband                  subband,
-  int                            sfBits,
-  int                            codeStyleFlags))
+IPPAPI(IppStatus, ippiDecodeCBProgrAttach_JPEG2K_32s_C1R,
+       (Ipp32s * pDst, int dstStep, IppiSize codeBlockSize,
+        IppiDecodeCBProgrState_JPEG2K* pState, IppiWTSubband subband,
+        int sfBits, int codeStyleFlags))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6511,9 +5936,8 @@ IPPAPI(IppStatus, ippiDecodeCBProgrAttach_JPEG2K_32s_C1R, (
 //
 */
 
-IPPAPI(IppStatus, ippiDecodeCBProgrSetPassCounter_JPEG2K, (
-  int                            nOfPasses,
-  IppiDecodeCBProgrState_JPEG2K *pState))
+IPPAPI(IppStatus, ippiDecodeCBProgrSetPassCounter_JPEG2K,
+       (int nOfPasses, IppiDecodeCBProgrState_JPEG2K* pState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6534,9 +5958,8 @@ IPPAPI(IppStatus, ippiDecodeCBProgrSetPassCounter_JPEG2K, (
 //
 */
 
-IPPAPI(IppStatus, ippiDecodeCBProgrGetPassCounter_JPEG2K, (
-  IppiDecodeCBProgrState_JPEG2K *state,
-  int                           *pNOfResidualPasses))
+IPPAPI(IppStatus, ippiDecodeCBProgrGetPassCounter_JPEG2K,
+       (IppiDecodeCBProgrState_JPEG2K * state, int* pNOfResidualPasses))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6556,10 +5979,13 @@ IPPAPI(IppStatus, ippiDecodeCBProgrGetPassCounter_JPEG2K, (
 //
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippiDecodeCBProgrGetCurBitPlaneNum_JPEG2K, (
-  IppiDecodeCBProgrState_JPEG2K *pState,
-  int                           *pBitPlaneNum))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippiDecodeCBProgrGetCurBitPlaneNum_JPEG2K,
+       (IppiDecodeCBProgrState_JPEG2K * pState, int* pBitPlaneNum))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6586,11 +6012,8 @@ IPPAPI(IppStatus, ippiDecodeCBProgrGetCurBitPlaneNum_JPEG2K, (
 //
 */
 
-IPPAPI(IppStatus, ippiDecodeCBProgrStep_JPEG2K, (
-  const Ipp8u*                         pSrc,
-        int                            srcLen,
-        IppiDecodeCBProgrState_JPEG2K* pState))
-
+IPPAPI(IppStatus, ippiDecodeCBProgrStep_JPEG2K,
+       (const Ipp8u* pSrc, int srcLen, IppiDecodeCBProgrState_JPEG2K* pState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6601,7 +6024,8 @@ IPPAPI(IppStatus, ippiDecodeCBProgrStep_JPEG2K, (
 //
 //  Parameters:
 //    codeBlockMaxSize - maximal size of codeblock for coding.
-//    pSize            - pointer to the variable that returns the size of working buffer
+//    pSize            - pointer to the variable that returns the size of
+working buffer
 //
 //  Returns:
 //   ippStsNoErr      - Ok,
@@ -6610,10 +6034,8 @@ IPPAPI(IppStatus, ippiDecodeCBProgrStep_JPEG2K, (
 //
 */
 
-IPPAPI(IppStatus, ippiDecodeGetBufSize_JPEG2K, (
-  IppiSize  codeBlockMaxSize,
-  int*      pSize))
-
+IPPAPI(IppStatus, ippiDecodeGetBufSize_JPEG2K,
+       (IppiSize codeBlockMaxSize, int* pSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6633,7 +6055,8 @@ IPPAPI(IppStatus, ippiDecodeGetBufSize_JPEG2K, (
 //    pTermPassLen   - pointer to the array of legnths for each terminated pass,
 //    nOfTermPasses  - number of terminated passes,
 //    codeStyleFlags - options for coding,
-//    pErrorBitPlane - pointer to the bit plane that contain first error returned for
+//    pErrorBitPlane - pointer to the bit plane that contain first error
+returned for
 //                     damaged codeblock,
 //    pBuffer        - pointer to the working buffer.
 //
@@ -6648,22 +6071,11 @@ IPPAPI(IppStatus, ippiDecodeGetBufSize_JPEG2K, (
 //
 */
 
-IPPAPI(IppStatus, ippiDecodeCodeBlock_JPEG2K_1u32s_C1R, (
-  const Ipp8u*         pSrc,
-        Ipp32s*        pDst,
-        int            dstStep,
-        IppiSize       codeBlockSize,
-        IppiWTSubband  subband,
-        int            sfBits,
-        int            nOfPasses,
-  const int*           pTermPassLen,
-        int            nOfTermPasses,
-        int            codeStyleFlags,
-        int*           pErrorBitPlane,
-        Ipp8u*         pBuffer))
-
-
-
+IPPAPI(IppStatus, ippiDecodeCodeBlock_JPEG2K_1u32s_C1R,
+       (const Ipp8u* pSrc, Ipp32s* pDst, int dstStep, IppiSize codeBlockSize,
+        IppiWTSubband subband, int sfBits, int nOfPasses,
+        const int* pTermPassLen, int nOfTermPasses, int codeStyleFlags,
+        int* pErrorBitPlane, Ipp8u* pBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6690,20 +6102,13 @@ IPPAPI(IppStatus, ippiDecodeCodeBlock_JPEG2K_1u32s_C1R, (
 //      Y2 = I0 - I1
 */
 
-IPPAPI(IppStatus, ippiRCTFwd_JPEG2K_16s_C3P3R, (
-  const Ipp16s*  pSrc,
-        int      srcStep,
-        Ipp16s*  pDst[3],
-        int      dstStep,
+IPPAPI(IppStatus, ippiRCTFwd_JPEG2K_16s_C3P3R,
+       (const Ipp16s* pSrc, int srcStep, Ipp16s* pDst[3], int dstStep,
         IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiRCTFwd_JPEG2K_32s_C3P3R, (
-  const Ipp32s*  pSrc,
-        int      srcStep,
-        Ipp32s*  pDst[3],
-        int      dstStep,
+IPPAPI(IppStatus, ippiRCTFwd_JPEG2K_32s_C3P3R,
+       (const Ipp32s* pSrc, int srcStep, Ipp32s* pDst[3], int dstStep,
         IppiSize roiSize))
-
 
 /* ////////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6728,16 +6133,11 @@ IPPAPI(IppStatus, ippiRCTFwd_JPEG2K_32s_C3P3R, (
 //      Y2 = I0 - I1
 */
 
-IPPAPI(IppStatus, ippiRCTFwd_JPEG2K_16s_P3IR, (
-  Ipp16s*  pSrcDst[3],
-  int      srcDstStep,
-  IppiSize roiSize))
+IPPAPI(IppStatus, ippiRCTFwd_JPEG2K_16s_P3IR,
+       (Ipp16s * pSrcDst[3], int srcDstStep, IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiRCTFwd_JPEG2K_32s_P3IR, (
-  Ipp32s*  pSrcDst[3],
-  int      srcDstStep,
-  IppiSize roiSize))
-
+IPPAPI(IppStatus, ippiRCTFwd_JPEG2K_32s_P3IR,
+       (Ipp32s * pSrcDst[3], int srcDstStep, IppiSize roiSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6764,20 +6164,13 @@ IPPAPI(IppStatus, ippiRCTFwd_JPEG2K_32s_P3IR, (
 //      I2 = Y1 + I1
 */
 
-IPPAPI(IppStatus, ippiRCTInv_JPEG2K_16s_P3C3R, (
-  const Ipp16s*  pSrc[3],
-        int      srcStep,
-        Ipp16s*  pDst,
-        int      dstStep,
+IPPAPI(IppStatus, ippiRCTInv_JPEG2K_16s_P3C3R,
+       (const Ipp16s* pSrc[3], int srcStep, Ipp16s* pDst, int dstStep,
         IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiRCTInv_JPEG2K_32s_P3C3R, (
-  const Ipp32s*  pSrc[3],
-        int      srcStep,
-        Ipp32s*  pDst,
-        int      dstStep,
+IPPAPI(IppStatus, ippiRCTInv_JPEG2K_32s_P3C3R,
+       (const Ipp32s* pSrc[3], int srcStep, Ipp32s* pDst, int dstStep,
         IppiSize roiSize))
-
 
 /* ////////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6802,16 +6195,11 @@ IPPAPI(IppStatus, ippiRCTInv_JPEG2K_32s_P3C3R, (
 //      I2 = Y1 + I1
 */
 
-IPPAPI(IppStatus, ippiRCTInv_JPEG2K_16s_P3IR, (
-  Ipp16s*  pSrcDst[3],
-  int      srcDstStep,
-  IppiSize roiSize))
+IPPAPI(IppStatus, ippiRCTInv_JPEG2K_16s_P3IR,
+       (Ipp16s * pSrcDst[3], int srcDstStep, IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiRCTInv_JPEG2K_32s_P3IR, (
-  Ipp32s*  pSrcDst[3],
-  int      srcDstStep,
-  IppiSize roiSize))
-
+IPPAPI(IppStatus, ippiRCTInv_JPEG2K_32s_P3IR,
+       (Ipp32s * pSrcDst[3], int srcDstStep, IppiSize roiSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6837,13 +6225,9 @@ IPPAPI(IppStatus, ippiRCTInv_JPEG2K_32s_P3IR, (
 //      Y2 =  0.5    *I0 - 0.41869*I1 - 0.08131*I2
 */
 
-IPPAPI(IppStatus, ippiICTFwd_JPEG2K_32f_C3P3R, (
-  const Ipp32f*  pSrc,
-        int      srcStep,
-        Ipp32f*  pDst[3],
-        int      dstStep,
+IPPAPI(IppStatus, ippiICTFwd_JPEG2K_32f_C3P3R,
+       (const Ipp32f* pSrc, int srcStep, Ipp32f* pDst[3], int dstStep,
         IppiSize roiSize))
-
 
 /* ////////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6869,21 +6253,14 @@ IPPAPI(IppStatus, ippiICTFwd_JPEG2K_32f_C3P3R, (
 //      Y2 =  0.5    *I0 - 0.41869*I1 - 0.08131*I2
 */
 
-IPPAPI(IppStatus, ippiICTFwd_JPEG2K_16s_P3IR, (
-  Ipp16s*  pSrcDst[3],
-  int      srcDstStep,
-  IppiSize roiSize))
+IPPAPI(IppStatus, ippiICTFwd_JPEG2K_16s_P3IR,
+       (Ipp16s * pSrcDst[3], int srcDstStep, IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiICTFwd_JPEG2K_32s_P3IR, (
-  Ipp32s*  pSrcDst[3],
-  int      srcDstStep,
-  IppiSize roiSize))
+IPPAPI(IppStatus, ippiICTFwd_JPEG2K_32s_P3IR,
+       (Ipp32s * pSrcDst[3], int srcDstStep, IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiICTFwd_JPEG2K_32f_P3IR, (
-  Ipp32f*  pSrcDst[3],
-  int      srcDstStep,
-  IppiSize roiSize))
-
+IPPAPI(IppStatus, ippiICTFwd_JPEG2K_32f_P3IR,
+       (Ipp32f * pSrcDst[3], int srcDstStep, IppiSize roiSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6909,13 +6286,9 @@ IPPAPI(IppStatus, ippiICTFwd_JPEG2K_32f_P3IR, (
 //      I2 = Y0 + 1.772  *Y1
 */
 
-IPPAPI(IppStatus, ippiICTInv_JPEG2K_32f_P3C3R, (
-  const Ipp32f*  pSrc[3],
-        int      srcStep,
-        Ipp32f*  pDst,
-        int      dstStep,
+IPPAPI(IppStatus, ippiICTInv_JPEG2K_32f_P3C3R,
+       (const Ipp32f* pSrc[3], int srcStep, Ipp32f* pDst, int dstStep,
         IppiSize roiSize))
-
 
 /* ////////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6941,23 +6314,14 @@ IPPAPI(IppStatus, ippiICTInv_JPEG2K_32f_P3C3R, (
 //      I2 = Y0 + 1.772  *Y1
 */
 
-IPPAPI(IppStatus, ippiICTInv_JPEG2K_16s_P3IR, (
-  Ipp16s*  pSrcDst[3],
-  int      srcDstStep,
-  IppiSize roiSize))
+IPPAPI(IppStatus, ippiICTInv_JPEG2K_16s_P3IR,
+       (Ipp16s * pSrcDst[3], int srcDstStep, IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiICTInv_JPEG2K_32s_P3IR, (
-  Ipp32s*  pSrcDst[3],
-  int      srcDstStep,
-  IppiSize roiSize))
+IPPAPI(IppStatus, ippiICTInv_JPEG2K_32s_P3IR,
+       (Ipp32s * pSrcDst[3], int srcDstStep, IppiSize roiSize))
 
-IPPAPI(IppStatus, ippiICTInv_JPEG2K_32f_P3IR, (
-  Ipp32f*  pSrcDst[3],
-  int      srcDstStep,
-  IppiSize roiSize))
-
-
-
+IPPAPI(IppStatus, ippiICTInv_JPEG2K_32f_P3IR,
+       (Ipp32f * pSrcDst[3], int srcDstStep, IppiSize roiSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        TIFF specific functions
@@ -6971,7 +6335,8 @@ IPPAPI(IppStatus, ippiICTInv_JPEG2K_32f_P3IR, (
 //    encode bytes using RLE algorithm according TIFF 6.0 spec
 //
 //  Parameter:
-//    pSrc         pointer to input buffer to keep Byte Segment or part of Byte Segment
+//    pSrc         pointer to input buffer to keep Byte Segment or part of Byte
+Segment
 //    srcLenBytes  length, in bytes, of input buffer
 //    pDst         pointer to output buffer
 //    pDstCurrPos  pointer to the current byte position in output buffer
@@ -6984,13 +6349,9 @@ IPPAPI(IppStatus, ippiICTInv_JPEG2K_32f_P3IR, (
 //    function implements PackBits algorithm according TIFF 6.0 spec
 */
 
-IPPAPI(IppStatus,ippiPackBitsRow_TIFF_8u_C1,(
-  const Ipp8u* pSrc,
-        int    srcLenBytes,
-        Ipp8u* pDst,
-        int*   pDstCurrPos,
-        int    dstLenBytes))
-
+IPPAPI(IppStatus, ippiPackBitsRow_TIFF_8u_C1,
+       (const Ipp8u* pSrc, int srcLenBytes, Ipp8u* pDst, int* pDstCurrPos,
+        int dstLenBytes))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7013,13 +6374,9 @@ IPPAPI(IppStatus,ippiPackBitsRow_TIFF_8u_C1,(
 //    function implements UnPackBits algorithm according TIFF 6.0 spec
 */
 
-IPPAPI(IppStatus,ippiUnpackBitsRow_TIFF_8u_C1,(
-  const Ipp8u* pSrc,
-        int*   pSrcCurrPos,
-        int    srcLenBytes,
-        Ipp8u* pDst,
-        int    dstLenBytes))
-
+IPPAPI(IppStatus, ippiUnpackBitsRow_TIFF_8u_C1,
+       (const Ipp8u* pSrc, int* pSrcCurrPos, int srcLenBytes, Ipp8u* pDst,
+        int dstLenBytes))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7039,11 +6396,8 @@ IPPAPI(IppStatus,ippiUnpackBitsRow_TIFF_8u_C1,(
 //
 */
 
-IPPAPI(IppStatus, ippiSplitRow_TIFF_16u8u_C1,(
-  const Ipp16u* pSrc,
-        Ipp8u*  pDst[2],
-        int     dstLen))
-
+IPPAPI(IppStatus, ippiSplitRow_TIFF_16u8u_C1,
+       (const Ipp16u* pSrc, Ipp8u* pDst[2], int dstLen))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7064,13 +6418,8 @@ IPPAPI(IppStatus, ippiSplitRow_TIFF_16u8u_C1,(
 //
 */
 
-IPPAPI(IppStatus, ippiJoinRow_TIFF_8u16u_C1,(
-  const Ipp8u*  pSrc[2],
-        Ipp16u* pDst,
-        int     dstLen))
-
-
-
+IPPAPI(IppStatus, ippiJoinRow_TIFF_8u16u_C1,
+       (const Ipp8u* pSrc[2], Ipp16u* pDst, int dstLen))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //        Texture Compression specific functions
@@ -7098,24 +6447,14 @@ IPPAPI(IppStatus, ippiJoinRow_TIFF_8u16u_C1,(
 //    negative line step is not supported
 */
 
-IPPAPI(IppStatus, ippiTextureEncodeBlockFromRGBA_DXT1_8u_C4C1R,(
-  const Ipp8u*   pSrc,
-        Ipp32u   srcStep,
-        IppiSize srcRoi,
-        Ipp8u*   pDst))
+IPPAPI(IppStatus, ippiTextureEncodeBlockFromRGBA_DXT1_8u_C4C1R,
+       (const Ipp8u* pSrc, Ipp32u srcStep, IppiSize srcRoi, Ipp8u* pDst))
 
-IPPAPI(IppStatus, ippiTextureEncodeBlockFromRGBA_DXT3_8u_C4C1R,(
-  const Ipp8u*   pSrc,
-        Ipp32u   srcStep,
-        IppiSize srcRoi,
-        Ipp8u*   pDst))
+IPPAPI(IppStatus, ippiTextureEncodeBlockFromRGBA_DXT3_8u_C4C1R,
+       (const Ipp8u* pSrc, Ipp32u srcStep, IppiSize srcRoi, Ipp8u* pDst))
 
-IPPAPI(IppStatus, ippiTextureEncodeBlockFromRGBA_DXT5_8u_C4C1R,(
-  const Ipp8u*   pSrc,
-        Ipp32u   srcStep,
-        IppiSize srcRoi,
-        Ipp8u*   pDst))
-
+IPPAPI(IppStatus, ippiTextureEncodeBlockFromRGBA_DXT5_8u_C4C1R,
+       (const Ipp8u* pSrc, Ipp32u srcStep, IppiSize srcRoi, Ipp8u* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7137,11 +6476,8 @@ IPPAPI(IppStatus, ippiTextureEncodeBlockFromRGBA_DXT5_8u_C4C1R,(
 //    negative line step is not supported
 */
 
-IPPAPI(IppStatus, ippiTextureEncodeBlockFromYCoCg_DXT5_8u_C3C1R,(
-  const Ipp8u*   pSrc,
-        Ipp32u   srcStep,
-        IppiSize srcRoi,
-        Ipp8u*   pDst))
+IPPAPI(IppStatus, ippiTextureEncodeBlockFromYCoCg_DXT5_8u_C3C1R,
+       (const Ipp8u* pSrc, Ipp32u srcStep, IppiSize srcRoi, Ipp8u* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7162,11 +6498,8 @@ IPPAPI(IppStatus, ippiTextureEncodeBlockFromYCoCg_DXT5_8u_C3C1R,(
 //    negative line step is not supported
 */
 
-IPPAPI(IppStatus, ippiTextureEncodeBlock_BC4_8u_C1R,(
-  const Ipp8u*   pSrc,
-        Ipp32u   srcStep,
-        IppiSize srcRoi,
-        Ipp8u*   pDst))
+IPPAPI(IppStatus, ippiTextureEncodeBlock_BC4_8u_C1R,
+       (const Ipp8u* pSrc, Ipp32u srcStep, IppiSize srcRoi, Ipp8u* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7187,11 +6520,8 @@ IPPAPI(IppStatus, ippiTextureEncodeBlock_BC4_8u_C1R,(
 //    negative line step is not supported
 */
 
-IPPAPI(IppStatus, ippiTextureEncodeBlockFromRG_BC5_8u_C2C1R,(
-  const Ipp8u*   pSrc,
-        Ipp32u   srcStep,
-        IppiSize srcRoi,
-        Ipp8u*   pDst))
+IPPAPI(IppStatus, ippiTextureEncodeBlockFromRG_BC5_8u_C2C1R,
+       (const Ipp8u* pSrc, Ipp32u srcStep, IppiSize srcRoi, Ipp8u* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7214,13 +6544,9 @@ IPPAPI(IppStatus, ippiTextureEncodeBlockFromRG_BC5_8u_C2C1R,(
 //    negative line step is not supported
 */
 
-IPPAPI(IppStatus, ippiTextureEncodeBlock4x4FromRGBA_BC7_8u_C4C1R,(
-  const Ipp8u*  pSrc,
-        Ipp32u  srcStep,
-        Ipp8u*  pDst,
-        Ipp32u* pMSE,
-        Ipp32u  mode))
-
+IPPAPI(IppStatus, ippiTextureEncodeBlock4x4FromRGBA_BC7_8u_C4C1R,
+       (const Ipp8u* pSrc, Ipp32u srcStep, Ipp8u* pDst, Ipp32u* pMSE,
+        Ipp32u mode))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7244,24 +6570,14 @@ IPPAPI(IppStatus, ippiTextureEncodeBlock4x4FromRGBA_BC7_8u_C4C1R,(
 //    negative line step is not supported
 */
 
-IPPAPI(IppStatus, ippiTextureDecodeBlockToRGBA_DXT1_8u_C1C4R,(
-  const Ipp8u*   pSrc,
-        Ipp8u*   pDst,
-        Ipp32u   dstStep,
-        IppiSize dstRoi))
+IPPAPI(IppStatus, ippiTextureDecodeBlockToRGBA_DXT1_8u_C1C4R,
+       (const Ipp8u* pSrc, Ipp8u* pDst, Ipp32u dstStep, IppiSize dstRoi))
 
-IPPAPI(IppStatus, ippiTextureDecodeBlockToRGBA_DXT3_8u_C1C4R,(
-  const Ipp8u*   pSrc,
-        Ipp8u*   pDst,
-        Ipp32u   dstStep,
-        IppiSize dstRoi))
+IPPAPI(IppStatus, ippiTextureDecodeBlockToRGBA_DXT3_8u_C1C4R,
+       (const Ipp8u* pSrc, Ipp8u* pDst, Ipp32u dstStep, IppiSize dstRoi))
 
-IPPAPI(IppStatus, ippiTextureDecodeBlockToRGBA_DXT5_8u_C1C4R,(
-  const Ipp8u*   pSrc,
-        Ipp8u*   pDst,
-        Ipp32u   dstStep,
-        IppiSize dstRoi))
-
+IPPAPI(IppStatus, ippiTextureDecodeBlockToRGBA_DXT5_8u_C1C4R,
+       (const Ipp8u* pSrc, Ipp8u* pDst, Ipp32u dstStep, IppiSize dstRoi))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7283,12 +6599,8 @@ IPPAPI(IppStatus, ippiTextureDecodeBlockToRGBA_DXT5_8u_C1C4R,(
 //    negative line step is not supported
 */
 
-IPPAPI(IppStatus, ippiTextureDecodeBlock_BC4_8u_C1R,(
- const Ipp8u*   pSrc,
-       Ipp8u*   pDst,
-       Ipp32u   dstStep,
-       IppiSize dstRoi))
-
+IPPAPI(IppStatus, ippiTextureDecodeBlock_BC4_8u_C1R,
+       (const Ipp8u* pSrc, Ipp8u* pDst, Ipp32u dstStep, IppiSize dstRoi))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7310,12 +6622,8 @@ IPPAPI(IppStatus, ippiTextureDecodeBlock_BC4_8u_C1R,(
 //    negative line step is not supported
 */
 
-IPPAPI(IppStatus,ippiTextureDecodeBlockToRG_BC5_8u_C1C2R,(
- const Ipp8u*   pSrc,
-       Ipp8u*   pDst,
-       Ipp32u   dstStep,
-       IppiSize dstRoi))
-
+IPPAPI(IppStatus, ippiTextureDecodeBlockToRG_BC5_8u_C1C2R,
+       (const Ipp8u* pSrc, Ipp8u* pDst, Ipp32u dstStep, IppiSize dstRoi))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7339,17 +6647,11 @@ IPPAPI(IppStatus,ippiTextureDecodeBlockToRG_BC5_8u_C1C2R,(
 //    negative line step is not supported
 */
 
-IPPAPI(IppStatus, ippiTextureDecodeBlockToRGB_BC6_16u_C1C3R,(
-  const Ipp8u*   pSrc,
-        Ipp16u*  pDst,
-        Ipp32u   dstStep,
-        IppiSize dstRoi))
+IPPAPI(IppStatus, ippiTextureDecodeBlockToRGB_BC6_16u_C1C3R,
+       (const Ipp8u* pSrc, Ipp16u* pDst, Ipp32u dstStep, IppiSize dstRoi))
 
-IPPAPI(IppStatus, ippiTextureDecodeBlockToRGB_BC6_16s_C1C3R,(
-  const Ipp8u*   pSrc,
-        Ipp16s*  pDst,
-        Ipp32u   dstStep,
-        IppiSize dstRoi))
+IPPAPI(IppStatus, ippiTextureDecodeBlockToRGB_BC6_16s_C1C3R,
+       (const Ipp8u* pSrc, Ipp16s* pDst, Ipp32u dstStep, IppiSize dstRoi))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -7371,14 +6673,8 @@ IPPAPI(IppStatus, ippiTextureDecodeBlockToRGB_BC6_16s_C1C3R,(
 //    negative line step is not supported
 */
 
-IPPAPI(IppStatus, ippiTextureDecodeBlockToRGBA_BC7_8u_C1C4R,(
-  const Ipp8u*   pSrc,
-        Ipp8u*   pDst,
-        Ipp32u   dstStep,
-        IppiSize dstRoi))
-
-
-
+IPPAPI(IppStatus, ippiTextureDecodeBlockToRGBA_BC7_8u_C1C4R,
+       (const Ipp8u* pSrc, Ipp8u* pDst, Ipp32u dstStep, IppiSize dstRoi))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //                       JPEG-XR functions
@@ -7417,57 +6713,41 @@ IPPAPI(IppStatus, ippiTextureDecodeBlockToRGBA_BC7_8u_C1C4R,(
 //    roiSize       Size of the ROI
 */
 
-IPPAPI(IppStatus,ippiPCTFwd16x16_JPEGXR_16s_C1IR,(
-  Ipp16s* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTFwd16x16_JPEGXR_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTFwd16x16_JPEGXR_32s_C1IR,(
-  Ipp32s* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTFwd16x16_JPEGXR_32s_C1IR,
+       (Ipp32s * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTFwd16x16_JPEGXR_32f_C1IR,(
-  Ipp32f* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTFwd16x16_JPEGXR_32f_C1IR,
+       (Ipp32f * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTFwd8x16_JPEGXR_16s_C1IR,(
-  Ipp16s* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTFwd8x16_JPEGXR_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTFwd8x16_JPEGXR_32s_C1IR,(
-  Ipp32s* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTFwd8x16_JPEGXR_32s_C1IR,
+       (Ipp32s * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTFwd8x16_JPEGXR_32f_C1IR,(
-  Ipp32f* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTFwd8x16_JPEGXR_32f_C1IR,
+       (Ipp32f * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTFwd8x8_JPEGXR_16s_C1IR,(
-  Ipp16s* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTFwd8x8_JPEGXR_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTFwd8x8_JPEGXR_32s_C1IR,(
-  Ipp32s* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTFwd8x8_JPEGXR_32s_C1IR,
+       (Ipp32s * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTFwd8x8_JPEGXR_32f_C1IR,(
-  Ipp32f* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTFwd8x8_JPEGXR_32f_C1IR,
+       (Ipp32f * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTFwd_JPEGXR_16s_C1IR,(
-  Ipp16s*  pSrcDst,
-  Ipp32u   srcDstStep,
-  IppiSize roiSize))
+IPPAPI(IppStatus, ippiPCTFwd_JPEGXR_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32u srcDstStep, IppiSize roiSize))
 
-IPPAPI(IppStatus,ippiPCTFwd_JPEGXR_32s_C1IR,(
-  Ipp32s*  pSrcDst,
-  Ipp32u   srcDstStep,
-  IppiSize roiSize))
+IPPAPI(IppStatus, ippiPCTFwd_JPEGXR_32s_C1IR,
+       (Ipp32s * pSrcDst, Ipp32u srcDstStep, IppiSize roiSize))
 
-IPPAPI(IppStatus,ippiPCTFwd_JPEGXR_32f_C1IR,(
-  Ipp32f*  pSrcDst,
-  Ipp32u   srcDstStep,
-  IppiSize roiSize))
-
+IPPAPI(IppStatus, ippiPCTFwd_JPEGXR_32f_C1IR,
+       (Ipp32f * pSrcDst, Ipp32u srcDstStep, IppiSize roiSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Names:
@@ -7489,7 +6769,8 @@ IPPAPI(IppStatus,ippiPCTFwd_JPEGXR_32f_C1IR,(
 //    ippStsNullPtrErr  One of the pointers is NULL
 //    ippStsSizeErr     roiSize width or height is less than or equal to zero
 //                      or is not a multiple of four
-//    ippStsStepErr     srcDstStep is less than( roiSize.width * sizeof(datatype))
+//    ippStsStepErr     srcDstStep is less than( roiSize.width *
+sizeof(datatype))
 //
 //  Parameters:
 //    pSrcDst      Pointer to the source/destination image
@@ -7497,57 +6778,41 @@ IPPAPI(IppStatus,ippiPCTFwd_JPEGXR_32f_C1IR,(
 //    roiSize      Size of the ROI
 */
 
-IPPAPI(IppStatus,ippiPCTInv16x16_JPEGXR_16s_C1IR,(
-  Ipp16s* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTInv16x16_JPEGXR_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTInv16x16_JPEGXR_32s_C1IR,(
-  Ipp32s* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTInv16x16_JPEGXR_32s_C1IR,
+       (Ipp32s * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTInv16x16_JPEGXR_32f_C1IR,(
-  Ipp32f* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTInv16x16_JPEGXR_32f_C1IR,
+       (Ipp32f * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTInv8x16_JPEGXR_16s_C1IR,(
-  Ipp16s* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTInv8x16_JPEGXR_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTInv8x16_JPEGXR_32s_C1IR,(
-  Ipp32s* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTInv8x16_JPEGXR_32s_C1IR,
+       (Ipp32s * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTInv8x16_JPEGXR_32f_C1IR,(
-  Ipp32f* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTInv8x16_JPEGXR_32f_C1IR,
+       (Ipp32f * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTInv8x8_JPEGXR_16s_C1IR,(
-  Ipp16s* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTInv8x8_JPEGXR_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTInv8x8_JPEGXR_32s_C1IR,(
-  Ipp32s* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTInv8x8_JPEGXR_32s_C1IR,
+       (Ipp32s * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTInv8x8_JPEGXR_32f_C1IR,(
-  Ipp32f* pSrcDst,
-  Ipp32u  srcDstStep))
+IPPAPI(IppStatus, ippiPCTInv8x8_JPEGXR_32f_C1IR,
+       (Ipp32f * pSrcDst, Ipp32u srcDstStep))
 
-IPPAPI(IppStatus,ippiPCTInv_JPEGXR_16s_C1IR,(
-  Ipp16s*  pSrcDst,
-  Ipp32u   srcDstStep,
-  IppiSize roiSize))
+IPPAPI(IppStatus, ippiPCTInv_JPEGXR_16s_C1IR,
+       (Ipp16s * pSrcDst, Ipp32u srcDstStep, IppiSize roiSize))
 
-IPPAPI(IppStatus,ippiPCTInv_JPEGXR_32s_C1IR,(
-  Ipp32s*  pSrcDst,
-  Ipp32u   srcDstStep,
-  IppiSize roiSize))
+IPPAPI(IppStatus, ippiPCTInv_JPEGXR_32s_C1IR,
+       (Ipp32s * pSrcDst, Ipp32u srcDstStep, IppiSize roiSize))
 
-IPPAPI(IppStatus,ippiPCTInv_JPEGXR_32f_C1IR,(
-  Ipp32f*  pSrcDst,
-  Ipp32u   srcDstStep,
-  IppiSize roiSize))
-
+IPPAPI(IppStatus, ippiPCTInv_JPEGXR_32f_C1IR,
+       (Ipp32f * pSrcDst, Ipp32u srcDstStep, IppiSize roiSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //                       JPEG-XR Adaptive VLC
@@ -7570,23 +6835,18 @@ IPPAPI(IppStatus,ippiPCTInv_JPEGXR_32f_C1IR,(
 //               either  ippVLCScanVert, ippVLCScanRaster or ippVLCScanHoriz
 */
 
-IPPAPI(IppStatus,ippiVLCAdapt_JPEGXR,(
-  IppiVLCState_JPEGXR* pVLCState,
-  IppiVLCAdaptType     adaptType))
+IPPAPI(IppStatus, ippiVLCAdapt_JPEGXR,
+       (IppiVLCState_JPEGXR * pVLCState, IppiVLCAdaptType adaptType))
 
-IPPAPI(IppStatus,ippiVLCScanReset_JPEGXR,(
-  IppiVLCState_JPEGXR* pVLCState,
-  IppiVLCScanType      scanType))
+IPPAPI(IppStatus, ippiVLCScanReset_JPEGXR,
+       (IppiVLCState_JPEGXR * pVLCState, IppiVLCScanType scanType))
 
-IPPAPI(IppStatus,ippiVLCScanSet_JPEGXR,(
-  IppiVLCState_JPEGXR* pVLCState,
-  IppiVLCScanType      scanType))
+IPPAPI(IppStatus, ippiVLCScanSet_JPEGXR,
+       (IppiVLCState_JPEGXR * pVLCState, IppiVLCScanType scanType))
 
-IPPAPI(IppStatus,ippiVLCInit_JPEGXR,(
-  IppiVLCState_JPEGXR* pVLCState))
+IPPAPI(IppStatus, ippiVLCInit_JPEGXR, (IppiVLCState_JPEGXR * pVLCState))
 
-IPPAPI(IppStatus,ippiVLCGetStateSize_JPEGXR,(int* pSize))
-
+IPPAPI(IppStatus, ippiVLCGetStateSize_JPEGXR, (int* pSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //                       JPEG-XR Adaptive scan functions
@@ -7601,17 +6861,14 @@ IPPAPI(IppStatus,ippiVLCGetStateSize_JPEGXR,(int* pSize))
 //   numModelBits    Max number of bits to encode
 //   pDstResidual    Pointer to the destination adaptive scan residual
 //   pVLCState       Pointer to the Adaptive VLC state structure
-//   pNumNonZero     Pointer to the number of coefficients in block (with non-zero model bits)
+//   pNumNonZero     Pointer to the number of coefficients in block (with
+non-zero model bits)
 */
 
-IPPAPI(IppStatus,ippiVLCScan4x4DC_JPEGXR_32s,(
-  const Ipp32s               pSrcCoeffs[16],
-        Ipp32u               numModelBits,
-        Ipp32s               pDstResidual[16],
-        Ipp32s*              pDstCoeffsScan,
-        Ipp32u*              pNumNonZero,
+IPPAPI(IppStatus, ippiVLCScan4x4DC_JPEGXR_32s,
+       (const Ipp32s pSrcCoeffs[16], Ipp32u numModelBits,
+        Ipp32s pDstResidual[16], Ipp32s* pDstCoeffsScan, Ipp32u* pNumNonZero,
         IppiVLCState_JPEGXR* pVLCState))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //                       Variable Length Code Encode functions
@@ -7630,7 +6887,8 @@ IPPAPI(IppStatus,ippiVLCScan4x4DC_JPEGXR_32s,(
 //   ippStsRangeErr     numBits > 32 or numModelBits > 15 or numTrimBits >15
 //                      or numCoeffs > 15 for ippiVLCEncodeDC444_JPEGXR_32s1u
 //                      or numCoeffs > 14 for ippiVLCEncodeDC422_JPEGXR_32s1u
-//                      or numCoeffs > 6 for ippiVLCEncodeDC420_JPEGXR_32s1u functions
+//                      or numCoeffs > 6 for ippiVLCEncodeDC420_JPEGXR_32s1u
+functions
 // Parameters:
 //   pSrcCoeffsScan     Pointer to the source vector of DC coeffs scanned
 //   pSrc               Pointer to the source image
@@ -7642,84 +6900,46 @@ IPPAPI(IppStatus,ippiVLCScan4x4DC_JPEGXR_32s,(
 //   ppBitStream        Moving pointer to the source bitstream data
 //   pBitsBuf           Prefetch buffer which contain the bits decoded last time
 //   pNumBits           Number of valid bits in prefetch buffer
-//   pNumNonZero        Pointer to the number of coefficients encoded (non-zero model bits after
+//   pNumNonZero        Pointer to the number of coefficients encoded (non-zero
+model bits after
 //                      flexbits and trimming applied)
 //   pVLCState          Pointer to the Adaptive VLC Coding state structure
 */
 
-IPPAPI(IppStatus,ippiVLCEncode4x4Flex_JPEGXR_16s1u_C1R,(
-  const Ipp16s*              pSrc,
-        Ipp32u               srcStep,
-        IppBool              chroma,
-        Ipp32u               numModelBits,
-        Ipp32u               numTrimBits,
-        Ipp32s               pDstResidual[16],
-        Ipp8u**              ppBitStream,
-        Ipp32u*              pBitsBuf,
-        Ipp32u*              pNumBits,
-        Ipp32u*              pNumNonZero,
+IPPAPI(IppStatus, ippiVLCEncode4x4Flex_JPEGXR_16s1u_C1R,
+       (const Ipp16s* pSrc, Ipp32u srcStep, IppBool chroma, Ipp32u numModelBits,
+        Ipp32u numTrimBits, Ipp32s pDstResidual[16], Ipp8u** ppBitStream,
+        Ipp32u* pBitsBuf, Ipp32u* pNumBits, Ipp32u* pNumNonZero,
         IppiVLCState_JPEGXR* pVLCState))
 
-IPPAPI(IppStatus,ippiVLCEncode4x4Flex_JPEGXR_32s1u_C1R,(
-  const Ipp32s*              pSrc,
-        Ipp32u               srcStep,
-        IppBool              chroma,
-        Ipp32u               numModelBits,
-        Ipp32u               numTrimBits,
-        Ipp32s               pDstResidual[16],
-        Ipp8u**              ppBitStream,
-        Ipp32u*              pBitsBuf,
-        Ipp32u*              pNumBits,
-        Ipp32u*              pNumNonZero,
+IPPAPI(IppStatus, ippiVLCEncode4x4Flex_JPEGXR_32s1u_C1R,
+       (const Ipp32s* pSrc, Ipp32u srcStep, IppBool chroma, Ipp32u numModelBits,
+        Ipp32u numTrimBits, Ipp32s pDstResidual[16], Ipp8u** ppBitStream,
+        Ipp32u* pBitsBuf, Ipp32u* pNumBits, Ipp32u* pNumNonZero,
         IppiVLCState_JPEGXR* pVLCState))
 
-IPPAPI(IppStatus,ippiVLCEncode4x4_JPEGXR_16s1u_C1R,(
-  const Ipp16s*              pSrc,
-        Ipp32u               srcStep,
-        IppBool              chroma,
-        Ipp32u               numModelBits,
-        Ipp8u**              ppBitStream,
-        Ipp32u*              pBitsBuf,
-        Ipp32u*              pNumBits,
-        Ipp32u*              pNumNonZero,
+IPPAPI(IppStatus, ippiVLCEncode4x4_JPEGXR_16s1u_C1R,
+       (const Ipp16s* pSrc, Ipp32u srcStep, IppBool chroma, Ipp32u numModelBits,
+        Ipp8u** ppBitStream, Ipp32u* pBitsBuf, Ipp32u* pNumBits,
+        Ipp32u* pNumNonZero, IppiVLCState_JPEGXR* pVLCState))
+
+IPPAPI(IppStatus, ippiVLCEncode4x4_JPEGXR_32s1u_C1R,
+       (const Ipp32s* pSrc, Ipp32u srcStep, IppBool chroma, Ipp32u numModelBits,
+        Ipp8u** ppBitStream, Ipp32u* pBitsBuf, Ipp32u* pNumBits,
+        Ipp32u* pNumNonZero, IppiVLCState_JPEGXR* pVLCState))
+
+IPPAPI(IppStatus, ippiVLCEncodeDC444_JPEGXR_32s1u,
+       (const Ipp32s* pSrcCoeffsScan, Ipp32s numCoeffs, IppBool chroma,
+        Ipp8u** ppBitStream, Ipp32u* pBitsBuf, Ipp32u* pNumBits,
         IppiVLCState_JPEGXR* pVLCState))
 
-IPPAPI(IppStatus,ippiVLCEncode4x4_JPEGXR_32s1u_C1R,(
-  const Ipp32s*              pSrc,
-        Ipp32u               srcStep,
-        IppBool              chroma,
-        Ipp32u               numModelBits,
-        Ipp8u**              ppBitStream,
-        Ipp32u*              pBitsBuf,
-        Ipp32u*              pNumBits,
-        Ipp32u*              pNumNonZero,
-        IppiVLCState_JPEGXR* pVLCState))
+IPPAPI(IppStatus, ippiVLCEncodeDC422_JPEGXR_32s1u,
+       (const Ipp32s pSrcCoeffsScan[14], Ipp32u numCoeffs, Ipp8u** ppBitStream,
+        Ipp32u* pBitsBuf, Ipp32u* pNumBits, IppiVLCState_JPEGXR* pVLCState))
 
-IPPAPI(IppStatus,ippiVLCEncodeDC444_JPEGXR_32s1u,(
-  const Ipp32s*              pSrcCoeffsScan,
-        Ipp32s               numCoeffs,
-        IppBool              chroma,
-        Ipp8u**              ppBitStream,
-        Ipp32u*              pBitsBuf,
-        Ipp32u*              pNumBits,
-        IppiVLCState_JPEGXR* pVLCState))
-
-IPPAPI(IppStatus,ippiVLCEncodeDC422_JPEGXR_32s1u,(
-  const Ipp32s               pSrcCoeffsScan[14],
-        Ipp32u               numCoeffs,
-        Ipp8u**              ppBitStream,
-        Ipp32u*              pBitsBuf,
-        Ipp32u*              pNumBits,
-        IppiVLCState_JPEGXR* pVLCState))
-
-IPPAPI(IppStatus,ippiVLCEncodeDC420_JPEGXR_32s1u,(
-  const Ipp32s               pSrcCoeffsScan[6],
-        Ipp32u               numCoeffs,
-        Ipp8u**              ppBitStream,
-        Ipp32u*              pBitsBuf,
-        Ipp32u*              pNumBits,
-        IppiVLCState_JPEGXR* pVLCState))
-
+IPPAPI(IppStatus, ippiVLCEncodeDC420_JPEGXR_32s1u,
+       (const Ipp32s pSrcCoeffsScan[6], Ipp32u numCoeffs, Ipp8u** ppBitStream,
+        Ipp32u* pBitsBuf, Ipp32u* pNumBits, IppiVLCState_JPEGXR* pVLCState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //                        Variable Length Code Decode functions
@@ -7747,53 +6967,30 @@ IPPAPI(IppStatus,ippiVLCEncodeDC420_JPEGXR_32s1u,(
 //    pVLCState           Pointer to the Adaptive VLC Coding state structure
 */
 
-IPPAPI(IppStatus,ippiVLCDecode4x4_JPEGXR_1u16s_C1R,(
-  const Ipp8u**              ppBitStream,
-        Ipp32u*              pBitsBuf,
-        Ipp32u*              pNumBits,
-        Ipp16s               dequantMult,
-        Ipp16s*              pDst,
-        Ipp32u               dstStep,
-        IppBool              chroma,
-        Ipp32u*              pNumNonZero,
+IPPAPI(IppStatus, ippiVLCDecode4x4_JPEGXR_1u16s_C1R,
+       (const Ipp8u** ppBitStream, Ipp32u* pBitsBuf, Ipp32u* pNumBits,
+        Ipp16s dequantMult, Ipp16s* pDst, Ipp32u dstStep, IppBool chroma,
+        Ipp32u* pNumNonZero, IppiVLCState_JPEGXR* pVLCState))
+
+IPPAPI(IppStatus, ippiVLCDecode4x4_JPEGXR_1u32s_C1R,
+       (const Ipp8u** ppBitStream, Ipp32u* pBitsBuf, Ipp32u* pNumBits,
+        Ipp32s dequantMult, Ipp32s* pDst, Ipp32u dstStep, IppBool chroma,
+        Ipp32u* pNumNonZero, IppiVLCState_JPEGXR* pVLCState))
+
+IPPAPI(IppStatus, ippiVLCDecodeDC444_JPEGXR_1u32s,
+       (const Ipp8u** ppBitStream, Ipp32u* pBitsBuf, Ipp32u* pNumBits,
+        Ipp32s pDstCoeffsScan[16], IppBool chroma, Ipp32u* pNumNonzero,
         IppiVLCState_JPEGXR* pVLCState))
 
-IPPAPI(IppStatus,ippiVLCDecode4x4_JPEGXR_1u32s_C1R,(
-  const Ipp8u**              ppBitStream,
-        Ipp32u*              pBitsBuf,
-        Ipp32u*              pNumBits,
-        Ipp32s               dequantMult,
-        Ipp32s*              pDst,
-        Ipp32u               dstStep,
-        IppBool              chroma,
-        Ipp32u*              pNumNonZero,
+IPPAPI(IppStatus, ippiVLCDecodeDC422_JPEGXR_1u32s,
+       (const Ipp8u** ppBitStream, Ipp32u* pBitsBuf, Ipp32u* pNumBits,
+        Ipp32s pDstCoeffsScan[14], Ipp32u* pNumNonZero,
         IppiVLCState_JPEGXR* pVLCState))
 
-IPPAPI(IppStatus,ippiVLCDecodeDC444_JPEGXR_1u32s,(
-  const Ipp8u**              ppBitStream,
-        Ipp32u*              pBitsBuf,
-        Ipp32u*              pNumBits,
-        Ipp32s               pDstCoeffsScan[16],
-        IppBool              chroma,
-        Ipp32u*              pNumNonzero,
+IPPAPI(IppStatus, ippiVLCDecodeDC420_JPEGXR_1u32s,
+       (const Ipp8u** ppBitStream, Ipp32u* pBitsBuf, Ipp32u* pNumBits,
+        Ipp32s pDstCoeffsScan[6], Ipp32u* pNumNonZero,
         IppiVLCState_JPEGXR* pVLCState))
-
-IPPAPI(IppStatus,ippiVLCDecodeDC422_JPEGXR_1u32s,(
-  const Ipp8u**              ppBitStream,
-        Ipp32u*              pBitsBuf,
-        Ipp32u*              pNumBits,
-        Ipp32s               pDstCoeffsScan[14],
-        Ipp32u*              pNumNonZero,
-        IppiVLCState_JPEGXR* pVLCState))
-
-IPPAPI(IppStatus,ippiVLCDecodeDC420_JPEGXR_1u32s,(
-  const Ipp8u**              ppBitStream,
-        Ipp32u*              pBitsBuf,
-        Ipp32u*              pNumBits,
-        Ipp32s               pDstCoeffsScan[6],
-        Ipp32u*              pNumNonZero,
-        IppiVLCState_JPEGXR* pVLCState))
-
 
 /* ///////////////////////////////////////////////////////////////////////////
 //                       Fixed Length Code Encode functions
@@ -7806,12 +7003,14 @@ IPPAPI(IppStatus,ippiVLCDecodeDC420_JPEGXR_1u32s,(
 //    srcStep              Source image step size
 //    pSrcResidual         Pointer to the adaptive scan residual
 //    ppBitStream          Moving pointer to the source bitstream data
-//    pBitsBuf             Prefetch buffer which contain the bits decoded last time
+//    pBitsBuf             Prefetch buffer which contain the bits decoded last
+time
 //    pNumBits             Number of valid bits in prefetch buffer
 //    numFlexBits          Number of flexbits to decode
 //    numTrimBits          Number of trimmed bits
 //    trimMult             Multiplier depending on the number of trimmed bits
-//    acFlag               Adaptive coding flag: if non-zero - adaptive scan residual is used,
+//    acFlag               Adaptive coding flag: if non-zero - adaptive scan
+residual is used,
 //                        otherwise , only flexbits processed
 //  Returns:
 //    ippStsNoErr          OK
@@ -7820,28 +7019,15 @@ IPPAPI(IppStatus,ippiVLCDecodeDC420_JPEGXR_1u32s,(
 //
 */
 
-IPPAPI(IppStatus,ippiFLCEncode4x4_JPEGXR_16s1u_C1R,(
-  const Ipp16s* pSrc,
-        Ipp32u  srcStep,
-  const Ipp32s* pSrcResidual,
-        Ipp8u** ppBitStream,
-        Ipp32u* pBitsBuf,
-        Ipp32u* pNumBits,
-        Ipp32u  numFlexBits,
-        Ipp32u  numTrimBits,
-        IppBool acFlag))
+IPPAPI(IppStatus, ippiFLCEncode4x4_JPEGXR_16s1u_C1R,
+       (const Ipp16s* pSrc, Ipp32u srcStep, const Ipp32s* pSrcResidual,
+        Ipp8u** ppBitStream, Ipp32u* pBitsBuf, Ipp32u* pNumBits,
+        Ipp32u numFlexBits, Ipp32u numTrimBits, IppBool acFlag))
 
-IPPAPI(IppStatus,ippiFLCEncode4x4_JPEGXR_32s1u_C1R,(
-  const Ipp32s* pSrc,
-        Ipp32u  srcStep,
-  const Ipp32s* pSrcResidual,
-        Ipp8u** ppBitStream,
-        Ipp32u* pBitsBuf,
-        Ipp32u* pNumBits,
-        Ipp32u  numFlexBits,
-        Ipp32u  numTrimBits,
-        IppBool acFlag))
-
+IPPAPI(IppStatus, ippiFLCEncode4x4_JPEGXR_32s1u_C1R,
+       (const Ipp32s* pSrc, Ipp32u srcStep, const Ipp32s* pSrcResidual,
+        Ipp8u** ppBitStream, Ipp32u* pBitsBuf, Ipp32u* pNumBits,
+        Ipp32u numFlexBits, Ipp32u numTrimBits, IppBool acFlag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //                       Fixed Length Code Decode functions
@@ -7858,7 +7044,8 @@ IPPAPI(IppStatus,ippiFLCEncode4x4_JPEGXR_32s1u_C1R,(
 //    numFlexBits       Number of flexbits to decode
 //    numTrimBits       Number of bits to trim
 //    trimMult          Multiplier depending on the number of trimmed bits
-//    acFlag            Adaptive coding flag: if non-zero - adaptive scan residual is used,
+//    acFlag            Adaptive coding flag: if non-zero - adaptive scan
+residual is used,
 //                    otherwise only flexbits processed
 //  Returns:
 //    ippStsNoErr       OK
@@ -7867,38 +7054,26 @@ IPPAPI(IppStatus,ippiFLCEncode4x4_JPEGXR_32s1u_C1R,(
 //
 */
 
-IPPAPI(IppStatus,ippiFLCDecode4x4_JPEGXR_1u16s_C1IR,(
-  const Ipp8u** ppBitStream,
-        Ipp32u* pBitsBuf,
-        Ipp32u* pNumBits,
-        Ipp16s* pSrcDst,
-        Ipp32u  srcDstStep,
-        Ipp32u  numFlexBits,
-        Ipp16s  trimMult,
+IPPAPI(IppStatus, ippiFLCDecode4x4_JPEGXR_1u16s_C1IR,
+       (const Ipp8u** ppBitStream, Ipp32u* pBitsBuf, Ipp32u* pNumBits,
+        Ipp16s* pSrcDst, Ipp32u srcDstStep, Ipp32u numFlexBits, Ipp16s trimMult,
         IppBool acFlag))
 
-IPPAPI(IppStatus,ippiFLCDecode4x4_JPEGXR_1u32s_C1IR,(
-  const Ipp8u** ppBitStream,
-        Ipp32u* pBitsBuf,
-        Ipp32u* pNumBits,
-        Ipp32s* pSrcDst,
-        Ipp32u  srcDstStep,
-        Ipp32u  numFlexBits,
-        Ipp32s  trimMult,
+IPPAPI(IppStatus, ippiFLCDecode4x4_JPEGXR_1u32s_C1IR,
+       (const Ipp8u** ppBitStream, Ipp32u* pBitsBuf, Ipp32u* pNumBits,
+        Ipp32s* pSrcDst, Ipp32u srcDstStep, Ipp32u numFlexBits, Ipp32s trimMult,
         IppBool acFlag))
-
 
 #ifdef __cplusplus
 }
 #endif
 
-#if defined (_IPP_STDCALL_CDECL)
-  #undef  _IPP_STDCALL_CDECL
-  #define __stdcall __cdecl
+#if defined(_IPP_STDCALL_CDECL)
+#undef _IPP_STDCALL_CDECL
+#define __stdcall __cdecl
 #endif
 
 #endif /* __IPPJ_H__ */
 
 /* //////////////////////// End of file "ippj.h" //////////////////////////
-*/
-
+ */

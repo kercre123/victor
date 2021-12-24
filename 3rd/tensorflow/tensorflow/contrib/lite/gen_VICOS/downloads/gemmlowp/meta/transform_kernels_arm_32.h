@@ -87,13 +87,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 0>::Transform(
       "pld [%[output]]\n"
 
       "bne 1b\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -184,13 +184,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 1>::Transform(
 
       "vst1.8 {d0[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -281,13 +281,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 2>::Transform(
 
       "vst1.16 {d0[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -380,13 +380,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 3>::Transform(
       "vst1.16 {d0[0]}, [%[output]]!\n"
       "vst1.8 {d0[2]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -477,13 +477,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 4>::Transform(
 
       "vst1.32 {d0[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -583,13 +583,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 5>::Transform(
       "vst1.32 {d0[0]}, [%[output]]!\n"
       "vst1.8 {d0[4]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -688,13 +688,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 6>::Transform(
       "vst1.32 {d0[0]}, [%[output]]!\n"
       "vst1.16 {d0[2]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -795,13 +795,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 7>::Transform(
       "vst1.16 {d0[2]}, [%[output]]!\n"
       "vst1.8 {d0[6]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -899,13 +899,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 8>::Transform(
 
       "vst1.32 {d0}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -1013,13 +1013,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 9>::Transform(
       "vst1.32 {d0}, [%[output]]!\n"
       "vst1.8 {d1[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -1127,13 +1127,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 10>::Transform(
       "vst1.32 {d0}, [%[output]]!\n"
       "vst1.16 {d1[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -1243,13 +1243,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 11>::Transform(
       "vst1.16 {d1[0]}, [%[output]]!\n"
       "vst1.8 {d1[2]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -1357,13 +1357,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 12>::Transform(
       "vst1.32 {d0}, [%[output]]!\n"
       "vst1.32 {d1[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -1480,13 +1480,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 13>::Transform(
       "vst1.32 {d1[0]}, [%[output]]!\n"
       "vst1.8 {d1[4]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -1602,13 +1602,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 14>::Transform(
       "vst1.32 {d1[0]}, [%[output]]!\n"
       "vst1.16 {d1[2]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -1726,13 +1726,13 @@ inline void Transform1DKernel<int32_t, uint8_t, Requantize, 16, 15>::Transform(
       "vst1.16 {d1[2]}, [%[output]]!\n"
       "vst1.8 {d1[6]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [input_range_min] "r"(params.input_range_min),
-        [output_range_min] "r"(params.output_range_min),
-        [input_range_offset] "r"(params.input_range_offset),
-        [one_over_output_range_scale] "r"(params.one_over_output_range_scale),
-        [input_range_scale] "r"(params.input_range_scale)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ input_range_min ] "r"(params.input_range_min),
+        [ output_range_min ] "r"(params.output_range_min),
+        [ input_range_offset ] "r"(params.input_range_offset),
+        [ one_over_output_range_scale ] "r"(params.one_over_output_range_scale),
+        [ input_range_scale ] "r"(params.input_range_scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -1790,10 +1790,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 0>::Transform(
       "pld [%[output]]\n"
 
       "bne 1b\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -1871,10 +1872,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 1>::Transform(
 
       "vst1.8 {d0[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -1952,10 +1954,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 2>::Transform(
 
       "vst1.16 {d0[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -2035,10 +2038,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 3>::Transform(
       "vst1.16 {d0[0]}, [%[output]]!\n"
       "vst1.8 {d0[2]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -2116,10 +2120,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 4>::Transform(
 
       "vst1.32 {d0[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -2204,10 +2209,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 5>::Transform(
       "vst1.32 {d0[0]}, [%[output]]!\n"
       "vst1.8 {d0[4]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -2291,10 +2297,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 6>::Transform(
       "vst1.32 {d0[0]}, [%[output]]!\n"
       "vst1.16 {d0[2]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -2380,10 +2387,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 7>::Transform(
       "vst1.16 {d0[2]}, [%[output]]!\n"
       "vst1.8 {d0[6]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -2466,10 +2474,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 8>::Transform(
 
       "vst1.32 {d0}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -2560,10 +2569,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 9>::Transform(
       "vst1.32 {d0}, [%[output]]!\n"
       "vst1.8 {d1[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -2654,10 +2664,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 10>::Transform(
       "vst1.32 {d0}, [%[output]]!\n"
       "vst1.16 {d1[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -2750,10 +2761,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 11>::Transform(
       "vst1.16 {d1[0]}, [%[output]]!\n"
       "vst1.8 {d1[2]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -2844,10 +2856,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 12>::Transform(
       "vst1.32 {d0}, [%[output]]!\n"
       "vst1.32 {d1[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -2945,10 +2958,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 13>::Transform(
       "vst1.32 {d1[0]}, [%[output]]!\n"
       "vst1.8 {d1[4]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -3045,10 +3059,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 14>::Transform(
       "vst1.32 {d1[0]}, [%[output]]!\n"
       "vst1.16 {d1[2]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -3147,10 +3162,11 @@ inline void Transform1DKernel<float, uint8_t, Quantize, 16, 15>::Transform(
       "vst1.16 {d1[2]}, [%[output]]!\n"
       "vst1.8 {d1[6]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -3208,10 +3224,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 0>::Transform(
       "pld [%[output]]\n"
 
       "bne 1b\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -3289,10 +3306,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 1>::Transform(
 
       "vst1.32 {d0[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -3370,10 +3388,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 2>::Transform(
 
       "vst1.32 {d0}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -3453,10 +3472,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 3>::Transform(
       "vst1.32 {d0}, [%[output]]!\n"
       "vst1.32 {d1[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -3534,10 +3554,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 4>::Transform(
 
       "vst1.32 {d0, d1}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -3622,10 +3643,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 5>::Transform(
       "vst1.32 {d0, d1}, [%[output]]!\n"
       "vst1.32 {d2[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -3709,10 +3731,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 6>::Transform(
 
       "vst1.32 {d0, d1, d2}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -3798,10 +3821,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 7>::Transform(
       "vst1.32 {d0, d1, d2}, [%[output]]!\n"
       "vst1.32 {d3[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -3884,10 +3908,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 8>::Transform(
 
       "vst1.32 {d0, d1, d2, d3}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -3978,10 +4003,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 9>::Transform(
       "vst1.32 {d0, d1, d2, d3}, [%[output]]!\n"
       "vst1.32 {d4[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -4072,10 +4098,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 10>::Transform(
       "vst1.32 {d0, d1, d2, d3}, [%[output]]!\n"
       "vst1.32 {d4}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -4168,10 +4195,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 11>::Transform(
       "vst1.32 {d4}, [%[output]]!\n"
       "vst1.32 {d5[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -4262,10 +4290,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 12>::Transform(
       "vst1.32 {d0, d1, d2, d3}, [%[output]]!\n"
       "vst1.32 {d4, d5}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -4363,10 +4392,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 13>::Transform(
       "vst1.32 {d4, d5}, [%[output]]!\n"
       "vst1.32 {d6[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -4463,10 +4493,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 14>::Transform(
       "vst1.32 {d0, d1, d2, d3}, [%[output]]!\n"
       "vst1.32 {d4, d5, d6}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -4565,10 +4596,11 @@ inline void Transform1DKernel<uint8_t, float, Dequantize, 16, 15>::Transform(
       "vst1.32 {d4, d5, d6}, [%[output]]!\n"
       "vst1.32 {d7[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [range_offset] "r"(params.range_offset),
-        [range_scale] "r"(params.range_scale), [range_min] "r"(params.range_min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ range_offset ] "r"(params.range_offset),
+        [ range_scale ] "r"(params.range_scale),
+        [ range_min ] "r"(params.range_min)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -4607,9 +4639,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "pld [%[output]]\n"
 
       "bne 1b\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "d0", "d1", "d8", "d9", "d10", "d11", "cc", "memory");
 }
 
@@ -4663,9 +4695,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
 
       "vst1.8 {d0[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "d0", "d1", "d8", "d9", "d10", "d11", "cc", "memory");
 }
 
@@ -4719,9 +4751,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
 
       "vst1.16 {d0[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "d0", "d1", "d8", "d9", "d10", "d11", "cc", "memory");
 }
 
@@ -4777,9 +4809,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "vst1.16 {d0[0]}, [%[output]]!\n"
       "vst1.8 {d0[2]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "d0", "d1", "d8", "d9", "d10", "d11", "cc", "memory");
 }
 
@@ -4833,9 +4865,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
 
       "vst1.32 {d0[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "d0", "d1", "d8", "d9", "d10", "d11", "cc", "memory");
 }
 
@@ -4891,9 +4923,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "vst1.32 {d0[0]}, [%[output]]!\n"
       "vst1.8 {d0[4]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "d0", "d1", "d8", "d9", "d10", "d11", "cc", "memory");
 }
 
@@ -4949,9 +4981,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "vst1.32 {d0[0]}, [%[output]]!\n"
       "vst1.16 {d0[2]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "d0", "d1", "d8", "d9", "d10", "d11", "cc", "memory");
 }
 
@@ -5009,9 +5041,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "vst1.16 {d0[2]}, [%[output]]!\n"
       "vst1.8 {d0[6]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "d0", "d1", "d8", "d9", "d10", "d11", "cc", "memory");
 }
 
@@ -5065,9 +5097,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
 
       "vst1.32 {d0}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "d0", "d1", "d8", "d9", "d10", "d11", "cc", "memory");
 }
 
@@ -5123,9 +5155,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "vst1.32 {d0}, [%[output]]!\n"
       "vst1.8 {d1[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "d0", "d1", "d8", "d9", "d10", "d11", "cc", "memory");
 }
 
@@ -5181,9 +5213,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "vst1.32 {d0}, [%[output]]!\n"
       "vst1.16 {d1[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "d0", "d1", "d8", "d9", "d10", "d11", "cc", "memory");
 }
 
@@ -5241,9 +5273,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "vst1.16 {d1[0]}, [%[output]]!\n"
       "vst1.8 {d1[2]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "d0", "d1", "d8", "d9", "d10", "d11", "cc", "memory");
 }
 
@@ -5299,9 +5331,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "vst1.32 {d0}, [%[output]]!\n"
       "vst1.32 {d1[0]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "d0", "d1", "d8", "d9", "d10", "d11", "cc", "memory");
 }
 
@@ -5359,9 +5391,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "vst1.32 {d1[0]}, [%[output]]!\n"
       "vst1.8 {d1[4]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "d0", "d1", "d8", "d9", "d10", "d11", "cc", "memory");
 }
 
@@ -5419,9 +5451,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "vst1.32 {d1[0]}, [%[output]]!\n"
       "vst1.16 {d1[2]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "d0", "d1", "d8", "d9", "d10", "d11", "cc", "memory");
 }
 
@@ -5481,9 +5513,9 @@ inline void Transform1DKernel<uint8_t, uint8_t, MinMax<uint8_t>, 16,
       "vst1.16 {d1[2]}, [%[output]]!\n"
       "vst1.8 {d1[6]}, [%[output]]!\n"
       "pld [%[output]]\n"
-      : [count] "+r"(params_count_copy), [input] "+r"(input),
-        [output] "+r"(output)
-      : [max] "r"(params.max), [min] "r"(params.min)
+      : [ count ] "+r"(params_count_copy), [ input ] "+r"(input),
+        [ output ] "+r"(output)
+      : [ max ] "r"(params.max), [ min ] "r"(params.min)
       : "d0", "d1", "d8", "d9", "d10", "d11", "cc", "memory");
 }
 
@@ -5590,15 +5622,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "bne 2b\n"
       "subs %[rows], %[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -5734,15 +5767,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "pld [%[output]]\n"
       "subs %[rows], %[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -5878,15 +5912,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "pld [%[output]]\n"
       "subs %[rows], %[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -6025,15 +6060,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "pld [%[output]]\n"
       "subs %[rows], %[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -6169,15 +6205,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "pld [%[output]]\n"
       "subs %[rows], %[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -6329,15 +6366,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "pld [%[output]]\n"
       "subs %[rows], %[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -6488,15 +6526,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "pld [%[output]]\n"
       "subs %[rows], %[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -6650,15 +6689,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "pld [%[output]]\n"
       "subs %[rows], %[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -6807,15 +6847,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "pld [%[output]]\n"
       "subs %[rows], %[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -6982,15 +7023,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "pld [%[output]]\n"
       "subs %[rows], %[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -7157,15 +7199,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "pld [%[output]]\n"
       "subs %[rows], %[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -7335,15 +7378,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "pld [%[output]]\n"
       "subs %[rows], %[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -7510,15 +7554,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "pld [%[output]]\n"
       "subs %[rows], %[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -7701,15 +7746,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "pld [%[output]]\n"
       "subs %[rows], %[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -7891,15 +7937,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "pld [%[output]]\n"
       "subs %[rows], %[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -8084,15 +8131,16 @@ inline void Transform1DKernel<uint8_t, int32_t, BiasAdd<uint8_t>, 16,
       "pld [%[output]]\n"
       "subs %[rows], %[rows], #1\n"
       "bne 1b\n"
-      : [input] "+r"(input), [output] "+r"(output)
-      : [count] "r"(params.count), [rows] "r"(params_rows_copy),
-        [output_range_offset] "m"(params.output_range_offset),
-        [input_range_scale] "m"(params.input_range_scale),
-        [one_over_output_range_scale] "m"(params.one_over_output_range_scale),
-        [bias_range_min] "m"(params.bias_range_min),
-        [output_range_min] "m"(params.output_range_min),
-        [bias_range_scale] "m"(params.bias_range_scale),
-        [bias] "r"(params.bias), [input_range_min] "m"(params.input_range_min)
+      : [ input ] "+r"(input), [ output ] "+r"(output)
+      : [ count ] "r"(params.count), [ rows ] "r"(params_rows_copy),
+        [ output_range_offset ] "m"(params.output_range_offset),
+        [ input_range_scale ] "m"(params.input_range_scale),
+        [ one_over_output_range_scale ] "m"(params.one_over_output_range_scale),
+        [ bias_range_min ] "m"(params.bias_range_min),
+        [ output_range_min ] "m"(params.output_range_min),
+        [ bias_range_scale ] "m"(params.bias_range_scale),
+        [ bias ] "r"(params.bias),
+        [ input_range_min ] "m"(params.input_range_min)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",

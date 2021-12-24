@@ -17,6 +17,7 @@ limitations under the License.
 #define TENSORFLOW_CONTRIB_LITE_JAVA_EXCEPTION_JNI_H_
 
 #include <jni.h>
+
 #include "tensorflow/contrib/lite/error_reporter.h"
 
 #ifdef __cplusplus

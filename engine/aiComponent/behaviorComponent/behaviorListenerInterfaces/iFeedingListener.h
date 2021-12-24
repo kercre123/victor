@@ -13,20 +13,17 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IFeedingListener_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IFeedingListener_H__
 
-
 namespace Anki {
 namespace Vector {
-  
-class IFeedingListener{
-public:
+
+class IFeedingListener {
+ public:
   virtual void StartedEating(const int duration_s) = 0;
   virtual void EatingComplete() = 0;
   virtual void EatingInterrupted() = 0;
-
 };
 
+}  // namespace Vector
+}  // namespace Anki
 
-} // namespace Vector
-} // namespace Anki
-
-#endif // __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IFeedingListener_H__
+#endif  // __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IFeedingListener_H__

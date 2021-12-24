@@ -18,15 +18,12 @@ namespace Anki {
 namespace Vector {
 
 class IReactToPetListener {
-public:
-  
+ public:
   // Notify listener when reaction ends
   virtual void BehaviorDidReact(const std::set<Vision::FaceID_t>& targets) = 0;
-  
 };
 
+}  // namespace Vector
+}  // namespace Anki
 
-} // namespace Vector
-} // namespace Anki
-
-#endif // __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IReactToPetListener_H__
+#endif  // __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IReactToPetListener_H__

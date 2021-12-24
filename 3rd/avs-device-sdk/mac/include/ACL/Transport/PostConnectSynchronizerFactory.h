@@ -16,9 +16,9 @@
 #ifndef ALEXA_CLIENT_SDK_ACL_INCLUDE_ACL_TRANSPORT_POSTCONNECTSYNCHRONIZERFACTORY_H_
 #define ALEXA_CLIENT_SDK_ACL_INCLUDE_ACL_TRANSPORT_POSTCONNECTSYNCHRONIZERFACTORY_H_
 
-#include <memory>
-
 #include <AVSCommon/SDKInterfaces/ContextManagerInterface.h>
+
+#include <memory>
 
 #include "ACL/Transport/PostConnectFactoryInterface.h"
 
@@ -29,31 +29,38 @@ namespace acl {
  * Factory for creating PostConnectSynchronizer instances.
  */
 class PostConnectSynchronizerFactory : public PostConnectFactoryInterface {
-public:
-    /**
-     * Create a PostConnectSynchronizerFactory instance.
-     *
-     * @param contextManager The @c ContextManager which will provide the context for @c SynchronizeState events.
-     * @return A PostConnectSynchronizer instance.
-     */
-    static std::shared_ptr<PostConnectSynchronizerFactory> create(
-        std::shared_ptr<avsCommon::sdkInterfaces::ContextManagerInterface> contextManager);
+ public:
+  /**
+   * Create a PostConnectSynchronizerFactory instance.
+   *
+   * @param contextManager The @c ContextManager which will provide the context
+   * for @c SynchronizeState events.
+   * @return A PostConnectSynchronizer instance.
+   */
+  static std::shared_ptr<PostConnectSynchronizerFactory> create(
+      std::shared_ptr<avsCommon::sdkInterfaces::ContextManagerInterface>
+          contextManager);
 
-    /// @name PostConnectFactoryInterface methods
-    /// @{
-    std::shared_ptr<PostConnectInterface> createPostConnect() override;
-    /// @}
+  /// @name PostConnectFactoryInterface methods
+  /// @{
+  std::shared_ptr<PostConnectInterface> createPostConnect() override;
+  /// @}
 
-private:
-    /**
-     * Constructor.
-     *
-     * @param contextManager The @c ContextManager which will provide the context for @c SynchronizeState events.
-     */
-    PostConnectSynchronizerFactory(std::shared_ptr<avsCommon::sdkInterfaces::ContextManagerInterface> contextManager);
+ private:
+  /**
+   * Constructor.
+   *
+   * @param contextManager The @c ContextManager which will provide the context
+   * for @c SynchronizeState events.
+   */
+  PostConnectSynchronizerFactory(
+      std::shared_ptr<avsCommon::sdkInterfaces::ContextManagerInterface>
+          contextManager);
 
-    /// The @c ContextManager which will provide the context for @c SynchronizeState events.
-    std::shared_ptr<avsCommon::sdkInterfaces::ContextManagerInterface> m_contextManager;
+  /// The @c ContextManager which will provide the context for @c
+  /// SynchronizeState events.
+  std::shared_ptr<avsCommon::sdkInterfaces::ContextManagerInterface>
+      m_contextManager;
 };
 
 }  // namespace acl

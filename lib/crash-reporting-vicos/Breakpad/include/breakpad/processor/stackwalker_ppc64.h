@@ -32,10 +32,8 @@
 // Provides stack frames given ppc64 register context and a memory region
 // corresponding to a ppc64 stack.
 
-
 #ifndef PROCESSOR_STACKWALKER_PPC64_H__
 #define PROCESSOR_STACKWALKER_PPC64_H__
-
 
 #include "google_breakpad/common/breakpad_types.h"
 #include "google_breakpad/common/minidump_format.h"
@@ -52,8 +50,7 @@ class StackwalkerPPC64 : public Stackwalker {
   // included in the stack.  The other arguments are passed directly through
   // to the base Stackwalker constructor.
   StackwalkerPPC64(const SystemInfo* system_info,
-                   const MDRawContextPPC64* context,
-                   MemoryRegion* memory,
+                   const MDRawContextPPC64* context, MemoryRegion* memory,
                    const CodeModules* modules,
                    StackFrameSymbolizer* frame_symbolizer);
 
@@ -70,8 +67,6 @@ class StackwalkerPPC64 : public Stackwalker {
   const MDRawContextPPC64* context_;
 };
 
-
 }  // namespace google_breakpad
-
 
 #endif  // PROCESSOR_STACKWALKER_PPC64_H__

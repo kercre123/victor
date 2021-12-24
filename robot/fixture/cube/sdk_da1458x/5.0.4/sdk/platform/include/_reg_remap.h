@@ -5,6 +5,4 @@
 
 //#define REG_REMAP_BASE_ADDR 0x10002000
 
-
-#endif // __REG_REMAP_H_
-
+#endif  // __REG_REMAP_H_

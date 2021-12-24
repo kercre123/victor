@@ -29,14 +29,19 @@ namespace audio {
  * This is an interface to produce sounds for the Communications interface.
  */
 class CommunicationsAudioFactoryInterface {
-public:
-    virtual ~CommunicationsAudioFactoryInterface() = default;
+ public:
+  virtual ~CommunicationsAudioFactoryInterface() = default;
 
-    virtual std::function<std::unique_ptr<std::istream>()> callConnectedRingtone() const = 0;
-    virtual std::function<std::unique_ptr<std::istream>()> callDisconnectedRingtone() const = 0;
-    virtual std::function<std::unique_ptr<std::istream>()> outboundRingtone() const = 0;
-    virtual std::function<std::unique_ptr<std::istream>()> dropInConnectedRingtone() const = 0;
-    virtual std::function<std::unique_ptr<std::istream>()> callIncomingRingtone() const = 0;
+  virtual std::function<std::unique_ptr<std::istream>()> callConnectedRingtone()
+      const = 0;
+  virtual std::function<std::unique_ptr<std::istream>()>
+  callDisconnectedRingtone() const = 0;
+  virtual std::function<std::unique_ptr<std::istream>()> outboundRingtone()
+      const = 0;
+  virtual std::function<std::unique_ptr<std::istream>()>
+  dropInConnectedRingtone() const = 0;
+  virtual std::function<std::unique_ptr<std::istream>()> callIncomingRingtone()
+      const = 0;
 };
 
 }  // namespace audio

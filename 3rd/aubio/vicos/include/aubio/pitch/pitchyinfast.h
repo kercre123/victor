@@ -51,14 +51,14 @@ typedef struct _aubio_pitchyinfast_t aubio_pitchyinfast_t;
   \param buf_size size of the input buffer to analyse
 
 */
-aubio_pitchyinfast_t *new_aubio_pitchyinfast (uint_t buf_size);
+aubio_pitchyinfast_t *new_aubio_pitchyinfast(uint_t buf_size);
 
 /** deletion of the pitch detection object
 
   \param o pitch detection object as returned by new_aubio_pitchyin()
 
 */
-void del_aubio_pitchyinfast (aubio_pitchyinfast_t * o);
+void del_aubio_pitchyinfast(aubio_pitchyinfast_t *o);
 
 /** execute pitch detection an input buffer
 
@@ -67,8 +67,8 @@ void del_aubio_pitchyinfast (aubio_pitchyinfast_t * o);
   \param cands_out pitch period candidates, in samples
 
 */
-void aubio_pitchyinfast_do (aubio_pitchyinfast_t * o, const fvec_t * samples_in, fvec_t * cands_out);
-
+void aubio_pitchyinfast_do(aubio_pitchyinfast_t *o, const fvec_t *samples_in,
+                           fvec_t *cands_out);
 
 /** set tolerance parameter for YIN algorithm
 
@@ -76,7 +76,7 @@ void aubio_pitchyinfast_do (aubio_pitchyinfast_t * o, const fvec_t * samples_in,
   \param tol tolerance parameter for minima selection [default 0.15]
 
 */
-uint_t aubio_pitchyinfast_set_tolerance (aubio_pitchyinfast_t * o, smpl_t tol);
+uint_t aubio_pitchyinfast_set_tolerance(aubio_pitchyinfast_t *o, smpl_t tol);
 
 /** get tolerance parameter for YIN algorithm
 
@@ -84,7 +84,7 @@ uint_t aubio_pitchyinfast_set_tolerance (aubio_pitchyinfast_t * o, smpl_t tol);
   \return tolerance parameter for minima selection [default 0.15]
 
 */
-smpl_t aubio_pitchyinfast_get_tolerance (aubio_pitchyinfast_t * o);
+smpl_t aubio_pitchyinfast_get_tolerance(aubio_pitchyinfast_t *o);
 
 /** get current confidence of YIN algorithm
 
@@ -92,11 +92,10 @@ smpl_t aubio_pitchyinfast_get_tolerance (aubio_pitchyinfast_t * o);
   \return confidence parameter
 
 */
-smpl_t aubio_pitchyinfast_get_confidence (aubio_pitchyinfast_t * o);
+smpl_t aubio_pitchyinfast_get_confidence(aubio_pitchyinfast_t *o);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* AUBIO_PITCHYINFAST_H */
-

@@ -6,16 +6,15 @@
  * Modifications:
  */
 
+#include <cstdio>
+#include <sstream>
+#include <webots/Supervisor.hpp>
 
 #include "../shared/ctrlCommonInitialization.h"
 #include "anki/cozmo/robot/cozmoBot.h"
-#include "simulator/robot/sim_overlayDisplay.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/factory/emrHelper.h"
-#include <cstdio>
-#include <sstream>
-
-#include <webots/Supervisor.hpp>
+#include "simulator/robot/sim_overlayDisplay.h"
 
 /*
  * This is the main program.
@@ -24,16 +23,14 @@
  */
 
 namespace Anki {
-  namespace Vector {
-    namespace Sim {
-      extern webots::Supervisor* CozmoBot;
-    }
-  }
+namespace Vector {
+namespace Sim {
+extern webots::Supervisor* CozmoBot;
 }
+}  // namespace Vector
+}  // namespace Anki
 
-
-int main(int argc, char **argv)
-{
+int main(int argc, char** argv) {
   using namespace Anki;
   using namespace Anki::Vector;
 
@@ -43,13 +40,16 @@ int main(int argc, char **argv)
   int shutdownSignal = 0;
 
   // parse commands
-  WebotsCtrlShared::ParsedCommandLine params = WebotsCtrlShared::ParseCommandLine(argc, argv);
+  WebotsCtrlShared::ParsedCommandLine params =
+      WebotsCtrlShared::ParseCommandLine(argc, argv);
   // create platform
-  const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlRobot2");
+  const Anki::Util::Data::DataPlatform& dataPlatform =
+      WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlRobot2");
   // initialize logger
-  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog, params.colorizeStderrOutput);
+  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(
+      dataPlatform, params.filterLog, params.colorizeStderrOutput);
 
-  if(Robot::Init(&shutdownSignal) != Anki::RESULT_OK) {
+  if (Robot::Init(&shutdownSignal) != Anki::RESULT_OK) {
     fprintf(stdout, "Failed to initialize Vector::Robot!\n");
     return -1;
   }
@@ -58,8 +58,7 @@ int main(int argc, char **argv)
 
   HAL::Step();
 
-  while(Robot::step_MainExecution() == Anki::RESULT_OK)
-  {
+  while (Robot::step_MainExecution() == Anki::RESULT_OK) {
     HAL::UpdateDisplay();
     HAL::Step();
   }

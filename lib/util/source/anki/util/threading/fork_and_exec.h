@@ -10,7 +10,6 @@
  *
  **/
 
-
 #pragma once
 #include <ostream>
 #include <string>
@@ -22,4 +21,4 @@ int ForkAndExec(const std::vector<std::string>& args);
 int ForkAndExecAndForget(const std::vector<std::string>& args);
 void KillChildProcess();
 
-} // namespace Anki
+}  // namespace Anki

@@ -1,31 +1,31 @@
 /**
-* File: RobotConnectionManager
-*
-* Author: Lee Crippen
-* Created: 7/6/2016
-*
-* Description: Holds onto current RobotConnections
-*
-* Copyright: Anki, inc. 2016
-*
-*/
+ * File: RobotConnectionManager
+ *
+ * Author: Lee Crippen
+ * Created: 7/6/2016
+ *
+ * Description: Holds onto current RobotConnections
+ *
+ * Copyright: Anki, inc. 2016
+ *
+ */
 #ifndef __Engine_Comms_RobotConnectionManager_H_
 #define __Engine_Comms_RobotConnectionManager_H_
 
-#include "engine/comms/robotConnectionMessageData.h"
+#include <deque>
+#include <memory>
+
 #include "coretech/common/shared/types.h"
 #include "coretech/messaging/shared/LocalUdpClient.h"
-#include "util/stats/recentStatsAccumulator.h"
+#include "engine/comms/robotConnectionMessageData.h"
 #include "util/signals/signalHolder.h"
-
-#include <memory>
-#include <deque>
+#include "util/stats/recentStatsAccumulator.h"
 
 //
 // Enable this to collect socket buffer usage stats at the end of each tick.
 // High buffer usage indicates that processes are falling behind on socket I/O.
-// If a socket runs out of available buffer space, send() may fail with errno=EAGAIN
-// or errno=EWOULDBLOCK.
+// If a socket runs out of available buffer space, send() may fail with
+// errno=EAGAIN or errno=EWOULDBLOCK.
 //
 #ifndef ANKI_PROFILE_ENGINE_SOCKET_BUFFER_STATS
 #define ANKI_PROFILE_ENGINE_SOCKET_BUFFER_STATS 0
@@ -33,21 +33,20 @@
 
 // Forward declarations
 namespace Anki {
-  namespace Util {
-    class Histogram;
-  }
-  namespace Vector {
-    class RobotManager;
-    class RobotConnectionData;
-  }
+namespace Util {
+class Histogram;
 }
+namespace Vector {
+class RobotManager;
+class RobotConnectionData;
+}  // namespace Vector
+}  // namespace Anki
 
 namespace Anki {
 namespace Vector {
 
-class RobotConnectionManager : private Util::SignalHolder
-{
-public:
+class RobotConnectionManager : private Util::SignalHolder {
+ public:
   RobotConnectionManager(RobotManager* robotManager);
   virtual ~RobotConnectionManager();
 
@@ -82,7 +81,7 @@ public:
   void ReportSocketBufferStats();
 #endif
 
-private:
+ private:
   void SendAndResetQueueStats();
 
   void HandleDataMessage(RobotConnectionMessageData& nextMessage);
@@ -90,18 +89,19 @@ private:
   void HandleDisconnectMessage(RobotConnectionMessageData& nextMessage);
   void HandleConnectionRequestMessage(RobotConnectionMessageData& nextMessage);
 
-  std::unique_ptr<RobotConnectionData>      _currentConnectionData;
-  RobotManager*                             _robotManager = nullptr;
-  std::deque<std::vector<uint8_t>>          _readyData;
+  std::unique_ptr<RobotConnectionData> _currentConnectionData;
+  RobotManager* _robotManager = nullptr;
+  std::deque<std::vector<uint8_t>> _readyData;
 
 #if TRACK_INCOMING_PACKET_LATENCY
-  Util::Stats::RecentStatsAccumulator _queuedTimes_ms = 100; // how many ms between packet arriving and it being passed onto game
-#endif // TRACK_INCOMING_PACKET_LATENCY
+  Util::Stats::RecentStatsAccumulator _queuedTimes_ms =
+      100;  // how many ms between packet arriving and it being passed onto game
+#endif      // TRACK_INCOMING_PACKET_LATENCY
 
   // track how large the incoming message queue gets in bytes
   Util::Stats::StatsAccumulator _queueSizeAccumulator;
 
-  RobotID_t      _robotID = -1;
+  RobotID_t _robotID = -1;
   LocalUdpClient _udpClient;
 
 #if ANKI_PROFILE_ENGINE_SOCKET_BUFFER_STATS
@@ -111,13 +111,12 @@ private:
   HistogramPtr _outgoingStats;
 
   // Report data collection
-  void ReportSocketBufferStats(const std::string & name, const HistogramPtr &histogram);
+  void ReportSocketBufferStats(const std::string& name,
+                               const HistogramPtr& histogram);
 #endif
-
 };
 
-} // end namespace Vector
-} // end namespace Anki
+}  // end namespace Vector
+}  // end namespace Anki
 
-
-#endif //__Engine_Comms_RobotConnectionManager_H_
+#endif  //__Engine_Comms_RobotConnectionManager_H_

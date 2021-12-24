@@ -37,28 +37,25 @@
 #ifndef PROCESSOR_STATIC_CONTAINED_RANGE_MAP_INL_H__
 #define PROCESSOR_STATIC_CONTAINED_RANGE_MAP_INL_H__
 
-#include "processor/static_contained_range_map.h"
 #include "processor/logging.h"
+#include "processor/static_contained_range_map.h"
 
 namespace google_breakpad {
 
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 StaticContainedRangeMap<AddressType, EntryType>::StaticContainedRangeMap(
     const char *base)
-    : base_(*(reinterpret_cast<const AddressType*>(base))),
-      entry_size_(*(reinterpret_cast<const uint32_t*>(base + sizeof(base_)))),
-      entry_ptr_(reinterpret_cast<const EntryType *>(
-          base + sizeof(base_) + sizeof(entry_size_))),
+    : base_(*(reinterpret_cast<const AddressType *>(base))),
+      entry_size_(*(reinterpret_cast<const uint32_t *>(base + sizeof(base_)))),
+      entry_ptr_(reinterpret_cast<const EntryType *>(base + sizeof(base_) +
+                                                     sizeof(entry_size_))),
       map_(base + sizeof(base_) + sizeof(entry_size_) + entry_size_) {
-  if (entry_size_ == 0)
-    entry_ptr_ = NULL;
+  if (entry_size_ == 0) entry_ptr_ = NULL;
 }
 
-
-template<typename AddressType, typename EntryType>
+template <typename AddressType, typename EntryType>
 bool StaticContainedRangeMap<AddressType, EntryType>::RetrieveRange(
     const AddressType &address, const EntryType *&entry) const {
-
   // Get an iterator to the child range whose high address is equal to or
   // greater than the supplied address.  If the supplied address is higher
   // than all of the high addresses in the range, then this range does not
@@ -67,22 +64,19 @@ bool StaticContainedRangeMap<AddressType, EntryType>::RetrieveRange(
   // the child range, so return false.
   MapConstIterator iterator = map_.lower_bound(address);
 
-  if (iterator == map_.end())
-    return false;
+  if (iterator == map_.end()) return false;
 
   const char *memory_child =
-      reinterpret_cast<const char*>(iterator.GetValuePtr());
+      reinterpret_cast<const char *>(iterator.GetValuePtr());
 
   StaticContainedRangeMap child_map(memory_child);
 
-  if (address < child_map.base_)
-    return false;
+  if (address < child_map.base_) return false;
 
   // The child in iterator->second contains the specified address.  Find out
   // if it has a more-specific descendant that also contains it.  If it does,
   // it will set |entry| appropriately.  If not, set |entry| to the child.
-  if (!child_map.RetrieveRange(address, entry))
-    entry = child_map.entry_ptr_;
+  if (!child_map.RetrieveRange(address, entry)) entry = child_map.entry_ptr_;
 
   return true;
 }

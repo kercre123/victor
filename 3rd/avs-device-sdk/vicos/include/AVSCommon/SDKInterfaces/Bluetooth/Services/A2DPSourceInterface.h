@@ -16,10 +16,11 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_BLUETOOTH_SERVICES_A2DPSOURCEINTERFACE_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_BLUETOOTH_SERVICES_A2DPSOURCEINTERFACE_H_
 
+#include <AVSCommon/Utils/Bluetooth/FormattedAudioStreamAdapter.h>
+
 #include <memory>
 
 #include "AVSCommon/SDKInterfaces/Bluetooth/Services/BluetoothServiceInterface.h"
-#include <AVSCommon/Utils/Bluetooth/FormattedAudioStreamAdapter.h>
 
 namespace alexaClientSDK {
 namespace avsCommon {
@@ -31,24 +32,28 @@ namespace services {
  * Interface to support A2DP streaming from bluetooth device to SDK
  */
 class A2DPSourceInterface : public BluetoothServiceInterface {
-public:
-    /// The Service UUID.
-    static constexpr const char* UUID = "0000110a-0000-1000-8000-00805f9b34fb";
+ public:
+  /// The Service UUID.
+  static constexpr const char* UUID = "0000110a-0000-1000-8000-00805f9b34fb";
 
-    /// The Service Name.
-    static constexpr const char* NAME = "AudioSource";
+  /// The Service Name.
+  static constexpr const char* NAME = "AudioSource";
 
-    /**
-     * Returns the stream containing the decoded raw PCM data sent by the connected device.
-     *
-     * @return A shared_ptr to a @c FormattedAudioStreamAdapter object to be consumed.
-     */
-    virtual std::shared_ptr<avsCommon::utils::bluetooth::FormattedAudioStreamAdapter> getSourceStream() = 0;
+  /**
+   * Returns the stream containing the decoded raw PCM data sent by the
+   * connected device.
+   *
+   * @return A shared_ptr to a @c FormattedAudioStreamAdapter object to be
+   * consumed.
+   */
+  virtual std::shared_ptr<
+      avsCommon::utils::bluetooth::FormattedAudioStreamAdapter>
+  getSourceStream() = 0;
 
-    /**
-     * Destructor.
-     */
-    virtual ~A2DPSourceInterface() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~A2DPSourceInterface() = default;
 };
 
 }  // namespace services

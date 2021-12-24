@@ -21,9 +21,9 @@
 #include <map>
 #include <string>
 
-#include "AVSCommon/Utils/HTTP2/HTTP2ResponseSinkInterface.h"
 #include "AVSCommon/Utils/HTTP2/HTTP2ReceiveDataStatus.h"
 #include "AVSCommon/Utils/HTTP2/HTTP2ResponseFinishedStatus.h"
+#include "AVSCommon/Utils/HTTP2/HTTP2ResponseSinkInterface.h"
 
 namespace alexaClientSDK {
 namespace avsCommon {
@@ -34,88 +34,93 @@ namespace http2 {
  * Interface for receiving a mime encoded HTTP2 response.
  */
 class HTTP2MimeResponseSinkInterface {
-public:
-    /**
-     * Default destructor.
-     */
-    virtual ~HTTP2MimeResponseSinkInterface() = default;
+ public:
+  /**
+   * Default destructor.
+   */
+  virtual ~HTTP2MimeResponseSinkInterface() = default;
 
-    /**
-     * Notification that an HTTP response code was returned for the request.
-     *
-     * @note Calls to this method may block network operations for the associated instance of HTTP2ConnectionInterface,
-     * so they should return quickly.
-     *
-     * @param responseCode The response code received for the request.
-     * @return Whether receipt of the response should continue.
-     */
-    virtual bool onReceiveResponseCode(long responseCode) = 0;
+  /**
+   * Notification that an HTTP response code was returned for the request.
+   *
+   * @note Calls to this method may block network operations for the associated
+   * instance of HTTP2ConnectionInterface, so they should return quickly.
+   *
+   * @param responseCode The response code received for the request.
+   * @return Whether receipt of the response should continue.
+   */
+  virtual bool onReceiveResponseCode(long responseCode) = 0;
 
-    /**
-     * Notification that an HTTP header line was received.
-     *
-     * @note Calls to this method may block network operations for the associated instance of HTTP2ConnectionInterface,
-     * so they should return quickly.
-     *
-     * @param line The HTTP response header line that was received.
-     * @return Whether receipt of the response should continue.
-     */
-    virtual bool onReceiveHeaderLine(const std::string& line) = 0;
+  /**
+   * Notification that an HTTP header line was received.
+   *
+   * @note Calls to this method may block network operations for the associated
+   * instance of HTTP2ConnectionInterface, so they should return quickly.
+   *
+   * @param line The HTTP response header line that was received.
+   * @return Whether receipt of the response should continue.
+   */
+  virtual bool onReceiveHeaderLine(const std::string& line) = 0;
 
-    /**
-     * Notification of the start of a new mime part.
-     *
-     * @note Calls to this method may block network operations for the associated instance of HTTP2ConnectionInterface,
-     * so they should return quickly.
-     *
-     * @param headers A multimap from header names to header values.
-     * @return Whether receipt of the response should continue.
-     */
-    virtual bool onBeginMimePart(const std::multimap<std::string, std::string>& headers) = 0;
+  /**
+   * Notification of the start of a new mime part.
+   *
+   * @note Calls to this method may block network operations for the associated
+   * instance of HTTP2ConnectionInterface, so they should return quickly.
+   *
+   * @param headers A multimap from header names to header values.
+   * @return Whether receipt of the response should continue.
+   */
+  virtual bool onBeginMimePart(
+      const std::multimap<std::string, std::string>& headers) = 0;
 
-    /**
-     * Notification of new body data received from an HTTP2 response.
-     *
-     * @note Calls to this method may block network operations for the associated instance of HTTP2ConnectionInterface,
-     * so they should return quickly.
-     *
-     * @param bytes The buffer containing the bytes to consume.
-     * @param size The number of bytes to consume.
-     * @return Status of the operation.  @see HTTP2ReceiveDataStatus
-     */
-    virtual HTTP2ReceiveDataStatus onReceiveMimeData(const char* bytes, size_t size) = 0;
+  /**
+   * Notification of new body data received from an HTTP2 response.
+   *
+   * @note Calls to this method may block network operations for the associated
+   * instance of HTTP2ConnectionInterface, so they should return quickly.
+   *
+   * @param bytes The buffer containing the bytes to consume.
+   * @param size The number of bytes to consume.
+   * @return Status of the operation.  @see HTTP2ReceiveDataStatus
+   */
+  virtual HTTP2ReceiveDataStatus onReceiveMimeData(const char* bytes,
+                                                   size_t size) = 0;
 
-    /**
-     * Notification of the end of the current mime part.
-     *
-     * @note Calls to this method may block network operations for the associated instance of HTTP2ConnectionInterface,
-     * so they should return quickly.
-     *
-     * @return Whether receipt of the response should continue.
-     */
-    virtual bool onEndMimePart() = 0;
+  /**
+   * Notification of the end of the current mime part.
+   *
+   * @note Calls to this method may block network operations for the associated
+   * instance of HTTP2ConnectionInterface, so they should return quickly.
+   *
+   * @return Whether receipt of the response should continue.
+   */
+  virtual bool onEndMimePart() = 0;
 
-    /**
-     * Notification of receipt of non-mime body data in an HTTP2 response.
-     *
-     * @note Calls to this method may block network operations for the associated instance of HTTP2ConnectionInterface,
-     * so they should return quickly.
-     *
-     * @param bytes The buffer containing the bytes to consume.
-     * @param size The number of bytes to consume.
-     * @return Status of the operation.  @see HTTP2ReceiveDataStatus.
-     */
-    virtual HTTP2ReceiveDataStatus onReceiveNonMimeData(const char* bytes, size_t size) = 0;
+  /**
+   * Notification of receipt of non-mime body data in an HTTP2 response.
+   *
+   * @note Calls to this method may block network operations for the associated
+   * instance of HTTP2ConnectionInterface, so they should return quickly.
+   *
+   * @param bytes The buffer containing the bytes to consume.
+   * @param size The number of bytes to consume.
+   * @return Status of the operation.  @see HTTP2ReceiveDataStatus.
+   */
+  virtual HTTP2ReceiveDataStatus onReceiveNonMimeData(const char* bytes,
+                                                      size_t size) = 0;
 
-    /**
-     * Notification that the request/response cycle has finished and no further notifications will be provided.
-     *
-     * @note Calls to this method may block network operations for the associated instance of HTTP2ConnectionInterface,
-     * so they should return quickly.
-     *
-     * @param status The status with which the response finished.  @see HTTP2ResponseFinishedStatus.
-     */
-    virtual void onResponseFinished(HTTP2ResponseFinishedStatus status) = 0;
+  /**
+   * Notification that the request/response cycle has finished and no further
+   * notifications will be provided.
+   *
+   * @note Calls to this method may block network operations for the associated
+   * instance of HTTP2ConnectionInterface, so they should return quickly.
+   *
+   * @param status The status with which the response finished.  @see
+   * HTTP2ResponseFinishedStatus.
+   */
+  virtual void onResponseFinished(HTTP2ResponseFinishedStatus status) = 0;
 };
 
 }  // namespace http2

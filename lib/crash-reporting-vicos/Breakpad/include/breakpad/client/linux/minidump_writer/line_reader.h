@@ -30,8 +30,8 @@
 #ifndef CLIENT_LINUX_MINIDUMP_WRITER_LINE_READER_H_
 #define CLIENT_LINUX_MINIDUMP_WRITER_LINE_READER_H_
 
-#include <stdint.h>
 #include <assert.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "common/linux/linux_libc_support.h"
@@ -43,11 +43,7 @@ namespace google_breakpad {
 // functions which may allocate memory.
 class LineReader {
  public:
-  LineReader(int fd)
-      : fd_(fd),
-        hit_eof_(false),
-        buf_used_(0) {
-  }
+  LineReader(int fd) : fd_(fd), hit_eof_(false), buf_used_(0) {}
 
   // The maximum length of a line.
   static const size_t kMaxLineLen = 512;
@@ -63,8 +59,7 @@ class LineReader {
   // get the same line over and over.
   bool GetNextLine(const char **line, unsigned *len) {
     for (;;) {
-      if (buf_used_ == 0 && hit_eof_)
-        return false;
+      if (buf_used_ == 0 && hit_eof_) return false;
 
       for (unsigned i = 0; i < buf_used_; ++i) {
         if (buf_[i] == '\n' || buf_[i] == 0) {
@@ -95,8 +90,8 @@ class LineReader {
       }
 
       // Otherwise, we should pull in more data from the file
-      const ssize_t n = sys_read(fd_, buf_ + buf_used_,
-                                 sizeof(buf_) - buf_used_);
+      const ssize_t n =
+          sys_read(fd_, buf_ + buf_used_, sizeof(buf_) - buf_used_);
       if (n < 0) {
         return false;
       } else if (n == 0) {

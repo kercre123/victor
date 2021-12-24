@@ -60,12 +60,10 @@ class HTTPUpload {
   // returned in error_description.
   static bool SendRequest(const string &url,
                           const map<string, string> &parameters,
-                          const map<string, string> &files,
-                          const string &proxy,
+                          const map<string, string> &files, const string &proxy,
                           const string &proxy_user_pwd,
                           const string &ca_certificate_file,
-                          string *response_body,
-                          long *response_code,
+                          string *response_body, long *response_code,
                           string *error_description);
 
  private:
@@ -75,7 +73,7 @@ class HTTPUpload {
   static bool CheckParameters(const map<string, string> &parameters);
 
   // Checks the curl_lib parameter points to a valid curl lib.
-  static bool CheckCurlLib(void* curl_lib);
+  static bool CheckCurlLib(void *curl_lib);
 
   // No instances of this class should be created.
   // Disallow all constructors, destructors, and operator=.

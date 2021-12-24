@@ -23,29 +23,32 @@ namespace capabilityAgents {
 namespace alerts {
 
 /**
- * A Timer class.  This represents an alert which the user wishes to activate at a point in time relative to the
- * current time.  This is different from requesting an alert at an absolute point in time.
+ * A Timer class.  This represents an alert which the user wishes to activate at
+ * a point in time relative to the current time.  This is different from
+ * requesting an alert at an absolute point in time.
  *
- * Timers may be basic, or named.  If named, they will use custom assets at the point of activation.
+ * Timers may be basic, or named.  If named, they will use custom assets at the
+ * point of activation.
  *
  * Example of basic timer use:
  * "Alexa, set a timer for 10 seconds."
- * 10 seconds later : device will render a simple audio file, local to the device, to alert the user.
+ * 10 seconds later : device will render a simple audio file, local to the
+ * device, to alert the user.
  *
  * Example of named timer use:
  * "Alexa, set an egg timer for 10 seconds"
- * 10 seconds later : Alexa will say something like "Your egg timer is complete".
+ * 10 seconds later : Alexa will say something like "Your egg timer is
+ * complete".
  */
 class Timer : public Alert {
-public:
-    /// String representation of this type.
-    static const std::string TYPE_NAME;
+ public:
+  /// String representation of this type.
+  static const std::string TYPE_NAME;
 
-    Timer(
-        std::function<std::unique_ptr<std::istream>()> defaultAudioFactory,
+  Timer(std::function<std::unique_ptr<std::istream>()> defaultAudioFactory,
         std::function<std::unique_ptr<std::istream>()> shortAudioFactory);
 
-    std::string getTypeName() const override;
+  std::string getTypeName() const override;
 };
 
 }  // namespace alerts

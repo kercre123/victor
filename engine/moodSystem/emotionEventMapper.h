@@ -10,66 +10,56 @@
  *
  **/
 
-
 #ifndef __Cozmo_Basestation_MoodSystem_EmotionEventMapper_H__
 #define __Cozmo_Basestation_MoodSystem_EmotionEventMapper_H__
-
 
 #include <map>
 #include <string>
 
-
 namespace Json {
-  class Value;
+class Value;
 }
-
 
 namespace Anki {
 namespace Vector {
 
-  
 class EmotionEvent;
 class MoodManager;
 class Robot;
 
-  
-class EmotionEventMapper
-{
-public:
-  
+class EmotionEventMapper {
+ public:
   EmotionEventMapper();
   ~EmotionEventMapper();
-  
-  // Explicitely delete copy and assignment operators (class doesn't support shallow copy)
+
+  // Explicitely delete copy and assignment operators (class doesn't support
+  // shallow copy)
   EmotionEventMapper(const EmotionEventMapper&) = delete;
   EmotionEventMapper& operator=(const EmotionEventMapper&) = delete;
-  
+
   void Clear();
-  
-  void AddEvent(EmotionEvent* emotionEvent); // transfers ownership of event to EmotionEventMapper
+
+  void AddEvent(EmotionEvent* emotionEvent);  // transfers ownership of event to
+                                              // EmotionEventMapper
 
   const EmotionEvent* FindEvent(const std::string& name) const;
-  
+
   void ClearEvents();
-  
+
   // ===== Json =====
-  
+
   bool LoadEmotionEvent(const Json::Value& inJson);
   bool LoadEmotionEvents(const Json::Value& inJson);
   bool ReadFromJson(const Json::Value& inJson);
   bool WriteToJson(Json::Value& outJson) const;
-  
-private:
-  
+
+ private:
   using EventMap = std::map<std::string, EmotionEvent*>;
-  
-  EventMap  _events;
+
+  EventMap _events;
 };
-  
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-
-#endif // __Cozmo_Basestation_MoodSystem_EmotionEventMapper_H__
-
+#endif  // __Cozmo_Basestation_MoodSystem_EmotionEventMapper_H__

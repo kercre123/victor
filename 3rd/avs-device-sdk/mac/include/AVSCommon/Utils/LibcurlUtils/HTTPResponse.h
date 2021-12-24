@@ -27,24 +27,23 @@ namespace libcurlUtils {
  * Structure used to capture the values resulting from an HTTP request.
  */
 struct HTTPResponse {
-public:
-    /**
-     * Default constructor.
-     */
-    HTTPResponse();
+ public:
+  /**
+   * Default constructor.
+   */
+  HTTPResponse();
 
-    /// The HTTP status code returned by the server.
-    long code;
+  /// The HTTP status code returned by the server.
+  long code;
 
-    /// The body of the response returned by the server.
-    std::string body;
+  /// The body of the response returned by the server.
+  std::string body;
 
-    /// Serialize the object
-    std::string serialize();
+  /// Serialize the object
+  std::string serialize();
 };
 
-inline HTTPResponse::HTTPResponse() : code(0) {
-}
+inline HTTPResponse::HTTPResponse() : code(0) {}
 
 }  // namespace libcurlUtils
 }  // namespace utils

@@ -43,11 +43,11 @@
 
 #include <string>
 
-#include "common/language.h"
-#include "common/module.h"
 #include "common/dwarf/bytereader.h"
 #include "common/dwarf/dwarf2diehandler.h"
 #include "common/dwarf/dwarf2reader.h"
+#include "common/language.h"
+#include "common/module.h"
 #include "common/scoped_ptr.h"
 #include "common/using_std_string.h"
 
@@ -65,8 +65,9 @@ using dwarf2reader::DwarfTag;
 // dwarf2reader::CompilationUnit DWARF parser. The handler uses the results
 // of parsing to populate a google_breakpad::Module with source file,
 // function, and source line information.
-class DwarfCUToModule: public dwarf2reader::RootDIEHandler {
+class DwarfCUToModule : public dwarf2reader::RootDIEHandler {
   struct FilePrivate;
+
  public:
   // Information global to the DWARF-bearing file we are processing,
   // for use by DwarfCUToModule. Each DwarfCUToModule instance deals
@@ -79,20 +80,18 @@ class DwarfCUToModule: public dwarf2reader::RootDIEHandler {
   // to true to handle debugging symbols with DW_FORM_ref_addr entries.
   class FileContext {
    public:
-    FileContext(const string &filename,
-                Module *module,
+    FileContext(const string &filename, Module *module,
                 bool handle_inter_cu_refs);
     ~FileContext();
 
     // Add CONTENTS of size LENGTH to the section map as NAME.
-    void AddSectionToSectionMap(const string& name,
-                                const uint8_t *contents,
+    void AddSectionToSectionMap(const string &name, const uint8_t *contents,
                                 uint64 length);
 
     // Clear the section map for testing.
     void ClearSectionMapForTest();
 
-    const dwarf2reader::SectionMap& section_map() const;
+    const dwarf2reader::SectionMap &section_map() const;
 
    private:
     friend class DwarfCUToModule;
@@ -129,14 +128,14 @@ class DwarfCUToModule: public dwarf2reader::RootDIEHandler {
   // this way makes unit testing a little easier.
   class LineToModuleHandler {
    public:
-    LineToModuleHandler() { }
-    virtual ~LineToModuleHandler() { }
+    LineToModuleHandler() {}
+    virtual ~LineToModuleHandler() {}
 
     // Called at the beginning of a new compilation unit, prior to calling
     // ReadProgram(). compilation_dir will indicate the path that the
     // current compilation unit was compiled in, consistent with the
     // DW_AT_comp_dir DIE.
-    virtual void StartCompilationUnit(const string& compilation_dir) = 0;
+    virtual void StartCompilationUnit(const string &compilation_dir) = 0;
 
     // Populate MODULE and LINES with source file names and code/line
     // mappings, given a pointer to some DWARF line number data
@@ -155,10 +154,12 @@ class DwarfCUToModule: public dwarf2reader::RootDIEHandler {
     // Warn about problems in the DWARF file FILENAME, in the
     // compilation unit at OFFSET.
     WarningReporter(const string &filename, uint64 cu_offset)
-        : filename_(filename), cu_offset_(cu_offset), printed_cu_header_(false),
+        : filename_(filename),
+          cu_offset_(cu_offset),
+          printed_cu_header_(false),
           printed_unpaired_header_(false),
-          uncovered_warnings_enabled_(false) { }
-    virtual ~WarningReporter() { }
+          uncovered_warnings_enabled_(false) {}
+    virtual ~WarningReporter() {}
 
     // Set the name of the compilation unit we're processing to NAME.
     virtual void SetCUName(const string &name) { cu_name_ = name; }
@@ -208,9 +209,7 @@ class DwarfCUToModule: public dwarf2reader::RootDIEHandler {
     // FilePrivate did not retain the inter-CU specification data.
     virtual void UnhandledInterCUReference(uint64 offset, uint64 target);
 
-    uint64 cu_offset() const {
-      return cu_offset_;
-    }
+    uint64 cu_offset() const { return cu_offset_; }
 
    protected:
     const string filename_;
@@ -233,19 +232,15 @@ class DwarfCUToModule: public dwarf2reader::RootDIEHandler {
   // FILE_CONTEXT->module. Use LINE_READER to handle the compilation
   // unit's line number data. Use REPORTER to report problems with the
   // data we find.
-  DwarfCUToModule(FileContext *file_context,
-                  LineToModuleHandler *line_reader,
+  DwarfCUToModule(FileContext *file_context, LineToModuleHandler *line_reader,
                   WarningReporter *reporter);
   ~DwarfCUToModule();
 
-  void ProcessAttributeSigned(enum DwarfAttribute attr,
-                              enum DwarfForm form,
+  void ProcessAttributeSigned(enum DwarfAttribute attr, enum DwarfForm form,
                               int64 data);
-  void ProcessAttributeUnsigned(enum DwarfAttribute attr,
-                                enum DwarfForm form,
+  void ProcessAttributeUnsigned(enum DwarfAttribute attr, enum DwarfForm form,
                                 uint64 data);
-  void ProcessAttributeString(enum DwarfAttribute attr,
-                              enum DwarfForm form,
+  void ProcessAttributeString(enum DwarfAttribute attr, enum DwarfForm form,
                               const string &data);
   bool EndAttributes();
   DIEHandler *FindChildHandler(uint64 offset, enum DwarfTag tag);

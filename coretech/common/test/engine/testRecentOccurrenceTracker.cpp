@@ -1,12 +1,10 @@
-#include "util/helpers/includeGTest.h"
-
 #include "coretech/common/engine/utils/recentOccurrenceTracker.h"
 #include "json/json.h"
+#include "util/helpers/includeGTest.h"
 
 using namespace Anki;
 
-GTEST_TEST(RecentOccurrenceTracker, JsonDefaults)
-{
+GTEST_TEST(RecentOccurrenceTracker, JsonDefaults) {
   RecentOccurrenceTracker tracker("test");
 
   RecentOccurrenceTracker::Handle handle1, handle2, handle3;
@@ -16,7 +14,7 @@ GTEST_TEST(RecentOccurrenceTracker, JsonDefaults)
     empty["recentOccurrence"] = Json::objectValue;
     int n;
     float s;
-    ASSERT_TRUE( RecentOccurrenceTracker::ParseConfig(empty, n, s) );
+    ASSERT_TRUE(RecentOccurrenceTracker::ParseConfig(empty, n, s));
     handle1 = tracker.GetHandle(n, s);
   }
 
@@ -26,7 +24,7 @@ GTEST_TEST(RecentOccurrenceTracker, JsonDefaults)
     noNumber["recentOccurrence"]["amountOfSeconds"] = 10.0f;
     int n;
     float s;
-    ASSERT_TRUE( RecentOccurrenceTracker::ParseConfig(noNumber, n, s) );
+    ASSERT_TRUE(RecentOccurrenceTracker::ParseConfig(noNumber, n, s));
     handle2 = tracker.GetHandle(n, s);
   }
 
@@ -36,7 +34,7 @@ GTEST_TEST(RecentOccurrenceTracker, JsonDefaults)
     noTime["recentOccurrence"]["numberOfTimes"] = 2;
     int n;
     float s;
-    ASSERT_TRUE( RecentOccurrenceTracker::ParseConfig(noTime, n, s) );
+    ASSERT_TRUE(RecentOccurrenceTracker::ParseConfig(noTime, n, s));
     handle3 = tracker.GetHandle(n, s);
   }
 
@@ -45,8 +43,8 @@ GTEST_TEST(RecentOccurrenceTracker, JsonDefaults)
   ASSERT_TRUE(handle3 != nullptr);
 
   float t = 0.0f;
-  tracker.SetTimeProvider( [&t](){ return t; } );
-  
+  tracker.SetTimeProvider([&t]() { return t; });
+
   EXPECT_FALSE(handle1->AreConditionsMet());
   EXPECT_FALSE(handle2->AreConditionsMet());
   EXPECT_FALSE(handle3->AreConditionsMet());
@@ -70,17 +68,15 @@ GTEST_TEST(RecentOccurrenceTracker, JsonDefaults)
   t = 100.0f;
   EXPECT_FALSE(handle2->AreConditionsMet());
   EXPECT_TRUE(handle3->AreConditionsMet());
-
 }
 
-GTEST_TEST(RecentOccurrenceTracker, SingleHandle)
-{
+GTEST_TEST(RecentOccurrenceTracker, SingleHandle) {
   RecentOccurrenceTracker tracker("test");
 
   auto handle = tracker.GetHandle(3, 10.0);
 
   float t = 0.0f;
-  tracker.SetTimeProvider( [&t](){ return t; } );
+  tracker.SetTimeProvider([&t]() { return t; });
 
   EXPECT_FALSE(handle->AreConditionsMet());
 
@@ -124,16 +120,13 @@ GTEST_TEST(RecentOccurrenceTracker, SingleHandle)
   tracker.AddOccurrence();
   EXPECT_FALSE(handle->AreConditionsMet());
   EXPECT_EQ(tracker.GetCurrentSize(), 1);
-
 }
 
-
-GTEST_TEST(RecentOccurrenceTracker, MultiHandle)
-{
+GTEST_TEST(RecentOccurrenceTracker, MultiHandle) {
   RecentOccurrenceTracker tracker("test");
 
   float t = 0.0f;
-  tracker.SetTimeProvider( [&t](){ return t; } );
+  tracker.SetTimeProvider([&t]() { return t; });
 
   auto handle1 = tracker.GetHandle(3, 10.0);
   auto handle2 = tracker.GetHandle(2, 15.0);
@@ -263,14 +256,10 @@ GTEST_TEST(RecentOccurrenceTracker, MultiHandle)
     tracker.AddOccurrence();
     EXPECT_FALSE(handle4->AreConditionsMet());
     EXPECT_EQ(tracker.GetCurrentSize(), 1);
-
   }
-
 }
 
-
-GTEST_TEST(RecentOccurrenceTracker, Destructor)
-{
+GTEST_TEST(RecentOccurrenceTracker, Destructor) {
   {
     RecentOccurrenceTracker::Handle handle;
 
@@ -278,7 +267,7 @@ GTEST_TEST(RecentOccurrenceTracker, Destructor)
       RecentOccurrenceTracker tracker("test");
 
       float t = 0.0f;
-      tracker.SetTimeProvider( [&t](){ return t; } );
+      tracker.SetTimeProvider([&t]() { return t; });
 
       handle = tracker.GetHandle(2, 5.0);
 
@@ -292,7 +281,8 @@ GTEST_TEST(RecentOccurrenceTracker, Destructor)
       EXPECT_TRUE(handle->AreConditionsMet());
     }
 
-    // tracker is out of scope now, but handle isn't, make sure things don't explode once the handle goes away
+    // tracker is out of scope now, but handle isn't, make sure things don't
+    // explode once the handle goes away
     EXPECT_TRUE(true);
   }
 

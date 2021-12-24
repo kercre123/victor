@@ -41,7 +41,7 @@ namespace google_breakpad {
 class ClientInfo;
 
 class CrashGenerationServer {
-public:
+ public:
   // WARNING: callbacks may be invoked on a different thread
   // than that which creates the CrashGenerationServer.  They must
   // be thread safe.
@@ -69,8 +69,7 @@ public:
                         OnClientDumpRequestCallback dump_callback,
                         void* dump_context,
                         OnClientExitingCallback exit_callback,
-                        void* exit_context,
-                        bool generate_dumps,
+                        void* exit_context, bool generate_dumps,
                         const string* dump_path);
 
   ~CrashGenerationServer();
@@ -89,7 +88,7 @@ public:
   // the ExceptionHandler constructor in the client process.
   static bool CreateReportChannel(int* server_fd, int* client_fd);
 
-private:
+ private:
   // Run the server's event loop
   void Run();
 
@@ -130,6 +129,6 @@ private:
   CrashGenerationServer& operator=(const CrashGenerationServer&);
 };
 
-} // namespace google_breakpad
+}  // namespace google_breakpad
 
-#endif // CLIENT_LINUX_CRASH_GENERATION_CRASH_GENERATION_SERVER_H_
+#endif  // CLIENT_LINUX_CRASH_GENERATION_CRASH_GENERATION_SERVER_H_

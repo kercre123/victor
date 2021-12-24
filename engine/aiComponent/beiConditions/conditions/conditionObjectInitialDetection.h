@@ -17,27 +17,28 @@
 
 namespace Anki {
 namespace Vector {
-  
-class ConditionObjectInitialDetection : public ConditionObjectKnown
-{
-public:
+
+class ConditionObjectInitialDetection : public ConditionObjectKnown {
+ public:
   explicit ConditionObjectInitialDetection(const Json::Value& config);
-  
+
   virtual ~ConditionObjectInitialDetection();
-  
-protected:
-  virtual void SetActiveInternal(BehaviorExternalInterface& behaviorExternalInterface, bool setActive) override;
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-private:
-  
+
+ protected:
+  virtual void SetActiveInternal(
+      BehaviorExternalInterface& behaviorExternalInterface,
+      bool setActive) override;
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) const override;
+
+ private:
   // If true, only react to the first time ever seeing this type of object
   bool _firstTimeOnly = false;
-  
+
   mutable bool _reacted = false;
 };
 
+}  // namespace Vector
+}  // namespace Anki
 
-} // namespace Vector
-} // namespace Anki
-
-#endif // __Engine_BeiConditions_ConditionObjectInitialDetection_H__
+#endif  // __Engine_BeiConditions_ConditionObjectInitialDetection_H__

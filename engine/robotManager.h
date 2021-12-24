@@ -11,14 +11,14 @@
 #ifndef ANKI_COZMO_BASESTATION_ROBOTMANAGER_H
 #define ANKI_COZMO_BASESTATION_ROBOTMANAGER_H
 
-#include "engine/robotEventHandler.h"
-#include "clad/types/robotStatusAndActions.h"
-#include "util/helpers/noncopyable.h"
 #include <memory>
 
+#include "clad/types/robotStatusAndActions.h"
+#include "engine/robotEventHandler.h"
+#include "util/helpers/noncopyable.h"
 
 namespace Json {
-  class Value;
+class Value;
 }
 
 namespace Anki {
@@ -30,16 +30,14 @@ namespace RobotInterface {
 class MessageHandler;
 enum class EngineToRobotTag : uint8_t;
 enum class RobotToEngineTag : uint8_t;
-}
+}  // namespace RobotInterface
 class Robot;
 class IExternalInterface;
 class CozmoContext;
 class RobotInitialConnection;
 
-class RobotManager : Util::noncopyable
-{
-public:
-
+class RobotManager : Util::noncopyable {
+ public:
   RobotManager(CozmoContext* context);
 
   ~RobotManager();
@@ -63,25 +61,25 @@ public:
   // Update robot connection state
   Result UpdateRobotConnection();
 
-  RobotInterface::MessageHandler* GetMsgHandler() const { return _robotMessageHandler.get(); }
+  RobotInterface::MessageHandler* GetMsgHandler() const {
+    return _robotMessageHandler.get();
+  }
   RobotEventHandler& GetRobotEventHandler() { return _robotEventHandler; }
 
   bool ShouldFilterMessage(RobotInterface::RobotToEngineTag msgType) const;
   bool ShouldFilterMessage(RobotInterface::EngineToRobotTag msgType) const;
 
-protected:
+ protected:
   std::unique_ptr<Robot> _robot;
   CozmoContext* _context;
   RobotEventHandler _robotEventHandler;
   std::unique_ptr<RobotInterface::MessageHandler> _robotMessageHandler;
   std::unique_ptr<RobotInitialConnection> _initialConnection;
 
-private:
+ private:
+};  // class RobotManager
 
-}; // class RobotManager
+}  // namespace Vector
+}  // namespace Anki
 
-} // namespace Vector
-} // namespace Anki
-
-
-#endif // ANKI_COZMO_BASESTATION_ROBOTMANAGER_H
+#endif  // ANKI_COZMO_BASESTATION_ROBOTMANAGER_H

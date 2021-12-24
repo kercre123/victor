@@ -4,7 +4,8 @@
  * Author: Guillermo Bautista
  * Created: 2018-09-26
  *
- * Description: Behavior for reacting when a user places the robot down on a flat surface in an upright position
+ * Description: Behavior for reacting when a user places the robot down on a
+ *flat surface in an upright position
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -18,33 +19,32 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorReactToPutDown : public ICozmoBehavior
-{
-public: 
+class BehaviorReactToPutDown : public ICozmoBehavior {
+ public:
   virtual ~BehaviorReactToPutDown();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorReactToPutDown(const Json::Value& config);  
+  explicit BehaviorReactToPutDown(const Json::Value& config);
 
   virtual void InitBehavior() override;
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override {}
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override {}
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
-  
 
-private:
+ private:
   void TransitionToPlayingPutDownAnimation();
   void TransitionToHeadCalibration();
   void TransitionToPlayingWaitAnimation();
 
   struct InstanceConfig {
     InstanceConfig();
-    
+
     ICozmoBehaviorPtr waitInternalBehavior;
   };
 
@@ -54,10 +54,9 @@ private:
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToPutDown__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToPutDown__

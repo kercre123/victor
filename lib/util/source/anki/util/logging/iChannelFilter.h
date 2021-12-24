@@ -18,18 +18,16 @@
 namespace Anki {
 namespace Util {
 
-class IChannelFilter
-{
-public:
-
+class IChannelFilter {
+ public:
   // destructor
   virtual ~IChannelFilter() {}
 
   // returns true if the given channel is enabled, false otherwise
-  virtual bool IsChannelEnabled(const std::string& channelName) const  = 0;
+  virtual bool IsChannelEnabled(const std::string& channelName) const = 0;
 };
 
-} // namespace Util
-} // namespace Anki
+}  // namespace Util
+}  // namespace Anki
 
 #endif

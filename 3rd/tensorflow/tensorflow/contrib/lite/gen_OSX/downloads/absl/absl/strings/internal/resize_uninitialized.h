@@ -57,7 +57,8 @@ inline constexpr bool STLStringSupportsNontrashingResize(string_type*) {
 // Like str->resize(new_size), except any new characters added to "*str" as a
 // result of resizing may be left uninitialized, rather than being filled with
 // '0' bytes. Typically used when code is then going to overwrite the backing
-// store of the std::string with known data. Uses a Google extension to std::string.
+// store of the std::string with known data. Uses a Google extension to
+// std::string.
 template <typename string_type, typename = void>
 inline void STLStringResizeUninitialized(string_type* s, size_t new_size) {
   ResizeUninit(s, new_size, HasResizeUninitialized<string_type>());

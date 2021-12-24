@@ -174,10 +174,10 @@ enum LinkerInitialized {
 //   #endif // ABSL_BAD_CALL_IF
 
 #if defined(__clang__)
-# if __has_attribute(enable_if)
-#  define ABSL_BAD_CALL_IF(expr, msg) \
-    __attribute__((enable_if(expr, "Bad call trap"), unavailable(msg)))
-# endif
+#if __has_attribute(enable_if)
+#define ABSL_BAD_CALL_IF(expr, msg) \
+  __attribute__((enable_if(expr, "Bad call trap"), unavailable(msg)))
+#endif
 #endif
 
 // ABSL_ASSERT()

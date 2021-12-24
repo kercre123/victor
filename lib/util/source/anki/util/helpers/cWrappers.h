@@ -9,14 +9,11 @@
 #ifndef UTIL_CWRAPPERS_H_
 #define UTIL_CWRAPPERS_H_
 
-#define DEFINE_SIMPLE_CONVERSIONS(ty, ref_ty)               \
-  inline ty* unwrap(ref_ty ref) {                    \
-    return reinterpret_cast<ty*>(ref);                      \
-  }                                                         \
-\
-  inline ref_ty wrap (const ty* ptr) {               \
-    return reinterpret_cast<ref_ty>(const_cast<ty*>(ptr));  \
+#define DEFINE_SIMPLE_CONVERSIONS(ty, ref_ty)                          \
+  inline ty* unwrap(ref_ty ref) { return reinterpret_cast<ty*>(ref); } \
+                                                                       \
+  inline ref_ty wrap(const ty* ptr) {                                  \
+    return reinterpret_cast<ref_ty>(const_cast<ty*>(ptr));             \
   }
 
 #endif
-

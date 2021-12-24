@@ -24,22 +24,24 @@ namespace sdkInterfaces {
 
 /// This specifies an interface to send a message.
 class MessageSenderInterface {
-public:
-    /// Destructor.
-    virtual ~MessageSenderInterface() = default;
+ public:
+  /// Destructor.
+  virtual ~MessageSenderInterface() = default;
 
-    /**
-     * Send a message.  This function must operate asynchronously, internally storing the message to be sent
-     * when the connection is able to process it.
-     * The @c onSendCompleted callback method of the @c MessageRequest object is invoked as follows:
-     *
-     * @li If the @c MessageSenderInterface object is not connected, the callback value is NOT_CONNECTED.
-     * @li Otherwise, the object attempts to send the message, and once this has either succeeded or failed,
-     *     the callback value is set appropriately.
-     *
-     * @param request The @c MessageRequest to send.
-     */
-    virtual void sendMessage(std::shared_ptr<avs::MessageRequest> request) = 0;
+  /**
+   * Send a message.  This function must operate asynchronously, internally
+   * storing the message to be sent when the connection is able to process it.
+   * The @c onSendCompleted callback method of the @c MessageRequest object is
+   * invoked as follows:
+   *
+   * @li If the @c MessageSenderInterface object is not connected, the callback
+   * value is NOT_CONNECTED.
+   * @li Otherwise, the object attempts to send the message, and once this has
+   * either succeeded or failed, the callback value is set appropriately.
+   *
+   * @param request The @c MessageRequest to send.
+   */
+  virtual void sendMessage(std::shared_ptr<avs::MessageRequest> request) = 0;
 };
 
 }  // namespace sdkInterfaces

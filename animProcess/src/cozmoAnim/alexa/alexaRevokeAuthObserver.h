@@ -4,13 +4,15 @@
  * Author: ross
  * Created: Nov 5 2018
  *
- * Description: Listens to onRevokeAuthorization and forwards it to the registrationManager
+ * Description: Listens to onRevokeAuthorization and forwards it to the
+ * registrationManager
  *
  * Copyright: Anki, Inc. 2018
  *
  */
 
-// Since this file an an analog to AlexaRevokeAuthObserver.cpp, some portions were copied. Here's the SDK license
+// Since this file an an analog to AlexaRevokeAuthObserver.cpp, some portions
+// were copied. Here's the SDK license
 /*
  * Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -35,18 +37,21 @@
 namespace Anki {
 namespace Vector {
 
-class AlexaRevokeAuthObserver : public alexaClientSDK::avsCommon::sdkInterfaces::RevokeAuthorizationObserverInterface
-{
-public:
-  
-    explicit AlexaRevokeAuthObserver( std::shared_ptr<alexaClientSDK::registrationManager::RegistrationManager> manager );
-    void onRevokeAuthorization() override;
+class AlexaRevokeAuthObserver
+    : public alexaClientSDK::avsCommon::sdkInterfaces::
+          RevokeAuthorizationObserverInterface {
+ public:
+  explicit AlexaRevokeAuthObserver(
+      std::shared_ptr<alexaClientSDK::registrationManager::RegistrationManager>
+          manager);
+  void onRevokeAuthorization() override;
 
-private:
-    std::shared_ptr<alexaClientSDK::registrationManager::RegistrationManager> _manager;
+ private:
+  std::shared_ptr<alexaClientSDK::registrationManager::RegistrationManager>
+      _manager;
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif  // ANIMPROCESS_COZMO_ALEXA_ALEXAREVOKEAUTHOBSERVER_H

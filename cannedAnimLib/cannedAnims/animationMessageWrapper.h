@@ -10,16 +10,14 @@
  *
  **/
 
-
 #ifndef ANKI_COZMO_ANIMATION_MESSAGE_WRAPPER_H
 #define ANKI_COZMO_ANIMATION_MESSAGE_WRAPPER_H
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
-
 namespace Anki {
 
-namespace Vision{
+namespace Vision {
 class ImageRGB565;
 }
 
@@ -29,17 +27,16 @@ class RobotAudioKeyFrame;
 
 struct AnimationEvent;
 
-struct AnimationMessageWrapper{
-  AnimationMessageWrapper(Vision::ImageRGB565& img)
-  : faceImg(img){}
+struct AnimationMessageWrapper {
+  AnimationMessageWrapper(Vision::ImageRGB565& img) : faceImg(img) {}
   using ETR = RobotInterface::EngineToRobot;
 
-  ETR* moveHeadMessage         = nullptr;
-  ETR* moveLiftMessage         = nullptr;
-  ETR* bodyMotionMessage       = nullptr;
-  ETR* recHeadMessage          = nullptr;
-  ETR* turnToRecHeadMessage    = nullptr;
-  ETR* backpackLightsMessage   = nullptr;
+  ETR* moveHeadMessage = nullptr;
+  ETR* moveLiftMessage = nullptr;
+  ETR* bodyMotionMessage = nullptr;
+  ETR* recHeadMessage = nullptr;
+  ETR* turnToRecHeadMessage = nullptr;
+  ETR* backpackLightsMessage = nullptr;
   RobotAudioKeyFrame* audioKeyFrameMessage = nullptr;
   AnimationEvent* eventMessage = nullptr;
 
@@ -47,8 +44,7 @@ struct AnimationMessageWrapper{
   Vision::ImageRGB565& faceImg;
 };
 
+}  // namespace Vector
+}  // namespace Anki
 
-} // namespace Vector
-} // namespace Anki
-
-#endif // ANKI_COZMO_ANIMATION_MESSAGE_WRAPPER_H
+#endif  // ANKI_COZMO_ANIMATION_MESSAGE_WRAPPER_H

@@ -12,40 +12,39 @@
 #ifndef __DasAppender_H__
 #define __DasAppender_H__
 
+#include <functional>
+#include <map>
+#include <string>
+
 #include "DAS.h"
 #include "DASPrivate.h"
 #include "taskExecutor.h"
-#include <functional>
-#include <string>
-#include <map>
 
-namespace Anki
-{
-namespace Das
-{
+namespace Anki {
+namespace Das {
 class DasLogFileAppender;
 
 class DasAppender {
-public:
+ public:
   static const uint32_t kDefaultFlushIntervalSeconds = 5;
-  
-  DasAppender(const std::string& dasLogDir,
-              const std::string& url,
-              uint32_t flush_interval = kDefaultFlushIntervalSeconds,
-              size_t maxLogLength = kDefaultMaxLogLength,
-              size_t maxLogFiles = kDasDefaultMaxLogFiles,
-              const DASArchiveFunction& archiveCallback = DASArchiveFunction{},
-              const DASUnarchiveFunction& unarchiveCallback = DASUnarchiveFunction{},
-              const std::string& archiveFileExtension = "");
+
+  DasAppender(
+      const std::string& dasLogDir, const std::string& url,
+      uint32_t flush_interval = kDefaultFlushIntervalSeconds,
+      size_t maxLogLength = kDefaultMaxLogLength,
+      size_t maxLogFiles = kDasDefaultMaxLogFiles,
+      const DASArchiveFunction& archiveCallback = DASArchiveFunction{},
+      const DASUnarchiveFunction& unarchiveCallback = DASUnarchiveFunction{},
+      const std::string& archiveFileExtension = "");
   ~DasAppender();
   void SetMaxLogLength(size_t maxLogLength);
 
   void append(DASLogLevel level, const char* eventName, const char* eventValue,
-              ThreadId_t threadId, const char* file, const char* funct, int line,
-              const std::map<std::string,std::string>* globals,
-              const std::map<std::string,std::string>& data);
+              ThreadId_t threadId, const char* file, const char* funct,
+              int line, const std::map<std::string, std::string>* globals,
+              const std::map<std::string, std::string>& data);
   void append(DASLogLevel level, const char* eventName, const char* eventValue,
-              const std::map<std::string,std::string>& data) {
+              const std::map<std::string, std::string>& data) {
     append(level, eventName, eventValue, 0, nullptr, nullptr, 0, nullptr, data);
   }
 
@@ -54,9 +53,9 @@ public:
 
   void SetIsUploadingPaused(const bool isPaused);
 
-private:
+ private:
   void SetTimedFlush();
-  bool ConsumeALogFile(const std::string &logFilePath, bool *stop);
+  bool ConsumeALogFile(const std::string& logFilePath, bool* stop);
   void Flush();
   DasLogFileAppender* _logFileAppender;
   std::string _url;
@@ -69,7 +68,7 @@ private:
   TaskExecutor _syncQueue;
 };
 
-} // namespace Das
-} // namespace Anki
+}  // namespace Das
+}  // namespace Anki
 
-#endif // __DasAppender_H__
+#endif  // __DasAppender_H__

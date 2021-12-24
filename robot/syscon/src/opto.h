@@ -4,15 +4,15 @@
 #include "messages.h"
 
 namespace Opto {
-  extern FailureCode failure;
-  extern bool active;
+extern FailureCode failure;
+extern bool active;
 
-  void start(void);
-  void stop(void);
-  void tick(void);
-  void transmit(BodyToHead *payload);
-  bool sensorsValid(void);
-}
+void start(void);
+void stop(void);
+void tick(void);
+void transmit(BodyToHead *payload);
+bool sensorsValid(void);
+}  // namespace Opto
 
 // Cliff sensor registers
 static const uint8_t DROP_SENSOR_ADDRESS = 0xA6;

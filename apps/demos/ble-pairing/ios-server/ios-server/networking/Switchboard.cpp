@@ -8,6 +8,7 @@
 //
 
 #include "Switchboard.h"
+
 #include "SecurePairing.h"
 
 #define IOS_MAIN
@@ -39,11 +40,13 @@ void Anki::Switchboard::Start() {
   // Setup secure pairing handler
   ////////////////////////////////////////
   //
-  // 1. Instantiate SecurePairing object? Or do we instantiate it ad hoc...probably ad hoc?
-  // 2. Hook into watcher to know when to begin pairing (this will probably be domain socket?)
+  // 1. Instantiate SecurePairing object? Or do we instantiate it ad
+  // hoc...probably ad hoc?
+  // 2. Hook into watcher to know when to begin pairing (this will probably be
+  // domain socket?)
   //
   // ###
-  
+
   ////////////////////////////////////////
   // Setup sdk clad messaging handler
   ////////////////////////////////////////
@@ -51,7 +54,7 @@ void Anki::Switchboard::Start() {
   // @Shawn Blakesley
   //
   // ###
-  
+
   ////////////////////////////////////////
   // Setup Network Interface
   ////////////////////////////////////////
@@ -67,7 +70,6 @@ void Anki::Switchboard::Start() {
 
 void Anki::Switchboard::StartBleComms() {
   // Tell ankibluetoothd to start advertising.
-  
 }
 
 void Anki::Switchboard::StartWifiComms() {
@@ -78,12 +80,12 @@ void Anki::Switchboard::StartWifiComms() {
 void Anki::Switchboard::HandleStartPairing() {
   //
   // if(_BleConnection->IsConnected()) {
-  //   _SecurePairing = std::make_unique<Networking::SecurePairing>(_BleConnection->GetStream(), sLoop);
+  //   _SecurePairing =
+  //   std::make_unique<Networking::SecurePairing>(_BleConnection->GetStream(),
+  //   sLoop);
   // }
 }
 
-# ifndef IOS_MAIN
-int main() {
-  Anki::Switchboard::Start();
-}
-# endif
+#ifndef IOS_MAIN
+int main() { Anki::Switchboard::Start(); }
+#endif

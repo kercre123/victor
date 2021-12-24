@@ -18,15 +18,14 @@
 #ifndef GEMMLOWP_INTERNAL_COMMON_H_
 #define GEMMLOWP_INTERNAL_COMMON_H_
 
-#include "../internal/platform.h"
-#include "../profiling/pthread_everywhere.h"
-
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
 
+#include "../internal/platform.h"
 #include "../profiling/instrumentation.h"
+#include "../profiling/pthread_everywhere.h"
 
 // Our inline assembly path assume GCC/Clang syntax.
 // Native Client doesn't seem to support inline assembly(?).

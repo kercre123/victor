@@ -10,32 +10,28 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_BLOCKING_H
 #define EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_BLOCKING_H
 
-
 namespace Eigen {
 namespace internal {
 
-enum {
-  ShardByRow = 0,
-  ShardByCol = 1
-};
-
+enum { ShardByRow = 0, ShardByCol = 1 };
 
 // Default Blocking Strategy
-template <typename LhsMapper, typename RhsMapper, typename Index, int ShardingType=ShardByCol>
+template <typename LhsMapper, typename RhsMapper, typename Index,
+          int ShardingType = ShardByCol>
 class TensorContractionBlocking {
  public:
-
   typedef typename LhsMapper::Scalar LhsScalar;
   typedef typename RhsMapper::Scalar RhsScalar;
 
-  EIGEN_DEVICE_FUNC TensorContractionBlocking(Index k, Index m, Index n, Index num_threads = 1) :
-      kc_(k), mc_(m), nc_(n)
-  {
+  EIGEN_DEVICE_FUNC TensorContractionBlocking(Index k, Index m, Index n,
+                                              Index num_threads = 1)
+      : kc_(k), mc_(m), nc_(n) {
     if (ShardingType == ShardByCol) {
-      computeProductBlockingSizes<LhsScalar, RhsScalar, 1>(kc_, mc_, nc_, num_threads);
-    }
-    else {
-      computeProductBlockingSizes<LhsScalar, RhsScalar, 1>(kc_, nc_, mc_, num_threads);
+      computeProductBlockingSizes<LhsScalar, RhsScalar, 1>(kc_, mc_, nc_,
+                                                           num_threads);
+    } else {
+      computeProductBlockingSizes<LhsScalar, RhsScalar, 1>(kc_, nc_, mc_,
+                                                           num_threads);
     }
   }
 
@@ -49,17 +45,20 @@ class TensorContractionBlocking {
   Index nc_;
 };
 
-
-
 #if defined(EIGEN_USE_LIBXSMM)
 template <typename LhsScalar, typename RhsScalar, typename Index>
 class TensorXsmmContractionBlocking {
  public:
   TensorXsmmContractionBlocking(Index k, Index m, Index n,
-      size_t max_num_threads = 1, bool transposeA = false,
-      bool transposeB = false):
-    k_(k), m_(m), n_(n), transposeA_(transposeA),
-    transposeB_(transposeB), num_threads_(max_num_threads) {
+                                size_t max_num_threads = 1,
+                                bool transposeA = false,
+                                bool transposeB = false)
+      : k_(k),
+        m_(m),
+        n_(n),
+        transposeA_(transposeA),
+        transposeB_(transposeB),
+        num_threads_(max_num_threads) {
 #ifdef EIGEN_TEST_SPECIFIC_BLOCKING_SIZES
     if (EIGEN_TEST_SPECIFIC_BLOCKING_SIZES) {
       mc_ = EIGEN_TEST_SPECIFIC_BLOCKING_SIZE_M;
@@ -81,17 +80,26 @@ class TensorXsmmContractionBlocking {
 
     // If the matrix is small enough, don't do blocking, just call single xsmm
     // kernel.
-    if (static_cast<double>(m)*k*n <= LIBXSMM_THRESHOLD) {
-      mc_ = m; kc_ = k; nc_ = n;
-      outer_m_ = m; outer_k_ = k; outer_n_ = n;
-      copyA_ = false; copyB_ = false;
+    if (static_cast<double>(m) * k * n <= LIBXSMM_THRESHOLD) {
+      mc_ = m;
+      kc_ = k;
+      nc_ = n;
+      outer_m_ = m;
+      outer_k_ = k;
+      outer_n_ = n;
+      copyA_ = false;
+      copyB_ = false;
     } else {
       int arch = libxsmm_cpuid_x86();
 
       if (arch == LIBXSMM_X86_AVX512_CORE) {
         // skylake
-        mc_ = 64; kc_ = 64; nc_ = 24;
-        outer_m_ = 512; outer_k_ = 512; outer_n_ = 24*22;
+        mc_ = 64;
+        kc_ = 64;
+        nc_ = 24;
+        outer_m_ = 512;
+        outer_k_ = 512;
+        outer_n_ = 24 * 22;
         // Hack to use this kernel architecture as the other one has performance
         // issues (no hardware prefetching).
         // TODO(nishantpatil): This should be removed if the issues are fixed,
@@ -99,16 +107,28 @@ class TensorXsmmContractionBlocking {
         setenv("LIBXSMM_AVX512_CLASSIC_GEMM", "1", 1);
       } else if (arch == LIBXSMM_X86_AVX2) {
         // haswell
-        mc_ = 32; kc_ = 192; nc_ = 33;
-        outer_m_ = 512; outer_k_ = 3*192; outer_n_ = 33*16;
+        mc_ = 32;
+        kc_ = 192;
+        nc_ = 33;
+        outer_m_ = 512;
+        outer_k_ = 3 * 192;
+        outer_n_ = 33 * 16;
       } else if (arch == LIBXSMM_X86_AVX) {
         // ivybridge
-        mc_ = 32; kc_ = 192; nc_ = 48;
-        outer_m_ = 512; outer_k_ = 3*192; outer_n_ = 48*11;
+        mc_ = 32;
+        kc_ = 192;
+        nc_ = 48;
+        outer_m_ = 512;
+        outer_k_ = 3 * 192;
+        outer_n_ = 48 * 11;
       } else {
         // generic kernel size, usually performing well
-        mc_ = 32; kc_ = 128; nc_ = 32;
-        outer_m_ = 512; outer_k_ = 512; outer_n_ = 512;
+        mc_ = 32;
+        kc_ = 128;
+        nc_ = 32;
+        outer_m_ = 512;
+        outer_k_ = 512;
+        outer_n_ = 512;
       }
 
       // Only copy if it makes the stride smaller.
@@ -139,8 +159,8 @@ class TensorXsmmContractionBlocking {
     }
     size_t parallelism = numext::maxi(compute_parallelism, pack_parallelism);
 
-    num_threads_ = numext::mini<size_t>(num_threads_,
-                                    parallelism / MIN_JOBS_PER_THREAD);
+    num_threads_ =
+        numext::mini<size_t>(num_threads_, parallelism / MIN_JOBS_PER_THREAD);
     num_threads_ = numext::maxi<size_t>(num_threads_, 1);
 
     // For optimal performance outer block sizes should be multiplies of kernel
@@ -176,15 +196,15 @@ class TensorXsmmContractionBlocking {
   size_t num_threads_;
 
   // Threshold for m*k*n to skip blocking and just call libxsmm
-  const double LIBXSMM_THRESHOLD = 80*80*80;
+  const double LIBXSMM_THRESHOLD = 80 * 80 * 80;
   // For computing optimal number of threads - so that each thread gets at least
   // that many jobs.
   const double MIN_JOBS_PER_THREAD = 3;
   libxsmm_gemm_prefetch_type prefetch_;
 };
-#endif // EIGEN_USE_LIBXSMM
+#endif  // EIGEN_USE_LIBXSMM
 
-} // end namespace internal
-} // end namespace Eigen
+}  // end namespace internal
+}  // end namespace Eigen
 
-#endif // EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_BLOCKING_H
+#endif  // EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_BLOCKING_H

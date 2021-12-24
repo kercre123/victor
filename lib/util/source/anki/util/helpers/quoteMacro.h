@@ -16,4 +16,4 @@
 #define QUOTE_HELPER(__ARG__) #__ARG__
 #define QUOTE(__ARG__) QUOTE_HELPER(__ARG__)
 
-#endif // UTIL_QUOTE_MACRO_H_
+#endif  // UTIL_QUOTE_MACRO_H_

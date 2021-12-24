@@ -15,12 +15,12 @@
 #define DR_COEXGEN_H_
 /**
 ****************************************************************************************
- * @addtogroup COEXGEN
- * @ingroup DRIVERS
- *
- * @brief Coexistence generator
- *
- * @{
+* @addtogroup COEXGEN
+* @ingroup DRIVERS
+*
+* @brief Coexistence generator
+*
+* @{
 ****************************************************************************************
 */
 
@@ -32,8 +32,8 @@
  ****************************************************************************************
  * @brief Start the WiMAX event generator with a given phase.
  *
- * @param[in] EventPhase     Time between the a Rwbtcore internal clkn event and the first
- *                           WiMAx Generator Event
+ * @param[in] EventPhase     Time between the a Rwbtcore internal clkn event and
+ *the first WiMAx Generator Event
  *****************************************************************************************
  */
 void DR_WmGenStart(uint16_t EventPhase);
@@ -63,4 +63,4 @@ void DR_WlGenStop(void);
 
 /// @} COEXGEN
 
-#endif // DR_COEXGEN_H_
+#endif  // DR_COEXGEN_H_

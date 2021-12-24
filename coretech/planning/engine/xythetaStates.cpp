@@ -11,48 +11,42 @@
  **/
 
 #include "xythetaStates.h"
-#include "xythetaEnvironment.h"
 
-#include "util/console/consoleInterface.h"
-#include "util/logging/logging.h"
-#include "util/jsonWriter/jsonWriter.h"
-
- 
 #include "coretech/common/engine/jsonTools.h"
 #include "json/json.h"
+#include "util/console/consoleInterface.h"
+#include "util/jsonWriter/jsonWriter.h"
+#include "util/logging/logging.h"
+#include "xythetaEnvironment.h"
 
 namespace Anki {
 namespace Planning {
 
 GraphState::GraphState(StateID sid)
-  : x(sid.s.x)
-  , y(sid.s.y)
-  , theta(sid.s.theta) {}
+    : x(sid.s.x), y(sid.s.y), theta(sid.s.theta) {}
 
-GraphState::GraphState(State_c s) 
-  : x(roundf(s.x_mm * oneOverResolution_))
-  , y(roundf(s.y_mm * oneOverResolution_))
-  , theta(s.GetGraphTheta()) {}
+GraphState::GraphState(State_c s)
+    : x(roundf(s.x_mm * oneOverResolution_)),
+      y(roundf(s.y_mm * oneOverResolution_)),
+      theta(s.GetGraphTheta()) {}
 
-bool GraphState::Import(const Json::Value& config)
-{
+bool GraphState::Import(const Json::Value& config) {
   try {
-    if( config.isNull() ) {
+    if (config.isNull()) {
       PRINT_NAMED_ERROR("GraphState.Import.Null", "config value is null");
       return false;
     }
 
-    if(!JsonTools::GetValueOptional(config, "x", x) ||
-       !JsonTools::GetValueOptional(config, "y", y) ||
-       !JsonTools::GetValueOptional(config, "theta", theta)) {
-      PRINT_NAMED_ERROR("GraphState.Import.Invalid", "could not parse state, dump follows");
+    if (!JsonTools::GetValueOptional(config, "x", x) ||
+        !JsonTools::GetValueOptional(config, "y", y) ||
+        !JsonTools::GetValueOptional(config, "theta", theta)) {
+      PRINT_NAMED_ERROR("GraphState.Import.Invalid",
+                        "could not parse state, dump follows");
       JsonTools::PrintJsonCout(config, 1);
       return false;
     }
-  }
-  catch( const std::exception&  e ) {
-    PRINT_NAMED_ERROR("GraphState.Import.Exception",
-                      "json exception: %s",
+  } catch (const std::exception& e) {
+    PRINT_NAMED_ERROR("GraphState.Import.Exception", "json exception: %s",
                       e.what());
     return false;
   }
@@ -60,16 +54,14 @@ bool GraphState::Import(const Json::Value& config)
   return true;
 }
 
-void GraphState::Dump(Util::JsonWriter& writer) const
-{
+void GraphState::Dump(Util::JsonWriter& writer) const {
   writer.AddEntry("x", x);
   writer.AddEntry("y", y);
   writer.AddEntry("theta", theta);
 }
 
-StateID GraphState::GetStateID() const
-{
-  //return x | y<<MAX_XY_BITS | theta<<(2*MAX_XY_BITS);
+StateID GraphState::GetStateID() const {
+  // return x | y<<MAX_XY_BITS | theta<<(2*MAX_XY_BITS);
   StateID sid;
   sid.s.x = x;
   sid.s.y = y;
@@ -77,48 +69,43 @@ StateID GraphState::GetStateID() const
   return sid;
 }
 
-bool GraphState::operator==(const GraphState& other) const
-{
+bool GraphState::operator==(const GraphState& other) const {
   // TODO:(bn) use union?
-  return x==other.x && y==other.y && theta==other.theta;
+  return x == other.x && y == other.y && theta == other.theta;
 }
 
-bool GraphState::operator!=(const GraphState& other) const
-{
+bool GraphState::operator!=(const GraphState& other) const {
   // TODO:(bn) use union?
-  return x!=other.x || y!=other.y || theta!=other.theta;
+  return x != other.x || y != other.y || theta != other.theta;
 }
 
-
-std::ostream& operator<<(std::ostream& out, const GraphState& state)
-{
-  return out<<'['<<(int)state.x<<','<<(int)state.y<<','<<(int)state.theta<<']';
+std::ostream& operator<<(std::ostream& out, const GraphState& state) {
+  return out << '[' << (int)state.x << ',' << (int)state.y << ','
+             << (int)state.theta << ']';
 }
 
-std::ostream& operator<<(std::ostream& out, const State_c& state)
-{
-  return out<<'('<<state.x_mm<<','<<state.y_mm<<','<<state.theta<<')';
+std::ostream& operator<<(std::ostream& out, const State_c& state) {
+  return out << '(' << state.x_mm << ',' << state.y_mm << ',' << state.theta
+             << ')';
 }
 
-bool State_c::Import(const Json::Value& config)
-{
+bool State_c::Import(const Json::Value& config) {
   try {
-    if( config.isNull() ) {
+    if (config.isNull()) {
       PRINT_NAMED_ERROR("State_c.Import.Null", "config value is null");
       return false;
     }
-  
-    if(!JsonTools::GetValueOptional(config, "x_mm", x_mm) ||
-       !JsonTools::GetValueOptional(config, "y_mm", y_mm) ||
-       !JsonTools::GetValueOptional(config, "theta_rads", theta)) {
-      PRINT_NAMED_ERROR("State_c.Import.Invalid", "could not parse State_c, dump follows");
+
+    if (!JsonTools::GetValueOptional(config, "x_mm", x_mm) ||
+        !JsonTools::GetValueOptional(config, "y_mm", y_mm) ||
+        !JsonTools::GetValueOptional(config, "theta_rads", theta)) {
+      PRINT_NAMED_ERROR("State_c.Import.Invalid",
+                        "could not parse State_c, dump follows");
       JsonTools::PrintJsonCout(config, 1);
       return false;
     }
-  }
-  catch( const std::exception&  e ) {
-    PRINT_NAMED_ERROR("State_c.Import.Exception",
-                      "json exception: %s",
+  } catch (const std::exception& e) {
+    PRINT_NAMED_ERROR("State_c.Import.Exception", "json exception: %s",
                       e.what());
     return false;
   }
@@ -126,29 +113,25 @@ bool State_c::Import(const Json::Value& config)
   return true;
 }
 
-void State_c::Dump(Util::JsonWriter& writer) const
-{
+void State_c::Dump(Util::JsonWriter& writer) const {
   writer.AddEntry("x_mm", x_mm);
   writer.AddEntry("y_mm", y_mm);
   writer.AddEntry("theta_rads", theta);
 }
 
-float State_c::GetDistanceBetween(const State_c& start, const GraphState& end)
-{
+float State_c::GetDistanceBetween(const State_c& start, const GraphState& end) {
   return (end.GetPointXY_mm() - start.GetPointXY_mm()).Length();
 }
 
-float State_c::GetDistanceBetween(const State_c& start, const State_c& end)
-{
+float State_c::GetDistanceBetween(const State_c& start, const State_c& end) {
   return (end.GetPointXY_mm() - start.GetPointXY_mm()).Length();
 }
 
-float State_c::GetMinAngleBetween(const State_c& start, const State_c& end)
-{
+float State_c::GetMinAngleBetween(const State_c& start, const State_c& end) {
   const float diff1 = std::abs(end.theta - start.theta);
-  const float diff2 = std::abs( std::abs(end.theta - start.theta) - M_PI );
-  return std::min( diff1, diff2 );
+  const float diff2 = std::abs(std::abs(end.theta - start.theta) - M_PI);
+  return std::min(diff1, diff2);
 }
 
-} // namespace Planning
-} // namespace Anki
+}  // namespace Planning
+}  // namespace Anki

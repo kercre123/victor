@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -14,23 +15,29 @@
 // Copyright (C) 2009, Willow Garage Inc., all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
-// This software is provided by the copyright holders and contributors "as is" and
+// This software is provided by the copyright holders and contributors "as is"
+and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -49,81 +56,85 @@ using namespace cvtest;
 ////////////////////////////////////////////////////////
 // pyrDown
 
-PARAM_TEST_CASE(PyrDown, cv::cuda::DeviceInfo, cv::Size, MatType, UseRoi)
-{
-    cv::cuda::DeviceInfo devInfo;
-    cv::Size size;
-    int type;
-    bool useRoi;
+PARAM_TEST_CASE(PyrDown, cv::cuda::DeviceInfo, cv::Size, MatType, UseRoi) {
+  cv::cuda::DeviceInfo devInfo;
+  cv::Size size;
+  int type;
+  bool useRoi;
 
-    virtual void SetUp()
-    {
-        devInfo = GET_PARAM(0);
-        size = GET_PARAM(1);
-        type = GET_PARAM(2);
-        useRoi = GET_PARAM(3);
+  virtual void SetUp() {
+    devInfo = GET_PARAM(0);
+    size = GET_PARAM(1);
+    type = GET_PARAM(2);
+    useRoi = GET_PARAM(3);
 
-        cv::cuda::setDevice(devInfo.deviceID());
-    }
+    cv::cuda::setDevice(devInfo.deviceID());
+  }
 };
 
-CUDA_TEST_P(PyrDown, Accuracy)
-{
-    cv::Mat src = randomMat(size, type);
+CUDA_TEST_P(PyrDown, Accuracy) {
+  cv::Mat src = randomMat(size, type);
 
-    cv::cuda::GpuMat dst = createMat(cv::Size((size.width + 1) / 2, (size.height + 1) / 2), type, useRoi);
-    cv::cuda::pyrDown(loadMat(src, useRoi), dst);
+  cv::cuda::GpuMat dst = createMat(
+      cv::Size((size.width + 1) / 2, (size.height + 1) / 2), type, useRoi);
+  cv::cuda::pyrDown(loadMat(src, useRoi), dst);
 
-    cv::Mat dst_gold;
-    cv::pyrDown(src, dst_gold);
+  cv::Mat dst_gold;
+  cv::pyrDown(src, dst_gold);
 
-    EXPECT_MAT_NEAR(dst_gold, dst, src.depth() == CV_32F ? 1e-4 : 1.0);
+  EXPECT_MAT_NEAR(dst_gold, dst, src.depth() == CV_32F ? 1e-4 : 1.0);
 }
 
-INSTANTIATE_TEST_CASE_P(CUDA_Warping, PyrDown, testing::Combine(
-    ALL_DEVICES,
-    DIFFERENT_SIZES,
-    testing::Values(MatType(CV_8UC1), MatType(CV_8UC3), MatType(CV_8UC4), MatType(CV_16UC1), MatType(CV_16UC3), MatType(CV_16UC4), MatType(CV_32FC1), MatType(CV_32FC3), MatType(CV_32FC4)),
-    WHOLE_SUBMAT));
+INSTANTIATE_TEST_CASE_P(
+    CUDA_Warping, PyrDown,
+    testing::Combine(ALL_DEVICES, DIFFERENT_SIZES,
+                     testing::Values(MatType(CV_8UC1), MatType(CV_8UC3),
+                                     MatType(CV_8UC4), MatType(CV_16UC1),
+                                     MatType(CV_16UC3), MatType(CV_16UC4),
+                                     MatType(CV_32FC1), MatType(CV_32FC3),
+                                     MatType(CV_32FC4)),
+                     WHOLE_SUBMAT));
 
 ////////////////////////////////////////////////////////
 // pyrUp
 
-PARAM_TEST_CASE(PyrUp, cv::cuda::DeviceInfo, cv::Size, MatType, UseRoi)
-{
-    cv::cuda::DeviceInfo devInfo;
-    cv::Size size;
-    int type;
-    bool useRoi;
+PARAM_TEST_CASE(PyrUp, cv::cuda::DeviceInfo, cv::Size, MatType, UseRoi) {
+  cv::cuda::DeviceInfo devInfo;
+  cv::Size size;
+  int type;
+  bool useRoi;
 
-    virtual void SetUp()
-    {
-        devInfo = GET_PARAM(0);
-        size = GET_PARAM(1);
-        type = GET_PARAM(2);
-        useRoi = GET_PARAM(3);
+  virtual void SetUp() {
+    devInfo = GET_PARAM(0);
+    size = GET_PARAM(1);
+    type = GET_PARAM(2);
+    useRoi = GET_PARAM(3);
 
-        cv::cuda::setDevice(devInfo.deviceID());
-    }
+    cv::cuda::setDevice(devInfo.deviceID());
+  }
 };
 
-CUDA_TEST_P(PyrUp, Accuracy)
-{
-    cv::Mat src = randomMat(size, type);
+CUDA_TEST_P(PyrUp, Accuracy) {
+  cv::Mat src = randomMat(size, type);
 
-    cv::cuda::GpuMat dst = createMat(cv::Size(size.width * 2, size.height * 2), type, useRoi);
-    cv::cuda::pyrUp(loadMat(src, useRoi), dst);
+  cv::cuda::GpuMat dst =
+      createMat(cv::Size(size.width * 2, size.height * 2), type, useRoi);
+  cv::cuda::pyrUp(loadMat(src, useRoi), dst);
 
-    cv::Mat dst_gold;
-    cv::pyrUp(src, dst_gold);
+  cv::Mat dst_gold;
+  cv::pyrUp(src, dst_gold);
 
-    EXPECT_MAT_NEAR(dst_gold, dst, src.depth() == CV_32F ? 1e-4 : 1.0);
+  EXPECT_MAT_NEAR(dst_gold, dst, src.depth() == CV_32F ? 1e-4 : 1.0);
 }
 
-INSTANTIATE_TEST_CASE_P(CUDA_Warping, PyrUp, testing::Combine(
-    ALL_DEVICES,
-    DIFFERENT_SIZES,
-    testing::Values(MatType(CV_8UC1), MatType(CV_8UC3), MatType(CV_8UC4), MatType(CV_16UC1), MatType(CV_16UC3), MatType(CV_16UC4), MatType(CV_32FC1), MatType(CV_32FC3), MatType(CV_32FC4)),
-    WHOLE_SUBMAT));
+INSTANTIATE_TEST_CASE_P(
+    CUDA_Warping, PyrUp,
+    testing::Combine(ALL_DEVICES, DIFFERENT_SIZES,
+                     testing::Values(MatType(CV_8UC1), MatType(CV_8UC3),
+                                     MatType(CV_8UC4), MatType(CV_16UC1),
+                                     MatType(CV_16UC3), MatType(CV_16UC4),
+                                     MatType(CV_32FC1), MatType(CV_32FC3),
+                                     MatType(CV_32FC4)),
+                     WHOLE_SUBMAT));
 
-#endif // HAVE_CUDA
+#endif  // HAVE_CUDA

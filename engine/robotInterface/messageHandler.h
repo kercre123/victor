@@ -1,27 +1,28 @@
 /**
-* File: messageHandler
-*
-* Author: damjan stulic
-* Created: 9/8/15
-*
-* Description: 
-*
-* Copyright: Anki, inc. 2015
-*
-*/
+ * File: messageHandler
+ *
+ * Author: damjan stulic
+ * Created: 9/8/15
+ *
+ * Description:
+ *
+ * Copyright: Anki, inc. 2015
+ *
+ */
 
 #ifndef __Anki_Cozmo_Basestation_RobotInterface_MessageHandler_H__
 #define __Anki_Cozmo_Basestation_RobotInterface_MessageHandler_H__
 
-#include "engine/events/ankiEventMgr.h"
-#include "coretech/common/shared/types.h"
-#include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/robotInterface/messageRobotToEngine.h"
-#include "util/signals/simpleSignal_fwd.h"
 #include <memory>
 
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "coretech/common/shared/types.h"
+#include "engine/events/ankiEventMgr.h"
+#include "util/signals/simpleSignal_fwd.h"
+
 namespace Json {
-  class Value;
+class Value;
 }
 
 namespace Anki {
@@ -29,14 +30,14 @@ namespace Anki {
 namespace Comms {
 class IChannel;
 struct IncomingPacket;
-}
-  
+}  // namespace Comms
+
 namespace Util {
-  class TransportAddress;
-  namespace Stats {
-    class StatsAccumulator;
-  }
+class TransportAddress;
+namespace Stats {
+class StatsAccumulator;
 }
+}  // namespace Util
 
 namespace Vector {
 
@@ -47,43 +48,50 @@ class RobotConnectionManager;
 namespace RobotInterface {
 
 class MessageHandler {
-public:
-
+ public:
   MessageHandler();
   virtual ~MessageHandler();
 
-  virtual void Init(const Json::Value& config, RobotManager* robotMgr, const CozmoContext* context);
+  virtual void Init(const Json::Value& config, RobotManager* robotMgr,
+                    const CozmoContext* context);
 
   virtual Result ProcessMessages();
 
-  virtual Result SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable = true, bool hot = false);
+  virtual Result SendMessage(const RobotInterface::EngineToRobot& msg,
+                             bool reliable = true, bool hot = false);
 
-  Signal::SmartHandle Subscribe(const RobotInterface::RobotToEngineTag& tagType, std::function<void(const AnkiEvent<RobotInterface::RobotToEngine>&)> messageHandler) {
+  Signal::SmartHandle Subscribe(
+      const RobotInterface::RobotToEngineTag& tagType,
+      std::function<void(const AnkiEvent<RobotInterface::RobotToEngine>&)>
+          messageHandler) {
     return _eventMgr.Subscribe(static_cast<uint32_t>(tagType), messageHandler);
   }
-  
+
   // Handle various event message types
-  template<typename T>
+  template <typename T>
   void HandleMessage(const T& msg);
 
   // Are we connected to this robot?
   bool IsConnected(RobotID_t robotID);
 
   Result AddRobotConnection(RobotID_t robotId);
-  
+
   void Disconnect();
-  
+
   const Util::Stats::StatsAccumulator& GetQueuedTimes_ms() const;
 
   uint32_t GetMessageCountRtE() const { return _messageCountRobotToEngine; }
   uint32_t GetMessageCountEtR() const { return _messageCountEngineToRobot; }
-  void     ResetMessageCounts() { _messageCountRobotToEngine = 0; _messageCountEngineToRobot = 0; }
+  void ResetMessageCounts() {
+    _messageCountRobotToEngine = 0;
+    _messageCountEngineToRobot = 0;
+  }
 
-protected:
+ protected:
   void Broadcast(const RobotInterface::RobotToEngine& message);
   void Broadcast(RobotInterface::RobotToEngine&& message);
-  
-private:
+
+ private:
   AnkiEventMgr<RobotInterface::RobotToEngine> _eventMgr;
   RobotManager* _robotManager;
   std::unique_ptr<RobotConnectionManager> _robotConnectionManager;
@@ -93,11 +101,8 @@ private:
   uint32_t _messageCountEngineToRobot = 0;
 };
 
+}  // end namespace RobotInterface
+}  // end namespace Vector
+}  // end namespace Anki
 
-} // end namespace RobotInterface
-} // end namespace Vector
-} // end namespace Anki
-
-
-
-#endif //__Anki_Cozmo_Basestation_RobotInterface_MessageHandler_H__
+#endif  //__Anki_Cozmo_Basestation_RobotInterface_MessageHandler_H__

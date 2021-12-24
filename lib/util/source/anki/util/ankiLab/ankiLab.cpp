@@ -11,27 +11,26 @@
  **/
 
 #include "util/ankiLab/ankiLab.h"
+
 #include "util/ankiLab/ankiLabAccessors.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "util/string/stringUtils.h"
 
-#define LOG_CHANNEL    "AnkiLab"
+#define LOG_CHANNEL "AnkiLab"
 
 namespace Anki {
 namespace Util {
 namespace AnkiLab {
 
 AnkiLab::AnkiLab()
-: _enabled(true)
-, _expUserHashFunc(&CalculateExperimentHashBucket)
-, _activeAssignmentsUpdatedSignal(new ActiveAssignmentsUpdatedSignalType())
-{
-}
+    : _enabled(true),
+      _expUserHashFunc(&CalculateExperimentHashBucket),
+      _activeAssignmentsUpdatedSignal(
+          new ActiveAssignmentsUpdatedSignalType()) {}
 
-void AnkiLab::Enable(const bool enabled)
-{
+void AnkiLab::Enable(const bool enabled) {
   _enabled = enabled;
   if (_enabled) {
     LOG_INFO("AnkiLab.Enable", "Enabling the lab");
@@ -43,8 +42,7 @@ void AnkiLab::Enable(const bool enabled)
   }
 }
 
-bool AnkiLab::Load(const std::string& jsonContents)
-{
+bool AnkiLab::Load(const std::string& jsonContents) {
   Json::Reader reader;
   Json::Value root;
 
@@ -58,26 +56,22 @@ bool AnkiLab::Load(const std::string& jsonContents)
   return success;
 }
 
-const AnkiLabDef& AnkiLab::GetAnkiLabDefinition() const
-{
-  return _ankiLabDef;
-}
+const AnkiLabDef& AnkiLab::GetAnkiLabDefinition() const { return _ankiLabDef; }
 
-const Experiment* AnkiLab::FindExperiment(const std::string& experimentKey) const
-{
+const Experiment* AnkiLab::FindExperiment(
+    const std::string& experimentKey) const {
   return Anki::Util::AnkiLab::FindExperiment(&_ankiLabDef, experimentKey);
 }
 
-AssignmentDef* AnkiLab::FindAssignment(std::vector<AssignmentDef>& assignmentList,
-                                       const std::string& experimentKey,
-                                       const std::string& userId)
-{
+AssignmentDef* AnkiLab::FindAssignment(
+    std::vector<AssignmentDef>& assignmentList,
+    const std::string& experimentKey, const std::string& userId) {
   auto search =
-  std::find_if(assignmentList.begin(), assignmentList.end(),
-               [&experimentKey, &userId](const AssignmentDef& def) {
-                 return (   (def.GetExperiment_key() == experimentKey)
-                         && (def.GetUser_id() == userId));
-               });
+      std::find_if(assignmentList.begin(), assignmentList.end(),
+                   [&experimentKey, &userId](const AssignmentDef& def) {
+                     return ((def.GetExperiment_key() == experimentKey) &&
+                             (def.GetUser_id() == userId));
+                   });
   if (search == assignmentList.end()) {
     return nullptr;
   } else {
@@ -86,57 +80,45 @@ AssignmentDef* AnkiLab::FindAssignment(std::vector<AssignmentDef>& assignmentLis
   }
 }
 
-
 bool AnkiLab::IsActiveExperiment(const std::string& experimentKey,
-                                 const std::string& userId) const
-{
-  // Drop const for lookup - safe since we are not exposing the mutable ptr result
+                                 const std::string& userId) const {
+  // Drop const for lookup - safe since we are not exposing the mutable ptr
+  // result
   AnkiLab* mutableThis = const_cast<AnkiLab*>(this);
-  AssignmentDef* def = mutableThis->FindAssignment(mutableThis->_activeAssignments,
-                                                   experimentKey,
-                                                   userId);
+  AssignmentDef* def = mutableThis->FindAssignment(
+      mutableThis->_activeAssignments, experimentKey, userId);
   if (nullptr == def) {
     def = mutableThis->FindAssignment(mutableThis->_forceAssignments,
-                                      experimentKey,
-                                      userId);
+                                      experimentKey, userId);
   }
   return (nullptr != def);
 }
 
-uint32_t AnkiLab::GetSecondsSinceEpoch() const
-{
+uint32_t AnkiLab::GetSecondsSinceEpoch() const {
   using namespace std::chrono;
-  system_clock::time_point nowTp {system_clock::now()};
+  system_clock::time_point nowTp{system_clock::now()};
   seconds nowSec = duration_cast<seconds>(nowTp.time_since_epoch());
   uint32_t now = Anki::Util::numeric_cast<uint32_t>(nowSec.count());
 
   return now;
 }
 
-
-AssignmentStatus AnkiLab::ActivateExperiment(const std::string& experimentKey,
-                                             const std::string& userId,
-                                             const std::vector<std::string>& audienceTags,
-                                             std::string& outVariationKey)
-{
+AssignmentStatus AnkiLab::ActivateExperiment(
+    const std::string& experimentKey, const std::string& userId,
+    const std::vector<std::string>& audienceTags,
+    std::string& outVariationKey) {
   uint32_t now = GetSecondsSinceEpoch();
-  AssignmentStatus status = ActivateExperiment(experimentKey, userId,
-                                               audienceTags,
-                                               now,
-                                               outVariationKey);
+  AssignmentStatus status = ActivateExperiment(
+      experimentKey, userId, audienceTags, now, outVariationKey);
   return status;
 }
 
-AssignmentStatus AnkiLab::ActivateExperiment(const std::string& experimentKey,
-                                             const std::string& userId,
-                                             const std::vector<std::string>& audienceTags,
-                                             const uint32_t epochSec,
-                                             std::string& outVariationKey)
-{
-  AssignmentStatus status = ActivateExperimentInternal(experimentKey, userId,
-                                                       audienceTags,
-                                                       epochSec,
-                                                       outVariationKey);
+AssignmentStatus AnkiLab::ActivateExperiment(
+    const std::string& experimentKey, const std::string& userId,
+    const std::vector<std::string>& audienceTags, const uint32_t epochSec,
+    std::string& outVariationKey) {
+  AssignmentStatus status = ActivateExperimentInternal(
+      experimentKey, userId, audienceTags, epochSec, outVariationKey);
 
   AssignmentDef assignment{experimentKey, userId, outVariationKey};
   ReportExperimentAssignmentResult(assignment, status);
@@ -144,17 +126,16 @@ AssignmentStatus AnkiLab::ActivateExperiment(const std::string& experimentKey,
   return status;
 }
 
-AssignmentStatus AnkiLab::RestoreActiveExperiment(const std::string& experimentKey,
-                                                  const std::string& userId,
-                                                  const std::string& variationKey,
-                                                  const uint32_t epochSec)
-{
+AssignmentStatus AnkiLab::RestoreActiveExperiment(
+    const std::string& experimentKey, const std::string& userId,
+    const std::string& variationKey, const uint32_t epochSec) {
   const Experiment* experiment = FindExperiment(experimentKey);
   if (nullptr == experiment) {
     return AssignmentStatus::ExperimentNotFound;
   }
 
-  const ExperimentVariation* variation = FindVariation(experiment, variationKey);
+  const ExperimentVariation* variation =
+      FindVariation(experiment, variationKey);
   if (nullptr == variation) {
     return AssignmentStatus::VariantNotFound;
   }
@@ -174,20 +155,15 @@ AssignmentStatus AnkiLab::RestoreActiveExperiment(const std::string& experimentK
   return AssignmentStatus::Assigned;
 }
 
-
-size_t AnkiLab::AutoActivateExperimentsForUser(const std::string& userId,
-                                               const std::vector<std::string>& audienceTags)
-{
+size_t AnkiLab::AutoActivateExperimentsForUser(
+    const std::string& userId, const std::vector<std::string>& audienceTags) {
   size_t count = 0;
   for (const Experiment& e : _ankiLabDef.GetExperiments()) {
     if (e.GetActivation_mode() == ActivationMode::automatic) {
       std::string variationKey;
-      AssignmentStatus status = ActivateExperiment(e.GetKey(),
-                                                   userId,
-                                                   audienceTags,
-                                                   variationKey);
-      LOG_INFO("AnkiLab.AutoActivateExperimentsForUser",
-               "%s : %s : %s",
+      AssignmentStatus status =
+          ActivateExperiment(e.GetKey(), userId, audienceTags, variationKey);
+      LOG_INFO("AnkiLab.AutoActivateExperimentsForUser", "%s : %s : %s",
                e.GetKey().c_str(), variationKey.c_str(), EnumToString(status));
       ++count;
     }
@@ -195,17 +171,14 @@ size_t AnkiLab::AutoActivateExperimentsForUser(const std::string& userId,
   return count;
 }
 
-std::vector<std::string> AnkiLab::GetKnownAudienceTags() const
-{
+std::vector<std::string> AnkiLab::GetKnownAudienceTags() const {
   return Anki::Util::AnkiLab::GetKnownAudienceTags(_ankiLabDef);
 }
 
-AssignmentStatus AnkiLab::ActivateExperimentInternal(const std::string& experimentKey,
-                                                     const std::string& userId,
-                                                     const std::vector<std::string>& audienceTags,
-                                                     const uint32_t epochSec,
-                                                     std::string& outVariationKey)
-{
+AssignmentStatus AnkiLab::ActivateExperimentInternal(
+    const std::string& experimentKey, const std::string& userId,
+    const std::vector<std::string>& audienceTags, const uint32_t epochSec,
+    std::string& outVariationKey) {
   outVariationKey = "";
   const Experiment* experiment = FindExperiment(experimentKey);
   if (nullptr == experiment) {
@@ -215,7 +188,8 @@ AssignmentStatus AnkiLab::ActivateExperimentInternal(const std::string& experime
   // Check for force assignment
   // TODO-BRC: Also need to check that variant is valid?
   {
-    AssignmentDef* def = FindAssignment(_forceAssignments, experimentKey, userId);
+    AssignmentDef* def =
+        FindAssignment(_forceAssignments, experimentKey, userId);
     if (nullptr != def) {
       outVariationKey = def->GetVariation_key();
       return AssignmentStatus::ForceAssigned;
@@ -229,20 +203,23 @@ AssignmentStatus AnkiLab::ActivateExperimentInternal(const std::string& experime
   }
 
   // If we already have an assignment restored from our profile, use that
-  AssignmentDef* existingAssignment = FindAssignment(_activeAssignments, experimentKey, userId);
+  AssignmentDef* existingAssignment =
+      FindAssignment(_activeAssignments, experimentKey, userId);
   if (nullptr != existingAssignment) {
     outVariationKey = existingAssignment->GetVariation_key();
     return AssignmentStatus::Assigned;
   }
 
   // if audience_ids were specified in the experiment,
-  // check that the specified audienceTags match the set defined in the experiment
+  // check that the specified audienceTags match the set defined in the
+  // experiment
   if (!IsMatchingAudience(experiment, audienceTags)) {
     return AssignmentStatus::AudienceMismatch;
   }
 
   // check override assignment
-  AssignmentDef* overrideAssignment = FindAssignment(_overrideAssignments, experimentKey, userId);
+  AssignmentDef* overrideAssignment =
+      FindAssignment(_overrideAssignments, experimentKey, userId);
   if (nullptr != overrideAssignment) {
     outVariationKey = overrideAssignment->GetVariation_key();
     return AssignmentStatus::OverrideAssigned;
@@ -255,19 +232,17 @@ AssignmentStatus AnkiLab::ActivateExperimentInternal(const std::string& experime
     return status;
   }
 
-  const uint8_t userHashBucket = CalculateExperimentHashBucket(experimentKey, userId);
-  LOG_INFO("AnkiLab.ActivateExperiment.bucket",
-           "%s : %u",
-            experimentKey.c_str(), userHashBucket);
-  const ExperimentVariation* variation = GetExperimentVariation(experiment, userHashBucket);
-
+  const uint8_t userHashBucket =
+      CalculateExperimentHashBucket(experimentKey, userId);
+  LOG_INFO("AnkiLab.ActivateExperiment.bucket", "%s : %u",
+           experimentKey.c_str(), userHashBucket);
+  const ExperimentVariation* variation =
+      GetExperimentVariation(experiment, userHashBucket);
 
   if (nullptr != variation) {
     outVariationKey = variation->GetKey();
-    LOG_INFO("AnkiLab.ActivateExperiment",
-             "%s : %u : %s",
-             experiment->GetKey().c_str(),
-             userHashBucket,
+    LOG_INFO("AnkiLab.ActivateExperiment", "%s : %u : %s",
+             experiment->GetKey().c_str(), userHashBucket,
              outVariationKey.c_str());
 
     AssignmentDef assignment{experimentKey, userId, variation->GetKey()};
@@ -279,29 +254,26 @@ AssignmentStatus AnkiLab::ActivateExperimentInternal(const std::string& experime
 }
 
 void AnkiLab::ReportExperimentAssignmentResult(const AssignmentDef& assignment,
-                                               const AssignmentStatus status)
-{
+                                               const AssignmentStatus status) {
   const std::string& experimentKey = assignment.GetExperiment_key();
 
   std::string statusString = EnumToString(status);
-  std::transform(statusString.begin(), statusString.end(), statusString.begin(), ::tolower);
+  std::transform(statusString.begin(), statusString.end(), statusString.begin(),
+                 ::tolower);
 
   const Metadata& meta = _ankiLabDef.GetMeta();
-  std::string versionString = meta.GetProject_id() +
-                              "-" + std::to_string(meta.GetVersion()) +
-                              "." + std::to_string(meta.GetRevision());
+  std::string versionString = meta.GetProject_id() + "-" +
+                              std::to_string(meta.GetVersion()) + "." +
+                              std::to_string(meta.GetRevision());
 
   // Invalid input, log event and bail
   if ((status == AssignmentStatus::Invalid) ||
       (status == AssignmentStatus::ExperimentNotFound) ||
-      (status == AssignmentStatus::VariantNotFound)){
+      (status == AssignmentStatus::VariantNotFound)) {
     std::string statusInfo = versionString + ":" + statusString;
-    LOG_WARNING("AnkiLab.experiment.invalid",
-                "%s:%s:%s - %s",
-                experimentKey.c_str(),
-                assignment.GetVariation_key().c_str(),
-                assignment.GetUser_id().c_str(),
-                statusInfo.c_str());
+    LOG_WARNING("AnkiLab.experiment.invalid", "%s:%s:%s - %s",
+                experimentKey.c_str(), assignment.GetVariation_key().c_str(),
+                assignment.GetUser_id().c_str(), statusInfo.c_str());
     return;
   }
 
@@ -309,51 +281,44 @@ void AnkiLab::ReportExperimentAssignmentResult(const AssignmentDef& assignment,
   // Generate an `assigned` or `unassigned` event
 
   const Experiment* experiment = FindExperiment(experimentKey);
-  const ExperimentVariation* variation = FindVariation(experiment, assignment.GetVariation_key());
+  const ExperimentVariation* variation =
+      FindVariation(experiment, assignment.GetVariation_key());
 
   // create `info` string: '<version>:<experiment_name>:<variant_name>:<status>'
-  std::string info = versionString +
-                     ":" + experiment->GetKey() +
-                     ":" + ((nullptr != variation) ? variation->GetKey() : "") +
-                     ":" + statusString;
+  std::string info = versionString + ":" + experiment->GetKey() + ":" +
+                     ((nullptr != variation) ? variation->GetKey() : "") + ":" +
+                     statusString;
 
   if ((status == AssignmentStatus::AudienceMismatch) ||
       (status == AssignmentStatus::ExperimentNotRunning) ||
-      (status == AssignmentStatus::Unassigned)){
+      (status == AssignmentStatus::Unassigned)) {
     // assignment criteria not met
-    Anki::Util::sInfo("experiment.unassigned", {
-      { "$user", assignment.GetUser_id().c_str() },
-      { DGROUP , assignment.GetVariation_key().c_str() },
-      { DDATA  , info.c_str() }
-    }, experimentKey.c_str());
+    Anki::Util::sInfo("experiment.unassigned",
+                      {{"$user", assignment.GetUser_id().c_str()},
+                       {DGROUP, assignment.GetVariation_key().c_str()},
+                       {DDATA, info.c_str()}},
+                      experimentKey.c_str());
 
-    LOG_DEBUG("AnkiLab.experiment.unassigned",
-              "%s:%s:%s - %s",
-              experimentKey.c_str(),
-              assignment.GetVariation_key().c_str(),
-              assignment.GetUser_id().c_str(),
-              info.c_str());
+    LOG_DEBUG("AnkiLab.experiment.unassigned", "%s:%s:%s - %s",
+              experimentKey.c_str(), assignment.GetVariation_key().c_str(),
+              assignment.GetUser_id().c_str(), info.c_str());
   } else {
-    Anki::Util::sInfo("experiment.assigned", {
-      { "$user", assignment.GetUser_id().c_str() },
-      { DGROUP , variation->GetKey().c_str() },
-      { DDATA  , info.c_str() }
-    }, experimentKey.c_str());
+    Anki::Util::sInfo("experiment.assigned",
+                      {{"$user", assignment.GetUser_id().c_str()},
+                       {DGROUP, variation->GetKey().c_str()},
+                       {DDATA, info.c_str()}},
+                      experimentKey.c_str());
 
-    LOG_DEBUG("AnkiLab.experiment.assigned",
-              "%s:%s:%s - %s",
-              experimentKey.c_str(),
-              variation->GetKey().c_str(),
-              assignment.GetUser_id().c_str(),
-              info.c_str());
+    LOG_DEBUG("AnkiLab.experiment.assigned", "%s:%s:%s - %s",
+              experimentKey.c_str(), variation->GetKey().c_str(),
+              assignment.GetUser_id().c_str(), info.c_str());
   }
 }
 
-void AnkiLab::AssignExperimentVariation(const AssignmentDef& assignment)
-{
-  AssignmentDef* def = FindAssignment(_activeAssignments,
-                                      assignment.GetExperiment_key(),
-                                      assignment.GetUser_id());
+void AnkiLab::AssignExperimentVariation(const AssignmentDef& assignment) {
+  AssignmentDef* def =
+      FindAssignment(_activeAssignments, assignment.GetExperiment_key(),
+                     assignment.GetUser_id());
   if (nullptr != def) {
     def->SetVariation_key(assignment.GetVariation_key());
   } else {
@@ -364,16 +329,16 @@ void AnkiLab::AssignExperimentVariation(const AssignmentDef& assignment)
   }
 }
 
-AssignmentStatus AnkiLab::ForceActivateExperiment(const std::string& experimentKey,
-                                                  const std::string& userId,
-                                                  const std::string& variationKey)
-{
+AssignmentStatus AnkiLab::ForceActivateExperiment(
+    const std::string& experimentKey, const std::string& userId,
+    const std::string& variationKey) {
   const Experiment* experiment = FindExperiment(experimentKey);
   if (nullptr == experiment) {
     return AssignmentStatus::ExperimentNotFound;
   }
 
-  const ExperimentVariation* variation = FindVariation(experiment, variationKey);
+  const ExperimentVariation* variation =
+      FindVariation(experiment, variationKey);
   if (nullptr == variation) {
     return AssignmentStatus::VariantNotFound;
   }
@@ -382,7 +347,8 @@ AssignmentStatus AnkiLab::ForceActivateExperiment(const std::string& experimentK
     return AssignmentStatus::Unassigned;
   }
 
-  AssignmentDef* assignment = FindAssignment(_forceAssignments, experimentKey, userId);
+  AssignmentDef* assignment =
+      FindAssignment(_forceAssignments, experimentKey, userId);
   if (nullptr == assignment) {
     AssignmentDef def{experimentKey, userId, variationKey};
     _forceAssignments.emplace_back(std::move(def));
@@ -395,21 +361,21 @@ AssignmentStatus AnkiLab::ForceActivateExperiment(const std::string& experimentK
   }
 
   LOG_INFO("AnkiLab.ForceActivate", "ForceAssigned: %s -> %s",
-                   experiment->GetKey().c_str(), variation->GetKey().c_str());
+           experiment->GetKey().c_str(), variation->GetKey().c_str());
 
   return AssignmentStatus::ForceAssigned;
 }
 
 bool AnkiLab::OverrideExperimentVariation(const std::string& experimentKey,
                                           const std::string& userId,
-                                          const std::string& variationKey)
-{
+                                          const std::string& variationKey) {
   const Experiment* experiment = FindExperiment(experimentKey);
   if (nullptr == experiment) {
     return false;
   }
 
-  const ExperimentVariation* variation = FindVariation(experiment, variationKey);
+  const ExperimentVariation* variation =
+      FindVariation(experiment, variationKey);
   if (nullptr == variation) {
     return false;
   }
@@ -423,10 +389,11 @@ bool AnkiLab::OverrideExperimentVariation(const std::string& experimentKey,
   }
 
   const auto& search =
-  std::find_if(_overrideAssignments.begin(), _overrideAssignments.end(),
-               [&experimentKey, &userId](const AssignmentDef &a){
-                 return ((a.GetExperiment_key() == experimentKey) && (a.GetUser_id() == userId));
-               });
+      std::find_if(_overrideAssignments.begin(), _overrideAssignments.end(),
+                   [&experimentKey, &userId](const AssignmentDef& a) {
+                     return ((a.GetExperiment_key() == experimentKey) &&
+                             (a.GetUser_id() == userId));
+                   });
 
   if (search == _overrideAssignments.end()) {
     // add entry
@@ -440,6 +407,6 @@ bool AnkiLab::OverrideExperimentVariation(const std::string& experimentKey,
   return true;
 }
 
-} // namespace AnkiLab
-} // namespace Util
-} // namespace Anki
+}  // namespace AnkiLab
+}  // namespace Util
+}  // namespace Anki

@@ -1,55 +1,51 @@
-#include "perf_precomp.hpp"
-
 #include "cmath"
+#include "perf_precomp.hpp"
 
 using namespace std;
 using namespace cv;
 using namespace perf;
-using std::tr1::make_tuple;
 using std::tr1::get;
+using std::tr1::make_tuple;
 
-typedef std::tr1::tuple<string, double, double, double> Image_RhoStep_ThetaStep_Threshold_t;
-typedef perf::TestBaseWithParam<Image_RhoStep_ThetaStep_Threshold_t> Image_RhoStep_ThetaStep_Threshold;
+typedef std::tr1::tuple<string, double, double, double>
+    Image_RhoStep_ThetaStep_Threshold_t;
+typedef perf::TestBaseWithParam<Image_RhoStep_ThetaStep_Threshold_t>
+    Image_RhoStep_ThetaStep_Threshold;
 
 PERF_TEST_P(Image_RhoStep_ThetaStep_Threshold, HoughLines,
-            testing::Combine(
-                testing::Values( "cv/shared/pic5.png", "stitching/a1.png" ),
-                testing::Values( 1, 10 ),
-                testing::Values( 0.01, 0.1 ),
-                testing::Values( 0.5, 1.1 )
-                )
-            )
-{
-    string filename = getDataPath(get<0>(GetParam()));
-    double rhoStep = get<1>(GetParam());
-    double thetaStep = get<2>(GetParam());
-    double threshold_ratio = get<3>(GetParam());
+            testing::Combine(testing::Values("cv/shared/pic5.png",
+                                             "stitching/a1.png"),
+                             testing::Values(1, 10), testing::Values(0.01, 0.1),
+                             testing::Values(0.5, 1.1))) {
+  string filename = getDataPath(get<0>(GetParam()));
+  double rhoStep = get<1>(GetParam());
+  double thetaStep = get<2>(GetParam());
+  double threshold_ratio = get<3>(GetParam());
 
-    Mat image = imread(filename, IMREAD_GRAYSCALE);
-    if (image.empty())
-        FAIL() << "Unable to load source image" << filename;
+  Mat image = imread(filename, IMREAD_GRAYSCALE);
+  if (image.empty()) FAIL() << "Unable to load source image" << filename;
 
-    Canny(image, image, 32, 128);
+  Canny(image, image, 32, 128);
 
-    // add some syntetic lines:
-    line(image, Point(0, 0), Point(image.cols, image.rows), Scalar::all(255), 3);
-    line(image, Point(image.cols, 0), Point(image.cols/2, image.rows), Scalar::all(255), 3);
+  // add some syntetic lines:
+  line(image, Point(0, 0), Point(image.cols, image.rows), Scalar::all(255), 3);
+  line(image, Point(image.cols, 0), Point(image.cols / 2, image.rows),
+       Scalar::all(255), 3);
 
-    vector<Vec2f> lines;
-    declare.time(60);
+  vector<Vec2f> lines;
+  declare.time(60);
 
-    int threshold = (int)(std::min(image.cols, image.rows) * threshold_ratio);
+  int threshold = (int)(std::min(image.cols, image.rows) * threshold_ratio);
 
-    TEST_CYCLE() HoughLines(image, lines, rhoStep, thetaStep, threshold);
+  TEST_CYCLE() HoughLines(image, lines, rhoStep, thetaStep, threshold);
 
-    printf("%dx%d: %d lines\n", image.cols, image.rows, (int)lines.size());
+  printf("%dx%d: %d lines\n", image.cols, image.rows, (int)lines.size());
 
-    if (threshold_ratio < 1.0)
-    {
-        EXPECT_GE(lines.size(), 2u);
-    }
+  if (threshold_ratio < 1.0) {
+    EXPECT_GE(lines.size(), 2u);
+  }
 
-    EXPECT_LT(lines.size(), 3000u);
+  EXPECT_LT(lines.size(), 3000u);
 
 #if 0
     cv::cvtColor(image,image,cv::COLOR_GRAY2BGR);
@@ -69,5 +65,5 @@ PERF_TEST_P(Image_RhoStep_ThetaStep_Threshold, HoughLines,
     cv::waitKey();
 #endif
 
-    SANITY_CHECK_NOTHING();
+  SANITY_CHECK_NOTHING();
 }

@@ -13,52 +13,53 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorPlaypenCameraCalibration_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorPlaypenCameraCalibration_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/iBehaviorPlaypen.h"
 #include "clad/types/imageTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/iBehaviorPlaypen.h"
 
 namespace Anki {
 namespace Vector {
-  
+
 namespace ExternalInterface {
 struct RobotObservedObject;
 }
 
-class BehaviorPlaypenCameraCalibration : public IBehaviorPlaypen
-{
-protected:
-  
+class BehaviorPlaypenCameraCalibration : public IBehaviorPlaypen {
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorPlaypenCameraCalibration(const Json::Value& config);
-  
-protected:
-  virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
+
+ protected:
+  virtual void GetBehaviorOperationModifiersInternal(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOnCharger = true;
-    modifiers.visionModesForActiveScope->insert({VisionMode::Markers, EVisionUpdateFrequency::High});
+    modifiers.visionModesForActiveScope->insert(
+        {VisionMode::Markers, EVisionUpdateFrequency::High});
   }
 
-  virtual Result         OnBehaviorActivatedInternal()   override;
+  virtual Result OnBehaviorActivatedInternal() override;
   virtual PlaypenStatus PlaypenUpdateInternal() override;
-  virtual void           OnBehaviorDeactivated()   override;
-  
-  virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event) override;
-    
-private:
+  virtual void OnBehaviorDeactivated() override;
 
+  virtual void HandleWhileActivatedInternal(
+      const EngineToGameEvent& event) override;
+
+ private:
   void HandleCameraCalibration(const CameraCalibration& calibMsg);
-  void HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg);
+  void HandleRobotObservedObject(
+      const ExternalInterface::RobotObservedObject& msg);
 
   // Whether or not we are currently computing camera calibration
   bool _computingCalibration = false;
 
   // Whether or not we are currently seeing the target
-  bool _seeingTarget         = false;
+  bool _seeingTarget = false;
 
   // Whether or not we are waiting to store an image for calibration
-  bool _waitingToStoreImage  = false;
+  bool _waitingToStoreImage = false;
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorPlaypenCameraCalibration_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorPlaypenCameraCalibration_H__

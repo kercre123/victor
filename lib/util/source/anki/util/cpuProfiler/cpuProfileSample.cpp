@@ -10,21 +10,12 @@
  *
  **/
 
-
 #include "util/cpuProfiler/cpuProfileSample.h"
-
 
 #if ANKI_CPU_PROFILER_ENABLED
 
-
 namespace Anki {
-namespace Util {
+namespace Util {}  // end namespace Util
+}  // end namespace Anki
 
-
-  
-} // end namespace Util
-} // end namespace Anki
-
-
-#endif // ANKI_CPU_PROFILER_ENABLED
-
+#endif  // ANKI_CPU_PROFILER_ENABLED

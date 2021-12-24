@@ -23,48 +23,46 @@ namespace Vector {
 class BlockWorldFilter;
 class ObservableObject;
 
-class BehaviorRollBlock : public ICozmoBehavior
-{
-public:
-  void SetTargetID(const ObjectID& targetID){
+class BehaviorRollBlock : public ICozmoBehavior {
+ public:
+  void SetTargetID(const ObjectID& targetID) {
     _dVars.targetID = targetID;
     _dVars.idSetExternally = true;
   }
-  
-protected:
+
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorRollBlock(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
   }
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
   virtual bool WantsToBeActivatedBehavior() const override;
-    
-private:
-  enum class State {
-    RollingBlock,
-    CelebratingRoll
-  };
 
-  struct InstanceConfig{
+ private:
+  enum class State { RollingBlock, CelebratingRoll };
+
+  struct InstanceConfig {
     InstanceConfig();
     bool isBlockRotationImportant;
-    int  rollRetryCount;
+    int rollRetryCount;
   };
 
-  struct DynamicVariables{
+  struct DynamicVariables {
     ObjectID targetID;
-    bool     didAttemptDock        = false;
+    bool didAttemptDock = false;
     AxisName upAxisOnBehaviorStart = AxisName::X_POS;
-    State    behaviorState         = State::RollingBlock;
-    int      rollRetryCount        = 0;
-    bool     idSetExternally       = false;
+    State behaviorState = State::RollingBlock;
+    int rollRetryCount = 0;
+    bool idSetExternally = false;
   };
 
   InstanceConfig _iConfig;
@@ -72,16 +70,15 @@ private:
 
   void TransitionToPerformingAction();
   void TransitionToRollSuccess();
-  
-  void CalculateTargetID(ObjectID& targetID) const;
-  
-  void UpdateTargetsUpAxis();
-  
-  void SetState_internal(State state, const std::string& stateName);
 
+  void CalculateTargetID(ObjectID& targetID) const;
+
+  void UpdateTargetsUpAxis();
+
+  void SetState_internal(State state, const std::string& stateName);
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

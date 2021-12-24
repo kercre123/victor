@@ -42,12 +42,9 @@ namespace google_breakpad {
 
 template <typename RegisterType, class RawContextType>
 bool SimpleCFIWalker<RegisterType, RawContextType>::FindCallerRegisters(
-    const MemoryRegion &memory,
-    const CFIFrameInfo &cfi_frame_info,
-    const RawContextType &callee_context,
-    int callee_validity,
-    RawContextType *caller_context,
-    int *caller_validity) const {
+    const MemoryRegion &memory, const CFIFrameInfo &cfi_frame_info,
+    const RawContextType &callee_context, int callee_validity,
+    RawContextType *caller_context, int *caller_validity) const {
   typedef CFIFrameInfo::RegisterValueMap<RegisterType> ValueMap;
   ValueMap callee_registers;
   ValueMap caller_registers;
@@ -114,6 +111,6 @@ bool SimpleCFIWalker<RegisterType, RawContextType>::FindCallerRegisters(
   return true;
 }
 
-} // namespace google_breakpad
+}  // namespace google_breakpad
 
-#endif // PROCESSOR_CFI_FRAME_INFO_INL_H_
+#endif  // PROCESSOR_CFI_FRAME_INFO_INL_H_

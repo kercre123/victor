@@ -16,12 +16,11 @@
 #ifndef ALEXA_CLIENT_SDK_SAMPLEAPP_AUTHORIZATION_CBLAUTHDELEGATE_INCLUDE_CBLAUTHDELEGATE_SQLITECBLAUTHDELEGATESTORAGE_H_
 #define ALEXA_CLIENT_SDK_SAMPLEAPP_AUTHORIZATION_CBLAUTHDELEGATE_INCLUDE_CBLAUTHDELEGATE_SQLITECBLAUTHDELEGATESTORAGE_H_
 
-#include <mutex>
-#include <string>
-
+#include <SQLiteStorage/SQLiteDatabase.h>
 #include <sqlite3.h>
 
-#include <SQLiteStorage/SQLiteDatabase.h>
+#include <mutex>
+#include <string>
 
 #include "CBLAuthDelegate/CBLAuthDelegateStorageInterface.h"
 
@@ -33,47 +32,50 @@ namespace cblAuthDelegate {
  * An implementation of CBLAuthDelegateStorageInterface using SQLite.
  */
 class SQLiteCBLAuthDelegateStorage : public CBLAuthDelegateStorageInterface {
-public:
-    /**
-     * Factory method for creating a storage object for CBLAuthDelegate based on an SQLite database.
-     *
-     * @param configurationRoot The global config object.
-     * @return Pointer to the SQLiteCBLAuthDelegate object, nullptr if there's an error creating it.
-     */
-    static std::unique_ptr<SQLiteCBLAuthDelegateStorage> create(
-        const avsCommon::utils::configuration::ConfigurationNode& configurationRoot);
+ public:
+  /**
+   * Factory method for creating a storage object for CBLAuthDelegate based on
+   * an SQLite database.
+   *
+   * @param configurationRoot The global config object.
+   * @return Pointer to the SQLiteCBLAuthDelegate object, nullptr if there's an
+   * error creating it.
+   */
+  static std::unique_ptr<SQLiteCBLAuthDelegateStorage> create(
+      const avsCommon::utils::configuration::ConfigurationNode&
+          configurationRoot);
 
-    /**
-     * Destructor
-     */
-    ~SQLiteCBLAuthDelegateStorage();
+  /**
+   * Destructor
+   */
+  ~SQLiteCBLAuthDelegateStorage();
 
-    /// @name CBLAuthDelegateStorageInterface method overrides.
-    /// @{
-    bool createDatabase() override;
-    bool open() override;
-    bool setRefreshToken(const std::string& refreshToken) override;
-    bool clearRefreshToken() override;
-    bool getRefreshToken(std::string* refreshToken) override;
-    bool clear() override;
-    /// @}
+  /// @name CBLAuthDelegateStorageInterface method overrides.
+  /// @{
+  bool createDatabase() override;
+  bool open() override;
+  bool setRefreshToken(const std::string& refreshToken) override;
+  bool clearRefreshToken() override;
+  bool getRefreshToken(std::string* refreshToken) override;
+  bool clear() override;
+  /// @}
 
-private:
-    /**
-     * Constructor.
-     */
-    SQLiteCBLAuthDelegateStorage(const std::string& databaseFilePath);
+ private:
+  /**
+   * Constructor.
+   */
+  SQLiteCBLAuthDelegateStorage(const std::string& databaseFilePath);
 
-    /**
-     * Close the database.
-     */
-    void close();
+  /**
+   * Close the database.
+   */
+  void close();
 
-    /// Mutex with which to serialize database operations.
-    std::mutex m_mutex;
+  /// Mutex with which to serialize database operations.
+  std::mutex m_mutex;
 
-    /// The underlying database class.
-    alexaClientSDK::storage::sqliteStorage::SQLiteDatabase m_database;
+  /// The underlying database class.
+  alexaClientSDK::storage::sqliteStorage::SQLiteDatabase m_database;
 };
 
 }  // namespace cblAuthDelegate

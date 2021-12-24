@@ -13,19 +13,21 @@
  */
 
 #include <stddef.h>
+
 #include "export.h"
 
 #ifdef __cplusplus
-# ifdef __GNUC__
-#  pragma GCC diagnostic ignored "-Wlong-long"
-# endif
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wlong-long"
+#endif
 extern "C" {
 #endif
 
 #define crypto_sign_edwards25519sha512batch_BYTES 64U
 #define crypto_sign_edwards25519sha512batch_PUBLICKEYBYTES 32U
 #define crypto_sign_edwards25519sha512batch_SECRETKEYBYTES (32U + 32U)
-#define crypto_sign_edwards25519sha512batch_MESSAGEBYTES_MAX (SODIUM_SIZE_MAX - crypto_sign_edwards25519sha512batch_BYTES)
+#define crypto_sign_edwards25519sha512batch_MESSAGEBYTES_MAX \
+  (SODIUM_SIZE_MAX - crypto_sign_edwards25519sha512batch_BYTES)
 
 SODIUM_EXPORT
 int crypto_sign_edwards25519sha512batch(unsigned char *sm,
@@ -33,7 +35,7 @@ int crypto_sign_edwards25519sha512batch(unsigned char *sm,
                                         const unsigned char *m,
                                         unsigned long long mlen,
                                         const unsigned char *sk)
-       __attribute__ ((deprecated));
+    __attribute__((deprecated));
 
 SODIUM_EXPORT
 int crypto_sign_edwards25519sha512batch_open(unsigned char *m,
@@ -41,12 +43,12 @@ int crypto_sign_edwards25519sha512batch_open(unsigned char *m,
                                              const unsigned char *sm,
                                              unsigned long long smlen,
                                              const unsigned char *pk)
-       __attribute__ ((deprecated));
+    __attribute__((deprecated));
 
 SODIUM_EXPORT
 int crypto_sign_edwards25519sha512batch_keypair(unsigned char *pk,
                                                 unsigned char *sk)
-       __attribute__ ((deprecated));
+    __attribute__((deprecated));
 
 #ifdef __cplusplus
 }

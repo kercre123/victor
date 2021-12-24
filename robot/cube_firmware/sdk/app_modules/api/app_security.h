@@ -26,46 +26,45 @@
  ****************************************************************************************
  */
 
+#include "app.h"
 #include "co_bt.h"
 #include "gap.h"
-#include "app.h"
 
 /*
  * TYPE DEFINITIONS
  ****************************************************************************************
  */
 
-struct app_sec_env_tag
-{
-    // CSRK
-    struct gap_sec_key csrk;
-    
-    // LTK
-    struct gap_sec_key ltk;
-    
-    // Random Number
-    struct rand_nb rand_nb;
-    
-    // EDIV
-    uint16_t ediv;
-    
-    // Remote IRK
-    struct gapc_irk irk;
+struct app_sec_env_tag {
+  // CSRK
+  struct gap_sec_key csrk;
 
-    // LTK key size
-    uint8_t key_size;
+  // LTK
+  struct gap_sec_key ltk;
 
-    // Last paired peer address type
-    uint8_t peer_addr_type;
-    
-    // Last paired peer address
-    struct bd_addr peer_addr;
+  // Random Number
+  struct rand_nb rand_nb;
 
-    // authentication level
-    uint8_t auth;
+  // EDIV
+  uint16_t ediv;
 
-    // Current Peer Device NVDS Tag
-    uint8_t nvds_tag;
+  // Remote IRK
+  struct gapc_irk irk;
+
+  // LTK key size
+  uint8_t key_size;
+
+  // Last paired peer address type
+  uint8_t peer_addr_type;
+
+  // Last paired peer address
+  struct bd_addr peer_addr;
+
+  // authentication level
+  uint8_t auth;
+
+  // Current Peer Device NVDS Tag
+  uint8_t nvds_tag;
 };
 
 /*
@@ -101,7 +100,8 @@ void app_sec_gen_ltk(uint8_t connection_idx, uint8_t key_size);
 
 /**
  ****************************************************************************************
- * @brief Generate Connection Signature Resolving Key (CSRK) and store it in #app_sec_env.
+ * @brief Generate Connection Signature Resolving Key (CSRK) and store it in
+ *#app_sec_env.
  * @param[in] connection_idx Connection index
  * @return void
  ****************************************************************************************
@@ -110,4 +110,4 @@ void app_sec_gen_csrk(uint8_t connection_idx);
 
 /// @} APP_SECURITY
 
-#endif // _APP_SECURITY_H_
+#endif  // _APP_SECURITY_H_

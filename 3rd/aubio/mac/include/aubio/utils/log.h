@@ -44,11 +44,11 @@ extern "C" {
 
 /** list of logging levels */
 enum aubio_log_level {
-  AUBIO_LOG_ERR, /**< critical errors */
-  AUBIO_LOG_INF, /**< infos */
-  AUBIO_LOG_MSG, /**< general messages */
-  AUBIO_LOG_DBG, /**< debug messages */
-  AUBIO_LOG_WRN, /**< warnings */
+  AUBIO_LOG_ERR,        /**< critical errors */
+  AUBIO_LOG_INF,        /**< infos */
+  AUBIO_LOG_MSG,        /**< general messages */
+  AUBIO_LOG_DBG,        /**< debug messages */
+  AUBIO_LOG_WRN,        /**< warnings */
   AUBIO_LOG_LAST_LEVEL, /**< number of valid levels */
 };
 
@@ -61,8 +61,8 @@ enum aubio_log_level {
   See @ref utils/test-log.c for an example of logging function.
 
  */
-typedef void (*aubio_log_function_t)(sint_t level, const char_t *message, void
-    *data);
+typedef void (*aubio_log_function_t)(sint_t level, const char_t* message,
+                                     void* data);
 
 /** Set logging function for all levels
 
@@ -82,7 +82,8 @@ void aubio_log_set_function(aubio_log_function_t fun, void* data);
 
 */
 aubio_log_function_t aubio_log_set_level_function(sint_t level,
-    aubio_log_function_t fun, void* data);
+                                                  aubio_log_function_t fun,
+                                                  void* data);
 
 /** Reset all logging functions to the default one
 

@@ -27,45 +27,42 @@ namespace utils {
  */
 template <typename Type>
 class PromiseFuturePair {
-public:
-    /**
-     * Constructor
-     */
-    PromiseFuturePair() : m_future{m_promise.get_future()} {
-    }
+ public:
+  /**
+   * Constructor
+   */
+  PromiseFuturePair() : m_future{m_promise.get_future()} {}
 
-    /**
-     * Set the value in promise.
-     * @param val The value to be set.
-     */
-    void setValue(Type val) {
-        m_promise.set_value(val);
-    }
+  /**
+   * Set the value in promise.
+   * @param val The value to be set.
+   */
+  void setValue(Type val) { m_promise.set_value(val); }
 
-    /**
-     * Wait for promise to be set.
-     * @param timeout Timeout for waiting for promise to be set.
-     * @return True if promise has been set before timeout, otherwise false.
-     */
-    bool waitFor(std::chrono::milliseconds timeout) {
-        auto future = m_future;
-        return future.wait_for(timeout) == std::future_status::ready;
-    }
+  /**
+   * Wait for promise to be set.
+   * @param timeout Timeout for waiting for promise to be set.
+   * @return True if promise has been set before timeout, otherwise false.
+   */
+  bool waitFor(std::chrono::milliseconds timeout) {
+    auto future = m_future;
+    return future.wait_for(timeout) == std::future_status::ready;
+  }
 
-    /**
-     * Retrieved the promised value.
-     */
-    Type getValue() {
-        auto future = m_future;
-        return future.get();
-    }
+  /**
+   * Retrieved the promised value.
+   */
+  Type getValue() {
+    auto future = m_future;
+    return future.get();
+  }
 
-private:
-    /// The promise that will be set later asynchronously with a value.
-    std::promise<Type> m_promise;
+ private:
+  /// The promise that will be set later asynchronously with a value.
+  std::promise<Type> m_promise;
 
-    /// The future object based from the @c m_promise.
-    std::shared_future<Type> m_future;
+  /// The future object based from the @c m_promise.
+  std::shared_future<Type> m_future;
 };
 
 /**
@@ -73,36 +70,33 @@ private:
  */
 template <>
 class PromiseFuturePair<void> {
-public:
-    /**
-     * Constructor
-     */
-    PromiseFuturePair() : m_future{m_promise.get_future()} {
-    }
+ public:
+  /**
+   * Constructor
+   */
+  PromiseFuturePair() : m_future{m_promise.get_future()} {}
 
-    /**
-     * Set the value in promise.
-     */
-    void setValue() {
-        m_promise.set_value();
-    }
+  /**
+   * Set the value in promise.
+   */
+  void setValue() { m_promise.set_value(); }
 
-    /**
-     * Wait for promise to be set.
-     * @param timeout Timeout for waiting for promise to be set.
-     * @return True if promise has been set before timeout, otherwise false.
-     */
-    bool waitFor(std::chrono::milliseconds timeout) {
-        auto future = m_future;
-        return future.wait_for(timeout) == std::future_status::ready;
-    }
+  /**
+   * Wait for promise to be set.
+   * @param timeout Timeout for waiting for promise to be set.
+   * @return True if promise has been set before timeout, otherwise false.
+   */
+  bool waitFor(std::chrono::milliseconds timeout) {
+    auto future = m_future;
+    return future.wait_for(timeout) == std::future_status::ready;
+  }
 
-private:
-    /// The promise that will be set later asynchronously.
-    std::promise<void> m_promise;
+ private:
+  /// The promise that will be set later asynchronously.
+  std::promise<void> m_promise;
 
-    /// The future object based from the @c m_promise.
-    std::shared_future<void> m_future;
+  /// The future object based from the @c m_promise.
+  std::shared_future<void> m_future;
 };
 
 }  // namespace utils

@@ -1,59 +1,48 @@
 /**
-* File: rescueClient.cpp
-*
-* Author: chapados
-* Date:   02/22/2019
-*
-* Description: ISwitchboardCommandClient implementation for vic-rescue program.
-* This implmementation relies on externally provided state and does not connect
-* to vic-engine. It provides enough logic to connect components to the logic the
-* subscribers of ht e Status/EngineMessage signals.
-*
-* Copyright: Anki, Inc. 2019
-**/
+ * File: rescueClient.cpp
+ *
+ * Author: chapados
+ * Date:   02/22/2019
+ *
+ * Description: ISwitchboardCommandClient implementation for vic-rescue program.
+ * This implmementation relies on externally provided state and does not connect
+ * to vic-engine. It provides enough logic to connect components to the logic
+ *the subscribers of ht e Status/EngineMessage signals.
+ *
+ * Copyright: Anki, Inc. 2019
+ **/
 
 #include "rescue/rescueClient.h"
-#include "rescue/miniFaceDisplay.h"
 
-#include "ev++.h"
-
-#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "cutils/properties.h"
-
+#include "ev++.h"
+#include "rescue/miniFaceDisplay.h"
 #include "switchboardd/savedSessionManager.h"
-
 
 namespace Anki {
 namespace Switchboard {
 
-bool RescueClient::Init()
-{
+bool RescueClient::Init() {
   // Get Robot Name
   _robotName = SavedSessionManager::GetRobotName();
-  
-  if(_robotName.empty())
-  {
+
+  if (_robotName.empty()) {
     return false;
   }
 
   return true;
 }
 
-bool RescueClient::Connect()
-{
+bool RescueClient::Connect() {
   _isConnected = true;
   return true;
 }
 
-bool RescueClient::Disconnect()
-{
-  return true;
-}
+bool RescueClient::Disconnect() { return true; }
 
-void RescueClient::StartPairing()
-{
+void RescueClient::StartPairing() {
   // Send Enter pairing message
   Anki::Vector::SwitchboardInterface::EnterPairing enterPairing;
   using EMessage = Anki::Vector::ExternalInterface::MessageEngineToGame;
@@ -62,32 +51,25 @@ void RescueClient::StartPairing()
   _pairingStatusSignal.emit(msg);
 }
 
-
-void RescueClient::SendMessage(const Anki::Vector::ExternalInterface::MessageGameToEngine& message)
-{
+void RescueClient::SendMessage(
+    const Anki::Vector::ExternalInterface::MessageGameToEngine& message) {
   /* noop */
 }
 
-void RescueClient::SetPairingPin(std::string pin)
-{
-  _pin = pin;
-}
+void RescueClient::SetPairingPin(std::string pin) { _pin = pin; }
 
-void RescueClient::SetFaultCode(int faultCode) {
-  _faultCode = faultCode;
-}
+void RescueClient::SetFaultCode(int faultCode) { _faultCode = faultCode; }
 
-void RescueClient::SendBLEConnectionStatus(bool connected)
-{
-  // This interface function is for engineMessagingClient to 
-  // inform vic-engine of BLE connection status, so it is 
+void RescueClient::SendBLEConnectionStatus(bool connected) {
+  // This interface function is for engineMessagingClient to
+  // inform vic-engine of BLE connection status, so it is
   // unneeded for rescueClient.
 }
 
-void RescueClient::ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus status)
-{
+void RescueClient::ShowPairingStatus(
+    Anki::Vector::SwitchboardInterface::ConnectionStatus status) {
   using namespace Anki::Vector::SwitchboardInterface;
-  switch(status) {
+  switch (status) {
     case ConnectionStatus::NONE:
       break;
     case ConnectionStatus::START_PAIRING:
@@ -116,13 +98,16 @@ void RescueClient::ShowPairingStatus(Anki::Vector::SwitchboardInterface::Connect
 // Ignore requests that would normally come from vic-engine
 //
 
-void RescueClient::HandleWifiScanRequest() { /* noop */ }
+void RescueClient::HandleWifiScanRequest() { /* noop */
+}
 
-void RescueClient::HandleWifiConnectRequest(const std::string& ssid,
-                                            const std::string& pwd,
-                                            bool disconnectAfterConnection) { /* noop */ }
+void RescueClient::HandleWifiConnectRequest(
+    const std::string& ssid, const std::string& pwd,
+    bool disconnectAfterConnection) { /* noop */
+}
 
-void RescueClient::HandleHasBleKeysRequest() { /* noop */ }
+void RescueClient::HandleHasBleKeysRequest() { /* noop */
+}
 
-} // namespace Switchboard
-} // namespace Anki
+}  // namespace Switchboard
+}  // namespace Anki

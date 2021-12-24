@@ -16,58 +16,71 @@
 #ifndef ALEXA_CLIENT_SDK_EQUALIZERIMPLEMENTATIONS_INCLUDE_EQUALIZERIMPLEMENTATIONS_MISCDBEQUALIZERSTORAGE_H_
 #define ALEXA_CLIENT_SDK_EQUALIZERIMPLEMENTATIONS_INCLUDE_EQUALIZERIMPLEMENTATIONS_MISCDBEQUALIZERSTORAGE_H_
 
-#include <memory>
-#include <mutex>
-
 #include <AVSCommon/SDKInterfaces/Audio/EqualizerStorageInterface.h>
 #include <AVSCommon/SDKInterfaces/Storage/MiscStorageInterface.h>
 #include <AVSCommon/Utils/Error/SuccessResult.h>
+
+#include <memory>
+#include <mutex>
 
 namespace alexaClientSDK {
 namespace equalizer {
 
 /**
- * An implementation of @c EqualizerStorageInterface that uses @c MiscStorageInterface as an underlying storage.
+ * An implementation of @c EqualizerStorageInterface that uses @c
+ * MiscStorageInterface as an underlying storage.
  */
-class MiscDBEqualizerStorage : public avsCommon::sdkInterfaces::audio::EqualizerStorageInterface {
-public:
-    /**
-     * Factory method to create an instance of @c MiscDBEqualizerStorage given the instance @c MiscStorageInterface.
-     *
-     * @param storage An instance of @c MiscStorageInterface to use as an underlying storage.
-     * @return An instance of @c MiscDBEqualizerStorage on success, @c nullptr otherwise.
-     */
-    static std::shared_ptr<MiscDBEqualizerStorage> create(
-        std::shared_ptr<avsCommon::sdkInterfaces::storage::MiscStorageInterface> storage);
+class MiscDBEqualizerStorage
+    : public avsCommon::sdkInterfaces::audio::EqualizerStorageInterface {
+ public:
+  /**
+   * Factory method to create an instance of @c MiscDBEqualizerStorage given the
+   * instance @c MiscStorageInterface.
+   *
+   * @param storage An instance of @c MiscStorageInterface to use as an
+   * underlying storage.
+   * @return An instance of @c MiscDBEqualizerStorage on success, @c nullptr
+   * otherwise.
+   */
+  static std::shared_ptr<MiscDBEqualizerStorage> create(
+      std::shared_ptr<avsCommon::sdkInterfaces::storage::MiscStorageInterface>
+          storage);
 
-    /// @name EqualizerStorageInterface functions.
-    /// @{
-    void saveState(const avsCommon::sdkInterfaces::audio::EqualizerState& state) override;
+  /// @name EqualizerStorageInterface functions.
+  /// @{
+  void saveState(
+      const avsCommon::sdkInterfaces::audio::EqualizerState& state) override;
 
-    avsCommon::utils::error::SuccessResult<avsCommon::sdkInterfaces::audio::EqualizerState> loadState() override;
+  avsCommon::utils::error::SuccessResult<
+      avsCommon::sdkInterfaces::audio::EqualizerState>
+  loadState() override;
 
-    void clear() override;
-    /// @}
+  void clear() override;
+  /// @}
 
-private:
-    /**
-     * Constructor.
-     *
-     * @param storage An instance of @c MiscStorageInterface to use as an underlying storage.
-     */
-    MiscDBEqualizerStorage(std::shared_ptr<avsCommon::sdkInterfaces::storage::MiscStorageInterface> storage);
+ private:
+  /**
+   * Constructor.
+   *
+   * @param storage An instance of @c MiscStorageInterface to use as an
+   * underlying storage.
+   */
+  MiscDBEqualizerStorage(
+      std::shared_ptr<avsCommon::sdkInterfaces::storage::MiscStorageInterface>
+          storage);
 
-    /**
-     * Initializes the underlying storage and prepares instance for usage.
-     *
-     * @return True if initalization succeeded, false otherwise.
-     */
-    bool initialize();
+  /**
+   * Initializes the underlying storage and prepares instance for usage.
+   *
+   * @return True if initalization succeeded, false otherwise.
+   */
+  bool initialize();
 
-    /**
-     * An instance of @c MiscStorageInterface to use as an underlying storage.
-     */
-    std::shared_ptr<avsCommon::sdkInterfaces::storage::MiscStorageInterface> m_miscStorage;
+  /**
+   * An instance of @c MiscStorageInterface to use as an underlying storage.
+   */
+  std::shared_ptr<avsCommon::sdkInterfaces::storage::MiscStorageInterface>
+      m_miscStorage;
 };
 
 }  // namespace equalizer

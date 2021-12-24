@@ -87,12 +87,12 @@ MulKernel<uint8_t, uint8_t, QuantizedStaticPreprocessed, RowMajor, 1, 1,
 
       // RowMajorOutput::Output
       "vst1.8 {d0[0]}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [multiplicative_offset] "r"(params.kernel.multiplicative_offset),
-        [shift] "r"(params.kernel.shift),
-        [stride] "r"(params.output_stream.stride),
-        [rounding_offset] "r"(params.kernel.rounding_offset)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ multiplicative_offset ] "r"(params.kernel.multiplicative_offset),
+        [ shift ] "r"(params.kernel.shift),
+        [ stride ] "r"(params.output_stream.stride),
+        [ rounding_offset ] "r"(params.kernel.rounding_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d8", "d9", "d10", "d11", "d12",
         "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -165,12 +165,12 @@ MulKernel<uint8_t, uint8_t, QuantizedStaticPreprocessed, RowMajor, 1, 2,
 
       // RowMajorOutput::Output
       "vst1.16 {d0[0]}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [multiplicative_offset] "r"(params.kernel.multiplicative_offset),
-        [shift] "r"(params.kernel.shift),
-        [stride] "r"(params.output_stream.stride),
-        [rounding_offset] "r"(params.kernel.rounding_offset)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ multiplicative_offset ] "r"(params.kernel.multiplicative_offset),
+        [ shift ] "r"(params.kernel.shift),
+        [ stride ] "r"(params.output_stream.stride),
+        [ rounding_offset ] "r"(params.kernel.rounding_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d8", "d9", "d10", "d11",
         "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -249,12 +249,12 @@ MulKernel<uint8_t, uint8_t, QuantizedStaticPreprocessed, RowMajor, 1, 3,
       // RowMajorOutput::Output
       "vst1.16 {d0[0]}, [%[result]]!\n"
       "vst1.8 {d0[2]}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [multiplicative_offset] "r"(params.kernel.multiplicative_offset),
-        [shift] "r"(params.kernel.shift),
-        [stride] "r"(params.output_stream.stride),
-        [rounding_offset] "r"(params.kernel.rounding_offset)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ multiplicative_offset ] "r"(params.kernel.multiplicative_offset),
+        [ shift ] "r"(params.kernel.shift),
+        [ stride ] "r"(params.output_stream.stride),
+        [ rounding_offset ] "r"(params.kernel.rounding_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -336,12 +336,12 @@ MulKernel<uint8_t, uint8_t, QuantizedStaticPreprocessed, RowMajor, 1, 4,
 
       // RowMajorOutput::Output
       "vst1.32 {d0[0]}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [multiplicative_offset] "r"(params.kernel.multiplicative_offset),
-        [shift] "r"(params.kernel.shift),
-        [stride] "r"(params.output_stream.stride),
-        [rounding_offset] "r"(params.kernel.rounding_offset)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ multiplicative_offset ] "r"(params.kernel.multiplicative_offset),
+        [ shift ] "r"(params.kernel.shift),
+        [ stride ] "r"(params.output_stream.stride),
+        [ rounding_offset ] "r"(params.kernel.rounding_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "cc", "memory");
@@ -437,12 +437,12 @@ MulKernel<uint8_t, uint8_t, QuantizedStaticPreprocessed, RowMajor, 1, 5,
       // RowMajorOutput::Output
       "vst1.32 {d0[0]}, [%[result]]!\n"
       "vst1.8 {d0[4]}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [multiplicative_offset] "r"(params.kernel.multiplicative_offset),
-        [shift] "r"(params.kernel.shift),
-        [stride] "r"(params.output_stream.stride),
-        [rounding_offset] "r"(params.kernel.rounding_offset)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ multiplicative_offset ] "r"(params.kernel.multiplicative_offset),
+        [ shift ] "r"(params.kernel.shift),
+        [ stride ] "r"(params.output_stream.stride),
+        [ rounding_offset ] "r"(params.kernel.rounding_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "cc", "memory");
@@ -542,12 +542,12 @@ MulKernel<uint8_t, uint8_t, QuantizedStaticPreprocessed, RowMajor, 1, 6,
       // RowMajorOutput::Output
       "vst1.32 {d0[0]}, [%[result]]!\n"
       "vst1.16 {d0[2]}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [multiplicative_offset] "r"(params.kernel.multiplicative_offset),
-        [shift] "r"(params.kernel.shift),
-        [stride] "r"(params.output_stream.stride),
-        [rounding_offset] "r"(params.kernel.rounding_offset)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ multiplicative_offset ] "r"(params.kernel.multiplicative_offset),
+        [ shift ] "r"(params.kernel.shift),
+        [ stride ] "r"(params.output_stream.stride),
+        [ rounding_offset ] "r"(params.kernel.rounding_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "cc", "memory");
@@ -653,12 +653,12 @@ MulKernel<uint8_t, uint8_t, QuantizedStaticPreprocessed, RowMajor, 1, 7,
       "vst1.32 {d0[0]}, [%[result]]!\n"
       "vst1.16 {d0[2]}, [%[result]]!\n"
       "vst1.8 {d0[6]}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [multiplicative_offset] "r"(params.kernel.multiplicative_offset),
-        [shift] "r"(params.kernel.shift),
-        [stride] "r"(params.output_stream.stride),
-        [rounding_offset] "r"(params.kernel.rounding_offset)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ multiplicative_offset ] "r"(params.kernel.multiplicative_offset),
+        [ shift ] "r"(params.kernel.shift),
+        [ stride ] "r"(params.output_stream.stride),
+        [ rounding_offset ] "r"(params.kernel.rounding_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "cc", "memory");
@@ -767,12 +767,12 @@ MulKernel<uint8_t, uint8_t, QuantizedStaticPreprocessed, RowMajor, 1, 8,
 
       // RowMajorOutput::Output
       "vst1.32 {d0}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [multiplicative_offset] "r"(params.kernel.multiplicative_offset),
-        [shift] "r"(params.kernel.shift),
-        [stride] "r"(params.output_stream.stride),
-        [rounding_offset] "r"(params.kernel.rounding_offset)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ multiplicative_offset ] "r"(params.kernel.multiplicative_offset),
+        [ shift ] "r"(params.kernel.shift),
+        [ stride ] "r"(params.output_stream.stride),
+        [ rounding_offset ] "r"(params.kernel.rounding_offset)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30",
@@ -858,12 +858,12 @@ MulKernel<uint8_t, uint8_t, QuantizedStaticPreprocessed, RowMajor, 2, 1,
       // RowMajorOutput::Output
       "vst1.8 {d0[0]}, [%[result]]!\n"
       "vst1.8 {d2[0]}, [r0]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [multiplicative_offset] "r"(params.kernel.multiplicative_offset),
-        [shift] "r"(params.kernel.shift),
-        [stride] "r"(params.output_stream.stride),
-        [rounding_offset] "r"(params.kernel.rounding_offset)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ multiplicative_offset ] "r"(params.kernel.multiplicative_offset),
+        [ shift ] "r"(params.kernel.shift),
+        [ stride ] "r"(params.output_stream.stride),
+        [ rounding_offset ] "r"(params.kernel.rounding_offset)
       : "r0", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "cc", "memory");
 }
@@ -955,12 +955,12 @@ MulKernel<uint8_t, uint8_t, QuantizedStaticPreprocessed, RowMajor, 2, 2,
       // RowMajorOutput::Output
       "vst1.16 {d0[0]}, [%[result]]!\n"
       "vst1.16 {d4[0]}, [r0]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [multiplicative_offset] "r"(params.kernel.multiplicative_offset),
-        [shift] "r"(params.kernel.shift),
-        [stride] "r"(params.output_stream.stride),
-        [rounding_offset] "r"(params.kernel.rounding_offset)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ multiplicative_offset ] "r"(params.kernel.multiplicative_offset),
+        [ shift ] "r"(params.kernel.shift),
+        [ stride ] "r"(params.output_stream.stride),
+        [ rounding_offset ] "r"(params.kernel.rounding_offset)
       : "r0", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "cc",
         "memory");
@@ -1065,12 +1065,12 @@ MulKernel<uint8_t, uint8_t, QuantizedStaticPreprocessed, RowMajor, 2, 3,
       "vst1.8 {d0[2]}, [%[result]]!\n"
       "vst1.16 {d6[0]}, [r0]!\n"
       "vst1.8 {d6[2]}, [r0]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [multiplicative_offset] "r"(params.kernel.multiplicative_offset),
-        [shift] "r"(params.kernel.shift),
-        [stride] "r"(params.output_stream.stride),
-        [rounding_offset] "r"(params.kernel.rounding_offset)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ multiplicative_offset ] "r"(params.kernel.multiplicative_offset),
+        [ shift ] "r"(params.kernel.shift),
+        [ stride ] "r"(params.output_stream.stride),
+        [ rounding_offset ] "r"(params.kernel.rounding_offset)
       : "r0", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "cc",
@@ -1184,12 +1184,12 @@ MulKernel<uint8_t, uint8_t, QuantizedStaticPreprocessed, RowMajor, 2, 4,
       // RowMajorOutput::Output
       "vst1.32 {d0[0]}, [%[result]]!\n"
       "vst1.32 {d8[0]}, [r0]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [multiplicative_offset] "r"(params.kernel.multiplicative_offset),
-        [shift] "r"(params.kernel.shift),
-        [stride] "r"(params.output_stream.stride),
-        [rounding_offset] "r"(params.kernel.rounding_offset)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ multiplicative_offset ] "r"(params.kernel.multiplicative_offset),
+        [ shift ] "r"(params.kernel.shift),
+        [ stride ] "r"(params.output_stream.stride),
+        [ rounding_offset ] "r"(params.kernel.rounding_offset)
       : "r0", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30",
@@ -1290,12 +1290,12 @@ MulKernel<uint8_t, uint8_t, QuantizedStaticPreprocessed, RowMajor, 3, 1,
       "vst1.8 {d0[0]}, [%[result]]!\n"
       "vst1.8 {d2[0]}, [r0]!\n"
       "vst1.8 {d4[0]}, [r1]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [multiplicative_offset] "r"(params.kernel.multiplicative_offset),
-        [shift] "r"(params.kernel.shift),
-        [stride] "r"(params.output_stream.stride),
-        [rounding_offset] "r"(params.kernel.rounding_offset)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ multiplicative_offset ] "r"(params.kernel.multiplicative_offset),
+        [ shift ] "r"(params.kernel.shift),
+        [ stride ] "r"(params.output_stream.stride),
+        [ rounding_offset ] "r"(params.kernel.rounding_offset)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "cc", "memory");
@@ -1407,12 +1407,12 @@ MulKernel<uint8_t, uint8_t, QuantizedStaticPreprocessed, RowMajor, 3, 2,
       "vst1.16 {d0[0]}, [%[result]]!\n"
       "vst1.16 {d4[0]}, [r0]!\n"
       "vst1.16 {d8[0]}, [r1]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [multiplicative_offset] "r"(params.kernel.multiplicative_offset),
-        [shift] "r"(params.kernel.shift),
-        [stride] "r"(params.output_stream.stride),
-        [rounding_offset] "r"(params.kernel.rounding_offset)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ multiplicative_offset ] "r"(params.kernel.multiplicative_offset),
+        [ shift ] "r"(params.kernel.shift),
+        [ stride ] "r"(params.output_stream.stride),
+        [ rounding_offset ] "r"(params.kernel.rounding_offset)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -1546,12 +1546,12 @@ MulKernel<uint8_t, uint8_t, QuantizedStaticPreprocessed, RowMajor, 3, 3,
       "vst1.8 {d6[2]}, [r0]!\n"
       "vst1.16 {d12[0]}, [r1]!\n"
       "vst1.8 {d12[2]}, [r1]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [multiplicative_offset] "r"(params.kernel.multiplicative_offset),
-        [shift] "r"(params.kernel.shift),
-        [stride] "r"(params.output_stream.stride),
-        [rounding_offset] "r"(params.kernel.rounding_offset)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ multiplicative_offset ] "r"(params.kernel.multiplicative_offset),
+        [ shift ] "r"(params.kernel.shift),
+        [ stride ] "r"(params.output_stream.stride),
+        [ rounding_offset ] "r"(params.kernel.rounding_offset)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -1615,9 +1615,9 @@ inline void MulKernel<
 
       // RowMajorOutput::Output
       "vst1.32 {d0[0]}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d8", "d9", "d10", "d11", "cc",
         "memory");
 }
@@ -1683,9 +1683,9 @@ inline void MulKernel<
 
       // RowMajorOutput::Output
       "vst1.32 {d0}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d8", "d9", "d10", "d11",
         "cc", "memory");
 }
@@ -1757,9 +1757,9 @@ inline void MulKernel<
       // RowMajorOutput::Output
       "vst1.32 {d0}, [%[result]]!\n"
       "vst1.32 {d1[0]}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "cc", "memory");
 }
@@ -1834,9 +1834,9 @@ inline void MulKernel<
 
       // RowMajorOutput::Output
       "vst1.32 {d0, d1}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d14", "d15", "d16", "d17", "d18", "d19", "d20", "d21",
         "cc", "memory");
@@ -1921,9 +1921,9 @@ inline void MulKernel<
       // RowMajorOutput::Output
       "vst1.32 {d0, d1}, [%[result]]!\n"
       "vst1.32 {d2[0]}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "cc", "memory");
@@ -2011,9 +2011,9 @@ inline void MulKernel<
 
       // RowMajorOutput::Output
       "vst1.32 {d0, d1, d2}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "cc", "memory");
@@ -2107,9 +2107,9 @@ inline void MulKernel<
       // RowMajorOutput::Output
       "vst1.32 {d0, d1, d2}, [%[result]]!\n"
       "vst1.32 {d3[0]}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "cc", "memory");
@@ -2207,9 +2207,9 @@ inline void MulKernel<
 
       // RowMajorOutput::Output
       "vst1.32 {d0, d1, d2, d3}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30",
@@ -2283,9 +2283,9 @@ inline void MulKernel<
       // RowMajorOutput::Output
       "vst1.32 {d0[0]}, [%[result]]!\n"
       "vst1.32 {d2[0]}, [r0]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride)
       : "r0", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d8", "d9", "d10",
         "d11", "cc", "memory");
 }
@@ -2365,9 +2365,9 @@ inline void MulKernel<
       // RowMajorOutput::Output
       "vst1.32 {d0}, [%[result]]!\n"
       "vst1.32 {d4}, [r0]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride)
       : "r0", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "cc",
         "memory");
@@ -2460,9 +2460,9 @@ inline void MulKernel<
       "vst1.32 {d1[0]}, [%[result]]!\n"
       "vst1.32 {d6}, [r0]!\n"
       "vst1.32 {d7[0]}, [r0]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride)
       : "r0", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "cc",
@@ -2564,9 +2564,9 @@ inline void MulKernel<
       // RowMajorOutput::Output
       "vst1.32 {d0, d1}, [%[result]]!\n"
       "vst1.32 {d8, d9}, [r0]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride)
       : "r0", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30",
@@ -2650,9 +2650,9 @@ inline void MulKernel<
       "vst1.32 {d0[0]}, [%[result]]!\n"
       "vst1.32 {d2[0]}, [r0]!\n"
       "vst1.32 {d4[0]}, [r1]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "cc", "memory");
 }
@@ -2746,9 +2746,9 @@ inline void MulKernel<
       "vst1.32 {d0}, [%[result]]!\n"
       "vst1.32 {d4}, [r0]!\n"
       "vst1.32 {d8}, [r1]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -2865,9 +2865,9 @@ inline void MulKernel<
       "vst1.32 {d7[0]}, [r0]!\n"
       "vst1.32 {d12}, [r1]!\n"
       "vst1.32 {d13[0]}, [r1]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -2934,10 +2934,10 @@ inline void MulKernel<
 
       // RowMajorOutput::Output
       "vst1.32 {d0[0]}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride),
-        [scale] "r"(params.kernel.scale)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride),
+        [ scale ] "r"(params.kernel.scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d8", "d9", "d10", "d11", "d12",
         "d13", "cc", "memory");
 }
@@ -3006,10 +3006,10 @@ inline void MulKernel<
 
       // RowMajorOutput::Output
       "vst1.32 {d0}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride),
-        [scale] "r"(params.kernel.scale)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride),
+        [ scale ] "r"(params.kernel.scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d8", "d9", "d10", "d11",
         "d12", "d13", "cc", "memory");
 }
@@ -3084,10 +3084,10 @@ inline void MulKernel<
       // RowMajorOutput::Output
       "vst1.32 {d0}, [%[result]]!\n"
       "vst1.32 {d1[0]}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride),
-        [scale] "r"(params.kernel.scale)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride),
+        [ scale ] "r"(params.kernel.scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "cc", "memory");
 }
@@ -3165,10 +3165,10 @@ inline void MulKernel<
 
       // RowMajorOutput::Output
       "vst1.32 {d0, d1}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride),
-        [scale] "r"(params.kernel.scale)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride),
+        [ scale ] "r"(params.kernel.scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "cc", "memory");
@@ -3258,10 +3258,10 @@ inline void MulKernel<
       // RowMajorOutput::Output
       "vst1.32 {d0, d1}, [%[result]]!\n"
       "vst1.32 {d2[0]}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride),
-        [scale] "r"(params.kernel.scale)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride),
+        [ scale ] "r"(params.kernel.scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "cc", "memory");
@@ -3354,10 +3354,10 @@ inline void MulKernel<
 
       // RowMajorOutput::Output
       "vst1.32 {d0, d1, d2}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride),
-        [scale] "r"(params.kernel.scale)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride),
+        [ scale ] "r"(params.kernel.scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "cc", "memory");
@@ -3456,10 +3456,10 @@ inline void MulKernel<
       // RowMajorOutput::Output
       "vst1.32 {d0, d1, d2}, [%[result]]!\n"
       "vst1.32 {d3[0]}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride),
-        [scale] "r"(params.kernel.scale)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride),
+        [ scale ] "r"(params.kernel.scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "cc", "memory");
@@ -3562,10 +3562,10 @@ inline void MulKernel<
 
       // RowMajorOutput::Output
       "vst1.32 {d0, d1, d2, d3}, [%[result]]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride),
-        [scale] "r"(params.kernel.scale)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride),
+        [ scale ] "r"(params.kernel.scale)
       : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30",
@@ -3644,10 +3644,10 @@ inline void MulKernel<
       // RowMajorOutput::Output
       "vst1.32 {d0[0]}, [%[result]]!\n"
       "vst1.32 {d2[0]}, [r0]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride),
-        [scale] "r"(params.kernel.scale)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride),
+        [ scale ] "r"(params.kernel.scale)
       : "r0", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d8", "d9", "d10",
         "d11", "d12", "d13", "cc", "memory");
 }
@@ -3732,10 +3732,10 @@ inline void MulKernel<
       // RowMajorOutput::Output
       "vst1.32 {d0}, [%[result]]!\n"
       "vst1.32 {d4}, [r0]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride),
-        [scale] "r"(params.kernel.scale)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride),
+        [ scale ] "r"(params.kernel.scale)
       : "r0", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "cc",
         "memory");
@@ -3833,10 +3833,10 @@ inline void MulKernel<
       "vst1.32 {d1[0]}, [%[result]]!\n"
       "vst1.32 {d6}, [r0]!\n"
       "vst1.32 {d7[0]}, [r0]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride),
-        [scale] "r"(params.kernel.scale)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride),
+        [ scale ] "r"(params.kernel.scale)
       : "r0", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "cc",
@@ -3943,10 +3943,10 @@ inline void MulKernel<
       // RowMajorOutput::Output
       "vst1.32 {d0, d1}, [%[result]]!\n"
       "vst1.32 {d8, d9}, [r0]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride),
-        [scale] "r"(params.kernel.scale)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride),
+        [ scale ] "r"(params.kernel.scale)
       : "r0", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
         "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20",
         "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30",
@@ -4037,10 +4037,10 @@ inline void MulKernel<
       "vst1.32 {d0[0]}, [%[result]]!\n"
       "vst1.32 {d2[0]}, [r0]!\n"
       "vst1.32 {d4[0]}, [r1]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride),
-        [scale] "r"(params.kernel.scale)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride),
+        [ scale ] "r"(params.kernel.scale)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "cc", "memory");
 }
@@ -4141,10 +4141,10 @@ inline void MulKernel<
       "vst1.32 {d0}, [%[result]]!\n"
       "vst1.32 {d4}, [r0]!\n"
       "vst1.32 {d8}, [r1]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride),
-        [scale] "r"(params.kernel.scale)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride),
+        [ scale ] "r"(params.kernel.scale)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",
@@ -4268,10 +4268,10 @@ inline void MulKernel<
       "vst1.32 {d7[0]}, [r0]!\n"
       "vst1.32 {d12}, [r1]!\n"
       "vst1.32 {d13[0]}, [r1]!\n"
-      : [rhs] "+r"(rhs), [lhs] "+r"(lhs), [result] "+r"(result)
-      : [count] "r"(params.kernel.count),
-        [stride] "r"(params.output_stream.stride),
-        [scale] "r"(params.kernel.scale)
+      : [ rhs ] "+r"(rhs), [ lhs ] "+r"(lhs), [ result ] "+r"(result)
+      : [ count ] "r"(params.kernel.count),
+        [ stride ] "r"(params.output_stream.stride),
+        [ scale ] "r"(params.kernel.scale)
       : "r0", "r1", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9",
         "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19",
         "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29",

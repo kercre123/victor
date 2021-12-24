@@ -16,10 +16,10 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_HTTPCONTENTFETCHERINTERFACEFACTORYINTERFACE_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_SDKINTERFACES_INCLUDE_AVSCOMMON_SDKINTERFACES_HTTPCONTENTFETCHERINTERFACEFACTORYINTERFACE_H_
 
+#include <AVSCommon/SDKInterfaces/HTTPContentFetcherInterface.h>
+
 #include <memory>
 #include <string>
-
-#include <AVSCommon/SDKInterfaces/HTTPContentFetcherInterface.h>
 
 namespace alexaClientSDK {
 namespace avsCommon {
@@ -29,16 +29,17 @@ namespace sdkInterfaces {
  * A factory interface class to produce @c HTTPContentFetcherInterface objects.
  */
 class HTTPContentFetcherInterfaceFactoryInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~HTTPContentFetcherInterfaceFactoryInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~HTTPContentFetcherInterfaceFactoryInterface() = default;
 
-    /**
-     * Produces an @c HTTPContentFetcherInterface object or @c nullptr on failure.
-     */
-    virtual std::unique_ptr<HTTPContentFetcherInterface> create(const std::string& url) = 0;
+  /**
+   * Produces an @c HTTPContentFetcherInterface object or @c nullptr on failure.
+   */
+  virtual std::unique_ptr<HTTPContentFetcherInterface> create(
+      const std::string& url) = 0;
 };
 
 }  // namespace sdkInterfaces

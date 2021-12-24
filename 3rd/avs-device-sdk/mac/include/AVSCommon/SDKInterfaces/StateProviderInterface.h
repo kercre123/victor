@@ -23,27 +23,31 @@ namespace avsCommon {
 namespace sdkInterfaces {
 
 /**
- * A @c StateProvider may be any client component whose state needs to be sent to the AVS.
- * This specifies the interface to a @c StateProvider.
+ * A @c StateProvider may be any client component whose state needs to be sent
+ * to the AVS. This specifies the interface to a @c StateProvider.
  */
 class StateProviderInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~StateProviderInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~StateProviderInterface() = default;
 
-    /**
-     * A request to a @c StateProvider to provide the state. The @c StateProvider should perform minimum processing
-     * and return quickly, otherwise it will block the processing of updating the states of other @c StateProviders.
-     * The @c ContextManager specifies a token which it uses to track the @c getContext request associated with this
-     * @c provideState request. The @c stateProviderInterface must use the same token when it updates its state via the
-     * @c setState call.
-     *
-     * @param stateProviderName The name of the state provider.
-     * @param stateRequestToken The token to use in the @c setState call.
-     */
-    virtual void provideState(const avs::NamespaceAndName& stateProviderName, const unsigned int stateRequestToken) = 0;
+  /**
+   * A request to a @c StateProvider to provide the state. The @c StateProvider
+   * should perform minimum processing and return quickly, otherwise it will
+   * block the processing of updating the states of other @c StateProviders. The
+   * @c ContextManager specifies a token which it uses to track the @c
+   * getContext request associated with this
+   * @c provideState request. The @c stateProviderInterface must use the same
+   * token when it updates its state via the
+   * @c setState call.
+   *
+   * @param stateProviderName The name of the state provider.
+   * @param stateRequestToken The token to use in the @c setState call.
+   */
+  virtual void provideState(const avs::NamespaceAndName& stateProviderName,
+                            const unsigned int stateRequestToken) = 0;
 };
 
 }  // namespace sdkInterfaces

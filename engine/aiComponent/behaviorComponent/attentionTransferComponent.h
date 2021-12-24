@@ -4,7 +4,8 @@
  * Author: Brad Neuman
  * Created: 2018-06-15
  *
- * Description: Component to manage state related to attention transfer between the robot and app
+ * Description: Component to manage state related to attention transfer between
+ *the robot and app
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -26,52 +27,54 @@ namespace Vector {
 
 class IGatewayInterface;
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class AttentionTransferComponent : public IDependencyManagedComponent<BCComponentID>
-                                 , public Anki::Util::noncopyable
-{
-public:
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - -
+class AttentionTransferComponent
+    : public IDependencyManagedComponent<BCComponentID>,
+      public Anki::Util::noncopyable {
+ public:
   AttentionTransferComponent();
 
-  virtual void GetInitDependencies( BCCompIDSet& dependencies ) const override {
+  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {
     dependencies.insert(BCComponentID::RobotInfo);
   }
-  virtual void InitDependent( Robot* robot, const BCCompMap& dependentComps ) override;
+  virtual void InitDependent(Robot* robot,
+                             const BCCompMap& dependentComps) override;
 
-  // Notify this component that a possible reason for attention transfer just happened
+  // Notify this component that a possible reason for attention transfer just
+  // happened
   void PossibleAttentionTransferNeeded(AttentionTransferReason reason);
 
   // Tell the component that an attention transfer happened for the given reason
   void OnAttentionTransferred(AttentionTransferReason reason);
 
-  // Tell the component to reset tracking for the given reason (without trigger the reason)
+  // Tell the component to reset tracking for the given reason (without trigger
+  // the reason)
   void ResetAttentionTransfer(AttentionTransferReason reason);
 
-  // Get a handle that will return that conditions are met when an attention transfer reason has happened
-  // numberOfTimes in amountOfSeconds.
-  RecentOccurrenceTracker::Handle GetRecentOccurrenceHandle(AttentionTransferReason reason,
-                                                            int numberOfTimes,
-                                                            float amountOfSeconds);
-private:
+  // Get a handle that will return that conditions are met when an attention
+  // transfer reason has happened numberOfTimes in amountOfSeconds.
+  RecentOccurrenceTracker::Handle GetRecentOccurrenceHandle(
+      AttentionTransferReason reason, int numberOfTimes, float amountOfSeconds);
 
+ private:
   RecentOccurrenceTracker& GetTracker(AttentionTransferReason reason);
 
   void HandleAppRequest(const AppToEngineEvent& event);
-  
-  // when the tracker has it's conditions met, we should do the attention transfer. Otherwise, we should do
-  // the fallback (if defined)
+
+  // when the tracker has it's conditions met, we should do the attention
+  // transfer. Otherwise, we should do the fallback (if defined)
   std::map<AttentionTransferReason, RecentOccurrenceTracker> _transferTrackers;
 
-  AttentionTransferReason _lastAttentionTransferReason = AttentionTransferReason::Invalid;
+  AttentionTransferReason _lastAttentionTransferReason =
+      AttentionTransferReason::Invalid;
   float _lastAttentionTransferTime_s = 0.0f;
-  
+
   IGatewayInterface* _gi = nullptr;
   std::vector<Signal::SmartHandle> _eventHandles;
 };
 
-
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

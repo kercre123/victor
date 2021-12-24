@@ -4,7 +4,8 @@
  * Author: Brad Neuman
  * Created: 2018-06-27
  *
- * Description: Wrapper for CozmoContext to allow it to be accessed like a component
+ * Description: Wrapper for CozmoContext to allow it to be accessed like a
+ *component
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -21,19 +22,19 @@ namespace Vector {
 
 class CozmoContext;
 
-class ContextWrapper:  public IDependencyManagedComponent<RobotComponentID> {
-public:
+class ContextWrapper : public IDependencyManagedComponent<RobotComponentID> {
+ public:
   ContextWrapper(const CozmoContext* context)
-  : IDependencyManagedComponent(this, RobotComponentID::CozmoContextWrapper)
-  , context(context){}
+      : IDependencyManagedComponent(this,
+                                    RobotComponentID::CozmoContextWrapper),
+        context(context) {}
 
   const CozmoContext* context;
 
-  inline const CozmoContext * GetContext() const { return context; }
-
+  inline const CozmoContext* GetContext() const { return context; }
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

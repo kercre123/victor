@@ -10,19 +10,19 @@
  *
  **/
 
-#include "clad/types/backpackAnimationTriggers.h"
 #include <map>
+
+#include "clad/types/backpackAnimationTriggers.h"
 
 namespace Anki {
 namespace Vector {
 
-bool EnumFromString(const std::string& string, BackpackAnimationTrigger& trigger)
-{
-  for(int i = 0; i < (int)BackpackAnimationTrigger::Count; ++i)
-  {
-    BackpackAnimationTrigger i_trigger = static_cast<BackpackAnimationTrigger>(i);
-    if(std::strcmp(EnumToString(i_trigger), string.c_str()) == 0)
-    {
+bool EnumFromString(const std::string& string,
+                    BackpackAnimationTrigger& trigger) {
+  for (int i = 0; i < (int)BackpackAnimationTrigger::Count; ++i) {
+    BackpackAnimationTrigger i_trigger =
+        static_cast<BackpackAnimationTrigger>(i);
+    if (std::strcmp(EnumToString(i_trigger), string.c_str()) == 0) {
       trigger = i_trigger;
       return true;
     }
@@ -30,5 +30,5 @@ bool EnumFromString(const std::string& string, BackpackAnimationTrigger& trigger
   return false;
 }
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki

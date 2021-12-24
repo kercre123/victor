@@ -11,50 +11,49 @@
 //
 */
 
-#if !defined( __IPPCORE_H__ ) || defined( _OWN_BLDPCS )
+#if !defined(__IPPCORE_H__) || defined(_OWN_BLDPCS)
 #define __IPPCORE_H__
 
-#if defined (_WIN32_WCE) && defined (_M_IX86) && defined (__stdcall)
-  #define _IPP_STDCALL_CDECL
-  #undef __stdcall
+#if defined(_WIN32_WCE) && defined(_M_IX86) && defined(__stdcall)
+#define _IPP_STDCALL_CDECL
+#undef __stdcall
 #endif
 
 #ifndef __IPPDEFS_H__
-  #include "ippdefs.h"
+#include "ippdefs.h"
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
-#if !defined( _IPP_NO_DEFAULT_LIB )
-  #if defined( _IPP_PARALLEL_DYNAMIC )
-    #pragma comment( lib, "ippcore" )
-  #elif defined( _IPP_PARALLEL_STATIC )
-    #pragma comment( lib, "ippcore_t" )
-  #elif defined( _IPP_SEQUENTIAL_STATIC )
-    #pragma comment( lib, "ippcore_l" )
-  #endif
+#if !defined(_IPP_NO_DEFAULT_LIB)
+#if defined(_IPP_PARALLEL_DYNAMIC)
+#pragma comment(lib, "ippcore")
+#elif defined(_IPP_PARALLEL_STATIC)
+#pragma comment(lib, "ippcore_t")
+#elif defined(_IPP_SEQUENTIAL_STATIC)
+#pragma comment(lib, "ippcore_l")
+#endif
 #endif
 
-
 typedef enum {
-    ippAffinityCompactFineCore, /* KMP_AFFINITY=granularity=fine,compact,n,offset, where n - level */
-    ippAffinityCompactFineHT,   /* KMP_AFFINITY=granularity=fine,compact,0,offset */
-    ippAffinityAllEnabled,      /* KMP_AFFINITY=respect */
-    ippAffinityRestore,
-    ippTstAffinityCompactFineCore, /* test mode for affinity type ippAffinityCompactFineCore */
-    ippTstAffinityCompactFineHT    /* test mode for affinity type ippAffinityCompactFineHT   */
+  ippAffinityCompactFineCore, /* KMP_AFFINITY=granularity=fine,compact,n,offset,
+                                 where n - level */
+  ippAffinityCompactFineHT, /* KMP_AFFINITY=granularity=fine,compact,0,offset */
+  ippAffinityAllEnabled,    /* KMP_AFFINITY=respect */
+  ippAffinityRestore,
+  ippTstAffinityCompactFineCore, /* test mode for affinity type
+                                    ippAffinityCompactFineCore */
+  ippTstAffinityCompactFineHT    /* test mode for affinity type
+                                    ippAffinityCompactFineHT   */
 } IppAffinityType;
-
 
 /* /////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //                   Functions declarations
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////// */
-
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippGetLibVersion
@@ -65,8 +64,7 @@ typedef enum {
 //
 //  Notes:      not necessary to release the returned structure
 */
-IPPAPI( const IppLibraryVersion*, ippGetLibVersion, (void) )
-
+IPPAPI(const IppLibraryVersion*, ippGetLibVersion, (void))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippGetStatusString
@@ -77,8 +75,7 @@ IPPAPI( const IppLibraryVersion*, ippGetLibVersion, (void) )
 //
 //  Notes:      don't free the pointer
 */
-IPPAPI( const char*, ippGetStatusString, ( IppStatus StsCode ) )
-
+IPPAPI(const char*, ippGetStatusString, (IppStatus StsCode))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippGetCpuType
@@ -88,19 +85,18 @@ IPPAPI( const char*, ippGetStatusString, ( IppStatus StsCode ) )
 //
 */
 
-IPPAPI( IppCpuType, ippGetCpuType, (void) )
+IPPAPI(IppCpuType, ippGetCpuType, (void))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippGetCpuClocks
 //  Purpose:    reading of time stamp counter (TSC) register value
 //  Returns:    TSC value
 //
-//  Note:      An hardware exception is possible if TSC reading is not supported by
-/              the current chipset
+//  Note:      An hardware exception is possible if TSC reading is not supported
+by /              the current chipset
 */
 
-IPPAPI( Ipp64u, ippGetCpuClocks, (void) )
-
+IPPAPI(Ipp64u, ippGetCpuClocks, (void))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Names:  ippSetFlushToZero,
@@ -120,10 +116,8 @@ IPPAPI( Ipp64u, ippGetCpuClocks, (void) )
 //   ippStsCpuNotSupportedErr - the mode is not supported
 */
 
-IPPAPI( IppStatus, ippSetFlushToZero, ( int value, unsigned int* pUMask ))
-IPPAPI( IppStatus, ippSetDenormAreZeros, ( int value ))
-
-
+IPPAPI(IppStatus, ippSetFlushToZero, (int value, unsigned int* pUMask))
+IPPAPI(IppStatus, ippSetDenormAreZeros, (int value))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippAlignPtr
@@ -135,7 +129,7 @@ IPPAPI( IppStatus, ippSetDenormAreZeros, ( int value ))
 //    alignBytes - number of bytes to align
 //
 */
-IPPAPI( void*, ippAlignPtr, ( void * ptr, int alignBytes ) )
+IPPAPI(void*, ippAlignPtr, (void* ptr, int alignBytes))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //                   Functions to allocate and free memory
@@ -151,8 +145,7 @@ IPPAPI( void*, ippAlignPtr, ( void * ptr, int alignBytes ) )
 //              function only.
 */
 
-IPPAPI( void*, ippMalloc,  (int length) )
-
+IPPAPI(void*, ippMalloc, (int length))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippFree
@@ -162,8 +155,7 @@ IPPAPI( void*, ippMalloc,  (int length) )
 //
 //  Notes:      use the function to free memory allocated by ippMalloc
 */
-IPPAPI( void, ippFree, (void* ptr) )
-
+IPPAPI(void, ippFree, (void* ptr))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippStaticInit
@@ -171,15 +163,17 @@ IPPAPI( void, ippFree, (void* ptr) )
 //  Returns:
 //   ippStsNoErr       - the best code (static) successfully set
 //   ippStsNonIntelCpu - px version (static) of code was set
-//   ippStsNoOperationInDll - function does nothing in the dynamic version of the library
+//   ippStsNoOperationInDll - function does nothing in the dynamic version of
+the library
 //
 //  Parameter:  nothing
 //
-//  Notes:      At the moment of this function execution no any other IPP function
+//  Notes:      At the moment of this function execution no any other IPP
+function
 //              has to be working
 */
-IPP_DEPRECATED("is deprecated: use ippInit function instead of this one")\
-IPPAPI( IppStatus, ippStaticInit, ( void ))
+IPP_DEPRECATED("is deprecated: use ippInit function instead of this one")
+IPPAPI(IppStatus, ippStaticInit, (void))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippInit
@@ -189,11 +183,11 @@ IPPAPI( IppStatus, ippStaticInit, ( void ))
 //
 //  Parameter:  nothing
 //
-//  Notes:      At the moment of this function execution no any other IPP function
+//  Notes:      At the moment of this function execution no any other IPP
+function
 //              has to be working
 */
-IPPAPI( IppStatus, ippInit, ( void ))
-
+IPPAPI(IppStatus, ippInit, (void))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippInitCpu
@@ -205,19 +199,23 @@ IPPAPI( IppStatus, ippInit, ( void ))
 //                       set is used
 //  Parameter:  IppCpuType
 //
-//  Notes:      At the moment of this function execution no any other IPP function
+//  Notes:      At the moment of this function execution no any other IPP
+function
 //              has to be working
 */
-IPPAPI( IppStatus, ippInitCpu, ( IppCpuType cpu ) )
-
+IPPAPI(IppStatus, ippInitCpu, (IppCpuType cpu))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippEnableCpu
-//  Purpose:    allows dispatching CPU specific IPP library. It doesn't dispatch the code.
-//              The following call ippInit(), if it follows ippEnableCpu, does that if application
+//  Purpose:    allows dispatching CPU specific IPP library. It doesn't dispatch
+the code.
+//              The following call ippInit(), if it follows ippEnableCpu, does
+that if application
 //              is executed on CPU enabled platform or CPU simulator.
-//              Introducing this function in IPP 6.1 was needed to allow IPP users run the codes
-//              with Intel(R) AVX instructions in the case they have an Intel AVX-enabled hardware
+//              Introducing this function in IPP 6.1 was needed to allow IPP
+users run the codes
+//              with Intel(R) AVX instructions in the case they have an Intel
+AVX-enabled hardware
 //              or simulator
 //
 //  Returns:
@@ -225,15 +223,17 @@ IPPAPI( IppStatus, ippInitCpu, ( IppCpuType cpu ) )
 //
 //  Parameter:  IppCpuType
 //
-//  Notes: The ippInit() call without calling ippEnableCpu() as well as ippEnableCpu
-//         without ippInit() call will not dispatch AVX code, even if you run code on Intel AVX
+//  Notes: The ippInit() call without calling ippEnableCpu() as well as
+ippEnableCpu
+//         without ippInit() call will not dispatch AVX code, even if you run
+code on Intel AVX
 //         enabled platform. Call the functions sequentially:
 //         ippEnableCpu(ippCpuAVX); ippInit(); to dispatch IPP AVX code.
-//         The function works and could be useful for ippCpuAVX processor type only.
+//         The function works and could be useful for ippCpuAVX processor type
+only.
 //
 */
-IPPAPI( IppStatus, ippEnableCpu, ( IppCpuType cpu ) )
-
+IPPAPI(IppStatus, ippEnableCpu, (IppCpuType cpu))
 
 /* ////////////////////////////////////////////////////////////////////////////
 //  Name:       ippGetCpuFreqMhz
@@ -253,7 +253,7 @@ IPPAPI( IppStatus, ippEnableCpu, ( IppCpuType cpu ) )
 //              vary with cpu workloading
 */
 
-IPPAPI(IppStatus, ippGetCpuFreqMhz, ( int* pMhz ) )
+IPPAPI(IppStatus, ippGetCpuFreqMhz, (int* pMhz))
 
 /* ////////////////////////////////////////////////////////////////////////////
 //  Name:       ippSetNumThreads
@@ -262,13 +262,14 @@ IPPAPI(IppStatus, ippGetCpuFreqMhz, ( int* pMhz ) )
 //
 //  Return:
 //    ippStsNoErr              Ok
-//    ippStsNoOperation        For static library internal threading is not supported
+//    ippStsNoOperation        For static library internal threading is not
+supported
 //    ippStsSizeErr            Desired number of threads less or equal zero
 //
 //  Arguments:
 //    numThr                   Desired number of threads
 */
-IPPAPI( IppStatus, ippSetNumThreads, ( int numThr ) )
+IPPAPI(IppStatus, ippSetNumThreads, (int numThr))
 
 /* ////////////////////////////////////////////////////////////////////////////
 //  Name:       ippGetNumThreads
@@ -278,13 +279,15 @@ IPPAPI( IppStatus, ippSetNumThreads, ( int numThr ) )
 //  Return:
 //    ippStsNoErr              Ok
 //    ippStsNullPtrErr         Pointer to numThr is Null
-//    ippStsNoOperation        For static library internal threading is not supported
+//    ippStsNoOperation        For static library internal threading is not
+supported
 //                             and return value is always == 1
 //
 //  Arguments:
-//    pNumThr                  Pointer to memory location where to store current numThr
+//    pNumThr                  Pointer to memory location where to store current
+numThr
 */
-IPPAPI( IppStatus, ippGetNumThreads, (int* pNumThr) )
+IPPAPI(IppStatus, ippGetNumThreads, (int* pNumThr))
 
 /* ////////////////////////////////////////////////////////////////////////////
 //  Name:       ippGetMaxCacheSizeB
@@ -294,7 +297,8 @@ IPPAPI( IppStatus, ippGetNumThreads, (int* pNumThr) )
 //  Return:
 //    ippStsNullPtrErr         The result's pointer is NULL.
 //    ippStsNotSupportedCpu    The cpu is not supported.
-//    ippStsUnknownCacheSize   The cpu is supported, but the size of the cache is unknown.
+//    ippStsUnknownCacheSize   The cpu is supported, but the size of the cache
+is unknown.
 //    ippStsNoErr              Ok
 //
 //  Arguments:
@@ -302,7 +306,8 @@ IPPAPI( IppStatus, ippGetNumThreads, (int* pNumThr) )
 //
 //  Note:
 //    1). Intel(R) processors are supported only.
-//    2). Intel(R) Itanium(R) processors and platforms with Intel XScale(R) technology are unsupported
+//    2). Intel(R) Itanium(R) processors and platforms with Intel XScale(R)
+technology are unsupported
 //    3). For unsupported processors the result is "0",
 //        and the return status is "ippStsNotSupportedCpu".
 //    4). For supported processors the result is "0",
@@ -310,7 +315,7 @@ IPPAPI( IppStatus, ippGetNumThreads, (int* pNumThr) )
 //        if sizes of the cache is unknown.
 //
 */
-IPPAPI( IppStatus, ippGetMaxCacheSizeB, ( int* pSizeByte ) )
+IPPAPI(IppStatus, ippGetMaxCacheSizeB, (int* pSizeByte))
 
 /*
 //  Name:       ippGetNumCoresOnDie
@@ -318,14 +323,15 @@ IPPAPI( IppStatus, ippGetMaxCacheSizeB, ( int* pSizeByte ) )
 //  Returns:    number of cores
 //
 */
-IPPAPI( int, ippGetNumCoresOnDie,( void ))
+IPPAPI(int, ippGetNumCoresOnDie, (void))
 
 /*
 //  Name:       ippGetCpuFeatures
 //  Purpose:    Detects CPU features.
 //  Parameters:
 //    pFeaturesMask   Pointer to the features mask.
-//                    Nonzero value of bit means the corresponding feature is supported.
+//                    Nonzero value of bit means the corresponding feature is
+supported.
 //                    Features mask values are defined in the ippdefs.h
 //                      [ 0] - MMX        ( ippCPUID_MMX   )
 //                      [ 1] - SSE        ( ippCPUID_SSE   )
@@ -351,17 +357,19 @@ IPPAPI( int, ippGetNumCoresOnDie,( void ))
 //                      [1] - register EBX
 //                      [2] - register ECX
 //                      [3] - register EDX
-//                    If pointer pCpuidInfoRegs is set to NULL, registers are not stored.
+//                    If pointer pCpuidInfoRegs is set to NULL, registers are
+not stored.
 //
 //  Returns:
-//    ippStsNullPtrErr         The pointer to the features mask (pFeaturesMask) is NULL.
+//    ippStsNullPtrErr         The pointer to the features mask (pFeaturesMask)
+is NULL.
 //    ippStsNotSupportedCpu    CPU is not supported.
 //    ippStsNoErr              Ok
 //
 //  Note: Only IA-32 and Intel(R) 64 are supported
 */
-IPPAPI( IppStatus, ippGetCpuFeatures, ( Ipp64u* pFeaturesMask,
-                                        Ipp32u  pCpuidInfoRegs[4] ) )
+IPPAPI(IppStatus, ippGetCpuFeatures,
+       (Ipp64u * pFeaturesMask, Ipp32u pCpuidInfoRegs[4]))
 
 /*
 //  Name:       ippGetEnabledCpuFeatures
@@ -387,20 +395,19 @@ IPPAPI( IppStatus, ippGetCpuFeatures, ( Ipp64u* pFeaturesMask,
 //                      [16:63] - Reserved
 //
 */
-IPPAPI( Ipp64u, ippGetEnabledCpuFeatures, ( void ) )
-
+IPPAPI(Ipp64u, ippGetEnabledCpuFeatures, (void))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //                   i18n functions to operate with Message Catalogs
 ///////////////////////////////////////////////////////////////////////////// */
 
-#if !defined( _OWN_BLDPCS )
-   DECLARE_IPPCONTEXT( IppMsgCatalog );
-   #if defined (_WIN32)
-   typedef unsigned short* IppMsg;
-   #else
-     typedef char* IppMsg;
-   #endif
+#if !defined(_OWN_BLDPCS)
+DECLARE_IPPCONTEXT(IppMsgCatalog);
+#if defined(_WIN32)
+typedef unsigned short* IppMsg;
+#else
+typedef char* IppMsg;
+#endif
 #endif /* _OWN_BLDPCS */
 
 /* /////////////////////////////////////////////////////////////////////////////
@@ -415,14 +422,17 @@ IPPAPI( Ipp64u, ippGetEnabledCpuFeatures, ( void ) )
 //    ippStsI18nMsgCatalogOpenErr
 //    ippStsNoErr
 //
-//  Notes: function allocates memory, this memory has to be freed by ippMessageCatalogCloseI18n
-//         ippMessageCatalogCloseI18n It should be used, despite of the returned status code
+//  Notes: function allocates memory, this memory has to be freed by
+ippMessageCatalogCloseI18n
+//         ippMessageCatalogCloseI18n It should be used, despite of the returned
+status code
 */
-IPPAPI( IppStatus, ippMessageCatalogOpenI18n, ( IppMsgCatalog** pMsgCatalog ) )
+IPPAPI(IppStatus, ippMessageCatalogOpenI18n, (IppMsgCatalog * *pMsgCatalog))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippMessageCatalogCloseI18n
-//  Purpose:    Closes i18n Message Catalog, which was opened by ippMessageCatalogOpenI18n
+//  Purpose:    Closes i18n Message Catalog, which was opened by
+ippMessageCatalogOpenI18n
 //  Parameters:
 //
 //  Returns:
@@ -433,7 +443,7 @@ IPPAPI( IppStatus, ippMessageCatalogOpenI18n, ( IppMsgCatalog** pMsgCatalog ) )
 //
 //  Notes:
 */
-IPPAPI( IppStatus, ippMessageCatalogCloseI18n, ( IppMsgCatalog* pMsgCatalog ) )
+IPPAPI(IppStatus, ippMessageCatalogCloseI18n, (IppMsgCatalog * pMsgCatalog))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippGetMessageStatusI18n
@@ -450,7 +460,8 @@ IPPAPI( IppStatus, ippMessageCatalogCloseI18n, ( IppMsgCatalog* pMsgCatalog ) )
 //  Notes:
 //
 */
-IPPAPI( IppStatus, ippGetMessageStatusI18n, ( const IppMsgCatalog* pMsgCatalog, IppStatus StsCode, IppMsg* pMsg ) )
+IPPAPI(IppStatus, ippGetMessageStatusI18n,
+       (const IppMsgCatalog* pMsgCatalog, IppStatus StsCode, IppMsg* pMsg))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippStatusToMessageIdI18n
@@ -463,7 +474,7 @@ IPPAPI( IppStatus, ippGetMessageStatusI18n, ( const IppMsgCatalog* pMsgCatalog, 
 //  Notes:      Function is useful for direct Message Catalogs access
 //
 */
-IPPAPI( Ipp32u, ippStatusToMessageIdI18n, ( IppStatus StsCode ) )
+IPPAPI(Ipp32u, ippStatusToMessageIdI18n, (IppStatus StsCode))
 
 /* ///////////////////////////////////////////////////////////////////////////
 Name:
@@ -484,12 +495,11 @@ ippSetAffinity
      ippStsNotSupportedCpu  - the cpu is not supported.
 */
 
-IPPAPI(IppStatus, ippSetAffinity,(IppAffinityType aType, int offset))
+IPPAPI(IppStatus, ippSetAffinity, (IppAffinityType aType, int offset))
 
-
-#if defined (_IPP_STDCALL_CDECL)
-  #undef  _IPP_STDCALL_CDECL
-  #define __stdcall __cdecl
+#if defined(_IPP_STDCALL_CDECL)
+#undef _IPP_STDCALL_CDECL
+#define __stdcall __cdecl
 #endif
 
 #ifdef __cplusplus

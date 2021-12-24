@@ -28,53 +28,57 @@ namespace utils {
 namespace bluetooth {
 
 /**
- * A class providing the way to receive a sequence of audio data blocks and a format associated with it.
+ * A class providing the way to receive a sequence of audio data blocks and a
+ * format associated with it.
  *
- * This class should be used when you want to publish a real time audio stream of the specified format to zero or one
- * recipient without buffering the data. The receiving party may start listening at any moment. With no listener set
+ * This class should be used when you want to publish a real time audio stream
+ * of the specified format to zero or one recipient without buffering the data.
+ * The receiving party may start listening at any moment. With no listener set
  * all the published data is lost.
  */
 class FormattedAudioStreamAdapter {
-public:
-    /**
-     * Constructor initializing the class with an @c AudioFormat.
-     *
-     * @param audioFormat @c AudioFormat describing the data being sent.
-     */
-    explicit FormattedAudioStreamAdapter(const AudioFormat& audioFormat);
+ public:
+  /**
+   * Constructor initializing the class with an @c AudioFormat.
+   *
+   * @param audioFormat @c AudioFormat describing the data being sent.
+   */
+  explicit FormattedAudioStreamAdapter(const AudioFormat& audioFormat);
 
-    /**
-     * Get @c AudioFormat associated with the class.
-     *
-     * @return @c AudioFormat associated with the class.
-     */
-    AudioFormat getAudioFormat() const;
+  /**
+   * Get @c AudioFormat associated with the class.
+   *
+   * @return @c AudioFormat associated with the class.
+   */
+  AudioFormat getAudioFormat() const;
 
-    /**
-     * Set the listener to receive data.
-     *
-     * @param listener the listener to receive data.
-     */
-    void setListener(std::shared_ptr<FormattedAudioStreamAdapterListener> listener);
+  /**
+   * Set the listener to receive data.
+   *
+   * @param listener the listener to receive data.
+   */
+  void setListener(
+      std::shared_ptr<FormattedAudioStreamAdapterListener> listener);
 
-    /**
-     * Publish data to the listener.
-     *
-     * @param buffer Buffer containing the data
-     * @param size Size of the data block in bytes. The value must be greater than zero.
-     * @return number of bytes processed.
-     */
-    size_t send(const unsigned char* buffer, size_t size);
+  /**
+   * Publish data to the listener.
+   *
+   * @param buffer Buffer containing the data
+   * @param size Size of the data block in bytes. The value must be greater than
+   * zero.
+   * @return number of bytes processed.
+   */
+  size_t send(const unsigned char* buffer, size_t size);
 
-private:
-    /// The @c AudioFormat associated with the class.
-    AudioFormat m_audioFormat;
+ private:
+  /// The @c AudioFormat associated with the class.
+  AudioFormat m_audioFormat;
 
-    /// the listener to receive data.
-    std::weak_ptr<FormattedAudioStreamAdapterListener> m_listener;
+  /// the listener to receive data.
+  std::weak_ptr<FormattedAudioStreamAdapterListener> m_listener;
 
-    /// Mutex to guard listener changes.
-    std::mutex m_readerFunctionMutex;
+  /// Mutex to guard listener changes.
+  std::mutex m_readerFunctionMutex;
 };
 
 }  // namespace bluetooth

@@ -159,8 +159,7 @@ static WEBP_INLINE void VP8PlanarTo24b(__m128i* const in0, __m128i* const in1,
 
 // Convert four packed four-channel buffers like argbargbargbargb... into the
 // split channels aaaaa ... rrrr ... gggg .... bbbbb ......
-static WEBP_INLINE void VP8L32bToPlanar(__m128i* const in0,
-                                        __m128i* const in1,
+static WEBP_INLINE void VP8L32bToPlanar(__m128i* const in0, __m128i* const in1,
                                         __m128i* const in2,
                                         __m128i* const in3) {
   // Column-wise transpose.

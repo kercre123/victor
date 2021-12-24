@@ -25,19 +25,20 @@ namespace acl {
  * An interface which allows a derived class to consume a Message from AVS.
  */
 class MessageConsumerInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~MessageConsumerInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~MessageConsumerInterface() = default;
 
-    /**
-     * Called when a message has been received from AVS.
-     *
-     * @param contextId The context id for the current message.
-     * @param message The AVS message in string representation.
-     */
-    virtual void consumeMessage(const std::string& contextId, const std::string& message) = 0;
+  /**
+   * Called when a message has been received from AVS.
+   *
+   * @param contextId The context id for the current message.
+   * @param message The AVS message in string representation.
+   */
+  virtual void consumeMessage(const std::string& contextId,
+                              const std::string& message) = 0;
 };
 
 }  // namespace acl

@@ -31,8 +31,9 @@
 #define CLIENT_LINUX_DUMP_WRITER_COMMON_MAPPING_INFO_H_
 
 #include <limits.h>
-#include <list>
 #include <stdint.h>
+
+#include <list>
 
 #include "google_breakpad/common/minidump_format.h"
 
@@ -57,7 +58,7 @@ struct MappingInfo {
     uintptr_t end_addr;
   } system_mapping_info;
   size_t offset;  // offset into the backed file.
-  bool exec;  // true if the mapping has the execute bit set.
+  bool exec;      // true if the mapping has the execute bit set.
   char name[NAME_MAX];
 };
 

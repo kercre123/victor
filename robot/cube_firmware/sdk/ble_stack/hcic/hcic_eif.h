@@ -20,13 +20,12 @@
  * @ingroup HCI
  * @brief HCIH EIF module.
  *
- * This module creates the abstraction between UART driver and HCI generic functions
- * (designed for any transport layer).
+ * This module creates the abstraction between UART driver and HCI generic
+ *functions (designed for any transport layer).
  *
  * @{
  ****************************************************************************************
  */
-
 
 /*
  * INCLUDE FILES
@@ -37,8 +36,8 @@
 
 #if (BLE_HCIC_ITF)
 
-#include <stdint.h>       // standard integer definition
-#include <stdbool.h>      // standard boolean definition
+#include <stdbool.h>  // standard boolean definition
+#include <stdint.h>   // standard integer definition
 
 /*
  * DEFINES
@@ -79,17 +78,17 @@ void hci_eif_start(void);
  *****************************************************************************************
  */
 bool hci_eif_stop(void);
-#endif //DEEP_SLEEP
+#endif  // DEEP_SLEEP
 
-#endif //BLE_HCIC_ITF
+#endif  // BLE_HCIC_ITF
 
 /**
  ****************************************************************************************
  * @brief HCIH EIF transport initialization.
  *
- * Puts the UART driver in reception, waiting for simple 1 byte message type. Space for
- * reception is allocated with ke_msg_alloc and the pointer is handed to uart_env.rx. RX
- * interrupt is enabled.
+ * Puts the UART driver in reception, waiting for simple 1 byte message type.
+ *Space for reception is allocated with ke_msg_alloc and the pointer is handed
+ *to uart_env.rx. RX interrupt is enabled.
  *
  *****************************************************************************************
  */
@@ -97,4 +96,4 @@ void hci_eif_init(void);
 
 /// @} HCI_EIF
 
-#endif // HCI_EIF_H_
+#endif  // HCI_EIF_H_

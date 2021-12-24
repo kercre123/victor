@@ -19,35 +19,35 @@
 namespace Anki {
 
 namespace Vision {
-  class TrackedFace;
+class TrackedFace;
 }
 
 namespace Vector {
 
 class BehaviorTextToSpeechLoop;
 
-class BehaviorSayName : public ISimpleFaceBehavior
-{
-public:
+class BehaviorSayName : public ISimpleFaceBehavior {
+ public:
   virtual ~BehaviorSayName() = default;
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   explicit BehaviorSayName(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
 
   virtual void InitBehavior() override;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
 
   virtual void BehaviorUpdate() override;
-private:
 
+ private:
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
 
@@ -60,8 +60,8 @@ private:
     // Text to speak *after* playing dontKnowNameAnimation (empty for none)
     std::string dontKnowTextKey = "BehaviorSayName.DontKnow";
 
-    // Max time to wait for a face in the process of being recognized to come back with a name
-    // before just triggering the "don't know" reaction
+    // Max time to wait for a face in the process of being recognized to come
+    // back with a name before just triggering the "don't know" reaction
     float waitForRecognitionMaxTime_sec = 1.5f;
 
     std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
@@ -69,7 +69,7 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
-    bool  waitingForRecognition = true;
+    bool waitingForRecognition = true;
   };
 
   InstanceConfig _iConfig;
@@ -80,7 +80,7 @@ private:
   void Finish();
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorSayName__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorSayName__

@@ -48,7 +48,7 @@ template <typename Derived, typename Key, typename Value,
           WireFormatLite::FieldType kValueFieldType, int default_enum_value>
 class MapField;
 }
-}
+}  // namespace protobuf
 
 namespace protobuf {
 namespace internal {

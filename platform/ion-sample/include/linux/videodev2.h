@@ -18,16 +18,17 @@
  ****************************************************************************/
 #ifndef _UAPI__LINUX_VIDEODEV2_H
 #define _UAPI__LINUX_VIDEODEV2_H
-#include <sys/time.h>
 #include <linux/compiler.h>
 #include <linux/ioctl.h>
 #include <linux/types.h>
 #include <linux/v4l2-common.h>
 #include <linux/v4l2-controls.h>
+#include <sys/time.h>
 #define VIDEO_MAX_FRAME 32
 #define VIDEO_MAX_PLANES 8
-#define v4l2_fourcc(a,b,c,d) ((__u32) (a) | ((__u32) (b) << 8) | ((__u32) (c) << 16) | ((__u32) (d) << 24))
-#define v4l2_fourcc_be(a,b,c,d) (v4l2_fourcc(a, b, c, d) | (1 << 31))
+#define v4l2_fourcc(a, b, c, d) \
+  ((__u32)(a) | ((__u32)(b) << 8) | ((__u32)(c) << 16) | ((__u32)(d) << 24))
+#define v4l2_fourcc_be(a, b, c, d) (v4l2_fourcc(a, b, c, d) | (1 << 31))
 enum v4l2_field {
   V4L2_FIELD_ANY = 0,
   V4L2_FIELD_NONE = 1,
@@ -40,10 +41,23 @@ enum v4l2_field {
   V4L2_FIELD_INTERLACED_TB = 8,
   V4L2_FIELD_INTERLACED_BT = 9,
 };
-#define V4L2_FIELD_HAS_TOP(field) ((field) == V4L2_FIELD_TOP || (field) == V4L2_FIELD_INTERLACED || (field) == V4L2_FIELD_INTERLACED_TB || (field) == V4L2_FIELD_INTERLACED_BT || (field) == V4L2_FIELD_SEQ_TB || (field) == V4L2_FIELD_SEQ_BT)
-#define V4L2_FIELD_HAS_BOTTOM(field) ((field) == V4L2_FIELD_BOTTOM || (field) == V4L2_FIELD_INTERLACED || (field) == V4L2_FIELD_INTERLACED_TB || (field) == V4L2_FIELD_INTERLACED_BT || (field) == V4L2_FIELD_SEQ_TB || (field) == V4L2_FIELD_SEQ_BT)
-#define V4L2_FIELD_HAS_BOTH(field) ((field) == V4L2_FIELD_INTERLACED || (field) == V4L2_FIELD_INTERLACED_TB || (field) == V4L2_FIELD_INTERLACED_BT || (field) == V4L2_FIELD_SEQ_TB || (field) == V4L2_FIELD_SEQ_BT)
-#define V4L2_FIELD_HAS_T_OR_B(field) ((field) == V4L2_FIELD_BOTTOM || (field) == V4L2_FIELD_TOP || (field) == V4L2_FIELD_ALTERNATE)
+#define V4L2_FIELD_HAS_TOP(field)                                         \
+  ((field) == V4L2_FIELD_TOP || (field) == V4L2_FIELD_INTERLACED ||       \
+   (field) == V4L2_FIELD_INTERLACED_TB ||                                 \
+   (field) == V4L2_FIELD_INTERLACED_BT || (field) == V4L2_FIELD_SEQ_TB || \
+   (field) == V4L2_FIELD_SEQ_BT)
+#define V4L2_FIELD_HAS_BOTTOM(field)                                      \
+  ((field) == V4L2_FIELD_BOTTOM || (field) == V4L2_FIELD_INTERLACED ||    \
+   (field) == V4L2_FIELD_INTERLACED_TB ||                                 \
+   (field) == V4L2_FIELD_INTERLACED_BT || (field) == V4L2_FIELD_SEQ_TB || \
+   (field) == V4L2_FIELD_SEQ_BT)
+#define V4L2_FIELD_HAS_BOTH(field)                                            \
+  ((field) == V4L2_FIELD_INTERLACED || (field) == V4L2_FIELD_INTERLACED_TB || \
+   (field) == V4L2_FIELD_INTERLACED_BT || (field) == V4L2_FIELD_SEQ_TB ||     \
+   (field) == V4L2_FIELD_SEQ_BT)
+#define V4L2_FIELD_HAS_T_OR_B(field)                            \
+  ((field) == V4L2_FIELD_BOTTOM || (field) == V4L2_FIELD_TOP || \
+   (field) == V4L2_FIELD_ALTERNATE)
 enum v4l2_buf_type {
   V4L2_BUF_TYPE_VIDEO_CAPTURE = 1,
   V4L2_BUF_TYPE_VIDEO_OUTPUT = 2,
@@ -58,8 +72,16 @@ enum v4l2_buf_type {
   V4L2_BUF_TYPE_SDR_CAPTURE = 11,
   V4L2_BUF_TYPE_PRIVATE = 0x80,
 };
-#define V4L2_TYPE_IS_MULTIPLANAR(type) ((type) == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE || (type) == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
-#define V4L2_TYPE_IS_OUTPUT(type) ((type) == V4L2_BUF_TYPE_VIDEO_OUTPUT || (type) == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE || (type) == V4L2_BUF_TYPE_VIDEO_OVERLAY || (type) == V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY || (type) == V4L2_BUF_TYPE_VBI_OUTPUT || (type) == V4L2_BUF_TYPE_SLICED_VBI_OUTPUT)
+#define V4L2_TYPE_IS_MULTIPLANAR(type)             \
+  ((type) == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE || \
+   (type) == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
+#define V4L2_TYPE_IS_OUTPUT(type)                  \
+  ((type) == V4L2_BUF_TYPE_VIDEO_OUTPUT ||         \
+   (type) == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE ||  \
+   (type) == V4L2_BUF_TYPE_VIDEO_OVERLAY ||        \
+   (type) == V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY || \
+   (type) == V4L2_BUF_TYPE_VBI_OUTPUT ||           \
+   (type) == V4L2_BUF_TYPE_SLICED_VBI_OUTPUT)
 enum v4l2_tuner_type {
   V4L2_TUNER_RADIO = 1,
   V4L2_TUNER_ANALOG_TV = 2,
@@ -415,7 +437,7 @@ struct v4l2_buffer {
   union {
     __u32 offset;
     unsigned long userptr;
-    struct v4l2_plane * planes;
+    struct v4l2_plane* planes;
     __s32 fd;
   } m;
   __u32 length;
@@ -465,7 +487,7 @@ struct v4l2_exportbuffer {
 struct v4l2_framebuffer {
   __u32 capability;
   __u32 flags;
-  void * base;
+  void* base;
   struct {
     __u32 width;
     __u32 height;
@@ -494,15 +516,15 @@ struct v4l2_framebuffer {
 #define V4L2_FBUF_FLAG_SRC_CHROMAKEY 0x0040
 struct v4l2_clip {
   struct v4l2_rect c;
-  struct v4l2_clip __user * next;
+  struct v4l2_clip __user* next;
 };
 struct v4l2_window {
   struct v4l2_rect w;
   __u32 field;
   __u32 chromakey;
-  struct v4l2_clip __user * clips;
+  struct v4l2_clip __user* clips;
   __u32 clipcount;
-  void __user * bitmap;
+  void __user* bitmap;
   __u8 global_alpha;
 };
 struct v4l2_captureparm {
@@ -546,38 +568,43 @@ struct v4l2_selection {
   __u32 reserved[9];
 };
 typedef __u64 v4l2_std_id;
-#define V4L2_STD_PAL_B ((v4l2_std_id) 0x00000001)
-#define V4L2_STD_PAL_B1 ((v4l2_std_id) 0x00000002)
-#define V4L2_STD_PAL_G ((v4l2_std_id) 0x00000004)
-#define V4L2_STD_PAL_H ((v4l2_std_id) 0x00000008)
-#define V4L2_STD_PAL_I ((v4l2_std_id) 0x00000010)
-#define V4L2_STD_PAL_D ((v4l2_std_id) 0x00000020)
-#define V4L2_STD_PAL_D1 ((v4l2_std_id) 0x00000040)
-#define V4L2_STD_PAL_K ((v4l2_std_id) 0x00000080)
-#define V4L2_STD_PAL_M ((v4l2_std_id) 0x00000100)
-#define V4L2_STD_PAL_N ((v4l2_std_id) 0x00000200)
-#define V4L2_STD_PAL_Nc ((v4l2_std_id) 0x00000400)
-#define V4L2_STD_PAL_60 ((v4l2_std_id) 0x00000800)
-#define V4L2_STD_NTSC_M ((v4l2_std_id) 0x00001000)
-#define V4L2_STD_NTSC_M_JP ((v4l2_std_id) 0x00002000)
-#define V4L2_STD_NTSC_443 ((v4l2_std_id) 0x00004000)
-#define V4L2_STD_NTSC_M_KR ((v4l2_std_id) 0x00008000)
-#define V4L2_STD_SECAM_B ((v4l2_std_id) 0x00010000)
-#define V4L2_STD_SECAM_D ((v4l2_std_id) 0x00020000)
-#define V4L2_STD_SECAM_G ((v4l2_std_id) 0x00040000)
-#define V4L2_STD_SECAM_H ((v4l2_std_id) 0x00080000)
-#define V4L2_STD_SECAM_K ((v4l2_std_id) 0x00100000)
-#define V4L2_STD_SECAM_K1 ((v4l2_std_id) 0x00200000)
-#define V4L2_STD_SECAM_L ((v4l2_std_id) 0x00400000)
-#define V4L2_STD_SECAM_LC ((v4l2_std_id) 0x00800000)
-#define V4L2_STD_ATSC_8_VSB ((v4l2_std_id) 0x01000000)
-#define V4L2_STD_ATSC_16_VSB ((v4l2_std_id) 0x02000000)
-#define V4L2_STD_NTSC (V4L2_STD_NTSC_M | V4L2_STD_NTSC_M_JP | V4L2_STD_NTSC_M_KR)
-#define V4L2_STD_SECAM_DK (V4L2_STD_SECAM_D | V4L2_STD_SECAM_K | V4L2_STD_SECAM_K1)
-#define V4L2_STD_SECAM (V4L2_STD_SECAM_B | V4L2_STD_SECAM_G | V4L2_STD_SECAM_H | V4L2_STD_SECAM_DK | V4L2_STD_SECAM_L | V4L2_STD_SECAM_LC)
+#define V4L2_STD_PAL_B ((v4l2_std_id)0x00000001)
+#define V4L2_STD_PAL_B1 ((v4l2_std_id)0x00000002)
+#define V4L2_STD_PAL_G ((v4l2_std_id)0x00000004)
+#define V4L2_STD_PAL_H ((v4l2_std_id)0x00000008)
+#define V4L2_STD_PAL_I ((v4l2_std_id)0x00000010)
+#define V4L2_STD_PAL_D ((v4l2_std_id)0x00000020)
+#define V4L2_STD_PAL_D1 ((v4l2_std_id)0x00000040)
+#define V4L2_STD_PAL_K ((v4l2_std_id)0x00000080)
+#define V4L2_STD_PAL_M ((v4l2_std_id)0x00000100)
+#define V4L2_STD_PAL_N ((v4l2_std_id)0x00000200)
+#define V4L2_STD_PAL_Nc ((v4l2_std_id)0x00000400)
+#define V4L2_STD_PAL_60 ((v4l2_std_id)0x00000800)
+#define V4L2_STD_NTSC_M ((v4l2_std_id)0x00001000)
+#define V4L2_STD_NTSC_M_JP ((v4l2_std_id)0x00002000)
+#define V4L2_STD_NTSC_443 ((v4l2_std_id)0x00004000)
+#define V4L2_STD_NTSC_M_KR ((v4l2_std_id)0x00008000)
+#define V4L2_STD_SECAM_B ((v4l2_std_id)0x00010000)
+#define V4L2_STD_SECAM_D ((v4l2_std_id)0x00020000)
+#define V4L2_STD_SECAM_G ((v4l2_std_id)0x00040000)
+#define V4L2_STD_SECAM_H ((v4l2_std_id)0x00080000)
+#define V4L2_STD_SECAM_K ((v4l2_std_id)0x00100000)
+#define V4L2_STD_SECAM_K1 ((v4l2_std_id)0x00200000)
+#define V4L2_STD_SECAM_L ((v4l2_std_id)0x00400000)
+#define V4L2_STD_SECAM_LC ((v4l2_std_id)0x00800000)
+#define V4L2_STD_ATSC_8_VSB ((v4l2_std_id)0x01000000)
+#define V4L2_STD_ATSC_16_VSB ((v4l2_std_id)0x02000000)
+#define V4L2_STD_NTSC \
+  (V4L2_STD_NTSC_M | V4L2_STD_NTSC_M_JP | V4L2_STD_NTSC_M_KR)
+#define V4L2_STD_SECAM_DK \
+  (V4L2_STD_SECAM_D | V4L2_STD_SECAM_K | V4L2_STD_SECAM_K1)
+#define V4L2_STD_SECAM                                      \
+  (V4L2_STD_SECAM_B | V4L2_STD_SECAM_G | V4L2_STD_SECAM_H | \
+   V4L2_STD_SECAM_DK | V4L2_STD_SECAM_L | V4L2_STD_SECAM_LC)
 #define V4L2_STD_PAL_BG (V4L2_STD_PAL_B | V4L2_STD_PAL_B1 | V4L2_STD_PAL_G)
 #define V4L2_STD_PAL_DK (V4L2_STD_PAL_D | V4L2_STD_PAL_D1 | V4L2_STD_PAL_K)
-#define V4L2_STD_PAL (V4L2_STD_PAL_BG | V4L2_STD_PAL_DK | V4L2_STD_PAL_H | V4L2_STD_PAL_I)
+#define V4L2_STD_PAL \
+  (V4L2_STD_PAL_BG | V4L2_STD_PAL_DK | V4L2_STD_PAL_H | V4L2_STD_PAL_I)
 #define V4L2_STD_B (V4L2_STD_PAL_B | V4L2_STD_PAL_B1 | V4L2_STD_SECAM_B)
 #define V4L2_STD_G (V4L2_STD_PAL_G | V4L2_STD_SECAM_G)
 #define V4L2_STD_H (V4L2_STD_PAL_H | V4L2_STD_SECAM_H)
@@ -585,10 +612,14 @@ typedef __u64 v4l2_std_id;
 #define V4L2_STD_GH (V4L2_STD_G | V4L2_STD_H)
 #define V4L2_STD_DK (V4L2_STD_PAL_DK | V4L2_STD_SECAM_DK)
 #define V4L2_STD_BG (V4L2_STD_B | V4L2_STD_G)
-#define V4L2_STD_MN (V4L2_STD_PAL_M | V4L2_STD_PAL_N | V4L2_STD_PAL_Nc | V4L2_STD_NTSC)
-#define V4L2_STD_MTS (V4L2_STD_NTSC_M | V4L2_STD_PAL_M | V4L2_STD_PAL_N | V4L2_STD_PAL_Nc)
-#define V4L2_STD_525_60 (V4L2_STD_PAL_M | V4L2_STD_PAL_60 | V4L2_STD_NTSC | V4L2_STD_NTSC_443)
-#define V4L2_STD_625_50 (V4L2_STD_PAL | V4L2_STD_PAL_N | V4L2_STD_PAL_Nc | V4L2_STD_SECAM)
+#define V4L2_STD_MN \
+  (V4L2_STD_PAL_M | V4L2_STD_PAL_N | V4L2_STD_PAL_Nc | V4L2_STD_NTSC)
+#define V4L2_STD_MTS \
+  (V4L2_STD_NTSC_M | V4L2_STD_PAL_M | V4L2_STD_PAL_N | V4L2_STD_PAL_Nc)
+#define V4L2_STD_525_60 \
+  (V4L2_STD_PAL_M | V4L2_STD_PAL_60 | V4L2_STD_NTSC | V4L2_STD_NTSC_443)
+#define V4L2_STD_625_50 \
+  (V4L2_STD_PAL | V4L2_STD_PAL_N | V4L2_STD_PAL_Nc | V4L2_STD_SECAM)
 #define V4L2_STD_ATSC (V4L2_STD_ATSC_8_VSB | V4L2_STD_ATSC_16_VSB)
 #define V4L2_STD_UNKNOWN 0
 #define V4L2_STD_ALL (V4L2_STD_525_60 | V4L2_STD_625_50)
@@ -631,10 +662,14 @@ struct v4l2_bt_timings {
 #define V4L2_DV_FL_CAN_REDUCE_FPS (1 << 1)
 #define V4L2_DV_FL_REDUCED_FPS (1 << 2)
 #define V4L2_DV_FL_HALF_LINE (1 << 3)
-#define V4L2_DV_BT_BLANKING_WIDTH(bt) ((bt)->hfrontporch + (bt)->hsync + (bt)->hbackporch)
+#define V4L2_DV_BT_BLANKING_WIDTH(bt) \
+  ((bt)->hfrontporch + (bt)->hsync + (bt)->hbackporch)
 #define V4L2_DV_BT_FRAME_WIDTH(bt) ((bt)->width + V4L2_DV_BT_BLANKING_WIDTH(bt))
-#define V4L2_DV_BT_BLANKING_HEIGHT(bt) ((bt)->vfrontporch + (bt)->vsync + (bt)->vbackporch + (bt)->il_vfrontporch + (bt)->il_vsync + (bt)->il_vbackporch)
-#define V4L2_DV_BT_FRAME_HEIGHT(bt) ((bt)->height + V4L2_DV_BT_BLANKING_HEIGHT(bt))
+#define V4L2_DV_BT_BLANKING_HEIGHT(bt)                                         \
+  ((bt)->vfrontporch + (bt)->vsync + (bt)->vbackporch + (bt)->il_vfrontporch + \
+   (bt)->il_vsync + (bt)->il_vbackporch)
+#define V4L2_DV_BT_FRAME_HEIGHT(bt) \
+  ((bt)->height + V4L2_DV_BT_BLANKING_HEIGHT(bt))
 struct v4l2_dv_timings {
   __u32 type;
   union {
@@ -729,11 +764,11 @@ struct v4l2_ext_control {
   union {
     __s32 value;
     __s64 value64;
-    char __user * string;
-    __u8 __user * p_u8;
-    __u16 __user * p_u16;
-    __u32 __user * p_u32;
-    void __user * ptr;
+    char __user* string;
+    __u8 __user* p_u8;
+    __u16 __user* p_u16;
+    __u32 __user* p_u32;
+    void __user* ptr;
   };
 } __attribute__((packed));
 struct v4l2_ext_controls {
@@ -741,11 +776,11 @@ struct v4l2_ext_controls {
   __u32 count;
   __u32 error_idx;
   __u32 reserved[2];
-  struct v4l2_ext_control * controls;
+  struct v4l2_ext_control* controls;
 };
 #define V4L2_CTRL_ID_MASK (0x0fffffff)
-#define V4L2_CTRL_ID2CLASS(id) ((id) & 0x0fff0000UL)
-#define V4L2_CTRL_DRIVER_PRIV(id) (((id) & 0xffff) >= 0x1000)
+#define V4L2_CTRL_ID2CLASS(id) ((id)&0x0fff0000UL)
+#define V4L2_CTRL_DRIVER_PRIV(id) (((id)&0xffff) >= 0x1000)
 #define V4L2_CTRL_MAX_DIMS (4)
 enum v4l2_ctrl_type {
   V4L2_CTRL_TYPE_INTEGER = 1,
@@ -1010,7 +1045,8 @@ struct v4l2_sliced_vbi_format {
 #define V4L2_SLICED_CAPTION_525 (0x1000)
 #define V4L2_SLICED_WSS_625 (0x4000)
 #define V4L2_SLICED_VBI_525 (V4L2_SLICED_CAPTION_525)
-#define V4L2_SLICED_VBI_625 (V4L2_SLICED_TELETEXT_B | V4L2_SLICED_VPS | V4L2_SLICED_WSS_625)
+#define V4L2_SLICED_VBI_625 \
+  (V4L2_SLICED_TELETEXT_B | V4L2_SLICED_VPS | V4L2_SLICED_WSS_625)
 struct v4l2_sliced_vbi_cap {
   __u16 service_set;
   __u16 service_lines[2][24];
@@ -1102,16 +1138,22 @@ struct v4l2_streamparm {
 #define V4L2_EVENT_COLOUR_SPACE_FLAG 0x4
 #define V4L2_EVENT_MSM_VIDC_START (V4L2_EVENT_PRIVATE_START + 0x00001000)
 #define V4L2_EVENT_MSM_VIDC_FLUSH_DONE (V4L2_EVENT_MSM_VIDC_START + 1)
-#define V4L2_EVENT_MSM_VIDC_PORT_SETTINGS_CHANGED_SUFFICIENT (V4L2_EVENT_MSM_VIDC_START + 2)
-#define V4L2_EVENT_MSM_VIDC_PORT_SETTINGS_CHANGED_INSUFFICIENT (V4L2_EVENT_MSM_VIDC_START + 3)
-#define V4L2_EVENT_MSM_VIDC_PORT_SETTINGS_BITDEPTH_CHANGED_INSUFFICIENT (V4L2_EVENT_MSM_VIDC_START + 4)
+#define V4L2_EVENT_MSM_VIDC_PORT_SETTINGS_CHANGED_SUFFICIENT \
+  (V4L2_EVENT_MSM_VIDC_START + 2)
+#define V4L2_EVENT_MSM_VIDC_PORT_SETTINGS_CHANGED_INSUFFICIENT \
+  (V4L2_EVENT_MSM_VIDC_START + 3)
+#define V4L2_EVENT_MSM_VIDC_PORT_SETTINGS_BITDEPTH_CHANGED_INSUFFICIENT \
+  (V4L2_EVENT_MSM_VIDC_START + 4)
 #define V4L2_EVENT_MSM_VIDC_SYS_ERROR (V4L2_EVENT_MSM_VIDC_START + 5)
-#define V4L2_EVENT_MSM_VIDC_RELEASE_BUFFER_REFERENCE (V4L2_EVENT_MSM_VIDC_START + 6)
-#define V4L2_EVENT_MSM_VIDC_RELEASE_UNQUEUED_BUFFER (V4L2_EVENT_MSM_VIDC_START + 7)
+#define V4L2_EVENT_MSM_VIDC_RELEASE_BUFFER_REFERENCE \
+  (V4L2_EVENT_MSM_VIDC_START + 6)
+#define V4L2_EVENT_MSM_VIDC_RELEASE_UNQUEUED_BUFFER \
+  (V4L2_EVENT_MSM_VIDC_START + 7)
 #define V4L2_EVENT_MSM_VIDC_HW_OVERLOAD (V4L2_EVENT_MSM_VIDC_START + 8)
 #define V4L2_EVENT_MSM_VIDC_MAX_CLIENTS (V4L2_EVENT_MSM_VIDC_START + 9)
 #define V4L2_EVENT_MSM_VIDC_HW_UNSUPPORTED (V4L2_EVENT_MSM_VIDC_START + 10)
-#define V4L2_EVENT_MSM_BA_PRIVATE_EVENT_BASE (V4L2_EVENT_PRIVATE_START + 0x00005000)
+#define V4L2_EVENT_MSM_BA_PRIVATE_EVENT_BASE \
+  (V4L2_EVENT_PRIVATE_START + 0x00005000)
 #define V4L2_EVENT_MSM_BA_START V4L2_EVENT_MSM_BA_PRIVATE_EVENT_BASE
 #define V4L2_EVENT_MSM_BA_DEVICE_AVAILABLE (V4L2_EVENT_MSM_BA_START + 1)
 #define V4L2_EVENT_MSM_BA_DEVICE_UNAVAILABLE (V4L2_EVENT_MSM_BA_START + 2)
@@ -1304,4 +1346,3 @@ struct v4l2_create_buffers {
 #define VIDIOC_HDMI_RX_CEC_G_CONNECTED _IOR('V', BASE_VIDIOC_PRIVATE + 3, int)
 #define VIDIOC_HDMI_RX_CEC_S_ENABLE _IOR('V', BASE_VIDIOC_PRIVATE + 4, int)
 #endif
-

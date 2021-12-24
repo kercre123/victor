@@ -129,8 +129,9 @@ struct SynchWaitParams;
 // issues that could potentially result in race conditions and deadlocks.
 //
 // For more information about the lock annotations, please see
-// [Thread Safety Analysis](http://clang.llvm.org/docs/ThreadSafetyAnalysis.html)
-// in the Clang documentation.
+// [Thread Safety
+// Analysis](http://clang.llvm.org/docs/ThreadSafetyAnalysis.html) in the Clang
+// documentation.
 //
 // See also `MutexLock`, below, for scoped `Mutex` acquisition.
 
@@ -488,8 +489,8 @@ class LOCKABLE Mutex {
   // Catch the error of writing Mutex when intending MutexLock.
   Mutex(const volatile Mutex * /*ignored*/) {}  // NOLINT(runtime/explicit)
 
-  Mutex(const Mutex&) = delete;
-  Mutex& operator=(const Mutex&) = delete;
+  Mutex(const Mutex &) = delete;
+  Mutex &operator=(const Mutex &) = delete;
 };
 
 // -----------------------------------------------------------------------------
@@ -521,9 +522,9 @@ class SCOPED_LOCKABLE MutexLock {
   }
 
   MutexLock(const MutexLock &) = delete;  // NOLINT(runtime/mutex)
-  MutexLock(MutexLock&&) = delete;  // NOLINT(runtime/mutex)
-  MutexLock& operator=(const MutexLock&) = delete;
-  MutexLock& operator=(MutexLock&&) = delete;
+  MutexLock(MutexLock &&) = delete;       // NOLINT(runtime/mutex)
+  MutexLock &operator=(const MutexLock &) = delete;
+  MutexLock &operator=(MutexLock &&) = delete;
 
   ~MutexLock() UNLOCK_FUNCTION() { this->mu_->Unlock(); }
 
@@ -537,19 +538,16 @@ class SCOPED_LOCKABLE MutexLock {
 // releases a shared lock on a `Mutex` via RAII.
 class SCOPED_LOCKABLE ReaderMutexLock {
  public:
-  explicit ReaderMutexLock(Mutex *mu) SHARED_LOCK_FUNCTION(mu)
-      :  mu_(mu) {
+  explicit ReaderMutexLock(Mutex *mu) SHARED_LOCK_FUNCTION(mu) : mu_(mu) {
     mu->ReaderLock();
   }
 
-  ReaderMutexLock(const ReaderMutexLock&) = delete;
-  ReaderMutexLock(ReaderMutexLock&&) = delete;
-  ReaderMutexLock& operator=(const ReaderMutexLock&) = delete;
-  ReaderMutexLock& operator=(ReaderMutexLock&&) = delete;
+  ReaderMutexLock(const ReaderMutexLock &) = delete;
+  ReaderMutexLock(ReaderMutexLock &&) = delete;
+  ReaderMutexLock &operator=(const ReaderMutexLock &) = delete;
+  ReaderMutexLock &operator=(ReaderMutexLock &&) = delete;
 
-  ~ReaderMutexLock() UNLOCK_FUNCTION() {
-    this->mu_->ReaderUnlock();
-  }
+  ~ReaderMutexLock() UNLOCK_FUNCTION() { this->mu_->ReaderUnlock(); }
 
  private:
   Mutex *const mu_;
@@ -561,19 +559,16 @@ class SCOPED_LOCKABLE ReaderMutexLock {
 // releases a write (exclusive) lock on a `Mutex` va RAII.
 class SCOPED_LOCKABLE WriterMutexLock {
  public:
-  explicit WriterMutexLock(Mutex *mu) EXCLUSIVE_LOCK_FUNCTION(mu)
-      : mu_(mu) {
+  explicit WriterMutexLock(Mutex *mu) EXCLUSIVE_LOCK_FUNCTION(mu) : mu_(mu) {
     mu->WriterLock();
   }
 
-  WriterMutexLock(const WriterMutexLock&) = delete;
-  WriterMutexLock(WriterMutexLock&&) = delete;
-  WriterMutexLock& operator=(const WriterMutexLock&) = delete;
-  WriterMutexLock& operator=(WriterMutexLock&&) = delete;
+  WriterMutexLock(const WriterMutexLock &) = delete;
+  WriterMutexLock(WriterMutexLock &&) = delete;
+  WriterMutexLock &operator=(const WriterMutexLock &) = delete;
+  WriterMutexLock &operator=(WriterMutexLock &&) = delete;
 
-  ~WriterMutexLock() UNLOCK_FUNCTION() {
-    this->mu_->WriterUnlock();
-  }
+  ~WriterMutexLock() UNLOCK_FUNCTION() { this->mu_->WriterUnlock(); }
 
  private:
   Mutex *const mu_;
@@ -635,7 +630,7 @@ class Condition {
   // Note: lambdas in this case must contain no bound variables.
   //
   // See class comment for performance advice.
-  template<typename T>
+  template <typename T>
   Condition(bool (*func)(T *), T *arg);
 
   // Templated version for invoking a method that returns a `bool`.
@@ -646,13 +641,13 @@ class Condition {
   // Implementation Note: `absl::internal::identity` is used to allow methods to
   // come from base classes. A simpler signature like
   // `Condition(T*, bool (T::*)())` does not suffice.
-  template<typename T>
-  Condition(T *object, bool (absl::internal::identity<T>::type::* method)());
+  template <typename T>
+  Condition(T *object, bool (absl::internal::identity<T>::type::*method)());
 
   // Same as above, for const members
-  template<typename T>
+  template <typename T>
   Condition(const T *object,
-            bool (absl::internal::identity<T>::type::* method)() const);
+            bool (absl::internal::identity<T>::type::*method)() const);
 
   // A Condition that returns the value of `*cond`
   explicit Condition(const bool *cond);
@@ -678,7 +673,7 @@ class Condition {
   // constructor doesn't participate in overload resolution if T doesn't have
   // `bool operator() const`.
   template <typename T, typename E = decltype(
-      static_cast<bool (T::*)() const>(&T::operator()))>
+                            static_cast<bool (T::*)() const>(&T::operator()))>
   explicit Condition(const T *obj)
       : Condition(obj, static_cast<bool (T::*)() const>(&T::operator())) {}
 
@@ -698,22 +693,24 @@ class Condition {
   static bool GuaranteedEqual(const Condition *a, const Condition *b);
 
  private:
-  typedef bool (*InternalFunctionType)(void * arg);
+  typedef bool (*InternalFunctionType)(void *arg);
   typedef bool (Condition::*InternalMethodType)();
-  typedef bool (*InternalMethodCallerType)(void * arg,
+  typedef bool (*InternalMethodCallerType)(void *arg,
                                            InternalMethodType internal_method);
 
-  bool (*eval_)(const Condition*);  // Actual evaluator
-  InternalFunctionType function_;   // function taking pointer returning bool
-  InternalMethodType method_;       // method returning bool
-  void *arg_;                       // arg of function_ or object of method_
+  bool (*eval_)(const Condition *);  // Actual evaluator
+  InternalFunctionType function_;    // function taking pointer returning bool
+  InternalMethodType method_;        // method returning bool
+  void *arg_;                        // arg of function_ or object of method_
 
-  Condition();        // null constructor used only to create kTrue
+  Condition();  // null constructor used only to create kTrue
 
   // Various functions eval_ can point to:
-  static bool CallVoidPtrFunction(const Condition*);
-  template <typename T> static bool CastAndCallFunction(const Condition* c);
-  template <typename T> static bool CastAndCallMethod(const Condition* c);
+  static bool CallVoidPtrFunction(const Condition *);
+  template <typename T>
+  static bool CastAndCallFunction(const Condition *c);
+  template <typename T>
+  static bool CastAndCallMethod(const Condition *c);
 };
 
 // -----------------------------------------------------------------------------
@@ -826,10 +823,9 @@ class CondVar {
   void Wakeup(base_internal::PerThreadSynch *w);
   std::atomic<intptr_t> cv_;  // Condition variable state.
 #endif
-  CondVar(const CondVar&) = delete;
-  CondVar& operator=(const CondVar&) = delete;
+  CondVar(const CondVar &) = delete;
+  CondVar &operator=(const CondVar &) = delete;
 };
-
 
 // Variants of MutexLock.
 //
@@ -841,17 +837,23 @@ class CondVar {
 // MutexLockMaybe is like MutexLock, but is a no-op when mu is null.
 class SCOPED_LOCKABLE MutexLockMaybe {
  public:
-  explicit MutexLockMaybe(Mutex *mu) EXCLUSIVE_LOCK_FUNCTION(mu)
-      : mu_(mu) { if (this->mu_ != nullptr) { this->mu_->Lock(); } }
-  ~MutexLockMaybe() UNLOCK_FUNCTION() {
-    if (this->mu_ != nullptr) { this->mu_->Unlock(); }
+  explicit MutexLockMaybe(Mutex *mu) EXCLUSIVE_LOCK_FUNCTION(mu) : mu_(mu) {
+    if (this->mu_ != nullptr) {
+      this->mu_->Lock();
+    }
   }
+  ~MutexLockMaybe() UNLOCK_FUNCTION() {
+    if (this->mu_ != nullptr) {
+      this->mu_->Unlock();
+    }
+  }
+
  private:
   Mutex *const mu_;
-  MutexLockMaybe(const MutexLockMaybe&) = delete;
-  MutexLockMaybe(MutexLockMaybe&&) = delete;
-  MutexLockMaybe& operator=(const MutexLockMaybe&) = delete;
-  MutexLockMaybe& operator=(MutexLockMaybe&&) = delete;
+  MutexLockMaybe(const MutexLockMaybe &) = delete;
+  MutexLockMaybe(MutexLockMaybe &&) = delete;
+  MutexLockMaybe &operator=(const MutexLockMaybe &) = delete;
+  MutexLockMaybe &operator=(MutexLockMaybe &&) = delete;
 };
 
 // ReleaseableMutexLock
@@ -865,17 +867,19 @@ class SCOPED_LOCKABLE ReleasableMutexLock {
     this->mu_->Lock();
   }
   ~ReleasableMutexLock() UNLOCK_FUNCTION() {
-    if (this->mu_ != nullptr) { this->mu_->Unlock(); }
+    if (this->mu_ != nullptr) {
+      this->mu_->Unlock();
+    }
   }
 
   void Release() UNLOCK_FUNCTION();
 
  private:
   Mutex *mu_;
-  ReleasableMutexLock(const ReleasableMutexLock&) = delete;
-  ReleasableMutexLock(ReleasableMutexLock&&) = delete;
-  ReleasableMutexLock& operator=(const ReleasableMutexLock&) = delete;
-  ReleasableMutexLock& operator=(ReleasableMutexLock&&) = delete;
+  ReleasableMutexLock(const ReleasableMutexLock &) = delete;
+  ReleasableMutexLock(ReleasableMutexLock &&) = delete;
+  ReleasableMutexLock &operator=(const ReleasableMutexLock &) = delete;
+  ReleasableMutexLock &operator=(ReleasableMutexLock &&) = delete;
 };
 
 #ifdef ABSL_INTERNAL_USE_NONPROD_MUTEX
@@ -953,7 +957,7 @@ void RegisterMutexProfiler(void (*fn)(int64_t wait_timestamp));
 //
 // This has the same memory ordering concerns as RegisterMutexProfiler() above.
 void RegisterMutexTracer(void (*fn)(const char *msg, const void *obj,
-                              int64_t wait_cycles));
+                                    int64_t wait_cycles));
 
 // TODO(gfalcon): Combine RegisterMutexProfiler() and RegisterMutexTracer()
 // into a single interface, since they are only ever called in pairs.
@@ -996,7 +1000,7 @@ void EnableMutexInvariantDebugging(bool enabled);
 enum class OnDeadlockCycle {
   kIgnore,  // Neither report on nor attempt to track cycles in lock ordering
   kReport,  // Report lock cycles to stderr when detected
-  kAbort,  // Report lock cycles to stderr when detected, then abort
+  kAbort,   // Report lock cycles to stderr when detected, then abort
 };
 
 // SetMutexDeadlockDetectionMode()

@@ -6,8 +6,8 @@
  *  Created by Jarrod Hatfield on 4/025/2018
  *
  *  Description
- *  + Parent behavior for allowing the user to playback messages that have been previously recorded to Victor's local
- *    storage.
+ *  + Parent behavior for allowing the user to playback messages that have been
+ *previously recorded to Victor's local storage.
  *
  **********************************************************************************************************************/
 
@@ -17,47 +17,43 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/mics/voiceMessageTypes.h"
 
-
 namespace Anki {
 namespace Vector {
 
 class BehaviorTextToSpeechLoop;
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class BehaviorPlaybackMessage : public ICozmoBehavior
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+class BehaviorPlaybackMessage : public ICozmoBehavior {
   friend class BehaviorFactory;
-  BehaviorPlaybackMessage( const Json::Value& config );
+  BehaviorPlaybackMessage(const Json::Value& config);
 
-
-public:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Overrides from ICozmoBehavior
+ public:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Overrides from ICozmoBehavior
 
   virtual bool WantsToBeActivatedBehavior() const override;
-  virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
-  virtual void GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
 
+ protected:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Internal Structs
 
-protected:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Internal Structs
-
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Overrides from ICozmoBehavior
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Overrides from ICozmoBehavior
 
   virtual void InitBehavior() override;
-  virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // State Transitions
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - State Transitions
 
   void TransitionToPlayingFirstMessage();
   void TransitionToPlayingNextMessage();
@@ -65,24 +61,23 @@ protected:
   void TransitionToNoMessagesResponse();
   void TransitionToFinishedMessages();
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Helpers ...
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Helpers ...
 
   // plays the next message in our internal list (starting at the end)
   void PlaybackNextMessage();
-  void OnMessagePlaybackComplete( VoiceMessageID id );
+  void OnMessagePlaybackComplete(VoiceMessageID id);
 
   void PlayNextRecipientTTS();
-  void PlayTextToSpeech( const std::string& ttsString, BehaviorSimpleCallback callback = {} );
+  void PlayTextToSpeech(const std::string& ttsString,
+                        BehaviorSimpleCallback callback = {});
 
+ private:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Instance Vars are members that last
+  // the lifetime of the behavior and generally do not change (config vars)
 
-private:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Instance Vars are members that last the lifetime of the behavior and generally do not change (config vars)
-
-  struct InstanceConfig
-  {
+  struct InstanceConfig {
     InstanceConfig();
 
     // Configurable localization keys
@@ -95,24 +90,24 @@ private:
 
   } _iVars;
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - Dynamic Vars are members that
+  // change over the lifetime of the behavior and are generally reset every
+  // activation
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Dynamic Vars are members that change over the lifetime of the behavior and are generally reset every activation
-
-  struct DynamicVariables
-  {
+  struct DynamicVariables {
     DynamicVariables();
 
-    std::string          messageRecipient;
-    VoiceMessageList     messages;
+    std::string messageRecipient;
+    VoiceMessageList messages;
     VoiceMessageUserList allMessages;
-    VoiceMessageID       activeMessageId;
+    VoiceMessageID activeMessageId;
 
   } _dVars;
 
-}; // class BehaviorPlaybackMessage
+};  // class BehaviorPlaybackMessage
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorPlaybackMessage_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorPlaybackMessage_H__

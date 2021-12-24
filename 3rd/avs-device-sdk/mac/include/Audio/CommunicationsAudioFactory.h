@@ -26,13 +26,19 @@ namespace audio {
 /**
  * A class that delivers a stream to the audio data for Comms sounds.
  */
-class CommunicationsAudioFactory : public avsCommon::sdkInterfaces::audio::CommunicationsAudioFactoryInterface {
-public:
-    std::function<std::unique_ptr<std::istream>()> callConnectedRingtone() const override;
-    std::function<std::unique_ptr<std::istream>()> callDisconnectedRingtone() const override;
-    std::function<std::unique_ptr<std::istream>()> outboundRingtone() const override;
-    std::function<std::unique_ptr<std::istream>()> dropInConnectedRingtone() const override;
-    std::function<std::unique_ptr<std::istream>()> callIncomingRingtone() const override;
+class CommunicationsAudioFactory : public avsCommon::sdkInterfaces::audio::
+                                       CommunicationsAudioFactoryInterface {
+ public:
+  std::function<std::unique_ptr<std::istream>()> callConnectedRingtone()
+      const override;
+  std::function<std::unique_ptr<std::istream>()> callDisconnectedRingtone()
+      const override;
+  std::function<std::unique_ptr<std::istream>()> outboundRingtone()
+      const override;
+  std::function<std::unique_ptr<std::istream>()> dropInConnectedRingtone()
+      const override;
+  std::function<std::unique_ptr<std::istream>()> callIncomingRingtone()
+      const override;
 };
 
 }  // namespace audio

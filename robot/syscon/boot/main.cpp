@@ -1,28 +1,28 @@
-#include "vectors.h"
-#include "bignum.h"
-#include "rsa_pss.h"
-#include "flash.h"
-#include "comms.h"
-
-#include "stm32f0xx.h"
-
-#include "power.h"
 #include "analog.h"
-
+#include "bignum.h"
 #include "common.h"
+#include "comms.h"
+#include "flash.h"
 #include "hardware.h"
+#include "power.h"
+#include "rsa_pss.h"
+#include "stm32f0xx.h"
+#include "vectors.h"
 
 extern "C" void StartApplication(const uint32_t* stack, VectorPtr reset);
 
-static const uint16_t MAIN_EXEC_PRESCALE = 4; // Timer prescale
-static const uint16_t MAIN_EXEC_PERIOD = SYSTEM_CLOCK / MAIN_EXEC_PRESCALE / 200;        // 200hz (5ms period)
+static const uint16_t MAIN_EXEC_PRESCALE = 4;  // Timer prescale
+static const uint16_t MAIN_EXEC_PERIOD =
+    SYSTEM_CLOCK / MAIN_EXEC_PRESCALE / 200;  // 200hz (5ms period)
 
 bool validate(void) {
   // Elevate the watchdog kicker while a cert check is running
   NVIC_SetPriority(TIM14_IRQn, 0);
 
   // If our hashes do not match, cert is bunk
-  bool valid = verify_cert(&APP->signedStart, COZMO_APPLICATION_SIZE - COZMO_APPLICATION_HEADER, APP->certificate, sizeof(APP->certificate));
+  bool valid = verify_cert(&APP->signedStart,
+                           COZMO_APPLICATION_SIZE - COZMO_APPLICATION_HEADER,
+                           APP->certificate, sizeof(APP->certificate));
 
   NVIC_SetPriority(TIM14_IRQn, 3);
 
@@ -57,15 +57,15 @@ static bool boot_test(void) {
 }
 
 void timer_init(void) {
-  // Start our cheese watchdog
-  #ifndef DEBUG
+// Start our cheese watchdog
+#ifndef DEBUG
   // Start the watchdog up
   IWDG->KR = 0xCCCC;
   IWDG->KR = 0x5555;
   IWDG->PR = 0;
   IWDG->RLR = WATCHDOG_LIMIT;
   IWDG->KR = 0xAAAA;
-  #endif
+#endif
 
   TIM14->CR1 = 0;
   TIM14->PSC = MAIN_EXEC_PRESCALE - 1;
@@ -77,14 +77,12 @@ void timer_init(void) {
   NVIC_EnableIRQ(TIM14_IRQn);
 }
 
-extern "C" void SoftReset(void) {
-  NVIC_SystemReset();
-}
+extern "C" void SoftReset(void) { NVIC_SystemReset(); }
 
 extern "C" void TIM14_IRQHandler(void) {
-  #ifndef DISABLE_WDOG
+#ifndef DISABLE_WDOG
   IWDG->KR = 0xAAAA;
-  #endif
+#endif
   TIM14->SR = 0;
   Analog::tick();
   Comms::tick();

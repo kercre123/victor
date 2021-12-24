@@ -15,45 +15,45 @@
 #ifndef ALEXA_CLIENT_SDK_ESP_INCLUDE_ESP_DUMMYESPDATAPROVIDER_H_
 #define ALEXA_CLIENT_SDK_ESP_INCLUDE_ESP_DUMMYESPDATAPROVIDER_H_
 
-#include <string>
-
 #include <AIP/ESPData.h>
 #include <ESP/ESPDataModifierInterface.h>
 #include <ESP/ESPDataProviderInterface.h>
+
+#include <string>
 
 namespace alexaClientSDK {
 namespace esp {
 
 /**
- * This is a dummy provider that allows customer to manually test ESP or just to keep it disabled.
+ * This is a dummy provider that allows customer to manually test ESP or just to
+ * keep it disabled.
  */
-class DummyESPDataProvider
-        : public ESPDataProviderInterface
-        , public ESPDataModifierInterface {
-public:
-    /**
-     * DummyESPDataProvider Constructor.
-     */
-    DummyESPDataProvider();
+class DummyESPDataProvider : public ESPDataProviderInterface,
+                             public ESPDataModifierInterface {
+ public:
+  /**
+   * DummyESPDataProvider Constructor.
+   */
+  DummyESPDataProvider();
 
-    /// @name Overridden ESPDataProviderInterface methods.
-    /// @{
-    capabilityAgents::aip::ESPData getESPData() override;
-    bool isEnabled() const override;
-    void disable() override;
-    void enable() override;
-    /// @}
+  /// @name Overridden ESPDataProviderInterface methods.
+  /// @{
+  capabilityAgents::aip::ESPData getESPData() override;
+  bool isEnabled() const override;
+  void disable() override;
+  void enable() override;
+  /// @}
 
-    /// @name Overridden ESPDataModifierInterface methods.
-    /// @{
-    void setVoiceEnergy(const std::string& voiceEnergy) override;
-    void setAmbientEnergy(const std::string& ambientEnergy) override;
-    /// @}
+  /// @name Overridden ESPDataModifierInterface methods.
+  /// @{
+  void setVoiceEnergy(const std::string& voiceEnergy) override;
+  void setAmbientEnergy(const std::string& ambientEnergy) override;
+  /// @}
 
-private:
-    std::string m_voiceEnergy;
-    std::string m_ambientEnergy;
-    bool m_enabled;
+ private:
+  std::string m_voiceEnergy;
+  std::string m_ambientEnergy;
+  bool m_enabled;
 };
 
 }  // namespace esp

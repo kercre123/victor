@@ -36,9 +36,8 @@
 // tested.
 
 // The interface and its implementations are in this header.
-#include "prime_tables.h"
-
 #include "gtest/gtest.h"
+#include "prime_tables.h"
 
 #if GTEST_HAS_PARAM_TEST
 
@@ -52,9 +51,7 @@ using ::testing::Values;
 // SetUp() method and delete them in TearDown() method.
 typedef PrimeTable* CreatePrimeTableFunc();
 
-PrimeTable* CreateOnTheFlyPrimeTable() {
-  return new OnTheFlyPrimeTable();
-}
+PrimeTable* CreateOnTheFlyPrimeTable() { return new OnTheFlyPrimeTable(); }
 
 template <size_t max_precalculated>
 PrimeTable* CreatePreCalculatedPrimeTable() {
@@ -112,10 +109,9 @@ TEST_P(PrimeTableTest, CanGetNextPrime) {
 //
 // Here, we instantiate our tests with a list of two PrimeTable object
 // factory functions:
-INSTANTIATE_TEST_CASE_P(
-    OnTheFlyAndPreCalculated,
-    PrimeTableTest,
-    Values(&CreateOnTheFlyPrimeTable, &CreatePreCalculatedPrimeTable<1000>));
+INSTANTIATE_TEST_CASE_P(OnTheFlyAndPreCalculated, PrimeTableTest,
+                        Values(&CreateOnTheFlyPrimeTable,
+                               &CreatePreCalculatedPrimeTable<1000>));
 
 #else
 

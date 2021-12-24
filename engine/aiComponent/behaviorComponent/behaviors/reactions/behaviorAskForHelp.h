@@ -4,8 +4,8 @@
  * Author: Guillermo Bautista
  * Created: 2018-09-04
  *
- * Description: Behavior that periodically plays a "distressed" animation because
- *              he's stuck and needs help from the user to get out of his situation.
+ * Description: Behavior that periodically plays a "distressed" animation
+ *because he's stuck and needs help from the user to get out of his situation.
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -19,28 +19,29 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorAskForHelp : public ICozmoBehavior
-{
-protected:
-
+class BehaviorAskForHelp : public ICozmoBehavior {
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   explicit BehaviorAskForHelp(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
     modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
   // Insert any possible root-level json keys that this class is expecting.
   // Not used currently since class does not use the ctor's "config" argument.
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
-  
-  // The conditions for activation are defined in the class's "config" JSON file,
-  // and are constructed, init'd, and checked by the base `ICozmoBehavior` class.
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override {}
+
+  // The conditions for activation are defined in the class's "config" JSON
+  // file, and are constructed, init'd, and checked by the base `ICozmoBehavior`
+  // class.
   virtual bool WantsToBeActivatedBehavior() const override { return true; }
   virtual void OnBehaviorActivated() override;
 
-private:
+ private:
   void SetAnimTriggers();
   void TriggerGetInAnim();
   void TriggerIdleAnim();
@@ -54,17 +55,16 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
-    
+
     AnimationTrigger getInTrigger;
     AnimationTrigger idleTrigger;
   };
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorStuck__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorStuck__

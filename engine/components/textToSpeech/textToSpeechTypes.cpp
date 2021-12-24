@@ -4,10 +4,10 @@
 namespace Anki {
 namespace Vector {
 
-const char * EnumToString(UtteranceState state)
-{
-  #define SWITCHCASE(enumval) \
-    case UtteranceState::enumval: return #enumval;
+const char* EnumToString(UtteranceState state) {
+#define SWITCHCASE(enumval)     \
+  case UtteranceState::enumval: \
+    return #enumval;
 
   switch (state) {
     SWITCHCASE(Invalid);
@@ -17,14 +17,14 @@ const char * EnumToString(UtteranceState state)
     SWITCHCASE(Finished);
   }
 
-  #undef SWITCHCASE
+#undef SWITCHCASE
   return "Unknown";
 }
 
-const char * EnumToString(UtteranceTriggerType triggerType)
-{
-  #define SWITCHCASE(enumval) \
-    case UtteranceTriggerType::enumval: return #enumval;
+const char* EnumToString(UtteranceTriggerType triggerType) {
+#define SWITCHCASE(enumval)           \
+  case UtteranceTriggerType::enumval: \
+    return #enumval;
 
   switch (triggerType) {
     SWITCHCASE(Immediate);
@@ -32,9 +32,9 @@ const char * EnumToString(UtteranceTriggerType triggerType)
     SWITCHCASE(KeyFrame);
   }
 
-  #undef SWITCHCASE
+#undef SWITCHCASE
   return "Unknown";
 }
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki

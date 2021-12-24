@@ -32,33 +32,34 @@ namespace http2 {
  * Interface for providing data to be sent as part of an HTTP2 request.
  */
 class HTTP2RequestSourceInterface {
-public:
-    /**
-     * Default destructor.
-     */
-    virtual ~HTTP2RequestSourceInterface() = default;
+ public:
+  /**
+   * Default destructor.
+   */
+  virtual ~HTTP2RequestSourceInterface() = default;
 
-    /**
-     * Get the header lines that should be output with this HTTP2 request.
-     *
-     * @note Calls to this method may block network operations for the associated instance of HTTP2ConnectionInterface,
-     * so they should return quickly.
-     *
-     * @return The header lines that should be output with this request.
-     */
-    virtual std::vector<std::string> getRequestHeaderLines() = 0;
+  /**
+   * Get the header lines that should be output with this HTTP2 request.
+   *
+   * @note Calls to this method may block network operations for the associated
+   * instance of HTTP2ConnectionInterface, so they should return quickly.
+   *
+   * @return The header lines that should be output with this request.
+   */
+  virtual std::vector<std::string> getRequestHeaderLines() = 0;
 
-    /**
-     * Notification of the need to provide body data for an HTTP2 request.
-     *
-     * @note Calls to this method may block network operations for the associated instance of HTTP2ConnectionInterface,
-     * so they should return quickly.
-     *
-     * @param bytes The buffer to receive the bytes to send.
-     * @param size The max number of bytes to copy.
-     * @return Result indicating the disposition of the operation and number of bytes copied.  @see HTTPSendDataResult.
-     */
-    virtual HTTP2SendDataResult onSendData(char* bytes, size_t size) = 0;
+  /**
+   * Notification of the need to provide body data for an HTTP2 request.
+   *
+   * @note Calls to this method may block network operations for the associated
+   * instance of HTTP2ConnectionInterface, so they should return quickly.
+   *
+   * @param bytes The buffer to receive the bytes to send.
+   * @param size The max number of bytes to copy.
+   * @return Result indicating the disposition of the operation and number of
+   * bytes copied.  @see HTTPSendDataResult.
+   */
+  virtual HTTP2SendDataResult onSendData(char* bytes, size_t size) = 0;
 };
 
 }  // namespace http2

@@ -23,31 +23,35 @@ class INetTransportDataReceiver;
 class TransportAddress;
 
 class INetTransport {
-
-public:
+ public:
   using AdvertisementBytes = std::vector<uint8_t>;
 
-  INetTransport(INetTransportDataReceiver* dataReceiver) : _dataReceiver(dataReceiver) {}
+  INetTransport(INetTransportDataReceiver* dataReceiver)
+      : _dataReceiver(dataReceiver) {}
   virtual ~INetTransport() {}
 
-  virtual void SendData(bool reliable, const TransportAddress& destAddress, const uint8_t* buffer, unsigned int size, bool flushPacket=false) = 0;
+  virtual void SendData(bool reliable, const TransportAddress& destAddress,
+                        const uint8_t* buffer, unsigned int size,
+                        bool flushPacket = false) = 0;
   virtual void StartHost() = 0;
   virtual void StopHost() = 0;
   virtual void StartClient() = 0;
   virtual void StopClient() = 0;
   virtual void Connect(const TransportAddress& destAddress) = 0;
-  virtual void FinishConnection(const TransportAddress& destAddress) = 0; // confirm a remote connection request
+  virtual void FinishConnection(
+      const TransportAddress&
+          destAddress) = 0;  // confirm a remote connection request
   virtual void Disconnect(const TransportAddress& destAddress) = 0;
   virtual void FillAdvertisementBytes(AdvertisementBytes& bytes) = 0;
-  virtual unsigned int FillAddressFromAdvertisement(TransportAddress& address, const uint8_t* buffer, unsigned int size) = 0;
+  virtual unsigned int FillAddressFromAdvertisement(TransportAddress& address,
+                                                    const uint8_t* buffer,
+                                                    unsigned int size) = 0;
 
-protected:
+ protected:
   INetTransportDataReceiver* _dataReceiver;
-
 };
 
-} // end namespace Util
-} // end namespace Anki
+}  // end namespace Util
+}  // end namespace Anki
 
-
-#endif // __NetworkService_INetTransport_H__
+#endif  // __NetworkService_INetTransport_H__

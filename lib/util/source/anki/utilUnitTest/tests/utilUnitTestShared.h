@@ -10,30 +10,18 @@
  *
  **/
 
-
 #ifndef __UtilUnitTest_Shared_UtilUnitTestShared_H__
 #define __UtilUnitTest_Shared_UtilUnitTestShared_H__
 
+class UtilUnitTestShared {
+ public:
+  enum class TimingMode { Default, Valgrind };
 
-
-class UtilUnitTestShared
-{
-public:
-  
-  enum class TimingMode
-  {
-    Default,
-    Valgrind
-  };
-  
   static void SetTimingMode(TimingMode mode) { sTimingMode = mode; }
   static TimingMode GetTimingMode() { return sTimingMode; }
-  
-private:
-  
+
+ private:
   static TimingMode sTimingMode;
 };
 
-
-#endif // __UtilUnitTest_Shared_UtilUnitTestShared_H__
-
+#endif  // __UtilUnitTest_Shared_UtilUnitTestShared_H__

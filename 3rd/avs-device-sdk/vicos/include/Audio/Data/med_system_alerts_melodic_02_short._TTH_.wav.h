@@ -21,8 +21,8 @@
  * Copyright 2017-2018 Amazon.com, Inc. or its affiliates ("Amazon").
  * All Rights Reserved.
  *
- * These materials are licensed to you as "Alexa Materials" under the Alexa Voice
- * Service Agreement, which is currently available at
+ * These materials are licensed to you as "Alexa Materials" under the Alexa
+ * Voice Service Agreement, which is currently available at
  * https://developer.amazon.com/public/solutions/alexa/alexa-voice-service/support/terms-and-agreements.
  */
 

@@ -16,82 +16,87 @@
 #ifndef ALEXA_CLIENT_SDK_AVSCOMMON_AVS_INCLUDE_AVSCOMMON_AVS_AVSMESSAGE_H_
 #define ALEXA_CLIENT_SDK_AVSCOMMON_AVS_INCLUDE_AVSCOMMON_AVS_AVSMESSAGE_H_
 
-#include "AVSMessageHeader.h"
-
 #include <memory>
 #include <string>
+
+#include "AVSMessageHeader.h"
 
 namespace alexaClientSDK {
 namespace avsCommon {
 namespace avs {
 
 /**
- * This is a base class which allows us to represent a message sent or received from AVS.
- * This class encapsulates the common data elements for all such messages.
+ * This is a base class which allows us to represent a message sent or received
+ * from AVS. This class encapsulates the common data elements for all such
+ * messages.
  */
 class AVSMessage {
-public:
-    /**
-     * Constructor.
-     *
-     * @param avsMessageHeader An object that contains the necessary header fields of an AVS message.
-     *                         NOTE: This parameter MUST NOT be null.
-     * @param payload The payload associated with an AVS message. This is expected to be in the JSON format.
-     */
-    AVSMessage(std::shared_ptr<AVSMessageHeader> avsMessageHeader, std::string payload);
+ public:
+  /**
+   * Constructor.
+   *
+   * @param avsMessageHeader An object that contains the necessary header fields
+   * of an AVS message. NOTE: This parameter MUST NOT be null.
+   * @param payload The payload associated with an AVS message. This is expected
+   * to be in the JSON format.
+   */
+  AVSMessage(std::shared_ptr<AVSMessageHeader> avsMessageHeader,
+             std::string payload);
 
-    /**
-     * Destructor.
-     */
-    virtual ~AVSMessage() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~AVSMessage() = default;
 
-    /**
-     * Returns The namespace of the message.
-     *
-     * @return The namespace.
-     */
-    std::string getNamespace() const;
+  /**
+   * Returns The namespace of the message.
+   *
+   * @return The namespace.
+   */
+  std::string getNamespace() const;
 
-    /**
-     * Returns The name of the message, which describes the intent.
-     *
-     * @return The name.
-     */
-    std::string getName() const;
+  /**
+   * Returns The name of the message, which describes the intent.
+   *
+   * @return The name.
+   */
+  std::string getName() const;
 
-    /**
-     * Returns The message ID of the message.
-     *
-     * @return The message ID, a unique ID used to identify a specific message.
-     */
-    std::string getMessageId() const;
+  /**
+   * Returns The message ID of the message.
+   *
+   * @return The message ID, a unique ID used to identify a specific message.
+   */
+  std::string getMessageId() const;
 
-    /**
-     * Returns The dialog request ID of the message.
-     *
-     * @return The dialog request ID, a unique ID for the messages that are part of the same dialog.
-     */
-    std::string getDialogRequestId() const;
+  /**
+   * Returns The dialog request ID of the message.
+   *
+   * @return The dialog request ID, a unique ID for the messages that are part
+   * of the same dialog.
+   */
+  std::string getDialogRequestId() const;
 
-    /**
-     * Returns the payload of the message.
-     *
-     * @return The payload.
-     */
-    std::string getPayload() const;
+  /**
+   * Returns the payload of the message.
+   *
+   * @return The payload.
+   */
+  std::string getPayload() const;
 
-    /**
-     * Return a string representation of this @c AVSMessage's header.
-     *
-     * @return A string representation of this @c AVSMessage's header.
-     */
-    std::string getHeaderAsString() const;
+  /**
+   * Return a string representation of this @c AVSMessage's header.
+   *
+   * @return A string representation of this @c AVSMessage's header.
+   */
+  std::string getHeaderAsString() const;
 
-private:
-    /// The fields that represent the common items in the header of an AVS message.
-    std::shared_ptr<AVSMessageHeader> m_header;
-    /// The payload of an AVS message.
-    std::string m_payload;
+ private:
+  /// The fields that represent the common items in the header of an AVS
+  /// message.
+  std::shared_ptr<AVSMessageHeader> m_header;
+  /// The payload of an AVS message.
+  std::string m_payload;
 };
 
 }  // namespace avs

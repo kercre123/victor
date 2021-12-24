@@ -21,19 +21,21 @@ namespace avsCommon {
 namespace sdkInterfaces {
 
 /**
- * This interface allows a derived class to know when the System.UserInactivityReport Event has been sent.
+ * This interface allows a derived class to know when the
+ * System.UserInactivityReport Event has been sent.
  */
 class UserInactivityMonitorObserverInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~UserInactivityMonitorObserverInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~UserInactivityMonitorObserverInterface() = default;
 
-    /**
-     * This function is called when the System.UserInactivityReport Event has been sent.
-     */
-    virtual void onUserInactivityReportSent() = 0;
+  /**
+   * This function is called when the System.UserInactivityReport Event has been
+   * sent.
+   */
+  virtual void onUserInactivityReportSent() = 0;
 };
 
 }  // namespace sdkInterfaces

@@ -9,7 +9,7 @@
  * @param sig Standard Deviation
  */
 inline float gaussian(float x, float y, float sigma) {
-  return expf(-(x*x + y*y) / (2.0f*sigma*sigma));
+  return expf(-(x * x + y * y) / (2.0f * sigma * sigma));
 }
 
 /* ************************************************************************* */
@@ -21,7 +21,6 @@ inline float gaussian(float x, float y, float sigma) {
  * @param height Image height
  */
 inline void checkDescriptorLimits(int &x, int &y, int width, int height) {
-
   if (x < 0) {
     x = 0;
   }

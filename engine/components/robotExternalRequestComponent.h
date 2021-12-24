@@ -13,33 +13,37 @@
 #ifndef __Engine_Components_RobotExternalRequestComponent_H__
 #define __Engine_Components_RobotExternalRequestComponent_H__
 
-#include "engine/robot.h"
-#include "engine/cozmoContext.h"
 #include "engine/cozmoAPI/comms/protoMessageHandler.h"
+#include "engine/cozmoContext.h"
+#include "engine/robot.h"
 
 namespace Anki {
 namespace Vector {
 
 class Robot;
-template<typename T> class AnkiEvent;
+template <typename T>
+class AnkiEvent;
 namespace external_interface {
-  class GatewayWrapper;
+class GatewayWrapper;
 }
 
-class RobotExternalRequestComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
-{
-public:
+class RobotExternalRequestComponent
+    : public IDependencyManagedComponent<RobotComponentID>,
+      private Util::noncopyable {
+ public:
   RobotExternalRequestComponent();
   ~RobotExternalRequestComponent() = default;
   void Init(CozmoContext* context);
-  void GetVersionState(const AnkiEvent<external_interface::GatewayWrapper>& event);
-  void GetBatteryState(const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void GetVersionState(
+      const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void GetBatteryState(
+      const AnkiEvent<external_interface::GatewayWrapper>& event);
 
-private:  
+ private:
   CozmoContext* _context = nullptr;
 };
 
-} // Cozmo namespace
-} // Anki namespace
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_Components_RobotExternalRequestComponent_H__
+#endif  // __Engine_Components_RobotExternalRequestComponent_H__

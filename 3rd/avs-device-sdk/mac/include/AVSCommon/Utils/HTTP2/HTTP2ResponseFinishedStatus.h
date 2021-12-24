@@ -27,14 +27,15 @@ namespace http2 {
  * Status provided when an HTTP2 response is finished.
  */
 enum class HTTP2ResponseFinishedStatus {
-    /// Receipt of the response was completed.
-    COMPLETE,
-    /// Receipt of the response was not completed due to a timeout.
-    TIMEOUT,
-    /// Receipt of the response was not completed because the operation was cancelled.
-    CANCELLED,
-    /// Receipt of the response was not completed due to an internal error.
-    INTERNAL_ERROR
+  /// Receipt of the response was completed.
+  COMPLETE,
+  /// Receipt of the response was not completed due to a timeout.
+  TIMEOUT,
+  /// Receipt of the response was not completed because the operation was
+  /// cancelled.
+  CANCELLED,
+  /// Receipt of the response was not completed due to an internal error.
+  INTERNAL_ERROR
 };
 
 /**
@@ -44,18 +45,19 @@ enum class HTTP2ResponseFinishedStatus {
  * @param status The status to write to the @c ostream as a string.
  * @return The @c ostream that was passed in and written to.
  */
-inline std::ostream& operator<<(std::ostream& stream, HTTP2ResponseFinishedStatus status) {
-    switch (status) {
-        case HTTP2ResponseFinishedStatus::COMPLETE:
-            return stream << "COMPLETE";
-        case HTTP2ResponseFinishedStatus::TIMEOUT:
-            return stream << "TIMEOUT";
-        case HTTP2ResponseFinishedStatus::CANCELLED:
-            return stream << "CANCELLED";
-        case HTTP2ResponseFinishedStatus::INTERNAL_ERROR:
-            return stream << "INTERNAL_ERROR";
-    }
-    return stream << "";
+inline std::ostream& operator<<(std::ostream& stream,
+                                HTTP2ResponseFinishedStatus status) {
+  switch (status) {
+    case HTTP2ResponseFinishedStatus::COMPLETE:
+      return stream << "COMPLETE";
+    case HTTP2ResponseFinishedStatus::TIMEOUT:
+      return stream << "TIMEOUT";
+    case HTTP2ResponseFinishedStatus::CANCELLED:
+      return stream << "CANCELLED";
+    case HTTP2ResponseFinishedStatus::INTERNAL_ERROR:
+      return stream << "INTERNAL_ERROR";
+  }
+  return stream << "";
 }
 
 }  // namespace http2

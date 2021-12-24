@@ -20,43 +20,42 @@ namespace Vector {
 
 class BehaviorTimerUtilityCoordinator;
 
-class BehaviorQuietModeCoordinator : public ICozmoBehavior
-{
-public: 
+class BehaviorQuietModeCoordinator : public ICozmoBehavior {
+ public:
   virtual ~BehaviorQuietModeCoordinator() = default;
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   explicit BehaviorQuietModeCoordinator(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual void InitBehavior() override;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-  
+ private:
   void SimmerDownNow();
   void ResumeNormal();
-  
-  void SetAudioActive( bool active );
-  
+
+  void SetAudioActive(bool active);
+
   struct BehaviorInfo {
     BehaviorID behaviorID;
     ICozmoBehaviorPtr behavior;
     bool allowsAudio;
   };
-  
+
   struct InstanceConfig {
     InstanceConfig();
-    
+
     float activeTime_s;
     float timeToPowerSave_s;
     std::vector<BehaviorInfo> behaviors;
@@ -66,7 +65,7 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
-    
+
     bool audioActive;
     bool wasFixed;
     bool requestedPowerSave;
@@ -74,10 +73,9 @@ private:
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorQuietModeCoordinator__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorQuietModeCoordinator__

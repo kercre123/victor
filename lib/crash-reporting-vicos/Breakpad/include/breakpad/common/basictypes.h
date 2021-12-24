@@ -49,9 +49,8 @@ namespace google_breakpad {
 //   if (TakeOwnership(my_var.get()) == SUCCESS)
 //     ignore_result(my_var.release());
 //
-template<typename T>
-inline void ignore_result(const T&) {
-}
+template <typename T>
+inline void ignore_result(const T&) {}
 
 }  // namespace google_breakpad
 

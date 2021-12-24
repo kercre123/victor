@@ -10,7 +10,6 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_META_MACROS_H
 #define EIGEN_CXX11_TENSOR_TENSOR_META_MACROS_H
 
-
 /** use this macro in sfinae selection in templated functions
  *
  *   template<typename T,
@@ -29,20 +28,19 @@
 // SFINAE requires variadic templates
 #ifndef EIGEN_CUDACC
 #if EIGEN_HAS_VARIADIC_TEMPLATES
-  // SFINAE doesn't work for gcc <= 4.7
-  #ifdef EIGEN_COMP_GNUC
-    #if EIGEN_GNUC_AT_LEAST(4,8)
-      #define EIGEN_HAS_SFINAE
-    #endif
-  #else
-    #define EIGEN_HAS_SFINAE
-  #endif
+// SFINAE doesn't work for gcc <= 4.7
+#ifdef EIGEN_COMP_GNUC
+#if EIGEN_GNUC_AT_LEAST(4, 8)
+#define EIGEN_HAS_SFINAE
+#endif
+#else
+#define EIGEN_HAS_SFINAE
+#endif
 #endif
 #endif
 
-#define EIGEN_SFINAE_ENABLE_IF( __condition__ ) \
-    typename internal::enable_if< ( __condition__ ) , int >::type = 0
-
+#define EIGEN_SFINAE_ENABLE_IF(__condition__) \
+  typename internal::enable_if<(__condition__), int>::type = 0
 
 #if EIGEN_HAS_CONSTEXPR
 #define EIGEN_CONSTEXPR constexpr
@@ -50,13 +48,12 @@
 #define EIGEN_CONSTEXPR
 #endif
 
-
 #if EIGEN_OS_WIN || EIGEN_OS_WIN64
 #define EIGEN_SLEEP(n) Sleep(n)
 #elif EIGEN_OS_GNULINUX
 #define EIGEN_SLEEP(n) usleep(n * 1000);
 #else
-#define EIGEN_SLEEP(n) sleep(std::max<unsigned>(1, n/1000))
+#define EIGEN_SLEEP(n) sleep(std::max<unsigned>(1, n / 1000))
 #endif
 
 #endif

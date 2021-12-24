@@ -49,7 +49,7 @@ typedef struct {
   \param height the height of the matrix to create
 
 */
-fmat_t * new_fmat(uint_t height, uint_t length);
+fmat_t *new_fmat(uint_t height, uint_t length);
 
 /** fmat_t buffer deletion function
 
@@ -75,7 +75,7 @@ smpl_t fmat_get_sample(const fmat_t *s, uint_t channel, uint_t position);
   \param position sample position to write to
 
 */
-void  fmat_set_sample(fmat_t *s, smpl_t data, uint_t channel, uint_t position);
+void fmat_set_sample(fmat_t *s, smpl_t data, uint_t channel, uint_t position);
 
 /** read channel vector from a buffer
 
@@ -84,7 +84,7 @@ void  fmat_set_sample(fmat_t *s, smpl_t data, uint_t channel, uint_t position);
   \param output ::fvec_t to output to
 
 */
-void fmat_get_channel (const fmat_t *s, uint_t channel, fvec_t *output);
+void fmat_get_channel(const fmat_t *s, uint_t channel, fvec_t *output);
 
 /** get vector buffer from an fmat data
 
@@ -92,14 +92,14 @@ void fmat_get_channel (const fmat_t *s, uint_t channel, fvec_t *output);
   \param channel channel to read from
 
 */
-smpl_t * fmat_get_channel_data (const fmat_t *s, uint_t channel);
+smpl_t *fmat_get_channel_data(const fmat_t *s, uint_t channel);
 
 /** read data from a buffer
 
   \param s vector to read from
 
 */
-smpl_t ** fmat_get_data(const fmat_t *s);
+smpl_t **fmat_get_data(const fmat_t *s);
 
 /** print out fmat data
 

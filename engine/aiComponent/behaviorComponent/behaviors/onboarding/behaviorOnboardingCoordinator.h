@@ -6,24 +6,30 @@
  *
  * Description: Modular App driven onboarding.
  *
- *     NOTE: Onboarding phase behaviors should comply with the following expectations to maintain App Authoritative
- *     onboarding design:
+ *     NOTE: Onboarding phase behaviors should comply with the following
+ *expectations to maintain App Authoritative onboarding design:
  *
- *     1. The coordinator will maintain an idle state with no wakeword responses, no mandatory physical reactions, and
- *        no cube connections. Phase behaviors should handle these features internally to promote Sep of Concerns.
+ *     1. The coordinator will maintain an idle state with no wakeword
+ *responses, no mandatory physical reactions, and no cube connections. Phase
+ *behaviors should handle these features internally to promote Sep of Concerns.
  *
- *     2. The phase behavior should expect to be interrupted by the coordinator in the event of App Disconnection.
- *        The coordinator will return to the LookAtPhone phase any time the app disconnects, and await instruction.
- * 
- *     3. If not specified otherwise in the onboarding json file, the power button will do nothing in a given onboarding
- *        phase. If the phase allows the power button to operate, it must properly handle being resumed by 
- *        re-delegation from the coordinator if the power button is released prior to powering down. 
+ *     2. The phase behavior should expect to be interrupted by the coordinator
+ *in the event of App Disconnection. The coordinator will return to the
+ *LookAtPhone phase any time the app disconnects, and await instruction.
  *
- *     4. The phase behavior should not maintain any persistent state. The App will be responsible for
- *        restoring onboarding to the beginning of the last known phase upon reconnection.
+ *     3. If not specified otherwise in the onboarding json file, the power
+ *button will do nothing in a given onboarding phase. If the phase allows the
+ *power button to operate, it must properly handle being resumed by
+ *        re-delegation from the coordinator if the power button is released
+ *prior to powering down.
  *
- *     5. A timeout specific to the phase behavior should be defined in the coordinator json file. The
- *        coordinator will be responsible for all timeouts during onboarding to centralize settings and code
+ *     4. The phase behavior should not maintain any persistent state. The App
+ *will be responsible for restoring onboarding to the beginning of the last
+ *known phase upon reconnection.
+ *
+ *     5. A timeout specific to the phase behavior should be defined in the
+ *coordinator json file. The coordinator will be responsible for all timeouts
+ *during onboarding to centralize settings and code
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -37,8 +43,8 @@
 
 namespace Anki {
 
-namespace Util{
-  class IConsoleFunction;
+namespace Util {
+class IConsoleFunction;
 }
 
 namespace Vector {
@@ -48,9 +54,8 @@ enum class OnboardingStages : uint8_t;
 enum class OnboardingPhase : uint8_t;
 enum class OnboardingPhaseState : uint8_t;
 
-class BehaviorOnboardingCoordinator : public ICozmoBehavior
-{
-public:
+class BehaviorOnboardingCoordinator : public ICozmoBehavior {
+ public:
   virtual ~BehaviorOnboardingCoordinator() = default;
 
   const static std::string kOnboardingFolder;
@@ -58,21 +63,24 @@ public:
   const static std::string kOnboardingStageKey;
   const static std::string kOnboardingTimeKey;
 
-  // Onboarding is a little weird in that it may need to handle messages from the App even if it isn't
-  // currently active to appropriately coordinate around Mute and CustomerCare screens which reset the
-  // behavior stack on Entry/Exit. This function is called from the OnboardingMessageHandler BCComponent
-  // whether or not this behavior is currently active so messages from the App are always handled.
+  // Onboarding is a little weird in that it may need to handle messages from
+  // the App even if it isn't currently active to appropriately coordinate
+  // around Mute and CustomerCare screens which reset the behavior stack on
+  // Entry/Exit. This function is called from the OnboardingMessageHandler
+  // BCComponent whether or not this behavior is currently active so messages
+  // from the App are always handled.
   void HandleOnboardingMessageFromApp(const AppToEngineEvent& event);
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   explicit BehaviorOnboardingCoordinator(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
 
   virtual bool WantsToBeActivatedBehavior() const override;
 
@@ -81,8 +89,7 @@ protected:
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-
+ private:
   struct BatteryInfo {
     float chargerTime_s;
     bool needsToCharge;
@@ -118,11 +125,11 @@ private:
   void SendPhaseProgressResponseToApp();
   void Send1p0WakeUpResponseToApp(bool canWakeUp);
 
-  struct OnboardingPhaseData{
-    std::string       behaviorIDStr;
-    float             timeout_s;
+  struct OnboardingPhaseData {
+    std::string behaviorIDStr;
+    float timeout_s;
     ICozmoBehaviorPtr behavior;
-    bool              allowPowerOff;
+    bool allowPowerOff;
   };
 
   struct InstanceConfig {
@@ -177,10 +184,9 @@ private:
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingCoordinator__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingCoordinator__

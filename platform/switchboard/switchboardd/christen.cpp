@@ -12,10 +12,10 @@
 
 #include "christen.h"
 
+#include <cutils/properties.h>
+
 #include <iostream>
 #include <random>
-
-#include <cutils/properties.h>
 
 const std::string kProductNamePropertyKey = "ro.anki.product.name";
 const std::string kDefaultProductName = "Vector";
@@ -26,7 +26,8 @@ namespace Switchboard {
 std::string Christen::GenerateName() {
   char prop_value[PROPERTY_VALUE_MAX] = {0};
 
-  (void) property_get(kProductNamePropertyKey.c_str(), prop_value, kDefaultProductName.c_str());
+  (void)property_get(kProductNamePropertyKey.c_str(), prop_value,
+                     kDefaultProductName.c_str());
   if (prop_value[0] == '\0') {
     // Fatal Error.  No product name.
     std::cerr << "Fatal: No product name found" << std::endl;
@@ -38,11 +39,10 @@ std::string Christen::GenerateName() {
   // In some fonts, '0' and 'O' look alike, so they are excluded.
   // In addition, we exclude '1', 'I', and 'L' for the same reason.
 
-  std::vector<char> letters = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J',
-                               'K', 'M', 'N', 'P', 'R', 'S', 'T', 'U', 'V',
-                               'W', 'X', 'Y', 'Z'};
-  std::vector<char> digits =  {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
-
+  std::vector<char> letters = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+                               'J', 'K', 'M', 'N', 'P', 'R', 'S', 'T',
+                               'U', 'V', 'W', 'X', 'Y', 'Z'};
+  std::vector<char> digits = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
 
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -52,7 +52,7 @@ std::string Christen::GenerateName() {
   std::uniform_int_distribution<> dis(1, 198);
 
   std::string robot_id;
-  for (int i = 0 ; i < 2 ; i++) {
+  for (int i = 0; i < 2; i++) {
     char letter = letters[dis(gen) % letters.size()];
     robot_id.push_back(letter);
     char digit = digits[dis(gen) % digits.size()];
@@ -64,5 +64,5 @@ std::string Christen::GenerateName() {
   return robot_name;
 }
 
-} // Anki
-} // Switchboard
+}  // namespace Switchboard
+}  // namespace Anki

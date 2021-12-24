@@ -1,81 +1,85 @@
+#include "../perf_feature2d.hpp"
+
 #include "../perf_precomp.hpp"
 #include "opencv2/ts/ocl_perf.hpp"
-#include "../perf_feature2d.hpp"
 
 #ifdef HAVE_OPENCL
 
 namespace cvtest {
 namespace ocl {
 
-OCL_PERF_TEST_P(feature2d, detect, testing::Combine(Feature2DType::all(), TEST_IMAGES))
-{
-    Ptr<Feature2D> detector = getFeature2D(get<0>(GetParam()));
-    std::string filename = getDataPath(get<1>(GetParam()));
-    Mat mimg = imread(filename, IMREAD_GRAYSCALE);
+OCL_PERF_TEST_P(feature2d, detect,
+                testing::Combine(Feature2DType::all(), TEST_IMAGES)) {
+  Ptr<Feature2D> detector = getFeature2D(get<0>(GetParam()));
+  std::string filename = getDataPath(get<1>(GetParam()));
+  Mat mimg = imread(filename, IMREAD_GRAYSCALE);
 
-    ASSERT_FALSE(mimg.empty());
-    ASSERT_TRUE(detector);
+  ASSERT_FALSE(mimg.empty());
+  ASSERT_TRUE(detector);
 
-    UMat img, mask;
-    mimg.copyTo(img);
-    declare.in(img);
-    vector<KeyPoint> points;
+  UMat img, mask;
+  mimg.copyTo(img);
+  declare.in(img);
+  vector<KeyPoint> points;
 
-    OCL_TEST_CYCLE() detector->detect(img, points, mask);
+  OCL_TEST_CYCLE() detector->detect(img, points, mask);
 
-    EXPECT_GT(points.size(), 20u);
-    SANITY_CHECK_NOTHING();
+  EXPECT_GT(points.size(), 20u);
+  SANITY_CHECK_NOTHING();
 }
 
-OCL_PERF_TEST_P(feature2d, extract, testing::Combine(testing::Values(DETECTORS_EXTRACTORS), TEST_IMAGES))
-{
-    Ptr<Feature2D> detector = AKAZE::create();
-    Ptr<Feature2D> extractor = getFeature2D(get<0>(GetParam()));
-    std::string filename = getDataPath(get<1>(GetParam()));
-    Mat mimg = imread(filename, IMREAD_GRAYSCALE);
+OCL_PERF_TEST_P(feature2d, extract,
+                testing::Combine(testing::Values(DETECTORS_EXTRACTORS),
+                                 TEST_IMAGES)) {
+  Ptr<Feature2D> detector = AKAZE::create();
+  Ptr<Feature2D> extractor = getFeature2D(get<0>(GetParam()));
+  std::string filename = getDataPath(get<1>(GetParam()));
+  Mat mimg = imread(filename, IMREAD_GRAYSCALE);
 
-    ASSERT_FALSE(mimg.empty());
-    ASSERT_TRUE(extractor);
+  ASSERT_FALSE(mimg.empty());
+  ASSERT_TRUE(extractor);
 
-    UMat img, mask;
-    mimg.copyTo(img);
-    declare.in(img);
-    vector<KeyPoint> points;
-    detector->detect(img, points, mask);
+  UMat img, mask;
+  mimg.copyTo(img);
+  declare.in(img);
+  vector<KeyPoint> points;
+  detector->detect(img, points, mask);
 
-    EXPECT_GT(points.size(), 20u);
+  EXPECT_GT(points.size(), 20u);
 
-    UMat descriptors;
+  UMat descriptors;
 
-    OCL_TEST_CYCLE() extractor->compute(img, points, descriptors);
+  OCL_TEST_CYCLE() extractor->compute(img, points, descriptors);
 
-    EXPECT_EQ((size_t)descriptors.rows, points.size());
-    SANITY_CHECK_NOTHING();
+  EXPECT_EQ((size_t)descriptors.rows, points.size());
+  SANITY_CHECK_NOTHING();
 }
 
-OCL_PERF_TEST_P(feature2d, detectAndExtract, testing::Combine(testing::Values(DETECTORS_EXTRACTORS), TEST_IMAGES))
-{
-    Ptr<Feature2D> detector = getFeature2D(get<0>(GetParam()));
-    std::string filename = getDataPath(get<1>(GetParam()));
-    Mat mimg = imread(filename, IMREAD_GRAYSCALE);
+OCL_PERF_TEST_P(feature2d, detectAndExtract,
+                testing::Combine(testing::Values(DETECTORS_EXTRACTORS),
+                                 TEST_IMAGES)) {
+  Ptr<Feature2D> detector = getFeature2D(get<0>(GetParam()));
+  std::string filename = getDataPath(get<1>(GetParam()));
+  Mat mimg = imread(filename, IMREAD_GRAYSCALE);
 
-    ASSERT_FALSE(mimg.empty());
-    ASSERT_TRUE(detector);
+  ASSERT_FALSE(mimg.empty());
+  ASSERT_TRUE(detector);
 
-    UMat img, mask;
-    mimg.copyTo(img);
-    declare.in(img);
-    vector<KeyPoint> points;
-    UMat descriptors;
+  UMat img, mask;
+  mimg.copyTo(img);
+  declare.in(img);
+  vector<KeyPoint> points;
+  UMat descriptors;
 
-    OCL_TEST_CYCLE() detector->detectAndCompute(img, mask, points, descriptors, false);
+  OCL_TEST_CYCLE()
+  detector->detectAndCompute(img, mask, points, descriptors, false);
 
-    EXPECT_GT(points.size(), 20u);
-    EXPECT_EQ((size_t)descriptors.rows, points.size());
-    SANITY_CHECK_NOTHING();
+  EXPECT_GT(points.size(), 20u);
+  EXPECT_EQ((size_t)descriptors.rows, points.size());
+  SANITY_CHECK_NOTHING();
 }
 
-} // ocl
-} // cvtest
+}  // namespace ocl
+}  // namespace cvtest
 
-#endif // HAVE_OPENCL
+#endif  // HAVE_OPENCL

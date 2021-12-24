@@ -22,9 +22,9 @@
 #else
 #include <stdint.h>
 namespace std {
-using ::uint8_t;
 using ::int32_t;
-}
+using ::uint8_t;
+}  // namespace std
 #endif
 
 namespace gemmlowp {

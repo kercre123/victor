@@ -17,66 +17,71 @@
 #ifndef FLATBUFFERS_UTIL_H_
 #define FLATBUFFERS_UTIL_H_
 
-#include <fstream>
-#include <iomanip>
-#include <string>
-#include <sstream>
+#include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <assert.h>
+
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <string>
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
-  #define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #endif
 #ifndef NOMINMAX
-  #define NOMINMAX
+#define NOMINMAX
 #endif
-#include <windows.h>
-#include <winbase.h>
 #include <direct.h>
+#include <winbase.h>
+#include <windows.h>
 #else
 #include <limits.h>
 #endif
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include "flatbuffers/base.h"
-
 
 namespace flatbuffers {
 
 // Convert an integer or floating point value to a string.
 // In contrast to std::stringstream, "char" values are
 // converted to a string of digits, and we don't use scientific notation.
-template<typename T> std::string NumToString(T t) {
+template <typename T>
+std::string NumToString(T t) {
   std::stringstream ss;
   ss << t;
   return ss.str();
 }
 // Avoid char types used as character data.
-template<> inline std::string NumToString<signed char>(signed char t) {
+template <>
+inline std::string NumToString<signed char>(signed char t) {
   return NumToString(static_cast<int>(t));
 }
-template<> inline std::string NumToString<unsigned char>(unsigned char t) {
+template <>
+inline std::string NumToString<unsigned char>(unsigned char t) {
   return NumToString(static_cast<int>(t));
 }
 #if defined(FLATBUFFERS_CPP98_STL)
-  template <> inline std::string NumToString<long long>(long long t) {
-    char buf[21]; // (log((1 << 63) - 1) / log(10)) + 2
-    snprintf(buf, sizeof(buf), "%lld", t);
-    return std::string(buf);
-  }
+template <>
+inline std::string NumToString<long long>(long long t) {
+  char buf[21];  // (log((1 << 63) - 1) / log(10)) + 2
+  snprintf(buf, sizeof(buf), "%lld", t);
+  return std::string(buf);
+}
 
-  template <> inline std::string NumToString<unsigned long long>(
-      unsigned long long t) {
-    char buf[22]; // (log((1 << 63) - 1) / log(10)) + 1
-    snprintf(buf, sizeof(buf), "%llu", t);
-    return std::string(buf);
-  }
+template <>
+inline std::string NumToString<unsigned long long>(unsigned long long t) {
+  char buf[22];  // (log((1 << 63) - 1) / log(10)) + 1
+  snprintf(buf, sizeof(buf), "%llu", t);
+  return std::string(buf);
+}
 #endif  // defined(FLATBUFFERS_CPP98_STL)
 
 // Special versions for floats/doubles.
-template<> inline std::string NumToString<double>(double t) {
+template <>
+inline std::string NumToString<double>(double t) {
   // to_string() prints different numbers of digits for floats depending on
   // platform and isn't available on Android, so we use stringstream
   std::stringstream ss;
@@ -91,7 +96,8 @@ template<> inline std::string NumToString<double>(double t) {
   }
   return s;
 }
-template<> inline std::string NumToString<float>(float t) {
+template <>
+inline std::string NumToString<float>(float t) {
   return NumToString(static_cast<double>(t));
 }
 
@@ -100,10 +106,7 @@ template<> inline std::string NumToString<float>(float t) {
 // For example, IntToStringHex(0x23, 8) returns the string "00000023".
 inline std::string IntToStringHex(int i, int xdigits) {
   std::stringstream ss;
-  ss << std::setw(xdigits)
-     << std::setfill('0')
-     << std::hex
-     << std::uppercase
+  ss << std::setw(xdigits) << std::setfill('0') << std::hex << std::uppercase
      << i;
   return ss.str();
 }
@@ -111,21 +114,21 @@ inline std::string IntToStringHex(int i, int xdigits) {
 // Portable implementation of strtoll().
 inline int64_t StringToInt(const char *str, char **endptr = nullptr,
                            int base = 10) {
-  #ifdef _MSC_VER
-    return _strtoi64(str, endptr, base);
-  #else
-    return strtoll(str, endptr, base);
-  #endif
+#ifdef _MSC_VER
+  return _strtoi64(str, endptr, base);
+#else
+  return strtoll(str, endptr, base);
+#endif
 }
 
 // Portable implementation of strtoull().
 inline uint64_t StringToUInt(const char *str, char **endptr = nullptr,
                              int base = 10) {
-  #ifdef _MSC_VER
-    return _strtoui64(str, endptr, base);
-  #else
-    return strtoull(str, endptr, base);
-  #endif
+#ifdef _MSC_VER
+  return _strtoui64(str, endptr, base);
+#else
+  return strtoull(str, endptr, base);
+#endif
 }
 
 typedef bool (*LoadFileFunction)(const char *filename, bool binary,
@@ -134,9 +137,8 @@ typedef bool (*FileExistsFunction)(const char *filename);
 
 LoadFileFunction SetLoadFileFunction(LoadFileFunction load_file_function);
 
-FileExistsFunction SetFileExistsFunction(FileExistsFunction
-                                         file_exists_function);
-
+FileExistsFunction SetFileExistsFunction(
+    FileExistsFunction file_exists_function);
 
 // Check if file "name" exists.
 bool FileExists(const char *name);
@@ -239,29 +241,29 @@ inline std::string PosixPath(const char *path) {
 inline void EnsureDirExists(const std::string &filepath) {
   auto parent = StripFileName(filepath);
   if (parent.length()) EnsureDirExists(parent);
-  #ifdef _WIN32
-    (void)_mkdir(filepath.c_str());
-  #else
-    mkdir(filepath.c_str(), S_IRWXU|S_IRGRP|S_IXGRP);
-  #endif
+#ifdef _WIN32
+  (void)_mkdir(filepath.c_str());
+#else
+  mkdir(filepath.c_str(), S_IRWXU | S_IRGRP | S_IXGRP);
+#endif
 }
 
 // Obtains the absolute path from any other path.
 // Returns the input path if the absolute path couldn't be resolved.
 inline std::string AbsolutePath(const std::string &filepath) {
-  #ifdef FLATBUFFERS_NO_ABSOLUTE_PATH_RESOLUTION
-    return filepath;
-  #else
-    #ifdef _WIN32
-      char abs_path[MAX_PATH];
-      return GetFullPathNameA(filepath.c_str(), MAX_PATH, abs_path, nullptr)
-    #else
-      char abs_path[PATH_MAX];
-      return realpath(filepath.c_str(), abs_path)
-    #endif
-      ? abs_path
-      : filepath;
-  #endif // FLATBUFFERS_NO_ABSOLUTE_PATH_RESOLUTION
+#ifdef FLATBUFFERS_NO_ABSOLUTE_PATH_RESOLUTION
+  return filepath;
+#else
+#ifdef _WIN32
+  char abs_path[MAX_PATH];
+  return GetFullPathNameA(filepath.c_str(), MAX_PATH, abs_path, nullptr)
+#else
+  char abs_path[PATH_MAX];
+  return realpath(filepath.c_str(), abs_path)
+#endif
+             ? abs_path
+             : filepath;
+#endif  // FLATBUFFERS_NO_ABSOLUTE_PATH_RESOLUTION
 }
 
 // To and from UTF-8 unicode conversion functions
@@ -279,7 +281,7 @@ inline int ToUTF8(uint32_t ucc, std::string *out) {
       uint32_t remain_bits = i * 6;
       // Store first byte:
       (*out) += static_cast<char>((0xFE << (max_bits - remain_bits)) |
-                                 (ucc >> remain_bits));
+                                  (ucc >> remain_bits));
       // Store remaining bytes:
       for (int j = i - 1; j >= 0; j--) {
         (*out) += static_cast<char>(((ucc >> (j * 6)) & 0x3F) | 0x80);
@@ -382,13 +384,27 @@ inline bool EscapeString(const char *s, size_t length, std::string *_text,
   for (uoffset_t i = 0; i < length; i++) {
     char c = s[i];
     switch (c) {
-      case '\n': text += "\\n"; break;
-      case '\t': text += "\\t"; break;
-      case '\r': text += "\\r"; break;
-      case '\b': text += "\\b"; break;
-      case '\f': text += "\\f"; break;
-      case '\"': text += "\\\""; break;
-      case '\\': text += "\\\\"; break;
+      case '\n':
+        text += "\\n";
+        break;
+      case '\t':
+        text += "\\t";
+        break;
+      case '\r':
+        text += "\\r";
+        break;
+      case '\b':
+        text += "\\b";
+        break;
+      case '\f':
+        text += "\\f";
+        break;
+      case '\"':
+        text += "\\\"";
+        break;
+      case '\\':
+        text += "\\\\";
+        break;
       default:
         if (c >= ' ' && c <= '~') {
           text += c;
@@ -421,7 +437,8 @@ inline bool EscapeString(const char *s, size_t length, std::string *_text,
               text += "\\u";
               text += IntToStringHex(ucc, 4);
             } else if (ucc <= 0x10FFFF) {
-              // Encode Unicode SMP values to a surrogate pair using two \u escapes.
+              // Encode Unicode SMP values to a surrogate pair using two \u
+              // escapes.
               uint32_t base = ucc - 0x10000;
               auto high_surrogate = (base >> 10) + 0xD800;
               auto low_surrogate = (base & 0x03FF) + 0xDC00;

@@ -33,8 +33,8 @@ struct AllocationInfo;
 // each tensor needs to be allocated and deallocated, and preallocates all the
 // necessary memory (the PlanAllocations phase). It then assigns portions of
 // this memory buffer to each tensor (the ExecuteAllocations phase). Tensors may
-// share some of the buffer if a tensor B is to be allocated after another tensor
-// A has been deallocated.
+// share some of the buffer if a tensor B is to be allocated after another
+// tensor A has been deallocated.
 //
 // If dynamic tensors are used the planning steps can be repeated during model
 // execution. Since dynamic tensors don't have sizes until after the

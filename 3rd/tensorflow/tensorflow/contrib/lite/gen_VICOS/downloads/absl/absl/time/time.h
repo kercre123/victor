@@ -573,7 +573,7 @@ class Time {
   // a `Time::Breakdown` to a function, pass an `absl::Time` and an
   // `absl::TimeZone`.
   struct Breakdown {
-    int64_t year;          // year (e.g., 2013)
+    int64_t year;        // year (e.g., 2013)
     int month;           // month of year [1:12]
     int day;             // day of month [1:31]
     int hour;            // hour of day [0:23]
@@ -909,8 +909,9 @@ extern const char RFC1123_no_wday[];  // %d %b %E4Y %H:%M:%S %z
 //
 // Note: If the given `absl::Time` is `absl::InfiniteFuture()`, the returned
 // std::string will be exactly "infinite-future". If the given `absl::Time` is
-// `absl::InfinitePast()`, the returned std::string will be exactly "infinite-past".
-// In both cases the given format std::string and `absl::TimeZone` are ignored.
+// `absl::InfinitePast()`, the returned std::string will be exactly
+// "infinite-past". In both cases the given format std::string and
+// `absl::TimeZone` are ignored.
 //
 std::string FormatTime(const std::string& format, Time t, TimeZone tz);
 
@@ -941,8 +942,8 @@ inline std::ostream& operator<<(std::ostream& os, Time t) {
 //
 //   "1970-01-01 00:00:00.0 +0000"
 //
-// For example, parsing a std::string of "15:45" (%H:%M) will return an absl::Time
-// that represents "1970-01-01 15:45:00.0 +0000".
+// For example, parsing a std::string of "15:45" (%H:%M) will return an
+// absl::Time that represents "1970-01-01 15:45:00.0 +0000".
 //
 // Note that since ParseTime() returns time instants, it makes the most sense
 // to parse fully-specified date/time strings that include a UTC offset (%z,
@@ -970,8 +971,8 @@ inline std::ostream& operator<<(std::ostream& os, Time t) {
 //
 // Note: If the input std::string is exactly "infinite-future", the returned
 // `absl::Time` will be `absl::InfiniteFuture()` and `true` will be returned.
-// If the input std::string is "infinite-past", the returned `absl::Time` will be
-// `absl::InfinitePast()` and `true` will be returned.
+// If the input std::string is "infinite-past", the returned `absl::Time` will
+// be `absl::InfinitePast()` and `true` will be returned.
 //
 bool ParseTime(const std::string& format, const std::string& input, Time* time,
                std::string* err);
@@ -1153,12 +1154,8 @@ constexpr Duration FromInt64(int64_t v, std::ratio<1, N>) {
   return MakeNormalizedDuration(
       v / N, v % N * kTicksPerNanosecond * 1000 * 1000 * 1000 / N);
 }
-constexpr Duration FromInt64(int64_t v, std::ratio<60>) {
-  return Minutes(v);
-}
-constexpr Duration FromInt64(int64_t v, std::ratio<3600>) {
-  return Hours(v);
-}
+constexpr Duration FromInt64(int64_t v, std::ratio<60>) { return Minutes(v); }
+constexpr Duration FromInt64(int64_t v, std::ratio<3600>) { return Hours(v); }
 
 // IsValidRep64<T>(0) is true if the expression `int64_t{std::declval<T>()}` is
 // valid. That is, if a T can be assigned to an int64_t without narrowing.
@@ -1186,24 +1183,16 @@ int64_t ToInt64(Duration d, Ratio) {
   return ToInt64Seconds(d * Ratio::den / Ratio::num);
 }
 // Fastpath implementations for the 6 common duration units.
-inline int64_t ToInt64(Duration d, std::nano) {
-  return ToInt64Nanoseconds(d);
-}
+inline int64_t ToInt64(Duration d, std::nano) { return ToInt64Nanoseconds(d); }
 inline int64_t ToInt64(Duration d, std::micro) {
   return ToInt64Microseconds(d);
 }
 inline int64_t ToInt64(Duration d, std::milli) {
   return ToInt64Milliseconds(d);
 }
-inline int64_t ToInt64(Duration d, std::ratio<1>) {
-  return ToInt64Seconds(d);
-}
-inline int64_t ToInt64(Duration d, std::ratio<60>) {
-  return ToInt64Minutes(d);
-}
-inline int64_t ToInt64(Duration d, std::ratio<3600>) {
-  return ToInt64Hours(d);
-}
+inline int64_t ToInt64(Duration d, std::ratio<1>) { return ToInt64Seconds(d); }
+inline int64_t ToInt64(Duration d, std::ratio<60>) { return ToInt64Minutes(d); }
+inline int64_t ToInt64(Duration d, std::ratio<3600>) { return ToInt64Hours(d); }
 
 // Converts an absl::Duration to a chrono duration of type T.
 template <typename T>
@@ -1224,7 +1213,8 @@ T ToChronoDuration(Duration d) {
 constexpr bool operator<(Duration lhs, Duration rhs) {
   return time_internal::GetRepHi(lhs) != time_internal::GetRepHi(rhs)
              ? time_internal::GetRepHi(lhs) < time_internal::GetRepHi(rhs)
-             : time_internal::GetRepHi(lhs) == std::numeric_limits<int64_t>::min()
+             : time_internal::GetRepHi(lhs) ==
+                       std::numeric_limits<int64_t>::min()
                    ? time_internal::GetRepLo(lhs) + 1 <
                          time_internal::GetRepLo(rhs) + 1
                    : time_internal::GetRepLo(lhs) <

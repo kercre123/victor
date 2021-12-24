@@ -20,11 +20,10 @@ namespace Vector {
 
 struct PathMotionProfile;
 
-void LoadPathMotionProfileFromJson(PathMotionProfile& profile, const Json::Value& config);
+void LoadPathMotionProfileFromJson(PathMotionProfile& profile,
+                                   const Json::Value& config);
 
-}
-}
-
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

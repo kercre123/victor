@@ -18,19 +18,16 @@
 namespace Anki {
 namespace Vector {
 
-class ConditionIsMaintenanceReboot : public IBEICondition
-{
-public:
-  
+class ConditionIsMaintenanceReboot : public IBEICondition {
+ public:
   explicit ConditionIsMaintenanceReboot(const Json::Value& config);
 
-protected:
-  
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+ protected:
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) const override;
 };
-  
-} // namespace
-} // namespace
 
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

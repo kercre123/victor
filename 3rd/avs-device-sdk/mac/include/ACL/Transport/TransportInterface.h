@@ -16,76 +16,78 @@
 #ifndef ALEXA_CLIENT_SDK_ACL_INCLUDE_ACL_TRANSPORT_TRANSPORTINTERFACE_H_
 #define ALEXA_CLIENT_SDK_ACL_INCLUDE_ACL_TRANSPORT_TRANSPORTINTERFACE_H_
 
-#include <memory>
-
 #include <AVSCommon/AVS/MessageRequest.h>
 #include <AVSCommon/Utils/RequiresShutdown.h>
+
+#include <memory>
 
 namespace alexaClientSDK {
 namespace acl {
 
 /**
- * This class defines the interface which must be implemented to represent the creation and management of a
- * specific connection to AVS.
+ * This class defines the interface which must be implemented to represent the
+ * creation and management of a specific connection to AVS.
  */
 class TransportInterface : public avsCommon::utils::RequiresShutdown {
-public:
-    /**
-     * TransportInterface constructor.
-     */
-    TransportInterface();
+ public:
+  /**
+   * TransportInterface constructor.
+   */
+  TransportInterface();
 
-    /**
-     * Initiate a connection to AVS.  This function may operate asynchronously, meaning its return value
-     * does not imply a successful connection, but that an attempt to connect has been successfully started.
-     * This function may not be thread-safe.
-     *
-     * @return If connection setup was successful.
-     */
-    virtual bool connect() = 0;
+  /**
+   * Initiate a connection to AVS.  This function may operate asynchronously,
+   * meaning its return value does not imply a successful connection, but that
+   * an attempt to connect has been successfully started. This function may not
+   * be thread-safe.
+   *
+   * @return If connection setup was successful.
+   */
+  virtual bool connect() = 0;
 
-    /**
-     * Disconnect from AVS.
-     * This function may not be thread-safe.
-     */
-    virtual void disconnect() = 0;
+  /**
+   * Disconnect from AVS.
+   * This function may not be thread-safe.
+   */
+  virtual void disconnect() = 0;
 
-    /**
-     * Returns whether this object is currently connected to AVS.
-     *
-     * @return If the object is currently connected to AVS.
-     */
-    virtual bool isConnected() = 0;
+  /**
+   * Returns whether this object is currently connected to AVS.
+   *
+   * @return If the object is currently connected to AVS.
+   */
+  virtual bool isConnected() = 0;
 
-    /**
-     * Sends an message request. This call blocks until the message can be sent.
-     *
-     * @param request The requested message.
-     */
-    virtual void send(std::shared_ptr<avsCommon::avs::MessageRequest> request) = 0;
+  /**
+   * Sends an message request. This call blocks until the message can be sent.
+   *
+   * @param request The requested message.
+   */
+  virtual void send(
+      std::shared_ptr<avsCommon::avs::MessageRequest> request) = 0;
 
-    /**
-     * Deleted copy constructor
-     *
-     * @param rhs The 'right hand side' to not copy.
-     */
-    TransportInterface(const TransportInterface& rhs) = delete;
+  /**
+   * Deleted copy constructor
+   *
+   * @param rhs The 'right hand side' to not copy.
+   */
+  TransportInterface(const TransportInterface& rhs) = delete;
 
-    /**
-     * Deleted assignment operator
-     *
-     * @param rhs The 'right hand side' to not copy.
-     */
-    TransportInterface& operator=(const TransportInterface& rhs) = delete;
+  /**
+   * Deleted assignment operator
+   *
+   * @param rhs The 'right hand side' to not copy.
+   */
+  TransportInterface& operator=(const TransportInterface& rhs) = delete;
 
-    /**
-     * Destructor.
-     */
-    virtual ~TransportInterface() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~TransportInterface() = default;
 };
 
-inline TransportInterface::TransportInterface() : RequiresShutdown{"TransportInterface"} {
-}
+inline TransportInterface::TransportInterface()
+    : RequiresShutdown{"TransportInterface"} {}
 
 }  // namespace acl
 }  // namespace alexaClientSDK

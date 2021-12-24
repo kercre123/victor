@@ -14,9 +14,9 @@
 #if !defined(__IPPAC_H__) || defined(_OWN_BLDPCS)
 #define __IPPAC_H__
 
-#if defined (_WIN32_WCE) && defined (_M_IX86) && defined (__stdcall)
-  #define _IPP_STDCALL_CDECL
-  #undef __stdcall
+#if defined(_WIN32_WCE) && defined(_M_IX86) && defined(__stdcall)
+#define _IPP_STDCALL_CDECL
+#undef __stdcall
 #endif
 
 #ifndef __IPPDEFS_H__
@@ -27,24 +27,22 @@
 extern "C" {
 #endif
 
-
-#if !defined( _IPP_NO_DEFAULT_LIB )
-  #if defined( _IPP_PARALLEL_DYNAMIC )
-    #pragma comment( lib, "ippac" )
-    #pragma comment( lib, "ippcore" )
-  #elif defined( _IPP_PARALLEL_STATIC )
-    #pragma comment( lib, "ippac_t" )
-    #pragma comment( lib, "ippdc_t" )
-    #pragma comment( lib, "ipps_t" )
-    #pragma comment( lib, "ippcore_t" )
-  #elif defined( _IPP_SEQUENTIAL_STATIC )
-    #pragma comment( lib, "ippac_l" )
-    #pragma comment( lib, "ippdc_l" )
-    #pragma comment( lib, "ipps_l" )
-    #pragma comment( lib, "ippcore_l" )
-  #endif
+#if !defined(_IPP_NO_DEFAULT_LIB)
+#if defined(_IPP_PARALLEL_DYNAMIC)
+#pragma comment(lib, "ippac")
+#pragma comment(lib, "ippcore")
+#elif defined(_IPP_PARALLEL_STATIC)
+#pragma comment(lib, "ippac_t")
+#pragma comment(lib, "ippdc_t")
+#pragma comment(lib, "ipps_t")
+#pragma comment(lib, "ippcore_t")
+#elif defined(_IPP_SEQUENTIAL_STATIC)
+#pragma comment(lib, "ippac_l")
+#pragma comment(lib, "ippdc_l")
+#pragma comment(lib, "ipps_l")
+#pragma comment(lib, "ippcore_l")
 #endif
-
+#endif
 
 /*
 //  Data Structures and Macro
@@ -110,32 +108,34 @@ typedef struct IppsFilterContext_DTS_32f IppsFilterSpec_DTS_32f;
 //  MP3 codec defines
 */
 
-#define IPP_MP3_GRANULE_LEN   576 /* maximum number of frequency
-                                     decoded lines */
-#define IPP_MP3_SF_BUF_LEN    40  /* scalefactor buffer length */
-#define IPP_MP3_V_BUF_LEN     512 /* V data buffers length (32-bit words) */
-#define IPP_MP3_ID_MPEG2      0   /* MPEG-2 frame identifier */
-#define IPP_MP3_ID_MPEG1      1   /* MPEG-1 frame identifier */
+#define IPP_MP3_GRANULE_LEN                                  \
+  576                         /* maximum number of frequency \
+                                 decoded lines */
+#define IPP_MP3_SF_BUF_LEN 40 /* scalefactor buffer length */
+#define IPP_MP3_V_BUF_LEN 512 /* V data buffers length (32-bit words) */
+#define IPP_MP3_ID_MPEG2 0    /* MPEG-2 frame identifier */
+#define IPP_MP3_ID_MPEG1 1    /* MPEG-1 frame identifier */
 
 /*
 //  Scalefactor band table length for short block
 */
 
-#define IPP_MP3_SFB_TABLE_LONG_LEN    138
+#define IPP_MP3_SFB_TABLE_LONG_LEN 138
 typedef const Ipp16s IppMP3ScaleFactorBandTableLong[IPP_MP3_SFB_TABLE_LONG_LEN];
 
 /*
 //  Scalefactor band table length for long block
 */
 
-#define IPP_MP3_SFB_TABLE_SHORT_LEN   84
-typedef const Ipp16s IppMP3ScaleFactorBandTableShort[IPP_MP3_SFB_TABLE_SHORT_LEN];
+#define IPP_MP3_SFB_TABLE_SHORT_LEN 84
+typedef const Ipp16s
+    IppMP3ScaleFactorBandTableShort[IPP_MP3_SFB_TABLE_SHORT_LEN];
 
 /*
 //  Mixed block partition table
 */
 
-#define IPP_MP3_MBP_TABLE_LEN   12
+#define IPP_MP3_MBP_TABLE_LEN 12
 typedef const Ipp16s IppMP3MixedBlockPartitionTable[IPP_MP3_MBP_TABLE_LEN];
 
 /* Example mixed block partition table
@@ -179,18 +179,12 @@ IppMP3MixedBlockPartitionTable Modified_Mbp_Table =
 
 */
 
-
 typedef enum {
-  IPPAC_DTS_NONPERFECT  = 0,
+  IPPAC_DTS_NONPERFECT = 0,
   IPPAC_DTS_PERFECT = 1
 } IppAC_DTS_SYNTHESIS;
 
-
-typedef enum {
-  IPP_CDBK_UNKNOWN  = 0,
-  IPP_CDBK_STANDARD = 1
-} Ipp_Cdbk_VQ_Hint;
-
+typedef enum { IPP_CDBK_UNKNOWN = 0, IPP_CDBK_STANDARD = 1 } Ipp_Cdbk_VQ_Hint;
 
 typedef enum {
   IPPAC_PS_CONF0 = 0,
@@ -209,28 +203,28 @@ typedef struct CdbkState_VQ_32f IppsVQCodeBookState_32f;
 */
 
 typedef struct {
-  int id;              /* ID: 1 - MPEG-1, 0 - MPEG-2              */
-  int layer;           /* layer index: 0x3 - Layer I
-                                       0x2 - Layer II
-                                       0x1 - Layer III            */
-  int protectionBit;   /* CRC flag 0: CRC on, 1: CRC off          */
-  int bitRate;         /* bit rate index                          */
-  int samplingFreq;    /* sampling frequency index                */
-  int paddingBit;      /* padding flag:
-                            0 - no padding,
-                            1 - padding                           */
-  int privateBit;      /* private_bit, no use                     */
-  int mode;            /* mono/stereo select information          */
-  int modeExt;         /* extension to mode                       */
-  int copyright;       /* copyright or not:
-                            0 - no,
-                            1 - yes                               */
-  int originalCopy;    /* original bitstream or copy:
-                            0 - copy,
-                            1 - original                          */
-  int emphasis;        /* flag indicates the type of de-emphasis
-                          that shall be used                      */
-  int CRCWord;         /* CRC-check word                          */
+  int id;            /* ID: 1 - MPEG-1, 0 - MPEG-2              */
+  int layer;         /* layer index: 0x3 - Layer I
+                                     0x2 - Layer II
+                                     0x1 - Layer III            */
+  int protectionBit; /* CRC flag 0: CRC on, 1: CRC off          */
+  int bitRate;       /* bit rate index                          */
+  int samplingFreq;  /* sampling frequency index                */
+  int paddingBit;    /* padding flag:
+                          0 - no padding,
+                          1 - padding                           */
+  int privateBit;    /* private_bit, no use                     */
+  int mode;          /* mono/stereo select information          */
+  int modeExt;       /* extension to mode                       */
+  int copyright;     /* copyright or not:
+                          0 - no,
+                          1 - yes                               */
+  int originalCopy;  /* original bitstream or copy:
+                          0 - copy,
+                          1 - original                          */
+  int emphasis;      /* flag indicates the type of de-emphasis
+                        that shall be used                      */
+  int CRCWord;       /* CRC-check word                          */
 } IppMP3FrameHeader;
 
 /*
@@ -242,86 +236,93 @@ typedef struct {
 */
 
 typedef struct {
-  int  part23Len;       /* the number of bits for scale factors
-                           and Huffman data                       */
-  int  bigVals;         /* the half number of Huffman data whose
-                           maximum amplitudes are greater than 1  */
-  int  globGain;        /* the quantizer step size information    */
-  int  sfCompress;      /* information to select the number of
-                           bits used for the transmission of the
-                           scale factors                          */
-  int  winSwitch;       /* flag signals that the block uses an
-                           other than normal window               */
-  int  blockType;       /* flag indicates the window type         */
-  int  mixedBlock;      /* flag indicates type of block:
-                            0 - non mixed block,
-                            1 - mixed block                       */
-  int  pTableSelect[3]; /* Huffman table index for the 3 regions
-                           in big-values field                    */
-  int  pSubBlkGain[3];  /* gain offset from the global gain for
-                           one subblock                           */
-  int  reg0Cnt;         /* the number of scale factor bands at
-                           the boundary of the first region of
-                           the big-values field                   */
-  int  reg1Cnt;         /* the number of scale factor bands at
-                           the boundary of the second region of
-                           the big-values field                   */
-  int  preFlag;         /* flag of high frequency amplification   */
-  int  sfScale;         /* scale to the scale factors             */
-  int  cnt1TabSel;      /* Huffman table index for the count1
-                           region of quadruples                   */
+  int part23Len;       /* the number of bits for scale factors
+                          and Huffman data                       */
+  int bigVals;         /* the half number of Huffman data whose
+                          maximum amplitudes are greater than 1  */
+  int globGain;        /* the quantizer step size information    */
+  int sfCompress;      /* information to select the number of
+                          bits used for the transmission of the
+                          scale factors                          */
+  int winSwitch;       /* flag signals that the block uses an
+                          other than normal window               */
+  int blockType;       /* flag indicates the window type         */
+  int mixedBlock;      /* flag indicates type of block:
+                           0 - non mixed block,
+                           1 - mixed block                       */
+  int pTableSelect[3]; /* Huffman table index for the 3 regions
+                          in big-values field                    */
+  int pSubBlkGain[3];  /* gain offset from the global gain for
+                          one subblock                           */
+  int reg0Cnt;         /* the number of scale factor bands at
+                          the boundary of the first region of
+                          the big-values field                   */
+  int reg1Cnt;         /* the number of scale factor bands at
+                          the boundary of the second region of
+                          the big-values field                   */
+  int preFlag;         /* flag of high frequency amplification   */
+  int sfScale;         /* scale to the scale factors             */
+  int cnt1TabSel;      /* Huffman table index for the count1
+                          region of quadruples                   */
 } IppMP3SideInfo;
 
 /*
 //  Global Macro Definitions for AAC codec
 */
 
-#define IPP_AAC_ELT_NUM       16          /* maximum number of elements for
-                                             one program */
-#define IPP_AAC_CR_ID_LEN     9           /* copyright id length */
-#define IPP_AAC_LFE_ELT_NUM   (1<<2)      /* maximum Low Frequency
-                                             Enhance elements number for one
-                                             program */
-#define IPP_AAC_DATA_ELT_NUM  (1<<3)      /* maximum data elements number
-                                             for one program */
-#define IPP_AAC_COMMENTS_LEN  (1<<8)      /* maximum length of the comment
-                                             field in bytes */
-#define IPP_AAC_TAG_LEN       4           /* length of AAC data element tag */
-#define IPP_AAC_MAX_SFB       51          /* maximum scalefactor band for all
-                                             sampling frequencies */
-#define IPP_AAC_GROUP_NUM_MAX 8           /* max groups number for one frame */
-#define IPP_AAC_SF_MAX        60          /* max number of sfb in one window */
-#define IPP_AAC_PRED_SFB_MAX  41          /* maximum prediction scalefactor
-                                             bands number for one frame */
-#define IPP_AAC_SF_LEN        120         /* scale factor buffer length */
-#define IPP_AAC_TNS_FILT_MAX  8           /* maximum filters number for one
-                                             frame */
-#define ADIF_ID               0x41444946  /* ASCII-"ADIF" */
+#define IPP_AAC_ELT_NUM                                       \
+  16                        /* maximum number of elements for \
+                               one program */
+#define IPP_AAC_CR_ID_LEN 9 /* copyright id length */
+#define IPP_AAC_LFE_ELT_NUM                   \
+  (1 << 2) /* maximum Low Frequency           \
+              Enhance elements number for one \
+              program */
+#define IPP_AAC_DATA_ELT_NUM               \
+  (1 << 3) /* maximum data elements number \
+              for one program */
+#define IPP_AAC_COMMENTS_LEN                               \
+  (1 << 8)                /* maximum length of the comment \
+                             field in bytes */
+#define IPP_AAC_TAG_LEN 4 /* length of AAC data element tag */
+#define IPP_AAC_MAX_SFB                                             \
+  51                            /* maximum scalefactor band for all \
+                                   sampling frequencies */
+#define IPP_AAC_GROUP_NUM_MAX 8 /* max groups number for one frame */
+#define IPP_AAC_SF_MAX 60       /* max number of sfb in one window */
+#define IPP_AAC_PRED_SFB_MAX                                 \
+  41                       /* maximum prediction scalefactor \
+                              bands number for one frame */
+#define IPP_AAC_SF_LEN 120 /* scale factor buffer length */
+#define IPP_AAC_TNS_FILT_MAX                                 \
+  8                        /* maximum filters number for one \
+                              frame */
+#define ADIF_ID 0x41444946 /* ASCII-"ADIF" */
 
 /*
 //  ADIF Header
 */
 
 typedef struct {
-  Ipp32u ADIFId;              /* 32-bit, "ADIF" ASCII code        */
-  int copyIdPres;             /* copy id flag:
-                                  0 - off,
-                                  1 - on                          */
-  int originalCopy;           /* copyright bit:
-                                  0 - no copyright on the coded
-                                      bitstream,
-                                  1 - copyright protected         */
-  int home;                   /* original/home bit:
-                                  0 - the bitstream is a copy,
-                                  1 - the bitstream is an original*/
-  int bitstreamType;          /* bitstream flag:
-                                  0 - constant rate bitstream,
-                                  1 - variable rate bitstream     */
-  int bitRate;                /* bit rate; if 0, unkown bit rate  */
-  int numPrgCfgElt;           /* number of program configure
-                                 elements                         */
-  int pADIFBufFullness[IPP_AAC_ELT_NUM];  /* buffer fullness      */
-  Ipp8u pCopyId[IPP_AAC_CR_ID_LEN];       /* copy id              */
+  Ipp32u ADIFId;                         /* 32-bit, "ADIF" ASCII code        */
+  int copyIdPres;                        /* copy id flag:
+                                             0 - off,
+                                             1 - on                          */
+  int originalCopy;                      /* copyright bit:
+                                             0 - no copyright on the coded
+                                                 bitstream,
+                                             1 - copyright protected         */
+  int home;                              /* original/home bit:
+                                             0 - the bitstream is a copy,
+                                             1 - the bitstream is an original*/
+  int bitstreamType;                     /* bitstream flag:
+                                             0 - constant rate bitstream,
+                                             1 - variable rate bitstream     */
+  int bitRate;                           /* bit rate; if 0, unkown bit rate  */
+  int numPrgCfgElt;                      /* number of program configure
+                                            elements                         */
+  int pADIFBufFullness[IPP_AAC_ELT_NUM]; /* buffer fullness      */
+  Ipp8u pCopyId[IPP_AAC_CR_ID_LEN];      /* copy id              */
 } IppAACADIFHeader;
 
 /*
@@ -329,60 +330,60 @@ typedef struct {
 */
 
 typedef struct {
-  int eltInsTag;              /* element instance tag             */
-  int profile;                /* profile index:
-                                  0 - main,
-                                  1 - Low Complexity,
-                                  2 - Scaleable Sampling Rate,
-                                  3 - reserved                    */
-  int samplingRateIndex;      /* sampling rate index              */
-  int numFrontElt;            /* number of front elements         */
-  int numSideElt;             /* number of side elements          */
-  int numBackElt;             /* number of back elements          */
-  int numLfeElt;              /* number of LFE elements           */
-  int numDataElt;             /* number of data elements          */
-  int numValidCcElt;          /* number of coupling channel
-                                  elements                        */
-  int monoMixdownPres;        /* mono mixdown flag:
-                                  0 - off,
-                                  1 - on                          */
-  int monoMixdownEltNum;      /* number of mono mixdown elements  */
-  int stereoMixdownPres;      /* stereo mixdown flag:
-                                  0 - off,
-                                  1 - on                          */
-  int stereoMixdownEltNum;    /* number of stereo mixdown
-                                  elements                        */
-  int matrixMixdownIdxPres;   /* matrix mixdown flag:
-                                  0 - off,
-                                  1 - on                          */
-  int matrixMixdownIdx;       /* identifier of the surround
-                                  mixdown coefficient             */
-  int pseudoSurroundEnable;   /* pseudo surround:
-                                  0 - off,
-                                  1 - on                          */
-  int pFrontIsCpe[IPP_AAC_ELT_NUM];     /* channel pair flag for
-                                           front elements         */
-  int pFrontTagSel[IPP_AAC_ELT_NUM];    /* instance tag for front
-                                           elements               */
-  int pSideIsCpe[IPP_AAC_ELT_NUM];      /* channel pair flag for
-                                           side elements          */
-  int pSideTagSel[IPP_AAC_ELT_NUM];     /* instance tag for side
-                                           elements               */
-  int pBackIsCpe[IPP_AAC_ELT_NUM];      /* channel pair flag for
-                                           back elements          */
-  int pBackTagSel[IPP_AAC_ELT_NUM];     /* instance tag for back
-                                           elements               */
-  int pLfeTagSel[IPP_AAC_LFE_ELT_NUM];  /* channel pair flag for
-                                           LFE elements           */
-  int pDataTagSel[IPP_AAC_DATA_ELT_NUM];  /* instance tag for data
-                                             elements             */
-  int pCceIsIndSw[IPP_AAC_ELT_NUM];     /* independent flag for
-                                           coupling               */
-                                        /* channel elements       */
-  int pCceTagSel[IPP_AAC_ELT_NUM];      /* instance tag for coupling
-                                           channel elements       */
-  int numComBytes;                      /* number of comment field
-                                           bytes                  */
+  int eltInsTag;                         /* element instance tag             */
+  int profile;                           /* profile index:
+                                             0 - main,
+                                             1 - Low Complexity,
+                                             2 - Scaleable Sampling Rate,
+                                             3 - reserved                    */
+  int samplingRateIndex;                 /* sampling rate index              */
+  int numFrontElt;                       /* number of front elements         */
+  int numSideElt;                        /* number of side elements          */
+  int numBackElt;                        /* number of back elements          */
+  int numLfeElt;                         /* number of LFE elements           */
+  int numDataElt;                        /* number of data elements          */
+  int numValidCcElt;                     /* number of coupling channel
+                                             elements                        */
+  int monoMixdownPres;                   /* mono mixdown flag:
+                                             0 - off,
+                                             1 - on                          */
+  int monoMixdownEltNum;                 /* number of mono mixdown elements  */
+  int stereoMixdownPres;                 /* stereo mixdown flag:
+                                             0 - off,
+                                             1 - on                          */
+  int stereoMixdownEltNum;               /* number of stereo mixdown
+                                             elements                        */
+  int matrixMixdownIdxPres;              /* matrix mixdown flag:
+                                             0 - off,
+                                             1 - on                          */
+  int matrixMixdownIdx;                  /* identifier of the surround
+                                             mixdown coefficient             */
+  int pseudoSurroundEnable;              /* pseudo surround:
+                                             0 - off,
+                                             1 - on                          */
+  int pFrontIsCpe[IPP_AAC_ELT_NUM];      /* channel pair flag for
+                                            front elements         */
+  int pFrontTagSel[IPP_AAC_ELT_NUM];     /* instance tag for front
+                                            elements               */
+  int pSideIsCpe[IPP_AAC_ELT_NUM];       /* channel pair flag for
+                                            side elements          */
+  int pSideTagSel[IPP_AAC_ELT_NUM];      /* instance tag for side
+                                            elements               */
+  int pBackIsCpe[IPP_AAC_ELT_NUM];       /* channel pair flag for
+                                            back elements          */
+  int pBackTagSel[IPP_AAC_ELT_NUM];      /* instance tag for back
+                                            elements               */
+  int pLfeTagSel[IPP_AAC_LFE_ELT_NUM];   /* channel pair flag for
+                                            LFE elements           */
+  int pDataTagSel[IPP_AAC_DATA_ELT_NUM]; /* instance tag for data
+                                            elements             */
+  int pCceIsIndSw[IPP_AAC_ELT_NUM];      /* independent flag for
+                                            coupling               */
+                                         /* channel elements       */
+  int pCceTagSel[IPP_AAC_ELT_NUM];       /* instance tag for coupling
+                                            channel elements       */
+  int numComBytes;                       /* number of comment field
+                                            bytes                  */
   Ipp8s pComFieldData[IPP_AAC_COMMENTS_LEN]; /* the comment buffer
                                                 field             */
 } IppAACPrgCfgElt;
@@ -393,38 +394,38 @@ typedef struct {
 
 typedef struct {
   /* ADTS fixed header */
-  int id;                   /* ID 1                               */
-  int layer;                /* layer index:
-                                0x3 - Layer I,
-                                0x2 - Layer II,
-                                0x1 - Layer III                   */
-  int protectionBit;        /* CRC flag:
-                                0 - CRC on,
-                                1 - CRC off                       */
-  int profile;              /* profile:
-                                0 - MP,
-                                1 - LP,
-                                2 - SSR                           */
-  int samplingRateIndex;    /* sampling frequency index           */
-  int privateBit;           /* private_bit, no use                */
-  int chConfig;             /* channel configuration              */
-  int originalCopy;         /* copyright bit:
-                                0 - no copyright on the coded
-                                bitstream,
-                                1 - copyright protected           */
-  int home;                 /* original/home bit:
-                                0 - the bitstream is a copy,
-                                1 - the bitstream is an original  */
-  int emphasis;             /* no in ISO/IEC 13818-7, but used    */
-                            /* by ISO/IEC 14490-3                 */
+  int id;                /* ID 1                               */
+  int layer;             /* layer index:
+                             0x3 - Layer I,
+                             0x2 - Layer II,
+                             0x1 - Layer III                   */
+  int protectionBit;     /* CRC flag:
+                             0 - CRC on,
+                             1 - CRC off                       */
+  int profile;           /* profile:
+                             0 - MP,
+                             1 - LP,
+                             2 - SSR                           */
+  int samplingRateIndex; /* sampling frequency index           */
+  int privateBit;        /* private_bit, no use                */
+  int chConfig;          /* channel configuration              */
+  int originalCopy;      /* copyright bit:
+                             0 - no copyright on the coded
+                             bitstream,
+                             1 - copyright protected           */
+  int home;              /* original/home bit:
+                             0 - the bitstream is a copy,
+                             1 - the bitstream is an original  */
+  int emphasis;          /* no in ISO/IEC 13818-7, but used    */
+                         /* by ISO/IEC 14490-3                 */
   /* ADTS variable header */
-  int cpRightIdBit;         /* copyright id bit                   */
-  int cpRightIdStart;       /* copyright id start                 */
-  int frameLen;             /* frame length in bytes              */
-  int ADTSBufFullness;      /* buffer fullness                    */
-  int numRawBlock;          /* n of raw data blocks in the frame  */
+  int cpRightIdBit;    /* copyright id bit                   */
+  int cpRightIdStart;  /* copyright id start                 */
+  int frameLen;        /* frame length in bytes              */
+  int ADTSBufFullness; /* buffer fullness                    */
+  int numRawBlock;     /* n of raw data blocks in the frame  */
   /* ADTS CRC error check, 16bits */
-  int CRCWord;              /* CRC-check word                     */
+  int CRCWord; /* CRC-check word                     */
 } IppAACADTSFrameHeader;
 
 /*
@@ -432,13 +433,13 @@ typedef struct {
 */
 
 typedef struct {
-  int commonWin;          /* common window flag:
-                              0 - off,
-                              1 - on                        */
-  int msMaskPres;         /* MS stereo mask present flag    */
+  int commonWin;  /* common window flag:
+                      0 - off,
+                      1 - on                        */
+  int msMaskPres; /* MS stereo mask present flag    */
   Ipp8u ppMsMask[IPP_AAC_GROUP_NUM_MAX][IPP_AAC_SF_MAX];
-                          /* MS stereo flag buffer for each
-                             scalefactor band               */
+  /* MS stereo flag buffer for each
+     scalefactor band               */
 } IppAACChanPairElt;
 
 /*
@@ -447,29 +448,29 @@ typedef struct {
 
 typedef struct {
   /* unpacked from the bitstream */
-  int icsReservedBit;     /* reserved bit                         */
-  int winSequence;        /* window sequence flag                 */
-  int winShape;           /* window shape flag:
-                              0 - sine window,
-                              1 - KBD window                      */
-  int maxSfb;             /* maximum effective scale factor bands */
-  int sfGrouping;         /* scale factor grouping information    */
-  int predDataPres;       /* prediction data present flag for one
-                             frame:
-                              0 - prediction off,
-                              1 - prediction on                   */
-  int predReset;          /* prediction reset flag:
-                              0 - off,
-                              1 - on                              */
-  int predResetGroupNum;  /* prediction reset group number        */
-  Ipp8u pPredUsed[IPP_AAC_PRED_SFB_MAX+3];
-                          /* prediction flag buffer for each scale
-                             factor band:
-                              0 - off,
-                              1 - on buffer length 44 bytes, 4-byte
-                                  align                           */
+  int icsReservedBit;    /* reserved bit                         */
+  int winSequence;       /* window sequence flag                 */
+  int winShape;          /* window shape flag:
+                             0 - sine window,
+                             1 - KBD window                      */
+  int maxSfb;            /* maximum effective scale factor bands */
+  int sfGrouping;        /* scale factor grouping information    */
+  int predDataPres;      /* prediction data present flag for one
+                            frame:
+                             0 - prediction off,
+                             1 - prediction on                   */
+  int predReset;         /* prediction reset flag:
+                             0 - off,
+                             1 - on                              */
+  int predResetGroupNum; /* prediction reset group number        */
+  Ipp8u pPredUsed[IPP_AAC_PRED_SFB_MAX + 3];
+  /* prediction flag buffer for each scale
+     factor band:
+      0 - off,
+      1 - on buffer length 44 bytes, 4-byte
+          align                           */
   /* decoded from the above info */
-  int numWinGrp;          /* window group number                  */
+  int numWinGrp; /* window group number                  */
   int pWinGrpLen[IPP_AAC_GROUP_NUM_MAX]; /* buffer for number of
                                             windows in each group */
 } IppAACIcsInfo;
@@ -478,15 +479,17 @@ typedef struct {
 //  MPEG 4 Layer
 */
 
-#define IPP_AAC_TNS_COEF_LEN  60        /* TNS coefficients buffer length */
-#define IPP_AAC_MAX_LTP_SFB   40        /* maximum length of Long Term
-                                           Prediction buffer for long block */
-#define IPP_AAC_WIN_MAX       8         /* maximum length of Long Term
-                                           Prediction buffer for short block */
-#define IPP_AAC_CHAN_NUM      2         /* number of AAC channels */
-#define NOISE_HCB             13        /* code of HCB noise in scalefactor code book */
-#define IPP_AAC_FRAME_LEN     1024      /* size of data in one AAC frame */
-#define IPP_LTP_BLOCK_LEN     (1024*3)  /* size of data in one AAC LTP block */
+#define IPP_AAC_TNS_COEF_LEN 60 /* TNS coefficients buffer length */
+#define IPP_AAC_MAX_LTP_SFB         \
+  40 /* maximum length of Long Term \
+        Prediction buffer for long block */
+#define IPP_AAC_WIN_MAX                                       \
+  8                            /* maximum length of Long Term \
+                                  Prediction buffer for short block */
+#define IPP_AAC_CHAN_NUM 2     /* number of AAC channels */
+#define NOISE_HCB 13           /* code of HCB noise in scalefactor code book */
+#define IPP_AAC_FRAME_LEN 1024 /* size of data in one AAC frame */
+#define IPP_LTP_BLOCK_LEN (1024 * 3) /* size of data in one AAC LTP block */
 
 /*
 //  AAC Channel Information Structure
@@ -514,25 +517,25 @@ typedef struct {
                              0 - off,
                              1 - on                               */
   /* Ics Info pointer */
-  IppAACIcsInfo *pIcsInfo;  /* pointer to IppAACIcsInfo structure */
+  IppAACIcsInfo* pIcsInfo; /* pointer to IppAACIcsInfo structure */
   /* channel pair element pointer */
-  IppAACChanPairElt *pChanPairElt; /* pointer to IppAACChanPairElt
+  IppAACChanPairElt* pChanPairElt; /* pointer to IppAACChanPairElt
                                       structure                   */
   /* section data */
-  Ipp8u pSectCb[IPP_AAC_SF_LEN];   /* section code book buffer    */
-  Ipp8u pSectEnd[IPP_AAC_SF_LEN];  /* end of scale factor offset
-                                      in each section             */
-  int pMaxSect[IPP_AAC_GROUP_NUM_MAX];  /* maximum section number
-                                           for each group         */
+  Ipp8u pSectCb[IPP_AAC_SF_LEN];       /* section code book buffer    */
+  Ipp8u pSectEnd[IPP_AAC_SF_LEN];      /* end of scale factor offset
+                                          in each section             */
+  int pMaxSect[IPP_AAC_GROUP_NUM_MAX]; /* maximum section number
+                                          for each group         */
   /* TNS data */
-  int pTnsNumFilt[IPP_AAC_GROUP_NUM_MAX];   /* TNS number filter
-                                               number buffer      */
+  int pTnsNumFilt[IPP_AAC_GROUP_NUM_MAX];     /* TNS number filter
+                                                 number buffer      */
   int pTnsFiltCoefRes[IPP_AAC_GROUP_NUM_MAX]; /* TNS coefficients
                                                  resolution flag  */
-  int pTnsRegionLen[IPP_AAC_TNS_FILT_MAX];  /* TNS filter length  */
-  int pTnsFiltOrder[IPP_AAC_TNS_FILT_MAX];  /* TNS filter order   */
-  int pTnsDirection[IPP_AAC_TNS_FILT_MAX];  /* TNS filter direction
-                                               flag               */
+  int pTnsRegionLen[IPP_AAC_TNS_FILT_MAX];    /* TNS filter length  */
+  int pTnsFiltOrder[IPP_AAC_TNS_FILT_MAX];    /* TNS filter order   */
+  int pTnsDirection[IPP_AAC_TNS_FILT_MAX];    /* TNS filter direction
+                                                 flag               */
 } IppAACChanInfo;
 
 /*
@@ -540,14 +543,14 @@ typedef struct {
 */
 
 typedef struct {
-  int tnsDataPresent;                     /* if TNS is used       */
-  int pTnsNumFilt[IPP_AAC_GROUP_NUM_MAX]; /* Number of TNS filter */
-  int pTnsFiltCoefRes[IPP_AAC_GROUP_NUM_MAX]; /* TNS coefficient
-                                                  resolution      */
-  int pTnsRegionLen[IPP_AAC_TNS_FILT_MAX]; /* TNS filter length   */
-  int pTnsFiltOrder[IPP_AAC_TNS_FILT_MAX]; /* TNS filter order    */
-  int pTnsDirection[IPP_AAC_TNS_FILT_MAX]; /* TNS filter direction
-                                              flag                */
+  int tnsDataPresent;                          /* if TNS is used       */
+  int pTnsNumFilt[IPP_AAC_GROUP_NUM_MAX];      /* Number of TNS filter */
+  int pTnsFiltCoefRes[IPP_AAC_GROUP_NUM_MAX];  /* TNS coefficient
+                                                   resolution      */
+  int pTnsRegionLen[IPP_AAC_TNS_FILT_MAX];     /* TNS filter length   */
+  int pTnsFiltOrder[IPP_AAC_TNS_FILT_MAX];     /* TNS filter order    */
+  int pTnsDirection[IPP_AAC_TNS_FILT_MAX];     /* TNS filter direction
+                                                  flag                */
   int pTnsCoefCompress[IPP_AAC_GROUP_NUM_MAX]; /* TNS compress
                                                   coefficients    */
   Ipp8s pTnsFiltCoef[IPP_AAC_TNS_COEF_LEN];    /* TNS filter
@@ -558,12 +561,12 @@ typedef struct {
 //  Long Term Prediction (LTP) Structure
 */
 
-typedef struct{
-  int ltpDataPresent;             /* if LTP is used               */
-  int ltpLag;                     /* optimal delay from 0 to 2047 */
-  Ipp16s ltpCoef;                 /* indicate the LTP coefficient */
-  int pLtpLongUsed[IPP_AAC_SF_MAX+1];   /* if long block use ltp  */
-  int pLtpShortUsed[IPP_AAC_WIN_MAX];   /* if short block use ltp */
+typedef struct {
+  int ltpDataPresent;                       /* if LTP is used               */
+  int ltpLag;                               /* optimal delay from 0 to 2047 */
+  Ipp16s ltpCoef;                           /* indicate the LTP coefficient */
+  int pLtpLongUsed[IPP_AAC_SF_MAX + 1];     /* if long block use ltp  */
+  int pLtpShortUsed[IPP_AAC_WIN_MAX];       /* if short block use ltp */
   int pLtpShortLagPresent[IPP_AAC_WIN_MAX]; /* if short lag
                                                is transmitted     */
   int pLtpShortLag[IPP_AAC_WIN_MAX];        /* relative delay
@@ -575,19 +578,19 @@ typedef struct{
 */
 
 typedef struct {
-  int windowSequence;  /* the windows is short or long type       */
-  int windowShape;     /* what window is used for the right hand,
-                          part of this analysis window            */
-  int maxSfb;          /* number of scale factor band transmitted */
-  int sfGrouping;      /* grouping of short spectral data         */
-  int numWinGrp;       /* window group number                     */
-  int pWinGrpLen[IPP_AAC_GROUP_NUM_MAX]; /* length of every group */
-  int msMode;          /* MS stereo flag:
-                           0 - none,
-                           1 - different for every sfb,
-                           2 - all                                */
-  Ipp8u (*ppMsMask)[IPP_AAC_SF_MAX];  /* if MS's used in one sfb,
-                                         when msMode == 1         */
+  int windowSequence; /* the windows is short or long type       */
+  int windowShape;    /* what window is used for the right hand,
+                         part of this analysis window            */
+  int maxSfb;         /* number of scale factor band transmitted */
+  int sfGrouping;     /* grouping of short spectral data         */
+  int numWinGrp;      /* window group number                     */
+  int pWinGrpLen[IPP_AAC_GROUP_NUM_MAX];    /* length of every group */
+  int msMode;                               /* MS stereo flag:
+                                                0 - none,
+                                                1 - different for every sfb,
+                                                2 - all                                */
+  Ipp8u (*ppMsMask)[IPP_AAC_SF_MAX];        /* if MS's used in one sfb,
+                                               when msMode == 1         */
   IppAACTnsInfo pTnsInfo[IPP_AAC_CHAN_NUM]; /* TNS structure for
                                                two channels       */
   IppAACLtpInfo pLtpInfo[IPP_AAC_CHAN_NUM]; /* LTP structure for
@@ -598,12 +601,12 @@ typedef struct {
 // AAC Scalable Extension Element Header
 */
 
-typedef struct{
-  int msMode;  /* Mode:
-                   0 - non,
-                   1 - part,
-                   2 - all                                        */
-  int maxSfb;  /* number of scale factor band for extension layer */
+typedef struct {
+  int msMode; /* Mode:
+                  0 - non,
+                  1 - part,
+                  2 - all                                        */
+  int maxSfb; /* number of scale factor band for extension layer */
   Ipp8u (*ppMsMask)[IPP_AAC_SF_MAX];        /* if MS is used      */
   IppAACTnsInfo pTnsInfo[IPP_AAC_CHAN_NUM]; /* TNS structure
                                                for Stereo         */
@@ -615,46 +618,49 @@ typedef struct{
 //  MP3 encoder
 */
 
-#define IPP_MP3_CHANNEL_NUM           2   /* Number MP3 channels */
-#define IPP_MP3_PSY_BAND_LONG_NUM    63   /* Number MP3 partition energy for long blocks */
-#define IPP_MP3_PSY_BAND_SHORT_NUM   42   /* Number MP3 partition energy for short blocks */
-#define FIRST_6_CW                    6   /* Number calculated lines are used for
-                                             unpredictability measure */
-#define IPP_MP3_BIT_RATE_FREE         0   /* Type value for free bit rate */
-#define IPP_MP3_BIT_RATE_32           1   /* Type value for 32 bit rate */
-#define IPP_MP3_BIT_RATE_40           2   /* Type value for 40 bit rate */
-#define IPP_MP3_BIT_RATE_48           3   /* Type value for 48 bit rate */
-#define IPP_MP3_BIT_RATE_56           4   /* Type value for 56 bit rate */
-#define IPP_MP3_BIT_RATE_64           5   /* Type value for 64 bit rate */
-#define IPP_MP3_BIT_RATE_80           6   /* Type value for 80 bit rate */
-#define IPP_MP3_BIT_RATE_96           7   /* Type value for 96 bit rate */
-#define IPP_MP3_BIT_RATE_112          8   /* Type value for 112 bit rate */
-#define IPP_MP3_BIT_RATE_128          9   /* Type value for 128 bit rate */
-#define IPP_MP3_BIT_RATE_160         10   /* Type value for 160 bit rate */
-#define IPP_MP3_BIT_RATE_192         11   /* Type value for 192 bit rate */
-#define IPP_MP3_BIT_RATE_224         12   /* Type value for 224 bit rate */
-#define IPP_MP3_BIT_RATE_256         13   /* Type value for 256 bit rate */
-#define IPP_MP3_BIT_RATE_320         14   /* Type value for 320 bit rate */
+#define IPP_MP3_CHANNEL_NUM 2 /* Number MP3 channels */
+#define IPP_MP3_PSY_BAND_LONG_NUM \
+  63 /* Number MP3 partition energy for long blocks */
+#define IPP_MP3_PSY_BAND_SHORT_NUM \
+  42 /* Number MP3 partition energy for short blocks */
+#define FIRST_6_CW                                                      \
+  6                             /* Number calculated lines are used for \
+                                   unpredictability measure */
+#define IPP_MP3_BIT_RATE_FREE 0 /* Type value for free bit rate */
+#define IPP_MP3_BIT_RATE_32 1   /* Type value for 32 bit rate */
+#define IPP_MP3_BIT_RATE_40 2   /* Type value for 40 bit rate */
+#define IPP_MP3_BIT_RATE_48 3   /* Type value for 48 bit rate */
+#define IPP_MP3_BIT_RATE_56 4   /* Type value for 56 bit rate */
+#define IPP_MP3_BIT_RATE_64 5   /* Type value for 64 bit rate */
+#define IPP_MP3_BIT_RATE_80 6   /* Type value for 80 bit rate */
+#define IPP_MP3_BIT_RATE_96 7   /* Type value for 96 bit rate */
+#define IPP_MP3_BIT_RATE_112 8  /* Type value for 112 bit rate */
+#define IPP_MP3_BIT_RATE_128 9  /* Type value for 128 bit rate */
+#define IPP_MP3_BIT_RATE_160 10 /* Type value for 160 bit rate */
+#define IPP_MP3_BIT_RATE_192 11 /* Type value for 192 bit rate */
+#define IPP_MP3_BIT_RATE_224 12 /* Type value for 224 bit rate */
+#define IPP_MP3_BIT_RATE_256 13 /* Type value for 256 bit rate */
+#define IPP_MP3_BIT_RATE_320 14 /* Type value for 320 bit rate */
 
-#define IPP_MP3_SAMPLE_RATE_32000     2   /* Type value for 32000 sample rate */
-#define IPP_MP3_SAMPLE_RATE_44100     0   /* Type value for 44100 sample rate */
-#define IPP_MP3_SAMPLE_RATE_48000     1   /* Type value for 48000 sample rate */
+#define IPP_MP3_SAMPLE_RATE_32000 2 /* Type value for 32000 sample rate */
+#define IPP_MP3_SAMPLE_RATE_44100 0 /* Type value for 44100 sample rate */
+#define IPP_MP3_SAMPLE_RATE_48000 1 /* Type value for 48000 sample rate */
 
-#define IPP_MP3_NONINTERLEAVED_PCM    1   /* Type value for non interleaved PCM */
-#define IPP_MP3_INTERLEAVED_PCM       2   /* Type value for interleaved PCM */
+#define IPP_MP3_NONINTERLEAVED_PCM 1 /* Type value for non interleaved PCM */
+#define IPP_MP3_INTERLEAVED_PCM 2    /* Type value for interleaved PCM */
 
 /*
 //  MP3 Huffman Table Structure
 */
 
 typedef struct {
-  int         tableSize;      /* number of rows in table          */
-  int         linbits;        /* variable used for encode if the
-                                 magnitude of encoded value is
-                                 greater or equal to 15           */
-  int         maxBitsValue;   /* maximum bit length of codewords  */
-  Ipp16u      *pHcod;         /* pointer to Huffman code table    */
-  Ipp8u       *pSlen;         /* pointer to Huffman length table  */
+  int tableSize;    /* number of rows in table          */
+  int linbits;      /* variable used for encode if the
+                       magnitude of encoded value is
+                       greater or equal to 15           */
+  int maxBitsValue; /* maximum bit length of codewords  */
+  Ipp16u* pHcod;    /* pointer to Huffman code table    */
+  Ipp8u* pSlen;     /* pointer to Huffman length table  */
 } IppMP3HuffmanTable;
 
 /*
@@ -662,27 +668,27 @@ typedef struct {
 */
 
 typedef struct {
-  int ScaleFactorBits;                /* number of bits used to
-                                         encode scale factors     */
-  Ipp32s pEnergy[IPP_MP3_SF_BUF_LEN]; /* energy of each scale
-                                         factor band              */
-  Ipp32s pDistortion[IPP_MP3_SF_BUF_LEN];  /* allowed distortion
-                                              of each scale factor
-                                              band                */
-  Ipp32s pXmin[IPP_MP3_SF_BUF_LEN];   /* allowed distortion of
-                                         each scale factor band   */
-  Ipp32s pNMR[IPP_MP3_SF_BUF_LEN];    /* Noise-Mask-Ratio array   */
-  int quantizeStepSize;               /* quantization step        */
-  int pSfbMaxIndex[40];               /* index array of Scalefactor
-                                         band maximum values      */
-  int minBits;      /* minimum bits decided by the bit reservoir
-                       and used bits                              */
-  int maxBits;      /* decided by estimatedBits and bit reservoir */
-  int count1;       /* number of Huffman symbols whose magnitude
-                       is no greater than 1                       */
-  int hufSize;      /* number of bits used for Huffman symbols    */
-  int pRegionCount[3];  /* pointer to the number of Hufman symbols
-                           in each region for the big values part */
+  int ScaleFactorBits;                    /* number of bits used to
+                                             encode scale factors     */
+  Ipp32s pEnergy[IPP_MP3_SF_BUF_LEN];     /* energy of each scale
+                                             factor band              */
+  Ipp32s pDistortion[IPP_MP3_SF_BUF_LEN]; /* allowed distortion
+                                             of each scale factor
+                                             band                */
+  Ipp32s pXmin[IPP_MP3_SF_BUF_LEN];       /* allowed distortion of
+                                             each scale factor band   */
+  Ipp32s pNMR[IPP_MP3_SF_BUF_LEN];        /* Noise-Mask-Ratio array   */
+  int quantizeStepSize;                   /* quantization step        */
+  int pSfbMaxIndex[40];                   /* index array of Scalefactor
+                                             band maximum values      */
+  int minBits;         /* minimum bits decided by the bit reservoir
+                          and used bits                              */
+  int maxBits;         /* decided by estimatedBits and bit reservoir */
+  int count1;          /* number of Huffman symbols whose magnitude
+                          is no greater than 1                       */
+  int hufSize;         /* number of bits used for Huffman symbols    */
+  int pRegionCount[3]; /* pointer to the number of Hufman symbols
+                          in each region for the big values part */
 } IppMP3QuantInfo;
 
 /*
@@ -691,11 +697,11 @@ typedef struct {
 
 typedef struct {
   int BitsRemaining; /* bits currently remaining in the reservoir */
-  int MaxBits; /* maximum possible reservoir size, in bits,
-                  determined as follows:  min(7680-avg_frame_len,
-                  2^9*8), where  avg_frame_len is the average frame
-                  length, in bits, including padding bits and
-                  excluding side information bits                 */
+  int MaxBits;       /* maximum possible reservoir size, in bits,
+                        determined as follows:  min(7680-avg_frame_len,
+                        2^9*8), where  avg_frame_len is the average frame
+                        length, in bits, including padding bits and
+                        excluding side information bits                 */
 } IppMP3BitReservoir;
 
 /*
@@ -703,37 +709,37 @@ typedef struct {
 */
 
 typedef struct {
-  Ipp64s pPrevMaskedThresholdLong[2][63];    /* long block masked
-             threshold history buffer; Contains masked threshold
-             estimates for the threshold calculation partitions
-             associated with the two most recent long blocks      */
+  Ipp64s pPrevMaskedThresholdLong[2][63]; /* long block masked
+          threshold history buffer; Contains masked threshold
+          estimates for the threshold calculation partitions
+          associated with the two most recent long blocks      */
   Ipp64s pPrevMaskedThresholdShort[IPP_MP3_PSY_BAND_SHORT_NUM]; /*
              short block masked threshold history buffer; Contains
              masked threshold estimates for the threshold
              calculation partitions associated with the two most
              recent long blocks                                   */
-  Ipp32sc pPrevFFT[2][FIRST_6_CW];        /* FFT history buffer;
-             contains real and imaginary FFT components associated
-             with the two most recent long blocks                 */
-  Ipp32s pPrevFFTMag[2][FIRST_6_CW];      /* FFT magnitude history
-             buffer; contains FFT component magnitudes associated
-             with the two most recent long blocks                 */
-  int nextPerceptualEntropy;              /* PE estimate for next
-             granule; one granule delay provided for synchronization
-             with analysis filterbank                             */
-  int nextBlockType;                     /* Expected block type for
-             next granule; either long (normal), short, or stop.
-             Depending upon analysis results for the granule
-             following the next, a long block could change to a
-             start block, and a stop block could change to a short
-             block. This buffer provides one granule of delay for
-             synchronization with the analysis filterbank         */
-  Ipp32s pNextMSRLong[IPP_MP3_SF_BUF_LEN];        /* long block MSR
-             estimates for next granule. One granule delay provided
-             for synchronization with analysis filterbank         */
-  Ipp32s pNextMSRShort[IPP_MP3_SF_BUF_LEN];       /* short block MSR
-             estimates for next granule. One granule delay provided
-             for synchronization with analysis filterbank         */
+  Ipp32sc pPrevFFT[2][FIRST_6_CW];          /* FFT history buffer;
+               contains real and imaginary FFT components associated
+               with the two most recent long blocks                 */
+  Ipp32s pPrevFFTMag[2][FIRST_6_CW];        /* FFT magnitude history
+               buffer; contains FFT component magnitudes associated
+               with the two most recent long blocks                 */
+  int nextPerceptualEntropy;                /* PE estimate for next
+               granule; one granule delay provided for synchronization
+               with analysis filterbank                             */
+  int nextBlockType;                        /* Expected block type for
+                next granule; either long (normal), short, or stop.
+                Depending upon analysis results for the granule
+                following the next, a long block could change to a
+                start block, and a stop block could change to a short
+                block. This buffer provides one granule of delay for
+                synchronization with the analysis filterbank         */
+  Ipp32s pNextMSRLong[IPP_MP3_SF_BUF_LEN];  /* long block MSR
+       estimates for next granule. One granule delay provided
+       for synchronization with analysis filterbank         */
+  Ipp32s pNextMSRShort[IPP_MP3_SF_BUF_LEN]; /* short block MSR
+       estimates for next granule. One granule delay provided
+       for synchronization with analysis filterbank         */
 } IppMP3PsychoacousticModelTwoState;
 
 /*
@@ -751,8 +757,8 @@ typedef struct {
                       granule/channel. That is, the block thresholds
                       are interleaved such that the thresholds are
                       grouped by SFB.                             */
-  Ipp32s PE;        /* Estimated perceptual entropy, one
-                       granule/channel                            */
+  Ipp32s PE;       /* Estimated perceptual entropy, one
+                      granule/channel                            */
 } IppMP3PsychoacousticModelTwoAnalysis;
 
 #endif /* _OWN_BLDPCS */
@@ -793,7 +799,7 @@ IPPAPI(const IppLibraryVersion*, ippacGetLibVersion, (void))
 //    ippStsContextMatchErr Indicates an error when the state structure is
 //                          invalid.
 */
-IPPAPI(IppStatus, ippsFDPReset_32f, (IppsFDPState_32f *pFDPState))
+IPPAPI(IppStatus, ippsFDPReset_32f, (IppsFDPState_32f * pFDPState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -819,8 +825,14 @@ IPPAPI(IppStatus, ippsFDPReset_32f, (IppsFDPState_32f *pFDPState))
 //    ippStsContextMatchErr Indicates an error when the state structure is
 //                          invalid.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsFDPResetSfb_32f, (const int* pSfbOffset, int sfbNumber, const Ipp8u* pResetFlag, IppsFDPState_32f* pFDPState))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsFDPResetSfb_32f,
+       (const int* pSfbOffset, int sfbNumber, const Ipp8u* pResetFlag,
+        IppsFDPState_32f* pFDPState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -844,7 +856,8 @@ IPPAPI(IppStatus, ippsFDPResetSfb_32f, (const int* pSfbOffset, int sfbNumber, co
 //    ippStsContextMatchErr Indicates an error when the state structure is
 //                          invalid.
 */
-IPPAPI(IppStatus, ippsFDPResetGroup_32f, (int resetGroupNumber, int step, IppsFDPState_32f* pFDPState))
+IPPAPI(IppStatus, ippsFDPResetGroup_32f,
+       (int resetGroupNumber, int step, IppsFDPState_32f* pFDPState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -867,8 +880,13 @@ IPPAPI(IppStatus, ippsFDPResetGroup_32f, (int resetGroupNumber, int step, IppsFD
 //                          or equal to 0.
 //    ippStsMemAllocErr     Indicates an error when no memory is allocated.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsFDPInitAlloc_32f, (IppsFDPState_32f** ppFDPState, int len))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsFDPInitAlloc_32f,
+       (IppsFDPState_32f * *ppFDPState, int len))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -887,8 +905,12 @@ IPPAPI(IppStatus, ippsFDPInitAlloc_32f, (IppsFDPState_32f** ppFDPState, int len)
 //    ippStsContextMatchErr Indicates an error when the state structure is
 //                          invalid.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsFDPFree_32f, (IppsFDPState_32f *pFDPState))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsFDPFree_32f, (IppsFDPState_32f * pFDPState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -913,8 +935,13 @@ IPPAPI(IppStatus, ippsFDPFree_32f, (IppsFDPState_32f *pFDPState))
 //    ippStsMisalignedBuf   Indicates misaligned arrays. Supply aligned data
 //                          for better performance.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsFDPFwd_32f, (const Ipp32f* pSrc, Ipp32f* pDst, IppsFDPState_32f* pFDPState))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsFDPFwd_32f,
+       (const Ipp32f* pSrc, Ipp32f* pDst, IppsFDPState_32f* pFDPState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -945,7 +972,9 @@ IPPAPI(IppStatus, ippsFDPFwd_32f, (const Ipp32f* pSrc, Ipp32f* pDst, IppsFDPStat
 //    ippStsMisalignedBuf   Indicates misaligned arrays. Supply aligned data
 //                          for better performance.
 */
-IPPAPI(IppStatus, ippsFDPInv_32f_I, (Ipp32f* pSrcDst, const int* pBandOffset, int predictorBandsNumber, const Ipp8u* pPredictionUsed, IppsFDPState_32f* pFDPState))
+IPPAPI(IppStatus, ippsFDPInv_32f_I,
+       (Ipp32f * pSrcDst, const int* pBandOffset, int predictorBandsNumber,
+        const Ipp8u* pPredictionUsed, IppsFDPState_32f* pFDPState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -967,7 +996,8 @@ IPPAPI(IppStatus, ippsFDPInv_32f_I, (Ipp32f* pSrcDst, const int* pBandOffset, in
 //    ippStsSizeErr         Indicates an error when the len is less than
 //                          or equal to 0.
 */
-IPPAPI(IppStatus, ippsFDPInit_32f, (IppsFDPState_32f **ppFDPState, int len, Ipp8u *pMemSpec))
+IPPAPI(IppStatus, ippsFDPInit_32f,
+       (IppsFDPState_32f * *ppFDPState, int len, Ipp8u* pMemSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -988,7 +1018,7 @@ IPPAPI(IppStatus, ippsFDPInit_32f, (IppsFDPState_32f **ppFDPState, int len, Ipp8
 //    ippStsSizeErr         Indicates an error when the length is less than
 //                          or equal to 0.
 */
-IPPAPI(IppStatus, ippsFDPGetSize_32f, (int len, int *pSizeState))
+IPPAPI(IppStatus, ippsFDPGetSize_32f, (int len, int* pSizeState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1012,9 +1042,13 @@ IPPAPI(IppStatus, ippsFDPGetSize_32f, (int len, int *pSizeState))
 //    ippStsFIRLenErr       Indicates an error when order or len is less
 //                          than or equal to 0.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsFIRBlockInitAlloc_32f,(IppsFIRBlockState_32f** pState,
-int order, int len))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsFIRBlockInitAlloc_32f,
+       (IppsFIRBlockState_32f * *pState, int order, int len))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1034,8 +1068,12 @@ int order, int len))
 //    ippStsContextMatchErr Indicates an error when the state structure is
 //                          invalid.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsFIRBlockFree_32f,(IppsFIRBlockState_32f* pState))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsFIRBlockFree_32f, (IppsFIRBlockState_32f * pState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1059,14 +1097,22 @@ IPPAPI(IppStatus, ippsFIRBlockFree_32f,(IppsFIRBlockState_32f* pState))
 //                          invalid.
 //    ippStsMisalignedBuf   Indicates misaligned arrays. Supply aligned data
 //                          for better performance.
-//    ippStsFIRLenErr       Indicates an error when one of following conditions is true:
+//    ippStsFIRLenErr       Indicates an error when one of following conditions
+is true:
 //                          1)pState->len is less than or equal to 0;
 //                          2)pState->order is less than or equal to 0;
 //                          3)pState->queue_end is less than 0;
-//                          4)pState->queue_end is greater or equal to pState->order.
+//                          4)pState->queue_end is greater or equal to
+pState->order.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsFIRBlockOne_32f,(Ipp32f *pSrc, Ipp32f* pDst, IppsFIRBlockState_32f* pState, Ipp32f *pTaps))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsFIRBlockOne_32f,
+       (Ipp32f * pSrc, Ipp32f* pDst, IppsFIRBlockState_32f* pState,
+        Ipp32f* pTaps))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1093,8 +1139,13 @@ IPPAPI(IppStatus, ippsFIRBlockOne_32f,(Ipp32f *pSrc, Ipp32f* pDst, IppsFIRBlockS
 //                          the above set of admissible values.
 //    ippStsMemAllocErr     Indicates an error when no memory is allocated.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTFwdInitAlloc_32f,(IppsMDCTFwdSpec_32f** ppMDCTSpec, int len))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTFwdInitAlloc_32f,
+       (IppsMDCTFwdSpec_32f * *ppMDCTSpec, int len))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1121,8 +1172,13 @@ IPPAPI(IppStatus, ippsMDCTFwdInitAlloc_32f,(IppsMDCTFwdSpec_32f** ppMDCTSpec, in
 //                          the above set of admissible values.
 //    ippStsMemAllocErr     Indicates an error when no memory is allocated.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTInvInitAlloc_32f,(IppsMDCTInvSpec_32f** ppMDCTSpec, int len))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTInvInitAlloc_32f,
+       (IppsMDCTInvSpec_32f * *ppMDCTSpec, int len))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1140,8 +1196,12 @@ IPPAPI(IppStatus, ippsMDCTInvInitAlloc_32f,(IppsMDCTInvSpec_32f** ppMDCTSpec, in
 //    ippStsNullPtrErr      Indicates an error when the pMDCTSpec pointer is
 //                          NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTFwdFree_32f,(IppsMDCTFwdSpec_32f* pMDCTSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTFwdFree_32f, (IppsMDCTFwdSpec_32f * pMDCTSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1159,8 +1219,12 @@ IPPAPI(IppStatus, ippsMDCTFwdFree_32f,(IppsMDCTFwdSpec_32f* pMDCTSpec))
 //    ippStsNullPtrErr      Indicates an error when the pMDCTSpec pointer is
 //                          NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTInvFree_32f,(IppsMDCTInvSpec_32f* pMDCTSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTInvFree_32f, (IppsMDCTInvSpec_32f * pMDCTSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1181,9 +1245,13 @@ IPPAPI(IppStatus, ippsMDCTInvFree_32f,(IppsMDCTInvSpec_32f* pMDCTSpec))
 //    ippStsContextMatchErr Indicates an error when the specification
 //                          structure pMDCTSpec is invalid.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTFwdGetBufSize_32f,(const IppsMDCTFwdSpec_32f* pMDCTSpec,
-    int* pSize))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTFwdGetBufSize_32f,
+       (const IppsMDCTFwdSpec_32f* pMDCTSpec, int* pSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1204,9 +1272,13 @@ IPPAPI(IppStatus, ippsMDCTFwdGetBufSize_32f,(const IppsMDCTFwdSpec_32f* pMDCTSpe
 //    ippStsContextMatchErr Indicates an error when the specification
 //                          structure pMDCTSpec is invalid.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTInvGetBufSize_32f,(const IppsMDCTInvSpec_32f* pMDCTSpec,
-    int* pSize))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTInvGetBufSize_32f,
+       (const IppsMDCTInvSpec_32f* pMDCTSpec, int* pSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1234,8 +1306,9 @@ IPPAPI(IppStatus, ippsMDCTInvGetBufSize_32f,(const IppsMDCTInvSpec_32f* pMDCTSpe
 //    ippStsMisalignedBuf   Indicates misaligned data. Supply aligned data
 //                          for better performance.
 */
-IPPAPI(IppStatus, ippsMDCTFwd_32f,(const Ipp32f* pSrc, Ipp32f* pDst,
-    const IppsMDCTFwdSpec_32f* pMDCTSpec, Ipp8u* pBuffer))
+IPPAPI(IppStatus, ippsMDCTFwd_32f,
+       (const Ipp32f* pSrc, Ipp32f* pDst, const IppsMDCTFwdSpec_32f* pMDCTSpec,
+        Ipp8u* pBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1260,8 +1333,9 @@ IPPAPI(IppStatus, ippsMDCTFwd_32f,(const Ipp32f* pSrc, Ipp32f* pDst,
 //    ippStsMisalignedBuf   Indicates misaligned data. Supply aligned data
 //                          for better performance.
 */
-IPPAPI(IppStatus, ippsMDCTInv_32f,(const Ipp32f* pSrc, Ipp32f* pDst,
-    const IppsMDCTInvSpec_32f* pMDCTSpec, Ipp8u* pBuffer))
+IPPAPI(IppStatus, ippsMDCTInv_32f,
+       (const Ipp32f* pSrc, Ipp32f* pDst, const IppsMDCTInvSpec_32f* pMDCTSpec,
+        Ipp8u* pBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1286,8 +1360,13 @@ IPPAPI(IppStatus, ippsMDCTInv_32f,(const Ipp32f* pSrc, Ipp32f* pDst,
 //    ippStsMisalignedBuf   Indicates misaligned data. Supply aligned data
 //                          for better performance.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTFwd_32f_I,(Ipp32f* pSrcDst, const IppsMDCTFwdSpec_32f* pMDCTSpec, Ipp8u* pBuffer))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTFwd_32f_I,
+       (Ipp32f * pSrcDst, const IppsMDCTFwdSpec_32f* pMDCTSpec, Ipp8u* pBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1312,8 +1391,13 @@ IPPAPI(IppStatus, ippsMDCTFwd_32f_I,(Ipp32f* pSrcDst, const IppsMDCTFwdSpec_32f*
 //    ippStsMisalignedBuf   Indicates misaligned data. Supply aligned data
 //                          for better performance.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTInv_32f_I,(Ipp32f* pSrcDst, const IppsMDCTInvSpec_32f* pMDCTSpec, Ipp8u* pBuffer))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTInv_32f_I,
+       (Ipp32f * pSrcDst, const IppsMDCTInvSpec_32f* pMDCTSpec, Ipp8u* pBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1339,10 +1423,14 @@ IPPAPI(IppStatus, ippsMDCTInv_32f_I,(Ipp32f* pSrcDst, const IppsMDCTInvSpec_32f*
 //    ippStsMisalignedBuf   Indicates misaligned data. Supply aligned data
 //                          for better performance.
 */
-IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
 IPPAPI(IppStatus, ippsMDCTFwd_16s_Sfs,
-       (const Ipp16s *pSrc, Ipp16s *pDst,
-        const IppsMDCTFwdSpec_16s* pMDCTSpec,
+       (const Ipp16s* pSrc, Ipp16s* pDst, const IppsMDCTFwdSpec_16s* pMDCTSpec,
         int scaleFactor, Ipp8u* pBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
@@ -1371,8 +1459,13 @@ IPPAPI(IppStatus, ippsMDCTFwd_16s_Sfs,
 //                          the above set of admissible values.
 //    ippStsMemAllocErr     Indicates an error when no memory is allocated.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTFwdInitAlloc_16s, (IppsMDCTFwdSpec_16s** ppMDCTSpec, int len))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTFwdInitAlloc_16s,
+       (IppsMDCTFwdSpec_16s * *ppMDCTSpec, int len))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1390,8 +1483,13 @@ IPPAPI(IppStatus, ippsMDCTFwdInitAlloc_16s, (IppsMDCTFwdSpec_16s** ppMDCTSpec, i
 //    ippStsNullPtrErr      Indicates an error when the pMDCTSpec pointer is
 //                          NULL.
 */
-IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTFwdFree_16s, (IppsMDCTFwdSpec_16s* pMDCTSpec))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTFwdFree_16s, (IppsMDCTFwdSpec_16s * pMDCTSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1422,8 +1520,14 @@ IPPAPI(IppStatus, ippsMDCTFwdFree_16s, (IppsMDCTFwdSpec_16s* pMDCTSpec))
 //    ippStsSizeErr         Indicates an error when len does not belong to
 //                          the above set of admissible values.
 */
-IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTFwdGetSize_16s, (int len, int* pSizeSpec, int* pSizeInit, int* pSizeBuf))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTFwdGetSize_16s,
+       (int len, int* pSizeSpec, int* pSizeInit, int* pSizeBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1444,9 +1548,13 @@ IPPAPI(IppStatus, ippsMDCTFwdGetSize_16s, (int len, int* pSizeSpec, int* pSizeIn
 //    ippStsContextMatchErr Indicates an error when the specification
 //                          structure pMDCTSpec is invalid.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
 IPPAPI(IppStatus, ippsMDCTFwdGetBufSize_16s,
-       (const IppsMDCTFwdSpec_16s *pMDCTSpec, int *pSize))
+       (const IppsMDCTFwdSpec_16s* pMDCTSpec, int* pSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1477,7 +1585,8 @@ IPPAPI(IppStatus, ippsMDCTFwdGetBufSize_16s,
 //    ippStsSizeErr         Indicates an error when len does not belong to
 //                          the above set of admissible values.
 */
-IPPAPI(IppStatus, ippsMDCTInvGetSize_32f, (int len, int *pSizeSpec, int *pSizeInit, int *pSizeBuf))
+IPPAPI(IppStatus, ippsMDCTInvGetSize_32f,
+       (int len, int* pSizeSpec, int* pSizeInit, int* pSizeBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1508,7 +1617,8 @@ IPPAPI(IppStatus, ippsMDCTInvGetSize_32f, (int len, int *pSizeSpec, int *pSizeIn
 //    ippStsSizeErr         Indicates an error when len does not belong to
 //                          the above set of admissible values.
 */
-IPPAPI(IppStatus, ippsMDCTFwdGetSize_32f, (int len, int *pSizeSpec, int *pSizeInit, int *pSizeBuf))
+IPPAPI(IppStatus, ippsMDCTFwdGetSize_32f,
+       (int len, int* pSizeSpec, int* pSizeInit, int* pSizeBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1538,7 +1648,9 @@ IPPAPI(IppStatus, ippsMDCTFwdGetSize_32f, (int len, int *pSizeSpec, int *pSizeIn
 //    ippStsSizeErr         Indicates an error when len does not belong to
 //                          the above set of admissible values.
 */
-IPPAPI(IppStatus, ippsMDCTFwdInit_32f, (IppsMDCTFwdSpec_32f** ppMDCTSpec, int len, Ipp8u* pMemSpec, Ipp8u* pMemInit))
+IPPAPI(IppStatus, ippsMDCTFwdInit_32f,
+       (IppsMDCTFwdSpec_32f * *ppMDCTSpec, int len, Ipp8u* pMemSpec,
+        Ipp8u* pMemInit))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1568,7 +1680,9 @@ IPPAPI(IppStatus, ippsMDCTFwdInit_32f, (IppsMDCTFwdSpec_32f** ppMDCTSpec, int le
 //    ippStsSizeErr         Indicates an error when len does not belong to
 //                          the above set of admissible values.
 */
-IPPAPI(IppStatus, ippsMDCTInvInit_32f,(IppsMDCTInvSpec_32f** ppMDCTSpec, int len, Ipp8u* pMemSpec, Ipp8u* pMemInit))
+IPPAPI(IppStatus, ippsMDCTInvInit_32f,
+       (IppsMDCTInvSpec_32f * *ppMDCTSpec, int len, Ipp8u* pMemSpec,
+        Ipp8u* pMemInit))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1598,8 +1712,15 @@ IPPAPI(IppStatus, ippsMDCTInvInit_32f,(IppsMDCTInvSpec_32f** ppMDCTSpec, int len
 //    ippStsSizeErr         Indicates an error when len does not belong to
 //                          the above set of admissible values.
 */
-IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTFwdInit_16s,(IppsMDCTFwdSpec_16s** ppMDCTSpec, int len, Ipp8u* pMemSpec, Ipp8u* pMemInit))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTFwdInit_16s,
+       (IppsMDCTFwdSpec_16s * *ppMDCTSpec, int len, Ipp8u* pMemSpec,
+        Ipp8u* pMemInit))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1619,9 +1740,14 @@ IPPAPI(IppStatus, ippsMDCTFwdInit_16s,(IppsMDCTFwdSpec_16s** ppMDCTSpec, int len
 //    ippStsNoErr           Indicates no error.
 //    ippStsNullPtrErr      Indicates an error when pDst pointer is NULL.
 */
-IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
 IPPAPI(IppStatus, ippsSpread_16s_Sfs,
-      (Ipp16s src1, Ipp16s src2, int inScaleFactor, Ipp16s* pDst))
+       (Ipp16s src1, Ipp16s src2, int inScaleFactor, Ipp16s* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1649,11 +1775,13 @@ IPPAPI(IppStatus, ippsSpread_16s_Sfs,
 //    ippStsMisalignedBuf   Indicates misaligned data. Supply aligned data
 //                          for better performance.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsInterleave_16s, (const Ipp16s   **pSrc,
-                                             int      ch_num,
-                                             int      len,
-                                             Ipp16s   *pDst))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsInterleave_16s,
+       (const Ipp16s** pSrc, int ch_num, int len, Ipp16s* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1681,10 +1809,8 @@ IPPAPI(IppStatus, ippsInterleave_16s, (const Ipp16s   **pSrc,
 //    ippStsMisalignedBuf   Indicates misaligned data. Supply aligned data
 //                          for better performance.
 */
-IPPAPI(IppStatus, ippsInterleave_32f, (const Ipp32f **pSrc,
-                                             int    ch_num,
-                                             int    len,
-                                             Ipp32f *pDst))
+IPPAPI(IppStatus, ippsInterleave_32f,
+       (const Ipp32f** pSrc, int ch_num, int len, Ipp32f* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1710,8 +1836,8 @@ IPPAPI(IppStatus, ippsInterleave_32f, (const Ipp32f **pSrc,
 //    ippStsMisalignedBuf   Indicates misaligned data. Supply aligned data
 //                          for better performance.
 */
-IPPAPI(IppStatus, ippsDeinterleave_16s, (const Ipp16s* pSrc, int ch_num,
-                                              int len, Ipp16s** pDst))
+IPPAPI(IppStatus, ippsDeinterleave_16s,
+       (const Ipp16s* pSrc, int ch_num, int len, Ipp16s** pDst))
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippsDeinterleave_32f
@@ -1736,8 +1862,8 @@ IPPAPI(IppStatus, ippsDeinterleave_16s, (const Ipp16s* pSrc, int ch_num,
 //    ippStsMisalignedBuf   Indicates misaligned data. Supply aligned data
 //                          for better performance.
 */
-IPPAPI(IppStatus, ippsDeinterleave_32f, (const Ipp32f* pSrc, int ch_num,
-                                              int len, Ipp32f** pDst))
+IPPAPI(IppStatus, ippsDeinterleave_32f,
+       (const Ipp32f* pSrc, int ch_num, int len, Ipp32f** pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1761,7 +1887,11 @@ IPPAPI(IppStatus, ippsDeinterleave_32f, (const Ipp32f* pSrc, int ch_num,
 //    ippStsSizeErr         Indicates an error when len is less than or
 //                          equal to 0.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
 IPPAPI(IppStatus, ippsPow34_32f16s, (const Ipp32f* pSrc, Ipp16s* pDst, int len))
 
 /* ///////////////////////////////////////////////////////////////////////////
@@ -1788,10 +1918,16 @@ IPPAPI(IppStatus, ippsPow34_32f16s, (const Ipp32f* pSrc, Ipp16s* pDst, int len))
 */
 IPPAPI(IppStatus, ippsPow43_16s32f, (const Ipp16s* pSrc, Ipp32f* pDst, int len))
 
-IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsPow43Scale_16s32s_Sf, (const Ipp16s* pSrc, Ipp32s* pDst,
-       const Ipp16s *pScaleFactor, const Ipp32s *pBandOffset,
-       int offset, int bandsNumber, int groupLen, int scalef))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsPow43Scale_16s32s_Sf,
+       (const Ipp16s* pSrc, Ipp32s* pDst, const Ipp16s* pScaleFactor,
+        const Ipp32s* pBandOffset, int offset, int bandsNumber, int groupLen,
+        int scalef))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1815,7 +1951,7 @@ IPPAPI(IppStatus, ippsPow43Scale_16s32s_Sf, (const Ipp16s* pSrc, Ipp32s* pDst,
 //    ippStsSizeErr         Indicates an error when len is less than or
 //                          equal to 0.
 */
-IPPAPI(IppStatus, ippsPow34_32f,(const Ipp32f* pSrc, Ipp32f* pDst, int len))
+IPPAPI(IppStatus, ippsPow34_32f, (const Ipp32f* pSrc, Ipp32f* pDst, int len))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1841,8 +1977,15 @@ IPPAPI(IppStatus, ippsPow34_32f,(const Ipp32f* pSrc, Ipp32f* pDst, int len))
 //    ippStsSizeErr         Indicates an error when len is less than or
 //                          equal to 0.
 */
-IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsPow34_16s_Sfs,(const Ipp16s* pSrc, int inScaleFactor, Ipp16s* pDst, int ScaleFactor, int len))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsPow34_16s_Sfs,
+       (const Ipp16s* pSrc, int inScaleFactor, Ipp16s* pDst, int ScaleFactor,
+        int len))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1864,7 +2007,8 @@ IPPAPI(IppStatus, ippsPow34_16s_Sfs,(const Ipp16s* pSrc, int inScaleFactor, Ipp1
 //    ippStsSizeErr         Indicates an error when len is less than or
 //                          equal to 0.
 */
-IPPAPI(IppStatus,ippsCalcSF_16s32f, (const Ipp16s* pSrc, int offset,Ipp32f *pDst, int len))
+IPPAPI(IppStatus, ippsCalcSF_16s32f,
+       (const Ipp16s* pSrc, int offset, Ipp32f* pDst, int len))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1893,7 +2037,9 @@ IPPAPI(IppStatus,ippsCalcSF_16s32f, (const Ipp16s* pSrc, int offset,Ipp32f *pDst
 //    ippStsSizeErr         Indicates an error when bandsNumber is less than
 //                          or equal to 0.
 */
-IPPAPI(IppStatus, ippsScale_32f_I, (Ipp32f* pSrcDst, Ipp32f* pSF, const Ipp32s* pBandOffset, int bandsNumber))
+IPPAPI(IppStatus, ippsScale_32f_I,
+       (Ipp32f * pSrcDst, Ipp32f* pSF, const Ipp32s* pBandOffset,
+        int bandsNumber))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1915,8 +2061,13 @@ IPPAPI(IppStatus, ippsScale_32f_I, (Ipp32f* pSrcDst, Ipp32f* pSF, const Ipp32s* 
 //    ippStsSizeErr         Indicates an error when size is less than or
 //                          equal to 0.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMakeFloat_16s32f, (Ipp16s* inmant, Ipp16s* inexp, Ipp32s size, Ipp32f* outfloat))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMakeFloat_16s32f,
+       (Ipp16s * inmant, Ipp16s* inexp, Ipp32s size, Ipp32f* outfloat))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1943,8 +2094,14 @@ IPPAPI(IppStatus, ippsMakeFloat_16s32f, (Ipp16s* inmant, Ipp16s* inexp, Ipp32s s
 //                          less than or equal to 0.
 //    ippStsMemAllocErr     Indicates an error when no memory is allocated.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVQCodeBookInitAlloc_32f, (const Ipp32f* pInputTable, IppsVQCodeBookState_32f** ppCodeBooks, int step, int height))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVQCodeBookInitAlloc_32f,
+       (const Ipp32f* pInputTable, IppsVQCodeBookState_32f** ppCodeBooks,
+        int step, int height))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1963,8 +2120,12 @@ IPPAPI(IppStatus, ippsVQCodeBookInitAlloc_32f, (const Ipp32f* pInputTable, IppsV
 //    ippStsNullPtrErr      Indicates an error when pCodeBook pointer is
 //                          NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVQCodeBookFree_32f, (IppsVQCodeBookState_32f* pCodeBook))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVQCodeBookFree_32f, (IppsVQCodeBookState_32f * pCodeBook))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -1991,8 +2152,14 @@ IPPAPI(IppStatus, ippsVQCodeBookFree_32f, (IppsVQCodeBookState_32f* pCodeBook))
 //    ippStsSizeErr         Indicates an error when the step or height is
 //                          less than or equal to 0.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVQCodeBookInit_32f, (const Ipp32f* pInputTable, IppsVQCodeBookState_32f** ppCodeBook , int step, int height, Ipp8u* pMemSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVQCodeBookInit_32f,
+       (const Ipp32f* pInputTable, IppsVQCodeBookState_32f** ppCodeBook,
+        int step, int height, Ipp8u* pMemSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2025,8 +2192,15 @@ IPPAPI(IppStatus, ippsVQCodeBookInit_32f, (const Ipp32f* pInputTable, IppsVQCode
 //    ippStsNullPtrErr      Indicates an error when pCodeBook or pSrc
 //                          pointer is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVQPreliminarySelect_32f, (const Ipp32f* pSrc, const Ipp32f* pWeights, int nDiv, const Ipp32s* pLengths, Ipp32s* pIndx, Ipp32s* pSign, int nCand, int* polbits, IppsVQCodeBookState_32f* pCodeBook))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVQPreliminarySelect_32f,
+       (const Ipp32f* pSrc, const Ipp32f* pWeights, int nDiv,
+        const Ipp32s* pLengths, Ipp32s* pIndx, Ipp32s* pSign, int nCand,
+        int* polbits, IppsVQCodeBookState_32f* pCodeBook))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2058,8 +2232,16 @@ IPPAPI(IppStatus, ippsVQPreliminarySelect_32f, (const Ipp32f* pSrc, const Ipp32f
 //    ippStsNullPtrErr      Indicates an error when one of the specified
 //                          pointers is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVQMainSelect_32f, (const Ipp32f* pSrc, const Ipp32f* pWeights, const Ipp32s* pLengths, int nDiv, int nCand, Ipp32s** ppIndexCand, Ipp32s** ppSignCand, Ipp32s** ppIndx, Ipp32s** ppSign, IppsVQCodeBookState_32f** ppCodeBooks, int nCodeBooks))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVQMainSelect_32f,
+       (const Ipp32f* pSrc, const Ipp32f* pWeights, const Ipp32s* pLengths,
+        int nDiv, int nCand, Ipp32s** ppIndexCand, Ipp32s** ppSignCand,
+        Ipp32s** ppIndx, Ipp32s** ppSign, IppsVQCodeBookState_32f** ppCodeBooks,
+        int nCodeBooks))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2094,8 +2276,15 @@ IPPAPI(IppStatus, ippsVQMainSelect_32f, (const Ipp32f* pSrc, const Ipp32f* pWeig
 //    ippStsNullPtrErr      Indicates an error when one of the specified
 //                          pointers is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVQIndexSelect_32f, (const Ipp32f* pSrc, const Ipp32f* pWeights, int nDiv, const Ipp32s* pLengths,  int nCand, int** ppPolbits, Ipp32s** ppIndx, Ipp32s** ppSign, IppsVQCodeBookState_32f** ppCodeBooks, int nCodeBooks))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVQIndexSelect_32f,
+       (const Ipp32f* pSrc, const Ipp32f* pWeights, int nDiv,
+        const Ipp32s* pLengths, int nCand, int** ppPolbits, Ipp32s** ppIndx,
+        Ipp32s** ppSign, IppsVQCodeBookState_32f** ppCodeBooks, int nCodeBooks))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2124,8 +2313,15 @@ IPPAPI(IppStatus, ippsVQIndexSelect_32f, (const Ipp32f* pSrc, const Ipp32f* pWei
 //    ippStsNullPtrErr      Indicates an error when one of the specified
 //                          pointers is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVQReconstruction_32f, (const Ipp32s** ppIndx, const Ipp32s** ppSign, const Ipp32s* pLength, int nDiv, int nStream, Ipp32f* pDst, IppsVQCodeBookState_32f** ppCodeBooks))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVQReconstruction_32f,
+       (const Ipp32s** ppIndx, const Ipp32s** ppSign, const Ipp32s* pLength,
+        int nDiv, int nStream, Ipp32f* pDst,
+        IppsVQCodeBookState_32f** ppCodeBooks))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2148,16 +2344,21 @@ IPPAPI(IppStatus, ippsVQReconstruction_32f, (const Ipp32s** ppIndx, const Ipp32s
 //    ippStsSizeErr         Indicates an error when the step or height is
 //                          less than or equal to 0.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVQCodeBookGetSize_32f, (int step, int height, int *pSizeState))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVQCodeBookGetSize_32f,
+       (int step, int height, int* pSizeState))
 
 /****************************************************************************
  *                   MPEG4-SBR AUDIO
  ****************************************************************************/
 
- /*
- // DECODER PART
- */
+/*
+// DECODER PART
+*/
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippsAnalysisFilterGetSize_SBR_RToC_32f,
@@ -2183,18 +2384,39 @@ IPPAPI(IppStatus, ippsVQCodeBookGetSize_32f, (int step, int height, int *pSizeSt
 //  Returns:
 //    ippStsNoErr           Indicates no error.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus, ippsAnalysisFilterGetSize_SBR_RToC_32f, ( int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf ))
-IPPAPI( IppStatus, ippsAnalysisFilterGetSize_SBR_RToC_32f32fc, ( int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf ))
-IPPAPI( IppStatus, ippsAnalysisFilterGetSize_SBR_RToR_32f, ( int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus, ippsSynthesisFilterGetSize_SBR_CToR_32f, ( int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf ))
-IPPAPI(IppStatus, ippsSynthesisFilterGetSize_SBR_CToR_32fc32f, ( int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf ))
-IPPAPI( IppStatus, ippsSynthesisFilterGetSize_SBR_RToR_32f, ( int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf ))
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus, ippsSynthesisDownFilterGetSize_SBR_CToR_32f, ( int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf ))
-IPPAPI( IppStatus, ippsSynthesisDownFilterGetSize_SBR_CToR_32fc32f, ( int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf ))
-IPPAPI( IppStatus, ippsSynthesisDownFilterGetSize_SBR_RToR_32f, ( int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilterGetSize_SBR_RToC_32f,
+       (int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf))
+IPPAPI(IppStatus, ippsAnalysisFilterGetSize_SBR_RToC_32f32fc,
+       (int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf))
+IPPAPI(IppStatus, ippsAnalysisFilterGetSize_SBR_RToR_32f,
+       (int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilterGetSize_SBR_CToR_32f,
+       (int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf))
+IPPAPI(IppStatus, ippsSynthesisFilterGetSize_SBR_CToR_32fc32f,
+       (int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf))
+IPPAPI(IppStatus, ippsSynthesisFilterGetSize_SBR_RToR_32f,
+       (int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisDownFilterGetSize_SBR_CToR_32f,
+       (int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf))
+IPPAPI(IppStatus, ippsSynthesisDownFilterGetSize_SBR_CToR_32fc32f,
+       (int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf))
+IPPAPI(IppStatus, ippsSynthesisDownFilterGetSize_SBR_RToR_32f,
+       (int* pSizeSpec, int* pSizeInitBuf, int* pSizeWorkBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2218,9 +2440,14 @@ IPPAPI( IppStatus, ippsSynthesisDownFilterGetSize_SBR_RToR_32f, ( int* pSizeSpec
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus, ippsAnalysisFilterInit_SBR_RToC_32f,
-       ( IppsFilterSpec_SBR_C_32f** ppFilterSpec, Ipp8u* pMemSpec, Ipp8u* pInitBuf))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilterInit_SBR_RToC_32f,
+       (IppsFilterSpec_SBR_C_32f * *ppFilterSpec, Ipp8u* pMemSpec,
+        Ipp8u* pInitBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2244,8 +2471,9 @@ IPPAPI( IppStatus, ippsAnalysisFilterInit_SBR_RToC_32f,
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPPAPI( IppStatus, ippsSynthesisFilterInit_SBR_CToR_32fc32f,
-       ( IppsFilterSpec_SBR_C_32fc** ppFilterSpec, Ipp8u* pMemSpec, Ipp8u* pInitBuf))
+IPPAPI(IppStatus, ippsSynthesisFilterInit_SBR_CToR_32fc32f,
+       (IppsFilterSpec_SBR_C_32fc * *ppFilterSpec, Ipp8u* pMemSpec,
+        Ipp8u* pInitBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2269,8 +2497,9 @@ IPPAPI( IppStatus, ippsSynthesisFilterInit_SBR_CToR_32fc32f,
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPPAPI( IppStatus, ippsAnalysisFilterInit_SBR_RToC_32f32fc,
-       ( IppsFilterSpec_SBR_C_32fc** ppFilterSpec, Ipp8u* pMemSpec, Ipp8u* pInitBuf))
+IPPAPI(IppStatus, ippsAnalysisFilterInit_SBR_RToC_32f32fc,
+       (IppsFilterSpec_SBR_C_32fc * *ppFilterSpec, Ipp8u* pMemSpec,
+        Ipp8u* pInitBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2294,8 +2523,9 @@ IPPAPI( IppStatus, ippsAnalysisFilterInit_SBR_RToC_32f32fc,
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPPAPI( IppStatus, ippsAnalysisFilterInit_SBR_RToR_32f,
-       ( IppsFilterSpec_SBR_R_32f** ppFilterSpec, Ipp8u* pMemSpec, Ipp8u* pInitBuf))
+IPPAPI(IppStatus, ippsAnalysisFilterInit_SBR_RToR_32f,
+       (IppsFilterSpec_SBR_R_32f * *ppFilterSpec, Ipp8u* pMemSpec,
+        Ipp8u* pInitBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2319,9 +2549,14 @@ IPPAPI( IppStatus, ippsAnalysisFilterInit_SBR_RToR_32f,
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus, ippsSynthesisFilterInit_SBR_CToR_32f,
-       ( IppsFilterSpec_SBR_C_32f** ppFilterSpec, Ipp8u* pMemSpec, Ipp8u* pInitBuf))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilterInit_SBR_CToR_32f,
+       (IppsFilterSpec_SBR_C_32f * *ppFilterSpec, Ipp8u* pMemSpec,
+        Ipp8u* pInitBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2345,8 +2580,9 @@ IPPAPI( IppStatus, ippsSynthesisFilterInit_SBR_CToR_32f,
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPPAPI( IppStatus, ippsSynthesisFilterInit_SBR_RToR_32f,
-       ( IppsFilterSpec_SBR_R_32f** ppFilterSpec, Ipp8u* pMemSpec, Ipp8u* pInitBuf))
+IPPAPI(IppStatus, ippsSynthesisFilterInit_SBR_RToR_32f,
+       (IppsFilterSpec_SBR_R_32f * *ppFilterSpec, Ipp8u* pMemSpec,
+        Ipp8u* pInitBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2370,9 +2606,14 @@ IPPAPI( IppStatus, ippsSynthesisFilterInit_SBR_RToR_32f,
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus, ippsSynthesisDownFilterInit_SBR_CToR_32f,
-       ( IppsFilterSpec_SBR_C_32f** ppFilterSpec, Ipp8u* pMemSpec, Ipp8u* pInitBuf))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisDownFilterInit_SBR_CToR_32f,
+       (IppsFilterSpec_SBR_C_32f * *ppFilterSpec, Ipp8u* pMemSpec,
+        Ipp8u* pInitBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2396,8 +2637,9 @@ IPPAPI( IppStatus, ippsSynthesisDownFilterInit_SBR_CToR_32f,
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPPAPI( IppStatus, ippsSynthesisDownFilterInit_SBR_CToR_32fc32f,
-       ( IppsFilterSpec_SBR_C_32fc** ppFilterSpec, Ipp8u* pMemSpec, Ipp8u* pInitBuf))
+IPPAPI(IppStatus, ippsSynthesisDownFilterInit_SBR_CToR_32fc32f,
+       (IppsFilterSpec_SBR_C_32fc * *ppFilterSpec, Ipp8u* pMemSpec,
+        Ipp8u* pInitBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2421,8 +2663,9 @@ IPPAPI( IppStatus, ippsSynthesisDownFilterInit_SBR_CToR_32fc32f,
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPPAPI( IppStatus, ippsSynthesisDownFilterInit_SBR_RToR_32f,
-       ( IppsFilterSpec_SBR_R_32f** ppFilterSpec, Ipp8u* pMemSpec, Ipp8u* pInitBuf))
+IPPAPI(IppStatus, ippsSynthesisDownFilterInit_SBR_RToR_32f,
+       (IppsFilterSpec_SBR_R_32f * *ppFilterSpec, Ipp8u* pMemSpec,
+        Ipp8u* pInitBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2437,15 +2680,21 @@ IPPAPI( IppStatus, ippsSynthesisDownFilterInit_SBR_RToR_32f,
 //  Parameters:
 //    pSrc                  Pointer to the input audio signal.
 //    pDst                  array of pointers, holds subband samples.
-//    pDstRe                array of pointers  that contains real parts of subband samples.
-//    pDstIm                array of pointers that contains imaginary parts of subband
+//    pDstRe                array of pointers  that contains real parts of
+subband samples.
+//    pDstIm                array of pointers that contains imaginary parts of
+subband
 //                          samples.
-//    pSbrTableWindowDown   Pointer to the window table that is used by decoder SBR Analysis Filter.
-//    offset                Desired displacement in number of rows when the matrix pDst is calculated. offset >=0
-//    NumLoop               Parameter equal to 32 if frame size of the core decoded signal is 1024
+//    pSbrTableWindowDown   Pointer to the window table that is used by decoder
+SBR Analysis Filter.
+//    offset                Desired displacement in number of rows when the
+matrix pDst is calculated. offset >=0
+//    NumLoop               Parameter equal to 32 if frame size of the core
+decoded signal is 1024
 //                          30 if frame size of the core decoded signal is 960.
 //    kx                    first SBR subband in the SBR range.
-//    pFilterSpec           Pointer to the FilterSpec_SBR specification structure.
+//    pFilterSpec           Pointer to the FilterSpec_SBR specification
+structure.
 //    pWorkBuf              Pointer to the work buffer.
 //
 //  Returns:
@@ -2455,19 +2704,23 @@ IPPAPI( IppStatus, ippsSynthesisDownFilterInit_SBR_RToR_32f,
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus, ippsAnalysisFilter_SBR_RToC_32f_D2L,
-       (const Ipp32f* pSrc, Ipp32f* pDstRe[], Ipp32f* pDstIm[], const Ipp32f* pSbrTableWinDown,
-       int NumLoop, int offset, int kx,
-       const IppsFilterSpec_SBR_C_32f* pFilterSpec, Ipp8u* pWorkBuf))
-IPPAPI( IppStatus, ippsAnalysisFilter_SBR_RToC_32f32fc_D2L,
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilter_SBR_RToC_32f_D2L,
+       (const Ipp32f* pSrc, Ipp32f* pDstRe[], Ipp32f* pDstIm[],
+        const Ipp32f* pSbrTableWinDown, int NumLoop, int offset, int kx,
+        const IppsFilterSpec_SBR_C_32f* pFilterSpec, Ipp8u* pWorkBuf))
+IPPAPI(IppStatus, ippsAnalysisFilter_SBR_RToC_32f32fc_D2L,
        (const Ipp32f* pSrc, Ipp32fc* pDst[], const Ipp32f* pSbrTableWinDown,
-       int NumLoop, int offset, int kx,
-       const IppsFilterSpec_SBR_C_32fc* pFilterSpec, Ipp8u* pWorkBuf))
-IPPAPI( IppStatus, ippsAnalysisFilter_SBR_RToR_32f_D2L,
+        int NumLoop, int offset, int kx,
+        const IppsFilterSpec_SBR_C_32fc* pFilterSpec, Ipp8u* pWorkBuf))
+IPPAPI(IppStatus, ippsAnalysisFilter_SBR_RToR_32f_D2L,
        (const Ipp32f* pSrc, Ipp32f* pDst[], const Ipp32f* pSbrTableWinDown,
-       int NumLoop, int offset, int kx,
-       const IppsFilterSpec_SBR_R_32f* pFilterSpec, Ipp8u* pWorkBuf))
+        int NumLoop, int offset, int kx,
+        const IppsFilterSpec_SBR_R_32f* pFilterSpec, Ipp8u* pWorkBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2480,11 +2733,16 @@ IPPAPI( IppStatus, ippsAnalysisFilter_SBR_RToR_32f_D2L,
 //
 //  Parameters:
 //      pSrc       - array of pointers, holds SBR-processed subband signals.
-//      pSrcRe     - array of pointers that contains real parts of SBR-processed subband signals.
-//      pSrcIm     - array of pointers that contains imaginary parts of SBR-processed subband signals.
-//      pDst       - Pointer to the output vector, holds time domain output samples.
-//      pSbrTableWindow - Pointer to the window table that is used by SBR Analysis Filter.
-//      NumLoop    - Parameter equal to 32 if frame size of the core decoded signal is 1024
+//      pSrcRe     - array of pointers that contains real parts of SBR-processed
+subband signals.
+//      pSrcIm     - array of pointers that contains imaginary parts of
+SBR-processed subband signals.
+//      pDst       - Pointer to the output vector, holds time domain output
+samples.
+//      pSbrTableWindow - Pointer to the window table that is used by SBR
+Analysis Filter.
+//      NumLoop    - Parameter equal to 32 if frame size of the core decoded
+signal is 1024
 //      30 if frame size of the core decoded signal is 960.
 //      pFilterSpec- Pointer to the FilterSpec_SBR specification structure.
 //      pWorkBuf   - Pointer to the work buffer used by the filter.
@@ -2496,86 +2754,128 @@ IPPAPI( IppStatus, ippsAnalysisFilter_SBR_RToR_32f_D2L,
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus, ippsSynthesisFilter_SBR_CToR_32f_D2L,
-       (const Ipp32f* pSrcRe[], const Ipp32f* pSrcIm[], Ipp32f* pDst, const Ipp32f* pSbrTableWindow,
-       int NumLoop, const IppsFilterSpec_SBR_C_32f* pFilterSpec, Ipp8u* pWorkBuf))
-IPPAPI( IppStatus, ippsSynthesisFilter_SBR_CToR_32fc32f_D2L,
-       (const Ipp32fc* pSrc[], Ipp32f* pDst, const Ipp32f* pSbrTableWindow, int NumLoop,
-       const IppsFilterSpec_SBR_C_32fc* pFilterSpec, Ipp8u* pWorkBuf ))
-IPPAPI( IppStatus, ippsSynthesisFilter_SBR_RToR_32f_D2L,
-       (const Ipp32f* pSrc[], Ipp32f* pDst, const Ipp32f* pSbrTableWindow, int NumLoop,
-       const IppsFilterSpec_SBR_R_32f* pFilterSpec, Ipp8u* pWorkBuf ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilter_SBR_CToR_32f_D2L,
+       (const Ipp32f* pSrcRe[], const Ipp32f* pSrcIm[], Ipp32f* pDst,
+        const Ipp32f* pSbrTableWindow, int NumLoop,
+        const IppsFilterSpec_SBR_C_32f* pFilterSpec, Ipp8u* pWorkBuf))
+IPPAPI(IppStatus, ippsSynthesisFilter_SBR_CToR_32fc32f_D2L,
+       (const Ipp32fc* pSrc[], Ipp32f* pDst, const Ipp32f* pSbrTableWindow,
+        int NumLoop, const IppsFilterSpec_SBR_C_32fc* pFilterSpec,
+        Ipp8u* pWorkBuf))
+IPPAPI(IppStatus, ippsSynthesisFilter_SBR_RToR_32f_D2L,
+       (const Ipp32f* pSrc[], Ipp32f* pDst, const Ipp32f* pSbrTableWindow,
+        int NumLoop, const IppsFilterSpec_SBR_R_32f* pFilterSpec,
+        Ipp8u* pWorkBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
-//  Name:       ippsSynthesisDownFilter_SBR_CToR_32f_D2L, ippsSynthesisDownFilter_SBR_CToR_32fc32f_D2L, ippsSynthesisDownFilter_SBR_RToR_32f_D2L
-//  Purpose:    Transforms SBR-processed subband signals into time domain samples and
+//  Name:       ippsSynthesisDownFilter_SBR_CToR_32f_D2L,
+ippsSynthesisDownFilter_SBR_CToR_32fc32f_D2L,
+ippsSynthesisDownFilter_SBR_RToR_32f_D2L
+//  Purpose:    Transforms SBR-processed subband signals into time domain
+samples and
 //              performs downsampling at the same time.
 //
 //  Parameters:
 //      pSrc   - array of pointers, holds SBR-processed subband signals.
-//      pSrcRe - array of pointers that contains real parts of SBR-processed subband signals.
-//      pSrcIm - array of pointers that contains imaginary parts of SBR-processed subband signals.
+//      pSrcRe - array of pointers that contains real parts of SBR-processed
+subband signals.
+//      pSrcIm - array of pointers that contains imaginary parts of
+SBR-processed subband signals.
 //      pDst   - Pointer to the output vector, holds time domain output samples.
-//      pSbrTableWindowDown  - Pointer to the window table that is used by SBR Analysis Filter.
-//      NumLoop- Parameter equal to 32 if frame size of the core decoded signal is 1024
+//      pSbrTableWindowDown  - Pointer to the window table that is used by SBR
+Analysis Filter.
+//      NumLoop- Parameter equal to 32 if frame size of the core decoded signal
+is 1024
 //      30 if frame size of the core decoded signal is 960.
 //      pFilterSpec  - Pointer to the FilterSpec_SBR specification structure.
 //      pWorkBuf     - Pointer to the work buffer used by the filter.
 //
 //  Return Values:     status
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus, ippsSynthesisDownFilter_SBR_CToR_32f_D2L,
-       (const Ipp32f* pSrcRe[],const Ipp32f* pSrcIm[], Ipp32f* pDst,
-       const Ipp32f* pSbrTableWindowDown, int NumLoop,
-       const IppsFilterSpec_SBR_C_32f* pFilterSpec, Ipp8u* pWorkBuf ))
-IPPAPI( IppStatus, ippsSynthesisDownFilter_SBR_CToR_32fc32f_D2L,
-       (const Ipp32fc* pSrc[], Ipp32f* pDst, const Ipp32f* pSbrTableWindowDown, int NumLoop,
-       const IppsFilterSpec_SBR_C_32fc* pFilterSpec, Ipp8u* pWorkBuf ))
-IPPAPI( IppStatus, ippsSynthesisDownFilter_SBR_RToR_32f_D2L,
-       (const Ipp32f* pSrc[], Ipp32f* pDst, const Ipp32f* pSbrTableWindowDown, int NumLoop,
-       const IppsFilterSpec_SBR_R_32f* pFilterSpec, Ipp8u* pWorkBuf ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisDownFilter_SBR_CToR_32f_D2L,
+       (const Ipp32f* pSrcRe[], const Ipp32f* pSrcIm[], Ipp32f* pDst,
+        const Ipp32f* pSbrTableWindowDown, int NumLoop,
+        const IppsFilterSpec_SBR_C_32f* pFilterSpec, Ipp8u* pWorkBuf))
+IPPAPI(IppStatus, ippsSynthesisDownFilter_SBR_CToR_32fc32f_D2L,
+       (const Ipp32fc* pSrc[], Ipp32f* pDst, const Ipp32f* pSbrTableWindowDown,
+        int NumLoop, const IppsFilterSpec_SBR_C_32fc* pFilterSpec,
+        Ipp8u* pWorkBuf))
+IPPAPI(IppStatus, ippsSynthesisDownFilter_SBR_RToR_32f_D2L,
+       (const Ipp32f* pSrc[], Ipp32f* pDst, const Ipp32f* pSbrTableWindowDown,
+        int NumLoop, const IppsFilterSpec_SBR_R_32f* pFilterSpec,
+        Ipp8u* pWorkBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
-//  Name:       ippsPredictCoef_SBR_R_32f_D2L, ippsPredictCoef_SBR_C_32fc_D2L, ippsPredictCoef_SBR_C_32f_D2L
+//  Name:       ippsPredictCoef_SBR_R_32f_D2L, ippsPredictCoef_SBR_C_32fc_D2L,
+ippsPredictCoef_SBR_C_32f_D2L
 //  Purpose:    Obtains prediction filter coefficients using covariance method.
 //
 //  Parameters:
-//      pSrc    - array of pointers holds input real or complex matrix ([40][32]),
+//      pSrc    - array of pointers holds input real or complex matrix
+([40][32]),
 //                holds Low Frequency QMF-processed subband signals.
 //      pSrcRe  - array of pointers ([40][32]) that contains real
 //                parts of Low Frequency SBR-processed subband signals.
 //      pSrcIm  - array of pointers ([40][32]) that contains
-//                imaginary parts of Low Frequency SBR-processed subband signals.
+//                imaginary parts of Low Frequency SBR-processed subband
+signals.
 //      k0      - First QMF subband in the f_master table.
 //      len     - Size autocorrelation.
 //      pAlpha0, pAlpha1     - Pointers to the  arrays that contain complex
-//                             or real Prediction filter coefficients used by High Frequency filter.
-//      pAlpha0Re, pAlpha1Re - Pointers to the  arrays that contain real parts of the
+//                             or real Prediction filter coefficients used by
+High Frequency filter.
+//      pAlpha0Re, pAlpha1Re - Pointers to the  arrays that contain real parts
+of the
 //                             corresponding complex filter coefficients.
-//      pAlpha0Im, pAlpha1Im - Pointers to the arrays that contain imaginary parts of the
+//      pAlpha0Im, pAlpha1Im - Pointers to the arrays that contain imaginary
+parts of the
 //                             corresponding complex filter coefficients.
 //
 //  Return Values:     status
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus, ippsPredictCoef_SBR_R_32f_D2L,
-       (const Ipp32f* pSrc[], Ipp32f* pAlpha0, Ipp32f* pAlpha1, int k0, int len))
-IPPAPI( IppStatus, ippsPredictCoef_SBR_C_32fc_D2L,
-       (const Ipp32fc* pSrc[], Ipp32fc* pAlpha0, Ipp32fc* pAlpha1, int k0, int len))
-IPPAPI( IppStatus, ippsPredictCoef_SBR_C_32f_D2L,
-                                            (const Ipp32f* pSrcRe[], const Ipp32f* pSrcIm[],
-                                            Ipp32f* pAlpha0Re, Ipp32f* pAlpha0Im,
-                                            Ipp32f* pAlpha1Re, Ipp32f* pAlpha1Im,
-                                            int k0, int len))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsPredictCoef_SBR_R_32f_D2L,
+       (const Ipp32f* pSrc[], Ipp32f* pAlpha0, Ipp32f* pAlpha1, int k0,
+        int len))
+IPPAPI(IppStatus, ippsPredictCoef_SBR_C_32fc_D2L,
+       (const Ipp32fc* pSrc[], Ipp32fc* pAlpha0, Ipp32fc* pAlpha1, int k0,
+        int len))
+IPPAPI(IppStatus, ippsPredictCoef_SBR_C_32f_D2L,
+       (const Ipp32f* pSrcRe[], const Ipp32f* pSrcIm[], Ipp32f* pAlpha0Re,
+        Ipp32f* pAlpha0Im, Ipp32f* pAlpha1Re, Ipp32f* pAlpha1Im, int k0,
+        int len))
 
-IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus, ippsPredictOneCoef_SBRHQ_32sc_D2L,
-       (const Ipp32sc* pSrc[], Ipp32sc* pAlpha0, Ipp32sc* pAlpha1, int k, int lenCorr))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsPredictOneCoef_SBRHQ_32sc_D2L,
+       (const Ipp32sc* pSrc[], Ipp32sc* pAlpha0, Ipp32sc* pAlpha1, int k,
+        int lenCorr))
 
-IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus, ippsPredictOneCoef_SBRLP_32s_D2L,
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsPredictOneCoef_SBRLP_32s_D2L,
        (const Ipp32s* pSrc[], Ipp32s* pAlpha0, Ipp32s* pAlpha1,
         Ipp32s* pRefCoef, int k, int lenCorr, int flag))
 
@@ -2585,139 +2885,274 @@ IPPAPI( IppStatus, ippsPredictOneCoef_SBRLP_32s_D2L,
  *
  ****************************************************************************/
 
- /* <-------------------- HQ MODE --------------------------> */
+/* <-------------------- HQ MODE --------------------------> */
 
-  /* GET SIZE */
-  IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsAnalysisFilterGetSize_SBRHQ_32s32sc, ( int* pSizeSpec ))
+/* GET SIZE */
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilterGetSize_SBRHQ_32s32sc, (int* pSizeSpec))
 
-  IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisFilterGetSize_SBRHQ_32sc32s, ( int* pSizeSpec ))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilterGetSize_SBRHQ_32sc32s, (int* pSizeSpec))
 
-  IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisDownFilterGetSize_SBRHQ_32sc32s, ( int* pSizeSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisDownFilterGetSize_SBRHQ_32sc32s,
+       (int* pSizeSpec))
 
-  /* INIT */
-  IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsAnalysisFilterInit_SBRHQ_32s32sc,
-       ( IppsFilterSpec_SBR_C_32sc* pFilterSpec))
+/* INIT */
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilterInit_SBRHQ_32s32sc,
+       (IppsFilterSpec_SBR_C_32sc * pFilterSpec))
 
-  IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisFilterInit_SBRHQ_32sc32s,
-       ( IppsFilterSpec_SBR_C_32sc* pFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilterInit_SBRHQ_32sc32s,
+       (IppsFilterSpec_SBR_C_32sc * pFilterSpec))
 
-  IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisDownFilterInit_SBRHQ_32sc32s,
-       ( IppsFilterSpec_SBR_C_32sc* pFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisDownFilterInit_SBRHQ_32sc32s,
+       (IppsFilterSpec_SBR_C_32sc * pFilterSpec))
 
-  /* INITALLOC */
-  IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsAnalysisFilterInitAlloc_SBRHQ_32s32sc,
-       ( IppsFilterSpec_SBR_C_32sc** ppFilterSpec))
+/* INITALLOC */
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilterInitAlloc_SBRHQ_32s32sc,
+       (IppsFilterSpec_SBR_C_32sc * *ppFilterSpec))
 
-  IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisFilterInitAlloc_SBRHQ_32sc32s,
-       ( IppsFilterSpec_SBR_C_32sc** ppFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilterInitAlloc_SBRHQ_32sc32s,
+       (IppsFilterSpec_SBR_C_32sc * *ppFilterSpec))
 
-  IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisDownFilterInitAlloc_SBRHQ_32sc32s,
-       ( IppsFilterSpec_SBR_C_32sc** ppFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisDownFilterInitAlloc_SBRHQ_32sc32s,
+       (IppsFilterSpec_SBR_C_32sc * *ppFilterSpec))
 
-  /* FREE */
-  IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsAnalysisFilterFree_SBRHQ_32s32sc,
-       ( IppsFilterSpec_SBR_C_32sc* pFilterSpec))
+/* FREE */
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilterFree_SBRHQ_32s32sc,
+       (IppsFilterSpec_SBR_C_32sc * pFilterSpec))
 
-  IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisFilterFree_SBRHQ_32sc32s,
-       ( IppsFilterSpec_SBR_C_32sc* pFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilterFree_SBRHQ_32sc32s,
+       (IppsFilterSpec_SBR_C_32sc * pFilterSpec))
 
-  IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisDownFilterFree_SBRHQ_32sc32s,
-       ( IppsFilterSpec_SBR_C_32sc* pFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisDownFilterFree_SBRHQ_32sc32s,
+       (IppsFilterSpec_SBR_C_32sc * pFilterSpec))
 
-  /* MAIN */
-  IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsAnalysisFilter_SBRHQ_32s32sc,
-       (const Ipp32s* pSrc, Ipp32sc* pDst,int kx,
+/* MAIN */
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilter_SBRHQ_32s32sc,
+       (const Ipp32s* pSrc, Ipp32sc* pDst, int kx,
         const IppsFilterSpec_SBR_C_32sc* pFilterSpec))
 
-  IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisFilter_SBRHQ_32sc32s,
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilter_SBRHQ_32sc32s,
        (const Ipp32sc* pSrc, Ipp32s* pDst,
         const IppsFilterSpec_SBR_C_32sc* pFilterSpec))
 
-  IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisDownFilter_SBRHQ_32sc32s,
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisDownFilter_SBRHQ_32sc32s,
        (const Ipp32sc* pSrc, Ipp32s* pDst,
-        const IppsFilterSpec_SBR_C_32sc* pFilterSpec ))
+        const IppsFilterSpec_SBR_C_32sc* pFilterSpec))
 
 /* <-----------------------LP MODE -----------------------> */
 
-  /* GET SIZE */
-  IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsAnalysisFilterGetSize_SBRLP_32s, ( int* pSizeSpec ))
+/* GET SIZE */
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilterGetSize_SBRLP_32s, (int* pSizeSpec))
 
-  IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisFilterGetSize_SBRLP_32s, ( int* pSizeSpec ))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilterGetSize_SBRLP_32s, (int* pSizeSpec))
 
-  IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisDownFilterGetSize_SBRLP_32s, ( int* pSizeSpec ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisDownFilterGetSize_SBRLP_32s, (int* pSizeSpec))
 
-  /* INIT */
-  IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsAnalysisFilterInit_SBRLP_32s,
-       ( IppsFilterSpec_SBR_R_32s* pFilterSpec))
+/* INIT */
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilterInit_SBRLP_32s,
+       (IppsFilterSpec_SBR_R_32s * pFilterSpec))
 
-  IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisFilterInit_SBRLP_32s,
-       ( IppsFilterSpec_SBR_R_32s* pFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilterInit_SBRLP_32s,
+       (IppsFilterSpec_SBR_R_32s * pFilterSpec))
 
-  IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisDownFilterInit_SBRLP_32s,
-       ( IppsFilterSpec_SBR_R_32s* pFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisDownFilterInit_SBRLP_32s,
+       (IppsFilterSpec_SBR_R_32s * pFilterSpec))
 
-  /* INITALLOC */
-  IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsAnalysisFilterInitAlloc_SBRLP_32s,
-       ( IppsFilterSpec_SBR_R_32s** ppFilterSpec))
+/* INITALLOC */
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilterInitAlloc_SBRLP_32s,
+       (IppsFilterSpec_SBR_R_32s * *ppFilterSpec))
 
-  IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisFilterInitAlloc_SBRLP_32s,
-       ( IppsFilterSpec_SBR_R_32s** ppFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilterInitAlloc_SBRLP_32s,
+       (IppsFilterSpec_SBR_R_32s * *ppFilterSpec))
 
-  IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisDownFilterInitAlloc_SBRLP_32s,
-       ( IppsFilterSpec_SBR_R_32s** ppFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisDownFilterInitAlloc_SBRLP_32s,
+       (IppsFilterSpec_SBR_R_32s * *ppFilterSpec))
 
-  /* FREE */
-  IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsAnalysisFilterFree_SBRLP_32s,
-       ( IppsFilterSpec_SBR_R_32s* pFilterSpec))
+/* FREE */
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilterFree_SBRLP_32s,
+       (IppsFilterSpec_SBR_R_32s * pFilterSpec))
 
-  IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisFilterFree_SBRLP_32s,
-       ( IppsFilterSpec_SBR_R_32s* pFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilterFree_SBRLP_32s,
+       (IppsFilterSpec_SBR_R_32s * pFilterSpec))
 
-  IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisDownFilterFree_SBRLP_32s,
-       ( IppsFilterSpec_SBR_R_32s* pFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisDownFilterFree_SBRLP_32s,
+       (IppsFilterSpec_SBR_R_32s * pFilterSpec))
 
-  /* MAIN */
-  IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsAnalysisFilter_SBRLP_32s,
-       (const Ipp32s* pSrc, Ipp32s* pDst,int kx,
+/* MAIN */
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilter_SBRLP_32s,
+       (const Ipp32s* pSrc, Ipp32s* pDst, int kx,
         const IppsFilterSpec_SBR_R_32s* pFilterSpec))
 
-  IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisFilter_SBRLP_32s,
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilter_SBRLP_32s,
        (const Ipp32s* pSrc, Ipp32s* pDst,
-        const IppsFilterSpec_SBR_R_32s* pFilterSpec ))
+        const IppsFilterSpec_SBR_R_32s* pFilterSpec))
 
-  IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-  IPPAPI( IppStatus, ippsSynthesisDownFilter_SBRLP_32s,
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisDownFilter_SBRLP_32s,
        (const Ipp32s* pSrc, Ipp32s* pDst,
-        const IppsFilterSpec_SBR_R_32s* pFilterSpec ))
+        const IppsFilterSpec_SBR_R_32s* pFilterSpec))
 
 /*
 // ENCODER PART
@@ -2741,10 +3176,13 @@ IPPAPI( IppStatus, ippsPredictOneCoef_SBRLP_32s_D2L,
 //    ippStsNullPtrErr      Indicates an error when any of the specified
 //                          pointers is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
 IPPAPI(IppStatus, ippsAnalysisFilterEncGetSize_SBR_32f,
-       (int *pSizeSpec,
-       int *pSizeInitBuf))
+       (int* pSizeSpec, int* pSizeInitBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2762,14 +3200,18 @@ IPPAPI(IppStatus, ippsAnalysisFilterEncGetSize_SBR_32f,
 //    ippStsNoErr           Indicates no error.
 //    ippStsNullPtrErr      Indicates an error when any of the specified
 //                          pointers is NULL.
-//    ippStsContextMatchErr Indicates an error when the identifier pFilterSpec is
+//    ippStsContextMatchErr Indicates an error when the identifier pFilterSpec
+is
 //                          incorrect.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
 IPPAPI(IppStatus, ippsAnalysisFilterEncInit_SBR_32f,
-       (IppsFilterSpec_SBR_C_32fc  *ppFilterSpec,
-       Ipp8u                      *pInitBuf))
+       (IppsFilterSpec_SBR_C_32fc * ppFilterSpec, Ipp8u* pInitBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2787,8 +3229,13 @@ IPPAPI(IppStatus, ippsAnalysisFilterEncInit_SBR_32f,
 //    ippStsNullPtrErr      Indicates an error when ppFilterSpec is NULL.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsAnalysisFilterEncInitAlloc_SBR_32f, (IppsFilterSpec_SBR_C_32f **ppFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilterEncInitAlloc_SBR_32f,
+       (IppsFilterSpec_SBR_C_32f * *ppFilterSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2808,8 +3255,13 @@ IPPAPI(IppStatus, ippsAnalysisFilterEncInitAlloc_SBR_32f, (IppsFilterSpec_SBR_C_
 //                          pFilterSpec is incorrect.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsAnalysisFilterEncFree_SBR_32f, (IppsFilterSpec_SBR_C_32f *pFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilterEncFree_SBR_32f,
+       (IppsFilterSpec_SBR_C_32f * pFilterSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2837,12 +3289,14 @@ IPPAPI(IppStatus, ippsAnalysisFilterEncFree_SBR_32f, (IppsFilterSpec_SBR_C_32f *
 //                          pFilterSpec is incorrect.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
 IPPAPI(IppStatus, ippsAnalysisFilterEnc_SBR_32f32fc,
-       (const Ipp32f   *pSrc,
-       Ipp32fc        *pDst,
-       const IppsFilterSpec_SBR_C_32f  *pFilterSpec))
-
+       (const Ipp32f* pSrc, Ipp32fc* pDst,
+        const IppsFilterSpec_SBR_C_32f* pFilterSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2852,7 +3306,8 @@ IPPAPI(IppStatus, ippsAnalysisFilterEnc_SBR_32f32fc,
 //    Transient detection is done by function.
 //
 //  Parameters:
-//    pSrc                  pointer to the vector which stores the spectrum component of audio signal.
+//    pSrc                  pointer to the vector which stores the spectrum
+component of audio signal.
 //
 //    pInOutThr            Pointer to the threshold of deviation.
 //
@@ -2863,8 +3318,13 @@ IPPAPI(IppStatus, ippsAnalysisFilterEnc_SBR_32f32fc,
 //    ippStsNullPtrErr      Indicates an error when any of the specified
 //                          pointers is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus, ippsDetectTransient_SBR_32f, (const Ipp32f* pSrc, Ipp32f* pInOutThr, Ipp32f* pDst))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsDetectTransient_SBR_32f,
+       (const Ipp32f* pSrc, Ipp32f* pInOutThr, Ipp32f* pDst))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2874,7 +3334,8 @@ IPPAPI( IppStatus, ippsDetectTransient_SBR_32f, (const Ipp32f* pSrc, Ipp32f* pIn
 //    Function estimates Tonality-To-Noise Ratio of audio signal.
 //
 //  Parameters:
-//    pSrc                 pointer to the vector which stores the spectrum component of audio signal
+//    pSrc                 pointer to the vector which stores the spectrum
+component of audio signal
 //
 //    pTNR0                Pointer to first estimation of TNR.
 //
@@ -2887,15 +3348,21 @@ IPPAPI( IppStatus, ippsDetectTransient_SBR_32f, (const Ipp32f* pSrc, Ipp32f* pIn
 //    ippStsNullPtrErr     Indicates an error when any of the specified
 //                         pointers is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus, ippsEstimateTNR_SBR_32f, (const Ipp32fc* pSrc, Ipp32f* pTNR0, Ipp32f* pTNR1, Ipp32f* pMeanNrg))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsEstimateTNR_SBR_32f,
+       (const Ipp32fc* pSrc, Ipp32f* pTNR0, Ipp32f* pTNR1, Ipp32f* pMeanNrg))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
 //    ippsAnalysisFilter_PS_32fc_D2
 //
 //  Purpose:
-//    Increases frequency resolution of the first few lower subbands by hybrid filtering
+//    Increases frequency resolution of the first few lower subbands by hybrid
+filtering
 //
 //  Parameters:
 //    pSrc                  Pointer to the lower QMF subband
@@ -2904,13 +3371,19 @@ IPPAPI( IppStatus, ippsEstimateTNR_SBR_32f, (const Ipp32fc* pSrc, Ipp32f* pTNR0,
 //
 //  Returns:
 //    ippStsNoErr           Indicates no error.
-//    ippStsNullPtrErr      Indicates an error when at least one of the specified pointers is NULL.
+//    ippStsNullPtrErr      Indicates an error when at least one of the
+specified pointers is NULL.
 //    ippStsBadArgErr       Indicates an error when config isn't correct
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus, ippsAnalysisFilter_PS_32fc_D2, (const Ipp32fc* pSrc, Ipp32fc ppDst[32][12],
-                                                   IppAC_PS_DEC_ANALYSIS config))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilter_PS_32fc_D2,
+       (const Ipp32fc* pSrc, Ipp32fc ppDst[32][12],
+        IppAC_PS_DEC_ANALYSIS config))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2931,10 +3404,13 @@ IPPAPI( IppStatus, ippsAnalysisFilter_PS_32fc_D2, (const Ipp32fc* pSrc, Ipp32fc 
 //                          FrameHeader is NULL.
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsUnpackFrameHeader_MP3, (
-  Ipp8u**            ppBitStream,
-  IppMP3FrameHeader* pFrameHeader))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsUnpackFrameHeader_MP3,
+       (Ipp8u * *ppBitStream, IppMP3FrameHeader* pFrameHeader))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -2960,7 +3436,8 @@ IPPAPI(IppStatus, ippsUnpackFrameHeader_MP3, (
 //                          current frame. One or more of the structures are
 //                          placed contiguously in the buffer pointed to by
 //                          pDstSideInfo in the following order:
-//                          {granule 0 (channel 0, channel 1), granule 1 (channel
+//                          {granule 0 (channel 0, channel 1), granule 1
+(channel
 //                          channel 1)}.
 //    pDstMainDataBegin     Pointer to the main_data_begin field.
 //    pDstPrivateBits       Pointer to the private bits field.
@@ -2987,14 +3464,15 @@ IPPAPI(IppStatus, ippsUnpackFrameHeader_MP3, (
 //    ippStsMP3SideInfoErr  Indicates an error when the value of block_type
 //                          is zero when window_switching_flag is set.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsUnpackSideInfo_MP3, (
-  Ipp8u**            ppBitStream,
-  IppMP3SideInfo*    pDstSideInfo,
-  int*               pDstMainDataBegin,
-  int*               pDstPrivateBits,
-  int*               pDstScfsi,
-  IppMP3FrameHeader* pFrameHeader))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsUnpackSideInfo_MP3,
+       (Ipp8u * *ppBitStream, IppMP3SideInfo* pDstSideInfo,
+        int* pDstMainDataBegin, int* pDstPrivateBits, int* pDstScfsi,
+        IppMP3FrameHeader* pFrameHeader))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3032,16 +3510,15 @@ IPPAPI(IppStatus, ippsUnpackSideInfo_MP3, (
 //                          pDstScaleFactor, pSideInfo, pScfsi, ppBitStream,
 //                          or pFrameHeader is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsUnpackScaleFactors_MP3_1u8s, (
-  Ipp8u**            ppBitStream,
-  int*               pOffset,
-  Ipp8s*             pDstScaleFactor,
-  IppMP3SideInfo*    pSideInfo,
-  int*               pScfsi,
-  IppMP3FrameHeader* pFrameHeader,
-  int                granule,
-  int                channel))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsUnpackScaleFactors_MP3_1u8s,
+       (Ipp8u * *ppBitStream, int* pOffset, Ipp8s* pDstScaleFactor,
+        IppMP3SideInfo* pSideInfo, int* pScfsi, IppMP3FrameHeader* pFrameHeader,
+        int granule, int channel))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3090,15 +3567,15 @@ IPPAPI(IppStatus, ippsUnpackScaleFactors_MP3_1u8s, (
 //                          hufSize < 0 or hufSize > pSideInfo->part23Len.
 //    ippStsErr             Indicates unknown error.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsHuffmanDecode_MP3_1u32s, (
-  Ipp8u**            ppBitStream,
-  int*               pOffset,
-  Ipp32s*            pDstIs,
-  int*               pDstNonZeroBound,
-  IppMP3SideInfo*    pSideInfo,
-  IppMP3FrameHeader* pFrameHeader,
-  int                hufSize))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsHuffmanDecode_MP3_1u32s,
+       (Ipp8u * *ppBitStream, int* pOffset, Ipp32s* pDstIs,
+        int* pDstNonZeroBound, IppMP3SideInfo* pSideInfo,
+        IppMP3FrameHeader* pFrameHeader, int hufSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3147,16 +3624,16 @@ IPPAPI(IppStatus, ippsHuffmanDecode_MP3_1u32s, (
 //                          hufSize < 0 or hufSize > pSideInfo->part23Len.
 //    ippStsErr             Indicates unknown error.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsHuffmanDecodeSfb_MP3_1u32s, (
-  Ipp8u**            ppBitStream,
-  int*               pOffset,
-  Ipp32s*            pDstIs,
-  int*               pDstNonZeroBound,
-  IppMP3SideInfo*    pSideInfo,
-  IppMP3FrameHeader* pFrameHeader,
-  int                hufSize,
-  IppMP3ScaleFactorBandTableLong pSfbTableLong))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsHuffmanDecodeSfb_MP3_1u32s,
+       (Ipp8u * *ppBitStream, int* pOffset, Ipp32s* pDstIs,
+        int* pDstNonZeroBound, IppMP3SideInfo* pSideInfo,
+        IppMP3FrameHeader* pFrameHeader, int hufSize,
+        IppMP3ScaleFactorBandTableLong pSfbTableLong))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3211,18 +3688,18 @@ IPPAPI(IppStatus, ippsHuffmanDecodeSfb_MP3_1u32s, (
 //                          hufSize < 0 or hufSize > pSideInfo->part23Len.
 //    ippStsErr             Indicates unknown error.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsHuffmanDecodeSfbMbp_MP3_1u32s, (
-  Ipp8u**            ppBitStream,
-  int*               pOffset,
-  Ipp32s*            pDstIs,
-  int*               pDstNonZeroBound,
-  IppMP3SideInfo*    pSideInfo,
-  IppMP3FrameHeader* pFrameHeader,
-  int                hufSize,
-  IppMP3ScaleFactorBandTableLong    pSfbTableLong,
-  IppMP3ScaleFactorBandTableShort   pSfbTableShort,
-  IppMP3MixedBlockPartitionTable    pMbpTable))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsHuffmanDecodeSfbMbp_MP3_1u32s,
+       (Ipp8u * *ppBitStream, int* pOffset, Ipp32s* pDstIs,
+        int* pDstNonZeroBound, IppMP3SideInfo* pSideInfo,
+        IppMP3FrameHeader* pFrameHeader, int hufSize,
+        IppMP3ScaleFactorBandTableLong pSfbTableLong,
+        IppMP3ScaleFactorBandTableShort pSfbTableShort,
+        IppMP3MixedBlockPartitionTable pMbpTable))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3281,14 +3758,15 @@ IPPAPI(IppStatus, ippsHuffmanDecodeSfbMbp_MP3_1u32s, (
 //                          is within the range of 0 to 2.
 //    ippStsErr             Indicates an unknown error.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsReQuantize_MP3_32s_I, (
-  Ipp32s*            pSrcDstIsXr,
-  int*               pNonZeroBound,
-  Ipp8s*             pScaleFactor,
-  IppMP3SideInfo*    pSideInfo,
-  IppMP3FrameHeader* pFrameHeader,
-  Ipp32s*            pBuffer))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsReQuantize_MP3_32s_I,
+       (Ipp32s * pSrcDstIsXr, int* pNonZeroBound, Ipp8s* pScaleFactor,
+        IppMP3SideInfo* pSideInfo, IppMP3FrameHeader* pFrameHeader,
+        Ipp32s* pBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3347,16 +3825,16 @@ IPPAPI(IppStatus, ippsReQuantize_MP3_32s_I, (
 //                          is within the range of 0 to 2.
 //    ippStsErr             Indicates an unknown error.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsReQuantizeSfb_MP3_32s_I, (
-  Ipp32s*            pSrcDstIsXr,
-  int*               pNonZeroBound,
-  Ipp8s*             pScaleFactor,
-  IppMP3SideInfo*    pSideInfo,
-  IppMP3FrameHeader* pFrameHeader,
-  Ipp32s*            pBuffer,
-  IppMP3ScaleFactorBandTableLong  pSfbTableLong,
-  IppMP3ScaleFactorBandTableShort pSfbTableShort))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsReQuantizeSfb_MP3_32s_I,
+       (Ipp32s * pSrcDstIsXr, int* pNonZeroBound, Ipp8s* pScaleFactor,
+        IppMP3SideInfo* pSideInfo, IppMP3FrameHeader* pFrameHeader,
+        Ipp32s* pBuffer, IppMP3ScaleFactorBandTableLong pSfbTableLong,
+        IppMP3ScaleFactorBandTableShort pSfbTableShort))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3396,15 +3874,14 @@ IPPAPI(IppStatus, ippsReQuantizeSfb_MP3_32s_I, (
 //                          ,1], or nonZeroBound exceeds [0,576], or *
 //                          pPrevNumOfImdct exceeds [0,32].
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTInv_MP3_32s, (
-  Ipp32s* pSrcXr,
-  Ipp32s* pDstY,
-  Ipp32s* pSrcDstOverlapAdd,
-  int     nonZeroBound,
-  int*    pPrevNumOfImdct,
-  int     blockType,
-  int     mixedBlock))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTInv_MP3_32s,
+       (Ipp32s * pSrcXr, Ipp32s* pDstY, Ipp32s* pSrcDstOverlapAdd,
+        int nonZeroBound, int* pPrevNumOfImdct, int blockType, int mixedBlock))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3458,13 +3935,15 @@ IPPAPI(IppStatus, ippsMDCTInv_MP3_32s, (
 //    modify the values contained in pVBuffer or pVPosition only during
 //    decoder reset, and the reset values should always be zero.
 */
-IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsSynthPQMF_MP3_32s16s, (
-  Ipp32s* pSrcY,
-  Ipp16s* pDstAudioOut,
-  Ipp32s* pVBuffer,
-  int*    pVPosition,
-  int     mode))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthPQMF_MP3_32s16s,
+       (Ipp32s * pSrcY, Ipp16s* pDstAudioOut, Ipp32s* pVBuffer, int* pVPosition,
+        int mode))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3498,10 +3977,14 @@ IPPAPI(IppStatus, ippsSynthPQMF_MP3_32s16s, (
 //    2. It is assumed that it is known how many IppAACPrgCfgElt
 //       must be supported.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsUnpackADIFHeader_AAC,(Ipp8u **ppBitStream,
-                    IppAACADIFHeader *pADIFHeader, IppAACPrgCfgElt *pPrgCfgElt,
-                                                            int prgCfgEltMax ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsUnpackADIFHeader_AAC,
+       (Ipp8u * *ppBitStream, IppAACADIFHeader* pADIFHeader,
+        IppAACPrgCfgElt* pPrgCfgElt, int prgCfgEltMax))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3528,9 +4011,13 @@ IPPAPI(IppStatus, ippsUnpackADIFHeader_AAC,(Ipp8u **ppBitStream,
 //    ippStsAacBitOffsetErr Indicates an error when pOffset is out of the
 //                          range of [0,7].
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsDecodePrgCfgElt_AAC,(Ipp8u **ppBitStream, int *pOffset,
-                                                 IppAACPrgCfgElt *pPrgCfgElt ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsDecodePrgCfgElt_AAC,
+       (Ipp8u * *ppBitStream, int* pOffset, IppAACPrgCfgElt* pPrgCfgElt))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3550,9 +4037,13 @@ IPPAPI(IppStatus, ippsDecodePrgCfgElt_AAC,(Ipp8u **ppBitStream, int *pOffset,
 //                          pointers ppBitStream, pADTSFrameHeader, or
 //                          *ppBitStream is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsUnpackADTSFrameHeader_AAC, (Ipp8u **ppBitStream,
-                                                  IppAACADTSFrameHeader *pADTSFrameHeader))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsUnpackADTSFrameHeader_AAC,
+       (Ipp8u * *ppBitStream, IppAACADTSFrameHeader* pADTSFrameHeader))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3591,9 +4082,14 @@ IPPAPI(IppStatus, ippsUnpackADTSFrameHeader_AAC, (Ipp8u **ppBitStream,
 //    ippStsAacBitOffsetErr Indicates an error when *pOffset is out of range
 //                          [0,7].
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsDecodeDatStrElt_AAC,(Ipp8u **ppBitStream, int *pOffset,
-                            int *pDataTag, int *pDataCnt, Ipp8u *pDstDataElt ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsDecodeDatStrElt_AAC,
+       (Ipp8u * *ppBitStream, int* pOffset, int* pDataTag, int* pDataCnt,
+        Ipp8u* pDstDataElt))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3623,9 +4119,13 @@ IPPAPI(IppStatus, ippsDecodeDatStrElt_AAC,(Ipp8u **ppBitStream, int *pOffset,
 //    ippStsAacBitOffsetErr Indicates an error when *pOffset is out of the
 //                          range of [0,7].
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsDecodeFillElt_AAC,(Ipp8u **ppBitStream, int *pOffset,
-                                           int *pFillCnt, Ipp8u *pDstFillElt ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsDecodeFillElt_AAC,
+       (Ipp8u * *ppBitStream, int* pOffset, int* pFillCnt, Ipp8u* pDstFillElt))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3668,12 +4168,14 @@ IPPAPI(IppStatus, ippsDecodeFillElt_AAC,(Ipp8u **ppBitStream, int *pOffset,
 //    ippStsAacPredSfbErr   Indicates an error when predSfbMax is out of
 //                          the range of [0, IPP_AAC_PRED_SFB_MAX].
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsDecodeChanPairElt_AAC, (Ipp8u             **ppBitStream,
-                                              int               *pOffset,
-                                              IppAACIcsInfo     *pIcsInfo,
-                                              IppAACChanPairElt *pChanPairElt,
-                                              int predSfbMax))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsDecodeChanPairElt_AAC,
+       (Ipp8u * *ppBitStream, int* pOffset, IppAACIcsInfo* pIcsInfo,
+        IppAACChanPairElt* pChanPairElt, int predSfbMax))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3760,11 +4262,16 @@ IPPAPI(IppStatus, ippsDecodeChanPairElt_AAC, (Ipp8u             **ppBitStream,
 //    User must set pChanInfo->samplingRateIndex, predSfbMax, pIcsInfo,
 //    before calling this function.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsNoiselessDecoder_LC_AAC,(Ipp8u **ppBitStream,
-                        int *pOffset, int commonWin, IppAACChanInfo *pChanInfo,
-                    Ipp16s *pDstScalefactor, Ipp32s *pDstQuantizedSpectralCoef,
-                                    Ipp8u *pDstSfbCb, Ipp8s *pDstTnsFiltCoef ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsNoiselessDecoder_LC_AAC,
+       (Ipp8u * *ppBitStream, int* pOffset, int commonWin,
+        IppAACChanInfo* pChanInfo, Ipp16s* pDstScalefactor,
+        Ipp32s* pDstQuantizedSpectralCoef, Ipp8u* pDstSfbCb,
+        Ipp8s* pDstTnsFiltCoef))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3819,11 +4326,15 @@ IPPAPI(IppStatus, ippsNoiselessDecoder_LC_AAC,(Ipp8u **ppBitStream,
 //                          coefficients value pointed to by
 //                          pSrcDstSpectralCoef exceeds [-8191,8191].
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsQuantInv_AAC_32s_I,(Ipp32s *pSrcDstSpectralCoef,
-                                     const Ipp16s *pScalefactor, int numWinGrp,
-                        const int *pWinGrpLen, int maxSfb, const Ipp8u *pSfbCb,
-                                           int samplingRateIndex, int winLen ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsQuantInv_AAC_32s_I,
+       (Ipp32s * pSrcDstSpectralCoef, const Ipp16s* pScalefactor, int numWinGrp,
+        const int* pWinGrpLen, int maxSfb, const Ipp8u* pSfbCb,
+        int samplingRateIndex, int winLen))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3903,11 +4414,15 @@ IPPAPI(IppStatus, ippsQuantInv_AAC_32s_I,(Ipp32s *pSrcDstSpectralCoef,
 // Notes:
 //    Input and output data are in interleaving mode, only for CPE.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsDecodeMsStereo_AAC_32s_I,(Ipp32s *pSrcDstL,
-                        Ipp32s *pSrcDstR, int msMaskPres, const Ipp8u *pMsUsed,
-                           Ipp8u *pSfbCb, int numWinGrp, const int *pWinGrpLen,
-                               int maxSfb, int samplingRateIndex, int winLen ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsDecodeMsStereo_AAC_32s_I,
+       (Ipp32s * pSrcDstL, Ipp32s* pSrcDstR, int msMaskPres,
+        const Ipp8u* pMsUsed, Ipp8u* pSfbCb, int numWinGrp,
+        const int* pWinGrpLen, int maxSfb, int samplingRateIndex, int winLen))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -3955,11 +4470,15 @@ IPPAPI(IppStatus, ippsDecodeMsStereo_AAC_32s_I,(Ipp32s *pSrcDstL,
 //    ippStsAacSamplRateIdxErr Indicates an error when pChanInfor->
 //                          samplingRateIndex exceeds [0,11].
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsDecodeIsStereo_AAC_32s,(const Ipp32s *pSrcL,
-                                     Ipp32s *pDstR, const Ipp16s *pScalefactor,
-                     const Ipp8u *pSfbCb, int numWinGrp, const int *pWinGrpLen,
-                               int maxSfb, int samplingRateIndex, int winLen ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsDecodeIsStereo_AAC_32s,
+       (const Ipp32s* pSrcL, Ipp32s* pDstR, const Ipp16s* pScalefactor,
+        const Ipp8u* pSfbCb, int numWinGrp, const int* pWinGrpLen, int maxSfb,
+        int samplingRateIndex, int winLen))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4002,10 +4521,14 @@ IPPAPI(IppStatus, ippsDecodeIsStereo_AAC_32s,(const Ipp32s *pSrcL,
 //    ippStsAacWinLenErr    Indicates an error when winLen is not equal to
 //                          128.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsDeinterleaveSpectrum_AAC_32s,(const Ipp32s *pSrc,
-                            Ipp32s *pDst, int numWinGrp, const int *pWinGrpLen,
-                               int maxSfb, int samplingRateIndex, int winLen ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsDeinterleaveSpectrum_AAC_32s,
+       (const Ipp32s* pSrc, Ipp32s* pDst, int numWinGrp, const int* pWinGrpLen,
+        int maxSfb, int samplingRateIndex, int winLen))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4123,12 +4646,17 @@ IPPAPI(IppStatus, ippsDeinterleaveSpectrum_AAC_32s,(const Ipp32s *pSrc,
 // Notes:
 //    Input/Output data(pSrcDstSpectralCoefs[]) are in Q3.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsDecodeTNS_AAC_32s_I,(Ipp32s *pSrcDstSpectralCoefs,
-                              const int *pTnsNumFilt, const int *pTnsRegionLen,
-                          const int *pTnsFiltOrder, const int *pTnsFiltCoefRes,
-                           const Ipp8s *pTnsFiltCoef, const int *pTnsDirection,
-                  int maxSfb, int profile, int samplingRateIndex, int winLen ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsDecodeTNS_AAC_32s_I,
+       (Ipp32s * pSrcDstSpectralCoefs, const int* pTnsNumFilt,
+        const int* pTnsRegionLen, const int* pTnsFiltOrder,
+        const int* pTnsFiltCoefRes, const Ipp8s* pTnsFiltCoef,
+        const int* pTnsDirection, int maxSfb, int profile,
+        int samplingRateIndex, int winLen))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4183,18 +4711,35 @@ IPPAPI(IppStatus, ippsDecodeTNS_AAC_32s_I,(Ipp32s *pSrcDstSpectralCoefs,
 //    Input data (pSrcSpectralCoefs[]) is in Q = _IPP_AAC_FB_Q;
 //    data (pSrcDstOverlapAdd[]) is in Q = _IPP_AAC_FB_Q.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTInv_AAC_32s16s,(Ipp32s *pSrcSpectralCoefs,
-                         Ipp16s *pDstPcmAudioOut, Ipp32s *pSrcDstOverlapAddBuf,
-                int winSequence, int winShape, int prevWinShape, int pcmMode ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTInv_AAC_32s16s,
+       (Ipp32s * pSrcSpectralCoefs, Ipp16s* pDstPcmAudioOut,
+        Ipp32s* pSrcDstOverlapAddBuf, int winSequence, int winShape,
+        int prevWinShape, int pcmMode))
 
-IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTInv_AAC_32s_I,(Ipp32s *tst_SrcDst, Ipp32s *tst_OverlapBuf,
-       int winSeq, int winShape, int prewinShape, int len))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTInv_AAC_32s_I,
+       (Ipp32s * tst_SrcDst, Ipp32s* tst_OverlapBuf, int winSeq, int winShape,
+        int prewinShape, int len))
 
-IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTFwd_AAC_32s_I,(Ipp32s *tst_SrcDst, int winSeq, int winShape,
-       int prewinShape, int len))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTFwd_AAC_32s_I,
+       (Ipp32s * tst_SrcDst, int winSeq, int winShape, int prewinShape,
+        int len))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4221,10 +4766,14 @@ IPPAPI(IppStatus, ippsMDCTFwd_AAC_32s_I,(Ipp32s *tst_SrcDst, int winSeq, int win
 //    ippStsAacMonoStereoErr Indicates an error when monoStereoFlag exceeds
 //                          [0,1].
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsDecodeMainHeader_AAC,(Ipp8u **ppBitStream,
-                int *pOffset, IppAACMainHeader *pAACMainHeader, int channelNum,
-                                                          int monoStereoFlag ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsDecodeMainHeader_AAC,
+       (Ipp8u * *ppBitStream, int* pOffset, IppAACMainHeader* pAACMainHeader,
+        int channelNum, int monoStereoFlag))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4269,11 +4818,15 @@ IPPAPI(IppStatus, ippsDecodeMainHeader_AAC,(Ipp8u **ppBitStream,
 //                          [0,3].
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsDecodeExtensionHeader_AAC,(Ipp8u **ppBitStream,
-              int *pOffset, IppAACExtHeader *pAACExtHeader, int monoStereoFlag,
-                   int thisLayerStereo, int monoLayerFlag, int preStereoMaxSfb,
-                                      int hightstMonoMaxSfb, int winSequence ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsDecodeExtensionHeader_AAC,
+       (Ipp8u * *ppBitStream, int* pOffset, IppAACExtHeader* pAACExtHeader,
+        int monoStereoFlag, int thisLayerStereo, int monoLayerFlag,
+        int preStereoMaxSfb, int hightstMonoMaxSfb, int winSequence))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4310,11 +4863,15 @@ IPPAPI(IppStatus, ippsDecodeExtensionHeader_AAC,(Ipp8u **ppBitStream,
 //    ippStsAacWinLenErr    Indicates an error when winLen is not equal to
 //                          128 or 1024.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsDecodePNS_AAC_32s,(Ipp32s *pSrcDstSpec,
-                      int *pSrcDstLtpFlag, Ipp8u *pSfbCb, Ipp16s *pScaleFactor,
-             int maxSfb, int numWinGrp, int *pWinGrpLen, int samplingFreqIndex,
-                                                int winLen, int *pRandomSeed ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsDecodePNS_AAC_32s,
+       (Ipp32s * pSrcDstSpec, int* pSrcDstLtpFlag, Ipp8u* pSfbCb,
+        Ipp16s* pScaleFactor, int maxSfb, int numWinGrp, int* pWinGrpLen,
+        int samplingFreqIndex, int winLen, int* pRandomSeed))
 
 /* ///////////////////////////////////////////////////////////////////////////
 // Name:
@@ -4356,11 +4913,16 @@ IPPAPI(IppStatus, ippsDecodePNS_AAC_32s,(Ipp32s *pSrcDstSpec,
 //    ippStsAacWinLenErr    Indicates an error when winLen is not equal to
 //                          128 or 1024.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsDecodeMsPNS_AAC_32s,(Ipp32s *pSrcDstSpec,
-                      int *pSrcDstLtpFlag, Ipp8u *pSfbCb, Ipp16s *pScaleFactor,
-             int maxSfb, int numWinGrp, int *pWinGrpLen, int samplingFreqIndex,
-             int winLen, int *pRandomSeed, int channel, Ipp8u *pMsUsed, int *pNoiseState ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsDecodeMsPNS_AAC_32s,
+       (Ipp32s * pSrcDstSpec, int* pSrcDstLtpFlag, Ipp8u* pSfbCb,
+        Ipp16s* pScaleFactor, int maxSfb, int numWinGrp, int* pWinGrpLen,
+        int samplingFreqIndex, int winLen, int* pRandomSeed, int channel,
+        Ipp8u* pMsUsed, int* pNoiseState))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4386,10 +4948,14 @@ IPPAPI(IppStatus, ippsDecodeMsPNS_AAC_32s,(Ipp32s *pSrcDstSpec,
 //    ippStsAacWinSeqErr    Indicates an error when winSequence exceeds
 //                          [0,3].
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsLongTermReconstruct_AAC_32s,(Ipp32s *pSrcEstSpec,
-                           Ipp32s *pSrcDstSpec, int *pLtpFlag, int winSequence,
-                                                       int samplingFreqIndex ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsLongTermReconstruct_AAC_32s,
+       (Ipp32s * pSrcEstSpec, Ipp32s* pSrcDstSpec, int* pLtpFlag,
+        int winSequence, int samplingFreqIndex))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4441,12 +5007,17 @@ IPPAPI(IppStatus, ippsLongTermReconstruct_AAC_32s,(Ipp32s *pSrcEstSpec,
 // Notes:
 //    Input/Output data(pSrcDstSpectralCoefs[]) are in Q3.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsEncodeTNS_AAC_32s_I,(Ipp32s *pSrcDstSpectralCoefs,
-                              const int *pTnsNumFilt, const int *pTnsRegionLen,
-                          const int *pTnsFiltOrder, const int *pTnsFiltCoefRes,
-                           const Ipp8s *pTnsFiltCoef, const int *pTnsDirection,
-                  int maxSfb, int profile, int samplingRateIndex, int winLen ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsEncodeTNS_AAC_32s_I,
+       (Ipp32s * pSrcDstSpectralCoefs, const int* pTnsNumFilt,
+        const int* pTnsRegionLen, const int* pTnsFiltOrder,
+        const int* pTnsFiltCoefRes, const Ipp8s* pTnsFiltCoef,
+        const int* pTnsDirection, int maxSfb, int profile,
+        int samplingRateIndex, int winLen))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4471,10 +5042,14 @@ IPPAPI(IppStatus, ippsEncodeTNS_AAC_32s_I,(Ipp32s *pSrcDstSpectralCoefs,
 //    ippStsAacWinSeqErr    Indicates an error when winSequence exceeds
 //                          [0,3].
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsLongTermPredict_AAC_32s,(Ipp32s *pSrcTimeSignal,
-                         Ipp32s *pDstEstTimeSignal, IppAACLtpInfo *pAACLtpInfo,
-                                                             int winSequence ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsLongTermPredict_AAC_32s,
+       (Ipp32s * pSrcTimeSignal, Ipp32s* pDstEstTimeSignal,
+        IppAACLtpInfo* pAACLtpInfo, int winSequence))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4531,13 +5106,17 @@ IPPAPI(IppStatus, ippsLongTermPredict_AAC_32s,(Ipp32s *pSrcTimeSignal,
 //    changes when get dpcm_noise_nrg or hcod_sf[dpcm_noise_nrg]
 //    information (all are stored in pDstScalefactor).
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsNoiselessDecode_AAC,(Ipp8u **ppBitStream, int *pOffset,
-                     IppAACMainHeader *pAACMainHeader, Ipp16s *pDstScalefactor,
-                           Ipp32s *pDstQuantizedSpectralCoef, Ipp8u *pDstSfbCb,
-                             Ipp8s *pDstTnsFiltCoef, IppAACChanInfo *pChanInfo,
-                                    int winSequence, int maxSfb, int commonWin,
-                                          int scaleFlag, int audioObjectType ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsNoiselessDecode_AAC,
+       (Ipp8u * *ppBitStream, int* pOffset, IppAACMainHeader* pAACMainHeader,
+        Ipp16s* pDstScalefactor, Ipp32s* pDstQuantizedSpectralCoef,
+        Ipp8u* pDstSfbCb, Ipp8s* pDstTnsFiltCoef, IppAACChanInfo* pChanInfo,
+        int winSequence, int maxSfb, int commonWin, int scaleFlag,
+        int audioObjectType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4570,10 +5149,14 @@ IPPAPI(IppStatus, ippsNoiselessDecode_AAC,(Ipp8u **ppBitStream, int *pOffset,
 //    ippStsAacWinShapeErr  Indicates an error when winShape or preWinShape
 //                          exceeds [0,1].
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsLtpUpdate_AAC_32s,(Ipp32s *pSpecVal,
-                            Ipp32s *pLtpSaveBuf, int winSequence, int winShape,
-                                           int preWinShape, Ipp32s *pWorkBuf ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsLtpUpdate_AAC_32s,
+       (Ipp32s * pSpecVal, Ipp32s* pLtpSaveBuf, int winSequence, int winShape,
+        int preWinShape, Ipp32s* pWorkBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4603,10 +5186,14 @@ IPPAPI(IppStatus, ippsLtpUpdate_AAC_32s,(Ipp32s *pSpecVal,
 //    ippStsAacWinShapeErr  Indicates an error when preWinShape exceeds
 //                          [0,1].
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTFwd_AAC_32s,(Ipp32s *pSrc, Ipp32s *pDst,
-                            Ipp32s *pOverlapAdd, int winSequence, int winShape,
-                                       int preWinShape, Ipp32s *pWindowedBuf ))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTFwd_AAC_32s,
+       (Ipp32s * pSrc, Ipp32s* pDst, Ipp32s* pOverlapAdd, int winSequence,
+        int winShape, int preWinShape, Ipp32s* pWindowedBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4642,11 +5229,15 @@ IPPAPI(IppStatus, ippsMDCTFwd_AAC_32s,(Ipp32s *pSrc, Ipp32s *pDst,
 //                          the maximum scale factor band for all sampling
 //                          frequencies.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsDecodeChanPairElt_MP4_AAC,(Ipp8u **ppBitStream, int *pOffset,
-                            IppAACIcsInfo *pIcsInfo, IppAACChanPairElt *pChanPairElt,
-                            IppAACMainHeader *pAACMainHeader, int predSfbMax,
-                            int audioObjectType))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsDecodeChanPairElt_MP4_AAC,
+       (Ipp8u * *ppBitStream, int* pOffset, IppAACIcsInfo* pIcsInfo,
+        IppAACChanPairElt* pChanPairElt, IppAACMainHeader* pAACMainHeader,
+        int predSfbMax, int audioObjectType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4681,12 +5272,9 @@ IPPAPI(IppStatus, ippsDecodeChanPairElt_MP4_AAC,(Ipp8u **ppBitStream, int *pOffs
 //                          created by ippsVLCDecodeInit_32s or
 //                          ippsVLCDecodeInitAlloc_32s functions.
 */
-IPPAPI(IppStatus, ippsVLCDecodeEscBlock_MP3_1u16s,(Ipp8u **ppBitStream,
-                                                   int *pBitOffset,
-                                                   int linbits,
-                                                   Ipp16s *pData,
-                                                   int len,
-                                                   const IppsVLCDecodeSpec_32s *pVLCSpec))
+IPPAPI(IppStatus, ippsVLCDecodeEscBlock_MP3_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, int linbits, Ipp16s* pData,
+        int len, const IppsVLCDecodeSpec_32s* pVLCSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4723,11 +5311,9 @@ IPPAPI(IppStatus, ippsVLCDecodeEscBlock_MP3_1u16s,(Ipp8u **ppBitStream,
 //                          created by ippsVLCDecodeInit_32s or
 //                          ippsVLCDecodeInitAlloc_32s functions.
 */
-IPPAPI(IppStatus, ippsVLCDecodeEscBlock_AAC_1u16s,(Ipp8u **ppBitStream,
-                                                   int *pBitOffset,
-                                                   Ipp16s *pData,
-                                                   int len,
-                                                   const IppsVLCDecodeSpec_32s *pVLCSpec))
+IPPAPI(IppStatus, ippsVLCDecodeEscBlock_AAC_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pData, int len,
+        const IppsVLCDecodeSpec_32s* pVLCSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4759,12 +5345,9 @@ IPPAPI(IppStatus, ippsVLCDecodeEscBlock_AAC_1u16s,(Ipp8u **ppBitStream,
 //                          created by ippsVLCEncodeInit_32s or
 //                          ippsVLCEncodeInitAlloc_32s functions.
 */
-IPPAPI(IppStatus, ippsVLCEncodeEscBlock_MP3_16s1u,(const Ipp16s *pInputData,
-                                                   int len,
-                                                   int linbits,
-                                                   Ipp8u **ppBitStream,
-                                                   int *pBitOffset,
-                                                   const IppsVLCEncodeSpec_32s *pVLCSpec))
+IPPAPI(IppStatus, ippsVLCEncodeEscBlock_MP3_16s1u,
+       (const Ipp16s* pInputData, int len, int linbits, Ipp8u** ppBitStream,
+        int* pBitOffset, const IppsVLCEncodeSpec_32s* pVLCSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4795,11 +5378,9 @@ IPPAPI(IppStatus, ippsVLCEncodeEscBlock_MP3_16s1u,(const Ipp16s *pInputData,
 //                          created by ippsVLCEncodeInit_32s or
 //                          ippsVLCEncodeInitAlloc_32s functions.
 */
-IPPAPI(IppStatus, ippsVLCEncodeEscBlock_AAC_16s1u,(const Ipp16s *pInputData,
-                                                   int len,
-                                                   Ipp8u **ppBitStream,
-                                                   int *pBitOffset,
-                                                   const IppsVLCEncodeSpec_32s *pVLCSpec))
+IPPAPI(IppStatus, ippsVLCEncodeEscBlock_AAC_16s1u,
+       (const Ipp16s* pInputData, int len, Ipp8u** ppBitStream, int* pBitOffset,
+        const IppsVLCEncodeSpec_32s* pVLCSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4823,11 +5404,9 @@ IPPAPI(IppStatus, ippsVLCEncodeEscBlock_AAC_16s1u,(const Ipp16s *pInputData,
 //                          created by ippsVLCEncodeInit_32s or
 //                          ippsVLCEncodeInitAlloc_32s functions.
 */
-IPPAPI(IppStatus, ippsVLCCountEscBits_MP3_16s32s,(const Ipp16s *pInputData,
-                                                  int len,
-                                                  int linbits,
-                                                  Ipp32s *pCountBits,
-                                                  const IppsVLCEncodeSpec_32s *pVLCSpec))
+IPPAPI(IppStatus, ippsVLCCountEscBits_MP3_16s32s,
+       (const Ipp16s* pInputData, int len, int linbits, Ipp32s* pCountBits,
+        const IppsVLCEncodeSpec_32s* pVLCSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4851,24 +5430,31 @@ IPPAPI(IppStatus, ippsVLCCountEscBits_MP3_16s32s,(const Ipp16s *pInputData,
 //                          created by ippsVLCEncodeInit_32s or
 //                          ippsVLCEncodeInitAlloc_32s functions.
 */
-IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCCountEscBits_AAC_16s32s,(const Ipp16s *pInputData,
-                                                  int len,
-                                                  Ipp32s *pCountBits,
-                                                  const IppsVLCEncodeSpec_32s *pVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCCountEscBits_AAC_16s32s,
+       (const Ipp16s* pInputData, int len, Ipp32s* pCountBits,
+        const IppsVLCEncodeSpec_32s* pVLCSpec))
 
 /*******************************************************************/
 
 /*
 //  Name:       ippsVLCDecodeUTupleEscBlock_MP3_1u16s
 //  Purpose:    decodes a len element encoded by VLC code from the source data
-//              *ppBitStream with *pBitOffset bits offset and stores the result in
+//              *ppBitStream with *pBitOffset bits offset and stores the result
+in
 //              the destination *pData
 //
 //  Arguments:
 //     ppBitStream                 Pointer to pointer to the current byte in the
-//                                 bitstream buffer. *ppBitStream is updated by the function.
-//     pBitOffset                  Pointer to the bit position in the byte pointed by
+//                                 bitstream buffer. *ppBitStream is updated by
+the function.
+//     pBitOffset                  Pointer to the bit position in the byte
+pointed by
 //                                 *ppBitStream. Valid within the range 0 to 7.
 //                                 *pBitOffset is updated by the function.
 //     linbits                     Length of escape sequence.
@@ -4880,35 +5466,46 @@ IPPAPI(IppStatus, ippsVLCCountEscBits_AAC_16s32s,(const Ipp16s *pInputData,
 //     ippStsNoErr                  Indicates no error.
 //     ippStsNullPtrErr             Indicates an error when one or more pointers
 //                                  passed to the function is NULL.
-//     ippStsVLCInputDataErr        Indicates an error when incorrect input is used.
-//                                  For decode functions it can indicate that bitstream
-//                                  contains code that is not specified inside the used table.
-//     ippStsBitOffsetErr           Indicate an error when offset less than 0 or more then 7.
-//     ippStsContextMatchErr        Indicate an error when pVLCSpec struct was not created by
-//                                  ippsVLCDecodeInit_32s or ippsVLCDecodeInitAlloc_32s functions.
+//     ippStsVLCInputDataErr        Indicates an error when incorrect input is
+used.
+//                                  For decode functions it can indicate that
+bitstream
+//                                  contains code that is not specified inside
+the used table.
+//     ippStsBitOffsetErr           Indicate an error when offset less than 0 or
+more then 7.
+//     ippStsContextMatchErr        Indicate an error when pVLCSpec struct was
+not created by
+//                                  ippsVLCDecodeInit_32s or
+ippsVLCDecodeInitAlloc_32s functions.
 //
 */
 
-IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCDecodeUTupleEscBlock_MP3_1u16s,(Ipp8u **ppBitStream,
-                                                   int *pBitOffset,
-                                                   int linbits,
-                                                   Ipp16s *pData,
-                                                   int len,
-                                                   const IppsVLCDecodeUTupleSpec_32s *pVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCDecodeUTupleEscBlock_MP3_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, int linbits, Ipp16s* pData,
+        int len, const IppsVLCDecodeUTupleSpec_32s* pVLCSpec))
 
 /*******************************************************************/
 
 /*
 //  Name:       ippsVLCDecodeUTupleEscBlock_AAC_1u16s
 //  Purpose:    decodes a len element encoded by VLC code from the source data
-//              *ppBitStream with *pBitOffset bits offset and stores the result in
+//              *ppBitStream with *pBitOffset bits offset and stores the result
+in
 //              the destination *pData
 //
 //  Arguments:
 //     ppBitStream                 Pointer to pointer to the current byte in the
-//                                 bitstream buffer. *ppBitStream is updated by the function.
-//     pBitOffset                  Pointer to the bit position in the byte pointed by
+//                                 bitstream buffer. *ppBitStream is updated by
+the function.
+//     pBitOffset                  Pointer to the bit position in the byte
+pointed by
 //                                 *ppBitStream. Valid within the range 0 to 7.
 //                                 *pBitOffset is updated by the function.
 //     pData                       Pointer to the array of decoded values.
@@ -4919,22 +5516,27 @@ IPPAPI(IppStatus, ippsVLCDecodeUTupleEscBlock_MP3_1u16s,(Ipp8u **ppBitStream,
 //     ippStsNoErr                  Indicates no error.
 //     ippStsNullPtrErr             Indicates an error when one or more pointers
 //                                  passed to the function is NULL.
-//     ippStsVLCInputDataErr        Indicates an error when incorrect input is used.
-//                                  For decode functions it can indicate that bitstream
-//                                  contains code that is not specified inside the used table.
-//     ippStsVLCAACEscCodeLengthErr Indicates an error when bitstream contains AAC-Esc code
+//     ippStsVLCInputDataErr        Indicates an error when incorrect input is
+used.
+//                                  For decode functions it can indicate that
+bitstream
+//                                  contains code that is not specified inside
+the used table.
+//     ippStsVLCAACEscCodeLengthErr Indicates an error when bitstream contains
+AAC-Esc code
 //                                  with the length more than 21.
-//     ippStsBitOffsetErr           Indicate an error when offset less than 0 or more then 7.
-//     ippStsContextMatchErr        Indicate an error when pVLCSpec struct was not created by
-//                                  ippsVLCDecodeInit_32s or ippsVLCDecodeInitAlloc_32s functions.
+//     ippStsBitOffsetErr           Indicate an error when offset less than 0 or
+more then 7.
+//     ippStsContextMatchErr        Indicate an error when pVLCSpec struct was
+not created by
+//                                  ippsVLCDecodeInit_32s or
+ippsVLCDecodeInitAlloc_32s functions.
 //
 */
 
-IPPAPI(IppStatus, ippsVLCDecodeUTupleEscBlock_AAC_1u16s,(Ipp8u **ppBitStream,
-                                                   int *pBitOffset,
-                                                   Ipp16s *pData,
-                                                   int len,
-                                                   const IppsVLCDecodeUTupleSpec_32s *pVLCSpec))
+IPPAPI(IppStatus, ippsVLCDecodeUTupleEscBlock_AAC_1u16s,
+       (Ipp8u * *ppBitStream, int* pBitOffset, Ipp16s* pData, int len,
+        const IppsVLCDecodeUTupleSpec_32s* pVLCSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -4965,10 +5567,13 @@ IPPAPI(IppStatus, ippsVLCDecodeUTupleEscBlock_AAC_1u16s,(Ipp8u **ppBitStream,
 //    ippStsNullPtrErr      Indicates an error when pSrcFrameHeader or
 //                          ppBitStream is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsPackFrameHeader_MP3, (
-    IppMP3FrameHeader*  pSrcFrameHeader,
-    Ipp8u**             ppBitStream))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsPackFrameHeader_MP3,
+       (IppMP3FrameHeader * pSrcFrameHeader, Ipp8u** ppBitStream))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5053,14 +5658,14 @@ IPPAPI(IppStatus, ippsPackFrameHeader_MP3, (
 //                          pFrameHeader->id != IPP_MP3_ID_MPEG2
 //                          pFrameHeader->mode exceeds [0, 3].
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsPackSideInfo_MP3, (
-    IppMP3SideInfo*     pSrcSideInfo,
-    Ipp8u**             ppBitStream,
-    int                 mainDataBegin,
-    int                 privateBits,
-    int*                pSrcScfsi,
-    IppMP3FrameHeader*  pFrameHeader))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsPackSideInfo_MP3,
+       (IppMP3SideInfo * pSrcSideInfo, Ipp8u** ppBitStream, int mainDataBegin,
+        int privateBits, int* pSrcScfsi, IppMP3FrameHeader* pFrameHeader))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5155,16 +5760,15 @@ IPPAPI(IppStatus, ippsPackSideInfo_MP3, (
 //                          IPP_MP3_ID_MPEG2 and pFrameHeader->modeExt
 //                          exceeds [0..3].
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsPackScaleFactors_MP3_8s1u, (
-    const Ipp8s*        pSrcScaleFactor,
-    Ipp8u**             ppBitStream,
-    int*                pOffset,
-    IppMP3FrameHeader*  pFrameHeader,
-    IppMP3SideInfo*     pSideInfo,
-    int*                pScfsi,
-    int                 granule,
-    int                 channel))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsPackScaleFactors_MP3_8s1u,
+       (const Ipp8s* pSrcScaleFactor, Ipp8u** ppBitStream, int* pOffset,
+        IppMP3FrameHeader* pFrameHeader, IppMP3SideInfo* pSideInfo, int* pScfsi,
+        int granule, int channel))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5253,15 +5857,15 @@ IPPAPI(IppStatus, ippsPackScaleFactors_MP3_8s1u, (
 //                          pFrameHeader->layer != 1
 //                          pFrameHeader->samplingFreq exceeds [0..2].
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsHuffmanEncode_MP3_32s1u, (
-    Ipp32s *pSrcIx,
-    Ipp8u **ppBitStream,
-    int *pOffset,
-    IppMP3FrameHeader *pFrameHeader,
-    IppMP3SideInfo *pSideInfo,
-    int count1Len,
-    int hufSize))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsHuffmanEncode_MP3_32s1u,
+       (Ipp32s * pSrcIx, Ipp8u** ppBitStream, int* pOffset,
+        IppMP3FrameHeader* pFrameHeader, IppMP3SideInfo* pSideInfo,
+        int count1Len, int hufSize))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5300,10 +5904,13 @@ IPPAPI(IppStatus, ippsHuffmanEncode_MP3_32s1u, (
 //    ippStsMP3FrameHeaderErr Indicates an error when
 //                          pFrameHeader->id != IPP_MP3_ID_MPEG1.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsBitReservoirInit_MP3, (
-    IppMP3BitReservoir* pDstBitResv,
-    IppMP3FrameHeader*  pFrameHeader))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsBitReservoirInit_MP3,
+       (IppMP3BitReservoir * pDstBitResv, IppMP3FrameHeader* pFrameHeader))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5345,16 +5952,14 @@ IPPAPI(IppStatus, ippsBitReservoirInit_MP3, (
 //                          pSrcXs, pDstXr, pFrameHeader, or pOverlapBuf is
 //                          NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTFwd_MP3_32s, (
-    const Ipp32s*       pSrc,
-    Ipp32s*             pDst,
-    int                 blockType,
-    int                 mixedBlock,
-    IppMP3FrameHeader*  pFrameHeader,
-    Ipp32s*             pOverlapBuf))
-
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTFwd_MP3_32s,
+       (const Ipp32s* pSrc, Ipp32s* pDst, int blockType, int mixedBlock,
+        IppMP3FrameHeader* pFrameHeader, Ipp32s* pOverlapBuf))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5379,11 +5984,14 @@ IPPAPI(IppStatus, ippsMDCTFwd_MP3_32s, (
 //    ippStsNullPtrErr      Indicates an error when one of the pointers
 //                          pSrc or pDst is NULL.
 */
-IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsMDCTInvWindow_MP3_32s,(
-    Ipp32s* pSrc,
-    Ipp32s* pDst,
-    int     blockType))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsMDCTInvWindow_MP3_32s,
+       (Ipp32s * pSrc, Ipp32s* pDst, int blockType))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5419,11 +6027,14 @@ IPPAPI(IppStatus, ippsMDCTInvWindow_MP3_32s,(
 //    ippStsNullPtrErr      Indicates an error when pSrcPcm or pDstXs is NULL.
 //    ippStsErr             Indicates an error when pcmMode exceeds [1,2].
 */
-IPP_DEPRECATED("is deprecated. Integer versions of audio codecs will be removed in one of the future IPP releases, use floating point versions instead. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsAnalysisPQMF_MP3_16s32s, (
-    const Ipp16s*       pSrcPcm,
-    Ipp32s*             pDstS,
-    int                 mode))
+IPP_DEPRECATED(
+    "is deprecated. Integer versions of audio codecs will be removed in one of "
+    "the future IPP releases, use floating point versions instead. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisPQMF_MP3_16s32s,
+       (const Ipp16s* pSrcPcm, Ipp32s* pDstS, int mode))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5511,14 +6122,15 @@ IPPAPI(IppStatus, ippsAnalysisPQMF_MP3_16s32s, (
 //    ippStsMP3SideInfoErr  Indicates an error if pSideInfo[0].blockType!=
 //                          pSideInfo[1].blockType when IS or MS is used.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsJointStereoEncode_MP3_32s_I, (
-    Ipp32s*             pSrcDstXrL,
-    Ipp32s*             pSrcDstXrR,
-    Ipp8s*              pDstScaleFactorR,
-    IppMP3FrameHeader*  pFrameHeader,
-    IppMP3SideInfo*     pSideInfo,
-    int*                pIsSfbBound))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsJointStereoEncode_MP3_32s_I,
+       (Ipp32s * pSrcDstXrL, Ipp32s* pSrcDstXrR, Ipp8s* pDstScaleFactorR,
+        IppMP3FrameHeader* pFrameHeader, IppMP3SideInfo* pSideInfo,
+        int* pIsSfbBound))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5721,24 +6333,23 @@ IPPAPI(IppStatus, ippsJointStereoEncode_MP3_32s_I, (
 //                          pWorkBuffer is NULL.
 //    ippStsMP3SideInfo     Indicates an error when pSideInfo->winSwitch and
 //                          pSideInfo->mixedBlock are both defined.
-//    ippStsMP3FrameHeaderErr  Indicates an error when pFrameHeader->samplingFreq or
+//    ippStsMP3FrameHeaderErr  Indicates an error when
+pFrameHeader->samplingFreq or
 //                          pFrameHeader->id is not correct.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsQuantize_MP3_32s_I, (
-    Ipp32s*             pSrcDstXrIx,
-    Ipp8s*              pDstScaleFactor,
-    int*                pDstScfsi,
-    int*                pDstCount1Len,
-    int*                pDstHufSize,
-    IppMP3FrameHeader*  pFrameHeader,
-    IppMP3SideInfo*     pSideInfo,
-    IppMP3PsychoacousticModelTwoAnalysis*   pPsychInfo,
-    IppMP3PsychoacousticModelTwoState*      pFramePsyState,
-    IppMP3BitReservoir* pResv,
-    int                 meanBits,
-    int*                pIsSfbBound,
-    Ipp32s*             pWorkBuffer))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsQuantize_MP3_32s_I,
+       (Ipp32s * pSrcDstXrIx, Ipp8s* pDstScaleFactor, int* pDstScfsi,
+        int* pDstCount1Len, int* pDstHufSize, IppMP3FrameHeader* pFrameHeader,
+        IppMP3SideInfo* pSideInfo,
+        IppMP3PsychoacousticModelTwoAnalysis* pPsychInfo,
+        IppMP3PsychoacousticModelTwoState* pFramePsyState,
+        IppMP3BitReservoir* pResv, int meanBits, int* pIsSfbBound,
+        Ipp32s* pWorkBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5870,16 +6481,17 @@ IPPAPI(IppStatus, ippsQuantize_MP3_32s_I, (
 //                          pDstIsSfbBound, pFrameHeader, pDstPsyState, or
 //                          pWorkBuffer is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsPsychoacousticModelTwo_MP3_16s, (
-    const Ipp16s*       pSrcPcm,
-    IppMP3PsychoacousticModelTwoAnalysis*   pDstPsyInfo,
-    int*                pDstIsSfbBound,
-    IppMP3SideInfo*     pDstSideInfo,
-    IppMP3FrameHeader*  pFrameHeader,
-    IppMP3PsychoacousticModelTwoState*      pFramePsyState,
-    int                 pcmMode,
-    Ipp32s*             pWorkBuffer))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsPsychoacousticModelTwo_MP3_16s,
+       (const Ipp16s* pSrcPcm,
+        IppMP3PsychoacousticModelTwoAnalysis* pDstPsyInfo, int* pDstIsSfbBound,
+        IppMP3SideInfo* pDstSideInfo, IppMP3FrameHeader* pFrameHeader,
+        IppMP3PsychoacousticModelTwoState* pFramePsyState, int pcmMode,
+        Ipp32s* pWorkBuffer))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5908,10 +6520,9 @@ IPPAPI(IppStatus, ippsPsychoacousticModelTwo_MP3_16s, (
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPPAPI(IppStatus, ippsSynthesisFilter_PQMF_MP3_32f, (const  Ipp32f  *pSrc,
-                                                            Ipp32f  *pDst,
-                                                     const  IppsFilterSpec_PQMF_MP3 *pFilterSpec,
-                                                            int     mode))
+IPPAPI(IppStatus, ippsSynthesisFilter_PQMF_MP3_32f,
+       (const Ipp32f* pSrc, Ipp32f* pDst,
+        const IppsFilterSpec_PQMF_MP3* pFilterSpec, int mode))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5928,7 +6539,7 @@ IPPAPI(IppStatus, ippsSynthesisFilter_PQMF_MP3_32f, (const  Ipp32f  *pSrc,
 //    ippStsNoErr           Indicates no error.
 //    ippStsNullPtrErr      Indicates an error when pSizeSpec is NULL.
 */
-IPPAPI(IppStatus, ippsSynthesisFilterGetSize_PQMF_MP3_32f, (int *pSizeSpec))
+IPPAPI(IppStatus, ippsSynthesisFilterGetSize_PQMF_MP3_32f, (int* pSizeSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5938,7 +6549,8 @@ IPPAPI(IppStatus, ippsSynthesisFilterGetSize_PQMF_MP3_32f, (int *pSizeSpec))
 //    Initializes synthesis specification structure.
 //
 //  Parameters:
-//    ppFilterSpec          Pointer to where pointer to the IppsFilterSpec_PQMF_MP3
+//    ppFilterSpec          Pointer to where pointer to the
+IppsFilterSpec_PQMF_MP3
 //                          specification structure is written. Only the
 //                          main function uses this structure.
 //    pMemSpec              Pointer to the area for the IppsFilterSpec_PQMF_MP3
@@ -5949,8 +6561,8 @@ IPPAPI(IppStatus, ippsSynthesisFilterGetSize_PQMF_MP3_32f, (int *pSizeSpec))
 //    ippStsNullPtrErr      Indicates an error when any of the specified
 //                          pointers is NULL.
 */
-IPPAPI(IppStatus, ippsSynthesisFilterInit_PQMF_MP3_32f, (IppsFilterSpec_PQMF_MP3 **ppFilterSpec,
-                                                         Ipp8u                   *pMemSpec))
+IPPAPI(IppStatus, ippsSynthesisFilterInit_PQMF_MP3_32f,
+       (IppsFilterSpec_PQMF_MP3 * *ppFilterSpec, Ipp8u* pMemSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5960,15 +6572,21 @@ IPPAPI(IppStatus, ippsSynthesisFilterInit_PQMF_MP3_32f, (IppsFilterSpec_PQMF_MP3
 //    Allocate memory for synthesis specification structure and initializes it.
 //
 //  Parameters:
-//    ppFilterSpec          Pointer to where pointer to the IppsFilterSpec_PQMF_MP3
+//    ppFilterSpec          Pointer to where pointer to the
+IppsFilterSpec_PQMF_MP3
 //                          specification structure is written.
 //
 //  Returns:
 //    ippStsNoErr           Indicates no error.
 //    ippStsNullPtrErr      Indicates an error when ppFilterSpec is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsSynthesisFilterInitAlloc_PQMF_MP3_32f, (IppsFilterSpec_PQMF_MP3 **ppFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilterInitAlloc_PQMF_MP3_32f,
+       (IppsFilterSpec_PQMF_MP3 * *ppFilterSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -5987,8 +6605,13 @@ IPPAPI(IppStatus, ippsSynthesisFilterInitAlloc_PQMF_MP3_32f, (IppsFilterSpec_PQM
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsSynthesisFilterFree_PQMF_MP3_32f, (IppsFilterSpec_PQMF_MP3 *pFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilterFree_PQMF_MP3_32f,
+       (IppsFilterSpec_PQMF_MP3 * pFilterSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6017,10 +6640,9 @@ IPPAPI(IppStatus, ippsSynthesisFilterFree_PQMF_MP3_32f, (IppsFilterSpec_PQMF_MP3
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPPAPI(IppStatus, ippsAnalysisFilter_PQMF_MP3_32f, (const  Ipp32f  *pSrc,
-                                                            Ipp32f  *pDst,
-                                                     const  IppsFilterSpec_PQMF_MP3 *pFilterSpec,
-                                                            int     mode))
+IPPAPI(IppStatus, ippsAnalysisFilter_PQMF_MP3_32f,
+       (const Ipp32f* pSrc, Ipp32f* pDst,
+        const IppsFilterSpec_PQMF_MP3* pFilterSpec, int mode))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6037,7 +6659,7 @@ IPPAPI(IppStatus, ippsAnalysisFilter_PQMF_MP3_32f, (const  Ipp32f  *pSrc,
 //    ippStsNoErr           Indicates no error.
 //    ippStsNullPtrErr      Indicates an error when pSizeSpec is NULL.
 */
-IPPAPI(IppStatus, ippsAnalysisFilterGetSize_PQMF_MP3_32f, (int *pSizeSpec))
+IPPAPI(IppStatus, ippsAnalysisFilterGetSize_PQMF_MP3_32f, (int* pSizeSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6047,7 +6669,8 @@ IPPAPI(IppStatus, ippsAnalysisFilterGetSize_PQMF_MP3_32f, (int *pSizeSpec))
 //    Initializes analysis specification structure.
 //
 //  Parameters:
-//    ppFilterSpec          Pointer to where pointer to the IppsFilterSpec_PQMF_MP3
+//    ppFilterSpec          Pointer to where pointer to the
+IppsFilterSpec_PQMF_MP3
 //                          specification structure is written. Only the
 //                          main function uses this structure.
 //    pMemSpec              Pointer to the area for the IppsFilterSpec_PQMF_MP3
@@ -6058,8 +6681,8 @@ IPPAPI(IppStatus, ippsAnalysisFilterGetSize_PQMF_MP3_32f, (int *pSizeSpec))
 //    ippStsNullPtrErr      Indicates an error when any of the specified
 //                          pointers is NULL.
 */
-IPPAPI(IppStatus, ippsAnalysisFilterInit_PQMF_MP3_32f, (IppsFilterSpec_PQMF_MP3 **ppFilterSpec,
-                                                         Ipp8u                   *pMemSpec))
+IPPAPI(IppStatus, ippsAnalysisFilterInit_PQMF_MP3_32f,
+       (IppsFilterSpec_PQMF_MP3 * *ppFilterSpec, Ipp8u* pMemSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6069,15 +6692,21 @@ IPPAPI(IppStatus, ippsAnalysisFilterInit_PQMF_MP3_32f, (IppsFilterSpec_PQMF_MP3 
 //    Allocate memory for analysis specification structure and initializes it.
 //
 //  Parameters:
-//    ppFilterSpec          Pointer to where pointer to the IppsFilterSpec_PQMF_MP3
+//    ppFilterSpec          Pointer to where pointer to the
+IppsFilterSpec_PQMF_MP3
 //                          specification structure is written.
 //
 //  Returns:
 //    ippStsNoErr           Indicates no error.
 //    ippStsNullPtrErr      Indicates an error when ppFilterSpec is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsAnalysisFilterInitAlloc_PQMF_MP3_32f, (IppsFilterSpec_PQMF_MP3 **ppFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilterInitAlloc_PQMF_MP3_32f,
+       (IppsFilterSpec_PQMF_MP3 * *ppFilterSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6096,9 +6725,13 @@ IPPAPI(IppStatus, ippsAnalysisFilterInitAlloc_PQMF_MP3_32f, (IppsFilterSpec_PQMF
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsAnalysisFilterFree_PQMF_MP3_32f, (IppsFilterSpec_PQMF_MP3 *pFilterSpec))
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsAnalysisFilterFree_PQMF_MP3_32f,
+       (IppsFilterSpec_PQMF_MP3 * pFilterSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6127,11 +6760,14 @@ IPPAPI(IppStatus, ippsAnalysisFilterFree_PQMF_MP3_32f, (IppsFilterSpec_PQMF_MP3 
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsSynthesisFilter_DTS_32f, (const  Ipp32f  *pSrc,
-                                                Ipp32f  *pDst,
-                                                Ipp32s filt_type,
-                                                const  IppsFilterSpec_DTS_32f *pFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilter_DTS_32f,
+       (const Ipp32f* pSrc, Ipp32f* pDst, Ipp32s filt_type,
+        const IppsFilterSpec_DTS_32f* pFilterSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6148,8 +6784,12 @@ IPPAPI(IppStatus, ippsSynthesisFilter_DTS_32f, (const  Ipp32f  *pSrc,
 //    ippStsNoErr           Indicates no error.
 //    ippStsNullPtrErr      Indicates an error when pSizeSpec is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsSynthesisFilterGetSize_DTS_32f, (int *pSizeSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilterGetSize_DTS_32f, (int* pSizeSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6167,8 +6807,13 @@ IPPAPI(IppStatus, ippsSynthesisFilterGetSize_DTS_32f, (int *pSizeSpec))
 //    ippStsNullPtrErr      Indicates an error when any of the specified
 //                          pointers is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsSynthesisFilterInit_DTS_32f, (IppsFilterSpec_DTS_32f *pFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilterInit_DTS_32f,
+       (IppsFilterSpec_DTS_32f * pFilterSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6178,15 +6823,21 @@ IPPAPI(IppStatus, ippsSynthesisFilterInit_DTS_32f, (IppsFilterSpec_DTS_32f *pFil
 //    Allocate memory for synthesis specification structure and initializes it.
 //
 //  Parameters:
-//    ppFilterSpec          Pointer to where pointer to the IppsFilterSpec_DTS_32f
+//    ppFilterSpec          Pointer to where pointer to the
+IppsFilterSpec_DTS_32f
 //                          specification structure is written.
 //
 //  Returns:
 //    ippStsNoErr           Indicates no error.
 //    ippStsNullPtrErr      Indicates an error when ppFilterSpec is NULL.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsSynthesisFilterInitAlloc_DTS_32f, (IppsFilterSpec_DTS_32f **ppFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilterInitAlloc_DTS_32f,
+       (IppsFilterSpec_DTS_32f * *ppFilterSpec))
 
 /* ///////////////////////////////////////////////////////////////////////////
 //  Name:
@@ -6205,8 +6856,13 @@ IPPAPI(IppStatus, ippsSynthesisFilterInitAlloc_DTS_32f, (IppsFilterSpec_DTS_32f 
 //    ippStsContextMatchErr Indicates an error when the identifier
 //                          pFilterSpec is incorrect.
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsSynthesisFilterFree_DTS_32f, (IppsFilterSpec_DTS_32f *pFilterSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsSynthesisFilterFree_DTS_32f,
+       (IppsFilterSpec_DTS_32f * pFilterSpec))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippsJoin_32f16s_D2L
@@ -6223,12 +6879,15 @@ IPPAPI(IppStatus, ippsSynthesisFilterFree_DTS_32f, (IppsFilterSpec_DTS_32f *pFil
 //
 */
 
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI( IppStatus, ippsJoin_32f16s_D2L, ( const Ipp32f** pSrc,
-                  int nChannels, int chanLen, Ipp16s* pDst ) )
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsJoin_32f16s_D2L,
+       (const Ipp32f** pSrc, int nChannels, int chanLen, Ipp16s* pDst))
 
-
-#if !defined( _OWN_BLDPCS )
+#if !defined(_OWN_BLDPCS)
 
 /*
 //             VLC
@@ -6247,81 +6906,116 @@ typedef struct {
 //  Purpose:            Frees memory allocated for internal VLCDecode structure.
 //
 //  Arguments:
-//     pVLCSpec         Pointer to pointer to VLCEncoder specification structure.
+//     pVLCSpec         Pointer to pointer to VLCEncoder specification
+structure.
 //
 //  Return:
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(void, ippsVLCEncodeFree_32s, (IppsVLCEncodeSpec_32s* pVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(void, ippsVLCEncodeFree_32s, (IppsVLCEncodeSpec_32s * pVLCSpec))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippsVLCEncodeInitAlloc_32s
 //  Purpose:    ippsVLCEncodeInitAlloc_32s allocates and initializes the size
-//              for internal VLCEncode structure on the base of Variable Length Code table.
+//              for internal VLCEncode structure on the base of Variable Length
+Code table.
 //
 //  Arguments:
 //     pInputTable                  pointer to input table.
 //     inputTableSize               size of this table.
-//     ppVLCSpec                    pointer to pointer to VLCEncoder specification structure.
+//     ppVLCSpec                    pointer to pointer to VLCEncoder
+specification structure.
 //
 //  Return:
 //     ippStsNoErr                  Indicates no error.
 //     ippStsNullPtrErr             Indicates an error when one or more pointers
 //                                  passed to the function is NULL.
-//     ippStsVLCInputDataErr        Indicates an error when incorrect input is used.
-//     ippStsMemAllocErr            Indicates an error when memory for VLCEncoder
+//     ippStsVLCInputDataErr        Indicates an error when incorrect input is
+used.
+//     ippStsMemAllocErr            Indicates an error when memory for
+VLCEncoder
 //                                  specification structure was not allocated.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Internal memory allocation will not be supported - use Get<Buffer>Size and Init pair for this functionality. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCEncodeInitAlloc_32s, (const IppsVLCTable_32s* pInputTable, int inputTableSize, IppsVLCEncodeSpec_32s** ppVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Internal memory allocation will not be supported "
+    "- use Get<Buffer>Size and Init pair for this functionality. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCEncodeInitAlloc_32s,
+       (const IppsVLCTable_32s* pInputTable, int inputTableSize,
+        IppsVLCEncodeSpec_32s** ppVLCSpec))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippsVLCEncodeInit_32s
-//  Purpose:    ippsVLCEncodeInit_32s initializes the size for internal VLCEncode
+//  Purpose:    ippsVLCEncodeInit_32s initializes the size for internal
+VLCEncode
 //              structure on the base of Variable Length Code table.
 //
 //  Arguments:
 //     pInputTable                  pointer to input table.
 //     inputTableSize               size of this table.
-//     pVLCSpec                     pointer to VLCEncoder specification structure.
+//     pVLCSpec                     pointer to VLCEncoder specification
+structure.
 //
 //  Return:
 //     ippStsNoErr                  Indicates no error.
 //     ippStsNullPtrErr             Indicates an error when one or more pointers
 //                                  passed to the function is NULL.
-//     ippStsVLCInputDataErr        Indicates an error when incorrect input is used.
+//     ippStsVLCInputDataErr        Indicates an error when incorrect input is
+used.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCEncodeInit_32s, (const IppsVLCTable_32s* pInputTable, int inputTableSize, IppsVLCEncodeSpec_32s* pVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCEncodeInit_32s,
+       (const IppsVLCTable_32s* pInputTable, int inputTableSize,
+        IppsVLCEncodeSpec_32s* pVLCSpec))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippsVLCEncodeGetSize_32s
-//  Purpose:    ippsVLCEncodeGetSize_32s calculates the size for internal VLCEncode
+//  Purpose:    ippsVLCEncodeGetSize_32s calculates the size for internal
+VLCEncode
 //              structure on the base of Variable Length Code table.
 //
 //  Arguments:
 //     pInputTable                  pointer to input table.
 //     inputTableSize               size of this table.
-//     pSize                        pointer to size of VLCEncoder specification structure.
+//     pSize                        pointer to size of VLCEncoder specification
+structure.
 //
 //  Return:
 //     ippStsNoErr                  Indicates no error.
 //     ippStsNullPtrErr             Indicates an error when one or more pointers
 //                                  passed to the function is NULL.
-//     ippStsVLCInputDataErr        Indicates an error when incorrect input is used.
+//     ippStsVLCInputDataErr        Indicates an error when incorrect input is
+used.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCEncodeGetSize_32s, (const IppsVLCTable_32s* pInputTable, int inputTableSize, Ipp32s* pSize))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCEncodeGetSize_32s,
+       (const IppsVLCTable_32s* pInputTable, int inputTableSize, Ipp32s* pSize))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //
 //  Name:       ippsVLCEncodeBlock_16s1u
 //  Purpose:    ippsVLCEncodeBlock_16s1u encodes dstLen elements from the source
-//              data pSrc and stores the result in the destination buffer *ppDst.
+//              data pSrc and stores the result in the destination buffer
+*ppDst.
 //              In addition, the function advances pointer *ppDst on the number
 //              successfully written bytes and stores the actual it in ppDst.
 //              The functions updates *pSrcBitsOffset to the value of the actual
@@ -6332,58 +7026,86 @@ IPPAPI(IppStatus, ippsVLCEncodeGetSize_32s, (const IppsVLCTable_32s* pInputTable
 //     srcLen                       size of value is array pSrc.
 //     ppDst                        pointer to pointer to destination bitstream.
 //     pDstBitsOffset               pointer to in/out bit offset in pDst.
-//     pVLCSpec                     pointer to VLCEncoder specification structure.
+//     pVLCSpec                     pointer to VLCEncoder specification
+structure.
 //
 //  Return:
 //     ippStsNoErr                  Indicates no error.
 //     ippStsNullPtrErr             Indicates an error when one or more pointers
 //                                  passed to the function is NULL.
-//     ippStsVLCInputDataErr        Indicates an error when incorrect input is used.
+//     ippStsVLCInputDataErr        Indicates an error when incorrect input is
+used.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCEncodeBlock_16s1u, (const Ipp16s* pSrc, int srcLen, Ipp8u** ppDst, int* pDstBitsOffset, const IppsVLCEncodeSpec_32s* pVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCEncodeBlock_16s1u,
+       (const Ipp16s* pSrc, int srcLen, Ipp8u** ppDst, int* pDstBitsOffset,
+        const IppsVLCEncodeSpec_32s* pVLCSpec))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //
 //  Name:       ippsVLCEncodeOne_16s1u
 //  Purpose:    ippsVLCEncodeOne_16s1u uses VLC table specified for
-//              ippsVLCEncodeInitAlloc_32s function or for ippsVLCEncodeInit_32s function.
+//              ippsVLCEncodeInitAlloc_32s function or for ippsVLCEncodeInit_32s
+function.
 //
 //  Arguments:
 //     src                          source value.
 //     ppDst                        pointer to pointer to destination bitstream.
 //     pDstBitsOffset               pointer to in/out bit offset in pDst.
-//     pVLCSpec                     pointer to VLCEncoder specification structure.
+//     pVLCSpec                     pointer to VLCEncoder specification
+structure.
 //
 //  Return:
 //     ippStsNoErr                  Indicates no error.
 //     ippStsNullPtrErr             Indicates an error when one or more pointers
 //                                  passed to the function is NULL.
-//     ippStsVLCInputDataErr        Indicates an error when incorrect input is used.
+//     ippStsVLCInputDataErr        Indicates an error when incorrect input is
+used.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCEncodeOne_16s1u, (Ipp16s src, Ipp8u** pDst, int* pDstBitsOffset, const IppsVLCEncodeSpec_32s* pVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCEncodeOne_16s1u,
+       (Ipp16s src, Ipp8u** pDst, int* pDstBitsOffset,
+        const IppsVLCEncodeSpec_32s* pVLCSpec))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippsVLCCountBits_16s32s
-//  Purpose:    ippsVLCCountBits_16s32s calculates number of bits necessary for encoding
-//              source data in pSrc  using variable Length Codes specified by pInputTable
-//              in the function ippsVLCEncodeInitAlloc_32s or in ippsVLCEncodeInit_32s.
+//  Purpose:    ippsVLCCountBits_16s32s calculates number of bits necessary for
+encoding
+//              source data in pSrc  using variable Length Codes specified by
+pInputTable
+//              in the function ippsVLCEncodeInitAlloc_32s or in
+ippsVLCEncodeInit_32s.
 //
 //  Arguments:
-//     pVLCSpec                     pointer to pointer to VLCEncoder specification structure.
+//     pVLCSpec                     pointer to pointer to VLCEncoder
+specification structure.
 //
 //  Return:
 //     ippStsNoErr                  Indicates no error.
 //     ippStsNullPtrErr             Indicates an error when one or more pointers
 //                                  passed to the function is NULL.
-//     ippStsVLCInputDataErr        Indicates an error when incorrect input is used.
+//     ippStsVLCInputDataErr        Indicates an error when incorrect input is
+used.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCCountBits_16s32s, (const Ipp16s* pSrc, int srcLen, Ipp32s* pCountBits, const IppsVLCEncodeSpec_32s* pVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCCountBits_16s32s,
+       (const Ipp16s* pSrc, int srcLen, Ipp32s* pCountBits,
+        const IppsVLCEncodeSpec_32s* pVLCSpec))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippsVLCDecodeGetSize_32s
@@ -6400,9 +7122,11 @@ IPPAPI(IppStatus, ippsVLCCountBits_16s32s, (const Ipp16s* pSrc, int srcLen, Ipp3
 //
 //  Return:
 //     ippStsNoErr                   Indicates no error.
-//     ippStsNullPtrErr              Indicates an error when one or more pointers
+//     ippStsNullPtrErr              Indicates an error when one or more
+pointers
 //                                   passed to the function is NULL.
-//     ippStsVLCUsrTblCodeLengthErr  Indicates an error when 1) the maximal length
+//     ippStsVLCUsrTblCodeLengthErr  Indicates an error when 1) the maximal
+length
 //                                   of codec in the input table exceeds 32;
 //                                   2) when any size in of subtables in
 //                                   pSubTablesSizes is less than one;
@@ -6410,12 +7134,14 @@ IPPAPI(IppStatus, ippsVLCCountBits_16s32s, (const Ipp16s* pSrc, int srcLen, Ipp3
 //                                   maximal length of codes in the input table.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCDecodeGetSize_32s,(const IppsVLCTable_32s *pInputTable,
-                                            int inputTableSize,
-                                            Ipp32s *pSubTablesSizes,
-                                            int numSubTables,
-                                            Ipp32s *pSize))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCDecodeGetSize_32s,
+       (const IppsVLCTable_32s* pInputTable, int inputTableSize,
+        Ipp32s* pSubTablesSizes, int numSubTables, Ipp32s* pSize))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippsVLCDecodeInit_32s
@@ -6427,13 +7153,16 @@ IPPAPI(IppStatus, ippsVLCDecodeGetSize_32s,(const IppsVLCTable_32s *pInputTable,
 //     inputTableSize                size of this table
 //     pSubTablesSizes               sizes of subTables
 //     numSubTables                  num of Subtabtes.
-//     pVLCSpec                      pointer to VLCDecoder specification structure
+//     pVLCSpec                      pointer to VLCDecoder specification
+structure
 //
 //  Return:
 //     ippStsNoErr                   Indicates no error.
-//     ippStsNullPtrErr              Indicates an error when one or more pointers
+//     ippStsNullPtrErr              Indicates an error when one or more
+pointers
 //                                   passed to the function is NULL.
-//     ippStsVLCUsrTblCodeLengthErr  Indicates an error when 1) the maximal length
+//     ippStsVLCUsrTblCodeLengthErr  Indicates an error when 1) the maximal
+length
 //                                   of codec in the input table exceeds 32;
 //                                   2) when any size in of subtables in
 //                                   pSubTablesSizes is less than one;
@@ -6441,12 +7170,15 @@ IPPAPI(IppStatus, ippsVLCDecodeGetSize_32s,(const IppsVLCTable_32s *pInputTable,
 //                                   maximal length of codes in the input table.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCDecodeInit_32s,(const IppsVLCTable_32s *pInputTable,
-                                         int inputTableSize,
-                                         Ipp32s *pSubTablesSizes,
-                                         int numSubTables,
-                                         IppsVLCDecodeSpec_32s *pVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCDecodeInit_32s,
+       (const IppsVLCTable_32s* pInputTable, int inputTableSize,
+        Ipp32s* pSubTablesSizes, int numSubTables,
+        IppsVLCDecodeSpec_32s* pVLCSpec))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippsVLCDecodeInitAlloc_32s
@@ -6458,28 +7190,37 @@ IPPAPI(IppStatus, ippsVLCDecodeInit_32s,(const IppsVLCTable_32s *pInputTable,
 //     inputTableSize                size of this table
 //     pSubTablesSizes               sizes of subTables
 //     numSubTables                  num of Subtabtes.
-//     ppVLCSpec                     pointer to pointer VLCDecoder specification structure
+//     ppVLCSpec                     pointer to pointer VLCDecoder specification
+structure
 //
 //  Return:
 //     ippStsNoErr                   Indicates no error.
-//     ippStsNullPtrErr              Indicates an error when one or more pointers
+//     ippStsNullPtrErr              Indicates an error when one or more
+pointers
 //                                   passed to the function is NULL.
-//     ippStsVLCUsrTblCodeLengthErr  Indicates an error when 1) the maximal length
+//     ippStsVLCUsrTblCodeLengthErr  Indicates an error when 1) the maximal
+length
 //                                   of codec in the input table exceeds 32;
 //                                   2) when any size in of subtables in
 //                                   pSubTablesSizes is less than one;
 //                                   3)when sum of this values is less than the
 //                                   maximal length of codes in the input table.
-//     ippStsMemAllocErr             Indicates an error when memory for VLCDecoder
+//     ippStsMemAllocErr             Indicates an error when memory for
+VLCDecoder
 //                                   specification structure was not allocated.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Internal memory allocation will not be supported - use Get<Buffer>Size and Init pair for this functionality. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCDecodeInitAlloc_32s,(const IppsVLCTable_32s *pInputTable,
-                                              int inputTableSize,
-                                              Ipp32s *pSubTablesSizes,
-                                              int numSubTables,
-                                              IppsVLCDecodeSpec_32s **ppVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Internal memory allocation will not be supported "
+    "- use Get<Buffer>Size and Init pair for this functionality. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCDecodeInitAlloc_32s,
+       (const IppsVLCTable_32s* pInputTable, int inputTableSize,
+        Ipp32s* pSubTablesSizes, int numSubTables,
+        IppsVLCDecodeSpec_32s** ppVLCSpec))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippsVLCDecodeFree_32s
@@ -6491,12 +7232,17 @@ IPPAPI(IppStatus, ippsVLCDecodeInitAlloc_32s,(const IppsVLCTable_32s *pInputTabl
 //  Return:
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(void, ippsVLCDecodeFree_32s, (IppsVLCDecodeSpec_32s *pVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(void, ippsVLCDecodeFree_32s, (IppsVLCDecodeSpec_32s * pVLCSpec))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippsVLCDecodeBlock_1u16s
-//  Purpose:    decodes a dstLen element encoded by VLC code from the source data
+//  Purpose:    decodes a dstLen element encoded by VLC code from the source
+data
 //              *ppSrc with *pSrcBitsOffset bits offset and stores the result in
 //              the destination *pDst
 //
@@ -6509,26 +7255,34 @@ IPPAPI(void, ippsVLCDecodeFree_32s, (IppsVLCDecodeSpec_32s *pVLCSpec))
 //
 //  Return:
 //     ippStsNoErr            Indicates no error.
-//     ippStsNullPtrErr       Indicates an error when one or more pointers passed to
+//     ippStsNullPtrErr       Indicates an error when one or more pointers
+passed to
 //                            the function is NULL.
 //     ippStsVLCInputDataErr  Indicates an error when incorrect input is used.
-//                            It can indicate that bitstream contain code that is not
+//                            It can indicate that bitstream contain code that
+is not
 //                            specified inside the used table.
-//     ippStsBitOffsetErr     Indicate an error when offset less than 0 or more than 7.
-//     ippStsContextMatchErr  Indicate an error when pVLCSpec struct was not created by
-//                            ippsVLCDecodeInit_32s or ippsVLCDecodeInitAlloc_32s functions.
+//     ippStsBitOffsetErr     Indicate an error when offset less than 0 or more
+than 7.
+//     ippStsContextMatchErr  Indicate an error when pVLCSpec struct was not
+created by
+//                            ippsVLCDecodeInit_32s or
+ippsVLCDecodeInitAlloc_32s functions.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCDecodeBlock_1u16s,(Ipp8u **ppSrc,
-                                            int *pSrcBitsOffset,
-                                            Ipp16s *pDst,
-                                            int dstLen,
-                                            const IppsVLCDecodeSpec_32s *pVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCDecodeBlock_1u16s,
+       (Ipp8u * *ppSrc, int* pSrcBitsOffset, Ipp16s* pDst, int dstLen,
+        const IppsVLCDecodeSpec_32s* pVLCSpec))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippsVLCDecodeOne_1u16s
-//  Purpose:    decodes a single element encoded by VLC code from the source data
+//  Purpose:    decodes a single element encoded by VLC code from the source
+data
 //              *ppSrc with *pSrcBitsOffset bits offset and stores the result in
 //              the destination *pDst
 //
@@ -6540,21 +7294,29 @@ IPPAPI(IppStatus, ippsVLCDecodeBlock_1u16s,(Ipp8u **ppSrc,
 //
 //  Return:
 //     ippStsNoErr            Indicates no error.
-//     ippStsNullPtrErr       Indicates an error when one or more pointers passed to
+//     ippStsNullPtrErr       Indicates an error when one or more pointers
+passed to
 //                            the function is NULL.
 //     ippStsVLCInputDataErr  Indicates an error when incorrect input is used.
-//                            It can indicate that bitstream contain code that is not
+//                            It can indicate that bitstream contain code that
+is not
 //                            specified inside the used table.
-//     ippStsBitOffsetErr     Indicate an error when offset less than 0 or more than 7.
-//     ippStsContextMatchErr  Indicate an error when pVLCSpec struct was not created by
-//                            ippsVLCDecodeInit_32s or ippsVLCDecodeInitAlloc_32s functions.
+//     ippStsBitOffsetErr     Indicate an error when offset less than 0 or more
+than 7.
+//     ippStsContextMatchErr  Indicate an error when pVLCSpec struct was not
+created by
+//                            ippsVLCDecodeInit_32s or
+ippsVLCDecodeInitAlloc_32s functions.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCDecodeOne_1u16s,(Ipp8u **ppSrc,
-                                          int *pSrcBitsOffset,
-                                          Ipp16s *pDst,
-                                          const IppsVLCDecodeSpec_32s *pVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCDecodeOne_1u16s,
+       (Ipp8u * *ppSrc, int* pSrcBitsOffset, Ipp16s* pDst,
+        const IppsVLCDecodeSpec_32s* pVLCSpec))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippsVLCDecodeUTupleGetSize_32s
@@ -6573,9 +7335,11 @@ IPPAPI(IppStatus, ippsVLCDecodeOne_1u16s,(Ipp8u **ppSrc,
 //
 //  Return:
 //     ippStsNoErr                   Indicates no error.
-//     ippStsNullPtrErr              Indicates an error when one or more pointers
+//     ippStsNullPtrErr              Indicates an error when one or more
+pointers
 //                                   passed to the function is NULL.
-//     ippStsVLCUsrTblCodeLengthErr  Indicates an error when 1) the maximal length
+//     ippStsVLCUsrTblCodeLengthErr  Indicates an error when 1) the maximal
+length
 //                                   of codec in the input table exceeds 32;
 //                                   2) when any size in of subtables in
 //                                   pSubTablesSizes is less than one;
@@ -6583,14 +7347,15 @@ IPPAPI(IppStatus, ippsVLCDecodeOne_1u16s,(Ipp8u **ppSrc,
 //                                   maximal length of codes in the input table.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCDecodeUTupleGetSize_32s,(const IppsVLCTable_32s  *pInputTable,
-                                                  int               inputTableSize,
-                                                  Ipp32s            *pSubTablesSizes,
-                                                  int               numSubTables,
-                                                  int               numElements,
-                                                  int               numValueBit,
-                                                  Ipp32s            *pSize))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCDecodeUTupleGetSize_32s,
+       (const IppsVLCTable_32s* pInputTable, int inputTableSize,
+        Ipp32s* pSubTablesSizes, int numSubTables, int numElements,
+        int numValueBit, Ipp32s* pSize))
 
 /*******************************************************************/
 
@@ -6606,13 +7371,16 @@ IPPAPI(IppStatus, ippsVLCDecodeUTupleGetSize_32s,(const IppsVLCTable_32s  *pInpu
 //     numSubTables                  num of Subtabtes.
 //     numElements                   number of elements in tuple
 //     numValueBit                   size of one element value, bit.
-//     pVLCSpec                      pointer to VLCDecoder specification structure
+//     pVLCSpec                      pointer to VLCDecoder specification
+structure
 //
 //  Return:
 //     ippStsNoErr                   Indicates no error.
-//     ippStsNullPtrErr              Indicates an error when one or more pointers
+//     ippStsNullPtrErr              Indicates an error when one or more
+pointers
 //                                   passed to the function is NULL.
-//     ippStsVLCUsrTblCodeLengthErr  Indicates an error when 1) the maximal length
+//     ippStsVLCUsrTblCodeLengthErr  Indicates an error when 1) the maximal
+length
 //                                   of codec in the input table exceeds 32;
 //                                   2) when any size in of subtables in
 //                                   pSubTablesSizes is less than one;
@@ -6620,14 +7388,15 @@ IPPAPI(IppStatus, ippsVLCDecodeUTupleGetSize_32s,(const IppsVLCTable_32s  *pInpu
 //                                   maximal length of codes in the input table.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCDecodeUTupleInit_32s,(const  IppsVLCTable_32s      *pInputTable,
-                                                int                   inputTableSize,
-                                                Ipp32s                *pSubTablesSizes,
-                                                int                   numSubTables,
-                                                int                   numElements,
-                                                int                   numValueBit,
-                                                IppsVLCDecodeUTupleSpec_32s *pVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCDecodeUTupleInit_32s,
+       (const IppsVLCTable_32s* pInputTable, int inputTableSize,
+        Ipp32s* pSubTablesSizes, int numSubTables, int numElements,
+        int numValueBit, IppsVLCDecodeUTupleSpec_32s* pVLCSpec))
 
 /*******************************************************************/
 
@@ -6643,30 +7412,37 @@ IPPAPI(IppStatus, ippsVLCDecodeUTupleInit_32s,(const  IppsVLCTable_32s      *pIn
 //     numSubTables                  num of Subtabtes.
 //     numElements                   number of elements in tuple
 //     numValueBit                   size of one element value, bit.
-//     ppVLCSpec                     pointer to pointer VLCDecoder specification structure
+//     ppVLCSpec                     pointer to pointer VLCDecoder specification
+structure
 //
 //  Return:
 //     ippStsNoErr                   Indicates no error.
-//     ippStsNullPtrErr              Indicates an error when one or more pointers
+//     ippStsNullPtrErr              Indicates an error when one or more
+pointers
 //                                   passed to the function is NULL.
-//     ippStsVLCUsrTblCodeLengthErr  Indicates an error when 1) the maximal length
+//     ippStsVLCUsrTblCodeLengthErr  Indicates an error when 1) the maximal
+length
 //                                   of codec in the input table exceeds 32;
 //                                   2) when any size in of subtables in
 //                                   pSubTablesSizes is less than one;
 //                                   3)when sum of this values is less than the
 //                                   maximal length of codes in the input table.
-//     ippStsMemAllocErr             Indicates an error when memory for VLCDecoder
+//     ippStsMemAllocErr             Indicates an error when memory for
+VLCDecoder
 //                                   specification structure was not allocated.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Internal memory allocation will not be supported - use Get<Buffer>Size and Init pair for this functionality. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCDecodeUTupleInitAlloc_32s,(const IppsVLCTable_32s      *pInputTable,
-                                                    int                   inputTableSize,
-                                                    Ipp32s                *pSubTablesSizes,
-                                                    int                   numSubTables,
-                                                    int                   numElements,
-                                                    int                   numValueBit,
-                                                    IppsVLCDecodeUTupleSpec_32s **ppVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Internal memory allocation will not be supported "
+    "- use Get<Buffer>Size and Init pair for this functionality. Use the "
+    "following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCDecodeUTupleInitAlloc_32s,
+       (const IppsVLCTable_32s* pInputTable, int inputTableSize,
+        Ipp32s* pSubTablesSizes, int numSubTables, int numElements,
+        int numValueBit, IppsVLCDecodeUTupleSpec_32s** ppVLCSpec))
 
 /*******************************************************************/
 
@@ -6680,14 +7456,18 @@ IPPAPI(IppStatus, ippsVLCDecodeUTupleInitAlloc_32s,(const IppsVLCTable_32s      
 //  Return:
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(void, ippsVLCDecodeUTupleFree_32s,(IppsVLCDecodeUTupleSpec_32s *pVLCSpec))
-
-
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(void, ippsVLCDecodeUTupleFree_32s,
+       (IppsVLCDecodeUTupleSpec_32s * pVLCSpec))
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippsVLCDecodeUTupleBlock_1u16s
-//  Purpose:    decodes a dstLen element encoded by VLC code from the source data
+//  Purpose:    decodes a dstLen element encoded by VLC code from the source
+data
 //              *ppSrc with *pSrcBitsOffset bits offset and stores the result in
 //              the destination *pDst
 //
@@ -6700,28 +7480,36 @@ IPPAPI(void, ippsVLCDecodeUTupleFree_32s,(IppsVLCDecodeUTupleSpec_32s *pVLCSpec)
 //
 //  Return:
 //     ippStsNoErr            Indicates no error.
-//     ippStsNullPtrErr       Indicates an error when one or more pointers passed to
+//     ippStsNullPtrErr       Indicates an error when one or more pointers
+passed to
 //                            the function is NULL.
 //     ippStsVLCInputDataErr  Indicates an error when incorrect input is used.
-//                            It can indicate that bitstream contain code that is not
+//                            It can indicate that bitstream contain code that
+is not
 //                            specified inside the used table.
-//     ippStsBitOffsetErr     Indicate an error when offset less than 0 or more than 7.
-//     ippStsContextMatchErr  Indicate an error when pVLCSpec struct was not created by
-//                            ippsVLCDecodeInit_32s or ippsVLCDecodeInitAlloc_32s functions.
+//     ippStsBitOffsetErr     Indicate an error when offset less than 0 or more
+than 7.
+//     ippStsContextMatchErr  Indicate an error when pVLCSpec struct was not
+created by
+//                            ippsVLCDecodeInit_32s or
+ippsVLCDecodeInitAlloc_32s functions.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCDecodeUTupleBlock_1u16s,(Ipp8u                       **ppSrc,
-                                            int                         *pSrcBitsOffset,
-                                            Ipp16s                      *pDst,
-                                            int                         dstLen,
-                                            const IppsVLCDecodeUTupleSpec_32s *pVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCDecodeUTupleBlock_1u16s,
+       (Ipp8u * *ppSrc, int* pSrcBitsOffset, Ipp16s* pDst, int dstLen,
+        const IppsVLCDecodeUTupleSpec_32s* pVLCSpec))
 
 /*******************************************************************/
 
 /* /////////////////////////////////////////////////////////////////////////////
 //  Name:       ippsVLCDecodeUTupleOne_1u16s
-//  Purpose:    decodes a single element encoded by VLC code from the source data
+//  Purpose:    decodes a single element encoded by VLC code from the source
+data
 //              *ppSrc with *pSrcBitsOffset bits offset and stores the result in
 //              the destination *pDst
 //
@@ -6733,29 +7521,37 @@ IPPAPI(IppStatus, ippsVLCDecodeUTupleBlock_1u16s,(Ipp8u                       **
 //
 //  Return:
 //     ippStsNoErr            Indicates no error.
-//     ippStsNullPtrErr       Indicates an error when one or more pointers passed to
+//     ippStsNullPtrErr       Indicates an error when one or more pointers
+passed to
 //                            the function is NULL.
 //     ippStsVLCInputDataErr  Indicates an error when incorrect input is used.
-//                            It can indicate that bitstream contain code that is not
+//                            It can indicate that bitstream contain code that
+is not
 //                            specified inside the used table.
-//     ippStsBitOffsetErr     Indicate an error when offset less than 0 or more than 7.
-//     ippStsContextMatchErr  Indicate an error when pVLCSpec struct was not created by
-//                            ippsVLCDecodeInit_32s or ippsVLCDecodeInitAlloc_32s functions.
+//     ippStsBitOffsetErr     Indicate an error when offset less than 0 or more
+than 7.
+//     ippStsContextMatchErr  Indicate an error when pVLCSpec struct was not
+created by
+//                            ippsVLCDecodeInit_32s or
+ippsVLCDecodeInitAlloc_32s functions.
 //
 */
-IPP_DEPRECATED("is deprecated. This function is obsolete and will be removed in one of the future IPP releases. Use the following link for details: http://software.intel.com/en-us/articles/intel-ipp-71-deprecated-features/")\
-IPPAPI(IppStatus, ippsVLCDecodeUTupleOne_1u16s,(Ipp8u                   **ppSrc,
-                                           int                          *pSrcBitsOffset,
-                                           Ipp16s                       *pDst,
-                                           const IppsVLCDecodeUTupleSpec_32s  *pVLCSpec))
+IPP_DEPRECATED(
+    "is deprecated. This function is obsolete and will be removed in one of "
+    "the future IPP releases. Use the following link for details: "
+    "http://software.intel.com/en-us/articles/"
+    "intel-ipp-71-deprecated-features/")
+IPPAPI(IppStatus, ippsVLCDecodeUTupleOne_1u16s,
+       (Ipp8u * *ppSrc, int* pSrcBitsOffset, Ipp16s* pDst,
+        const IppsVLCDecodeUTupleSpec_32s* pVLCSpec))
 
 #ifdef __cplusplus
 }
 #endif
 
-#if defined (_IPP_STDCALL_CDECL)
-  #undef  _IPP_STDCALL_CDECL
-  #define __stdcall __cdecl
+#if defined(_IPP_STDCALL_CDECL)
+#undef _IPP_STDCALL_CDECL
+#define __stdcall __cdecl
 #endif
 
-#endif  /* #if !defined(__IPPAC_H__ ) || defined(_OWN_BLDPCS ) */
+#endif /* #if !defined(__IPPAC_H__ ) || defined(_OWN_BLDPCS ) */

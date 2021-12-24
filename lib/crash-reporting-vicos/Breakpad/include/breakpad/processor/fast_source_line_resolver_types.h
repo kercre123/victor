@@ -37,14 +37,13 @@
 #ifndef PROCESSOR_FAST_SOURCE_LINE_RESOLVER_TYPES_H__
 #define PROCESSOR_FAST_SOURCE_LINE_RESOLVER_TYPES_H__
 
-#include "google_breakpad/processor/fast_source_line_resolver.h"
-#include "processor/source_line_resolver_base_types.h"
-
 #include <map>
 #include <string>
 
+#include "google_breakpad/processor/fast_source_line_resolver.h"
 #include "google_breakpad/processor/stack_frame.h"
 #include "processor/cfi_frame_info.h"
+#include "processor/source_line_resolver_base_types.h"
 #include "processor/static_address_map-inl.h"
 #include "processor/static_contained_range_map-inl.h"
 #include "processor/static_map.h"
@@ -55,25 +54,25 @@ namespace google_breakpad {
 
 struct FastSourceLineResolver::Line : public SourceLineResolverBase::Line {
   void CopyFrom(const Line *line_ptr) {
-    const char *raw = reinterpret_cast<const char*>(line_ptr);
+    const char *raw = reinterpret_cast<const char *>(line_ptr);
     CopyFrom(raw);
   }
 
   // De-serialize the memory data of a Line.
   void CopyFrom(const char *raw) {
-    address = *(reinterpret_cast<const MemAddr*>(raw));
-    size = *(reinterpret_cast<const MemAddr*>(raw + sizeof(address)));
-    source_file_id = *(reinterpret_cast<const int32_t *>(
-        raw + 2 * sizeof(address)));
-    line = *(reinterpret_cast<const int32_t*>(
-        raw + 2 * sizeof(address) + sizeof(source_file_id)));
+    address = *(reinterpret_cast<const MemAddr *>(raw));
+    size = *(reinterpret_cast<const MemAddr *>(raw + sizeof(address)));
+    source_file_id =
+        *(reinterpret_cast<const int32_t *>(raw + 2 * sizeof(address)));
+    line = *(reinterpret_cast<const int32_t *>(raw + 2 * sizeof(address) +
+                                               sizeof(source_file_id)));
   }
 };
 
-struct FastSourceLineResolver::Function :
-public SourceLineResolverBase::Function {
+struct FastSourceLineResolver::Function
+    : public SourceLineResolverBase::Function {
   void CopyFrom(const Function *func_ptr) {
-    const char *raw = reinterpret_cast<const char*>(func_ptr);
+    const char *raw = reinterpret_cast<const char *>(func_ptr);
     CopyFrom(raw);
   }
 
@@ -81,11 +80,11 @@ public SourceLineResolverBase::Function {
   void CopyFrom(const char *raw) {
     size_t name_size = strlen(raw) + 1;
     name = raw;
-    address = *(reinterpret_cast<const MemAddr*>(raw + name_size));
-    size = *(reinterpret_cast<const MemAddr*>(
-        raw + name_size + sizeof(MemAddr)));
-    parameter_size = *(reinterpret_cast<const int32_t*>(
-        raw + name_size + 2 * sizeof(MemAddr)));
+    address = *(reinterpret_cast<const MemAddr *>(raw + name_size));
+    size =
+        *(reinterpret_cast<const MemAddr *>(raw + name_size + sizeof(MemAddr)));
+    parameter_size = *(reinterpret_cast<const int32_t *>(raw + name_size +
+                                                         2 * sizeof(MemAddr)));
     lines = StaticRangeMap<MemAddr, Line>(
         raw + name_size + 2 * sizeof(MemAddr) + sizeof(int32_t));
   }
@@ -93,10 +92,10 @@ public SourceLineResolverBase::Function {
   StaticRangeMap<MemAddr, Line> lines;
 };
 
-struct FastSourceLineResolver::PublicSymbol :
-public SourceLineResolverBase::PublicSymbol {
+struct FastSourceLineResolver::PublicSymbol
+    : public SourceLineResolverBase::PublicSymbol {
   void CopyFrom(const PublicSymbol *public_symbol_ptr) {
-    const char *raw = reinterpret_cast<const char*>(public_symbol_ptr);
+    const char *raw = reinterpret_cast<const char *>(public_symbol_ptr);
     CopyFrom(raw);
   }
 
@@ -104,16 +103,16 @@ public SourceLineResolverBase::PublicSymbol {
   void CopyFrom(const char *raw) {
     size_t name_size = strlen(raw) + 1;
     name = raw;
-    address = *(reinterpret_cast<const MemAddr*>(raw + name_size));
-    parameter_size = *(reinterpret_cast<const int32_t*>(
-        raw + name_size + sizeof(MemAddr)));
+    address = *(reinterpret_cast<const MemAddr *>(raw + name_size));
+    parameter_size =
+        *(reinterpret_cast<const int32_t *>(raw + name_size + sizeof(MemAddr)));
   }
 };
 
-class FastSourceLineResolver::Module: public SourceLineResolverBase::Module {
+class FastSourceLineResolver::Module : public SourceLineResolverBase::Module {
  public:
-  explicit Module(const string &name) : name_(name), is_corrupt_(false) { }
-  virtual ~Module() { }
+  explicit Module(const string &name) : name_(name), is_corrupt_(false) {}
+  virtual ~Module() {}
 
   // Looks up the given relative address, and fills the StackFrame struct
   // with the result.
@@ -159,7 +158,7 @@ class FastSourceLineResolver::Module: public SourceLineResolverBase::Module {
   // there may be overlaps between maps of different types, but some
   // information is only available as certain types.
   StaticContainedRangeMap<MemAddr, char>
-    windows_frame_info_[WindowsFrameInfo::STACK_INFO_LAST];
+      windows_frame_info_[WindowsFrameInfo::STACK_INFO_LAST];
 
   // DWARF CFI stack walking data. The Module stores the initial rule sets
   // and rule deltas as strings, just as they appear in the symbol file:

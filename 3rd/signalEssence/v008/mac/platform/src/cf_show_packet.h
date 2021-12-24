@@ -1,5 +1,5 @@
-#ifndef _CF_SHOW_PACKET_H 
-#define _CF_SHOW_PACKET_H 
+#ifndef _CF_SHOW_PACKET_H
+#define _CF_SHOW_PACKET_H
 //============================================================================
 // 635 Linux Demonstration Code.
 // show_packet,h: Ultra-simple 635 command-line communications example

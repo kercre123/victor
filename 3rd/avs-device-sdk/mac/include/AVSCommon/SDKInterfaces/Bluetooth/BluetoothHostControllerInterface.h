@@ -29,67 +29,68 @@ namespace bluetooth {
  * This is responsible for Scanning and Discovery.
  */
 class BluetoothHostControllerInterface {
-public:
-    /// Destructor
-    virtual ~BluetoothHostControllerInterface() = default;
+ public:
+  /// Destructor
+  virtual ~BluetoothHostControllerInterface() = default;
 
-    /**
-     * Getter for the MAC address of the adapter.
-     *
-     * @return The MAC address of the adapter.
-     */
-    virtual std::string getMac() const = 0;
+  /**
+   * Getter for the MAC address of the adapter.
+   *
+   * @return The MAC address of the adapter.
+   */
+  virtual std::string getMac() const = 0;
 
-    /**
-     * Getter for the friendly name of the adapter.
-     *
-     * @return The friendly name of the adapter.
-     */
-    virtual std::string getFriendlyName() const = 0;
+  /**
+   * Getter for the friendly name of the adapter.
+   *
+   * @return The friendly name of the adapter.
+   */
+  virtual std::string getFriendlyName() const = 0;
 
-    /**
-     * Getter for the discoverability of the device. This must wait until
-     * any prior enterDiscoverableMode or exitDiscoverableMode methods have finished.
-     *
-     * @return Whether the device is currently discoverable by other devices.
-     */
-    virtual bool isDiscoverable() const = 0;
+  /**
+   * Getter for the discoverability of the device. This must wait until
+   * any prior enterDiscoverableMode or exitDiscoverableMode methods have
+   * finished.
+   *
+   * @return Whether the device is currently discoverable by other devices.
+   */
+  virtual bool isDiscoverable() const = 0;
 
-    /**
-     * Set the adapter to become discoverable.
-     *
-     * @return Indicates whether the operation was successful.
-     */
-    virtual std::future<bool> enterDiscoverableMode() = 0;
+  /**
+   * Set the adapter to become discoverable.
+   *
+   * @return Indicates whether the operation was successful.
+   */
+  virtual std::future<bool> enterDiscoverableMode() = 0;
 
-    /**
-     * Set the adapter to become non-discoverable.
-     *
-     * @return Indicates whether the operation was successful.
-     */
-    virtual std::future<bool> exitDiscoverableMode() = 0;
+  /**
+   * Set the adapter to become non-discoverable.
+   *
+   * @return Indicates whether the operation was successful.
+   */
+  virtual std::future<bool> exitDiscoverableMode() = 0;
 
-    /**
-     * Getter for the scanning state of the device. This must wait until
-     * any prior startScan or stopScan methods have finished.
-     *
-     * @return Whether the device is currently scanning for other devices.
-     */
-    virtual bool isScanning() const = 0;
+  /**
+   * Getter for the scanning state of the device. This must wait until
+   * any prior startScan or stopScan methods have finished.
+   *
+   * @return Whether the device is currently scanning for other devices.
+   */
+  virtual bool isScanning() const = 0;
 
-    /**
-     * Set the adapter to start scanning.
-     *
-     * @return Indicates whether the operation was successful.
-     */
-    virtual std::future<bool> startScan() = 0;
+  /**
+   * Set the adapter to start scanning.
+   *
+   * @return Indicates whether the operation was successful.
+   */
+  virtual std::future<bool> startScan() = 0;
 
-    /**
-     * Set the adapter to stop scanning.
-     *
-     * @return Indicates whether the operation was successful.
-     */
-    virtual std::future<bool> stopScan() = 0;
+  /**
+   * Set the adapter to stop scanning.
+   *
+   * @return Indicates whether the operation was successful.
+   */
+  virtual std::future<bool> stopScan() = 0;
 };
 
 }  // namespace bluetooth

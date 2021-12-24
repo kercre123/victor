@@ -12,10 +12,9 @@
 
 #if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
 
-typedef struct hdr_timespec
-{
-    long tv_sec;
-    long tv_nsec;
+typedef struct hdr_timespec {
+  long tv_sec;
+  long tv_nsec;
 } hdr_timespec;
 
 #else
@@ -46,4 +45,3 @@ void hdr_timespec_from_double(hdr_timespec* t, double value);
 #endif
 
 #endif
-

@@ -4,29 +4,27 @@
  * Author: Lorenzo Riano
  * Created: 11/14/17
  *
- * Description: 
+ * Description:
  *
  * Copyright: Anki, Inc. 2017
  *
  **/
 
-#include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
-#include "coretech/common/engine/math/logisticRegression.h"
-
 #include <random>
+
+#include "coretech/common/engine/math/logisticRegression.h"
+#include "util/helpers/includeGTest.h"  // Used in place of gTest/gTest.h directly to suppress warnings in the header
 
 using namespace Anki;
 
-inline float sigmoid(float x) {
-  return float(1. / ( 1. + std::exp(-x)));
-}
+inline float sigmoid(float x) { return float(1. / (1. + std::exp(-x))); }
 
 GTEST_TEST(TestLogisticRegression, Simplefitting) {
-
   const int nsamples = 1000;
 
   // Create the classifier
-  cv::Ptr<cv::ml::LogisticRegression> clf = cv::makePtr<WeightedLogisticRegression>();
+  cv::Ptr<cv::ml::LogisticRegression> clf =
+      cv::makePtr<WeightedLogisticRegression>();
   clf->setLearningRate(0.1 * nsamples);
   clf->setIterations(1000);
   clf->setRegularization(cv::ml::LogisticRegression::REG_DISABLE);
@@ -56,9 +54,8 @@ GTEST_TEST(TestLogisticRegression, Simplefitting) {
       X_row[i] = x;
     }
   }
-  cv::Ptr<cv::ml::TrainData> trainData = cv::ml::TrainData::create(X,
-                                                                   cv::ml::SampleTypes::ROW_SAMPLE,
-                                                                   labels);
+  cv::Ptr<cv::ml::TrainData> trainData =
+      cv::ml::TrainData::create(X, cv::ml::SampleTypes::ROW_SAMPLE, labels);
   const bool trainingSuccess = clf->train(trainData);
   ASSERT_TRUE(trainingSuccess);
 
@@ -66,9 +63,10 @@ GTEST_TEST(TestLogisticRegression, Simplefitting) {
   const float learnedIntercept = thetas.at<float>(0, 0);
   const float learnedCoeff = thetas.at<float>(0, 1);
   EXPECT_PRED_FORMAT2(::testing::FloatLE, std::fabs(learnedCoeff - coeff), 0.1)
-            << "Learned coeff: "<<learnedCoeff<<"\tReal: "<<coeff;
-  EXPECT_PRED_FORMAT2(::testing::FloatLE, std::fabs(learnedIntercept - intercept), 0.1)
-            << "Learned intercept: "<<learnedIntercept<<"\tReal: "<<intercept;
+      << "Learned coeff: " << learnedCoeff << "\tReal: " << coeff;
+  EXPECT_PRED_FORMAT2(::testing::FloatLE,
+                      std::fabs(learnedIntercept - intercept), 0.1)
+      << "Learned intercept: " << learnedIntercept << "\tReal: " << intercept;
 
   // calculate error
   cv::Mat responses;
@@ -83,7 +81,8 @@ GTEST_TEST(TestLogisticRegression, AmbiguousFittingUseWeights) {
   const float positiveClassWeight = 5.0;
 
   // Create the classifier
-  cv::Ptr<cv::ml::LogisticRegression> clf = cv::makePtr<WeightedLogisticRegression>();
+  cv::Ptr<cv::ml::LogisticRegression> clf =
+      cv::makePtr<WeightedLogisticRegression>();
   clf->setLearningRate(0.2 * nsamples);
   clf->setIterations(5000);
   clf->setRegularization(cv::ml::LogisticRegression::REG_DISABLE);
@@ -106,10 +105,9 @@ GTEST_TEST(TestLogisticRegression, AmbiguousFittingUseWeights) {
     float* label_row = labels.ptr<float>(0);
     float* weight_row = classWeights.ptr<float>(0);
     for (int i = 0; i < nsamples; ++i) {
-
       const float x = distRng(mt);
       const float r = normalRng(mt);
-      const float y = std::sin(0.75f*x) * 7.0f * x + 5.0f * r;
+      const float y = std::sin(0.75f * x) * 7.0f * x + 5.0f * r;
 
       // swap x and y
       X_row[i] = y;
@@ -118,20 +116,14 @@ GTEST_TEST(TestLogisticRegression, AmbiguousFittingUseWeights) {
       if (label == 1.0) {
         weight_row[i] = positiveClassWeight;
         numberOfPositives++;
-      }
-      else {
+      } else {
         weight_row[i] = 1.0;
       }
-
     }
   }
-  cv::Ptr<cv::ml::TrainData> trainData = cv::ml::TrainData::create(X,
-                                                                   cv::ml::SampleTypes::ROW_SAMPLE,
-                                                                   labels,
-                                                                   cv::noArray(),
-                                                                   cv::noArray(),
-                                                                   classWeights,
-                                                                   cv::noArray());
+  cv::Ptr<cv::ml::TrainData> trainData = cv::ml::TrainData::create(
+      X, cv::ml::SampleTypes::ROW_SAMPLE, labels, cv::noArray(), cv::noArray(),
+      classWeights, cv::noArray());
   const bool trainingSuccess = clf->train(trainData);
   ASSERT_TRUE(trainingSuccess);
   cv::Mat thetas = clf->get_learnt_thetas();
@@ -145,8 +137,12 @@ GTEST_TEST(TestLogisticRegression, AmbiguousFittingUseWeights) {
   // calculate number of positives
   const float predictedNumberOfPositives = float(cv::sum(responses)[0]);
   const float realPositivesRatio = numberOfPositives / float(nsamples);
-  const float predictedPositivesRatio = predictedNumberOfPositives / float(nsamples);
+  const float predictedPositivesRatio =
+      predictedNumberOfPositives / float(nsamples);
 
-  EXPECT_PRED_FORMAT2(::testing::FloatLE, std::fabs(realPositivesRatio - predictedPositivesRatio), 0.01)
-            <<"Real ratio of positives: "<<realPositivesRatio<<", predicted: "<<predictedPositivesRatio;
+  EXPECT_PRED_FORMAT2(::testing::FloatLE,
+                      std::fabs(realPositivesRatio - predictedPositivesRatio),
+                      0.01)
+      << "Real ratio of positives: " << realPositivesRatio
+      << ", predicted: " << predictedPositivesRatio;
 }

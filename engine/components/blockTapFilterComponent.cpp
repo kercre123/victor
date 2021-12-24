@@ -4,8 +4,8 @@
  * Author: Molly Jameson
  * Created: 2016-07-07
  *
- * Description: A component to manage time delays to only send the most intense taps
- *               from blocks sent close together, since the other taps were likely noise
+ * Description: A component to manage time delays to only send the most intense
+ *taps from blocks sent close together, since the other taps were likely noise
  *
  * Copyright: Anki, Inc. 2016
  *
@@ -13,6 +13,9 @@
 
 #include "engine/components/blockTapFilterComponent.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -22,18 +25,18 @@
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/utils/cozmoFeatureGate.h"
-#include "coretech/common/engine/utils/timer.h"
-#include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/externalInterface/messageGameToEngine.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/math/math.h"
 #include "util/transport/connectionStats.h"
 
 CONSOLE_VAR(int16_t, kTapIntensityMin, "TapFilter.IntesityMin", 60);
-CONSOLE_VAR(Anki::TimeStamp_t, kTapWaitOffset_ms, "TapFilter.WaitOffsetTime", 75);
-CONSOLE_VAR(Anki::TimeStamp_t, kDoubleTapTime_ms, "TapFilter.DoubleTapTime", 500);
-CONSOLE_VAR(Anki::TimeStamp_t, kIgnoreMoveTimeAfterDoubleTap_ms, "TapFilter.IgnoreMoveTimeAfterDoubleTap", 500);
+CONSOLE_VAR(Anki::TimeStamp_t, kTapWaitOffset_ms, "TapFilter.WaitOffsetTime",
+            75);
+CONSOLE_VAR(Anki::TimeStamp_t, kDoubleTapTime_ms, "TapFilter.DoubleTapTime",
+            500);
+CONSOLE_VAR(Anki::TimeStamp_t, kIgnoreMoveTimeAfterDoubleTap_ms,
+            "TapFilter.IgnoreMoveTimeAfterDoubleTap", 500);
 CONSOLE_VAR(bool, kCanDoubleTapDirtyPoses, "DoubleTap", false);
 CONSOLE_VAR(bool, kIgnoreMovementWhileWaitingForDoubleTap, "DoubleTap", false);
 
@@ -41,231 +44,229 @@ namespace Anki {
 namespace Vector {
 
 BlockTapFilterComponent::BlockTapFilterComponent()
-: IDependencyManagedComponent(this, RobotComponentID::BlockTapFilter)
-, _enabled(true)
-, _waitToTime(0)
-{
-}
+    : IDependencyManagedComponent(this, RobotComponentID::BlockTapFilter),
+      _enabled(true),
+      _waitToTime(0) {}
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BlockTapFilterComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BlockTapFilterComponent::InitDependent(
+    Vector::Robot* robot, const RobotCompMap& dependentComps) {
   _robot = robot;
   // Null for unit tests
-  if( _robot->GetContext()->GetExternalInterface() )
-  {
+  if (_robot->GetContext()->GetExternalInterface()) {
     // Subscribe to messages
-    auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _eventHandles);
+    auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this,
+                                    _eventHandles);
     using namespace ExternalInterface;
     helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectMoved>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectStoppedMoving>();
   }
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BlockTapFilterComponent::UpdateDependent(const RobotCompMap& dependentComps)
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BlockTapFilterComponent::UpdateDependent(
+    const RobotCompMap& dependentComps) {
   ANKI_CPU_PROFILE("BlockTapFilterComponent::Update");
-  
-  const EngineTimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
-  if( !_tapInfo.empty() )
-  {
-    if( currTime > _waitToTime )
-    {
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ObjectTapped(_tapInfo.back())));
+  const EngineTimeStamp_t currTime =
+      BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+
+  if (!_tapInfo.empty()) {
+    if (currTime > _waitToTime) {
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(
+          ExternalInterface::ObjectTapped(_tapInfo.back())));
       _tapInfo.clear();
     }
   }
-  
-  for(auto& doubleTapInfo : _doubleTapObjects)
-  {
-    const bool ignoreMovementTimePassed = doubleTapInfo.second.ignoreNextMoveTime <= currTime;
-    
-    // If we were ignoring move messages but the timeout has expired mark the object as dirty
-    if(doubleTapInfo.second.isIgnoringMoveMessages &&
-       ignoreMovementTimePassed)
-    {
+
+  for (auto& doubleTapInfo : _doubleTapObjects) {
+    const bool ignoreMovementTimePassed =
+        doubleTapInfo.second.ignoreNextMoveTime <= currTime;
+
+    // If we were ignoring move messages but the timeout has expired mark the
+    // object as dirty
+    if (doubleTapInfo.second.isIgnoringMoveMessages &&
+        ignoreMovementTimePassed) {
       doubleTapInfo.second.isIgnoringMoveMessages = false;
-            
-      const auto* tappedObject = _robot->GetBlockWorld().GetConnectedBlockByActiveID( doubleTapInfo.first );
-      if ( nullptr != tappedObject ) {
-        PRINT_CH_DEBUG("BlockTapFilterComponent", "BlockTapFilterComponent.Update.ExpiredTap",
+
+      const auto* tappedObject =
+          _robot->GetBlockWorld().GetConnectedBlockByActiveID(
+              doubleTapInfo.first);
+      if (nullptr != tappedObject) {
+        PRINT_CH_DEBUG("BlockTapFilterComponent",
+                       "BlockTapFilterComponent.Update.ExpiredTap",
                        "Marking object %d as dirty due to tap timeout",
-                        tappedObject->GetID().GetValue());
+                       tappedObject->GetID().GetValue());
       }
 
       if (kCanDoubleTapDirtyPoses) {
-        BlockWorldFilter filter;	
-        filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);	
-        filter.SetFilterFcn([&doubleTapInfo](const ObservableObject* object) {	
-          return object->IsActive() && (object->GetID() == doubleTapInfo.first);	
-        });	
+        BlockWorldFilter filter;
+        filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+        filter.SetFilterFcn([&doubleTapInfo](const ObservableObject* object) {
+          return object->IsActive() && (object->GetID() == doubleTapInfo.first);
+        });
 
-        std::vector<ObservableObject *> matchingObjects;	
-        _robot->GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
+        std::vector<ObservableObject*> matchingObjects;
+        _robot->GetBlockWorld().FindLocatedMatchingObjects(filter,
+                                                           matchingObjects);
 
-        for(auto& object : matchingObjects)	
-        {	
-          if ( object->IsPoseStateKnown() ) {	
-            _robot->GetBlockWorld().MarkObjectDirty(object);	
-          }	
+        for (auto& object : matchingObjects) {
+          if (object->IsPoseStateKnown()) {
+            _robot->GetBlockWorld().MarkObjectDirty(object);
+          }
         }
       }
     }
   }
 }
 
-
-void BlockTapFilterComponent::HandleObjectTapped(const ExternalInterface::ObjectTapped& payload)
-{
+void BlockTapFilterComponent::HandleObjectTapped(
+    const ExternalInterface::ObjectTapped& payload) {
   // find connected object by objectID
-  const auto* tappedObject = _robot->GetBlockWorld().GetConnectedBlockByID( payload.objectID );
+  const auto* tappedObject =
+      _robot->GetBlockWorld().GetConnectedBlockByID(payload.objectID);
 
-  if(nullptr == tappedObject)
-  {
-    PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectTapped.UnknownObjectID",
-                        "Could not find match for object ID %d", payload.objectID);
+  if (nullptr == tappedObject) {
+    PRINT_NAMED_WARNING(
+        "BlockTapFilterComponent.HandleActiveObjectTapped.UnknownObjectID",
+        "Could not find match for object ID %d", payload.objectID);
     return;
   }
-  
-  const Anki::TimeStamp_t engineTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  PRINT_CH_INFO("BlockPool","BlockTapFilterComponent.HandleActiveObjectTapped.MessageActiveObjectTapped",
+
+  const Anki::TimeStamp_t engineTime =
+      BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  PRINT_CH_INFO("BlockPool",
+                "BlockTapFilterComponent.HandleActiveObjectTapped."
+                "MessageActiveObjectTapped",
                 "Received message that %s %d (Object ID %d) was tapped "
                 "(engineTime: %d).",
                 EnumToString(tappedObject->GetType()),
                 tappedObject->GetID().GetValue(), payload.objectID, engineTime);
-  
-  // In the simulator, taps are soft and also webots doesn't simulate the phantom taps.
-  if (!_enabled || !_robot->IsPhysical())
-  {
+
+  // In the simulator, taps are soft and also webots doesn't simulate the
+  // phantom taps.
+  if (!_enabled || !_robot->IsPhysical()) {
     // Do not filter any taps if block tap filtering was disabled.
-    _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ObjectTapped(payload)));
-  }
-  else
-  {
-    // A new "group" of taps is coming in, evaluate after a certain amount of time after the first one
-    if( _tapInfo.empty() )
-    {
-      // Potentially we could add more time based on LatencyAvg if we wanted to track that in the
-      // shipping app. Latency should be higher on lower end devices
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(
+        ExternalInterface::ObjectTapped(payload)));
+  } else {
+    // A new "group" of taps is coming in, evaluate after a certain amount of
+    // time after the first one
+    if (_tapInfo.empty()) {
+      // Potentially we could add more time based on LatencyAvg if we wanted to
+      // track that in the shipping app. Latency should be higher on lower end
+      // devices
       _waitToTime = engineTime + kTapWaitOffset_ms;
     }
 
     _tapInfo.push_back(payload);
   }
-  
+
   CheckForDoubleTap(payload.objectID);
 }
 
-template<>
-void BlockTapFilterComponent::HandleMessage(const ExternalInterface::ObjectMoved& payload)
-{
-  const auto* object = _robot->GetBlockWorld().GetConnectedBlockByID(payload.objectID);
-  if( object == nullptr )
-  {
-    PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectMoved.ObjectIDNull",
-                        "Could not find match for object ID %d", payload.objectID);
+template <>
+void BlockTapFilterComponent::HandleMessage(
+    const ExternalInterface::ObjectMoved& payload) {
+  const auto* object =
+      _robot->GetBlockWorld().GetConnectedBlockByID(payload.objectID);
+  if (object == nullptr) {
+    PRINT_NAMED_WARNING(
+        "BlockTapFilterComponent.HandleActiveObjectMoved.ObjectIDNull",
+        "Could not find match for object ID %d", payload.objectID);
     return;
   }
-  
-  const auto& doubleTapInfo = _doubleTapObjects.find(object->GetID().GetValue());
-  
-  if(doubleTapInfo != _doubleTapObjects.end())
-  {
-    // If we have not started waiting for a double tap then mark this cube as moving
-    // Prevents checking for double taps while a cube is moving and also prevents
-    // considering a cube is moving while we are waiting for a potential double tap since
-    // taps/double taps often cause moved messages
-    if(doubleTapInfo->second.doubleTapTime == 0)
-    {
+
+  const auto& doubleTapInfo =
+      _doubleTapObjects.find(object->GetID().GetValue());
+
+  if (doubleTapInfo != _doubleTapObjects.end()) {
+    // If we have not started waiting for a double tap then mark this cube as
+    // moving Prevents checking for double taps while a cube is moving and also
+    // prevents considering a cube is moving while we are waiting for a
+    // potential double tap since taps/double taps often cause moved messages
+    if (doubleTapInfo->second.doubleTapTime == 0) {
       doubleTapInfo->second.isMoving = true;
     }
-  }
-  else
-  {
+  } else {
     _doubleTapObjects.emplace(object->GetID(), DoubleTapInfo{0, true, 0});
   }
 }
 
-template<>
-void BlockTapFilterComponent::HandleMessage(const ExternalInterface::ObjectStoppedMoving& payload)
-{
-  // In the message coming from the robot, the objectID is the slot the object is connected on which is its
-  // engine activeID
-  const auto* object = _robot->GetBlockWorld().GetConnectedBlockByID(payload.objectID);
-  if( object == nullptr )
-  {
-    PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectStopped.ObjectIDNull",
-                        "Could not find match for object ID %d", payload.objectID);
+template <>
+void BlockTapFilterComponent::HandleMessage(
+    const ExternalInterface::ObjectStoppedMoving& payload) {
+  // In the message coming from the robot, the objectID is the slot the object
+  // is connected on which is its engine activeID
+  const auto* object =
+      _robot->GetBlockWorld().GetConnectedBlockByID(payload.objectID);
+  if (object == nullptr) {
+    PRINT_NAMED_WARNING(
+        "BlockTapFilterComponent.HandleActiveObjectStopped.ObjectIDNull",
+        "Could not find match for object ID %d", payload.objectID);
     return;
   }
-  
-  const auto& doubleTapInfo = _doubleTapObjects.find(object->GetID().GetValue());
-  
-  if(doubleTapInfo != _doubleTapObjects.end())
-  {
+
+  const auto& doubleTapInfo =
+      _doubleTapObjects.find(object->GetID().GetValue());
+
+  if (doubleTapInfo != _doubleTapObjects.end()) {
     doubleTapInfo->second.isMoving = false;
-  }
-  else
-  {
+  } else {
     _doubleTapObjects.emplace(object->GetID(), DoubleTapInfo{0, false, 0});
   }
 }
 
-bool BlockTapFilterComponent::ShouldIgnoreMovementDueToDoubleTap(const ObjectID& objectID)
-{
-  if(!kIgnoreMovementWhileWaitingForDoubleTap)
-  {
+bool BlockTapFilterComponent::ShouldIgnoreMovementDueToDoubleTap(
+    const ObjectID& objectID) {
+  if (!kIgnoreMovementWhileWaitingForDoubleTap) {
     return false;
   }
 
   const auto& doubleTapInfo = _doubleTapObjects.find(objectID);
-  
-  if(doubleTapInfo != _doubleTapObjects.end())
-  {
-    return doubleTapInfo->second.ignoreNextMoveTime > BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+
+  if (doubleTapInfo != _doubleTapObjects.end()) {
+    return doubleTapInfo->second.ignoreNextMoveTime >
+           BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   }
   return false;
 }
 
-void BlockTapFilterComponent::CheckForDoubleTap(const ObjectID& objectID)
-{
-  const EngineTimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  
+void BlockTapFilterComponent::CheckForDoubleTap(const ObjectID& objectID) {
+  const EngineTimeStamp_t currTime =
+      BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+
   auto doubleTapInfo = _doubleTapObjects.find(objectID);
-  if(doubleTapInfo == _doubleTapObjects.end())
-  {
-    doubleTapInfo = _doubleTapObjects.emplace(objectID, DoubleTapInfo{0, false, 0}).first;
+  if (doubleTapInfo == _doubleTapObjects.end()) {
+    doubleTapInfo =
+        _doubleTapObjects.emplace(objectID, DoubleTapInfo{0, false, 0}).first;
   }
-  
+
   // Don't check for double taps while the cube is moving
-  if(doubleTapInfo->second.isMoving)
-  {
+  if (doubleTapInfo->second.isMoving) {
     doubleTapInfo->second.doubleTapTime = 0;
     return;
   }
-  
-  // We have been waiting for a double tap and just got a tap within the double tap wait time
-  if(currTime < doubleTapInfo->second.doubleTapTime)
-  {
+
+  // We have been waiting for a double tap and just got a tap within the double
+  // tap wait time
+  if (currTime < doubleTapInfo->second.doubleTapTime) {
     PRINT_CH_INFO("BlockPool", "BlockTapFilterComponent.Update.DoubleTap",
                   "Detected double tap id:%u", objectID.GetValue());
-    
+
     doubleTapInfo->second.doubleTapTime = 0;
     doubleTapInfo->second.isIgnoringMoveMessages = false;
   }
   // Start waiting for a double tap
-  else
-  {
+  else {
     doubleTapInfo->second.doubleTapTime = currTime + kDoubleTapTime_ms;
-    doubleTapInfo->second.ignoreNextMoveTime = currTime + kIgnoreMoveTimeAfterDoubleTap_ms;
+    doubleTapInfo->second.ignoreNextMoveTime =
+        currTime + kIgnoreMoveTimeAfterDoubleTap_ms;
     doubleTapInfo->second.isIgnoringMoveMessages = true;
   }
 }
-  
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki

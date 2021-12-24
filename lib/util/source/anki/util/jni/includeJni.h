@@ -10,13 +10,16 @@
 #define native_includeJni_h
 
 #if defined(ANDROID)
-#include <jni.h>
 #include <assert.h>
+#include <jni.h>
 #define JNI_CHECK(__jniEnv) assert(nullptr != (__jniEnv))
 #elif defined(__APPLE__) || defined(LINUX)
 #include <JavaVM/jni.h>
-#define JNI_CHECK(__jniEnv) ({ if (nullptr == (__jniEnv)) return; })
+#define JNI_CHECK(__jniEnv)            \
+  ({                                   \
+    if (nullptr == (__jniEnv)) return; \
+  })
 //#include "fakeJNI.h"
 #endif
 
-#endif // native_includeJni_h
+#endif  // native_includeJni_h

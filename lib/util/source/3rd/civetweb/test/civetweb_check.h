@@ -35,6 +35,7 @@
 #pragma warning(disable : 4127)
 #endif
 #include <stdint.h>
+
 #include "check.h"
 #ifdef __clang__
 #pragma clang diagnostic pop

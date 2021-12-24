@@ -26,52 +26,53 @@ static const char* kRequireFaceForActivationKey = "requireFaceForActivation";
 static const char* kRequireFaceConfirmationKey = "requireFaceConfirmation";
 static const char* kReturnToOriginalPoseKey = "returnToOriginalPose";
 static const char* kSetFastTurnKey = "setFastTurn";
-}
+}  // namespace
 
-struct BehaviorAnimSequenceWithFace::InstanceConfig
-{
-  FaceSelectionComponent::FaceSelectionFactorMap faceSelectionCriteria = FaceSelectionComponent::kDefaultSelectionCriteria;
+struct BehaviorAnimSequenceWithFace::InstanceConfig {
+  FaceSelectionComponent::FaceSelectionFactorMap faceSelectionCriteria =
+      FaceSelectionComponent::kDefaultSelectionCriteria;
   bool requireFaceForActivation;
   bool requireFaceConfirmation;
   bool returnToOriginalPose;
   bool fastTurn;
 };
-  
-struct BehaviorAnimSequenceWithFace::DynamicVariables
-{
+
+struct BehaviorAnimSequenceWithFace::DynamicVariables {
   Radians startAbsAngle_rad;
 };
-  
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorAnimSequenceWithFace::BehaviorAnimSequenceWithFace(const Json::Value& config)
-  : BaseClass(config)
-  , _iConfig(new InstanceConfig)
-  , _dVars(new DynamicVariables)
-{
-  if( !config[kFaceSelectionPenaltiesKey].isNull() ) {
-    const bool parsedOK = FaceSelectionComponent::ParseFaceSelectionFactorMap(config[kFaceSelectionPenaltiesKey],
-                                                                             _iConfig->faceSelectionCriteria);
-    ANKI_VERIFY(parsedOK, "BehaviorAnimSequenceWithFace.InvalidFaceSelectionConfig",
-                "behavior '%s' has invalid config",
-                GetDebugLabel().c_str());
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorAnimSequenceWithFace::BehaviorAnimSequenceWithFace(
+    const Json::Value& config)
+    : BaseClass(config),
+      _iConfig(new InstanceConfig),
+      _dVars(new DynamicVariables) {
+  if (!config[kFaceSelectionPenaltiesKey].isNull()) {
+    const bool parsedOK = FaceSelectionComponent::ParseFaceSelectionFactorMap(
+        config[kFaceSelectionPenaltiesKey], _iConfig->faceSelectionCriteria);
+    ANKI_VERIFY(parsedOK,
+                "BehaviorAnimSequenceWithFace.InvalidFaceSelectionConfig",
+                "behavior '%s' has invalid config", GetDebugLabel().c_str());
   }
-  
-  _iConfig->requireFaceForActivation = config.get( kRequireFaceForActivationKey, false ).asBool();
-  _iConfig->requireFaceConfirmation = config.get( kRequireFaceConfirmationKey, false ).asBool();
-  _iConfig->returnToOriginalPose = config.get( kReturnToOriginalPoseKey, false ).asBool();
-  _iConfig->fastTurn = config.get( kSetFastTurnKey, false).asBool();
+
+  _iConfig->requireFaceForActivation =
+      config.get(kRequireFaceForActivationKey, false).asBool();
+  _iConfig->requireFaceConfirmation =
+      config.get(kRequireFaceConfirmationKey, false).asBool();
+  _iConfig->returnToOriginalPose =
+      config.get(kReturnToOriginalPoseKey, false).asBool();
+  _iConfig->fastTurn = config.get(kSetFastTurnKey, false).asBool();
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorAnimSequenceWithFace::~BehaviorAnimSequenceWithFace()
-{
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorAnimSequenceWithFace::~BehaviorAnimSequenceWithFace() {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAnimSequenceWithFace::WantsToBeActivatedAnimSeqInternal() const
-{
-  if( _iConfig->requireFaceForActivation ) {
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool BehaviorAnimSequenceWithFace::WantsToBeActivatedAnimSeqInternal() const {
+  if (_iConfig->requireFaceForActivation) {
     SmartFaceID bestFace = GetBestFace();
     const bool hasFace = bestFace.IsValid();
     return hasFace;
@@ -79,36 +80,38 @@ bool BehaviorAnimSequenceWithFace::WantsToBeActivatedAnimSeqInternal() const
     return true;
   }
 }
-  
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAnimSequenceWithFace::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
-{
-  modifiers.visionModesForActivatableScope->insert({ VisionMode::Faces, EVisionUpdateFrequency::Low });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::Faces, EVisionUpdateFrequency::Standard });
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorAnimSequenceWithFace::GetBehaviorOperationModifiers(
+    BehaviorOperationModifiers& modifiers) const {
+  modifiers.visionModesForActivatableScope->insert(
+      {VisionMode::Faces, EVisionUpdateFrequency::Low});
+  modifiers.visionModesForActiveScope->insert(
+      {VisionMode::Faces, EVisionUpdateFrequency::Standard});
 
   BaseClass::GetBehaviorOperationModifiers(modifiers);
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAnimSequenceWithFace::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorAnimSequenceWithFace::GetBehaviorJsonKeys(
+    std::set<const char*>& expectedKeys) const {
   BaseClass::GetBehaviorJsonKeys(expectedKeys);
   const char* list[] = {
-    kFaceSelectionPenaltiesKey,
-    kRequireFaceForActivationKey,
-    kRequireFaceConfirmationKey,
-    kReturnToOriginalPoseKey,
-    kSetFastTurnKey,
+      kFaceSelectionPenaltiesKey,
+      kRequireFaceForActivationKey,
+      kRequireFaceConfirmationKey,
+      kReturnToOriginalPoseKey,
+      kSetFastTurnKey,
   };
-  expectedKeys.insert( std::begin(list), std::end(list) );
+  expectedKeys.insert(std::begin(list), std::end(list));
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAnimSequenceWithFace::OnBehaviorActivated()
-{
-
-  if( _iConfig->fastTurn ) {
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorAnimSequenceWithFace::OnBehaviorActivated() {
+  if (_iConfig->fastTurn) {
     PathMotionProfile profile;
     profile.pointTurnSpeed_rad_per_sec = 4.0f;
     profile.pointTurnAccel_rad_per_sec2 = 20.0f;
@@ -116,48 +119,53 @@ void BehaviorAnimSequenceWithFace::OnBehaviorActivated()
     profile.isCustom = true;
     SmartSetMotionProfile(profile);
   }
-  
-  _dVars->startAbsAngle_rad = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>();
+
+  _dVars->startAbsAngle_rad =
+      GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>();
   SmartFaceID bestFace = GetBestFace();
-  if( bestFace.IsValid() ) {
-    // attempt to turn towards last face, and even if fails, move on to the animations
-    auto* action = new TurnTowardsFaceAction( bestFace );
-    action->SetRequireFaceConfirmation( _iConfig->requireFaceConfirmation );
-    DelegateIfInControl(action, [this]() {
-        BaseClass::StartPlayingAnimations();
-      });
-  }
-  else {
-    ANKI_VERIFY( !_iConfig->requireFaceForActivation,
-                 "BehaviorAnimSequenceWithFace.OnBehaviorActivated.ActivatedWithoutFace",
-                 "This behavior activated without a known face, but config requires a face" );
+  if (bestFace.IsValid()) {
+    // attempt to turn towards last face, and even if fails, move on to the
+    // animations
+    auto* action = new TurnTowardsFaceAction(bestFace);
+    action->SetRequireFaceConfirmation(_iConfig->requireFaceConfirmation);
+    DelegateIfInControl(action,
+                        [this]() { BaseClass::StartPlayingAnimations(); });
+  } else {
+    ANKI_VERIFY(
+        !_iConfig->requireFaceForActivation,
+        "BehaviorAnimSequenceWithFace.OnBehaviorActivated.ActivatedWithoutFace",
+        "This behavior activated without a known face, but config requires a "
+        "face");
     // otherwise skip straight to the animation
     BaseClass::StartPlayingAnimations();
 
-    // NOTE: we could fall back to the "last face pose" here in the case when all faces have times out of face
-    // world. This may be a useful feature in the future and was used on Cozmo, but my hope is that the
-    // increased field of view will increase the chances of there being a face around
-  }  
+    // NOTE: we could fall back to the "last face pose" here in the case when
+    // all faces have times out of face world. This may be a useful feature in
+    // the future and was used on Cozmo, but my hope is that the increased field
+    // of view will increase the chances of there being a face around
+  }
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SmartFaceID BehaviorAnimSequenceWithFace::GetBestFace() const
-{
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+SmartFaceID BehaviorAnimSequenceWithFace::GetBestFace() const {
   const auto& faceSelection = GetAIComp<FaceSelectionComponent>();
-  SmartFaceID bestFace = faceSelection.GetBestFaceToUse( _iConfig->faceSelectionCriteria );
+  SmartFaceID bestFace =
+      faceSelection.GetBestFaceToUse(_iConfig->faceSelectionCriteria);
   return bestFace;
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAnimSequenceWithFace::OnAnimationsComplete()
-{
-  if( _iConfig->returnToOriginalPose ) {
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorAnimSequenceWithFace::OnAnimationsComplete() {
+  if (_iConfig->returnToOriginalPose) {
     const bool isAbsolute = true;
-    auto* action = new TurnInPlaceAction{ _dVars->startAbsAngle_rad.ToFloat(), isAbsolute };
-    DelegateIfInControl( action );
+    auto* action =
+        new TurnInPlaceAction{_dVars->startAbsAngle_rad.ToFloat(), isAbsolute};
+    DelegateIfInControl(action);
   }
   // otherwise do nothing and the behavior should exit
 }
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki

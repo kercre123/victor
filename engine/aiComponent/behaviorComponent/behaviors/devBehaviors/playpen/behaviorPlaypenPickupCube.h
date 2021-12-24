@@ -4,7 +4,8 @@
  * Author: Al Chaussee
  * Created: 08/08/17
  *
- * Description: Checks that Cozmo can pickup and place LightCube1 (paperclip) with minimal changes in body rotation
+ * Description: Checks that Cozmo can pickup and place LightCube1 (paperclip)
+ *with minimal changes in body rotation
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -18,38 +19,36 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorPlaypenPickupCube : public IBehaviorPlaypen
-{
-protected:
-  
+class BehaviorPlaypenPickupCube : public IBehaviorPlaypen {
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorPlaypenPickupCube(const Json::Value& config);
-  
-protected:
-  
-  virtual Result         OnBehaviorActivatedInternal()   override;
-  virtual void           OnBehaviorDeactivated()   override;
-  
-  virtual void HandleWhileActivatedInternal(const RobotToEngineEvent& event) override;
 
-  virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
-    modifiers.visionModesForActiveScope->insert({VisionMode::Markers, EVisionUpdateFrequency::High});
+ protected:
+  virtual Result OnBehaviorActivatedInternal() override;
+  virtual void OnBehaviorDeactivated() override;
+
+  virtual void HandleWhileActivatedInternal(
+      const RobotToEngineEvent& event) override;
+
+  virtual void GetBehaviorOperationModifiersInternal(
+      BehaviorOperationModifiers& modifiers) const override {
+    modifiers.visionModesForActiveScope->insert(
+        {VisionMode::Markers, EVisionUpdateFrequency::High});
   }
 
-
-private:
-  
+ private:
   void TransitionToWaitForCube();
   void TransitionToPickupCube();
   void TransitionToPlaceCube();
   void TransitionToBackup();
-  
+
   Pose3d _expectedCubePose;
   Radians _robotAngleAtPickup;
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorPlaypenPickupCube_H__
+#endif  // __Cozmo_Basestation_Behaviors_BehaviorPlaypenPickupCube_H__

@@ -4,5 +4,4 @@
 
 // This file exists to test that valid C++ files compile correctly.
 
-void FunctionInCCFile() {
-}
+void FunctionInCCFile() {}

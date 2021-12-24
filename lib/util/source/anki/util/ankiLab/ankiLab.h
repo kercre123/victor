@@ -5,11 +5,11 @@
  * Created: 1/25/17
  *
  * Description: Interface to A/B test data for experimental features.
- * Note that this class only provides an interface to data and operations related
- * directly to experiment data.  It has no knowledge of user profiles or outside
- * configuration data.  It provides a simple interface to determine whether an
- * experiment is valid / running and for reproducibly assigning an experiment
- * variation for a user_id + experiment_id combination.
+ * Note that this class only provides an interface to data and operations
+ *related directly to experiment data.  It has no knowledge of user profiles or
+ *outside configuration data.  It provides a simple interface to determine
+ *whether an experiment is valid / running and for reproducibly assigning an
+ *experiment variation for a user_id + experiment_id combination.
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -31,10 +31,8 @@ namespace AnkiLab {
 
 class IAnkiLabDataStore;
 
-class AnkiLab
-{
-public:
-
+class AnkiLab {
+ public:
   AnkiLab();
 
   // Enables/disables the testing lab
@@ -43,10 +41,11 @@ public:
   // Accessor for whether or not the lab is enabled
   bool IsEnabled() const { return _enabled; }
 
-  // Set function user to convert an (experimentKey, userId) tuple to an 'bucket'
-  // value from 0-99, used to determine the group to which the user will be assigned.
-  using ExperimentUserHashFunction =
-    std::function<uint8_t (const std::string& experimentKey, const std::string& userId)>;
+  // Set function user to convert an (experimentKey, userId) tuple to an
+  // 'bucket' value from 0-99, used to determine the group to which the user
+  // will be assigned.
+  using ExperimentUserHashFunction = std::function<uint8_t(
+      const std::string& experimentKey, const std::string& userId)>;
   void SetExperimentUserHashFunction(ExperimentUserHashFunction hashFunc);
 
   // Load Experiments from JSON
@@ -69,11 +68,11 @@ public:
   // Queries
   //
 
-  // @return true if user has been assigned a group variant in the specified experiment during
-  // the current apprun.
+  // @return true if user has been assigned a group variant in the specified
+  // experiment during the current apprun.
   bool IsActiveExperiment(const std::string& experimentKey,
                           const std::string& userId) const;
-  
+
   //
   // Actions
   //
@@ -90,26 +89,27 @@ public:
   // This method generates analytics (DAS) events based on the outcome of the
   // assignment attempt.
   //
-  // @return AssignmentStatus to indicate invalid input, unassigned or assigned outcomes.
-  AssignmentStatus ActivateExperiment(const std::string& experimentKey,
-                                      const std::string& userId,
-                                      const std::vector<std::string>& audienceTags,
-                                      const uint32_t epochSec,
-                                      std::string& outVariationKey);
+  // @return AssignmentStatus to indicate invalid input, unassigned or assigned
+  // outcomes.
+  AssignmentStatus ActivateExperiment(
+      const std::string& experimentKey, const std::string& userId,
+      const std::vector<std::string>& audienceTags, const uint32_t epochSec,
+      std::string& outVariationKey);
 
   // Attempt to assign a user to an experiment group (variation).
   //
   // Identical to ActivateExperiment, except that the current time parameter
   // is automatically determined based on the system clock.
-  AssignmentStatus ActivateExperiment(const std::string& experimentKey,
-                                      const std::string& userId,
-                                      const std::vector<std::string>& audienceTags,
-                                      std::string& outVariationKey);
+  AssignmentStatus ActivateExperiment(
+      const std::string& experimentKey, const std::string& userId,
+      const std::vector<std::string>& audienceTags,
+      std::string& outVariationKey);
 
   AssignmentStatus RestoreActiveExperiment(const std::string& experimentKey,
                                            const std::string& userId,
                                            const std::string& variationKey) {
-    return RestoreActiveExperiment(experimentKey, userId, variationKey, GetSecondsSinceEpoch());
+    return RestoreActiveExperiment(experimentKey, userId, variationKey,
+                                   GetSecondsSinceEpoch());
   }
 
   AssignmentStatus RestoreActiveExperiment(const std::string& experimentKey,
@@ -131,31 +131,31 @@ public:
   // causing the user to be assigned to the specified variation. All other
   // criteria must still be valid. Must be called before ActivateExperiment.
   //
-  // @return true if group assignment will be overridden during activation, otherwise
-  // false.
+  // @return true if group assignment will be overridden during activation,
+  // otherwise false.
   bool OverrideExperimentVariation(const std::string& experimentKey,
                                    const std::string& userId,
                                    const std::string& variationKey);
 
-
-  // Attempt to activate experiments defined as `automatic` with the specified `userId`
-  // and `audienceTags`.
+  // Attempt to activate experiments defined as `automatic` with the specified
+  // `userId` and `audienceTags`.
   // @return The number of experiments on which ActivateExperiment was called.
-  size_t AutoActivateExperimentsForUser(const std::string& userId,
-                                      const std::vector<std::string>& audienceTags);
+  size_t AutoActivateExperimentsForUser(
+      const std::string& userId, const std::vector<std::string>& audienceTags);
 
   // Return a list of all audience tags in the experiments we know about
   std::vector<std::string> GetKnownAudienceTags() const;
 
   using ActiveAssignmentsUpdatedSignalType =
-    Signal::Signal<void (const std::vector<AssignmentDef>& activeAssignments)>;
+      Signal::Signal<void(const std::vector<AssignmentDef>& activeAssignments)>;
 
   ActiveAssignmentsUpdatedSignalType& ActiveAssignmentsUpdatedSignal() {
     return (*_activeAssignmentsUpdatedSignal);
   };
 
-private:
-  // Enabled by default in shipping builds and disabled for debug (aka developer) builds
+ private:
+  // Enabled by default in shipping builds and disabled for debug (aka
+  // developer) builds
   bool _enabled;
 
   // Hash function for calculating user bucket for experiment
@@ -173,7 +173,8 @@ private:
   // keep track of 'force' assignments
   std::vector<AssignmentDef> _forceAssignments;
 
-  std::unique_ptr<ActiveAssignmentsUpdatedSignalType> _activeAssignmentsUpdatedSignal;
+  std::unique_ptr<ActiveAssignmentsUpdatedSignalType>
+      _activeAssignmentsUpdatedSignal;
 
   // Helper method to find assignments based on `experimentKey` and `userId`.
   // @return pointer to `_activeAssignments` for (experimentKey, userId) tuple.
@@ -186,28 +187,27 @@ private:
 
   // Perform work required to assign a user to an experiment group (variation).
   //
-  // This method performs that actual work of `ActivateExperiment` but does not report
-  // any analytics events.
+  // This method performs that actual work of `ActivateExperiment` but does not
+  // report any analytics events.
   //
-  // @return AssignmentStatus to indicate invalid input, unassigned or assigned outcomes.
-  AssignmentStatus ActivateExperimentInternal(const std::string& experimentKey,
-                                              const std::string& userId,
-                                              const std::vector<std::string>& audienceTags,
-                                              const uint32_t epochSec,
-                                              std::string& outVariationKey);
+  // @return AssignmentStatus to indicate invalid input, unassigned or assigned
+  // outcomes.
+  AssignmentStatus ActivateExperimentInternal(
+      const std::string& experimentKey, const std::string& userId,
+      const std::vector<std::string>& audienceTags, const uint32_t epochSec,
+      std::string& outVariationKey);
 
-  // Generate and send analytics events for an experiment group assignment result.
-  // This method generates:
-  // event:experiment.assigned, event:experiment.unassigned, warning:experiment.invalid
+  // Generate and send analytics events for an experiment group assignment
+  // result. This method generates: event:experiment.assigned,
+  // event:experiment.unassigned, warning:experiment.invalid
   void ReportExperimentAssignmentResult(const AssignmentDef& assignment,
                                         const AssignmentStatus status);
 
   uint32_t GetSecondsSinceEpoch() const;
 };
 
-} // namespace AnkiLab
-} // namespace Util
-} // namespace Anki
+}  // namespace AnkiLab
+}  // namespace Util
+}  // namespace Anki
 
-
-#endif // __util_ankiLab_ankiLab_H_
+#endif  // __util_ankiLab_ankiLab_H_

@@ -11,10 +11,11 @@
  **/
 
 #include <fstream>
+
+#include "coretech/common/engine/jsonTools.h"
+#include "json/json.h"
 #include "util/helpers/includeGTest.h"
 #include "util/helpers/quoteMacro.h"
-#include "json/json.h"
-#include "coretech/common/engine/jsonTools.h"
 
 using namespace std;
 
@@ -25,19 +26,19 @@ using namespace std;
 #define TEST_PRIM_FILE "/planning/matlab/test_mprim.json"
 #define TEST_JSON_FILE "/common/engine/config/test.json"
 
-GTEST_TEST(TestConfigTreeJsonCpp, JsonCppWorks)
-{
-  Json::Value root;   // will contains the root value after parsing.
+GTEST_TEST(TestConfigTreeJsonCpp, JsonCppWorks) {
+  Json::Value root;  // will contains the root value after parsing.
   Json::Reader reader;
 
   using namespace Anki;
 
-  const std::string & test_json_path = std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_JSON_FILE);
+  const std::string& test_json_path =
+      std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_JSON_FILE);
   ifstream configFileStream(test_json_path);
 
   ASSERT_TRUE(reader.parse(configFileStream, root))
-    << "Failed to parse configuration\n"
-    << reader.getFormattedErrorMessages();
+      << "Failed to parse configuration\n"
+      << reader.getFormattedErrorMessages();
 
   EXPECT_EQ(root["key"].asString(), "value");
   EXPECT_EQ(root.get("key", "wrong"), "value");
@@ -54,26 +55,27 @@ GTEST_TEST(TestConfigTreeJsonCpp, JsonCppWorks)
 
   EXPECT_EQ(root["dict"]["list"][1]["bv"].asBool(), true);
 
-  Json::Value::Members members = root["dict"]["imporatantKeys"].getMemberNames();
+  Json::Value::Members members =
+      root["dict"]["imporatantKeys"].getMemberNames();
   ASSERT_EQ(members.size(), 2);
-  
+
   EXPECT_TRUE(members[0] == "key1" || members[1] == "key1");
   EXPECT_TRUE(members[0] == "key2" || members[1] == "key2");
 }
 
-GTEST_TEST(TestConfigTreeJsonCpp, OptionalValues)
-{
-  Json::Value root;   // will contains the root value after parsing.
+GTEST_TEST(TestConfigTreeJsonCpp, OptionalValues) {
+  Json::Value root;  // will contains the root value after parsing.
   Json::Reader reader;
 
   using namespace Anki;
-  
-  const std::string & test_json_path = std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_JSON_FILE);
+
+  const std::string& test_json_path =
+      std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_JSON_FILE);
   ifstream configFileStream(test_json_path);
 
   ASSERT_TRUE(reader.parse(configFileStream, root))
-    << "Failed to parse configuration\n"
-    << reader.getFormattedErrorMessages();
+      << "Failed to parse configuration\n"
+      << reader.getFormattedErrorMessages();
 
   using namespace Anki::JsonTools;
 

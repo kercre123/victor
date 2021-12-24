@@ -55,19 +55,20 @@ typedef struct _aubio_pitchspecacf_t aubio_pitchspecacf_t;
   \param cands_out pitch period candidates, in samples
 
 */
-void aubio_pitchspecacf_do (aubio_pitchspecacf_t * o, const fvec_t * samples_in, fvec_t * cands_out);
+void aubio_pitchspecacf_do(aubio_pitchspecacf_t *o, const fvec_t *samples_in,
+                           fvec_t *cands_out);
 /** creation of the pitch detection object
 
   \param buf_size size of the input buffer to analyse
 
 */
-aubio_pitchspecacf_t *new_aubio_pitchspecacf (uint_t buf_size);
+aubio_pitchspecacf_t *new_aubio_pitchspecacf(uint_t buf_size);
 /** deletion of the pitch detection object
 
   \param o pitch detection object as returned by new_aubio_pitchspecacf()
 
 */
-void del_aubio_pitchspecacf (aubio_pitchspecacf_t * o);
+void del_aubio_pitchspecacf(aubio_pitchspecacf_t *o);
 
 /** get tolerance parameter for `specacf` pitch detection object
 
@@ -76,7 +77,7 @@ void del_aubio_pitchspecacf (aubio_pitchspecacf_t * o);
   \return tolerance parameter for minima selection [default 1.]
 
 */
-smpl_t aubio_pitchspecacf_get_tolerance (const aubio_pitchspecacf_t * o);
+smpl_t aubio_pitchspecacf_get_tolerance(const aubio_pitchspecacf_t *o);
 
 /** set tolerance parameter for `specacf` pitch detection object
 
@@ -86,7 +87,7 @@ smpl_t aubio_pitchspecacf_get_tolerance (const aubio_pitchspecacf_t * o);
   \return `1` on error, `0` on success
 
 */
-uint_t aubio_pitchspecacf_set_tolerance (aubio_pitchspecacf_t * o, smpl_t tol);
+uint_t aubio_pitchspecacf_set_tolerance(aubio_pitchspecacf_t *o, smpl_t tol);
 
 /** get currenct confidence for `specacf` pitch detection object
 
@@ -94,7 +95,7 @@ uint_t aubio_pitchspecacf_set_tolerance (aubio_pitchspecacf_t * o, smpl_t tol);
   \return confidence parameter
 
 */
-smpl_t aubio_pitchspecacf_get_confidence (const aubio_pitchspecacf_t * o);
+smpl_t aubio_pitchspecacf_get_confidence(const aubio_pitchspecacf_t *o);
 
 #ifdef __cplusplus
 }

@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -15,23 +16,29 @@
 // Copyright (C) 2013, OpenCV Foundation, all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
-// This software is provided by the copyright holders and contributors "as is" and
+// This software is provided by the copyright holders and contributors "as is"
+and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -46,182 +53,152 @@
 
 #include <opencv2/core.hpp>
 
-// After this condition removal update blacklist for bindings: modules/python/common.cmake
-#if defined(__linux__) || defined(LINUX) || defined(__APPLE__) || defined(__ANDROID__) || \
-  defined(CV_CXX11)
+// After this condition removal update blacklist for bindings:
+// modules/python/common.cmake
+#if defined(__linux__) || defined(LINUX) || defined(__APPLE__) || \
+    defined(__ANDROID__) || defined(CV_CXX11)
 
 #include <vector>
 
-namespace cv
-{
+namespace cv {
 
 //! @addtogroup objdetect
 //! @{
 
-class CV_EXPORTS DetectionBasedTracker
-{
-    public:
-        struct CV_EXPORTS Parameters
-        {
-            int maxTrackLifetime;
-            int minDetectionPeriod; //the minimal time between run of the big object detector (on the whole frame) in ms (1000 mean 1 sec), default=0
+class CV_EXPORTS DetectionBasedTracker {
+ public:
+  struct CV_EXPORTS Parameters {
+    int maxTrackLifetime;
+    int minDetectionPeriod;  // the minimal time between run of the big object
+                             // detector (on the whole frame) in ms (1000 mean 1
+                             // sec), default=0
 
-            Parameters();
-        };
+    Parameters();
+  };
 
-        class IDetector
-        {
-            public:
-                IDetector():
-                    minObjSize(96, 96),
-                    maxObjSize(INT_MAX, INT_MAX),
-                    minNeighbours(2),
-                    scaleFactor(1.1f)
-                {}
+  class IDetector {
+   public:
+    IDetector()
+        : minObjSize(96, 96),
+          maxObjSize(INT_MAX, INT_MAX),
+          minNeighbours(2),
+          scaleFactor(1.1f) {}
 
-                virtual void detect(const cv::Mat& image, std::vector<cv::Rect>& objects) = 0;
+    virtual void detect(const cv::Mat& image,
+                        std::vector<cv::Rect>& objects) = 0;
 
-                void setMinObjectSize(const cv::Size& min)
-                {
-                    minObjSize = min;
-                }
-                void setMaxObjectSize(const cv::Size& max)
-                {
-                    maxObjSize = max;
-                }
-                cv::Size getMinObjectSize() const
-                {
-                    return minObjSize;
-                }
-                cv::Size getMaxObjectSize() const
-                {
-                    return maxObjSize;
-                }
-                float getScaleFactor()
-                {
-                    return scaleFactor;
-                }
-                void setScaleFactor(float value)
-                {
-                    scaleFactor = value;
-                }
-                int getMinNeighbours()
-                {
-                    return minNeighbours;
-                }
-                void setMinNeighbours(int value)
-                {
-                    minNeighbours = value;
-                }
-                virtual ~IDetector() {}
+    void setMinObjectSize(const cv::Size& min) { minObjSize = min; }
+    void setMaxObjectSize(const cv::Size& max) { maxObjSize = max; }
+    cv::Size getMinObjectSize() const { return minObjSize; }
+    cv::Size getMaxObjectSize() const { return maxObjSize; }
+    float getScaleFactor() { return scaleFactor; }
+    void setScaleFactor(float value) { scaleFactor = value; }
+    int getMinNeighbours() { return minNeighbours; }
+    void setMinNeighbours(int value) { minNeighbours = value; }
+    virtual ~IDetector() {}
 
-            protected:
-                cv::Size minObjSize;
-                cv::Size maxObjSize;
-                int minNeighbours;
-                float scaleFactor;
-        };
+   protected:
+    cv::Size minObjSize;
+    cv::Size maxObjSize;
+    int minNeighbours;
+    float scaleFactor;
+  };
 
-        DetectionBasedTracker(cv::Ptr<IDetector> mainDetector, cv::Ptr<IDetector> trackingDetector, const Parameters& params);
-        virtual ~DetectionBasedTracker();
+  DetectionBasedTracker(cv::Ptr<IDetector> mainDetector,
+                        cv::Ptr<IDetector> trackingDetector,
+                        const Parameters& params);
+  virtual ~DetectionBasedTracker();
 
-        virtual bool run();
-        virtual void stop();
-        virtual void resetTracking();
+  virtual bool run();
+  virtual void stop();
+  virtual void resetTracking();
 
-        virtual void process(const cv::Mat& imageGray);
+  virtual void process(const cv::Mat& imageGray);
 
-        bool setParameters(const Parameters& params);
-        const Parameters& getParameters() const;
+  bool setParameters(const Parameters& params);
+  const Parameters& getParameters() const;
 
+  typedef std::pair<cv::Rect, int> Object;
+  virtual void getObjects(std::vector<cv::Rect>& result) const;
+  virtual void getObjects(std::vector<Object>& result) const;
 
-        typedef std::pair<cv::Rect, int> Object;
-        virtual void getObjects(std::vector<cv::Rect>& result) const;
-        virtual void getObjects(std::vector<Object>& result) const;
+  enum ObjectStatus {
+    DETECTED_NOT_SHOWN_YET,
+    DETECTED,
+    DETECTED_TEMPORARY_LOST,
+    WRONG_OBJECT
+  };
+  struct ExtObject {
+    int id;
+    cv::Rect location;
+    ObjectStatus status;
+    ExtObject(int _id, cv::Rect _location, ObjectStatus _status)
+        : id(_id), location(_location), status(_status) {}
+  };
+  virtual void getObjects(std::vector<ExtObject>& result) const;
 
-        enum ObjectStatus
-        {
-            DETECTED_NOT_SHOWN_YET,
-            DETECTED,
-            DETECTED_TEMPORARY_LOST,
-            WRONG_OBJECT
-        };
-        struct ExtObject
-        {
-            int id;
-            cv::Rect location;
-            ObjectStatus status;
-            ExtObject(int _id, cv::Rect _location, ObjectStatus _status)
-                :id(_id), location(_location), status(_status)
-            {
-            }
-        };
-        virtual void getObjects(std::vector<ExtObject>& result) const;
+  virtual int addObject(
+      const cv::Rect& location);  // returns id of the new object
 
+ protected:
+  class SeparateDetectionWork;
+  cv::Ptr<SeparateDetectionWork> separateDetectionWork;
+  friend void* workcycleObjectDetectorFunction(void* p);
 
-        virtual int addObject(const cv::Rect& location); //returns id of the new object
+  struct InnerParameters {
+    int numLastPositionsToTrack;
+    int numStepsToWaitBeforeFirstShow;
+    int numStepsToTrackWithoutDetectingIfObjectHasNotBeenShown;
+    int numStepsToShowWithoutDetecting;
 
-    protected:
-        class SeparateDetectionWork;
-        cv::Ptr<SeparateDetectionWork> separateDetectionWork;
-        friend void* workcycleObjectDetectorFunction(void* p);
+    float coeffTrackingWindowSize;
+    float coeffObjectSizeToTrack;
+    float coeffObjectSpeedUsingInPrediction;
 
-        struct InnerParameters
-        {
-            int numLastPositionsToTrack;
-            int numStepsToWaitBeforeFirstShow;
-            int numStepsToTrackWithoutDetectingIfObjectHasNotBeenShown;
-            int numStepsToShowWithoutDetecting;
+    InnerParameters();
+  };
+  Parameters parameters;
+  InnerParameters innerParameters;
 
-            float coeffTrackingWindowSize;
-            float coeffObjectSizeToTrack;
-            float coeffObjectSpeedUsingInPrediction;
+  struct TrackedObject {
+    typedef std::vector<cv::Rect> PositionsVector;
 
-            InnerParameters();
-        };
-        Parameters parameters;
-        InnerParameters innerParameters;
+    PositionsVector lastPositions;
 
-        struct TrackedObject
-        {
-            typedef std::vector<cv::Rect> PositionsVector;
+    int numDetectedFrames;
+    int numFramesNotDetected;
+    int id;
 
-            PositionsVector lastPositions;
+    TrackedObject(const cv::Rect& rect)
+        : numDetectedFrames(1), numFramesNotDetected(0) {
+      lastPositions.push_back(rect);
+      id = getNextId();
+    };
 
-            int numDetectedFrames;
-            int numFramesNotDetected;
-            int id;
+    static int getNextId() {
+      static int _id = 0;
+      return _id++;
+    }
+  };
 
-            TrackedObject(const cv::Rect& rect):numDetectedFrames(1), numFramesNotDetected(0)
-            {
-                lastPositions.push_back(rect);
-                id=getNextId();
-            };
+  int numTrackedSteps;
+  std::vector<TrackedObject> trackedObjects;
 
-            static int getNextId()
-            {
-                static int _id=0;
-                return _id++;
-            }
-        };
+  std::vector<float> weightsPositionsSmoothing;
+  std::vector<float> weightsSizesSmoothing;
 
-        int numTrackedSteps;
-        std::vector<TrackedObject> trackedObjects;
+  cv::Ptr<IDetector> cascadeForTracking;
 
-        std::vector<float> weightsPositionsSmoothing;
-        std::vector<float> weightsSizesSmoothing;
-
-        cv::Ptr<IDetector> cascadeForTracking;
-
-        void updateTrackedObjects(const std::vector<cv::Rect>& detectedObjects);
-        cv::Rect calcTrackedObjectPositionToShow(int i) const;
-        cv::Rect calcTrackedObjectPositionToShow(int i, ObjectStatus& status) const;
-        void detectInRegion(const cv::Mat& img, const cv::Rect& r, std::vector<cv::Rect>& detectedObjectsInRegions);
+  void updateTrackedObjects(const std::vector<cv::Rect>& detectedObjects);
+  cv::Rect calcTrackedObjectPositionToShow(int i) const;
+  cv::Rect calcTrackedObjectPositionToShow(int i, ObjectStatus& status) const;
+  void detectInRegion(const cv::Mat& img, const cv::Rect& r,
+                      std::vector<cv::Rect>& detectedObjectsInRegions);
 };
 
 //! @} objdetect
 
-} //end of cv namespace
+}  // namespace cv
 #endif
 
 #endif

@@ -16,10 +16,10 @@
 #ifndef ALEXA_CLIENT_SDK_CERTIFIEDSENDER_INCLUDE_CERTIFIEDSENDER_SQLITEMESSAGESTORAGE_H_
 #define ALEXA_CLIENT_SDK_CERTIFIEDSENDER_INCLUDE_CERTIFIEDSENDER_SQLITEMESSAGESTORAGE_H_
 
-#include "CertifiedSender/MessageStorageInterface.h"
-
 #include <AVSCommon/Utils/Configuration/ConfigurationNode.h>
 #include <SQLiteStorage/SQLiteDatabase.h>
+
+#include "CertifiedSender/MessageStorageInterface.h"
 
 namespace alexaClientSDK {
 namespace certifiedSender {
@@ -30,42 +30,45 @@ namespace certifiedSender {
  * This class is not thread-safe.
  */
 class SQLiteMessageStorage : public MessageStorageInterface {
-public:
-    /**
-     * Factory method for creating a storage object for Messages based on an SQLite database.
-     *
-     * @param configurationRoot The global config object.
-     * @return Pointer to the SQLiteMessagetStorge object, nullptr if there's an error creating it.
-     */
-    static std::unique_ptr<SQLiteMessageStorage> create(
-        const avsCommon::utils::configuration::ConfigurationNode& configurationRoot);
+ public:
+  /**
+   * Factory method for creating a storage object for Messages based on an
+   * SQLite database.
+   *
+   * @param configurationRoot The global config object.
+   * @return Pointer to the SQLiteMessagetStorge object, nullptr if there's an
+   * error creating it.
+   */
+  static std::unique_ptr<SQLiteMessageStorage> create(
+      const avsCommon::utils::configuration::ConfigurationNode&
+          configurationRoot);
 
-    /**
-     * Constructor.
-     *
-     * @param dbFilePath The location of the SQLite database file.
-     */
-    SQLiteMessageStorage(const std::string& databaseFilePath);
+  /**
+   * Constructor.
+   *
+   * @param dbFilePath The location of the SQLite database file.
+   */
+  SQLiteMessageStorage(const std::string& databaseFilePath);
 
-    ~SQLiteMessageStorage();
+  ~SQLiteMessageStorage();
 
-    bool createDatabase() override;
+  bool createDatabase() override;
 
-    bool open() override;
+  bool open() override;
 
-    void close() override;
+  void close() override;
 
-    bool store(const std::string& message, int* id) override;
+  bool store(const std::string& message, int* id) override;
 
-    bool load(std::queue<StoredMessage>* messageContainer) override;
+  bool load(std::queue<StoredMessage>* messageContainer) override;
 
-    bool erase(int messageId) override;
+  bool erase(int messageId) override;
 
-    bool clearDatabase() override;
+  bool clearDatabase() override;
 
-private:
-    /// The underlying database class.
-    alexaClientSDK::storage::sqliteStorage::SQLiteDatabase m_database;
+ private:
+  /// The underlying database class.
+  alexaClientSDK::storage::sqliteStorage::SQLiteDatabase m_database;
 };
 
 }  // namespace certifiedSender

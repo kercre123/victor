@@ -16,9 +16,8 @@
 #ifndef WEBP_DSP_LOSSLESS_COMMON_H_
 #define WEBP_DSP_LOSSLESS_COMMON_H_
 
-#include "../webp/types.h"
-
 #include "../utils/utils.h"
+#include "../webp/types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,13 +31,9 @@ static WEBP_INLINE uint32_t VP8GetARGBIndex(uint32_t idx) {
   return (idx >> 8) & 0xff;
 }
 
-static WEBP_INLINE uint8_t VP8GetAlphaIndex(uint8_t idx) {
-  return idx;
-}
+static WEBP_INLINE uint8_t VP8GetAlphaIndex(uint8_t idx) { return idx; }
 
-static WEBP_INLINE uint32_t VP8GetARGBValue(uint32_t val) {
-  return val;
-}
+static WEBP_INLINE uint32_t VP8GetARGBValue(uint32_t val) { return val; }
 
 static WEBP_INLINE uint8_t VP8GetAlphaValue(uint32_t val) {
   return (val >> 8) & 0xff;
@@ -71,8 +66,8 @@ static WEBP_INLINE int VP8LNearLosslessBits(int near_lossless_quality) {
 // Practically, we can get rid of the call to log() as the two values match to
 // very high degree (the ratio of these two is 0.99999x).
 // Keeping a high threshold for now.
-#define APPROX_LOG_WITH_CORRECTION_MAX  65536
-#define APPROX_LOG_MAX                   4096
+#define APPROX_LOG_WITH_CORRECTION_MAX 65536
+#define APPROX_LOG_MAX 4096
 #define LOG_2_RECIPROCAL 1.44269504088896338700465094007086
 #define LOG_LOOKUP_IDX_MAX 256
 extern const float kLog2Table[LOG_LOOKUP_IDX_MAX];
@@ -122,7 +117,7 @@ static WEBP_INLINE void VP8LPrefixEncodeNoLUT(int distance, int* const code,
   *code = 2 * highest_bit + second_highest_bit;
 }
 
-#define PREFIX_LOOKUP_IDX_MAX   512
+#define PREFIX_LOOKUP_IDX_MAX 512
 typedef struct {
   int8_t code_;
   int8_t extra_bits_;
@@ -156,16 +151,16 @@ static WEBP_INLINE void VP8LPrefixEncode(int distance, int* const code,
 }
 
 // Sum of each component, mod 256.
-static WEBP_UBSAN_IGNORE_UNSIGNED_OVERFLOW WEBP_INLINE
-uint32_t VP8LAddPixels(uint32_t a, uint32_t b) {
+static WEBP_UBSAN_IGNORE_UNSIGNED_OVERFLOW WEBP_INLINE uint32_t
+VP8LAddPixels(uint32_t a, uint32_t b) {
   const uint32_t alpha_and_green = (a & 0xff00ff00u) + (b & 0xff00ff00u);
   const uint32_t red_and_blue = (a & 0x00ff00ffu) + (b & 0x00ff00ffu);
   return (alpha_and_green & 0xff00ff00u) | (red_and_blue & 0x00ff00ffu);
 }
 
 // Difference of each component, mod 256.
-static WEBP_UBSAN_IGNORE_UNSIGNED_OVERFLOW WEBP_INLINE
-uint32_t VP8LSubPixels(uint32_t a, uint32_t b) {
+static WEBP_UBSAN_IGNORE_UNSIGNED_OVERFLOW WEBP_INLINE uint32_t
+VP8LSubPixels(uint32_t a, uint32_t b) {
   const uint32_t alpha_and_green =
       0x00ff00ffu + (a & 0xff00ff00u) - (b & 0xff00ff00u);
   const uint32_t red_and_blue =
@@ -181,30 +176,30 @@ uint32_t VP8LSubPixels(uint32_t a, uint32_t b) {
 
 // The predictor is added to the output pixel (which
 // is therefore considered as a residual) to get the final prediction.
-#define GENERATE_PREDICTOR_ADD(PREDICTOR, PREDICTOR_ADD)             \
-static void PREDICTOR_ADD(const uint32_t* in, const uint32_t* upper, \
-                          int num_pixels, uint32_t* out) {           \
-  int x;                                                             \
-  for (x = 0; x < num_pixels; ++x) {                                 \
-    const uint32_t pred = (PREDICTOR)(out[x - 1], upper + x);        \
-    out[x] = VP8LAddPixels(in[x], pred);                             \
-  }                                                                  \
-}
+#define GENERATE_PREDICTOR_ADD(PREDICTOR, PREDICTOR_ADD)               \
+  static void PREDICTOR_ADD(const uint32_t* in, const uint32_t* upper, \
+                            int num_pixels, uint32_t* out) {           \
+    int x;                                                             \
+    for (x = 0; x < num_pixels; ++x) {                                 \
+      const uint32_t pred = (PREDICTOR)(out[x - 1], upper + x);        \
+      out[x] = VP8LAddPixels(in[x], pred);                             \
+    }                                                                  \
+  }
 
 // It subtracts the prediction from the input pixel and stores the residual
 // in the output pixel.
-#define GENERATE_PREDICTOR_SUB(PREDICTOR, PREDICTOR_SUB)             \
-static void PREDICTOR_SUB(const uint32_t* in, const uint32_t* upper, \
-                          int num_pixels, uint32_t* out) {           \
-  int x;                                                             \
-  for (x = 0; x < num_pixels; ++x) {                                 \
-    const uint32_t pred = (PREDICTOR)(in[x - 1], upper + x);         \
-    out[x] = VP8LSubPixels(in[x], pred);                             \
-  }                                                                  \
-}
+#define GENERATE_PREDICTOR_SUB(PREDICTOR, PREDICTOR_SUB)               \
+  static void PREDICTOR_SUB(const uint32_t* in, const uint32_t* upper, \
+                            int num_pixels, uint32_t* out) {           \
+    int x;                                                             \
+    for (x = 0; x < num_pixels; ++x) {                                 \
+      const uint32_t pred = (PREDICTOR)(in[x - 1], upper + x);         \
+      out[x] = VP8LSubPixels(in[x], pred);                             \
+    }                                                                  \
+  }
 
 #ifdef __cplusplus
-}    // extern "C"
+}  // extern "C"
 #endif
 
 #endif  // WEBP_DSP_LOSSLESS_COMMON_H_

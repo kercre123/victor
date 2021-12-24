@@ -12,32 +12,29 @@
  **/
 
 #include "util/questEngine/multiAction.h"
-#include "util/questEngine/questNotice.h"
+
 #include "util/questEngine/questEngine.h"
+#include "util/questEngine/questNotice.h"
 
 namespace Anki {
 namespace Util {
 namespace QuestEngine {
-      
-MultiAction::MultiAction(const std::vector<AbstractAction*>& actions)
-: _actions(actions)
-{
-}
 
-MultiAction::~MultiAction()
-{
+MultiAction::MultiAction(const std::vector<AbstractAction*>& actions)
+    : _actions(actions) {}
+
+MultiAction::~MultiAction() {
   for (auto* it : _actions) {
     delete it;
   }
 }
-  
-void MultiAction::PerformAction(QuestEngine& questEngine)
-{
+
+void MultiAction::PerformAction(QuestEngine& questEngine) {
   for (AbstractAction* action : _actions) {
     action->PerformAction(questEngine);
   }
 }
-      
-} // namespace StatEngine
-} // namespace Util
-} // namespace Anki
+
+}  // namespace QuestEngine
+}  // namespace Util
+}  // namespace Anki

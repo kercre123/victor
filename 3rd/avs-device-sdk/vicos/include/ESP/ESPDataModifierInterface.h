@@ -15,36 +15,37 @@
 #ifndef ALEXA_CLIENT_SDK_ESP_INCLUDE_ESP_ESPDATAMODIFIERINTERFACE_H_
 #define ALEXA_CLIENT_SDK_ESP_INCLUDE_ESP_ESPDATAMODIFIERINTERFACE_H_
 
-#include <string>
-
 #include <AIP/ESPData.h>
+
+#include <string>
 
 namespace alexaClientSDK {
 namespace esp {
 
 /**
- * The ESPDataModifierInterface is a debugging interface to allow modifying the ESPData in the DummyESPDataProvider.
+ * The ESPDataModifierInterface is a debugging interface to allow modifying the
+ * ESPData in the DummyESPDataProvider.
  */
 class ESPDataModifierInterface {
-public:
-    /**
-     * Destructor
-     */
-    virtual ~ESPDataModifierInterface() = default;
+ public:
+  /**
+   * Destructor
+   */
+  virtual ~ESPDataModifierInterface() = default;
 
-    /**
-     * Set new voice energy.
-     *
-     * @param voiceEnergy New voice energy value.
-     */
-    virtual void setVoiceEnergy(const std::string& voiceEnergy) = 0;
+  /**
+   * Set new voice energy.
+   *
+   * @param voiceEnergy New voice energy value.
+   */
+  virtual void setVoiceEnergy(const std::string& voiceEnergy) = 0;
 
-    /**
-     * Set new ambient energy.
-     *
-     * @param ambientEnergy New ambient energy value.
-     */
-    virtual void setAmbientEnergy(const std::string& ambientEnergy) = 0;
+  /**
+   * Set new ambient energy.
+   *
+   * @param ambientEnergy New ambient energy value.
+   */
+  virtual void setAmbientEnergy(const std::string& ambientEnergy) = 0;
 };
 
 }  // namespace esp

@@ -47,6 +47,6 @@ struct MicrodumpExtraInfo {
         process_type(NULL) {}
 };
 
-}
+}  // namespace google_breakpad
 
 #endif  // CLIENT_LINUX_HANDLER_MICRODUMP_EXTRA_INFO_H_

@@ -24,27 +24,28 @@ namespace sdkInterfaces {
 namespace audio {
 
 /**
- * Interface to handle equalizer modes. It is up to device manufacturer to implement the mode behavior. For example
- * vendor may wish to apply:
+ * Interface to handle equalizer modes. It is up to device manufacturer to
+ * implement the mode behavior. For example vendor may wish to apply:
  * - Equalizer preset
  * - Volume scaling
  * - Audio effects such as reverb or surround.
  */
 class EqualizerModeControllerInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~EqualizerModeControllerInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~EqualizerModeControllerInterface() = default;
 
-    /**
-     * Changes the current equalizer mode. Equalizer state listeners will be notified only if this method returns true.
-     * It is safe to change equalizer band values from this function, but changing mode is not allowed.
-     *
-     * @param mode The @c EqualizerMode to set.
-     * @return True if mode has been successfully set, false otherwise.
-     */
-    virtual bool setEqualizerMode(EqualizerMode mode) = 0;
+  /**
+   * Changes the current equalizer mode. Equalizer state listeners will be
+   * notified only if this method returns true. It is safe to change equalizer
+   * band values from this function, but changing mode is not allowed.
+   *
+   * @param mode The @c EqualizerMode to set.
+   * @return True if mode has been successfully set, false otherwise.
+   */
+  virtual bool setEqualizerMode(EqualizerMode mode) = 0;
 };
 
 }  // namespace audio

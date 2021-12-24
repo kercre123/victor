@@ -15,11 +15,10 @@
 #ifndef WEBP_DSP_LOSSLESS_H_
 #define WEBP_DSP_LOSSLESS_H_
 
-#include "../webp/types.h"
-#include "../webp/decode.h"
-
 #include "../enc/histogram_enc.h"
 #include "../utils/utils.h"
+#include "../webp/decode.h"
+#include "../webp/types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,8 +64,8 @@ struct VP8LTransform;  // Defined in dec/vp8li.h.
 // The *in and *out pointers refer to source and destination data respectively
 // corresponding to the intermediate row (row_start).
 void VP8LInverseTransform(const struct VP8LTransform* const transform,
-                          int row_start, int row_end,
-                          const uint32_t* const in, uint32_t* const out);
+                          int row_start, int row_end, const uint32_t* const in,
+                          uint32_t* const out);
 
 // Color space conversion.
 typedef void (*VP8LConvertFunc)(const uint32_t* src, int num_pixels,
@@ -82,13 +81,11 @@ void VP8LConvertFromBGRA(const uint32_t* const in_data, int num_pixels,
                          WEBP_CSP_MODE out_colorspace, uint8_t* const rgba);
 
 typedef void (*VP8LMapARGBFunc)(const uint32_t* src,
-                                const uint32_t* const color_map,
-                                uint32_t* dst, int y_start,
-                                int y_end, int width);
+                                const uint32_t* const color_map, uint32_t* dst,
+                                int y_start, int y_end, int width);
 typedef void (*VP8LMapAlphaFunc)(const uint8_t* src,
-                                 const uint32_t* const color_map,
-                                 uint8_t* dst, int y_start,
-                                 int y_end, int width);
+                                 const uint32_t* const color_map, uint8_t* dst,
+                                 int y_start, int y_end, int width);
 
 extern VP8LMapARGBFunc VP8LMapColor32b;
 extern VP8LMapAlphaFunc VP8LMapColor8b;
@@ -107,10 +104,10 @@ void VP8LTransformColorInverse_C(const VP8LMultipliers* const m,
 
 void VP8LConvertBGRAToRGB_C(const uint32_t* src, int num_pixels, uint8_t* dst);
 void VP8LConvertBGRAToRGBA_C(const uint32_t* src, int num_pixels, uint8_t* dst);
-void VP8LConvertBGRAToRGBA4444_C(const uint32_t* src,
-                                 int num_pixels, uint8_t* dst);
-void VP8LConvertBGRAToRGB565_C(const uint32_t* src,
-                               int num_pixels, uint8_t* dst);
+void VP8LConvertBGRAToRGBA4444_C(const uint32_t* src, int num_pixels,
+                                 uint8_t* dst);
+void VP8LConvertBGRAToRGB565_C(const uint32_t* src, int num_pixels,
+                               uint8_t* dst);
 void VP8LConvertBGRAToBGR_C(const uint32_t* src, int num_pixels, uint8_t* dst);
 void VP8LAddGreenToBlueAndRed_C(const uint32_t* src, int num_pixels,
                                 uint32_t* dst);
@@ -127,20 +124,20 @@ typedef void (*VP8LTransformColorFunc)(const VP8LMultipliers* const m,
                                        uint32_t* const dst, int num_pixels);
 extern VP8LTransformColorFunc VP8LTransformColor;
 typedef void (*VP8LCollectColorBlueTransformsFunc)(
-    const uint32_t* argb, int stride,
-    int tile_width, int tile_height,
+    const uint32_t* argb, int stride, int tile_width, int tile_height,
     int green_to_blue, int red_to_blue, int histo[]);
 extern VP8LCollectColorBlueTransformsFunc VP8LCollectColorBlueTransforms;
 
-typedef void (*VP8LCollectColorRedTransformsFunc)(
-    const uint32_t* argb, int stride,
-    int tile_width, int tile_height,
-    int green_to_red, int histo[]);
+typedef void (*VP8LCollectColorRedTransformsFunc)(const uint32_t* argb,
+                                                  int stride, int tile_width,
+                                                  int tile_height,
+                                                  int green_to_red,
+                                                  int histo[]);
 extern VP8LCollectColorRedTransformsFunc VP8LCollectColorRedTransforms;
 
 // Expose some C-only fallback functions
-void VP8LTransformColor_C(const VP8LMultipliers* const m,
-                          uint32_t* data, int num_pixels);
+void VP8LTransformColor_C(const VP8LMultipliers* const m, uint32_t* data,
+                          int num_pixels);
 void VP8LSubtractGreenFromBlueAndRed_C(uint32_t* argb_data, int num_pixels);
 void VP8LCollectColorRedTransforms_C(const uint32_t* argb, int stride,
                                      int tile_width, int tile_height,
@@ -166,17 +163,17 @@ extern VP8LCostFunc VP8LExtraCost;
 extern VP8LCostCombinedFunc VP8LExtraCostCombined;
 extern VP8LCombinedShannonEntropyFunc VP8LCombinedShannonEntropy;
 
-typedef struct {        // small struct to hold counters
-  int counts[2];        // index: 0=zero steak, 1=non-zero streak
-  int streaks[2][2];    // [zero/non-zero][streak<3 / streak>=3]
+typedef struct {      // small struct to hold counters
+  int counts[2];      // index: 0=zero steak, 1=non-zero streak
+  int streaks[2][2];  // [zero/non-zero][streak<3 / streak>=3]
 } VP8LStreaks;
 
-typedef struct {            // small struct to hold bit entropy results
-  double entropy;           // entropy
-  uint32_t sum;             // sum of the population
-  int nonzeros;             // number of non-zero elements in the population
-  uint32_t max_val;         // maximum value in the population
-  uint32_t nonzero_code;    // index of the last non-zero in the population
+typedef struct {          // small struct to hold bit entropy results
+  double entropy;         // entropy
+  uint32_t sum;           // sum of the population
+  int nonzeros;           // number of non-zero elements in the population
+  uint32_t max_val;       // maximum value in the population
+  uint32_t nonzero_code;  // index of the last non-zero in the population
 } VP8LBitEntropy;
 
 void VP8LBitEntropyInit(VP8LBitEntropy* const entropy);
@@ -223,7 +220,7 @@ void VP8LEncDspInit(void);
 //------------------------------------------------------------------------------
 
 #ifdef __cplusplus
-}    // extern "C"
+}  // extern "C"
 #endif
 
 #endif  // WEBP_DSP_LOSSLESS_H_

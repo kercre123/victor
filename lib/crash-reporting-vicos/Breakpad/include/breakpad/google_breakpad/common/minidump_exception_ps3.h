@@ -30,7 +30,6 @@
 /* minidump_exception_ps3.h: A definition of exception codes for
  * PS3 */
 
-
 #ifndef GOOGLE_BREAKPAD_COMMON_MINIDUMP_EXCEPTION_PS3_H__
 #define GOOGLE_BREAKPAD_COMMON_MINIDUMP_EXCEPTION_PS3_H__
 

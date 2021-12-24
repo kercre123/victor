@@ -27,10 +27,9 @@
 
 #ifndef ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
-#include "coretech/common/shared/types.h"
 #include "clad/types/motorTypes.h"
 #include "clad/types/proxMessages.h"
-
+#include "coretech/common/shared/types.h"
 
 #ifdef SIMULATOR
 #include "sim_hal.h"
@@ -42,7 +41,6 @@
 namespace Anki {
 namespace Vector {
 namespace HAL {
-
 
 /************************************************************************
  * \section Parameters and Constants
@@ -56,7 +54,7 @@ static const f32 MOTOR_MAX_POWER = 1.0f;
 // Blocks until initialization complete or shutdownSignal becomes non-zero
 // Returns RESULT_OK or error
 //
-Result Init(const int * shutdownSignal);
+Result Init(const int* shutdownSignal);
 
 //
 // Perform a single HAL "tick"
@@ -75,7 +73,7 @@ u32 GetMicroCounter(void);
 /// Block main execution for specified number of microseconds
 void MicroWait(u32 microseconds);
 
-/// Retrieve current time (from steady_clock) in ms 
+/// Retrieve current time (from steady_clock) in ms
 extern "C" TimeStamp_t GetTimeStamp(void);
 
 /// Retrieve the number of times a hardware watchdog reset has occurred.
@@ -94,10 +92,9 @@ void PrintBodyData(u32 period_tics, bool motors, bool prox, bool battery);
  */
 
 /// IMU_DataStructure contains 3-axis acceleration and 3-axis gyro data
-struct IMU_DataStructure
-{
+struct IMU_DataStructure {
   f32 accel[3];  ///< mm/s/s
-  f32 gyro[3]; ///< rad/s
+  f32 gyro[3];   ///< rad/s
   f32 temperature_degC;
 };
 
@@ -106,7 +103,7 @@ struct IMU_DataStructure
  * y-axis points out of cozmo's left
  * z-axis points out the top of cozmo's head
  */
-bool IMUReadData(IMU_DataStructure &imuData);
+bool IMUReadData(IMU_DataStructure& imuData);
 
 /************************************************************************
  * \section Motors
@@ -148,14 +145,14 @@ s32 MotorGetLoad();
  * \section Encoder state
  */
 
-// Whether or not the encoders have been "disabled". 
-// (In reality they are operating at a lower frequency so that motion can be detected.)
-// This happens normally if the motors are not actively being driven.
+// Whether or not the encoders have been "disabled".
+// (In reality they are operating at a lower frequency so that motion can be
+// detected.) This happens normally if the motors are not actively being driven.
 bool AreEncodersDisabled();
 
-// Whether or not the head/lift was detected to have moved while the encoders were "disabled"
-// i.e. Calibration is necessary!
-// Note: This gets cleared as soon as the motor is driven again
+// Whether or not the head/lift was detected to have moved while the encoders
+// were "disabled" i.e. Calibration is necessary! Note: This gets cleared as
+// soon as the motor is driven again
 bool IsHeadEncoderInvalid();
 bool IsLiftEncoderInvalid();
 
@@ -164,14 +161,13 @@ bool IsLiftEncoderInvalid();
  */
 
 /// Ids for cliff sensors
-typedef enum
-{
-  CLIFF_FL = 0, ///< Front left
-  CLIFF_FR,     ///< Front right
-  CLIFF_BL,     ///< Back left
-  CLIFF_BR,     ///< Back right
+typedef enum {
+  CLIFF_FL = 0,  ///< Front left
+  CLIFF_FR,      ///< Front right
+  CLIFF_BL,      ///< Back left
+  CLIFF_BR,      ///< Back right
   CLIFF_COUNT
-} CliffID; //TODO: assert matches DropSensor, or use directly
+} CliffID;  // TODO: assert matches DropSensor, or use directly
 
 /// Face proximity sensor
 ProxSensorDataRaw GetRawProxData();
@@ -183,11 +179,14 @@ u16 GetRawCliffData(const CliffID cliff_id);
  * \section Microphones
  */
 
-using SendDataFunction = Result (*)(const s16* latestMicData, uint32_t numSamples);
+using SendDataFunction = Result (*)(const s16* latestMicData,
+                                    uint32_t numSamples);
 
 /** Grants access to microphone data from this tick.
- * @param[in] Provides a function pointer for actually sending out the message using the mic data
- * @return true if more data needs to be sent (and this should be called again) false otherwise
+ * @param[in] Provides a function pointer for actually sending out the message
+ * using the mic data
+ * @return true if more data needs to be sent (and this should be called again)
+ * false otherwise
  */
 bool HandleLatestMicData(SendDataFunction sendDataFunc);
 
@@ -196,19 +195,15 @@ bool HandleLatestMicData(SendDataFunction sendDataFunc);
  */
 
 /// Button IDs
-typedef enum
-{
-  BUTTON_CAPACITIVE = 0,
-  BUTTON_POWER = 1,
-  BUTTON_COUNT
-} ButtonID;
+typedef enum { BUTTON_CAPACITIVE = 0, BUTTON_POWER = 1, BUTTON_COUNT } ButtonID;
 
 /** Retrieve current button state
  * @param[in] button_id The button to retrieve
- * @return Mechanical buttons return 0 or 1. Capacitive buttons return an analog value
+ * @return Mechanical buttons return 0 or 1. Capacitive buttons return an analog
+ * value
  */
 u16 GetButtonState(const ButtonID button_id);
- 
+
 /************************************************************************
  * \section Battery
  */
@@ -225,8 +220,8 @@ bool BatteryIsCharging();
 /// Return whether or not the robot is connected to a charger
 bool BatteryIsOnCharger();
 
-/// Return whether or not the battery has been disconnected from the charging circuit
-/// after being on charge base for more than 30 min.
+/// Return whether or not the battery has been disconnected from the charging
+/// circuit after being on charge base for more than 30 min.
 bool BatteryIsDisconnected();
 
 // Return temperature of battery in C
@@ -236,7 +231,7 @@ u8 BatteryGetTemperature_C();
 // Syscon will shutoff 30s after this first becomes true.
 bool BatteryIsOverheated();
 
-// Battery is low. 
+// Battery is low.
 // Time until shutdown: POWER_DOWN_WARNING_TIME
 bool BatteryIsLow();
 
@@ -247,8 +242,7 @@ f32 ChargerGetVoltage();
  */
 
 /// LED identifiers
-typedef enum
-{
+typedef enum {
   LED_BACKPACK_FRONT = 0,
   LED_BACKPACK_MIDDLE,
   LED_BACKPACK_BACK,
@@ -256,12 +250,11 @@ typedef enum
 } LEDId;
 
 enum {
-    LED_RED_SHIFT= 24,
-    LED_GRN_SHIFT= 16,
-    LED_BLU_SHIFT= 8,
-    LED_CHANNEL_MASK= 0xFF
+  LED_RED_SHIFT = 24,
+  LED_GRN_SHIFT = 16,
+  LED_BLU_SHIFT = 8,
+  LED_CHANNEL_MASK = 0xFF
 };
-
 
 /** Set LED to specific color
  * @param[in] led_id The LED to Set
@@ -275,10 +268,9 @@ void SetSystemLED(u32 color);
  */
 
 /// Run levels for the hardware
-typedef enum
-{
-  POWER_MODE_ACTIVE           = 0x0,
-  POWER_MODE_CALM             = 0x1,
+typedef enum {
+  POWER_MODE_ACTIVE = 0x0,
+  POWER_MODE_CALM = 0x1,
 } PowerState;
 
 /** Command syscon to enter specified power state
@@ -311,25 +303,26 @@ bool RadioIsConnected();
 void DisconnectRadio(bool sendDisconnectMsg = true);
 
 /** Gets the next packet from the radio
- * @param buffer [out] A buffer into which to copy the packet. Must have MTU bytes available
- * return The number of bytes of the packet or 0 if no packet was available.
+ * @param buffer [out] A buffer into which to copy the packet. Must have MTU
+ * bytes available return The number of bytes of the packet or 0 if no packet
+ * was available.
  */
 u32 RadioGetNextPacket(u8* buffer);
 
 /** Send a packet on the radio.
  * @param buffer [in] A pointer to the data to be sent
  * @param length [in] The number of bytes to be sent
- * @return true if the packet was queued for transmission, false if it couldn't be queued.
+ * @return true if the packet was queued for transmission, false if it couldn't
+ * be queued.
  */
-bool RadioSendPacket(const void *buffer, const size_t length);
+bool RadioSendPacket(const void* buffer, const size_t length);
 
 /** Wrapper method for sending messages NOT PACKETS
  * @param msgID The ID (tag) of the message to be sent
  * @param buffer A pointer to the message to be sent
  * @return True if successfully queued, false otherwise
  */
-bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID);
-
+bool RadioSendMessage(const void* buffer, const u16 size, const u8 msgID);
 
 /************************************************************************
  * \section Hardware / Firmware Version information
@@ -346,10 +339,13 @@ const uint8_t* const GetSysconVersionInfo();
 
 /// Force a hard fault in the processor, used for hardware assert
 void FORCE_HARDFAULT();
-#define HAL_ASSERT(c) do { if(!(c)) FORCE_HARDFAULT(); } while(0)
+#define HAL_ASSERT(c)            \
+  do {                           \
+    if (!(c)) FORCE_HARDFAULT(); \
+  } while (0)
 
-} // namespace HAL
-} // namespace Vector
-} // namespace Anki
+}  // namespace HAL
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
+#endif  // ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H

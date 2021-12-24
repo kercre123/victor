@@ -61,9 +61,7 @@ struct AppMemory {
     return ptr == other.ptr;
   }
 
-  bool operator==(const void* other) const {
-    return ptr == other;
-  }
+  bool operator==(const void* other) const { return ptr == other; }
 };
 typedef std::list<AppMemory> AppMemoryList;
 
@@ -83,8 +81,8 @@ bool WriteMinidump(const char* minidump_path, pid_t crashing_process,
                    uintptr_t principal_mapping_address = 0,
                    bool sanitize_stacks = false);
 // Same as above but takes an open file descriptor instead of a path.
-bool WriteMinidump(int minidump_fd, pid_t crashing_process,
-                   const void* blob, size_t blob_size,
+bool WriteMinidump(int minidump_fd, pid_t crashing_process, const void* blob,
+                   size_t blob_size,
                    bool skip_stacks_if_mapping_unreferenced = false,
                    uintptr_t principal_mapping_address = 0,
                    bool sanitize_stacks = false);
@@ -101,14 +99,12 @@ bool WriteMinidump(const char* minidump_path, pid_t process,
 // a list of additional memory regions to be included in the minidump.
 bool WriteMinidump(const char* minidump_path, pid_t crashing_process,
                    const void* blob, size_t blob_size,
-                   const MappingList& mappings,
-                   const AppMemoryList& appdata,
+                   const MappingList& mappings, const AppMemoryList& appdata,
                    bool skip_stacks_if_mapping_unreferenced = false,
                    uintptr_t principal_mapping_address = 0,
                    bool sanitize_stacks = false);
-bool WriteMinidump(int minidump_fd, pid_t crashing_process,
-                   const void* blob, size_t blob_size,
-                   const MappingList& mappings,
+bool WriteMinidump(int minidump_fd, pid_t crashing_process, const void* blob,
+                   size_t blob_size, const MappingList& mappings,
                    const AppMemoryList& appdata,
                    bool skip_stacks_if_mapping_unreferenced = false,
                    uintptr_t principal_mapping_address = 0,
@@ -116,26 +112,20 @@ bool WriteMinidump(int minidump_fd, pid_t crashing_process,
 
 // These overloads also allow passing a file size limit for the minidump.
 bool WriteMinidump(const char* minidump_path, off_t minidump_size_limit,
-                   pid_t crashing_process,
-                   const void* blob, size_t blob_size,
-                   const MappingList& mappings,
-                   const AppMemoryList& appdata,
+                   pid_t crashing_process, const void* blob, size_t blob_size,
+                   const MappingList& mappings, const AppMemoryList& appdata,
                    bool skip_stacks_if_mapping_unreferenced = false,
                    uintptr_t principal_mapping_address = 0,
                    bool sanitize_stacks = false);
 bool WriteMinidump(int minidump_fd, off_t minidump_size_limit,
-                   pid_t crashing_process,
-                   const void* blob, size_t blob_size,
-                   const MappingList& mappings,
-                   const AppMemoryList& appdata,
+                   pid_t crashing_process, const void* blob, size_t blob_size,
+                   const MappingList& mappings, const AppMemoryList& appdata,
                    bool skip_stacks_if_mapping_unreferenced = false,
                    uintptr_t principal_mapping_address = 0,
                    bool sanitize_stacks = false);
 
-bool WriteMinidump(const char* filename,
-                   const MappingList& mappings,
-                   const AppMemoryList& appdata,
-                   LinuxDumper* dumper);
+bool WriteMinidump(const char* filename, const MappingList& mappings,
+                   const AppMemoryList& appdata, LinuxDumper* dumper);
 
 }  // namespace google_breakpad
 

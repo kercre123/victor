@@ -15,7 +15,6 @@
 
 #include <functional>
 
-
 namespace Anki {
 namespace Vector {
 
@@ -23,13 +22,12 @@ namespace ExternalInterface {
 struct RobotCompletedAction;
 }
 
-using ActionEndedCallback = std::function<void(const ExternalInterface::RobotCompletedAction&)>;
+using ActionEndedCallback =
+    std::function<void(const ExternalInterface::RobotCompletedAction&)>;
 
 using ActionEndedCallbackID = int;
 
-}
-}
-
-
+}  // namespace Vector
+}  // namespace Anki
 
 #endif

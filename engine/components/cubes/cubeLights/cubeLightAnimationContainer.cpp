@@ -19,47 +19,47 @@
 
 namespace Anki {
 namespace Vector {
-  
-CubeLightAnimationContainer::CubeLightAnimationContainer(const InitMap& initializationMap)
-{
-  for(const auto& pair: initializationMap){
+
+CubeLightAnimationContainer::CubeLightAnimationContainer(
+    const InitMap& initializationMap) {
+  for (const auto& pair : initializationMap) {
     const bool mustHaveExtension = true;
     const bool removeExtension = true;
-    auto animName = Util::FileUtils::GetFileName(pair.first, mustHaveExtension, removeExtension);
-    
+    auto animName = Util::FileUtils::GetFileName(pair.first, mustHaveExtension,
+                                                 removeExtension);
+
     CubeLightAnimation::Animation animation;
-    CubeLightAnimation::ParseCubeAnimationFromJson(animName, pair.second, animation);
+    CubeLightAnimation::ParseCubeAnimationFromJson(animName, pair.second,
+                                                   animation);
     _animations.emplace(std::move(animName), std::move(animation));
   }
 }
 
-
-CubeLightAnimation::Animation* CubeLightAnimationContainer::GetAnimationHelper(const std::string& name) const
-{
+CubeLightAnimation::Animation* CubeLightAnimationContainer::GetAnimationHelper(
+    const std::string& name) const {
   CubeLightAnimation::Animation* animPtr = nullptr;
-  
+
   auto retVal = _animations.find(name);
-  if(retVal == _animations.end()) {
-    PRINT_NAMED_ERROR("CubeLightAnimationContainer.GetAnimation_Const.InvalidName",
-                      "Animation requested for unknown animation '%s'.",
-                      name.c_str());
+  if (retVal == _animations.end()) {
+    PRINT_NAMED_ERROR(
+        "CubeLightAnimationContainer.GetAnimation_Const.InvalidName",
+        "Animation requested for unknown animation '%s'.", name.c_str());
   } else {
     animPtr = const_cast<CubeLightAnimation::Animation*>(&retVal->second);
   }
-  
+
   return animPtr;
 }
 
-const CubeLightAnimation::Animation* CubeLightAnimationContainer::GetAnimation(const std::string& name) const
-{
+const CubeLightAnimation::Animation* CubeLightAnimationContainer::GetAnimation(
+    const std::string& name) const {
   return GetAnimationHelper(name);
 }
 
-CubeLightAnimation::Animation* CubeLightAnimationContainer::GetAnimation(const std::string& name)
-{
+CubeLightAnimation::Animation* CubeLightAnimationContainer::GetAnimation(
+    const std::string& name) {
   return GetAnimationHelper(name);
 }
 
-  
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki

@@ -18,9 +18,7 @@ namespace Anki {
 
 class BLEAdvertiseSettings {
  public:
-  BLEAdvertiseSettings()
-      : appearance_(0)
-  { }
+  BLEAdvertiseSettings() : appearance_(0) {}
   ~BLEAdvertiseSettings() = default;
 
   void SetAppearance(int appearance) { appearance_ = appearance; }
@@ -40,4 +38,4 @@ class BLEAdvertiseSettings {
   BLEAdvertiseData scan_response_;
 };
 
-} // namespace Anki
+}  // namespace Anki

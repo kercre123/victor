@@ -25,16 +25,18 @@ namespace mediaPlayer {
 
 /// Identifies the specific type of error in a @c PlaybackFailed event.
 enum class ErrorType {
-    /// An unknown error occurred.
-    MEDIA_ERROR_UNKNOWN,
-    /// The server recognized the request as being malformed (bad request, unauthorized, forbidden, not found, etc).
-    MEDIA_ERROR_INVALID_REQUEST,
-    /// The client was unable to reach the service.
-    MEDIA_ERROR_SERVICE_UNAVAILABLE,
-    /// The server accepted the request, but was unable to process the request as expected.
-    MEDIA_ERROR_INTERNAL_SERVER_ERROR,
-    /// There was an internal error on the client.
-    MEDIA_ERROR_INTERNAL_DEVICE_ERROR
+  /// An unknown error occurred.
+  MEDIA_ERROR_UNKNOWN,
+  /// The server recognized the request as being malformed (bad request,
+  /// unauthorized, forbidden, not found, etc).
+  MEDIA_ERROR_INVALID_REQUEST,
+  /// The client was unable to reach the service.
+  MEDIA_ERROR_SERVICE_UNAVAILABLE,
+  /// The server accepted the request, but was unable to process the request as
+  /// expected.
+  MEDIA_ERROR_INTERNAL_SERVER_ERROR,
+  /// There was an internal error on the client.
+  MEDIA_ERROR_INTERNAL_DEVICE_ERROR
 };
 
 /**
@@ -44,30 +46,32 @@ enum class ErrorType {
  * @return The AVS-compliant string representation of @c errorType.
  */
 inline std::string errorTypeToString(ErrorType errorType) {
-    switch (errorType) {
-        case ErrorType::MEDIA_ERROR_UNKNOWN:
-            return "MEDIA_ERROR_UNKNOWN";
-        case ErrorType::MEDIA_ERROR_INVALID_REQUEST:
-            return "MEDIA_ERROR_INVALID_REQUEST";
-        case ErrorType::MEDIA_ERROR_SERVICE_UNAVAILABLE:
-            return "MEDIA_ERROR_SERVICE_UNAVAILABLE";
-        case ErrorType::MEDIA_ERROR_INTERNAL_SERVER_ERROR:
-            return "MEDIA_ERROR_INTERNAL_SERVER_ERROR";
-        case ErrorType::MEDIA_ERROR_INTERNAL_DEVICE_ERROR:
-            return "MEDIA_ERROR_INTERNAL_DEVICE_ERROR";
-    }
-    return "unknown ErrorType";
+  switch (errorType) {
+    case ErrorType::MEDIA_ERROR_UNKNOWN:
+      return "MEDIA_ERROR_UNKNOWN";
+    case ErrorType::MEDIA_ERROR_INVALID_REQUEST:
+      return "MEDIA_ERROR_INVALID_REQUEST";
+    case ErrorType::MEDIA_ERROR_SERVICE_UNAVAILABLE:
+      return "MEDIA_ERROR_SERVICE_UNAVAILABLE";
+    case ErrorType::MEDIA_ERROR_INTERNAL_SERVER_ERROR:
+      return "MEDIA_ERROR_INTERNAL_SERVER_ERROR";
+    case ErrorType::MEDIA_ERROR_INTERNAL_DEVICE_ERROR:
+      return "MEDIA_ERROR_INTERNAL_DEVICE_ERROR";
+  }
+  return "unknown ErrorType";
 }
 
 /**
  * Write an @c ErrorType value to an @c ostream.
  *
  * @param stream The stream to write the value to.
- * @param errorType The @c ErrorType value to write to the @c ostream as a string.
+ * @param errorType The @c ErrorType value to write to the @c ostream as a
+ * string.
  * @return The @c ostream that was passed in and written to.
  */
-inline std::ostream& operator<<(std::ostream& stream, const ErrorType& errorType) {
-    return stream << errorTypeToString(errorType);
+inline std::ostream& operator<<(std::ostream& stream,
+                                const ErrorType& errorType) {
+  return stream << errorTypeToString(errorType);
 }
 
 }  // namespace mediaPlayer

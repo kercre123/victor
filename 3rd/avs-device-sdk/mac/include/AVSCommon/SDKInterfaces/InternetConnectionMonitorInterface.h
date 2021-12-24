@@ -23,24 +23,27 @@ namespace avsCommon {
 namespace sdkInterfaces {
 
 /**
- * An interface for classes responsible for monitoring and reporting internet connection status.
+ * An interface for classes responsible for monitoring and reporting internet
+ * connection status.
  */
 class InternetConnectionMonitorInterface {
-public:
-    /**
-     * Add an observer to be notified of internet connection changes.
-     */
-    virtual void addInternetConnectionObserver(std::shared_ptr<InternetConnectionObserverInterface> observer) = 0;
+ public:
+  /**
+   * Add an observer to be notified of internet connection changes.
+   */
+  virtual void addInternetConnectionObserver(
+      std::shared_ptr<InternetConnectionObserverInterface> observer) = 0;
 
-    /**
-     * Remove an observer to be notified of internet connection changes.
-     */
-    virtual void removeInternetConnectionObserver(std::shared_ptr<InternetConnectionObserverInterface> observer) = 0;
+  /**
+   * Remove an observer to be notified of internet connection changes.
+   */
+  virtual void removeInternetConnectionObserver(
+      std::shared_ptr<InternetConnectionObserverInterface> observer) = 0;
 
-    /**
-     * Destructor.
-     */
-    virtual ~InternetConnectionMonitorInterface() = default;
+  /**
+   * Destructor.
+   */
+  virtual ~InternetConnectionMonitorInterface() = default;
 };
 
 }  // namespace sdkInterfaces

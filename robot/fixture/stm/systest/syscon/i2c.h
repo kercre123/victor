@@ -21,18 +21,18 @@ struct I2C_Operation {
 };
 
 namespace I2C {
-	void init(void);
-  void execute(const I2C_Operation* cmd);
-  void capture();
-  void release();
+void init(void);
+void execute(const I2C_Operation* cmd);
+void capture();
+void release();
 
-	bool multiOp(I2C_Op func, uint8_t channel, uint8_t slave, uint8_t reg, int size, void* data);
-	bool writeReg(uint8_t channel, uint8_t slave, uint8_t reg, uint8_t data);
-	bool writeReg16(uint8_t channel, uint8_t slave, uint8_t reg, uint16_t data);
-  bool writeReg32(uint8_t channel, uint8_t slave, uint8_t reg, uint32_t data);
-	int readReg(uint8_t channel, uint8_t slave, uint8_t reg);
-	int readReg16(uint8_t channel, uint8_t slave, uint8_t reg);
-}
-
+bool multiOp(I2C_Op func, uint8_t channel, uint8_t slave, uint8_t reg, int size,
+             void* data);
+bool writeReg(uint8_t channel, uint8_t slave, uint8_t reg, uint8_t data);
+bool writeReg16(uint8_t channel, uint8_t slave, uint8_t reg, uint16_t data);
+bool writeReg32(uint8_t channel, uint8_t slave, uint8_t reg, uint32_t data);
+int readReg(uint8_t channel, uint8_t slave, uint8_t reg);
+int readReg16(uint8_t channel, uint8_t slave, uint8_t reg);
+}  // namespace I2C
 
 #endif

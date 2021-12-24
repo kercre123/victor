@@ -1,5 +1,5 @@
-/* This is FAST corner detector, contributed to OpenCV by the author, Edward Rosten.
-   Below is the original copyright and the references */
+/* This is FAST corner detector, contributed to OpenCV by the author, Edward
+   Rosten. Below is the original copyright and the references */
 
 /*
 Copyright (c) 2006, 2008 Edward Rosten
@@ -44,19 +44,19 @@ The references are:
 #ifndef OPENCV_FEATURES2D_FAST_HPP
 #define OPENCV_FEATURES2D_FAST_HPP
 
-namespace cv
-{
-namespace opt_AVX2
-{
+namespace cv {
+namespace opt_AVX2 {
 #if CV_TRY_AVX2
-class FAST_t_patternSize16_AVX2
-{
-public:
-    static Ptr<FAST_t_patternSize16_AVX2> getImpl(int _cols, int _threshold, bool _nonmax_suppression, const int* _pixel);
-    virtual void process(int &j, const uchar* &ptr, uchar* curr, int* cornerpos, int &ncorners) = 0;
-    virtual ~FAST_t_patternSize16_AVX2() {};
+class FAST_t_patternSize16_AVX2 {
+ public:
+  static Ptr<FAST_t_patternSize16_AVX2> getImpl(int _cols, int _threshold,
+                                                bool _nonmax_suppression,
+                                                const int* _pixel);
+  virtual void process(int& j, const uchar*& ptr, uchar* curr, int* cornerpos,
+                       int& ncorners) = 0;
+  virtual ~FAST_t_patternSize16_AVX2(){};
 };
 #endif
-}
-}
+}  // namespace opt_AVX2
+}  // namespace cv
 #endif

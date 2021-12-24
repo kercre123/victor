@@ -5,10 +5,10 @@
  *
  * @brief hci over spi message exchange header file.
  *
- * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer 
- * program includes Confidential, Proprietary Information and is a Trade Secret of 
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
- * unless authorized in writing. All Rights Reserved.
+ * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -36,8 +36,7 @@ uint8_t calc_crc(uint32_t length);
 * @return Transfer error (0) or transfer OK (1)
 ****************************************************************************************
 */
-uint32_t send_header(uint32_t length,uint8_t crc,uint32_t mode);
-
+uint32_t send_header(uint32_t length, uint8_t crc, uint32_t mode);
 
 /**
 ****************************************************************************************
@@ -47,7 +46,7 @@ uint32_t send_header(uint32_t length,uint8_t crc,uint32_t mode);
 * @return Transfer error (0) or transfer OK (1)
 ****************************************************************************************
 */
-uint8_t send_payload(uint32_t mode,uint32_t length);
+uint8_t send_payload(uint32_t mode, uint32_t length);
 
 /**
 ****************************************************************************************

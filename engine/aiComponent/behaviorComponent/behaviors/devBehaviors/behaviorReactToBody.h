@@ -24,18 +24,17 @@ namespace Vector {
 class ConditionSalientPointDetected;
 class BehaviorSearchWithinBoundingBox;
 
-class BehaviorReactToBody : public ICozmoBehavior
-{
-public: 
+class BehaviorReactToBody : public ICozmoBehavior {
+ public:
   virtual ~BehaviorReactToBody() = default;
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   explicit BehaviorReactToBody(const Json::Value& config);
 
-  void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   bool WantsToBeActivatedBehavior() const override;
@@ -44,16 +43,15 @@ protected:
 
   void InitBehavior() override;
 
-private:
-
+ private:
   void TransitionToStart();
   void TransitionToMaybeGoStraightAndLookUp();
   void TransitionToLookForFace();
   void TransitionToFaceFound();
   void TransitionToCompleted();
 
-  bool CheckIfShouldStop(); // It won't run if e.g. it's picked up, or there's a cliff, or an obstacle..
-
+  bool CheckIfShouldStop();  // It won't run if e.g. it's picked up, or there's
+                             // a cliff, or an obstacle..
 
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
@@ -79,16 +77,15 @@ private:
     Vision::SalientPoint lastPersonDetected;
     bool searchingForFaces;
     bool droveOffCharger;
-    bool actingOnFaceFound; // currently tracking, could be something else
+    bool actingOnFaceFound;  // currently tracking, could be something else
     RobotTimeStamp_t imageTimestampWhenActivated;
   };
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTurnTowardsPerson__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTurnTowardsPerson__

@@ -19,6 +19,7 @@
 
 #include <map>
 #include <sstream>
+
 #include "flatbuffers/idl.h"
 
 namespace flatbuffers {
@@ -49,7 +50,7 @@ class CodeWriter {
   // Associates a key with a value.  All subsequent calls to operator+=, where
   // the specified key is contained in {{ and }} delimiters will be replaced by
   // the given value.
-  void SetValue(const std::string& key, const std::string& value) {
+  void SetValue(const std::string &key, const std::string &value) {
     value_map_[key] = value;
   }
 
@@ -71,8 +72,7 @@ class BaseGenerator {
  public:
   virtual bool generate() = 0;
 
-  static std::string NamespaceDir(const Parser &parser,
-                                  const std::string &path,
+  static std::string NamespaceDir(const Parser &parser, const std::string &path,
                                   const Namespace &ns);
 
  protected:
@@ -128,8 +128,7 @@ struct CommentConfig {
 };
 
 extern void GenComment(const std::vector<std::string> &dc,
-                       std::string *code_ptr,
-                       const CommentConfig *config,
+                       std::string *code_ptr, const CommentConfig *config,
                        const char *prefix = "");
 
 }  // namespace flatbuffers

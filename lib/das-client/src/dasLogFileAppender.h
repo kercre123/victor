@@ -12,34 +12,33 @@
 #ifndef __DasLogFileAppender_H__
 #define __DasLogFileAppender_H__
 
+#include <algorithm>
+#include <cstring>
+#include <fstream>
+#include <functional>
+#include <iostream>
+#include <string>
+#include <vector>
+
 #include "DAS.h"
 #include "DASPrivate.h"
 #include "taskExecutor.h"
-#include <iostream>
-#include <fstream>
-#include <functional>
-#include <string>
-#include <vector>
-#include <cstring>
-#include <algorithm>
 
-namespace Anki
-{
-namespace Das
-{
+namespace Anki {
+namespace Das {
 
-using DASLogFileConsumptionBlock = std::function<bool (const std::string& logFilePath, bool* stop)>;
+using DASLogFileConsumptionBlock =
+    std::function<bool(const std::string& logFilePath, bool* stop)>;
 
-class DasLogFileAppender
-{
-public:
-  DasLogFileAppender(const std::string& logDirPath,
-                     size_t maxLogLength = kDefaultMaxLogLength,
-                     size_t maxLogFiles = kDasDefaultMaxLogFiles,
-                     const DASArchiveFunction& archiveCallback = DASArchiveFunction{},
-                     const DASUnarchiveFunction& unarchiveCallback = DASUnarchiveFunction{},
-                     const std::string& archiveFileExtension = "");
-  
+class DasLogFileAppender {
+ public:
+  DasLogFileAppender(
+      const std::string& logDirPath, size_t maxLogLength = kDefaultMaxLogLength,
+      size_t maxLogFiles = kDasDefaultMaxLogFiles,
+      const DASArchiveFunction& archiveCallback = DASArchiveFunction{},
+      const DASUnarchiveFunction& unarchiveCallback = DASUnarchiveFunction{},
+      const std::string& archiveFileExtension = "");
+
   ~DasLogFileAppender();
   std::string CurrentLogFilePath();
   void WriteDataToCurrentLogfile(const std::string logData);
@@ -52,7 +51,7 @@ public:
   static constexpr const char* kDasLogFileExtension = "das";
   static constexpr const char* kDasInProgressExtension = "das_inprogress";
 
-private:
+ private:
   bool CreateNewLogFile() const;
   void PrvFlush();
   void UpdateLogFilePath();
@@ -60,7 +59,8 @@ private:
   void OpenHandleToCurrentLogFile();
   void UpdateLogFileHandle();
   std::string FullLogFilePath() const;
-  std::string MakeLogFilePath(const std::string &logDir, uint32_t logNumber, const std::string &extension) const;
+  std::string MakeLogFilePath(const std::string& logDir, uint32_t logNumber,
+                              const std::string& extension) const;
   uint32_t NextAvailableLogFileNumber(uint32_t startNumber) const;
   std::ofstream& CurrentLogFileHandle();
   std::string PrvCurrentLogFilePath();
@@ -68,7 +68,7 @@ private:
   void RolloverLogFileAtPath(std::string path) const;
   std::vector<std::string> InProgressLogFiles() const;
 
-private:
+ private:
   std::string _logDirPath;
   size_t _maxLogLength;
   size_t _maxLogFiles;
@@ -82,8 +82,7 @@ private:
   std::string _archiveFileExtension;
 };
 
-#endif // __DasLogFileAppender_H__
+#endif  // __DasLogFileAppender_H__
 
-} // namespace Das
-} // namespace Anki
-
+}  // namespace Das
+}  // namespace Anki

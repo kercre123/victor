@@ -36,50 +36,50 @@ struct FixedPointRawTypeTraits<v8i16> {
 
 template <>
 inline v4i32 BitAnd(v4i32 a, v4i32 b) {
-  return reinterpret_cast<v4i32>(__builtin_msa_and_v(reinterpret_cast<v16u8>(a),
-                                                     reinterpret_cast<v16u8>(b)));
+  return reinterpret_cast<v4i32>(__builtin_msa_and_v(
+      reinterpret_cast<v16u8>(a), reinterpret_cast<v16u8>(b)));
 }
 
 template <>
 inline v8i16 BitAnd(v8i16 a, v8i16 b) {
-  return reinterpret_cast<v8i16>(__builtin_msa_and_v(reinterpret_cast<v16u8>(a),
-                                                     reinterpret_cast<v16u8>(b)));
+  return reinterpret_cast<v8i16>(__builtin_msa_and_v(
+      reinterpret_cast<v16u8>(a), reinterpret_cast<v16u8>(b)));
 }
 
 template <>
 inline v4i32 BitOr(v4i32 a, v4i32 b) {
-  return reinterpret_cast<v4i32>(__builtin_msa_or_v(reinterpret_cast<v16u8>(a),
-                                                    reinterpret_cast<v16u8>(b)));
+  return reinterpret_cast<v4i32>(__builtin_msa_or_v(
+      reinterpret_cast<v16u8>(a), reinterpret_cast<v16u8>(b)));
 }
 
 template <>
 inline v8i16 BitOr(v8i16 a, v8i16 b) {
-  return reinterpret_cast<v8i16>(__builtin_msa_or_v(reinterpret_cast<v16u8>(a),
-                                                    reinterpret_cast<v16u8>(b)));
+  return reinterpret_cast<v8i16>(__builtin_msa_or_v(
+      reinterpret_cast<v16u8>(a), reinterpret_cast<v16u8>(b)));
 }
 
 template <>
 inline v4i32 BitXor(v4i32 a, v4i32 b) {
-  return reinterpret_cast<v4i32>(__builtin_msa_xor_v(reinterpret_cast<v16u8>(a),
-                                                     reinterpret_cast<v16u8>(b)));
+  return reinterpret_cast<v4i32>(__builtin_msa_xor_v(
+      reinterpret_cast<v16u8>(a), reinterpret_cast<v16u8>(b)));
 }
 
 template <>
 inline v8i16 BitXor(v8i16 a, v8i16 b) {
-  return reinterpret_cast<v8i16>(__builtin_msa_xor_v(reinterpret_cast<v16u8>(a),
-                                                     reinterpret_cast<v16u8>(b)));
+  return reinterpret_cast<v8i16>(__builtin_msa_xor_v(
+      reinterpret_cast<v16u8>(a), reinterpret_cast<v16u8>(b)));
 }
 
 template <>
 inline v4i32 BitNot(v4i32 a) {
-  return reinterpret_cast<v4i32>(__builtin_msa_nor_v(reinterpret_cast<v16u8>(a),
-                                                     reinterpret_cast<v16u8>(a)));
+  return reinterpret_cast<v4i32>(__builtin_msa_nor_v(
+      reinterpret_cast<v16u8>(a), reinterpret_cast<v16u8>(a)));
 }
 
 template <>
 inline v8i16 BitNot(v8i16 a) {
-  return reinterpret_cast<v8i16>(__builtin_msa_nor_v(reinterpret_cast<v16u8>(a),
-                                                     reinterpret_cast<v16u8>(a)));
+  return reinterpret_cast<v8i16>(__builtin_msa_nor_v(
+      reinterpret_cast<v16u8>(a), reinterpret_cast<v16u8>(a)));
 }
 
 template <>
@@ -136,17 +136,17 @@ inline v8i16 ShiftRight(v8i16 a, int offset) {
 
 template <>
 inline v4i32 SelectUsingMask(v4i32 if_mask, v4i32 then_val, v4i32 else_val) {
-  if_mask = reinterpret_cast<v4i32>(__builtin_msa_bsel_v(reinterpret_cast<v16u8>(if_mask),
-                                                         reinterpret_cast<v16u8>(else_val),
-                                                         reinterpret_cast<v16u8>(then_val)));
+  if_mask = reinterpret_cast<v4i32>(__builtin_msa_bsel_v(
+      reinterpret_cast<v16u8>(if_mask), reinterpret_cast<v16u8>(else_val),
+      reinterpret_cast<v16u8>(then_val)));
   return if_mask;
 }
 
 template <>
 inline v8i16 SelectUsingMask(v8i16 if_mask, v8i16 then_val, v8i16 else_val) {
-  if_mask = reinterpret_cast<v8i16>(__builtin_msa_bsel_v(reinterpret_cast<v16u8>(if_mask),
-                                                         reinterpret_cast<v16u8>(else_val),
-                                                         reinterpret_cast<v16u8>(then_val)));
+  if_mask = reinterpret_cast<v8i16>(__builtin_msa_bsel_v(
+      reinterpret_cast<v16u8>(if_mask), reinterpret_cast<v16u8>(else_val),
+      reinterpret_cast<v16u8>(then_val)));
   return if_mask;
 }
 
@@ -291,8 +291,8 @@ struct ImplSaturatingRoundingMultiplyByPOT<Exponent, v4i32, 1> {
       // need to be ones, not zeroes.
       res = __builtin_msa_slli_w(res, Exponent);
       // Finally, set those trailing zero bits to ones.
-      res = reinterpret_cast<v4i32>(__builtin_msa_or_v(reinterpret_cast<v16u8>(res),
-                                                       reinterpret_cast<v16u8>(tmp)));
+      res = reinterpret_cast<v4i32>(__builtin_msa_or_v(
+          reinterpret_cast<v16u8>(res), reinterpret_cast<v16u8>(tmp)));
       return res;
     }
   }
@@ -319,8 +319,8 @@ struct ImplSaturatingRoundingMultiplyByPOT<Exponent, v8i16, 1> {
       // need to be ones, not zeroes.
       res = __builtin_msa_slli_h(res, Exponent);
       // Finally, set those trailing zero bits to ones.
-      res = reinterpret_cast<v8i16>(__builtin_msa_or_v(reinterpret_cast<v16u8>(res),
-                                                       reinterpret_cast<v16u8>(tmp)));
+      res = reinterpret_cast<v8i16>(__builtin_msa_or_v(
+          reinterpret_cast<v16u8>(res), reinterpret_cast<v16u8>(tmp)));
       return res;
     }
   }
@@ -329,8 +329,9 @@ struct ImplSaturatingRoundingMultiplyByPOT<Exponent, v8i16, 1> {
 // TODO: possibly implement:
 // template <> v4i32 RoundingDivideByPOT(v4i32, int)
 // template <> v8i16 RoundingDivideByPOT(v8i16, int)
-// template <int Exponent> struct ImplSaturatingRoundingMultiplyByPOT<Exponent, v4i32, -1>
-// template <int Exponent> struct ImplSaturatingRoundingMultiplyByPOT<Exponent, v8i16, -1>
+// template <int Exponent> struct ImplSaturatingRoundingMultiplyByPOT<Exponent,
+// v4i32, -1> template <int Exponent> struct
+// ImplSaturatingRoundingMultiplyByPOT<Exponent, v8i16, -1>
 
 template <>
 inline v4i32 Dup<v4i32>(std::int32_t x) {

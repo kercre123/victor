@@ -30,8 +30,8 @@
 #ifndef CLIENT_LINUX_MINIDUMP_WRITER_PROC_CPUINFO_READER_H_
 #define CLIENT_LINUX_MINIDUMP_WRITER_PROC_CPUINFO_READER_H_
 
-#include <stdint.h>
 #include <assert.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "client/linux/minidump_writer/line_reader.h"
@@ -43,10 +43,8 @@ namespace google_breakpad {
 // A class for reading /proc/cpuinfo without using fopen/fgets or other
 // functions which may allocate memory.
 class ProcCpuInfoReader {
-public:
-  ProcCpuInfoReader(int fd)
-    : line_reader_(fd), pop_count_(-1) {
-  }
+ public:
+  ProcCpuInfoReader(int fd) : line_reader_(fd), pop_count_(-1) {}
 
   // Return the next field name, or NULL in case of EOF.
   // field: (output) Pointer to zero-terminated field name.
@@ -62,8 +60,7 @@ public:
         pop_count_ = -1;
       }
 
-      if (!line_reader_.GetNextLine(&line, &line_len))
-        return false;
+      if (!line_reader_.GetNextLine(&line, &line_len)) return false;
 
       pop_count_ = static_cast<int>(line_len);
 
@@ -75,25 +72,21 @@ public:
       //   - <field-name> can contain spaces.
       //   - some fields have an empty <value>
       char* sep = static_cast<char*>(my_memchr(line, ':', line_len));
-      if (sep == NULL)
-        continue;
+      if (sep == NULL) continue;
 
       // Record the value. Skip leading space after the column to get
       // its start.
-      const char* val = sep+1;
-      while (val < line_end && my_isspace(*val))
-        val++;
+      const char* val = sep + 1;
+      while (val < line_end && my_isspace(*val)) val++;
 
       value_ = val;
       value_len_ = static_cast<size_t>(line_end - val);
 
       // Remove trailing spaces before the column to properly 0-terminate
       // the field name.
-      while (sep > line && my_isspace(sep[-1]))
-        sep--;
+      while (sep > line && my_isspace(sep[-1])) sep--;
 
-      if (sep == line)
-        continue;
+      if (sep == line) continue;
 
       // zero-terminate field name.
       *sep = '\0';
@@ -118,7 +111,7 @@ public:
     return value_;
   }
 
-private:
+ private:
   LineReader line_reader_;
   int pop_count_;
   const char* value_;

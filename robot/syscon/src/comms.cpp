@@ -1,27 +1,22 @@
+#include "comms.h"
+
 #include <string.h>
 
-#include "common.h"
-#include "hardware.h"
-
 #include "analog.h"
-#include "comms.h"
-#include "motors.h"
-#include "power.h"
-#include "opto.h"
+#include "common.h"
+#include "encoders.h"
+#include "flash.h"
+#include "hardware.h"
 #include "lights.h"
+#include "messages.h"
 #include "mics.h"
+#include "motors.h"
+#include "opto.h"
+#include "power.h"
 #include "touch.h"
 #include "vectors.h"
-#include "flash.h"
-#include "encoders.h"
 
-#include "messages.h"
-
-enum CommsState {
-  COMM_STATE_SYNC,
-  COMM_STATE_VALIDATE,
-  COMM_STATE_PAYLOAD
-};
+enum CommsState { COMM_STATE_SYNC, COMM_STATE_VALIDATE, COMM_STATE_PAYLOAD };
 
 struct InboundPacket {
   union {
@@ -68,11 +63,15 @@ static struct {
 } outboundPacket;
 
 static const uint16_t BYTE_TIMER_PRESCALE = SYSTEM_CLOCK / COMMS_BAUDRATE;
-static const uint16_t BYTE_TIMER_PERIOD = 14; // 8 bits, 1 start / stop + 3 bits of "slop"
-static const int MAX_MISSED_FRAMES = 200; // 1 second of missed frames
+static const uint16_t BYTE_TIMER_PERIOD =
+    14;  // 8 bits, 1 start / stop + 3 bits of "slop"
+static const int MAX_MISSED_FRAMES = 200;  // 1 second of missed frames
 static const int MAX_FIFO_SLOTS = 4;
-static const int MAX_INBOUND_SIZE = 0x100;  // Must be a power of two, and at least twice as big as InboundPacket
-static const int EXTRA_MESSAGE_DATA = sizeof(SpineMessageHeader) + sizeof(SpineMessageFooter);
+static const int MAX_INBOUND_SIZE =
+    0x100;  // Must be a power of two, and at least twice as big as
+            // InboundPacket
+static const int EXTRA_MESSAGE_DATA =
+    sizeof(SpineMessageHeader) + sizeof(SpineMessageFooter);
 
 static TransmitFifo txFifo[MAX_FIFO_SLOTS];
 static int txFifo_read = 0;
@@ -87,7 +86,7 @@ static int receivedWords;
 static CommsState state;
 
 static uint32_t crc(const void* ptr, int length) {
-  const uint32_t* data = (const uint32_t*) ptr;
+  const uint32_t* data = (const uint32_t*)ptr;
 
   CRC->CR = CRC_CR_RESET | CRC_CR_REV_IN | CRC_CR_REV_OUT;
   while (length-- > 0) {
@@ -103,9 +102,7 @@ void Comms::init(void) {
   // Configure our USART1 (Using double buffered DMA)
   USART1->BRR = SYSTEM_CLOCK / COMMS_BAUDRATE;
   USART1->CR3 = USART_CR3_DMAR | USART_CR3_OVRDIS;
-  USART1->CR1 = USART_CR1_RE
-              | USART_CR1_TE
-              | USART_CR1_UE;
+  USART1->CR1 = USART_CR1_RE | USART_CR1_TE | USART_CR1_UE;
 
   // Timer6 is used to fire off the DMA for outbound UART data
   TIM6->PSC = BYTE_TIMER_PRESCALE - 1;
@@ -116,7 +113,8 @@ void Comms::init(void) {
   // Setup our constants for outbound data
   outboundPacket.sync.header.sync_bytes = SYNC_BODY_TO_HEAD;
   outboundPacket.sync.header.payload_type = PAYLOAD_DATA_FRAME;
-  outboundPacket.sync.header.bytes_to_follow = sizeof(outboundPacket.sync.payload);
+  outboundPacket.sync.header.bytes_to_follow =
+      sizeof(outboundPacket.sync.payload);
 
   // Configure our interrupts
   NVIC_SetPriority(DMA1_Channel4_5_IRQn, PRIORITY_SPINE_COMMS);
@@ -129,14 +127,10 @@ void Comms::init(void) {
 
   reset();
 
-  DMA1_Channel5->CCR = DMA_CCR_MINC
-                     | DMA_CCR_CIRC
-                     | DMA_CCR_TCIE
-                     | DMA_CCR_HTIE
-                     | DMA_CCR_EN
-                     ;
+  DMA1_Channel5->CCR =
+      DMA_CCR_MINC | DMA_CCR_CIRC | DMA_CCR_TCIE | DMA_CCR_HTIE | DMA_CCR_EN;
 
-  static const AckMessage ack = { ACK_APPLICATION };
+  static const AckMessage ack = {ACK_APPLICATION};
   enqueue(PAYLOAD_ACK, &ack, sizeof(ack));
 }
 
@@ -153,7 +147,7 @@ void Comms::enqueue(PayloadId kind, const void* packet, int size) {
 
   // Drop payload (should probably do something)
   if (next == txFifo_read) {
-    return ;
+    return;
   }
 
   TransmitFifo* target = &txFifo[txFifo_write];
@@ -171,13 +165,13 @@ void Comms::enqueue(PayloadId kind, const void* packet, int size) {
 }
 
 static int dequeue(void* out, int size) {
-  uint8_t* output = (uint8_t*) out;
+  uint8_t* output = (uint8_t*)out;
   int transmitted = 0;
 
   while (txFifo_read != txFifo_write) {
     TransmitFifo* target = &txFifo[txFifo_read];
     if (target->size > size) {
-      break ;
+      break;
     }
 
     memcpy(output, &target->payload, target->size);
@@ -200,18 +194,17 @@ void Comms::tick(void) {
   }
 
   // Stop our DMA
-  DMA1_Channel3->CCR = DMA_CCR_MINC
-                     | DMA_CCR_DIR;
+  DMA1_Channel3->CCR = DMA_CCR_MINC | DMA_CCR_DIR;
 
   // Finalize the packet
   int count = sizeof(outboundPacket.sync);
 
-  outboundPacket.sync.payload.flags  = 0
-                                     | (Opto::active ? RUNNING_FLAGS_SENSORS_VALID : 0)
-                                     | (Encoders::disabled ? ENCODERS_DISABLED : 0)
-                                     | (Encoders::head_invalid ? ENCODER_HEAD_INVALID : 0)
-                                     | (Encoders::lift_invalid ? ENCODER_LIFT_INVALID : 0);
-  
+  outboundPacket.sync.payload.flags =
+      0 | (Opto::active ? RUNNING_FLAGS_SENSORS_VALID : 0) |
+      (Encoders::disabled ? ENCODERS_DISABLED : 0) |
+      (Encoders::head_invalid ? ENCODER_HEAD_INVALID : 0) |
+      (Encoders::lift_invalid ? ENCODER_LIFT_INVALID : 0);
+
   Analog::transmit(&outboundPacket.sync.payload);
   Motors::transmit(&outboundPacket.sync.payload);
   Opto::transmit(&outboundPacket.sync.payload);
@@ -222,7 +215,9 @@ void Comms::tick(void) {
   Touch::transmit(outboundPacket.sync.payload.touchLevel);
 
   outboundPacket.sync.payload.framecounter++;
-  outboundPacket.sync.footer.checksum = crc(&outboundPacket.sync.payload, sizeof(outboundPacket.sync.payload) / sizeof(uint32_t));
+  outboundPacket.sync.footer.checksum =
+      crc(&outboundPacket.sync.payload,
+          sizeof(outboundPacket.sync.payload) / sizeof(uint32_t));
 
   DMA1_Channel3->CMAR = (uint32_t)&outboundPacket;
 
@@ -268,8 +263,10 @@ void Comms::sendVersion(void) {
 static void ProcessMessage(InboundPacket& packet) {
   using namespace Comms;
   // Check the CRC
-  uint32_t foundCRC = crc(packet.raw_payload, packet.header.bytes_to_follow / sizeof (uint32_t));
-  SpineMessageFooter* footer = (SpineMessageFooter*) &packet.raw_payload[packet.header.bytes_to_follow];
+  uint32_t foundCRC =
+      crc(packet.raw_payload, packet.header.bytes_to_follow / sizeof(uint32_t));
+  SpineMessageFooter* footer =
+      (SpineMessageFooter*)&packet.raw_payload[packet.header.bytes_to_follow];
 
   // Process our packet
   if (foundCRC == footer->checksum) {
@@ -281,34 +278,34 @@ static void ProcessMessage(InboundPacket& packet) {
         // Prevent system from waking itself up for 1 second
         missed_frames = 0;
         Power::setMode(POWER_STOP);
-        break ;
+        break;
       case PAYLOAD_MODE_CHANGE:
-        break ;
+        break;
       case PAYLOAD_VERSION:
         Comms::sendVersion();
-        break ;
+        break;
       case PAYLOAD_ERASE:
         Power::setMode(POWER_ERASE);
-        break ;
+        break;
       case PAYLOAD_LIGHT_STATE:
         Lights::receive(packet.lightState.ledColors);
-        break ;
+        break;
       case PAYLOAD_DATA_FRAME:
         missed_frames = 0;
         Power::wakeUp();
         Motors::receive(&packet.headToBody);
         Lights::receive(packet.headToBody.lightState.ledColors);
         Analog::receive(&packet.headToBody);
-        break ;
+        break;
       case PAYLOAD_CONT_DATA:
-        break ;
+        break;
       default:
-        static const AckMessage ack = { NACK_BAD_COMMAND };
+        static const AckMessage ack = {NACK_BAD_COMMAND};
         enqueue(PAYLOAD_ACK, &ack, sizeof(ack));
-        break ;
+        break;
     }
   } else {
-    static const AckMessage ack = { NACK_CRC_FAILED };
+    static const AckMessage ack = {NACK_CRC_FAILED};
     enqueue(PAYLOAD_ACK, &ack, sizeof(ack));
   }
 }
@@ -350,16 +347,17 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
 
         // We don't have enough data to test the header
         if (receivedWords < sizeof(uint32_t)) {
-          continue ;
+          continue;
         }
 
         // Locate our sync header
         for (offset = 0; offset <= receivedWords - sizeof(uint32_t); offset++) {
-          __packed uint32_t* sync_word = (__packed uint32_t*) &packet.raw[offset];
+          __packed uint32_t* sync_word =
+              (__packed uint32_t*)&packet.raw[offset];
 
           if (*sync_word == SYNC_HEAD_TO_BODY) {
             state = COMM_STATE_VALIDATE;
-            break ;
+            break;
           }
         }
 
@@ -372,15 +370,17 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
       case COMM_STATE_VALIDATE:
         // We don't have enough data to test the header
         if (receivedWords < sizeof(SpineMessageHeader)) {
-          continue ;
+          continue;
         }
 
         // Verify that the message is of the expected type
-        // Discard everything if the data is bunk (can cause additional packet loss)
-        if (packet.header.bytes_to_follow != sizeOfInboundPayload(packet.header.payload_type)) {
+        // Discard everything if the data is bunk (can cause additional packet
+        // loss)
+        if (packet.header.bytes_to_follow !=
+            sizeOfInboundPayload(packet.header.payload_type)) {
           state = COMM_STATE_SYNC;
           receivedWords = 0;
-          continue ;
+          continue;
         }
 
         // Header was valid, start receiving the payload
@@ -390,17 +390,18 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
       case COMM_STATE_PAYLOAD:
         // Have not received data
         if (receivedWords < packetLength) {
-          continue ;
+          continue;
         }
 
         // Process the message
         ProcessMessage(packet);
 
-        // Clear out our payload       
-        memcpy(&packet.raw[0], &packet.raw[packetLength], receivedWords - packetLength);
+        // Clear out our payload
+        memcpy(&packet.raw[0], &packet.raw[packetLength],
+               receivedWords - packetLength);
         receivedWords -= packetLength;
         state = COMM_STATE_SYNC;
-        continue ;
+        continue;
     }
   }
 

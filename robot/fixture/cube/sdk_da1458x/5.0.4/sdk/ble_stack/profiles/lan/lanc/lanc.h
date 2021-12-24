@@ -24,11 +24,10 @@
  ****************************************************************************************
  */
 
-
- /// LANC Location and Navigation Profile Collector role
-#define BLE_LN_COLLECTOR            1
-#if !defined (BLE_CLIENT_PRF)
-    #define BLE_CLIENT_PRF          1
+/// LANC Location and Navigation Profile Collector role
+#define BLE_LN_COLLECTOR 1
+#if !defined(BLE_CLIENT_PRF)
+#define BLE_CLIENT_PRF 1
 #endif
 
 /*
@@ -49,51 +48,48 @@
  */
 
 /// Location and Navigation Service Characteristic Descriptors
-enum lanc_lns_descs
-{
-    /// Location and Speed Char. - Client Characteristic Configuration
-    LANC_DESC_LOC_SPEED_CL_CFG,
+enum lanc_lns_descs {
+  /// Location and Speed Char. - Client Characteristic Configuration
+  LANC_DESC_LOC_SPEED_CL_CFG,
 
-    /// LN Control Point Char. - Client Characteristic Configuration
-    LANC_DESC_LN_CTNL_PT_CL_CFG,
+  /// LN Control Point Char. - Client Characteristic Configuration
+  LANC_DESC_LN_CTNL_PT_CL_CFG,
 
-    /// Navigation Char. - Client Characteristic Configuration
-    LANC_DESC_NAVIGATION_CL_CFG,
+  /// Navigation Char. - Client Characteristic Configuration
+  LANC_DESC_NAVIGATION_CL_CFG,
 
+  LANC_DESC_MAX,
 
-    LANC_DESC_MAX,
-
-    LANC_DESC_MASK = 0x10,
+  LANC_DESC_MASK = 0x10,
 };
 
-/// Internal codes for reading/writing a LNS characteristic with one single request
-enum lanc_code
-{
-    /// Read LN Feature
-    LANC_RD_LN_FEAT           = LANP_LANS_LN_FEAT_CHAR,
-    /// Notified Location and Speed
-    LANC_NTF_LOC_SPEED        = LANP_LANS_LOC_SPEED_CHAR,
-    /// Read Position quality
-    LANC_RD_POS_Q             = LANP_LANS_POS_Q_CHAR,
-    /// Indicated LN Control Point
-    LANC_IND_LN_CTNL_PT       = LANP_LANS_LN_CTNL_PT_CHAR,
-    /// Notified Navigation
-    LANC_NTF_NAVIGATION       = LANP_LANS_NAVIG_CHAR,
+/// Internal codes for reading/writing a LNS characteristic with one single
+/// request
+enum lanc_code {
+  /// Read LN Feature
+  LANC_RD_LN_FEAT = LANP_LANS_LN_FEAT_CHAR,
+  /// Notified Location and Speed
+  LANC_NTF_LOC_SPEED = LANP_LANS_LOC_SPEED_CHAR,
+  /// Read Position quality
+  LANC_RD_POS_Q = LANP_LANS_POS_Q_CHAR,
+  /// Indicated LN Control Point
+  LANC_IND_LN_CTNL_PT = LANP_LANS_LN_CTNL_PT_CHAR,
+  /// Notified Navigation
+  LANC_NTF_NAVIGATION = LANP_LANS_NAVIG_CHAR,
 
-    /// Read/Write Location and Speed Client Char. Configuration Descriptor
-    LANC_RD_WR_LOC_SPEED_CL_CFG = (LANC_DESC_LOC_SPEED_CL_CFG | LANC_DESC_MASK),
+  /// Read/Write Location and Speed Client Char. Configuration Descriptor
+  LANC_RD_WR_LOC_SPEED_CL_CFG = (LANC_DESC_LOC_SPEED_CL_CFG | LANC_DESC_MASK),
 
-    /// Read LN Control Point Client Char. Configuration Descriptor
-    LANC_RD_WR_LN_CTNL_PT_CFG   = (LANC_DESC_LN_CTNL_PT_CL_CFG | LANC_DESC_MASK),
+  /// Read LN Control Point Client Char. Configuration Descriptor
+  LANC_RD_WR_LN_CTNL_PT_CFG = (LANC_DESC_LN_CTNL_PT_CL_CFG | LANC_DESC_MASK),
 
-    /// Read/Write Vector Client Char. Configuration Descriptor
-    LANC_RD_WR_NAVIGATION_CFG   = (LANC_DESC_NAVIGATION_CL_CFG   | LANC_DESC_MASK),
+  /// Read/Write Vector Client Char. Configuration Descriptor
+  LANC_RD_WR_NAVIGATION_CFG = (LANC_DESC_NAVIGATION_CL_CFG | LANC_DESC_MASK),
 
 };
 
 /// Pointer to the connection clean-up function
-#define LANC_CLEANUP_FNCT        (lanc_cleanup)
-
+#define LANC_CLEANUP_FNCT (lanc_cleanup)
 
 /*
  * STRUCTURES
@@ -101,59 +97,55 @@ enum lanc_code
  */
 
 /**
- * Structure containing the characteristics handles, value handles and descriptors for
- * the Location and Navigation Service
+ * Structure containing the characteristics handles, value handles and
+ * descriptors for the Location and Navigation Service
  */
-struct lanc_lns_content
-{
-    /// Service info
-    struct prf_svc svc;
+struct lanc_lns_content {
+  /// Service info
+  struct prf_svc svc;
 
-    /// Characteristic info:
-    ///  - LN Feature
-    ///  - Location and Speed
-    ///  - Position quality
-    ///  - LN Control Point
-    ///  - Navigation
-    struct prf_char_inf chars[LANP_LANS_CHAR_MAX];
+  /// Characteristic info:
+  ///  - LN Feature
+  ///  - Location and Speed
+  ///  - Position quality
+  ///  - LN Control Point
+  ///  - Navigation
+  struct prf_char_inf chars[LANP_LANS_CHAR_MAX];
 
-    /// Descriptor handles:
-    ///  - Location and Speed Client Cfg
-    ///  - Control Point Client Cfg
-    ///  - Navigation Client Cfg
-    struct prf_char_desc_inf descs[LANC_DESC_MAX];
+  /// Descriptor handles:
+  ///  - Location and Speed Client Cfg
+  ///  - Control Point Client Cfg
+  ///  - Navigation Client Cfg
+  struct prf_char_desc_inf descs[LANC_DESC_MAX];
 };
 
-
 /// Location and Navigation Profile Collector environment variable
-struct lanc_env_tag
-{
-    /// Profile Connection Info
-    struct prf_con_info con_info;
+struct lanc_env_tag {
+  /// Profile Connection Info
+  struct prf_con_info con_info;
 
-    /// Current Operation
-    void *operation;
+  /// Current Operation
+  void *operation;
 
-    /// Provide an indication about the last operation
-    uint16_t last_req;
-    /// Last characteristic code discovered
-    uint8_t last_char_code;
-    /// Counter used to check service uniqueness
-    uint8_t nb_svc;
+  /// Provide an indication about the last operation
+  uint16_t last_req;
+  /// Last characteristic code discovered
+  uint8_t last_char_code;
+  /// Counter used to check service uniqueness
+  uint8_t nb_svc;
 
-    /// Location and Navigation Service Characteristics
-    struct lanc_lns_content lans;
+  /// Location and Navigation Service Characteristics
+  struct lanc_lns_content lans;
 };
 
 /// Command Message Basic Structure
-struct lanc_cmd
-{
-    /// Connection Handle
-    uint16_t conhdl;
-    /// Operation Code
-    uint8_t operation;
+struct lanc_cmd {
+  /// Connection Handle
+  uint16_t conhdl;
+  /// Operation Code
+  uint8_t operation;
 
-    /// MORE DATA
+  /// MORE DATA
 };
 
 /*
@@ -191,17 +183,19 @@ void lanc_cleanup(prf_env_struct *idx_env);
  * @brief Send a LANC_CMP_EVT message when no connection exists (no environment)
  ****************************************************************************************
  */
-void lanc_send_no_conn_cmp_evt(uint8_t src_id, uint8_t dest_id, uint16_t conhdl, uint8_t operation);
+void lanc_send_no_conn_cmp_evt(uint8_t src_id, uint8_t dest_id, uint16_t conhdl,
+                               uint8_t operation);
 
 /**
  ****************************************************************************************
  * @brief Send a LANC_CMP_EVT message to the task which enabled the profile
  ****************************************************************************************
  */
-void lanc_send_cmp_evt(struct lanc_env_tag *lanc_env, uint8_t operation, uint8_t status);
+void lanc_send_cmp_evt(struct lanc_env_tag *lanc_env, uint8_t operation,
+                       uint8_t status);
 
-#endif //(BLE_LN_COLLECTOR)
+#endif  //(BLE_LN_COLLECTOR)
 
 /// @} LANC
 
-#endif //(_LANC_H_)
+#endif  //(_LANC_H_)

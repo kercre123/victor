@@ -5,10 +5,10 @@
  *
  * @brief Definitions for uart interface.
  *
- * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer 
- * program includes Confidential, Proprietary Information and is a Trade Secret of 
- * Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is prohibited 
- * unless authorized in writing. All Rights Reserved.
+ * Copyright (C) 2012. Dialog Semiconductor Ltd, unpublished work. This computer
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd.  All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -20,15 +20,15 @@
 
 #define MAX_PACKET_LENGTH 350
 #define MIN_PACKET_LENGTH 9
- /*
- ****************************************************************************************
- * @brief Write message to UART.
- *
- *  @param[in] size  Message's size.
- *  @param[in] data  Pointer to message's data.
- *
- * @return void.
- ****************************************************************************************
+/*
+****************************************************************************************
+* @brief Write message to UART.
+*
+*  @param[in] size  Message's size.
+*  @param[in] data  Pointer to message's data.
+*
+* @return void.
+****************************************************************************************
 */
 void UARTSend(unsigned short size, unsigned char *data);
 /*
@@ -40,7 +40,7 @@ void UARTSend(unsigned short size, unsigned char *data);
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void SendToMain(unsigned short length, uint8_t *bInputDataPtr);
 /*
  ****************************************************************************************
@@ -48,7 +48,7 @@ void SendToMain(unsigned short length, uint8_t *bInputDataPtr);
  *
  * @return void.
  ****************************************************************************************
-*/
+ */
 void UARTProc(PVOID unused);
 
 /*
@@ -60,8 +60,7 @@ void UARTProc(PVOID unused);
  *
  * @return -1 on failure / 0 on success.
  ****************************************************************************************
-*/
+ */
 uint8_t InitUART(int Port, int BaudRate);
-
 
 #endif /* _UART_H_ */

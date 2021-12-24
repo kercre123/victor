@@ -1,14 +1,14 @@
 /**
-* File: ConditionPetInitialDetection.h
-*
-* Author: Kevin M. Karol
-* Created: 11/1/17
-*
-* Description: Strategy for responding to a pet being detected
-*
-* Copyright: Anki, Inc. 2017
-*
-**/
+ * File: ConditionPetInitialDetection.h
+ *
+ * Author: Kevin M. Karol
+ * Created: 11/1/17
+ *
+ * Description: Strategy for responding to a pet being detected
+ *
+ * Copyright: Anki, Inc. 2017
+ *
+ **/
 
 #include "engine/aiComponent/beiConditions/conditions/conditionPetInitialDetection.h"
 
@@ -25,32 +25,34 @@ namespace {
 static const int kReactToPetNumTimesObserved = 3;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionPetInitialDetection::ConditionPetInitialDetection(const Json::Value& config)
-: IBEICondition(config)
-{
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+ConditionPetInitialDetection::ConditionPetInitialDetection(
+    const Json::Value& config)
+    : IBEICondition(config) {}
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionPetInitialDetection::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool ConditionPetInitialDetection::AreConditionsMetInternal(
+    BehaviorExternalInterface& behaviorExternalInterface) const {
   // Check for new pets
-  const auto & petWorld = behaviorExternalInterface.GetPetWorld();
-  const auto & pets = petWorld.GetAllKnownPets();
+  const auto& petWorld = behaviorExternalInterface.GetPetWorld();
+  const auto& pets = petWorld.GetAllKnownPets();
 
-  for (const auto & it : pets) {
+  for (const auto& it : pets) {
     const auto petID = it.first;
     if (_reactedTo.find(petID) != _reactedTo.end()) {
-      LOG_DEBUG("ConditionPetInitialDetection.AreConditionsMet.AlreadyReacted", "Already reacted to petID %d", petID);
+      LOG_DEBUG("ConditionPetInitialDetection.AreConditionsMet.AlreadyReacted",
+                "Already reacted to petID %d", petID);
       continue;
     }
-    const auto & pet = it.second;
+    const auto& pet = it.second;
     const auto numTimesObserved = pet.GetNumTimesObserved();
     if (numTimesObserved < kReactToPetNumTimesObserved) {
-      LOG_DEBUG("ConditionPetInitialDetection.AreConditionsMet.NumTimesObserved",
-                "PetID %d does not meet observation threshold (%d < %d)",
-                petID, numTimesObserved, kReactToPetNumTimesObserved);
+      LOG_DEBUG(
+          "ConditionPetInitialDetection.AreConditionsMet.NumTimesObserved",
+          "PetID %d does not meet observation threshold (%d < %d)", petID,
+          numTimesObserved, kReactToPetNumTimesObserved);
       continue;
     }
     _reactedTo.insert(petID);
@@ -60,6 +62,5 @@ bool ConditionPetInitialDetection::AreConditionsMetInternal(BehaviorExternalInte
   return false;
 }
 
-
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki

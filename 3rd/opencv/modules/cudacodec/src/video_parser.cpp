@@ -2,7 +2,8 @@
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
-//  By downloading, copying, installing or using the software you agree to this license.
+//  By downloading, copying, installing or using the software you agree to this
+license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
 //
@@ -15,23 +16,29 @@
 // Copyright (C) 2013, OpenCV Foundation, all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
-// Redistribution and use in source and binary forms, with or without modification,
+// Redistribution and use in source and binary forms, with or without
+modification,
 // are permitted provided that the following conditions are met:
 //
 //   * Redistribution's of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
+//   * Redistribution's in binary form must reproduce the above copyright
+notice,
 //     this list of conditions and the following disclaimer in the documentation
 //     and/or other materials provided with the distribution.
 //
-//   * The name of the copyright holders may not be used to endorse or promote products
+//   * The name of the copyright holders may not be used to endorse or promote
+products
 //     derived from this software without specific prior written permission.
 //
-// This software is provided by the copyright holders and contributors "as is" and
+// This software is provided by the copyright holders and contributors "as is"
+and
 // any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
+// warranties of merchantability and fitness for a particular purpose are
+disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any
+direct,
 // indirect, incidental, special, exemplary, or consequential damages
 // (including, but not limited to, procurement of substitute goods or services;
 // loss of use, data, or profits; or business interruption) however caused
@@ -45,118 +52,120 @@
 
 #ifdef HAVE_NVCUVID
 
-cv::cudacodec::detail::VideoParser::VideoParser(VideoDecoder* videoDecoder, FrameQueue* frameQueue) :
-    videoDecoder_(videoDecoder), frameQueue_(frameQueue), unparsedPackets_(0), hasError_(false)
-{
-    CUVIDPARSERPARAMS params;
-    std::memset(&params, 0, sizeof(CUVIDPARSERPARAMS));
+cv::cudacodec::detail::VideoParser::VideoParser(VideoDecoder* videoDecoder,
+                                                FrameQueue* frameQueue)
+    : videoDecoder_(videoDecoder),
+      frameQueue_(frameQueue),
+      unparsedPackets_(0),
+      hasError_(false) {
+  CUVIDPARSERPARAMS params;
+  std::memset(&params, 0, sizeof(CUVIDPARSERPARAMS));
 
-    params.CodecType              = videoDecoder->codec();
-    params.ulMaxNumDecodeSurfaces = videoDecoder->maxDecodeSurfaces();
-    params.ulMaxDisplayDelay      = 1; // this flag is needed so the parser will push frames out to the decoder as quickly as it can
-    params.pUserData              = this;
-    params.pfnSequenceCallback    = HandleVideoSequence;    // Called before decoding frames and/or whenever there is a format change
-    params.pfnDecodePicture       = HandlePictureDecode;    // Called when a picture is ready to be decoded (decode order)
-    params.pfnDisplayPicture      = HandlePictureDisplay;   // Called whenever a picture is ready to be displayed (display order)
+  params.CodecType = videoDecoder->codec();
+  params.ulMaxNumDecodeSurfaces = videoDecoder->maxDecodeSurfaces();
+  params.ulMaxDisplayDelay =
+      1;  // this flag is needed so the parser will push frames out to the
+          // decoder as quickly as it can
+  params.pUserData = this;
+  params.pfnSequenceCallback =
+      HandleVideoSequence;  // Called before decoding frames and/or whenever
+                            // there is a format change
+  params.pfnDecodePicture =
+      HandlePictureDecode;  // Called when a picture is ready to be decoded
+                            // (decode order)
+  params.pfnDisplayPicture =
+      HandlePictureDisplay;  // Called whenever a picture is ready to be
+                             // displayed (display order)
 
-    cuSafeCall( cuvidCreateVideoParser(&parser_, &params) );
+  cuSafeCall(cuvidCreateVideoParser(&parser_, &params));
 }
 
-bool cv::cudacodec::detail::VideoParser::parseVideoData(const unsigned char* data, size_t size, bool endOfStream)
-{
-    CUVIDSOURCEDATAPACKET packet;
-    std::memset(&packet, 0, sizeof(CUVIDSOURCEDATAPACKET));
+bool cv::cudacodec::detail::VideoParser::parseVideoData(
+    const unsigned char* data, size_t size, bool endOfStream) {
+  CUVIDSOURCEDATAPACKET packet;
+  std::memset(&packet, 0, sizeof(CUVIDSOURCEDATAPACKET));
 
-    if (endOfStream)
-        packet.flags |= CUVID_PKT_ENDOFSTREAM;
+  if (endOfStream) packet.flags |= CUVID_PKT_ENDOFSTREAM;
 
-    packet.payload_size = static_cast<unsigned long>(size);
-    packet.payload = data;
+  packet.payload_size = static_cast<unsigned long>(size);
+  packet.payload = data;
 
-    if (cuvidParseVideoData(parser_, &packet) != CUDA_SUCCESS)
-    {
-        hasError_ = true;
-        frameQueue_->endDecode();
-        return false;
+  if (cuvidParseVideoData(parser_, &packet) != CUDA_SUCCESS) {
+    hasError_ = true;
+    frameQueue_->endDecode();
+    return false;
+  }
+
+  const int maxUnparsedPackets = 15;
+
+  ++unparsedPackets_;
+  if (unparsedPackets_ > maxUnparsedPackets) {
+    hasError_ = true;
+    frameQueue_->endDecode();
+    return false;
+  }
+
+  if (endOfStream) frameQueue_->endDecode();
+
+  return !frameQueue_->isEndOfDecode();
+}
+
+int CUDAAPI cv::cudacodec::detail::VideoParser::HandleVideoSequence(
+    void* userData, CUVIDEOFORMAT* format) {
+  VideoParser* thiz = static_cast<VideoParser*>(userData);
+
+  thiz->unparsedPackets_ = 0;
+
+  if (format->codec != thiz->videoDecoder_->codec() ||
+      format->coded_width != thiz->videoDecoder_->frameWidth() ||
+      format->coded_height != thiz->videoDecoder_->frameHeight() ||
+      format->chroma_format != thiz->videoDecoder_->chromaFormat()) {
+    FormatInfo newFormat;
+
+    newFormat.codec = static_cast<Codec>(format->codec);
+    newFormat.chromaFormat = static_cast<ChromaFormat>(format->chroma_format);
+    newFormat.width = format->coded_width;
+    newFormat.height = format->coded_height;
+
+    try {
+      thiz->videoDecoder_->create(newFormat);
+    } catch (const cv::Exception&) {
+      thiz->hasError_ = true;
+      return false;
     }
+  }
 
-    const int maxUnparsedPackets = 15;
-
-    ++unparsedPackets_;
-    if (unparsedPackets_ > maxUnparsedPackets)
-    {
-        hasError_ = true;
-        frameQueue_->endDecode();
-        return false;
-    }
-
-    if (endOfStream)
-        frameQueue_->endDecode();
-
-    return !frameQueue_->isEndOfDecode();
+  return true;
 }
 
-int CUDAAPI cv::cudacodec::detail::VideoParser::HandleVideoSequence(void* userData, CUVIDEOFORMAT* format)
-{
-    VideoParser* thiz = static_cast<VideoParser*>(userData);
+int CUDAAPI cv::cudacodec::detail::VideoParser::HandlePictureDecode(
+    void* userData, CUVIDPICPARAMS* picParams) {
+  VideoParser* thiz = static_cast<VideoParser*>(userData);
 
-    thiz->unparsedPackets_ = 0;
+  thiz->unparsedPackets_ = 0;
 
-    if (format->codec         != thiz->videoDecoder_->codec()       ||
-        format->coded_width   != thiz->videoDecoder_->frameWidth()  ||
-        format->coded_height  != thiz->videoDecoder_->frameHeight() ||
-        format->chroma_format != thiz->videoDecoder_->chromaFormat())
-    {
-        FormatInfo newFormat;
+  bool isFrameAvailable =
+      thiz->frameQueue_->waitUntilFrameAvailable(picParams->CurrPicIdx);
 
-        newFormat.codec = static_cast<Codec>(format->codec);
-        newFormat.chromaFormat = static_cast<ChromaFormat>(format->chroma_format);
-        newFormat.width = format->coded_width;
-        newFormat.height = format->coded_height;
+  if (!isFrameAvailable) return false;
 
-        try
-        {
-            thiz->videoDecoder_->create(newFormat);
-        }
-        catch (const cv::Exception&)
-        {
-            thiz->hasError_ = true;
-            return false;
-        }
-    }
+  if (!thiz->videoDecoder_->decodePicture(picParams)) {
+    thiz->hasError_ = true;
+    return false;
+  }
 
-    return true;
+  return true;
 }
 
-int CUDAAPI cv::cudacodec::detail::VideoParser::HandlePictureDecode(void* userData, CUVIDPICPARAMS* picParams)
-{
-    VideoParser* thiz = static_cast<VideoParser*>(userData);
+int CUDAAPI cv::cudacodec::detail::VideoParser::HandlePictureDisplay(
+    void* userData, CUVIDPARSERDISPINFO* picParams) {
+  VideoParser* thiz = static_cast<VideoParser*>(userData);
 
-    thiz->unparsedPackets_ = 0;
+  thiz->unparsedPackets_ = 0;
 
-    bool isFrameAvailable = thiz->frameQueue_->waitUntilFrameAvailable(picParams->CurrPicIdx);
+  thiz->frameQueue_->enqueue(picParams);
 
-    if (!isFrameAvailable)
-        return false;
-
-    if (!thiz->videoDecoder_->decodePicture(picParams))
-    {
-        thiz->hasError_ = true;
-        return false;
-    }
-
-    return true;
+  return true;
 }
 
-int CUDAAPI cv::cudacodec::detail::VideoParser::HandlePictureDisplay(void* userData, CUVIDPARSERDISPINFO* picParams)
-{
-    VideoParser* thiz = static_cast<VideoParser*>(userData);
-
-    thiz->unparsedPackets_ = 0;
-
-    thiz->frameQueue_->enqueue(picParams);
-
-    return true;
-}
-
-#endif // HAVE_NVCUVID
+#endif  // HAVE_NVCUVID

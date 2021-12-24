@@ -21,16 +21,17 @@ namespace capabilityAgents {
 namespace notifications {
 
 /**
- * Interface to objects that receive callbacks from an implementation of NotificationRendererInterface.
+ * Interface to objects that receive callbacks from an implementation of
+ * NotificationRendererInterface.
  */
 class NotificationRendererObserverInterface {
-public:
-    virtual ~NotificationRendererObserverInterface() = default;
+ public:
+  virtual ~NotificationRendererObserverInterface() = default;
 
-    /**
-     * Notify our observer that rendering a notification audio clip has finished.
-     */
-    virtual void onNotificationRenderingFinished() = 0;
+  /**
+   * Notify our observer that rendering a notification audio clip has finished.
+   */
+  virtual void onNotificationRenderingFinished() = 0;
 };
 
 }  // namespace notifications

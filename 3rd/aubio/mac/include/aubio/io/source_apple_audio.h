@@ -57,7 +57,9 @@ typedef struct _aubio_source_apple_audio_t aubio_source_apple_audio_t;
   ::aubio_source_apple_audio_get_samplerate.
 
 */
-aubio_source_apple_audio_t * new_aubio_source_apple_audio(const char_t * uri, uint_t samplerate, uint_t hop_size);
+aubio_source_apple_audio_t* new_aubio_source_apple_audio(const char_t* uri,
+                                                         uint_t samplerate,
+                                                         uint_t hop_size);
 
 /**
 
@@ -71,7 +73,8 @@ aubio_source_apple_audio_t * new_aubio_source_apple_audio(const char_t * uri, ui
   source. `hop_size` if enough frames could be read, less otherwise.
 
 */
-void aubio_source_apple_audio_do(aubio_source_apple_audio_t * s, fvec_t * read_to, uint_t * read);
+void aubio_source_apple_audio_do(aubio_source_apple_audio_t* s, fvec_t* read_to,
+                                 uint_t* read);
 
 /**
 
@@ -85,7 +88,8 @@ void aubio_source_apple_audio_do(aubio_source_apple_audio_t * s, fvec_t * read_t
   source. `hop_size` if enough frames could be read, less otherwise.
 
 */
-void aubio_source_apple_audio_do_multi(aubio_source_apple_audio_t * s, fmat_t * read_to, uint_t * read);
+void aubio_source_apple_audio_do_multi(aubio_source_apple_audio_t* s,
+                                       fmat_t* read_to, uint_t* read);
 
 /**
 
@@ -95,7 +99,8 @@ void aubio_source_apple_audio_do_multi(aubio_source_apple_audio_t * s, fmat_t * 
   \return samplerate, in Hz
 
 */
-uint_t aubio_source_apple_audio_get_samplerate(const aubio_source_apple_audio_t * s);
+uint_t aubio_source_apple_audio_get_samplerate(
+    const aubio_source_apple_audio_t* s);
 
 /**
 
@@ -105,7 +110,8 @@ uint_t aubio_source_apple_audio_get_samplerate(const aubio_source_apple_audio_t 
   \return number of channels
 
 */
-uint_t aubio_source_apple_audio_get_channels(const aubio_source_apple_audio_t * s);
+uint_t aubio_source_apple_audio_get_channels(
+    const aubio_source_apple_audio_t* s);
 
 /**
 
@@ -115,7 +121,8 @@ uint_t aubio_source_apple_audio_get_channels(const aubio_source_apple_audio_t * 
   \return number of frames in file
 
 */
-uint_t aubio_source_apple_audio_get_duration(const aubio_source_apple_audio_t * s);
+uint_t aubio_source_apple_audio_get_duration(
+    const aubio_source_apple_audio_t* s);
 
 /**
 
@@ -127,7 +134,7 @@ uint_t aubio_source_apple_audio_get_duration(const aubio_source_apple_audio_t * 
   \return 0 if sucessful, non-zero on failure
 
 */
-uint_t aubio_source_apple_audio_seek (aubio_source_apple_audio_t * s, uint_t pos);
+uint_t aubio_source_apple_audio_seek(aubio_source_apple_audio_t* s, uint_t pos);
 
 /**
 
@@ -138,7 +145,7 @@ uint_t aubio_source_apple_audio_seek (aubio_source_apple_audio_t * s, uint_t pos
   \return 0 if sucessful, non-zero on failure
 
 */
-uint_t aubio_source_apple_audio_close(aubio_source_apple_audio_t * s);
+uint_t aubio_source_apple_audio_close(aubio_source_apple_audio_t* s);
 
 /**
 
@@ -147,7 +154,7 @@ uint_t aubio_source_apple_audio_close(aubio_source_apple_audio_t * s);
   \param s source object, created with ::new_aubio_source_apple_audio
 
 */
-void del_aubio_source_apple_audio(aubio_source_apple_audio_t * s);
+void del_aubio_source_apple_audio(aubio_source_apple_audio_t* s);
 
 #ifdef __cplusplus
 }

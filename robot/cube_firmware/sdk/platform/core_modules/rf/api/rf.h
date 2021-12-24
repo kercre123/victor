@@ -20,12 +20,12 @@
  * @ingroup DRIVERS
  * @brief Common definitions for radio modules.
  *
- * This module declares the functions and constants that have to be defined for all RF.
+ * This module declares the functions and constants that have to be defined for
+ *all RF.
  *
  * @{
  ****************************************************************************************
  */
-
 
 /*
  * FUNCTION DECLARATIONS
@@ -38,8 +38,8 @@ struct rwip_rf_api;  // forward declaration to avoid including rw.h
  *****************************************************************************************
  * @brief Initialization of RF.
  *
- * This function initializes the RF and fills the structure containing the function
- * pointers and parameters required by the RW BT stack.
+ * This function initializes the RF and fills the structure containing the
+ *function pointers and parameters required by the RW BT stack.
  *
  * @param[out]  api  Pointer to the BT RF API structure
  *
@@ -49,4 +49,4 @@ void rf_init(struct rwip_rf_api *api);
 
 /// @} RF
 
-#endif // RF_H_
+#endif  // RF_H_

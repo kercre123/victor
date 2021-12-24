@@ -1,16 +1,17 @@
 /**
-* File: backpackLightAnimation.cpp
-*
-* Authors: Kevin M. Karol
-* Created: 6/21/18
-*
-* Description: Definitions for building/parsing backpack lights
-*
-* Copyright: Anki, Inc. 2018
-*
-**/
+ * File: backpackLightAnimation.cpp
+ *
+ * Authors: Kevin M. Karol
+ * Created: 6/21/18
+ *
+ * Description: Definitions for building/parsing backpack lights
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 #include "cozmoAnim/backpackLights/animBackpackLightAnimation.h"
+
 #include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
@@ -18,11 +19,10 @@ namespace Vector {
 namespace Anim {
 namespace BackpackLightAnimation {
 
-bool DefineFromJSON(const Json::Value& jsonDef, BackpackAnimation& outAnim)
-{
+bool DefineFromJSON(const Json::Value& jsonDef, BackpackAnimation& outAnim) {
 #define ARRAY_TO_LIGHTSTATE(arr, lightState, lightStateField) \
   {                                                           \
-    for(int i = 0; i < arr.size(); ++i) {                     \
+    for (int i = 0; i < arr.size(); ++i) {                    \
       lightState[i].lightStateField = arr[i];                 \
     }                                                         \
   }
@@ -32,10 +32,12 @@ bool DefineFromJSON(const Json::Value& jsonDef, BackpackAnimation& outAnim)
   // so we need to convert between the two
   bool res = true;
   std::array<u32, (int)LEDId::NUM_BACKPACK_LEDS> arr;
-  res &= JsonTools::GetColorValuesToArrayOptional(jsonDef, "onColors", arr, true);
+  res &=
+      JsonTools::GetColorValuesToArrayOptional(jsonDef, "onColors", arr, true);
   ARRAY_TO_LIGHTSTATE(arr, outAnim.lights.lights, onColor);
-  
-  res &= JsonTools::GetColorValuesToArrayOptional(jsonDef, "offColors", arr, true);
+
+  res &=
+      JsonTools::GetColorValuesToArrayOptional(jsonDef, "offColors", arr, true);
   ARRAY_TO_LIGHTSTATE(arr, outAnim.lights.lights, offColor);
 
   res &= JsonTools::GetArrayOptional(jsonDef, "onPeriod_ms", arr);
@@ -55,10 +57,10 @@ bool DefineFromJSON(const Json::Value& jsonDef, BackpackAnimation& outAnim)
 
   return res;
 
-  #undef ARRAY_TO_LIGHTSTATE
+#undef ARRAY_TO_LIGHTSTATE
 }
 
-} // namespace BackpackLightAnimation
-} // namespace Anim
-} // namespace Vector
-} // namespace Anki
+}  // namespace BackpackLightAnimation
+}  // namespace Anim
+}  // namespace Vector
+}  // namespace Anki

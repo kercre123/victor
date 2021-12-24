@@ -15,12 +15,10 @@
 #define PROXR_H_
 
 /// Proximity Profile Reporter Role
-#define BLE_PROX_REPORTER       1
-#if !defined (BLE_SERVER_PRF)
-    #define BLE_SERVER_PRF      1
+#define BLE_PROX_REPORTER 1
+#if !defined(BLE_SERVER_PRF)
+#define BLE_SERVER_PRF 1
 #endif
-
-
 
 /**
  ****************************************************************************************
@@ -29,14 +27,14 @@
  * @brief Proximity Profile Reporter.
  *
  * The PROXR is responsible for providing proximity reporter functionalities to
- * upper layer module or application. The device using this profile takes the role
- * of a proximity reporter role.
+ * upper layer module or application. The device using this profile takes the
+ *role of a proximity reporter role.
  *
- * Proximity Reporter (PR): A PR (e.g. a watch, key fob, etc) is the term used by
- * this profile to describe a personal device that a user carries with them and that
- * has low power requirement (i.e. it is operating with a button cell), allowing another
- * device to monitor their connection. The device may have a simple user alert
- * functionality, for example a blinking LED or audible output.
+ * Proximity Reporter (PR): A PR (e.g. a watch, key fob, etc) is the term used
+ *by this profile to describe a personal device that a user carries with them
+ *and that has low power requirement (i.e. it is operating with a button cell),
+ *allowing another device to monitor their connection. The device may have a
+ *simple user alert functionality, for example a blinking LED or audible output.
  * @{
  ****************************************************************************************
  */
@@ -55,57 +53,51 @@
  */
 
 /// LLS Handles offsets
-enum
-{
-    LLS_IDX_SVC,
+enum {
+  LLS_IDX_SVC,
 
-    LLS_IDX_ALERT_LVL_CHAR,
-    LLS_IDX_ALERT_LVL_VAL,
+  LLS_IDX_ALERT_LVL_CHAR,
+  LLS_IDX_ALERT_LVL_VAL,
 
-    LLS_IDX_NB,
+  LLS_IDX_NB,
 };
 
 /// IAS Handles offsets
-enum
-{
-    IAS_IDX_SVC,
+enum {
+  IAS_IDX_SVC,
 
-    IAS_IDX_ALERT_LVL_CHAR,
-    IAS_IDX_ALERT_LVL_VAL,
+  IAS_IDX_ALERT_LVL_CHAR,
+  IAS_IDX_ALERT_LVL_VAL,
 
-    IAS_IDX_NB,
+  IAS_IDX_NB,
 };
 
 /// TXPS Handles offsets
-enum
-{
-    TXPS_IDX_SVC,
+enum {
+  TXPS_IDX_SVC,
 
-    TXPS_IDX_TX_POWER_LVL_CHAR,
-    TXPS_IDX_TX_POWER_LVL_VAL,
+  TXPS_IDX_TX_POWER_LVL_CHAR,
+  TXPS_IDX_TX_POWER_LVL_VAL,
 
-    TXPS_IDX_NB,
+  TXPS_IDX_NB,
 };
 
-///Characteristics Code for Write Indications
-enum
-{
-    PROXR_ERR_CHAR,
-    PROXR_LLS_CHAR,
-    PROXR_IAS_CHAR,
+/// Characteristics Code for Write Indications
+enum {
+  PROXR_ERR_CHAR,
+  PROXR_LLS_CHAR,
+  PROXR_IAS_CHAR,
 };
 
-///Alert Level Values
-enum
-{
-    PROXR_ALERT_NONE,
-    PROXR_ALERT_MILD,
-    PROXR_ALERT_HIGH,
+/// Alert Level Values
+enum {
+  PROXR_ALERT_NONE,
+  PROXR_ALERT_MILD,
+  PROXR_ALERT_HIGH,
 };
-
 
 /// Pointer to the connection clean-up function
-#define PROXR_CLEANUP_FNCT        (NULL)
+#define PROXR_CLEANUP_FNCT (NULL)
 
 /*
  * STRUCTURES
@@ -113,17 +105,16 @@ enum
  */
 
 /// Proximity reporter environment variable
-struct proxr_env_tag
-{
-    /// Connection Information
-    struct prf_con_info con_info;
+struct proxr_env_tag {
+  /// Connection Information
+  struct prf_con_info con_info;
 
-    /// LLS Start Handle
-    uint16_t lls_shdl;
-    /// IAS Start Handle
-    uint16_t ias_shdl;
-    /// TXPS Start Handle
-    uint16_t txps_shdl;
+  /// LLS Start Handle
+  uint16_t lls_shdl;
+  /// IAS Start Handle
+  uint16_t ias_shdl;
+  /// TXPS Start Handle
+  uint16_t txps_shdl;
 };
 
 /*
@@ -183,10 +174,10 @@ void proxr_init(void);
  * @brief Disable role.
  ****************************************************************************************
  */
-void proxr_disable(uint16_t conhdl); 
+void proxr_disable(uint16_t conhdl);
 
-#endif //BLE_PROX_REPORTER
+#endif  // BLE_PROX_REPORTER
 
 /// @} PROXR
 
-#endif // PROXR_H_
+#endif  // PROXR_H_

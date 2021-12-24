@@ -34,99 +34,64 @@
 #include "general.h"
 #include "nn_index.h"
 
-namespace cvflann
-{
+namespace cvflann {
 
-struct LinearIndexParams : public IndexParams
-{
-    LinearIndexParams()
-    {
-        (* this)["algorithm"] = FLANN_INDEX_LINEAR;
-    }
+struct LinearIndexParams : public IndexParams {
+  LinearIndexParams() { (*this)["algorithm"] = FLANN_INDEX_LINEAR; }
 };
 
 template <typename Distance>
-class LinearIndex : public NNIndex<Distance>
-{
-public:
+class LinearIndex : public NNIndex<Distance> {
+ public:
+  typedef typename Distance::ElementType ElementType;
+  typedef typename Distance::ResultType DistanceType;
 
-    typedef typename Distance::ElementType ElementType;
-    typedef typename Distance::ResultType DistanceType;
+  LinearIndex(const Matrix<ElementType>& inputData,
+              const IndexParams& params = LinearIndexParams(),
+              Distance d = Distance())
+      : dataset_(inputData), index_params_(params), distance_(d) {}
 
+  LinearIndex(const LinearIndex&);
+  LinearIndex& operator=(const LinearIndex&);
 
-    LinearIndex(const Matrix<ElementType>& inputData, const IndexParams& params = LinearIndexParams(),
-                Distance d = Distance()) :
-        dataset_(inputData), index_params_(params), distance_(d)
-    {
+  flann_algorithm_t getType() const { return FLANN_INDEX_LINEAR; }
+
+  size_t size() const { return dataset_.rows; }
+
+  size_t veclen() const { return dataset_.cols; }
+
+  int usedMemory() const { return 0; }
+
+  void buildIndex() { /* nothing to do here for linear search */ }
+
+  void saveIndex(FILE*) { /* nothing to do here for linear search */ }
+
+  void loadIndex(FILE*) {
+    /* nothing to do here for linear search */
+
+    index_params_["algorithm"] = getType();
+  }
+
+  void findNeighbors(ResultSet<DistanceType>& resultSet, const ElementType* vec,
+                     const SearchParams& /*searchParams*/) {
+    ElementType* data = dataset_.data;
+    for (size_t i = 0; i < dataset_.rows; ++i, data += dataset_.cols) {
+      DistanceType dist = distance_(data, vec, dataset_.cols);
+      resultSet.addPoint(dist, (int)i);
     }
+  }
 
-    LinearIndex(const LinearIndex&);
-    LinearIndex& operator=(const LinearIndex&);
+  IndexParams getParameters() const { return index_params_; }
 
-    flann_algorithm_t getType() const
-    {
-        return FLANN_INDEX_LINEAR;
-    }
-
-
-    size_t size() const
-    {
-        return dataset_.rows;
-    }
-
-    size_t veclen() const
-    {
-        return dataset_.cols;
-    }
-
-
-    int usedMemory() const
-    {
-        return 0;
-    }
-
-    void buildIndex()
-    {
-        /* nothing to do here for linear search */
-    }
-
-    void saveIndex(FILE*)
-    {
-        /* nothing to do here for linear search */
-    }
-
-
-    void loadIndex(FILE*)
-    {
-        /* nothing to do here for linear search */
-
-        index_params_["algorithm"] = getType();
-    }
-
-    void findNeighbors(ResultSet<DistanceType>& resultSet, const ElementType* vec, const SearchParams& /*searchParams*/)
-    {
-        ElementType* data = dataset_.data;
-        for (size_t i = 0; i < dataset_.rows; ++i, data += dataset_.cols) {
-            DistanceType dist = distance_(data, vec, dataset_.cols);
-            resultSet.addPoint(dist, (int)i);
-        }
-    }
-
-    IndexParams getParameters() const
-    {
-        return index_params_;
-    }
-
-private:
-    /** The dataset */
-    const Matrix<ElementType> dataset_;
-    /** Index parameters */
-    IndexParams index_params_;
-    /** Index distance */
-    Distance distance_;
-
+ private:
+  /** The dataset */
+  const Matrix<ElementType> dataset_;
+  /** Index parameters */
+  IndexParams index_params_;
+  /** Index distance */
+  Distance distance_;
 };
 
-}
+}  // namespace cvflann
 
-#endif // OPENCV_FLANN_LINEAR_INDEX_H_
+#endif  // OPENCV_FLANN_LINEAR_INDEX_H_

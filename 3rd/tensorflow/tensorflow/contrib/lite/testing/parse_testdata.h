@@ -16,6 +16,7 @@ limitations under the License.
 #define TENSORFLOW_CONTRIB_LITE_NNAPI_PARSE_TESTDATA_H_
 
 #include <vector>
+
 #include "tensorflow/contrib/lite/interpreter.h"
 #include "tensorflow/contrib/lite/testing/test_runner.h"
 

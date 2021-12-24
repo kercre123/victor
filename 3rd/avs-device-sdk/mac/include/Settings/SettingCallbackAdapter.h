@@ -18,44 +18,48 @@
 #include <functional>
 #include <memory>
 
-#include "SettingsManager.h"
 #include "SettingObserverInterface.h"
+#include "SettingsManager.h"
 
 namespace alexaClientSDK {
 namespace settings {
 
 /**
- * Interface for the SettingCallbackAdapter that will allow callbacks to be stored in one single container.
+ * Interface for the SettingCallbackAdapter that will allow callbacks to be
+ * stored in one single container.
  *
- * @tparam ManagerT The setting manager type that this callback will be added to.
+ * @tparam ManagerT The setting manager type that this callback will be added
+ * to.
  */
 template <typename ManagerT>
 class SettingCallbackAdapterInterface {
-public:
-    /**
-     * Add callback to the given manager.
-     *
-     * @param manager Manager that has the setting to be observed.
-     * @return @c true if it succeeds; @false otherwise.
-     */
-    virtual bool addToManager(ManagerT& manager) = 0;
+ public:
+  /**
+   * Add callback to the given manager.
+   *
+   * @param manager Manager that has the setting to be observed.
+   * @return @c true if it succeeds; @false otherwise.
+   */
+  virtual bool addToManager(ManagerT& manager) = 0;
 
-    /**
-     * Remove callback from the given manager.
-     *
-     * @param manager Manager that has the setting that was being observed.
-     */
-    virtual void removeFromManager(ManagerT& manager) = 0;
+  /**
+   * Remove callback from the given manager.
+   *
+   * @param manager Manager that has the setting that was being observed.
+   */
+  virtual void removeFromManager(ManagerT& manager) = 0;
 };
 
 /**
- * A SettingCallbackAdapter can be used to register callback functions called when there is a setting notification.
+ * A SettingCallbackAdapter can be used to register callback functions called
+ * when there is a setting notification.
  *
  * This is an example of how to use this adapter.
  *
  * @code
- *   MyClass(std::shared_ptr<DeviceSettingsManager> manager) : m_manager {manager} {
- *      m_adapter = SettingCallbackAdapter<DeviceSettingsManager, id>::create([](bool, SettingNotifications) {
+ *   MyClass(std::shared_ptr<DeviceSettingsManager> manager) : m_manager
+ * {manager} { m_adapter = SettingCallbackAdapter<DeviceSettingsManager,
+ * id>::create([](bool, SettingNotifications) {
  *          // do something.
  *      });
  *      m_adapter->addToManager(*m_manager);
@@ -66,86 +70,96 @@ public:
  *   }
  * @endcode
  *
- * @tparam ManagerT The setting manager type that this callback will be added to.
+ * @tparam ManagerT The setting manager type that this callback will be added
+ * to.
  * @tparam id The id of the setting inside the manager.
  */
 template <typename ManagerT, size_t id>
-class SettingCallbackAdapter
-        : public SettingCallbackAdapterInterface<ManagerT>
-        , public ManagerT::template ObserverType<id>
-        , public std::enable_shared_from_this<SettingCallbackAdapter<ManagerT, id>> {
-public:
-    /// Setting value type.
-    using ValueType = typename ManagerT::template ValueType<id>;
+class SettingCallbackAdapter : public SettingCallbackAdapterInterface<ManagerT>,
+                               public ManagerT::template ObserverType<id>,
+                               public std::enable_shared_from_this<
+                                   SettingCallbackAdapter<ManagerT, id>> {
+ public:
+  /// Setting value type.
+  using ValueType = typename ManagerT::template ValueType<id>;
 
-    /// Callback function value type.
-    using FunctionType = std::function<void(const ValueType&, SettingNotifications)>;
+  /// Callback function value type.
+  using FunctionType =
+      std::function<void(const ValueType&, SettingNotifications)>;
 
-    /**
-     * Creates a SettingCallbackAdapter object.
-     *
-     * @param callback The function callback that should be called upon notification.
-     */
-    static std::shared_ptr<SettingCallbackAdapter> create(FunctionType callback);
+  /**
+   * Creates a SettingCallbackAdapter object.
+   *
+   * @param callback The function callback that should be called upon
+   * notification.
+   */
+  static std::shared_ptr<SettingCallbackAdapter> create(FunctionType callback);
 
-    /**
-     * The virtual destructor.
-     */
-    virtual ~SettingCallbackAdapter() = default;
+  /**
+   * The virtual destructor.
+   */
+  virtual ~SettingCallbackAdapter() = default;
 
-    /// @name Functions from @c SettingCallbackAdapterInterface
-    /// @{
-    bool addToManager(ManagerT& manager) override;
-    void removeFromManager(ManagerT& manager) override;
-    /// @}
+  /// @name Functions from @c SettingCallbackAdapterInterface
+  /// @{
+  bool addToManager(ManagerT& manager) override;
+  void removeFromManager(ManagerT& manager) override;
+  /// @}
 
-private:
-    /**
-     * Constructor.
-     * @param callback The function callback that should be called upon notification.
-     */
-    SettingCallbackAdapter(FunctionType callback);
+ private:
+  /**
+   * Constructor.
+   * @param callback The function callback that should be called upon
+   * notification.
+   */
+  SettingCallbackAdapter(FunctionType callback);
 
-    /// @name SettingObserverInterface function
-    /// @{
-    virtual void onSettingNotification(const ValueType& value, SettingNotifications notification) override;
-    /// @}
+  /// @name SettingObserverInterface function
+  /// @{
+  virtual void onSettingNotification(
+      const ValueType& value, SettingNotifications notification) override;
+  /// @}
 
-    /// Saves the callback method which will be used during the @c onChanged call.
-    FunctionType m_callback;
+  /// Saves the callback method which will be used during the @c onChanged call.
+  FunctionType m_callback;
 };
 
 template <typename ManagerT, size_t id>
 void SettingCallbackAdapter<ManagerT, id>::onSettingNotification(
     const ValueType& value,
     alexaClientSDK::settings::SettingNotifications notification) {
-    m_callback(value, notification);
+  m_callback(value, notification);
 }
 
 template <typename ManagerT, size_t id>
-SettingCallbackAdapter<ManagerT, id>::SettingCallbackAdapter(FunctionType callback) : m_callback{callback} {
-}
+SettingCallbackAdapter<ManagerT, id>::SettingCallbackAdapter(
+    FunctionType callback)
+    : m_callback{callback} {}
 
 template <typename ManagerT, size_t id>
 bool SettingCallbackAdapter<ManagerT, id>::addToManager(ManagerT& manager) {
-    /// The template keyword is required because addObserver definition depends on ManagerT.
-    return manager.template addObserver<id>(this->shared_from_this());
+  /// The template keyword is required because addObserver definition depends on
+  /// ManagerT.
+  return manager.template addObserver<id>(this->shared_from_this());
 };
 
 template <typename ManagerT, size_t id>
-void SettingCallbackAdapter<ManagerT, id>::removeFromManager(ManagerT& manager) {
-    /// The template keyword is required because removeObserver definition depends on ManagerT.
-    return manager.template removeObserver<id>(this->shared_from_this());
+void SettingCallbackAdapter<ManagerT, id>::removeFromManager(
+    ManagerT& manager) {
+  /// The template keyword is required because removeObserver definition depends
+  /// on ManagerT.
+  return manager.template removeObserver<id>(this->shared_from_this());
 };
 
 template <typename ManagerT, size_t id>
-std::shared_ptr<SettingCallbackAdapter<ManagerT, id>> SettingCallbackAdapter<ManagerT, id>::create(
+std::shared_ptr<SettingCallbackAdapter<ManagerT, id>>
+SettingCallbackAdapter<ManagerT, id>::create(
     SettingCallbackAdapter::FunctionType callback) {
-    if (callback) {
-        return std::shared_ptr<SettingCallbackAdapter<ManagerT, id>>(
-            new SettingCallbackAdapter<ManagerT, id>(callback));
-    }
-    return nullptr;
+  if (callback) {
+    return std::shared_ptr<SettingCallbackAdapter<ManagerT, id>>(
+        new SettingCallbackAdapter<ManagerT, id>(callback));
+  }
+  return nullptr;
 }
 
 }  // namespace settings

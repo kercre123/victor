@@ -4,8 +4,7 @@
 
 #include <stdio.h>
 
-int main(void)
-{
+int main(void) {
 #ifdef ABC
   printf("With define\n");
 #else

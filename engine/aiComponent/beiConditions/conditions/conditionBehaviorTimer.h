@@ -1,15 +1,14 @@
 /**
-* File: conditionBehaviorTimer.h
-*
-* Author: ross
-* Created: feb 23 2018
-*
-* Description: Condition that checks the state of a shared named BehaviorTimer
-*
-* Copyright: Anki, Inc. 2018
-*
-**/
-
+ * File: conditionBehaviorTimer.h
+ *
+ * Author: ross
+ * Created: feb 23 2018
+ *
+ * Description: Condition that checks the state of a shared named BehaviorTimer
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 #ifndef __Engine_AiComponent_BeiConditions_Conditions_ConditionBehaviorTimer_H__
 #define __Engine_AiComponent_BeiConditions_Conditions_ConditionBehaviorTimer_H__
@@ -20,25 +19,22 @@
 namespace Anki {
 namespace Vector {
 
-
-class ConditionBehaviorTimer : public IBEICondition
-{
-public:
-  
+class ConditionBehaviorTimer : public IBEICondition {
+ public:
   explicit ConditionBehaviorTimer(const Json::Value& config);
   ~ConditionBehaviorTimer();
 
-protected:
-  
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  
-private:
-  
+ protected:
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) const override;
+
+ private:
   std::string _timerName;
   float _cooldown_s;
 };
-  
-} // namespace
-} // namespace
 
-#endif // endif __Engine_AiComponent_BeiConditions_Conditions_ConditionBehaviorTimer_H__
+}  // namespace Vector
+}  // namespace Anki
+
+#endif  // endif
+        // __Engine_AiComponent_BeiConditions_Conditions_ConditionBehaviorTimer_H__

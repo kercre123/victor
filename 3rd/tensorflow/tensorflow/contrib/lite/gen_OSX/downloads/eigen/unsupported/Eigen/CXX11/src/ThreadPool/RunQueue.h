@@ -10,7 +10,6 @@
 #ifndef EIGEN_CXX11_THREADPOOL_RUNQUEUE_H_
 #define EIGEN_CXX11_THREADPOOL_RUNQUEUE_H_
 
-
 namespace Eigen {
 
 // RunQueue is a fixed-size, partially non-blocking deque or Work items.
@@ -131,9 +130,8 @@ class RunQueue {
       Elem* e = &array_[mid & kMask];
       uint8_t s = e->state.load(std::memory_order_relaxed);
       if (n == 0) {
-        if (s != kReady ||
-            !e->state.compare_exchange_strong(s, kBusy,
-                                              std::memory_order_acquire))
+        if (s != kReady || !e->state.compare_exchange_strong(
+                               s, kBusy, std::memory_order_acquire))
           continue;
         start = mid;
       } else {

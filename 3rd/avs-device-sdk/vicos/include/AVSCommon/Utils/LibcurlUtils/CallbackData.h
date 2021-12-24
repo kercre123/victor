@@ -28,58 +28,59 @@ namespace libcurlUtils {
  * Class to handle CURL callback data
  */
 class CallbackData {
-public:
-    /**
-     * Constructor.
-     */
-    CallbackData() = default;
+ public:
+  /**
+   * Constructor.
+   */
+  CallbackData() = default;
 
-    /**
-     * Constructor that initializes with a value.
-     */
-    CallbackData(const char* data);
+  /**
+   * Constructor that initializes with a value.
+   */
+  CallbackData(const char* data);
 
-    /**
-     * This will append new data to the existing instance.
-     *
-     * @param data The data that needs to be appended.
-     * @param dataSize The size of the data to be appended.
-     * @return The size of data that was appended.
-     */
-    size_t appendData(const char* data, size_t dataSize);
+  /**
+   * This will append new data to the existing instance.
+   *
+   * @param data The data that needs to be appended.
+   * @param dataSize The size of the data to be appended.
+   * @return The size of data that was appended.
+   */
+  size_t appendData(const char* data, size_t dataSize);
 
-    /**
-     * This will append new data to the existing instance.
-     *
-     * @param data The data that needs to be appended.
-     * @return The size of data that was appended.
-     */
-    size_t appendData(const char* data);
+  /**
+   * This will append new data to the existing instance.
+   *
+   * @param data The data that needs to be appended.
+   * @return The size of data that was appended.
+   */
+  size_t appendData(const char* data);
 
-    /**
-     * This will clear the data.
-     */
-    void clearData();
+  /**
+   * This will clear the data.
+   */
+  void clearData();
 
-    /**
-     * Will return the callback data in the passed in container.
-     *
-     * @param dataContainer The container in which the callback data will be returned.
-     * @param dataSize The expected size of the data to be returned.
-     * @return Size of the returned callback data.
-     */
-    size_t getData(char* dataContainer, size_t dataSize);
+  /**
+   * Will return the callback data in the passed in container.
+   *
+   * @param dataContainer The container in which the callback data will be
+   * returned.
+   * @param dataSize The expected size of the data to be returned.
+   * @return Size of the returned callback data.
+   */
+  size_t getData(char* dataContainer, size_t dataSize);
 
-    /**
-     * Returns the callback data size.
-     *
-     * @return Callback data size.
-     */
-    size_t getSize();
+  /**
+   * Returns the callback data size.
+   *
+   * @return Callback data size.
+   */
+  size_t getSize();
 
-private:
-    /// Callback data
-    std::vector<char> m_memory;
+ private:
+  /// Callback data
+  std::vector<char> m_memory;
 };
 
 }  // namespace libcurlUtils

@@ -32,44 +32,49 @@ namespace playlistParser {
  * An observer of the playlist parser.
  */
 class PlaylistParserObserverInterface {
-public:
-    /**
-     * Destructor.
-     */
-    virtual ~PlaylistParserObserverInterface() = default;
+ public:
+  /**
+   * Destructor.
+   */
+  virtual ~PlaylistParserObserverInterface() = default;
 
-    /**
-     * Notification that an entry has been parsed.
-     *
-     * @param requestId The id of the callback to connect this callback to an original request.
-     * @param playlistEntry The parsing result. The @c url field will be valid if @c parseResult is different than
-     * ERROR.
-     *
-     * @note This function is always called from a single thread in PlayListParser.
-     */
-    virtual void onPlaylistEntryParsed(int requestId, PlaylistEntry playlistEntry) = 0;
+  /**
+   * Notification that an entry has been parsed.
+   *
+   * @param requestId The id of the callback to connect this callback to an
+   * original request.
+   * @param playlistEntry The parsing result. The @c url field will be valid if
+   * @c parseResult is different than ERROR.
+   *
+   * @note This function is always called from a single thread in
+   * PlayListParser.
+   */
+  virtual void onPlaylistEntryParsed(int requestId,
+                                     PlaylistEntry playlistEntry) = 0;
 };
 
 /**
  * Write a @c PlaylistParseResult value to an @c ostream as a string.
  *
  * @param stream The stream to write the value to.
- * @param result The PlaylistParseResult value to write to the @c ostream as a string.
+ * @param result The PlaylistParseResult value to write to the @c ostream as a
+ * string.
  * @return The @c ostream that was passed in and written to.
  */
-inline std::ostream& operator<<(std::ostream& stream, const PlaylistParseResult& result) {
-    switch (result) {
-        case PlaylistParseResult::FINISHED:
-            stream << "FINISHED";
-            break;
-        case PlaylistParseResult::ERROR:
-            stream << "ERROR";
-            break;
-        case PlaylistParseResult::STILL_ONGOING:
-            stream << "STILL_ONGOING";
-            break;
-    }
-    return stream;
+inline std::ostream& operator<<(std::ostream& stream,
+                                const PlaylistParseResult& result) {
+  switch (result) {
+    case PlaylistParseResult::FINISHED:
+      stream << "FINISHED";
+      break;
+    case PlaylistParseResult::ERROR:
+      stream << "ERROR";
+      break;
+    case PlaylistParseResult::STILL_ONGOING:
+      stream << "STILL_ONGOING";
+      break;
+  }
+  return stream;
 }
 
 }  // namespace playlistParser

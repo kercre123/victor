@@ -24,21 +24,21 @@ namespace avsCommon {
 namespace avs {
 
 /**
- * Builds a JSON event string which includes the header, the @c payload and an optional @c context.
- * The header includes the namespace, name, message Id and an optional @c dialogRequestId.
- * The message Id required for the header is a random string that is generated and added to the
- * header.
+ * Builds a JSON event string which includes the header, the @c payload and an
+ * optional @c context. The header includes the namespace, name, message Id and
+ * an optional @c dialogRequestId. The message Id required for the header is a
+ * random string that is generated and added to the header.
  *
  * @param eventName The name of the event to be include in the header.
- * @param dialogRequestIdString The value associated with the "dialogRequestId" key.
+ * @param dialogRequestIdString The value associated with the "dialogRequestId"
+ * key.
  * @param payload The payload value associated with the "payload" key.
  * @param context Optional @c context to be sent with the event message.
- * @return A pair object consisting of the messageId and the event JSON string if successful,
- * else a pair of empty strings.
+ * @return A pair object consisting of the messageId and the event JSON string
+ * if successful, else a pair of empty strings.
  */
 const std::pair<std::string, std::string> buildJsonEventString(
-    const std::string& nameSpace,
-    const std::string& eventName,
+    const std::string& nameSpace, const std::string& eventName,
     const std::string& dialogRequestIdValue = "",
     const std::string& jsonPayloadValue = "{}",
     const std::string& jsonContext = "");

@@ -15,22 +15,22 @@
 #ifndef __Victor_OSState_H__
 #define __Victor_OSState_H__
 
-#include "coretech/common/shared/types.h"
-#include "util/singleton/dynamicSingleton.h"
-#include "json/json.h"
-
 #include <functional>
 #include <string>
 
+#include "coretech/common/shared/types.h"
+#include "json/json.h"
+#include "util/singleton/dynamicSingleton.h"
+
 // Forward declarations
 namespace webots {
-  class Supervisor;
+class Supervisor;
 }
 namespace Anki {
-  namespace Vector {
-    class DASManager;
-  }
+namespace Vector {
+class DASManager;
 }
+}  // namespace Anki
 
 namespace Anki {
 namespace Vector {
@@ -42,17 +42,12 @@ enum class DesiredCPUFrequency : uint32_t {
   Manual533Mhz = 533333,
 };
 
-class OSState : public Util::DynamicSingleton<OSState>
-{
+class OSState : public Util::DynamicSingleton<OSState> {
   ANKIUTIL_FRIEND_SINGLETON(OSState);
 
-public:
+ public:
   // Public types
-  typedef enum Alert {
-    None = 0,
-    Yellow = 1,
-    Red = 2
-  } Alert;
+  typedef enum Alert { None = 0, Yellow = 1, Red = 2 } Alert;
 
   // System-wide memory stats
   typedef struct MemoryInfo {
@@ -91,8 +86,8 @@ public:
     Alert alert = Alert::None;
   } DiskInfo;
 
-// Public destructor
-~OSState();
+  // Public destructor
+  ~OSState();
 
   void Update(BaseStationTime_t currTime_nanosec);
 
@@ -106,7 +101,8 @@ public:
   // ever care about CPU freq and temperature.
   void SetUpdatePeriod(uint32_t milliseconds);
 
-  void SendToWebVizCallback(const std::function<void(const Json::Value&)>& callback);
+  void SendToWebVizCallback(
+      const std::function<void(const Json::Value&)>& callback);
 
   // Returns true if CPU frequency falls below kNominalCPUFreq_kHz
   bool IsCPUThrottling() const;
@@ -121,30 +117,31 @@ public:
   void SetDesiredCPUFrequency(DesiredCPUFrequency freq);
 
   // Returns uptime (and idle time) in seconds
-  float GetUptimeAndIdleTime(float &idleTime_s) const;
+  float GetUptimeAndIdleTime(float& idleTime_s) const;
 
   // Get system-wide memory info
   // Values are fetched once per update period
-  void GetMemoryInfo(MemoryInfo & info) const;
+  void GetMemoryInfo(MemoryInfo& info) const;
 
   // Get current wifi info.
   // Values are fetched from wlan device on each call.
   // Returns true on success, false on error.
-  bool GetWifiInfo(WifiInfo & info) const;
+  bool GetWifiInfo(WifiInfo& info) const;
 
   // Get disk info for given path.
   // Values are fetched from file system on each call.
   // Returns true on success, false on error.
-  bool GetDiskInfo(const std::string & path, DiskInfo & info) const;
+  bool GetDiskInfo(const std::string& path, DiskInfo& info) const;
 
   // Returns data about CPU times
-  void GetCPUTimeStats(std::vector<std::string> & stats) const;
+  void GetCPUTimeStats(std::vector<std::string>& stats) const;
 
   // Returns our ip address
   const std::string& GetIPAddress(bool update = false);
 
   // Returns whether or not the IP address is "valid"
-  // which currently just means it is an ipv4 address and it's not a link-local IP
+  // which currently just means it is an ipv4 address and it's not a link-local
+  // IP
   bool IsValidIPAddress(const std::string& ip) const;
 
   // Returns the SSID of the connected wifi network
@@ -157,11 +154,9 @@ public:
   uint64_t GetWifiRxBytes() const;
 
   // Returns the ESN (electronic serial number) as a u32
-  u32 GetSerialNumber()
-  {
+  u32 GetSerialNumber() {
     const std::string& serialNum = GetSerialNumberAsString();
-    if(!serialNum.empty())
-    {
+    if (!serialNum.empty()) {
       return static_cast<u32>(std::stoul(serialNum, nullptr, 16));
     }
 
@@ -174,7 +169,8 @@ public:
   // Returns the os build version (time of build)
   const std::string& GetOSBuildVersion();
 
-  void GetOSBuildVersion(int& major, int& minor, int& incremental, int& build) const;
+  void GetOSBuildVersion(int& major, int& minor, int& incremental,
+                         int& build) const;
 
   // Returns "major.minor.build" for reporting to DAS
   const std::string& GetRobotVersion();
@@ -194,8 +190,9 @@ public:
   // while robot is on charger
   bool IsInRecoveryMode();
 
-  // True if this current boot of the robot was the result of an automatic reboot, as opposed to the user
-  // turning off the robot or it powering off for some other reason, like a dead battery
+  // True if this current boot of the robot was the result of an automatic
+  // reboot, as opposed to the user turning off the robot or it powering off for
+  // some other reason, like a dead battery
   bool RebootedForMaintenance() const;
 
   // True if we've synced time with a time server
@@ -212,15 +209,15 @@ public:
 
   // Reads CPU times data
   void UpdateCPUTimeStats() const;
-  
-protected:
-   // Return true if robot has a valid EMR.
-   // This function is "off limits" to normal robot services
-   // but allows vic-dasmgr to check for ESN without crashing.
+
+ protected:
+  // Return true if robot has a valid EMR.
+  // This function is "off limits" to normal robot services
+  // but allows vic-dasmgr to check for ESN without crashing.
   friend class DASManager;
   bool HasValidEMR() const;
 
-private:
+ private:
   // private ctor
   OSState();
 
@@ -243,24 +240,23 @@ private:
 
   uint32_t kNominalCPUFreq_kHz = 800000;
 
-  std::string _ipAddress       = "";
-  std::string _ssid            = "";
+  std::string _ipAddress = "";
+  std::string _ssid = "";
   std::string _serialNumString = "";
-  std::string _osBuildVersion  = "";
-  std::string _robotVersion    = "";
-  std::string _buildSha        = "";
-  std::string _bootID          = "";
-  bool        _isUserSpaceSecure = false;
-  bool        _hasValidIPAddress = false;
-  bool        _isAnkiDevRobot = false;
+  std::string _osBuildVersion = "";
+  std::string _robotVersion = "";
+  std::string _buildSha = "";
+  std::string _bootID = "";
+  bool _isUserSpaceSecure = false;
+  bool _hasValidIPAddress = false;
+  bool _isAnkiDevRobot = false;
 
-  inline uint32_t GetPressure(uint32_t avail, uint32_t total) const
-  {
+  inline uint32_t GetPressure(uint32_t avail, uint32_t total) const {
     return (avail > 0 ? total / avail : std::numeric_limits<uint32_t>::max());
   }
 
-  inline Alert GetAlert(uint32_t pressure, uint32_t yellow, uint32_t red) const
-  {
+  inline Alert GetAlert(uint32_t pressure, uint32_t yellow,
+                        uint32_t red) const {
     if (pressure > red) {
       return Alert::Red;
     }
@@ -270,9 +266,9 @@ private:
     return Alert::None;
   }
 
-}; // class OSState
+};  // class OSState
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
 #endif /* __Victor_OSState_H__ */

@@ -4,10 +4,11 @@
  * Author: ross
  * Created: Nov 4 2018
  *
- * Description: Subclass of the MessageRouter that accepts MessageRequestObserverInterface observers.
- *              We need this to receive onSendCompleted, which provides error status on failed
- *              attempts to send data to AVS.
- *              
+ * Description: Subclass of the MessageRouter that accepts
+ * MessageRequestObserverInterface observers. We need this to receive
+ * onSendCompleted, which provides error status on failed attempts to send data
+ * to AVS.
+ *
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -34,41 +35,50 @@
 
 #include <ACL/Transport/MessageRouter.h>
 // todo: fwd declare where possible
-#include <AVSCommon/SDKInterfaces/MessageRequestObserverInterface.h>
 #include <AVSCommon/AVS/Attachment/AttachmentManager.h>
 #include <AVSCommon/AVS/MessageRequest.h>
-#include "AVSCommon/SDKInterfaces/AuthDelegateInterface.h"
+#include <AVSCommon/SDKInterfaces/MessageRequestObserverInterface.h>
+
 #include "ACL/Transport/MessageConsumerInterface.h"
 #include "ACL/Transport/MessageRouterInterface.h"
 #include "ACL/Transport/MessageRouterObserverInterface.h"
 #include "ACL/Transport/TransportFactoryInterface.h"
 #include "ACL/Transport/TransportInterface.h"
-
+#include "AVSCommon/SDKInterfaces/AuthDelegateInterface.h"
 
 namespace Anki {
 namespace Vector {
-    
-class AlexaMessageRouter : public alexaClientSDK::acl::MessageRouter
-{
-public:
-  
-  AlexaMessageRouter( const std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface>>& observers,
-                      std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::AuthDelegateInterface> authDelegate,
-                      std::shared_ptr<alexaClientSDK::avsCommon::avs::attachment::AttachmentManager> attachmentManager,
-                      std::shared_ptr<alexaClientSDK::acl::TransportFactoryInterface> transportFactory,
-                      const std::string& avsEndpoint = "" );
-  
-  virtual void sendMessage( std::shared_ptr<alexaClientSDK::avsCommon::avs::MessageRequest> request ) override;
 
-  virtual void consumeMessage(const std::string& contextId, const std::string& message) override;
-  
-private:
-  
-  std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface>> _observers;
+class AlexaMessageRouter : public alexaClientSDK::acl::MessageRouter {
+ public:
+  AlexaMessageRouter(
+      const std::unordered_set<
+          std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::
+                              MessageRequestObserverInterface>>& observers,
+      std::shared_ptr<
+          alexaClientSDK::avsCommon::sdkInterfaces::AuthDelegateInterface>
+          authDelegate,
+      std::shared_ptr<
+          alexaClientSDK::avsCommon::avs::attachment::AttachmentManager>
+          attachmentManager,
+      std::shared_ptr<alexaClientSDK::acl::TransportFactoryInterface>
+          transportFactory,
+      const std::string& avsEndpoint = "");
+
+  virtual void sendMessage(
+      std::shared_ptr<alexaClientSDK::avsCommon::avs::MessageRequest> request)
+      override;
+
+  virtual void consumeMessage(const std::string& contextId,
+                              const std::string& message) override;
+
+ private:
+  std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::
+                                         MessageRequestObserverInterface>>
+      _observers;
 };
 
-  
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // ANIMPROCESS_COZMO_ALEXA_ALEXAMESSAGEROUTER_H
+#endif  // ANIMPROCESS_COZMO_ALEXA_ALEXAMESSAGEROUTER_H

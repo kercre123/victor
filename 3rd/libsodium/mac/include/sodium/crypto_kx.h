@@ -6,9 +6,9 @@
 #include "export.h"
 
 #ifdef __cplusplus
-# ifdef __GNUC__
-#  pragma GCC diagnostic ignored "-Wlong-long"
-# endif
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wlong-long"
+#endif
 extern "C" {
 #endif
 
@@ -42,20 +42,22 @@ int crypto_kx_keypair(unsigned char pk[crypto_kx_PUBLICKEYBYTES],
                       unsigned char sk[crypto_kx_SECRETKEYBYTES]);
 
 SODIUM_EXPORT
-int crypto_kx_client_session_keys(unsigned char rx[crypto_kx_SESSIONKEYBYTES],
-                                  unsigned char tx[crypto_kx_SESSIONKEYBYTES],
-                                  const unsigned char client_pk[crypto_kx_PUBLICKEYBYTES],
-                                  const unsigned char client_sk[crypto_kx_SECRETKEYBYTES],
-                                  const unsigned char server_pk[crypto_kx_PUBLICKEYBYTES])
-            __attribute__ ((warn_unused_result));
+int crypto_kx_client_session_keys(
+    unsigned char rx[crypto_kx_SESSIONKEYBYTES],
+    unsigned char tx[crypto_kx_SESSIONKEYBYTES],
+    const unsigned char client_pk[crypto_kx_PUBLICKEYBYTES],
+    const unsigned char client_sk[crypto_kx_SECRETKEYBYTES],
+    const unsigned char server_pk[crypto_kx_PUBLICKEYBYTES])
+    __attribute__((warn_unused_result));
 
 SODIUM_EXPORT
-int crypto_kx_server_session_keys(unsigned char rx[crypto_kx_SESSIONKEYBYTES],
-                                  unsigned char tx[crypto_kx_SESSIONKEYBYTES],
-                                  const unsigned char server_pk[crypto_kx_PUBLICKEYBYTES],
-                                  const unsigned char server_sk[crypto_kx_SECRETKEYBYTES],
-                                  const unsigned char client_pk[crypto_kx_PUBLICKEYBYTES])
-            __attribute__ ((warn_unused_result));
+int crypto_kx_server_session_keys(
+    unsigned char rx[crypto_kx_SESSIONKEYBYTES],
+    unsigned char tx[crypto_kx_SESSIONKEYBYTES],
+    const unsigned char server_pk[crypto_kx_PUBLICKEYBYTES],
+    const unsigned char server_sk[crypto_kx_SECRETKEYBYTES],
+    const unsigned char client_pk[crypto_kx_PUBLICKEYBYTES])
+    __attribute__((warn_unused_result));
 
 #ifdef __cplusplus
 }

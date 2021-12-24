@@ -46,8 +46,8 @@ typedef struct _aubio_scale_t aubio_scale_t;
   \param ihig higher value of output function
 
 */
-aubio_scale_t * new_aubio_scale(smpl_t flow, smpl_t fhig,
-    smpl_t ilow, smpl_t ihig);
+aubio_scale_t *new_aubio_scale(smpl_t flow, smpl_t fhig, smpl_t ilow,
+                               smpl_t ihig);
 /** delete a scale object
 
   \param s scale object as returned by new_aubio_scale
@@ -60,7 +60,7 @@ void del_aubio_scale(aubio_scale_t *s);
   \param input vector to scale
 
 */
-void aubio_scale_do(aubio_scale_t *s, fvec_t * input);
+void aubio_scale_do(aubio_scale_t *s, fvec_t *input);
 /** modify scale parameters after object creation
 
   \param s scale object as returned by new_aubio_scale
@@ -70,8 +70,8 @@ void aubio_scale_do(aubio_scale_t *s, fvec_t * input);
   \param ihig higher value of output function
 
 */
-uint_t aubio_scale_set_limits (aubio_scale_t *s, smpl_t ilow, smpl_t ihig,
-    smpl_t olow, smpl_t ohig);
+uint_t aubio_scale_set_limits(aubio_scale_t *s, smpl_t ilow, smpl_t ihig,
+                              smpl_t olow, smpl_t ohig);
 
 #ifdef __cplusplus
 }

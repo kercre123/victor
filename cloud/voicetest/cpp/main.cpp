@@ -20,43 +20,33 @@ std::function<void()> stopRecordingFunc;
 // C exports
 extern "C" {
 
-  void StartRecording() {
-    startRecordingFunc();
-  }
+void StartRecording() { startRecordingFunc(); }
 
-  void StopRecording() {
-    stopRecordingFunc();
-  }
-
+void StopRecording() { stopRecordingFunc(); }
 }
 
-int main()
-{
+int main() {
   // add logging
   auto logger = std::make_unique<Anki::Util::PrintfLoggerProvider>();
   Anki::Util::gLoggerProvider = logger.get();
 
   // create audio capture system
   Anki::AudioUtil::AudioCaptureSystem audioCapture{100};
-  audioCapture.SetCallback(std::bind(&AudioInputCallback, std::placeholders::_1, std::placeholders::_2));
+  audioCapture.SetCallback(std::bind(&AudioInputCallback, std::placeholders::_1,
+                                     std::placeholders::_2));
   audioCapture.Init();
 
   // bind C callbacks
-  startRecordingFunc = [&audioCapture] {
-    audioCapture.StartRecording();
-  };
-  stopRecordingFunc = [&audioCapture] {
-    audioCapture.StopRecording();
-  };
+  startRecordingFunc = [&audioCapture] { audioCapture.StartRecording(); };
+  stopRecordingFunc = [&audioCapture] { audioCapture.StopRecording(); };
 
   GoMain(StartRecording, StopRecording);
   return 0;
 }
 
-static void AudioInputCallback(const int16_t* samples, uint32_t numSamples)
-{
+static void AudioInputCallback(const int16_t* samples, uint32_t numSamples) {
   // need a non-const buffer to pass to Go :(
-  std::vector<int16_t> data{samples, samples+numSamples};
+  std::vector<int16_t> data{samples, samples + numSamples};
   GoSlice audioSlice{data.data(), numSamples, numSamples};
   GoAudioCallback(audioSlice);
 }

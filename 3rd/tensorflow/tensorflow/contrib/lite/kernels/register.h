@@ -16,6 +16,7 @@ limitations under the License.
 #define TENSORFLOW_CONTRIB_LITE_KERNELS_REGISTER_H_
 
 #include <unordered_map>
+
 #include "tensorflow/contrib/lite/context.h"
 #include "tensorflow/contrib/lite/model.h"
 

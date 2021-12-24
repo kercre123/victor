@@ -6,9 +6,9 @@
  * @brief Header file - Body Composition Service Server.
  *
  * Copyright (C) 2015. Dialog Semiconductor Ltd, unpublished work. This computer
- * program includes Confidential, Proprietary Information and is a Trade Secret of
- * Dialog Semiconductor Ltd. All use, disclosure, and/or reproduction is prohibited
- * unless authorized in writing. All Rights Reserved.
+ * program includes Confidential, Proprietary Information and is a Trade Secret
+ *of Dialog Semiconductor Ltd. All use, disclosure, and/or reproduction is
+ *prohibited unless authorized in writing. All Rights Reserved.
  *
  * <bluetooth.support@diasemi.com> and contributors.
  *
@@ -28,9 +28,9 @@
  */
 
 /// Body Composition Server Role
-#define BLE_BCS_SERVER              1
-#if !defined (BLE_SERVER_PRF)
-    #define BLE_SERVER_PRF          1
+#define BLE_BCS_SERVER 1
+#if !defined(BLE_SERVER_PRF)
+#define BLE_SERVER_PRF 1
 #endif
 
 /*
@@ -39,9 +39,8 @@
  */
 
 #if (BLE_BCS_SERVER)
-#include "prf_types.h"
-
 #include "bcs_common.h"
+#include "prf_types.h"
 
 /*
  * DEFINES
@@ -54,39 +53,37 @@
  */
 
 /// Body Composition Service Attributes Indexes
-enum
-{
-    BCSS_IDX_SVC,
+enum {
+  BCSS_IDX_SVC,
 
-    BCSS_IDX_FEAT_CHAR,
-    BCSS_IDX_FEAT_VAL,
-    BCSS_IDX_MEAS_CHAR,
-    BCSS_IDX_MEAS_VAL,
-    BCSS_IDX_MEAS_IND_CFG,
+  BCSS_IDX_FEAT_CHAR,
+  BCSS_IDX_FEAT_VAL,
+  BCSS_IDX_MEAS_CHAR,
+  BCSS_IDX_MEAS_VAL,
+  BCSS_IDX_MEAS_IND_CFG,
 
-    BCSS_IDX_NB,
+  BCSS_IDX_NB,
 };
 
 /*
  * TYPE DEFINITIONS
  ****************************************************************************************
  */
-///Body Composition Service Server Environment Variable
-struct bcss_env_tag
-{
-    /// Connection Info
-    struct prf_con_info con_info;
+/// Body Composition Service Server Environment Variable
+struct bcss_env_tag {
+  /// Connection Info
+  struct prf_con_info con_info;
 
-    /// Service Start HandleVAL
-    uint16_t shdl;
+  /// Service Start HandleVAL
+  uint16_t shdl;
 
-    /// Supported features
-    uint32_t features;
+  /// Supported features
+  uint32_t features;
 
-    /// Last measurement set by the App
-    bcs_meas_t *meas;
-    /// Features for measurements that needs to be indicated
-    uint16_t ind_cont_feat;
+  /// Last measurement set by the App
+  bcs_meas_t *meas;
+  /// Features for measurements that needs to be indicated
+  uint16_t ind_cont_feat;
 };
 
 /*
@@ -122,18 +119,20 @@ void bcss_indicate(const bcs_meas_t *meas, uint16_t features, uint16_t mtu);
 
 /**
  ****************************************************************************************
- * @brief Send a BCSS_MEAS_VAL_IND_CFM message to the application to inform it about the
- * status of a indication that was send
+ * @brief Send a BCSS_MEAS_VAL_IND_CFM message to the application to inform it
+ *about the status of a indication that was send
  ****************************************************************************************
  */
 void bcss_ind_cfm_send(uint8_t status);
 
 /**
  ****************************************************************************************
- * @brief Disable actions grouped in getting back to IDLE and sending configuration to requester task
+ * @brief Disable actions grouped in getting back to IDLE and sending
+ *configuration to requester task
  ****************************************************************************************
  */
-void bcss_disable(uint16_t conhdl); ;
+void bcss_disable(uint16_t conhdl);
+;
 
 #endif /* #if (BLE_BCS_SERVER) */
 

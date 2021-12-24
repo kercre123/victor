@@ -24,9 +24,9 @@ namespace utils {
 
 /// Function used to check the machine endianness.
 inline bool littleEndianMachine() {
-    uint16_t original = 1;
-    uint8_t* words = reinterpret_cast<uint8_t*>(&original);
-    return words[0] == 1;
+  uint16_t original = 1;
+  uint8_t* words = reinterpret_cast<uint8_t*>(&original);
+  return words[0] == 1;
 }
 
 }  // namespace utils

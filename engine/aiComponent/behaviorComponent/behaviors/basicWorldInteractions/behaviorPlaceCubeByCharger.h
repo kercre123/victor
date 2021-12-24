@@ -4,8 +4,8 @@
  * Author: Sam Russell
  * Created: 2018-08-08
  *
- * Description: Pick up a cube and place it nearby the charger, "put it away". If the charger can't be found,
- *              just put the cube somewhere else nearby.
+ * Description: Pick up a cube and place it nearby the charger, "put it away".
+ *If the charger can't be found, just put the cube somewhere else nearby.
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -15,11 +15,9 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorPlaceCubeByCharger__
 #pragma once
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-
 #include "coretech/common/engine/math/polygon_fwd.h"
 #include "coretech/common/engine/math/pose.h"
-
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "util/random/rejectionSamplerHelper_fwd.h"
 
 namespace Anki {
@@ -27,42 +25,42 @@ namespace Vector {
 
 // Fwd Declarations
 namespace RobotPointSamplerHelper {
-  class RejectIfInRange;
-  class RejectIfWouldCrossCliff;
-  class RejectIfCollidesWithMemoryMap;
-}
+class RejectIfInRange;
+class RejectIfWouldCrossCliff;
+class RejectIfCollidesWithMemoryMap;
+}  // namespace RobotPointSamplerHelper
 class CarryingComponent;
 class BlockWorldFilter;
 class BehaviorPickUpCube;
 class BehaviorPutDownBlockAtPose;
 
-
-class BehaviorPlaceCubeByCharger : public ICozmoBehavior
-{
-public: 
+class BehaviorPlaceCubeByCharger : public ICozmoBehavior {
+ public:
   virtual ~BehaviorPlaceCubeByCharger() override;
   virtual bool WantsToBeActivatedBehavior() const override;
 
-protected:
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorPlaceCubeByCharger(const Json::Value& config);  
+  explicit BehaviorPlaceCubeByCharger(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-    modifiers.visionModesForActiveScope->insert({ VisionMode::Markers, EVisionUpdateFrequency::High });
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override {
+    modifiers.visionModesForActiveScope->insert(
+        {VisionMode::Markers, EVisionUpdateFrequency::High});
     modifiers.wantsToBeActivatedWhenOnCharger = false;
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
   }
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-
-  enum class PlaceCubeState{
+ private:
+  enum class PlaceCubeState {
     PickUpCube,
     ConfirmCharger,
     SearchForCharger,
@@ -74,16 +72,20 @@ private:
 
   struct InstanceConfig {
     InstanceConfig();
-    std::shared_ptr<BehaviorPickUpCube>         pickupBehavior;
+    std::shared_ptr<BehaviorPickUpCube> pickupBehavior;
     std::shared_ptr<BehaviorPutDownBlockAtPose> putCubeSomewhereBehavior;
-    std::shared_ptr<ICozmoBehavior>             turnToLastFaceBehavior;
-    std::unique_ptr<BlockWorldFilter>           chargerFilter;
+    std::shared_ptr<ICozmoBehavior> turnToLastFaceBehavior;
+    std::unique_ptr<BlockWorldFilter> chargerFilter;
 
-    std::unique_ptr<Util::RejectionSamplerHelper<Point2f>> searchSpacePointEvaluator;
-    std::unique_ptr<Util::RejectionSamplerHelper<Poly2f>>  searchSpacePolyEvaluator;
+    std::unique_ptr<Util::RejectionSamplerHelper<Point2f>>
+        searchSpacePointEvaluator;
+    std::unique_ptr<Util::RejectionSamplerHelper<Poly2f>>
+        searchSpacePolyEvaluator;
 
-    std::shared_ptr<RobotPointSamplerHelper::RejectIfWouldCrossCliff> condHandleCliffs;
-    std::shared_ptr<RobotPointSamplerHelper::RejectIfCollidesWithMemoryMap> condHandleCollisions;
+    std::shared_ptr<RobotPointSamplerHelper::RejectIfWouldCrossCliff>
+        condHandleCliffs;
+    std::shared_ptr<RobotPointSamplerHelper::RejectIfCollidesWithMemoryMap>
+        condHandleCollisions;
 
     bool turnToUserBeforeSuccessReaction;
     bool turnToUserAfterSuccessReaction;
@@ -116,7 +118,7 @@ private:
   bool RobotKnowsWhereChargerIs();
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorPlaceCubeByCharger__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorPlaceCubeByCharger__

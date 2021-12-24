@@ -10,14 +10,13 @@
 #define WiFiNetworkStream_hpp
 
 #include <stdio.h>
+
 #include "INetworkStream.h"
 
 namespace Anki {
 namespace Switchboard {
-  class WiFiNetworkStream : public INetworkStream {
-
-  };
-} // Switchboard
-} // Anki
+class WiFiNetworkStream : public INetworkStream {};
+}  // namespace Switchboard
+}  // namespace Anki
 
 #endif /* WiFiNetworkStream_hpp */

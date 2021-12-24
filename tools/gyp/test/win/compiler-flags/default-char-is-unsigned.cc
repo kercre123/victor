@@ -3,8 +3,7 @@
 // found in the LICENSE file.
 
 template <bool>
-struct CompileAssert {
-};
+struct CompileAssert {};
 
 #define COMPILE_ASSERT(expr, msg) \
   typedef CompileAssert<(bool(expr))> msg[bool(expr) ? 1 : -1]

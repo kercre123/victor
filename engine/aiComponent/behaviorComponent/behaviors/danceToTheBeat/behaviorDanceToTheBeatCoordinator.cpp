@@ -10,126 +10,147 @@
  *
  **/
 
-
 #include "engine/aiComponent/behaviorComponent/behaviors/danceToTheBeat/behaviorDanceToTheBeatCoordinator.h"
 
+#include "clad/types/behaviorComponent/behaviorTimerTypes.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
-
 #include "engine/components/mics/beatDetectorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
-
-#include "clad/types/behaviorComponent/behaviorTimerTypes.h"
-
-#include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/utils/timer.h"
-
 #include "util/console/consoleInterface.h"
 #include "util/logging/DAS.h"
 
 namespace Anki {
 namespace Vector {
-  
+
 namespace {
-  const char* kListeningBehavior_key = "listeningBehavior";
-  const char* kLongListeningBehavior_key = "longListeningBehavior";
-  const char* kOffChargerDancingBehavior_key = "offChargerDancingBehavior";
-  const char* kOnChargerDancingBehavior_key  = "onChargerDancingBehavior";
-  
-  #define CONSOLE_GROUP "BehaviorDanceToTheBeatCoordinator"
-  CONSOLE_VAR_RANGED(f32, kDancingCooldown_sec, CONSOLE_GROUP, 20.0f, 0.0f, 3600.0f);
-  CONSOLE_VAR_RANGED(f32, kListeningCooldown_sec, CONSOLE_GROUP, 20.0f, 0.0f, 3600.0f);
-  
-  // The minimum time allowed between dancing and activation of this behavior (always enforced - even if a strong beat
-  // is detected)
-  CONSOLE_VAR_RANGED(f32, kMinIntraDancingPeriod_sec, CONSOLE_GROUP, 10.f, 0.0f, 3600.0f);
-}
-  
-#define LOG_FUNCTION_NAME() PRINT_CH_INFO("Behaviors", "BehaviorDanceToTheBeatCoordinator", "BehaviorDanceToTheBeatCoordinator.%s", __func__);
+const char* kListeningBehavior_key = "listeningBehavior";
+const char* kLongListeningBehavior_key = "longListeningBehavior";
+const char* kOffChargerDancingBehavior_key = "offChargerDancingBehavior";
+const char* kOnChargerDancingBehavior_key = "onChargerDancingBehavior";
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorDanceToTheBeatCoordinator::BehaviorDanceToTheBeatCoordinator(const Json::Value& config)
- : ICozmoBehavior(config)
-{
+#define CONSOLE_GROUP "BehaviorDanceToTheBeatCoordinator"
+CONSOLE_VAR_RANGED(f32, kDancingCooldown_sec, CONSOLE_GROUP, 20.0f, 0.0f,
+                   3600.0f);
+CONSOLE_VAR_RANGED(f32, kListeningCooldown_sec, CONSOLE_GROUP, 20.0f, 0.0f,
+                   3600.0f);
+
+// The minimum time allowed between dancing and activation of this behavior
+// (always enforced - even if a strong beat is detected)
+CONSOLE_VAR_RANGED(f32, kMinIntraDancingPeriod_sec, CONSOLE_GROUP, 10.f, 0.0f,
+                   3600.0f);
+}  // namespace
+
+#define LOG_FUNCTION_NAME()                                       \
+  PRINT_CH_INFO("Behaviors", "BehaviorDanceToTheBeatCoordinator", \
+                "BehaviorDanceToTheBeatCoordinator.%s", __func__);
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorDanceToTheBeatCoordinator::BehaviorDanceToTheBeatCoordinator(
+    const Json::Value& config)
+    : ICozmoBehavior(config) {
   const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
-  
-  _iConfig.listeningBehaviorStr         = JsonTools::ParseString(config, kListeningBehavior_key, debugName);
-  _iConfig.longListeningBehaviorStr     = JsonTools::ParseString(config, kLongListeningBehavior_key, debugName);
-  _iConfig.offChargerDancingBehaviorStr = JsonTools::ParseString(config, kOffChargerDancingBehavior_key, debugName);
-  _iConfig.onChargerDancingBehaviorStr  = JsonTools::ParseString(config, kOnChargerDancingBehavior_key, debugName);
+
+  _iConfig.listeningBehaviorStr =
+      JsonTools::ParseString(config, kListeningBehavior_key, debugName);
+  _iConfig.longListeningBehaviorStr =
+      JsonTools::ParseString(config, kLongListeningBehavior_key, debugName);
+  _iConfig.offChargerDancingBehaviorStr =
+      JsonTools::ParseString(config, kOffChargerDancingBehavior_key, debugName);
+  _iConfig.onChargerDancingBehaviorStr =
+      JsonTools::ParseString(config, kOnChargerDancingBehavior_key, debugName);
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorDanceToTheBeatCoordinator::~BehaviorDanceToTheBeatCoordinator()
-{
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+BehaviorDanceToTheBeatCoordinator::~BehaviorDanceToTheBeatCoordinator() {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDanceToTheBeatCoordinator::InitBehavior()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorDanceToTheBeatCoordinator::InitBehavior() {
   const auto& BC = GetBEI().GetBehaviorContainer();
-  _iConfig.listeningBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.listeningBehaviorStr));
+  _iConfig.listeningBehavior =
+      BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(
+          _iConfig.listeningBehaviorStr));
   DEV_ASSERT(_iConfig.listeningBehavior != nullptr,
              "BehaviorDanceToTheBeatCoordinator.InitBehavior.NullBehavior");
-  
-  _iConfig.longListeningBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.longListeningBehaviorStr));
+
+  _iConfig.longListeningBehavior =
+      BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(
+          _iConfig.longListeningBehaviorStr));
   DEV_ASSERT(_iConfig.longListeningBehavior != nullptr,
              "BehaviorDanceToTheBeatCoordinator.InitBehavior.NullBehavior");
-  
-  _iConfig.offChargerDancingBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.offChargerDancingBehaviorStr));
+
+  _iConfig.offChargerDancingBehavior =
+      BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(
+          _iConfig.offChargerDancingBehaviorStr));
   DEV_ASSERT(_iConfig.offChargerDancingBehavior != nullptr,
              "BehaviorDanceToTheBeatCoordinator.InitBehavior.NullBehavior");
-  
-  _iConfig.onChargerDancingBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.onChargerDancingBehaviorStr));
+
+  _iConfig.onChargerDancingBehavior =
+      BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(
+          _iConfig.onChargerDancingBehaviorStr));
   DEV_ASSERT(_iConfig.onChargerDancingBehavior != nullptr,
              "BehaviorDanceToTheBeatCoordinator.InitBehavior.NullBehavior");
-  
-  _iConfig.driveOffChargerBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(DriveOffChargerStraight));
+
+  _iConfig.driveOffChargerBehavior =
+      BC.FindBehaviorByID(BEHAVIOR_ID(DriveOffChargerStraight));
   _iConfig.goHomeBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(FindAndGoToHome));
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDanceToTheBeatCoordinator::WantsToBeActivatedBehavior() const
-{
-  // Do not try to activate this behavior if the backpack has been fiddled with recently, since that is sometimes
-  // interpreted as a rhythmic 'beat' by the BeatDetectorComponent
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool BehaviorDanceToTheBeatCoordinator::WantsToBeActivatedBehavior() const {
+  // Do not try to activate this behavior if the backpack has been fiddled with
+  // recently, since that is sometimes interpreted as a rhythmic 'beat' by the
+  // BeatDetectorComponent
   if (RecentBackpackActivity()) {
     return false;
   }
 
   // Check if either dancing or listening cooldown is active
   auto& timerManager = GetBEI().GetBehaviorTimerManager();
-  const auto& danceTimer = timerManager.GetTimer(BehaviorTimerTypes::DancingCooldown);
-  const auto& listeningTimer = timerManager.GetTimer(BehaviorTimerTypes::ListenForBeatsCooldown);
-  bool timersExpired = (danceTimer.HasCooldownExpired(kDancingCooldown_sec) &&
-                        listeningTimer.HasCooldownExpired(kListeningCooldown_sec));
+  const auto& danceTimer =
+      timerManager.GetTimer(BehaviorTimerTypes::DancingCooldown);
+  const auto& listeningTimer =
+      timerManager.GetTimer(BehaviorTimerTypes::ListenForBeatsCooldown);
+  bool timersExpired =
+      (danceTimer.HasCooldownExpired(kDancingCooldown_sec) &&
+       listeningTimer.HasCooldownExpired(kListeningCooldown_sec));
 
-  // Has the minimum intra-dancing time been observed? If not, do not activate, even if a strong beat is detected.
-  const bool minIntraDanceTimeExceeded = danceTimer.HasCooldownExpired(kMinIntraDancingPeriod_sec);
+  // Has the minimum intra-dancing time been observed? If not, do not activate,
+  // even if a strong beat is detected.
+  const bool minIntraDanceTimeExceeded =
+      danceTimer.HasCooldownExpired(kMinIntraDancingPeriod_sec);
   if (!minIntraDanceTimeExceeded) {
     return false;
   }
-  
+
   // Override cooldowns if a 'strong' beat is detected
   const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
   const bool strongBeatDetected = beatDetector.IsBeatDetected();
-  
+
   return (timersExpired || strongBeatDetected);
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDanceToTheBeatCoordinator::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
-{
-  modifiers.wantsToBeActivatedWhenCarryingObject  = false;
-  modifiers.wantsToBeActivatedWhenOffTreads       = false;
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorDanceToTheBeatCoordinator::GetBehaviorOperationModifiers(
+    BehaviorOperationModifiers& modifiers) const {
+  modifiers.wantsToBeActivatedWhenCarryingObject = false;
+  modifiers.wantsToBeActivatedWhenOffTreads = false;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDanceToTheBeatCoordinator::GetAllDelegates(std::set<IBehavior*>& delegates) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorDanceToTheBeatCoordinator::GetAllDelegates(
+    std::set<IBehavior*>& delegates) const {
   delegates.insert(_iConfig.listeningBehavior.get());
   delegates.insert(_iConfig.longListeningBehavior.get());
   delegates.insert(_iConfig.offChargerDancingBehavior.get());
@@ -138,58 +159,71 @@ void BehaviorDanceToTheBeatCoordinator::GetAllDelegates(std::set<IBehavior*>& de
   delegates.insert(_iConfig.goHomeBehavior.get());
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDanceToTheBeatCoordinator::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorDanceToTheBeatCoordinator::GetBehaviorJsonKeys(
+    std::set<const char*>& expectedKeys) const {
   const char* list[] = {
-    kListeningBehavior_key,
-    kLongListeningBehavior_key,
-    kOffChargerDancingBehavior_key,
-    kOnChargerDancingBehavior_key,
+      kListeningBehavior_key,
+      kLongListeningBehavior_key,
+      kOffChargerDancingBehavior_key,
+      kOnChargerDancingBehavior_key,
   };
-  expectedKeys.insert( std::begin(list), std::end(list) );
+  expectedKeys.insert(std::begin(list), std::end(list));
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDanceToTheBeatCoordinator::OnBehaviorActivated() 
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorDanceToTheBeatCoordinator::OnBehaviorActivated() {
   // reset dynamic variables
   _dVars = DynamicVariables();
-  
+
   // Begin listening to confirm that a beat is happening
   const bool wantsToRun = _iConfig.listeningBehavior->WantsToBeActivated();
-  DEV_ASSERT(wantsToRun, "BehaviorDanceToTheBeatCoordinator.OnBehaviorActivated.ListenDoesNotWantToRun");
+  DEV_ASSERT(wantsToRun,
+             "BehaviorDanceToTheBeatCoordinator.OnBehaviorActivated."
+             "ListenDoesNotWantToRun");
   DelegateIfInControl(_iConfig.listeningBehavior.get(),
                       &BehaviorDanceToTheBeatCoordinator::CheckIfBeatDetected);
-  
+
   const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
-  DASMSG(dttb_coord_activated, "dttb.coord_activated", "DanceToTheBeat coordinator activated");
-  DASMSG_SET(i1, beatDetector.IsPossibleBeatDetected(), "IsPossibleBeatDetected");
+  DASMSG(dttb_coord_activated, "dttb.coord_activated",
+         "DanceToTheBeat coordinator activated");
+  DASMSG_SET(i1, beatDetector.IsPossibleBeatDetected(),
+             "IsPossibleBeatDetected");
   DASMSG_SET(i2, beatDetector.IsBeatDetected(), "IsBeatDetected");
   DASMSG_SEND();
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDanceToTheBeatCoordinator::CheckIfBeatDetected()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorDanceToTheBeatCoordinator::CheckIfBeatDetected() {
   LOG_FUNCTION_NAME();
-  
+
   const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
   if (!beatDetector.IsBeatDetected()) {
-    // After listening, we do not have a strong beat detected. Bail out of the behavior.
-    PRINT_CH_INFO("Behaviors", "BehaviorDanceToTheBeatCoordinator.TransitionToCheckForBeat.NoBeat",
-                  "Exiting behavior since no beat was detected during the listening phase");
-    DASMSG(dttb_coord_no_beat, "dttb.coord_no_beat", "DanceToTheBeat coordinator exiting since no beat detected during listening");
+    // After listening, we do not have a strong beat detected. Bail out of the
+    // behavior.
+    PRINT_CH_INFO(
+        "Behaviors",
+        "BehaviorDanceToTheBeatCoordinator.TransitionToCheckForBeat.NoBeat",
+        "Exiting behavior since no beat was detected during the listening "
+        "phase");
+    DASMSG(dttb_coord_no_beat, "dttb.coord_no_beat",
+           "DanceToTheBeat coordinator exiting since no beat detected during "
+           "listening");
     DASMSG_SEND();
     return;
   }
-  
-  // We have a detected beat! Take action based on our current onCharger/battery state
-  
+
+  // We have a detected beat! Take action based on our current onCharger/battery
+  // state
+
   const auto& robotInfo = GetBEI().GetRobotInfo();
   const bool isOnCharger = robotInfo.IsOnChargerPlatform();
-  const bool isBatteryFull = (robotInfo.GetBatteryLevel() == BatteryLevel::Full);
-  
+  const bool isBatteryFull =
+      (robotInfo.GetBatteryLevel() == BatteryLevel::Full);
+
   if (isOnCharger) {
     if (isBatteryFull) {
       // Battery is full, so we can drive off the charger to dance
@@ -203,91 +237,111 @@ void BehaviorDanceToTheBeatCoordinator::CheckIfBeatDetected()
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDanceToTheBeatCoordinator::TransitionToOffChargerDance()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorDanceToTheBeatCoordinator::TransitionToOffChargerDance() {
   LOG_FUNCTION_NAME();
-  
-  const bool wantsToRun = _iConfig.offChargerDancingBehavior->WantsToBeActivated();
+
+  const bool wantsToRun =
+      _iConfig.offChargerDancingBehavior->WantsToBeActivated();
   if (wantsToRun) {
     DelegateIfInControl(_iConfig.offChargerDancingBehavior.get());
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDanceToTheBeatCoordinator::TransitionToOnChargerDance()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorDanceToTheBeatCoordinator::TransitionToOnChargerDance() {
   LOG_FUNCTION_NAME();
-  
-  const bool wantsToRun = _iConfig.onChargerDancingBehavior->WantsToBeActivated();
-  DEV_ASSERT(wantsToRun, "BehaviorDanceToTheBeatCoordinator.TransitionToOnChargerDance.onChargerDanceDoesNotWantToRun");
+
+  const bool wantsToRun =
+      _iConfig.onChargerDancingBehavior->WantsToBeActivated();
+  DEV_ASSERT(wantsToRun,
+             "BehaviorDanceToTheBeatCoordinator.TransitionToOnChargerDance."
+             "onChargerDanceDoesNotWantToRun");
   DelegateIfInControl(_iConfig.onChargerDancingBehavior.get());
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDanceToTheBeatCoordinator::TransitionToDriveOffCharger()
-{
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorDanceToTheBeatCoordinator::TransitionToDriveOffCharger() {
   LOG_FUNCTION_NAME();
 
-  const bool wantsToRun = _iConfig.driveOffChargerBehavior->WantsToBeActivated();
-  DEV_ASSERT(wantsToRun, "BehaviorDanceToTheBeatCoordinator.TransitionToDriveOffCharger.driveOffChargerDoesNotWantToRun");
-  DelegateIfInControl(_iConfig.driveOffChargerBehavior.get(),
-                      &BehaviorDanceToTheBeatCoordinator::TransitionToOffChargerListening);
+  const bool wantsToRun =
+      _iConfig.driveOffChargerBehavior->WantsToBeActivated();
+  DEV_ASSERT(wantsToRun,
+             "BehaviorDanceToTheBeatCoordinator.TransitionToDriveOffCharger."
+             "driveOffChargerDoesNotWantToRun");
+  DelegateIfInControl(
+      _iConfig.driveOffChargerBehavior.get(),
+      &BehaviorDanceToTheBeatCoordinator::TransitionToOffChargerListening);
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDanceToTheBeatCoordinator::TransitionToOffChargerListening()
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+void BehaviorDanceToTheBeatCoordinator::TransitionToOffChargerListening() {
   LOG_FUNCTION_NAME();
- 
+
   const auto& robotInfo = GetBEI().GetRobotInfo();
   const bool isOnCharger = robotInfo.IsOnChargerPlatform();
   if (isOnCharger) {
-    PRINT_NAMED_WARNING("BehaviorDanceToTheBeatCoordinator.TransitionToOffChargerListening.OnCharger",
-                        "Somehow we are still on the charger. Exiting behavior");
+    PRINT_NAMED_WARNING(
+        "BehaviorDanceToTheBeatCoordinator.TransitionToOffChargerListening."
+        "OnCharger",
+        "Somehow we are still on the charger. Exiting behavior");
     return;
   }
-  
-  // Use the 'long' version of listening here, since we may have messed up our beat detector by driving off the charger
-  // (and thus making a bunch of motor noise)
+
+  // Use the 'long' version of listening here, since we may have messed up our
+  // beat detector by driving off the charger (and thus making a bunch of motor
+  // noise)
   const bool wantsToRun = _iConfig.longListeningBehavior->WantsToBeActivated();
-  DEV_ASSERT(wantsToRun, "BehaviorDanceToTheBeatCoordinator.TransitionToOffChargerListening.LongListenDoesNotWantToRun");
-  DelegateIfInControl(_iConfig.longListeningBehavior.get(),
-                      [this](){
-                        const bool wantsToDance = _iConfig.offChargerDancingBehavior->WantsToBeActivated();
-                        if (wantsToDance) {
-                          TransitionToOffChargerDance();
-                        } else {
-                          // Dancing does not want to run - just go back home in this case
-                          PRINT_CH_INFO("Behaviors", "BehaviorDanceToTheBeatCoordinator.TransitionToOffChargerListening.DoesNotWantToDance",
-                                        "Returning to charger since the offChargerDancing behavior does not want to run");
-                          if (_iConfig.goHomeBehavior->WantsToBeActivated()) {
-                            DelegateIfInControl(_iConfig.goHomeBehavior.get());
-                          }
-                        }
-                      });
+  DEV_ASSERT(wantsToRun,
+             "BehaviorDanceToTheBeatCoordinator."
+             "TransitionToOffChargerListening.LongListenDoesNotWantToRun");
+  DelegateIfInControl(_iConfig.longListeningBehavior.get(), [this]() {
+    const bool wantsToDance =
+        _iConfig.offChargerDancingBehavior->WantsToBeActivated();
+    if (wantsToDance) {
+      TransitionToOffChargerDance();
+    } else {
+      // Dancing does not want to run - just go back home in this case
+      PRINT_CH_INFO("Behaviors",
+                    "BehaviorDanceToTheBeatCoordinator."
+                    "TransitionToOffChargerListening.DoesNotWantToDance",
+                    "Returning to charger since the offChargerDancing behavior "
+                    "does not want to run");
+      if (_iConfig.goHomeBehavior->WantsToBeActivated()) {
+        DelegateIfInControl(_iConfig.goHomeBehavior.get());
+      }
+    }
+  });
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDanceToTheBeatCoordinator::RecentBackpackActivity() const
-{
-  // Has the backpack been fiddled with recently enough to mess up beat detection? A cooldown is necessary since the
-  // beat detector can retain its "beat detected" state for some time after the last touch.
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool BehaviorDanceToTheBeatCoordinator::RecentBackpackActivity() const {
+  // Has the backpack been fiddled with recently enough to mess up beat
+  // detection? A cooldown is necessary since the beat detector can retain its
+  // "beat detected" state for some time after the last touch.
   const float kButtonPressCooldown_sec = 10.f;
-  
+
   const auto& touchSensor = GetBEI().GetTouchSensorComponent();
-  const auto now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const auto now_sec =
+      BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   float touchTime = touchSensor.GetTouchPressTime();
-  // time defaults to FLT_MAX if never touched, so set this to zero in that case (shouldn't be in the future...)
-  if( touchTime > now_sec + kButtonPressCooldown_sec ) {
+  // time defaults to FLT_MAX if never touched, so set this to zero in that case
+  // (shouldn't be in the future...)
+  if (touchTime > now_sec + kButtonPressCooldown_sec) {
     touchTime = 0.0f;
   }
 
-  const bool recentTouchSensorActivity = touchSensor.GetIsPressed() ||
-                                         touchTime > now_sec - kButtonPressCooldown_sec;
-  
+  const bool recentTouchSensorActivity =
+      touchSensor.GetIsPressed() ||
+      touchTime > now_sec - kButtonPressCooldown_sec;
+
   return recentTouchSensorActivity;
 }
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki

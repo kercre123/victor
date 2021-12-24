@@ -11,12 +11,14 @@
  **/
 
 #include "testUtils.h"
+
 #include <stdio.h>
 #include <string.h>
+
 #include <fstream>
 
-int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
-{
+int unlink_cb(const char *fpath, const struct stat *sb, int typeflag,
+              struct FTW *ftwbuf) {
   int rv = remove(fpath);
 
   if (rv) {
@@ -26,21 +28,18 @@ int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW
   return rv;
 }
 
-int rmrf(const char *path)
-{
+int rmrf(const char *path) {
   return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS);
 }
 
-int truncate_to_zero(const char* fpath)
-{
+int truncate_to_zero(const char *fpath) {
   return write_string_to_file(fpath, NULL);
 }
 
-int write_string_to_file(const char* fpath, const char* data)
-{
+int write_string_to_file(const char *fpath, const char *data) {
   int rv = 0;
-  FILE* f = fopen(fpath, "w");
-  if ((FILE *) 0 == f) {
+  FILE *f = fopen(fpath, "w");
+  if ((FILE *)0 == f) {
     return -1;
   }
   if (data && *data) {
@@ -52,12 +51,12 @@ int write_string_to_file(const char* fpath, const char* data)
       rv = -1;
     }
   }
-  rv = fclose(f) | rv; f = (FILE *) 0;
+  rv = fclose(f) | rv;
+  f = (FILE *)0;
   return rv;
 }
 
-void copy_file(std::string source, std::string destination)
-{
+void copy_file(std::string source, std::string destination) {
   std::ifstream src(source);
   std::ofstream dst(destination);
   dst << src.rdbuf();

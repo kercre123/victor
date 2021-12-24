@@ -5,6 +5,4 @@
 
 #define REG_BLE_EM_TX_BASE_ADDR 0x80000
 
-
-#endif // __REG_BLE_EM_TX_H_
-
+#endif  // __REG_BLE_EM_TX_H_

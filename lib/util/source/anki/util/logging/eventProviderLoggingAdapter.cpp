@@ -4,71 +4,70 @@
  * Author: Brad Neuman
  * Created: 2018-08-20
  *
- * Description: Adapter to log DAS event info over another ILoggerProvider (e.g. for webots)
+ * Description: Adapter to log DAS event info over another ILoggerProvider (e.g.
+ *for webots)
  *
  * Copyright: Anki, Inc. 2018
  *
  **/
 
 #include "util/logging/eventProviderLoggingAdapter.h"
-#include "util/logging/DAS.h"
 
 #include <assert.h>
+
 #include <sstream>
 #include <string>
 
+#include "util/logging/DAS.h"
 
 namespace Anki {
 namespace Util {
 
-EventProviderLoggingAdapter::EventProviderLoggingAdapter( ILoggerProvider* logger )
-  : _logger(logger)
-{
-}
+EventProviderLoggingAdapter::EventProviderLoggingAdapter(
+    ILoggerProvider* logger)
+    : _logger(logger) {}
 
-EventProviderLoggingAdapter::~EventProviderLoggingAdapter()
-{
-}
+EventProviderLoggingAdapter::~EventProviderLoggingAdapter() {}
 
-void EventProviderLoggingAdapter::SetGlobal(const char * key, const char * value)
-{
+void EventProviderLoggingAdapter::SetGlobal(const char* key,
+                                            const char* value) {
   // Key may not be null
   assert(key != nullptr);
 
   std::lock_guard<std::mutex> lock(_mutex);
 
   if (value == nullptr) {
-    if( _logger ) {
+    if (_logger) {
       _logger->PrintEvent("DAS_GLOBALS.Clear", {}, key);
     }
-    
+
     _eventGlobals.erase(key);
   } else {
-    if( _logger ) {
+    if (_logger) {
       std::stringstream ss;
-      ss << key << "=" << value;      
+      ss << key << "=" << value;
       _logger->PrintEvent("DAS_GLOBALS.Set", {}, ss.str().c_str());
     }
-    _eventGlobals.emplace(std::pair<std::string,std::string>{key, value});
+    _eventGlobals.emplace(std::pair<std::string, std::string>{key, value});
   }
 }
 
-void EventProviderLoggingAdapter::GetGlobals(std::map<std::string, std::string> & globals)
-{
+void EventProviderLoggingAdapter::GetGlobals(
+    std::map<std::string, std::string>& globals) {
   std::lock_guard<std::mutex> lock(_mutex);
   globals = _eventGlobals;
 }
 
+#define DAS_KV_HELPER(kv, msg, item)                  \
+  {                                                   \
+    if (!msg.item.value.empty()) {                    \
+      kv.emplace_back(#item, msg.item.value.c_str()); \
+    }                                                 \
+  }
 
-#define DAS_KV_HELPER(kv, msg, item) {                  \
-  if( !msg.item.value.empty() ) {                       \
-    kv.emplace_back( #item, msg.item.value.c_str() );   \
-  }                                                     \
-}
-
-void EventProviderLoggingAdapter::LogEvent(LogLevel level, const DasMsg & dasMsg)
-{
-  if( _logger == nullptr ) {
+void EventProviderLoggingAdapter::LogEvent(LogLevel level,
+                                           const DasMsg& dasMsg) {
+  if (_logger == nullptr) {
     return;
   }
 
@@ -84,10 +83,10 @@ void EventProviderLoggingAdapter::LogEvent(LogLevel level, const DasMsg & dasMsg
   DAS_KV_HELPER(keyValues, dasMsg, i3);
   DAS_KV_HELPER(keyValues, dasMsg, i4);
 
-  const std::string & uptime_ms = std::to_string(Anki::Util::DAS::UptimeMS());
+  const std::string& uptime_ms = std::to_string(Anki::Util::DAS::UptimeMS());
   keyValues.emplace_back("uptime_ms", uptime_ms.c_str());
 
-  switch(level) {
+  switch (level) {
     case LOG_LEVEL_DEBUG:
     case LOG_LEVEL_INFO:
     case LOG_LEVEL_EVENT:
@@ -101,13 +100,12 @@ void EventProviderLoggingAdapter::LogEvent(LogLevel level, const DasMsg & dasMsg
     case LOG_LEVEL_ERROR:
       _logger->PrintLogE("DASMSG", keyValues, dasMsg.event.c_str());
       break;
-      
+
     case _LOG_LEVEL_COUNT:
       assert(level != _LOG_LEVEL_COUNT);
       break;
   }
 }
 
-
-} // end namespace Util
-} // end namespace Anki
+}  // end namespace Util
+}  // end namespace Anki

@@ -26,26 +26,26 @@ namespace sdkInterfaces {
  * This specifies the interface to send an ExceptionEncountered event to AVS.
  */
 class ExceptionEncounteredSenderInterface {
-public:
-    /**
-     * Virtual destructor to ensure proper cleanup by derived types.
-     */
-    virtual ~ExceptionEncounteredSenderInterface() = default;
+ public:
+  /**
+   * Virtual destructor to ensure proper cleanup by derived types.
+   */
+  virtual ~ExceptionEncounteredSenderInterface() = default;
 
-    /**
-     * Send a @c System::ExceptionEncountered message to AVS.
-     *
-     * @note The implementation of this method MUST return quickly. Failure to do so blocks the processing
-     * of subsequent @c AVSDirectives.
-     *
-     * @param unparsedDirective The unparsed JSON of the directive.
-     * @param error The type of error encountered.
-     * @param errorDescription Additional error details for logging and troubleshooting.
-     */
-    virtual void sendExceptionEncountered(
-        const std::string& unparsedDirective,
-        avs::ExceptionErrorType error,
-        const std::string& errorDescription) = 0;
+  /**
+   * Send a @c System::ExceptionEncountered message to AVS.
+   *
+   * @note The implementation of this method MUST return quickly. Failure to do
+   * so blocks the processing of subsequent @c AVSDirectives.
+   *
+   * @param unparsedDirective The unparsed JSON of the directive.
+   * @param error The type of error encountered.
+   * @param errorDescription Additional error details for logging and
+   * troubleshooting.
+   */
+  virtual void sendExceptionEncountered(
+      const std::string& unparsedDirective, avs::ExceptionErrorType error,
+      const std::string& errorDescription) = 0;
 };
 
 }  // namespace sdkInterfaces

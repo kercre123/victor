@@ -20,11 +20,10 @@ namespace Anki {
 class BLEAdvertiseData {
  public:
   BLEAdvertiseData()
-      : include_device_name_(false)
-      , include_tx_power_level_(false)
-      , min_interval_(0)
-      , max_interval_(0)
-  { }
+      : include_device_name_(false),
+        include_tx_power_level_(false),
+        min_interval_(0),
+        max_interval_(0) {}
   ~BLEAdvertiseData() = default;
 
   // Whether the device name should be included in the advertisement
@@ -33,18 +32,26 @@ class BLEAdvertiseData {
   bool GetIncludeDeviceName() const { return include_device_name_; }
 
   // Whether or not to include the tranmission power level in the advertisement
-  void SetIncludeTxPowerLevel(const bool value) { include_tx_power_level_ = value; }
+  void SetIncludeTxPowerLevel(const bool value) {
+    include_tx_power_level_ = value;
+  }
   bool GetIncludeTxPowerLevel() const { return include_tx_power_level_; }
 
-  void SetManufacturerData(const std::vector<uint8_t>& data) { manufacturer_data_ = data; }
-  const std::vector<uint8_t>& GetManufacturerData() const { return manufacturer_data_; }
+  void SetManufacturerData(const std::vector<uint8_t>& data) {
+    manufacturer_data_ = data;
+  }
+  const std::vector<uint8_t>& GetManufacturerData() const {
+    return manufacturer_data_;
+  }
   std::vector<uint8_t>& GetManufacturerData() { return manufacturer_data_; }
 
-  void SetServiceData(const std::vector<uint8_t>& data) { service_data_ = data; }
+  void SetServiceData(const std::vector<uint8_t>& data) {
+    service_data_ = data;
+  }
   const std::vector<uint8_t>& GetServiceData() const { return service_data_; }
   std::vector<uint8_t>& GetServiceData() { return service_data_; }
 
-  void SetServiceUUID(const std::string uuid) {service_uuid_ = uuid;}
+  void SetServiceUUID(const std::string uuid) { service_uuid_ = uuid; }
   const std::string& GetServiceUUID() const { return service_uuid_; }
 
   // The min and max interval are for the slave connection interval range
@@ -57,13 +64,9 @@ class BLEAdvertiseData {
   int GetMaxInterval() const { return max_interval_; }
 
   bool empty() const {
-    return (!include_device_name_
-            && !include_tx_power_level_
-            && manufacturer_data_.empty()
-            && service_data_.empty()
-            && service_uuid_.empty()
-            && !min_interval_
-            && !max_interval_);
+    return (!include_device_name_ && !include_tx_power_level_ &&
+            manufacturer_data_.empty() && service_data_.empty() &&
+            service_uuid_.empty() && !min_interval_ && !max_interval_);
   }
 
  private:
@@ -76,4 +79,4 @@ class BLEAdvertiseData {
   int max_interval_;
 };
 
-} // namespace Anki
+}  // namespace Anki

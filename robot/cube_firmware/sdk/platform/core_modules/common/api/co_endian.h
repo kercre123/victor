@@ -14,9 +14,10 @@
 #ifndef _CO_ENDIAN_H_
 #define _CO_ENDIAN_H_
 
-#include <stdint.h>              // standard integer definitions
-#include "rwip_config.h"         // stack configuration
-#include "arch.h"                // architectural platform definition
+#include <stdint.h>  // standard integer definitions
+
+#include "arch.h"         // architectural platform definition
+#include "rwip_config.h"  // stack configuration
 
 /**
  ****************************************************************************************
@@ -30,15 +31,15 @@
  *
  * Example:
  * @code
- *  struct eth_header   *header = get_header();  // get pointer on Eth II packet header
- *  uint16_t            eth_id;                  // will contain the type of the packet
- *  eth_id = co_ntohs(header->eth_id);           // retrieve the type with correct endianness
+ *  struct eth_header   *header = get_header();  // get pointer on Eth II packet
+ *header uint16_t            eth_id;                  // will contain the type
+ *of the packet eth_id = co_ntohs(header->eth_id);           // retrieve the
+ *type with correct endianness
  * @endcode
  *
  * @{
  * ****************************************************************************************
  * */
-
 
 /**
  ****************************************************************************************
@@ -48,9 +49,9 @@
  * @return The 32 bit swapped value.
  ****************************************************************************************
  */
-__INLINE uint32_t co_bswap32(uint32_t val32)
-{
-    return (val32<<24) | ((val32<<8)&0xFF0000) | ((val32>>8)&0xFF00) | ((val32>>24)&0xFF);
+__INLINE uint32_t co_bswap32(uint32_t val32) {
+  return (val32 << 24) | ((val32 << 8) & 0xFF0000) | ((val32 >> 8) & 0xFF00) |
+         ((val32 >> 24) & 0xFF);
 }
 
 /**
@@ -61,14 +62,10 @@ __INLINE uint32_t co_bswap32(uint32_t val32)
  * @return The 16 bit swapped value.
  ****************************************************************************************
  */
-__INLINE uint16_t co_bswap16(uint16_t val16)
-{
-    return ((val16<<8)&0xFF00) | ((val16>>8)&0xFF);
+__INLINE uint16_t co_bswap16(uint16_t val16) {
+  return ((val16 << 8) & 0xFF00) | ((val16 >> 8) & 0xFF);
 }
 /// @} CO_ENDIAN
-
-
-
 
 /**
  * ****************************************************************************************
@@ -102,13 +99,12 @@ __INLINE uint16_t co_bswap16(uint16_t val16)
  * @return The converted long word.
  ****************************************************************************************
  */
-__INLINE uint32_t co_htonl(uint32_t hostlong)
-{
-    #if (!CPU_LE)
-        return hostlong;
-    #else
-        return co_bswap32(hostlong);
-    #endif // CPU_LE
+__INLINE uint32_t co_htonl(uint32_t hostlong) {
+#if (!CPU_LE)
+  return hostlong;
+#else
+  return co_bswap32(hostlong);
+#endif  // CPU_LE
 }
 
 /**
@@ -120,13 +116,12 @@ __INLINE uint32_t co_htonl(uint32_t hostlong)
  * @return The converted short word.
  ****************************************************************************************
  */
-__INLINE uint16_t co_htons(uint16_t hostshort)
-{
-    #if (!CPU_LE)
-        return hostshort;
-    #else
-        return co_bswap16(hostshort);
-    #endif // CPU_LE
+__INLINE uint16_t co_htons(uint16_t hostshort) {
+#if (!CPU_LE)
+  return hostshort;
+#else
+  return co_bswap16(hostshort);
+#endif  // CPU_LE
 }
 
 /**
@@ -138,10 +133,7 @@ __INLINE uint16_t co_htons(uint16_t hostshort)
  * @return The converted long word.
  ****************************************************************************************
  */
-__INLINE uint32_t co_ntohl(uint32_t netlong)
-{
-    return co_htonl(netlong);
-}
+__INLINE uint32_t co_ntohl(uint32_t netlong) { return co_htonl(netlong); }
 
 /**
  ****************************************************************************************
@@ -152,10 +144,7 @@ __INLINE uint32_t co_ntohl(uint32_t netlong)
  * @return The converted short word.
  ****************************************************************************************
  */
-__INLINE uint16_t co_ntohs(uint16_t netshort)
-{
-    return co_htons(netshort);
-}
+__INLINE uint16_t co_ntohs(uint16_t netshort) { return co_htons(netshort); }
 /// @} CO_ENDIAN_NET
 
 /**
@@ -187,13 +176,12 @@ __INLINE uint16_t co_ntohs(uint16_t netshort)
  * @return The converted long word.
  ****************************************************************************************
  */
-__INLINE uint32_t co_htobl(uint32_t hostlong)
-{
-    #if (CPU_LE)
-        return hostlong;
-    #else
-        return co_bswap32(hostlong);
-    #endif // CPU_LE
+__INLINE uint32_t co_htobl(uint32_t hostlong) {
+#if (CPU_LE)
+  return hostlong;
+#else
+  return co_bswap32(hostlong);
+#endif  // CPU_LE
 }
 
 /**
@@ -205,15 +193,13 @@ __INLINE uint32_t co_htobl(uint32_t hostlong)
  * @return The converted short word.
  ****************************************************************************************
  */
-__INLINE uint16_t co_htobs(uint16_t hostshort)
-{
-    #if (CPU_LE)
-        return hostshort;
-    #else
-        return co_bswap16(hostshort);
-    #endif // CPU_LE
+__INLINE uint16_t co_htobs(uint16_t hostshort) {
+#if (CPU_LE)
+  return hostshort;
+#else
+  return co_bswap16(hostshort);
+#endif  // CPU_LE
 }
-
 
 /**
  ****************************************************************************************
@@ -224,11 +210,7 @@ __INLINE uint16_t co_htobs(uint16_t hostshort)
  * @return The converted long word.
  ****************************************************************************************
  */
-__INLINE uint32_t co_btohl(uint32_t btlong)
-{
-    return co_htobl(btlong);
-}
-
+__INLINE uint32_t co_btohl(uint32_t btlong) { return co_htobl(btlong); }
 
 /**
  ****************************************************************************************
@@ -239,10 +221,7 @@ __INLINE uint32_t co_btohl(uint32_t btlong)
  * @return The converted short word.
  ****************************************************************************************
  */
-__INLINE uint16_t co_btohs(uint16_t btshort)
-{
-    return co_htobs(btshort);
-}
+__INLINE uint16_t co_btohs(uint16_t btshort) { return co_htobs(btshort); }
 /// @} CO_ENDIAN
 
-#endif // _CO_ENDIAN_H_
+#endif  // _CO_ENDIAN_H_

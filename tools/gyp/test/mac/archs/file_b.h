@@ -7,4 +7,4 @@
 
 void DependentFunctionB();
 
-#endif // _INCLUDED_TEST_MAC_DEPENDENCIES_FILE_B_H_
+#endif  // _INCLUDED_TEST_MAC_DEPENDENCIES_FILE_B_H_

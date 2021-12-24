@@ -21,15 +21,14 @@
  *      Release Information : BP200-r0p0-00rel0
  *-----------------------------------------------------------------------------
  */
-/**************************************************************************//**
- * @file     system_CMSDK.h
- * @brief    CMSIS compatible Cortex-M0 Device Peripheral Access Layer Header File
- *           for the CMSDK
- * @version  $State: Experimental $
- * @date     $Date: Mon Oct  1 11:08:52 2012 $
- *
- ******************************************************************************/
-
+/**************************************************************************/ /**
+                                                                              * @file     system_CMSDK.h
+                                                                              * @brief    CMSIS compatible Cortex-M0 Device Peripheral Access Layer Header File
+                                                                              *           for the CMSDK
+                                                                              * @version  $State: Experimental $
+                                                                              * @date     $Date: Mon Oct  1 11:08:52 2012 $
+                                                                              *
+                                                                              ******************************************************************************/
 
 #ifndef __SYSTEM_CMSDK_H
 #define __SYSTEM_CMSDK_H
@@ -38,8 +37,8 @@
 extern "C" {
 #endif
 
-extern uint32_t SystemFrequency;    /*!< System Clock Frequency (Core Clock)  */
-extern uint32_t SystemCoreClock;    /*!< Processor Clock Frequency            */
+extern uint32_t SystemFrequency; /*!< System Clock Frequency (Core Clock)  */
+extern uint32_t SystemCoreClock; /*!< Processor Clock Frequency            */
 /**
  * Initialize the system
  *
@@ -49,7 +48,7 @@ extern uint32_t SystemCoreClock;    /*!< Processor Clock Frequency            */
  * @brief  Setup the microcontroller system.
  *         Initialize the System and update the SystemFrequency variable.
  */
-extern void SystemInit (void);
+extern void SystemInit(void);
 /**
  * Update the SystemCoreClock variable
  *
@@ -58,11 +57,10 @@ extern void SystemInit (void);
  *
  * @brief  Update the SystemCoreClock variable after clock setting changed.
  */
-extern void SystemCoreClockUpdate (void);
+extern void SystemCoreClockUpdate(void);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* __SYSTEM_CMSDK_H */
-

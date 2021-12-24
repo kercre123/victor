@@ -26,31 +26,34 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *************************************************************************/
 
-#include "precomp.hpp"
 #include "opencv2/flann.hpp"
 
-namespace cvflann
-{
-    /** Global variable indicating the distance metric to be used.
-     * \deprecated Provided for backward compatibility
-    */
-    flann_distance_t flann_distance_type_ = FLANN_DIST_L2;
-    flann_distance_t flann_distance_type() { return flann_distance_type_; }
+#include "precomp.hpp"
 
-    /**
-     * Set distance type to used
-     * \deprecated
-     */
-    void set_distance_type(flann_distance_t distance_type, int /*order*/)
-    {
-        printf("[WARNING] The cvflann::set_distance_type function is deperecated, "
-            "use cv::flann::GenericIndex<Distance> instead.\n");
-        if (distance_type != FLANN_DIST_L1 && distance_type != FLANN_DIST_L2) {
-            printf("[ERROR] cvflann::set_distance_type only provides backwards compatibility "
-            "for the L1 and L2 distances. "
-            "For other distance types you must use cv::flann::GenericIndex<Distance>\n");
-        }
-        flann_distance_type_ = distance_type;
-    }
+namespace cvflann {
+/** Global variable indicating the distance metric to be used.
+ * \deprecated Provided for backward compatibility
+ */
+flann_distance_t flann_distance_type_ = FLANN_DIST_L2;
+flann_distance_t flann_distance_type() { return flann_distance_type_; }
 
+/**
+ * Set distance type to used
+ * \deprecated
+ */
+void set_distance_type(flann_distance_t distance_type, int /*order*/) {
+  printf(
+      "[WARNING] The cvflann::set_distance_type function is deperecated, "
+      "use cv::flann::GenericIndex<Distance> instead.\n");
+  if (distance_type != FLANN_DIST_L1 && distance_type != FLANN_DIST_L2) {
+    printf(
+        "[ERROR] cvflann::set_distance_type only provides backwards "
+        "compatibility "
+        "for the L1 and L2 distances. "
+        "For other distance types you must use "
+        "cv::flann::GenericIndex<Distance>\n");
+  }
+  flann_distance_type_ = distance_type;
 }
+
+}  // namespace cvflann

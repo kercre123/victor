@@ -4,7 +4,8 @@
  * Author: ross
  * Created: 2018 feb 21
  *
- * Description: WantsToActivate when the UserIntentComponent received an intent that nobody claimed
+ * Description: WantsToActivate when the UserIntentComponent received an intent
+ *that nobody claimed
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -18,30 +19,28 @@
 namespace Anki {
 namespace Vector {
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class BehaviorReactToUnclaimedIntent : public ICozmoBehavior
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+class BehaviorReactToUnclaimedIntent : public ICozmoBehavior {
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  BehaviorReactToUnclaimedIntent( const Json::Value& config );
+  BehaviorReactToUnclaimedIntent(const Json::Value& config);
 
-
-public:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ public:
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - -
 
   virtual bool WantsToBeActivatedBehavior() const override;
-  virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override {}
 
-protected:
-
+ protected:
   virtual void OnBehaviorActivated() override;
-  
 };
 
-}
-}
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorUnclaimedIntent_H__
-
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorUnclaimedIntent_H__

@@ -32,42 +32,33 @@
  ****************************************************************************************
  */
 
-#include "rwip_config.h"          // stack configuration
+#include <stdint.h>  // standard integer definition
 
-#include <stdint.h>       // standard integer definition
-
+#include "rwip_config.h"  // stack configuration
 
 /*
  * CONSTANTS
  ****************************************************************************************
  */
 
-
 /// Status of ke_task API functions
-enum KE_EVENT_STATUS
-{
-    KE_EVENT_OK = 0,
-    KE_EVENT_FAIL,
-    KE_EVENT_UNKNOWN,
-    KE_EVENT_CAPA_EXCEEDED,
-    KE_EVENT_ALREADY_EXISTS,
+enum KE_EVENT_STATUS {
+  KE_EVENT_OK = 0,
+  KE_EVENT_FAIL,
+  KE_EVENT_UNKNOWN,
+  KE_EVENT_CAPA_EXCEEDED,
+  KE_EVENT_ALREADY_EXISTS,
 };
-
 
 /*
  * TYPE DEFINITION
  ****************************************************************************************
  */
 
-
-
-
 /*
  * FUNCTION PROTOTYPES
  ****************************************************************************************
  */
-
-
 
 /**
  ****************************************************************************************
@@ -92,8 +83,8 @@ uint8_t ke_event_callback_set(uint8_t event_type, void (*p_callback)(void));
  ****************************************************************************************
  * @brief Set an event
  *
- * This primitive sets one event. It will trigger the call to the corresponding event
- * handler in the next scheduling call.
+ * This primitive sets one event. It will trigger the call to the corresponding
+ *event handler in the next scheduling call.
  *
  * @param[in]  event_type      Event to be set.
  ****************************************************************************************
@@ -145,8 +136,6 @@ void ke_event_flush(void);
  */
 void ke_event_schedule(void);
 
-
-
 /// @} EVT
 
-#endif //_KE_EVENT_H_
+#endif  //_KE_EVENT_H_

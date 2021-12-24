@@ -15,41 +15,39 @@
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "proto/external_interface/settings.pb.h"
 
 namespace Anki {
 namespace Vector {
 
-class BehaviorEyeColorVoiceCommand : public ICozmoBehavior
-{
-public: 
+class BehaviorEyeColorVoiceCommand : public ICozmoBehavior {
+ public:
   virtual ~BehaviorEyeColorVoiceCommand();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorEyeColorVoiceCommand(const Json::Value& config);  
+  explicit BehaviorEyeColorVoiceCommand(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
-private:
-
-  external_interface::EyeColor GetDesiredColorFromIntent(UserIntentPtr intentData);
+ private:
+  external_interface::EyeColor GetDesiredColorFromIntent(
+      UserIntentPtr intentData);
   external_interface::EyeColor ChooseColorCyclic();
   bool SetEyeColor(external_interface::EyeColor desiredEyeColor);
-  
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorEyeColorVoiceCommand__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorEyeColorVoiceCommand__

@@ -4,10 +4,11 @@
  * Author: Brad
  * Created: 2018-06-19
  *
- * Description: This behavior will perform an attention transfer (aka "look at phone") animation and send the
- *              corresponding message to the app if needed. It can be configured to require an event happen X
- *              times in Y seconds to trigger the transfer, and if that hasn't been met it can either do a
- *              fallback animation or nothing.
+ * Description: This behavior will perform an attention transfer (aka "look at
+ *phone") animation and send the corresponding message to the app if needed. It
+ *can be configured to require an event happen X times in Y seconds to trigger
+ *the transfer, and if that hasn't been met it can either do a fallback
+ *animation or nothing.
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -17,39 +18,37 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorAttentionTransferIfNeeded__
 #pragma once
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-
-#include "coretech/common/engine/utils/recentOccurrenceTracker.h"
-
 #include "clad/types/behaviorComponent/attentionTransferTypes.h"
+#include "coretech/common/engine/utils/recentOccurrenceTracker.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Vector {
 
-class BehaviorAttentionTransferIfNeeded : public ICozmoBehavior
-{
-public: 
+class BehaviorAttentionTransferIfNeeded : public ICozmoBehavior {
+ public:
   virtual ~BehaviorAttentionTransferIfNeeded();
 
-protected:
-
+ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorAttentionTransferIfNeeded(const Json::Value& config);  
+  explicit BehaviorAttentionTransferIfNeeded(const Json::Value& config);
 
   virtual void InitBehavior() override;
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+  virtual void GetBehaviorOperationModifiers(
+      BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
-  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override {}
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override {
+  }
+  virtual void GetBehaviorJsonKeys(
+      std::set<const char*>& expectedKeys) const override;
+
   virtual bool WantsToBeActivatedBehavior() const override;
-  
+
   virtual void OnBehaviorActivated() override;
 
-private:
-
+ private:
   struct InstanceConfig {
     AttentionTransferReason reason = AttentionTransferReason::Invalid;
     RecentOccurrenceTracker::Handle recentOccurrenceHandle;
@@ -62,10 +61,9 @@ private:
 
   void TransitionToAttentionTransfer();
   void TransitionToNoAttentionTransfer();
-
 };
 
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorAttentionTransferIfNeeded__
+#endif  // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorAttentionTransferIfNeeded__

@@ -19,7 +19,7 @@
  * INCLUDE FILES
  ****************************************************************************************
  */
-#include "rwip_config.h"       // stack configuration
+#include "rwip_config.h"  // stack configuration
 
 /**
  ****************************************************************************************
@@ -27,8 +27,9 @@
  * @ingroup ROOT
  * @brief The Kernel module.
  *
- * The Kernel is responsible for providing essential OS features like time management,
- * inter-task communication, task management and message handling and administration.
+ * The Kernel is responsible for providing essential OS features like time
+ *management, inter-task communication, task management and message handling and
+ *administration.
  *
  * @{
  ****************************************************************************************
@@ -48,13 +49,13 @@
  * CONSTANT DEFINITIONS
  ****************************************************************************************
  */
-#define KE_MEM_RW       1
-#define KE_MEM_LINUX    0
-#define KE_MEM_LIBC     0
+#define KE_MEM_RW 1
+#define KE_MEM_LINUX 0
+#define KE_MEM_LIBC 0
 
-#define KE_FULL         1
-#define KE_SEND_ONLY    0
+#define KE_FULL 1
+#define KE_SEND_ONLY 0
 
 /// @} CFG
 
-#endif // _KE_CONFIG_H_
+#endif  // _KE_CONFIG_H_

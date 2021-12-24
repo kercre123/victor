@@ -1,15 +1,15 @@
 /**
-* File: strategyRobotShaken.h
-*
-* Author: Matt Michini - Kevin M. Karol
-* Created: 2017/01/11  - 7/5/17
-*
-* Description: Strategy for responding to robot being shaken
-*
-* Copyright: Anki, Inc. 2017
-*
-*
-**/
+ * File: strategyRobotShaken.h
+ *
+ * Author: Matt Michini - Kevin M. Karol
+ * Created: 2017/01/11  - 7/5/17
+ *
+ * Description: Strategy for responding to robot being shaken
+ *
+ * Copyright: Anki, Inc. 2017
+ *
+ *
+ **/
 
 #ifndef __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionRobotShaken_H__
 #define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionRobotShaken_H__
@@ -19,19 +19,18 @@
 namespace Anki {
 namespace Vector {
 
-class ConditionRobotShaken : public IBEICondition
-{
-public:
+class ConditionRobotShaken : public IBEICondition {
+ public:
   explicit ConditionRobotShaken(const Json::Value& config);
 
-protected:
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+ protected:
+  virtual bool AreConditionsMetInternal(
+      BehaviorExternalInterface& behaviorExternalInterface) const override;
 
   float _minTriggerMagnitude;
 };
 
+}  // namespace Vector
+}  // namespace Anki
 
-} // namespace Vector
-} // namespace Anki
-
-#endif // __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionRobotShaken_H__
+#endif  // __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionRobotShaken_H__

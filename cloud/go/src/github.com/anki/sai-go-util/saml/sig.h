@@ -1,10 +1,9 @@
 #ifndef BUILDSIG
 
 typedef struct {
-    int code;
-    char msg[256];
+  int code;
+  char msg[256];
 } verify_err;
-
 
 verify_err last_xmlsec_error();
 void shutdown_xmlsec();

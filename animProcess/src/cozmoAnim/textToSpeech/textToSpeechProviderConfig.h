@@ -7,35 +7,33 @@
  *
  */
 
-
 #ifndef __cozmo_textToSpeech_textToSpeechProviderConfig_h
 #define __cozmo_textToSpeech_textToSpeechProviderConfig_h
 
-#include <string>
 #include <list>
+#include <string>
 
 // Forward declarations
 namespace Anki {
-  namespace Util {
-    class RandomGenerator;
-  }
+namespace Util {
+class RandomGenerator;
 }
+}  // namespace Anki
 namespace Json {
-  class Value;
+class Value;
 }
 
 namespace Anki {
 namespace Vector {
 namespace TextToSpeech {
 
-class TextToSpeechProviderConfig
-{
-public:
+class TextToSpeechProviderConfig {
+ public:
+  TextToSpeechProviderConfig(const std::string& language,
+                             const Json::Value& json);
 
-  TextToSpeechProviderConfig(const std::string & language, const Json::Value& json);
-
-  const std::string & GetLanguage() const { return _tts_language; }
-  const std::string & GetVoice() const { return _tts_voice; }
+  const std::string& GetLanguage() const { return _tts_language; }
+  const std::string& GetVoice() const { return _tts_voice; }
 
   // Base values, possibly modified by console vars
   int GetSpeed() const;
@@ -51,16 +49,15 @@ public:
   bool GetEnablePauseParams() const;
 
   //
-  // Get base speed, adjusted for length, possibly modified by configuration traits.
-  // Note that configuration traits will override console vars!
-  // This allows testing of randomness even when console vars are enabled.
+  // Get base speed, adjusted for length, possibly modified by configuration
+  // traits. Note that configuration traits will override console vars! This
+  // allows testing of randomness even when console vars are enabled.
   //
   // RNG may not be null.
   //
   int GetSpeed(Anki::Util::RandomGenerator* rng, size_t textLength) const;
 
-private:
-
+ private:
   // Base values
   std::string _tts_language;
   std::string _tts_voice;
@@ -70,7 +67,7 @@ private:
 
   // Configurable traits
   struct ConfigTrait {
-    ConfigTrait(const Json::Value & json);
+    ConfigTrait(const Json::Value& json);
     int textLengthMin = 0;
     int textLengthMax = 0;
     int rangeMin = 0;
@@ -78,11 +75,10 @@ private:
   };
 
   std::list<ConfigTrait> _speedTraits;
-
 };
 
-} // end namespace TextToSpeech
-} // end namespace Vector
-} // end namespace Anki
+}  // end namespace TextToSpeech
+}  // end namespace Vector
+}  // end namespace Anki
 
-#endif //__cozmo_textToSpeech_textToSpeechProviderConfig_h
+#endif  //__cozmo_textToSpeech_textToSpeechProviderConfig_h

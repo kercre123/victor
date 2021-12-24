@@ -8,4 +8,4 @@ void *duk_alloc_hybrid(void *udata, duk_size_t size);
 void *duk_realloc_hybrid(void *udata, void *ptr, duk_size_t size);
 void duk_free_hybrid(void *udata, void *ptr);
 
-#endif  /* DUK_ALLOC_HYBRID_H_INCLUDED */
+#endif /* DUK_ALLOC_HYBRID_H_INCLUDED */

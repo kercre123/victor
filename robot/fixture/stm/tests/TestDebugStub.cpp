@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "app.h"
 #include "board.h"
 #include "console.h"
@@ -20,35 +21,23 @@
 static uint32_t detect_ms = 0;
 static uint32_t Tdetect;
 
-//start a test run by flipping detected to true (auto clear at end)
+// start a test run by flipping detected to true (auto clear at end)
 void TestDebugSetDetect(int ms) {
-  Tdetect = Timer::get(); //reset the timebase
+  Tdetect = Timer::get();  // reset the timebase
   detect_ms = ms;
 }
 
 bool TestDebugDetect(void) {
-  return Timer::elapsedUs(Tdetect) < 1000*detect_ms;
+  return Timer::elapsedUs(Tdetect) < 1000 * detect_ms;
 }
 
-void TestDebugCleanup(void)
-{
-}
+void TestDebugCleanup(void) {}
 
-void TestDebugInit(void)
-{
-}
+void TestDebugInit(void) {}
 
-void TestDebugProcess(void)
-{
-}
+void TestDebugProcess(void) {}
 
-TestFunction* TestDebugGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestDebugInit,
-    TestDebugProcess,
-    NULL
-  };
+TestFunction* TestDebugGetTests(void) {
+  static TestFunction m_tests[] = {TestDebugInit, TestDebugProcess, NULL};
   return m_tests;
 }
-

@@ -13,16 +13,16 @@
 #ifndef __Util_Random_RejectionSamplerHelperFwd_H__
 #define __Util_Random_RejectionSamplerHelperFwd_H__
 
-namespace Anki{
-namespace Util{
-  
+namespace Anki {
+namespace Util {
+
 template <typename T, bool ExpectConditionReordering = false>
 class RejectionSamplerHelper;
-  
+
 template <typename T>
 class RejectionSamplingCondition;
-  
-} // namespace
-} // namespace
 
-#endif // __Util_Random_RejectionSamplerHelperFwd_H__
+}  // namespace Util
+}  // namespace Anki
+
+#endif  // __Util_Random_RejectionSamplerHelperFwd_H__

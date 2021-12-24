@@ -4,7 +4,8 @@
  * Author: Michael Willett
  * Created: 7/6/2017
  *
- * Description: wants to run strategy for responding to obstacle detected by prox sensor
+ * Description: wants to run strategy for responding to obstacle detected by
+ *prox sensor
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -19,23 +20,22 @@
 
 namespace Anki {
 namespace Vector {
-  
+
 //////
 /// React To Sudden Prox Sensor Change
 /////
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
 ConditionObstacleDetected::ConditionObstacleDetected(const Json::Value& config)
-: IBEICondition(config)
-{
-}
+    : IBEICondition(config) {}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionObstacleDetected::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - -
+bool ConditionObstacleDetected::AreConditionsMetInternal(
+    BehaviorExternalInterface& behaviorExternalInterface) const {
   return behaviorExternalInterface.GetAIComponent().IsSuddenObstacleDetected();
 }
 
-  
-} // namespace Vector
-} // namespace Anki
+}  // namespace Vector
+}  // namespace Anki
