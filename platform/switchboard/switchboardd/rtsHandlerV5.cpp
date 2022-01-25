@@ -323,6 +323,9 @@ void RtsHandlerV5::HandleRtsWifiConnectRequest(const Vector::ExternalComms::RtsC
 
     if(connected == Wifi::ConnectWifiResult::CONNECT_SUCCESS) {
       Log::Write("Connected to wifi.");
+
+      int res = system("sudo systemctl restart chronyd");
+      Log::Write("Restarted chronyd with result %d", res);
     } else if(connected == Wifi::ConnectWifiResult::CONNECT_INVALIDKEY) {
       Log::Write("Failure to connect: invalid wifi password.");
     } else {
