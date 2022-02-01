@@ -323,6 +323,16 @@ void RtsHandlerV5::HandleRtsWifiConnectRequest(const Vector::ExternalComms::RtsC
 
     if(connected == Wifi::ConnectWifiResult::CONNECT_SUCCESS) {
       Log::Write("Connected to wifi.");
+
+      // We use chrony to keep the time in vector upto date. Normally it assumes that the 
+      // wifi is connected and pings the NTP servers to update the time. Here we know for 
+      // sure the wifi is connected and try to restart the service.
+      int res = system("sudo systemctl restart chronyd");
+      if (res != 0) {
+        Log::Write("Failed to restart chronyd : result %d", res);
+      } else {
+        Log::Write("Restarted chronyd successfully");
+      }
     } else if(connected == Wifi::ConnectWifiResult::CONNECT_INVALIDKEY) {
       Log::Write("Failure to connect: invalid wifi password.");
     } else {
