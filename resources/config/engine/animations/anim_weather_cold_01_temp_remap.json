@@ -11576,6 +11576,21 @@
     },
     {
       "audioName": [
+        "Play__Robot_Vic__External_Voice_Text"
+      ],
+      "Name": "RobotAudioKeyFrame",
+      "probability": [
+        1.0
+      ],
+      "hasAlts": true,
+      "volume": 1.0,
+      "audioEventId": [
+        2774572774
+      ],
+      "triggerTime_ms": 1584
+    },
+    {
+      "audioName": [
         "Stop__Robot_Vic_Sfx__Dsp_Loop_Stop"
       ],
       "Name": "RobotAudioKeyFrame",
@@ -11665,14 +11680,144 @@
       "triggerTime_ms": 9438
     },
     {
-      "event_id": "TOGGLE_NUMBERS_DISPLAY",
+      "layer": "Layer_7",
+      "Name": "SpriteBoxKeyFrame",
+      "spriteBoxName": "SpriteBox_1",
+      "xPos": -9,
+      "height": 69,
+      "width": 29,
+      "yPos": 27,
+      "renderMethod": "EyeColor",
+      "assetName": "weather_negative_indicator",
+      "alpha": 100,
       "triggerTime_ms": 1320,
-      "Name": "EventKeyFrame"
+      "spriteSeqEndType": "Clear"
     },
     {
-      "event_id": "TOGGLE_NUMBERS_DISPLAY",
+      "layer": "Layer_7",
+      "Name": "SpriteBoxKeyFrame",
+      "spriteBoxName": "SpriteBox_2",
+      "xPos": 20,
+      "height": 69,
+      "width": 45,
+      "yPos": 27,
+      "renderMethod": "EyeColor",
+      "assetName": "weather_temp_0",
+      "alpha": 100,
+      "triggerTime_ms": 1320,
+      "spriteSeqEndType": "Clear"
+    },
+    {
+      "layer": "Layer_7",
+      "Name": "SpriteBoxKeyFrame",
+      "spriteBoxName": "SpriteBox_3",
+      "xPos": 65,
+      "height": 69,
+      "width": 45,
+      "yPos": 27,
+      "renderMethod": "EyeColor",
+      "assetName": "weather_temp_0",
+      "alpha": 100,
+      "triggerTime_ms": 1320,
+      "spriteSeqEndType": "Clear"
+    },
+    {
+      "layer": "Layer_7",
+      "Name": "SpriteBoxKeyFrame",
+      "spriteBoxName": "SpriteBox_4",
+      "xPos": 110,
+      "height": 69,
+      "width": 45,
+      "yPos": 27,
+      "renderMethod": "EyeColor",
+      "assetName": "weather_temp_0",
+      "alpha": 100,
+      "triggerTime_ms": 1320,
+      "spriteSeqEndType": "Clear"
+    },
+    {
+      "layer": "Layer_7",
+      "Name": "SpriteBoxKeyFrame",
+      "spriteBoxName": "SpriteBox_5",
+      "xPos": 155,
+      "height": 69,
+      "width": 29,
+      "yPos": 27,
+      "renderMethod": "EyeColor",
+      "assetName": "weather_fahrenheit_indicator",
+      "alpha": 100,
+      "triggerTime_ms": 1320,
+      "spriteSeqEndType": "Clear"
+    },
+    {
+      "layer": "Layer_7",
+      "Name": "SpriteBoxKeyFrame",
+      "spriteBoxName": "SpriteBox_1",
+      "xPos": -9,
+      "height": 69,
+      "width": 29,
+      "yPos": 27,
+      "renderMethod": "EyeColor",
+      "assetName": "clear_sprite_box",
+      "alpha": 100,
       "triggerTime_ms": 2739,
-      "Name": "EventKeyFrame"
+      "spriteSeqEndType": "Clear"
+    },
+    {
+      "layer": "Layer_7",
+      "Name": "SpriteBoxKeyFrame",
+      "spriteBoxName": "SpriteBox_2",
+      "xPos": 20,
+      "height": 69,
+      "width": 45,
+      "yPos": 27,
+      "renderMethod": "EyeColor",
+      "assetName": "clear_sprite_box",
+      "alpha": 100,
+      "triggerTime_ms": 2739,
+      "spriteSeqEndType": "Clear"
+    },
+    {
+      "layer": "Layer_7",
+      "Name": "SpriteBoxKeyFrame",
+      "spriteBoxName": "SpriteBox_3",
+      "xPos": 65,
+      "height": 69,
+      "width": 45,
+      "yPos": 27,
+      "renderMethod": "EyeColor",
+      "assetName": "clear_sprite_box",
+      "alpha": 100,
+      "triggerTime_ms": 2739,
+      "spriteSeqEndType": "Clear"
+    },
+    {
+      "layer": "Layer_7",
+      "Name": "SpriteBoxKeyFrame",
+      "spriteBoxName": "SpriteBox_4",
+      "xPos": 110,
+      "height": 69,
+      "width": 45,
+      "yPos": 27,
+      "renderMethod": "EyeColor",
+      "assetName": "clear_sprite_box",
+      "alpha": 100,
+      "triggerTime_ms": 2739,
+      "spriteSeqEndType": "Clear"
+    },
+    {
+      "layer": "Layer_7",
+      "Name": "SpriteBoxKeyFrame",
+      "spriteBoxName": "SpriteBox_5",
+      "xPos": 155,
+      "height": 69,
+      "width": 29,
+      "yPos": 27,
+      "renderMethod": "EyeColor",
+      "assetName": "clear_sprite_box",
+      "alpha": 100,
+      "triggerTime_ms": 2739,
+      "spriteSeqEndType": "Clear"
     },
     {
       "Right": [

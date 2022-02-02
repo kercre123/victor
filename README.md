@@ -97,7 +97,7 @@ use it:
 4. Open terminal and configure AWS using the command: `aws configure`
 5. Enter the various credentials and for region use: `us-east-1`
 6. Install `Boto 3` to access S3 objects via Python: `pip2 install boto3 && pip3 install boto3` Ubuntu 16.04: `apt install python-pip && pip install boto3==1.3.1`
-```
+
 
 ## Building Victor
 

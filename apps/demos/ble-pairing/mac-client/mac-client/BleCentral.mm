@@ -2756,6 +2756,8 @@ didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic
   if(data.length > 3) {
     isPairing = ((uint8_t*)data.bytes)[3] == 0x70;
   }
+
+  if(!peripheral.name) {return;}
   
   // set global bool
   [_victorsDiscovered setValue:[NSNumber numberWithBool:isPairing] forKey:peripheral.name];
