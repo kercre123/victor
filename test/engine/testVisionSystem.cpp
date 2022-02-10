@@ -53,7 +53,7 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_InvertedBox)
   
   // Don't really need a valid camera calibration, so just pass a dummy one in
   // to make vision system happy. All that matters is the image dimensions be correct.
-  std::shared_ptr<Anki::Vision::CameraCalibration> calib(new Anki::Vision::CameraCalibration(360,640,
+  std::shared_ptr<Anki::Vision::CameraCalibration> calib(new Anki::Vision::CameraCalibration(600,800,
                                                                                              290,290,
                                                                                              320,180,
                                                                                              0.f));
@@ -106,7 +106,7 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_InvertedBox)
                                                0.1779613197923669,
                                                0, 0, 0}};
   
-  const Anki::Vision::CameraCalibration expectedCalibration(360,640,
+  const Anki::Vision::CameraCalibration expectedCalibration(600,800,
                                                             372.328857,
                                                             368.344482,
                                                             306.370270,
@@ -161,7 +161,7 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_Qbert)
   
   // Don't really need a valid camera calibration, so just pass a dummy one in
   // to make vision system happy. All that matters is the image dimensions be correct.
-  std::shared_ptr<Anki::Vision::CameraCalibration> calib(new Anki::Vision::CameraCalibration(360,640,
+  std::shared_ptr<Anki::Vision::CameraCalibration> calib(new Anki::Vision::CameraCalibration(600,800,
                                                                                              290,290,
                                                                                              320,180,
                                                                                              0.f));
@@ -213,7 +213,7 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_Qbert)
                                               0.1341471670512819,
                                               0, 0, 0}};
   
-  const Anki::Vision::CameraCalibration expectedCalibration(360,640,
+  const Anki::Vision::CameraCalibration expectedCalibration(600,800,
                                                             362.8773099149878,
                                                             366.7347434532929,
                                                             302.2888225643724,

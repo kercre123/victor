@@ -983,8 +983,8 @@ namespace Cozmo {
             // Send any images in the debug image lists to Viz for display
             // Resize to fit display, but don't if it would make the image larger (to save bandwidth)
             const bool kOnlyResizeIfSmaller = true;
-            const s32  kDisplayNumRows = 360; // TODO: Get these from VizManager perhaps?
-            const s32  kDisplayNumCols = 640; //   "
+            const s32  kDisplayNumRows = 600; // TODO: Get these from VizManager perhaps?
+            const s32  kDisplayNumCols = 800; //   "
             for(auto & debugGray : result.debugImages) {
               debugGray.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
               debugGray.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
@@ -2665,8 +2665,8 @@ namespace Cozmo {
           const std::array<f32, 8> distortionCoeffs = {{-0.03822904514363595, -0.2964213946476391, -0.00181089972406104, 0.001866070303033584, 0.1803429725181202,
             0, 0, 0}};
 
-          auto calib = std::make_shared<Vision::CameraCalibration>(360,
-                                          640,
+          auto calib = std::make_shared<Vision::CameraCalibration>(600,
+                                          800,
                                           364.7223064012286,
                                           366.1693698832141,
                                           310.6264440545544,

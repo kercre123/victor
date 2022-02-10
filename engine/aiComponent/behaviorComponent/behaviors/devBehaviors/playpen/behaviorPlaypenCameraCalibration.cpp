@@ -32,7 +32,7 @@ namespace {
 #ifdef SIMULATOR
 // V2 Simulated camera calibration
 static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
-  new Vision::CameraCalibration(360, 640,
+  new Vision::CameraCalibration(600, 800,
                                 296, 296,
                                 319, 179,
                                 0.f,
@@ -40,7 +40,7 @@ static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
 #else
 // V2 Physical camera calibration
 static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
-  new Vision::CameraCalibration(360, 640,
+  new Vision::CameraCalibration(600, 800,
                                 362, 364,
                                 303, 196,
                                 0.f,
