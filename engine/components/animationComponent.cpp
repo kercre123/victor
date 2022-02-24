@@ -35,9 +35,6 @@ namespace {
   static const char* kLogChannelName = "Animations";
 
   const u32 kMaxNumAvailableAnimsToReportPerTic = 50;
-
-  static const u32 kNumImagePixels     = FACE_DISPLAY_HEIGHT * FACE_DISPLAY_WIDTH;
-  static const u32 kNumHalfImagePixels = kNumImagePixels / 2;
 }
   
   
@@ -367,7 +364,6 @@ Result AnimationComponent::DisplayFaceImageBinary(const Vision::Image& img, u32 
 
     RobotInterface::DisplayFaceImageBinaryChunk msg;
     static const u32 kFaceArraySize = sizeof(msg.faceData);
-    static_assert(8 * kFaceArraySize == kNumHalfImagePixels, "AnimationComponent.DisplayFaceImageBinary.WrongFaceDataSize");
   
     msg.imageId = 0;
     msg.chunkIndex = halfIdx;

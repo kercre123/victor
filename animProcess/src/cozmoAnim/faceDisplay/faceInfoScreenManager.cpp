@@ -405,7 +405,7 @@ void FaceInfoScreenManager::DrawFAC()
 		    NamedColors::GREEN : NamedColors::RED),
                    { 0, FACE_DISPLAY_HEIGHT-10 },
                    10,
-                   3.f);
+                   2.5f);
 }
 
 void FaceInfoScreenManager::UpdateFAC()
