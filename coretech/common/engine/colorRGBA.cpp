@@ -69,13 +69,6 @@ namespace Anki {
     const ColorRGBA LIGHTGRAY (0.7f, 0.7f, 0.7f);
     const ColorRGBA DARKGREEN (0.f, 0.5f, 0.0f);
     const ColorRGBA OFFWHITE  (0.8f, 0.8f, 0.8f);
-    const ColorRGBA TIP_OVER_TEAL  (0.21f, 0.76f, 0.44f);
-    const ColorRGBA OVERFIT_ORANGE  (0.93f, 0.44f, 0.1f);
-    const ColorRGBA UNCANNY_YELLOW  (0.94f, 0.84f, 0.0f);
-    const ColorRGBA NON_LINEAR_LIME  (0.66f, 0.90f, 0.04f);
-    const ColorRGBA SINGULARITY_SAPPHIRE  (0.1f, 0.62f, 0.92f);
-    const ColorRGBA FALSE_POSITIVE_PURPLE  (0.74f, 0.29f, 1.f);
-    const ColorRGBA CONFUSION_MATRIX_GREEN  (0.21f, 0.76f, 0.44f);
 
     const ColorRGBA& GetByString(const std::string& name)
     {

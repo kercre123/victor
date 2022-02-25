@@ -79,7 +79,8 @@ namespace Cozmo {
 // Default values for text rendering
 const Point2f FaceInfoScreenManager::kDefaultTextStartingLoc_pix = {0,10};
 const u32 FaceInfoScreenManager::kDefaultTextSpacing_pix = 11;
-const f32 FaceInfoScreenManager::kDefaultTextScale = 0.4f;
+const f32 FaceInfoScreenManager::kDefaultTextScale = 0.35f;
+const f32 FaceInfoScreenManager::kDefaultFACTextScale = 2.6f;
 
 namespace {
   // Number of tics that a wheel needs to be moving for before it registers
@@ -223,8 +224,8 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
 
   // Main screen menu
   ADD_MENU_ITEM(Main, "EXIT", None);
-  // ADD_MENU_ITEM(Main, "Self Test", SelfTest);   // TODO: VIC-1498
-  ADD_MENU_ITEM(Main, "CLEAR USER DATA", ClearUserData);
+  // ADD_MENU_ITEM(Main, "Test", SelfTest);   // TODO: VIC-1498
+  ADD_MENU_ITEM(Main, "RESET", ClearUserData);
   
   // Self test screen
   ADD_MENU_ITEM(SelfTest, "EXIT", Main);
@@ -321,7 +322,7 @@ void FaceInfoScreenManager::SetShouldDrawFAC(bool draw)
   { 
     if(draw)
     {
-      SetScreen(ScreenName::FAC);
+      SetScreen(ScreenName::Main);
     }
     else
     {
@@ -405,7 +406,7 @@ void FaceInfoScreenManager::DrawFAC()
 		    NamedColors::GREEN : NamedColors::RED),
                    { 0, FACE_DISPLAY_HEIGHT-10 },
                    10,
-                   2.5f);
+                   FaceInfoScreenManager::kDefaultFACTextScale);
 }
 
 void FaceInfoScreenManager::UpdateFAC()

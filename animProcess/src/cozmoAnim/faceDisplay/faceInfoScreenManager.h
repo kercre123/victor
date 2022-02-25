@@ -142,7 +142,8 @@ private:
   static const Point2f kDefaultTextStartingLoc_pix;
   static const u32 kDefaultTextSpacing_pix;
   static const f32 kDefaultTextScale;
-
+  static const f32 kDefaultFACTextScale;
+  
   // Helper methods for drawing debug data to face
   void DrawTextOnScreen(const std::vector<std::string>& textVec, 
                         const ColorRGBA& textColor = NamedColors::WHITE,

@@ -93,14 +93,6 @@ namespace Anki {
     extern const ColorRGBA DARKGREEN;
     extern const ColorRGBA OFFWHITE;
     extern const ColorRGBA DEFAULT;
-    extern const ColorRGBA TIP_OVER_TEAL;
-    extern const ColorRGBA OVERFIT_ORANGE;
-    extern const ColorRGBA UNCANNY_YELLOW;
-    extern const ColorRGBA NON_LINEAR_LIME;
-    extern const ColorRGBA SINGULARITY_SAPPHIRE;
-    extern const ColorRGBA FALSE_POSITIVE_PURPLE;
-    extern const ColorRGBA CONFUSION_MATRIX_GREEN;
-    
     const ColorRGBA& GetByString(const std::string& name);
   } // namespace NamedColors
   
