@@ -322,7 +322,7 @@ void FaceInfoScreenManager::SetShouldDrawFAC(bool draw)
   { 
     if(draw)
     {
-      SetScreen(ScreenName::Main);
+      SetScreen(ScreenName::FAC);
     }
     else
     {
