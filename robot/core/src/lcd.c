@@ -27,6 +27,8 @@
 #define FALSE 0
 #define TRUE (!FALSE)
 
+#define MSB(a) ((a) >> 8)
+#define LSB(a) ((a) & 0xff)
 
 static const int MAX_TRANSFER = 0x1000;
 
@@ -51,12 +53,11 @@ static GPIO DnC_PIN;
 
 
 #define RSHIFT 0x1C
-#define XSHIFT 0x00
-#define YSHIFT 0x17
+#define XSHIFT 0x0
+#define YSHIFT 0x18
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define MIN(a,b) (((a)<(b))?(a):(b))
-
 typedef struct {
   uint8_t cmd;
   uint8_t data_bytes;
@@ -87,6 +88,7 @@ static const INIT_SCRIPT st77890_init_scr[] =
   { 0x21, 1, { 0x00 }, 0 }, // Display inversion on
   { 0 }
 };
+
 static const INIT_SCRIPT st7789_init_scr[] =
 {
   { 0x01, 1, { 0x00 }, 150}, // RESET
@@ -101,29 +103,30 @@ static const INIT_SCRIPT st7789_init_scr[] =
   { 0x29, 1, { 0x00 }, 10 }, // Display on
   { 0 }
 };
+
 static const INIT_SCRIPT st7735_init_scr[] =
 {
-        { 0x01, 0, { 0x00}, 150},
-        { 0x11, 0, { 0x00}, 500},
-        { 0xB1, 3, { 0x01, 0x2c, 0x2d}, 0},
-        { 0xB2, 3, { 0x01, 0x2c, 0x2d}, 0},
-        { 0xB3, 6, { 0x01, 0x2c, 0x2d, 0x01, 0x2c, 0x2d}, 0},
-        { 0xB4, 1, { 0x07}, 0},
-        { 0xC0, 3, { 0xa2, 0x02, 0x84}, 0},
-        { 0xC1, 1, { 0xc5}, 0},
-        { 0xC2, 2, { 0x0a, 0x00}, 0},
-        { 0xC3, 2, { 0x8a, 0x2a}, 0},
-        { 0xC4, 2, { 0x8a, 0xee}, 0},
-        { 0xC5, 1, { 0x0e}, 0},
-        { 0x20, 0, { 0x00}, 0},
-        { 0x36, 1, { 0xE0}, 0}, //exchange rotate and reverse order in each of 2 dim
-        { 0x3A, 1, { 0x05}, 0}, // Interface pixel format (16 bit/pixel 65k RGB data)
-        { 0xE1, 16, { 0x02, 0x1c, 0x07, 0x12, 0x37, 0x32, 0x29, 0x2d, 0x29, 0x25, 0x2b, 0x39, 0x00, 0x01, 0x03, 0x10}, 0}, 
-        { 0xE0, 16, { 0x03, 0x1d, 0x07, 0x06, 0x2e, 0x2c, 0x29, 0x2d, 0x2e, 0x2e, 0x37, 0x3f, 0x00, 0x00, 0x02, 0x10}, 0}, 
+  { 0x01, 0, { 0x00}, 150},
+  { 0x11, 0, { 0x00}, 500},
+  { 0xB1, 3, { 0x01, 0x2c, 0x2d}, 0},
+  { 0xB2, 3, { 0x01, 0x2c, 0x2d}, 0},
+  { 0xB3, 6, { 0x01, 0x2c, 0x2d, 0x01, 0x2c, 0x2d}, 0},
+  { 0xB4, 1, { 0x07}, 0},
+  { 0xC0, 3, { 0xa2, 0x02, 0x84}, 0},
+  { 0xC1, 1, { 0xc5}, 0},
+  { 0xC2, 2, { 0x0a, 0x00}, 0},
+  { 0xC3, 2, { 0x8a, 0x2a}, 0},
+  { 0xC4, 2, { 0x8a, 0xee}, 0},
+  { 0xC5, 1, { 0x0e}, 0},
+  { 0x20, 0, { 0x00}, 0},
+  { 0x36, 1, { 0xE0}, 0}, //exchange rotate and reverse order in each of 2 dim
+  { 0x3A, 1, { 0x05}, 0}, // Interface pixel format (16 bit/pixel 65k RGB data)
+  { 0xE1, 16, { 0x02, 0x1c, 0x07, 0x12, 0x37, 0x32, 0x29, 0x2d, 0x29, 0x25, 0x2b, 0x39, 0x00, 0x01, 0x03, 0x10}, 0}, 
+  { 0xE0, 16, { 0x03, 0x1d, 0x07, 0x06, 0x2e, 0x2c, 0x29, 0x2d, 0x2e, 0x2e, 0x37, 0x3f, 0x00, 0x00, 0x02, 0x10}, 0}, 
 
-        { 0x13, 0, { 0x00}, 100},
-        { 0x21, 1, { 0x00 }, 0 }, // Display inversion on
-        { 0x29, 0, { 0x00}, 10},
+  { 0x13, 0, { 0x00}, 100},
+  { 0x21, 1, { 0x00 }, 0 }, // Display inversion on
+  { 0x29, 0, { 0x00}, 10},
 
 #if 0
   { 0x2A, 4, { XSHIFT >> 8, XSHIFT & 0xFF, (LCD_FRAME_WIDTH + XSHIFT -1) >> 8, (LCD_FRAME_WIDTH + XSHIFT -1) & 0xFF } }, // Column address set
@@ -141,36 +144,38 @@ static const INIT_SCRIPT st7735_init_scr[] =
 #else
   { 0x2A, 4, { 0x00, 0x00, 0x00, 0x4F } }, //CASET
   { 0x2B, 4, { 0x00, 0x00, 0x00, 0x9F } }, //RASET
-        { 0x36, 1, { 0xC8 }, 0}, //MADCTL
-        { 0x36, 1, { 0xC0 }, 0}, //MADCTL
-        { 0x36, 1, { 0xE0 }, 0}, //MADCTL
+  { 0x36, 1, { 0xC8 }, 0}, //MADCTL
+  { 0x36, 1, { 0xC0 }, 0}, //MADCTL
+  { 0x36, 1, { 0xE0 }, 0}, //MADCTL
 #endif
-{ 0 } 
+  { 0 } 
 };
 
+// Thats what we are using 
 static const INIT_SCRIPT nv3022_init_scr[] =
 {
-        { 0x01, 0, { 0x00}, 150}, // Software reset
-        { 0x11, 0, { 0x00}, 500}, // Sleep out
-        { 0x20, 0, { 0x00}, 0}, // Display inversion off
-        { 0x36, 1, { 0xA8}, 0}, //exchange rotate and reverse order in each of 2 dim 
-        { 0x3A, 1, { 0x05}, 0}, // Interface pixel format (16 bit/pixel 65k RGB data)
+  { 0x01, 0, { 0x00}, 150}, // Software reset
+  { 0x11, 0, { 0x00}, 500}, // Sleep out
+  { 0x20, 0, { 0x00}, 0}, // Display inversion off
+  { 0x36, 1, { 0xA8}, 0}, //exchange rotate and reverse order in each of 2 dim 
+  { 0x3A, 1, { 0x05}, 0}, // Interface pixel format (16 bit/pixel 65k RGB data)
 
-        { 0xE0, 16, { 0x07, 0x0e, 0x08, 0x07, 0x10, 0x07, 0x02, 0x07, 0x09, 0x0f, 0x25, 0x36, 0x00, 0x08, 0x04, 0x10 }, 0},  // 
-        { 0xE1, 16, { 0x0a, 0x0d, 0x08, 0x07, 0x0f, 0x07, 0x02, 0x07, 0x09, 0x0f, 0x25, 0x35, 0x00, 0x09, 0x04, 0x10 }, 0}, 
+  { 0xE0, 16, { 0x07, 0x0e, 0x08, 0x07, 0x10, 0x07, 0x02, 0x07, 0x09, 0x0f, 0x25, 0x36, 0x00, 0x08, 0x04, 0x10 }, 0},  // 
+  { 0xE1, 16, { 0x0a, 0x0d, 0x08, 0x07, 0x0f, 0x07, 0x02, 0x07, 0x09, 0x0f, 0x25, 0x35, 0x00, 0x09, 0x04, 0x10 }, 0}, 
 
-        { 0xFC, 1, { 128+64}, 0},
-  
-        { 0x13, 0, { 0x00}, 100}, // Normal Display Mode On
-  { 0x21, 0, { 0x00 }, 10 }, // Display inversion on
-        { 0x20, 0, { 0x00 }, 10 }, // Display inversion off
+  { 0xFC, 1, { 128+64}, 0},
+
+  { 0x13, 0, { 0x00}, 100}, // Normal Display Mode On
+  // { 0x21, 0, { 0x00 }, 10 }, // Display inversion on
+  // { 0x20, 0, { 0x00 }, 10 }, // Display inversion off
   { 0x26, 1, {0x02} , 10}, // Set Gamma
-        { 0x29, 0, { 0x00}, 10}, // Display On
+  { 0x29, 0, { 0x00}, 10}, // Display On
 
-       { 0x2A, 4, { XSHIFT >> 8, XSHIFT & 0xFF, (LCD_FRAME_WIDTH + XSHIFT -1) >> 8, (LCD_FRAME_WIDTH + XSHIFT -1) & 0xFF } }, // Column address set
-       { 0x2B, 4, { YSHIFT >> 8, YSHIFT & 0xFF, (LCD_FRAME_HEIGHT + YSHIFT -1) >> 8, (LCD_FRAME_HEIGHT + YSHIFT -1) & 0xFF } }, // Row address set
 
-{ 0 }
+  { 0x2A, 4, { MSB(XSHIFT), LSB(XSHIFT), MSB(LCD_FRAME_WIDTH + XSHIFT - 1), LSB(LCD_FRAME_WIDTH + XSHIFT - 1) } }, // Column address set
+  { 0x2B, 4, { MSB(YSHIFT), LSB(YSHIFT), MSB(LCD_FRAME_HEIGHT + YSHIFT -1), LSB(LCD_FRAME_HEIGHT + YSHIFT -1) } }, // Row address set
+
+  { 0 }
 };
 
 
@@ -245,38 +250,6 @@ void lcd_clear_screen(void) {
   const LcdFrame frame={{0}};
   lcd_draw_frame(&frame);
 }
-void lcd_test(int test_var)
-{
-    static const uint8_t down_com = 0x28;
-    static const uint8_t up_com = 0x29;
-  LcdFrame fld;
-  int iter;
-  for (iter=0; iter < PXL_CNT; iter++)
-  {
-    if (iter%(PXL_CNT/2) < PXL_CNT/4)
-    {
-      if ( iter%80 < 40 )
-        fld.data[iter] = (test_var? lcd_BLUE: lcd_YELLOW);
-      else 
-        fld.data[iter] = (test_var? lcd_YELLOW: lcd_BLUE);
-    }
-    else
-    {
-      if ( iter%80 < 40 )
-        fld.data[iter] = (test_var? lcd_GREEN: lcd_RED);
-      else 
-        fld.data[iter] = (test_var? lcd_RED: lcd_GREEN);
-    }
-  }
-    lcd_spi_transfer(TRUE, 1, &down_com);
-  lcd_draw_frame(&fld);
-    lcd_spi_transfer(TRUE, 1, &up_com);
-/*
-  gpio_set_value(DnC_PIN, test_var ? gpio_LOW : gpio_HIGH);
-  gpio_set_value(RESET_PIN2, test_var ? gpio_LOW : gpio_HIGH);
-*/
-
-}
 
 void lcd_draw_frame(const LcdFrame* frame) {
    static const uint8_t WRITE_RAM = 0x2C;
@@ -284,123 +257,16 @@ void lcd_draw_frame(const LcdFrame* frame) {
    lcd_spi_transfer(FALSE, sizeof(frame->data), frame->data);
 }
 
-void scale_row(int kscale, int divk, int difk, uint16_t **ofr_pp, uint16_t **ifr_pp)
-{
-  int k = 0, ihg = 0, idifk = 0;
-  if ( !ofr_pp || !ifr_pp  )
-    return;
-  idifk = difk;
-        for (k = 0; k < OLD_FRAME_WIDTH; k++)
-        {
-                if (kscale)
-                {
-                        if ( (idifk>0) &&  divk &&!(k % divk) )
-                        {
-        for ( ihg = 0 ; ihg < ((difk/OLD_FRAME_WIDTH)?:1); ihg++)
-        {
-                                  **ofr_pp = **ifr_pp;
-                                  (*ofr_pp)++; 
-                                  idifk--;
-          // distribute(ihg--) if evnd erlier to smoo
-        }
-                        }
-                        **ofr_pp = **ifr_pp;
-                        (*ofr_pp)++; (*ifr_pp)++;
-                }
-                else
-                {
-                        if ( (idifk>0) &&  divk &&!(k % divk) )
-                        {
-                                (*ifr_pp)++;
-                                idifk--;
-                        }
-                        else
-                        {
-                          **ofr_pp = **ifr_pp;
-                          (*ofr_pp)++; (*ifr_pp)++;
-                        }
-                }
-        }
-}
-
-
-/*
-
-TEST THE SIX OFFICIAL EYE COLORS IN ROTATION
-
-#define RGB_PACK(r,g,b)    ( ((r >> 3) << 11) + ( (g >> 2) << 5) + (b >> 3))
-#define RGB_PACK_F(r,g,b) ( ( ( (uint8_t)(r * 255.0) >> 3) << 11 ) + ( ( (uint8_t)(g*255.0) >> 2) << 5) + ((uint8_t)(b * 255.0) >> 3) )
-
-void *memset16(void *m, uint16_t val, size_t count)
-{
-    uint16_t *buf = m;
-
-    while(count--) *buf++ = val;
-    return m;
-}
-
-
 void lcd_draw_frame2(const uint16_t* frame, size_t size) {
   static const uint8_t WRITE_RAM = 0x2C;
-  static const uint8_t PAD = 0x0;
-  
-  uint16_t colors[] = {
-    RGB_PACK_F(0.21,0.76,0.44),
-    RGB_PACK_F(0.93,0.44,0.1),
-    RGB_PACK_F(0.94, 0.84, 0.0),
-    RGB_PACK_F(0.66, 0.9, 0.04),
-    RGB_PACK_F(0.1,0.62,0.92),
-    RGB_PACK_F(0.74,0.29,1.0),
-  };
+  static uint16_t buffer[LCD_FRAME_WIDTH * LCD_FRAME_HEIGHT];
 
-  for (int x=0;x<6;x++) {
-    uint16_t row[OLD_FRAME_WIDTH];
-    memset16(row, colors[x] ,OLD_FRAME_WIDTH);
-  
-    lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
-
-    lcd_spi_transfer(FALSE, 1, &PAD);
-  
-    for(int i=0;i<LCD_FRAME_HEIGHT;i++)
-    {
-if 0
-      const uint16_t* row = (uint16_t*)frame + ((i+12) * OLD_FRAME_WIDTH ) + 8;
-#else
-      const uint16_t* row = (uint16_t*)anki_dev_unit + ((i+12) * OLD_FRAME_WIDTH ) + 8;
-#endif
-      lcd_spi_transfer(FALSE, (LCD_FRAME_WIDTH )* 2, row);
-    }
-
-    sleep(5);
-  };
-  return;
-}
-*/
-
-void lcd_draw_frame2(const uint16_t* frame, size_t size) {
-  static const uint8_t WRITE_RAM = 0x2C;
-  static const uint8_t PAD = 0x0;
-
-  lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
-
-  // For some reason we need this to align properly. We should be able
-  // To fix this on the initialization but haven't figured that out yet
-  // If not we don't align on bytes properly and effectively have a swap
-  // of MSB/LSB causing all sorts of problems with the color pallette.
-  
-  lcd_spi_transfer(FALSE, 1, &PAD);
-  
-  for(int i=0;i<LCD_FRAME_HEIGHT-1;i++)
-  {
-#if 1 // WRITE REAL DATA
-    const uint16_t* row = (uint16_t*)frame + ((i+12) * OLD_FRAME_WIDTH ) + 8;
-#else // USE CLOUD PATTERN FOR TESTING PURPOSES
-    const uint16_t* row = (uint16_t*)anki_dev_unit + ((i+12) * OLD_FRAME_WIDTH ) + 8;
-#endif
-    lcd_spi_transfer(FALSE, (LCD_FRAME_WIDTH )* 2, row);
+  for(int i=0; i < LCD_FRAME_WIDTH * LCD_FRAME_HEIGHT ; i++) {
+    buffer[i] = __builtin_bswap16(frame[i]);
   }
-
-  return;
+  
+  lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
+  lcd_spi_transfer(FALSE, size, buffer);
 }
 
 

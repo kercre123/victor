@@ -69,7 +69,7 @@ namespace Anki {
     const ColorRGBA LIGHTGRAY (0.7f, 0.7f, 0.7f);
     const ColorRGBA DARKGREEN (0.f, 0.5f, 0.0f);
     const ColorRGBA OFFWHITE  (0.8f, 0.8f, 0.8f);
-    
+
     const ColorRGBA& GetByString(const std::string& name)
     {
       static const std::map<std::string, const ColorRGBA& > LUT = {

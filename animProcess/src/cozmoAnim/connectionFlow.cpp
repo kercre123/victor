@@ -41,7 +41,7 @@ namespace Cozmo {
 namespace {
 u32 _pin = 123456;
 
-const f32 kRobotNameScale = 0.6f;
+const f32 kRobotNameScale = 0.5f;
 const std::string kURL = "ddl.io/v";
 const ColorRGBA   kColor(0.9f, 0.9f, 0.9f, 1.f);
 }
@@ -67,7 +67,7 @@ bool DrawStartPairingScreen(AnimationStreamer* animStreamer)
   cv::Size textSize;
   float scale = 0;
   Vision::Image::MakeTextFillImageWidth(kURL, CV_FONT_NORMAL, 1, img.GetNumCols(), textSize, scale);
-  img.DrawTextCenteredHorizontally(kURL, CV_FONT_NORMAL, scale, 1, kColor, (FACE_DISPLAY_HEIGHT + textSize.height)/2, true);
+  img.DrawTextCenteredHorizontally(kURL, CV_FONT_NORMAL, scale, 1, kColor, (FACE_DISPLAY_HEIGHT + textSize.height) / 2, true);
 
   animStreamer->SetFaceImage(img, 0);
   return true;
@@ -79,6 +79,7 @@ void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* conte
   Vision::ImageRGB key;
   key.Load(context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, 
                                                       "config/facePNGs/pairing_icon_key.png"));
+  key.Resize(FACE_DISPLAY_HEIGHT - 5, FACE_DISPLAY_WIDTH - 20);
 
   Vision::ImageRGB img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
   img.FillWith(0);
@@ -92,7 +93,7 @@ void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* conte
 
   i.DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, kRobotNameScale, 1, kColor, 15, false);
 
-  i.DrawTextCenteredHorizontally(pin, CV_FONT_NORMAL, 0.8f, 1, kColor, FACE_DISPLAY_HEIGHT-5, false);
+  i.DrawTextCenteredHorizontally(pin, CV_FONT_NORMAL, 0.6f, 1, kColor, FACE_DISPLAY_HEIGHT-5, false);
 
   animStreamer->SetFaceImage(i, 0);
 }

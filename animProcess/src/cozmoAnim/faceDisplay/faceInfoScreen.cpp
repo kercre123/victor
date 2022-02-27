@@ -100,7 +100,7 @@ void FaceInfoScreen::DrawMenu(Vision::ImageRGB565& img) const
 {
   const ColorRGBA& menuBgColor = NamedColors::BLACK;
   const ColorRGBA& menuItemColor = NamedColors::WHITE;
-  const f32 locX = 10;
+  // const f32 locX = 10;
   const f32 stepY = 11;
   const f32 textScale = 0.4f;
 
@@ -111,21 +111,25 @@ void FaceInfoScreen::DrawMenu(Vision::ImageRGB565& img) const
   }
   
   if (HasMenu()) {
-    // Draw menu items (bottom-aligned)
+    // Draw menu items (bottom)
     locY = FACE_DISPLAY_HEIGHT-1;
-    for (s32 i = static_cast<s32>(_menu.size()) - 1; i >= 0; --i) {
-      
-      if (_menuCursor == i) {
-        // Draw cursor
-        img.DrawText({0,locY}, ">", menuItemColor, textScale);
-      } else {
-        const Rectangle<f32> rect( 0.f, locY-stepY, FACE_DISPLAY_WIDTH, stepY);
-        img.DrawFilledRect(rect, menuBgColor);
-      }
+    s32 menus = static_cast<s32>(_menu.size());
+    s32 blocks = menus;
+    f32 blockSize = FACE_DISPLAY_WIDTH / blocks;
+    s32 blockDrawn = 1;
+
+    // Clear background
+    const Rectangle<f32> rect(0.f, FACE_DISPLAY_HEIGHT -stepY, FACE_DISPLAY_WIDTH, stepY);
+    img.DrawFilledRect(rect, menuBgColor);
+
+    for (s32 i = menus - 1; i >= 0; --i) {
+      f32 x = (FACE_DISPLAY_WIDTH - (blockSize * blockDrawn));
+      f32 y = locY;
 
       // Draw menu item text
-      img.DrawText({locX, locY}, _menu[i].text, menuItemColor, textScale);
-      locY -= stepY;
+      if (_menuCursor == i) img.DrawText({x, y}, ">", menuItemColor, textScale);
+      img.DrawText({x + 10, y}, _menu[i].text, menuItemColor, textScale);
+      blockDrawn++;
     }
   }
 }
