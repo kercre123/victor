@@ -82,7 +82,7 @@ use it:
 
 1. To speed up builds, [install `ccache`](/docs/ccache.md) on your system and the build system will automatically start using it.
 
-1. Add the following to your `~/.bash_profile` or `~/.zshrc` if you use zsh::
+1. Add the following to your `~/.bash_profile` or `~/.zshrc` if you use zsh:
 
     ```
     source <PATH_TO_YOUR_VICTOR_REPO>/project/victor/scripts/usefulALiases.sh
