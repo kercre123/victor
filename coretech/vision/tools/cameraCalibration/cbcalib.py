@@ -85,10 +85,10 @@ def main(filepath,length = 9 , width = 7,square_size = 30):
     img_pts = np.array(img_pts)
     obj_pts = obj_pts.astype(np.float32)
     img_pts = img_pts.astype(np.float32)
-    retval,cameraMatrix,distCoeffs,rvecs,tvecs = cv2.calibrateCamera(obj_pts,img_pts,(h,w)) #does the hard part
+    retval,cameraMatrix,distCoeffs,rvecs,tvecs = cv2.calibrateCamera(obj_pts,img_pts,(h,w), None, None) #does the hard part
     print ('reprojection error: ' + str(retval)+ ' this is the number of pixels between the found points and the same points once they were reprojected using this calibration. ideally this error should be between .1 and 1.0') 
     print ('camera Matrix')
-    print cameraMatrix
+    print (cameraMatrix)
     print ('fx: ' + str(cameraMatrix[0][0]))
     print ('fy: '  + str(cameraMatrix[1][1]))
     print ('cx: ' +str(cameraMatrix[0][2]))
@@ -96,8 +96,8 @@ def main(filepath,length = 9 , width = 7,square_size = 30):
     print ('distortion coefficients: ' + str(distCoeffs))
     return
 if len(sys.argv) <= 1:
-    print 'please call the function with a path to the images you wish to calibrate'
-    print 'for example: python cbcalib.py /Users/peter.unrein/Desktop/calib_images/'
+    print ('please call the function with a path to the images you wish to calibrate')
+    print ('for example: python cbcalib.py /Users/peter.unrein/Desktop/calib_images/')
 elif len(sys.argv) > 4:
     main(str(sys.argv[1]),sys.argv[2],sys.argv[3],sys.argv[4])
 elif len(sys.argv) > 3:
