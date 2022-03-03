@@ -41,8 +41,8 @@ static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
 // V2 Physical camera calibration
 static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
   new Vision::CameraCalibration(600, 800,
-                                362, 364,
-                                303, 196,
+                                417, 416,
+                                380, 310,
                                 0.f,
                                 std::vector<f32>({-0.1, -0.15, 0.00005, -0.0001, 0.05, 0.f, 0.f, 0.f})));
 #endif
@@ -83,11 +83,11 @@ Result BehaviorPlaypenCameraCalibration::OnBehaviorActivatedInternal()
 
   // Set fake calibration if not already set so that we can actually run
   // calibration from images
-  if (!robot.GetVisionComponent().IsCameraCalibrationSet())
-  {
+  // if (!robot.GetVisionComponent().IsCameraCalibrationSet())
+  // {
     PRINT_NAMED_INFO("BehaviorPlaypenCameraCalibration.SettingFakeCalib", "");
     robot.GetVisionComponent().SetCameraCalibration(kApproxCalib);
-  }
+  // }
   
   robot.GetVisionComponent().ClearCalibrationImages();
   
