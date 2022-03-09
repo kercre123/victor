@@ -5,8 +5,6 @@ import array
 from PIL import Image
 #import Image
 
-SCREEN_WIDTH,SCREEN_HEIGHT = 184,96 #240,240 #180,240
-SIZE = (SCREEN_WIDTH,SCREEN_HEIGHT)
 
 def pack16bitRGB(pixel):
 #    print(pixel)
@@ -27,6 +25,8 @@ def pack16bitRGB(pixel):
 
 
 def convert_to_raw(img):
+    print(SCREEN_WIDTH)
+    print(SCREEN_HEIGHT)
     bitmap = [0x0000]*(SCREEN_WIDTH*SCREEN_HEIGHT)
     for y in range(img.size[1]):
         for x in range(img.size[0]):
@@ -48,7 +48,6 @@ def extractGifFrames(inGif):
     nframes = 0
     with open('%s.raw' % (os.path.basename(inGif),), "wb+") as f:
         while frame:
-#            newframe = frame.rotate(90).resize( SIZE, Image.ANTIALIAS).convert('RGBA')
             data = convert_frame_to_data(frame)
             f.write(data.tostring())
             nframes += 1
@@ -70,12 +69,12 @@ def convertImages(dirname, images):
 
         print('wrote {} frames to {}'.format(nframes, outfilename))
             
-if len(sys.argv) == 1:
-    print('error: pass in a .gif file or a folder of sequentail images')
+if len(sys.argv) != 4:
+    print('Usage: gif_to_raw.py image.gif WIDTH HEIGHT')
+    print('Legacy vector is 184x96 new is 160x80')
     exit(-1)
-elif len(sys.argv) == 2:
-    extractGifFrames(sys.argv[1])
 else:
-    print('got {} images'.format(len(sys.argv)))
-    images = sorted(sys.argv[1:])
-    convertImages(os.path.dirname(sys.argv[0]), images)
+    SCREEN_WIDTH = int(sys.argv[2])
+    SCREEN_HEIGHT = int(sys.argv[3])
+
+    extractGifFrames(sys.argv[1])
