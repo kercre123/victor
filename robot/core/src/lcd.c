@@ -123,8 +123,9 @@ static const INIT_SCRIPT display_on_scr_midas[] = {
 
 static int lcd_fd;
 
-static int lcd_is_midas() {
-  return 0;
+lcd_display_t lcd_display_version() {
+  //  return SANTEK;
+  return MIDAS;
 }
 
 static int lcd_spi_init()
@@ -224,7 +225,7 @@ static int lcd_fb_init(void)
 static void lcd_device_init()
 {
   // Init registers and put the display in sleep mode
-  lcd_run_script(lcd_is_midas() ? init_scr_midas : init_scr_santek);
+  lcd_run_script(lcd_display_version() == SANTEK ? init_scr_santek : init_scr_midas);
 
   // Clear lcd memory before turning display on
   // as the contents of memory are set randomly on
@@ -232,7 +233,7 @@ static void lcd_device_init()
   lcd_clear_screen();
   
   // Turn display on
-  lcd_run_script(lcd_is_midas() ? display_on_scr_midas : display_on_scr_santek);
+  lcd_run_script(lcd_display_version() == SANTEK ? display_on_scr_santek : display_on_scr_midas);
 }
 
 void lcd_clear_screen(void) {
@@ -282,7 +283,7 @@ void lcd_draw_frame2_santek(const uint16_t* frame, size_t size) {
 }
 
 void lcd_draw_frame2(const uint16_t* frame, size_t size) {
-  if (lcd_is_midas()) {
+  if (lcd_display_version() != SANTEK) {
     lcd_draw_frame2_midas(frame, size);
   } else {
     lcd_draw_frame2_santek(frame, size);
@@ -392,7 +393,7 @@ void lcd_shutdown(void) {
 
   if (lcd_fd) {
     if (DnC_PIN) {
-      lcd_run_script( lcd_is_midas() ? sleep_in_midas : sleep_in_santek);
+      lcd_run_script( lcd_display_version() == SANTEK ? sleep_in_santek : sleep_in_midas);
     }
     close(lcd_fd);
   }

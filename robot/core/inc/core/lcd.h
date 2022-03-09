@@ -34,6 +34,12 @@ enum LcdColor {
   lcd_WHITE   = 0xFFFF,
 };
 
+typedef enum {
+  SANTEK,
+  MIDAS
+} lcd_display_t;
+
+lcd_display_t lcd_display_version();
 int lcd_init(void);
 void lcd_clear_screen(void);
 void lcd_draw_frame(const LcdFrame* frame);
