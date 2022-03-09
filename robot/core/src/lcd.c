@@ -6,41 +6,50 @@
 #include <sys/ioctl.h>
 #include <linux/spi/spidev.h>
 #include <linux/fb.h>
+#include <time.h>
+#include <stddef.h>
 
 #include "core/common.h"
 #include "core/clock.h"
 #include "platform/gpio/gpio.h"
+#include "core/anki_dev_unit.h"
 
 #include "core/lcd.h"
 
 #define FALSE 0
 #define TRUE (!FALSE)
 
+#define MSB(a) ((a) >> 8)
+#define LSB(a) ((a) & 0xff)
 
 static int MAX_TRANSFER = 0x1000;
 
 static int lcd_use_fb; // use /dev/fb0?
 
 #define GPIO_LCD_WRX   110
-#define GPIO_LCD_RESET 55
+#define GPIO_LCD_RESET 96
 
 static GPIO RESET_PIN;
 static GPIO DnC_PIN;
 
 
 #define RSHIFT 0x1C
+#define XSHIFT 0x0
+#define YSHIFT 0x18
 
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#define MIN(a,b) (((a)<(b))?(a):(b))
 typedef struct {
   uint8_t cmd;
   uint8_t data_bytes;
-  uint8_t data[14];
+  uint8_t data[128];
   uint32_t delay_ms;
 } INIT_SCRIPT;
 
-static const INIT_SCRIPT init_scr[] = {
+static const INIT_SCRIPT init_scr_santek[] = {
   { 0x10, 1, { 0x00 }, 120}, // Sleep in
-  { 0x2A, 4, { 0x00, RSHIFT, (LCD_FRAME_WIDTH + RSHIFT - 1) >> 8, (LCD_FRAME_WIDTH + RSHIFT - 1) & 0xFF } }, // Column address set
-  { 0x2B, 4, { 0x00, 0x00, (LCD_FRAME_HEIGHT -1) >> 8, (LCD_FRAME_HEIGHT -1) & 0xFF } }, // Row address set
+  { 0x2A, 4, { 0x00, RSHIFT, (LCD_FRAME_WIDTH_SANTEK + RSHIFT - 1) >> 8, (LCD_FRAME_WIDTH_SANTEK + RSHIFT - 1) & 0xFF } }, // Column address set
+  { 0x2B, 4, { 0x00, 0x00, (LCD_FRAME_HEIGHT_SANTEK -1) >> 8, (LCD_FRAME_HEIGHT_SANTEK -1) & 0xFF } }, // Row address set
   { 0x36, 1, { 0x00 }, 0 }, // Memory data access control
   { 0x3A, 1, { 0x55 }, 0 }, // Interface pixel format (16 bit/pixel 65k RGB data)
   { 0xB0, 2, { 0x00, 0x08 } }, // RAM control (LSB first)
@@ -60,14 +69,52 @@ static const INIT_SCRIPT init_scr[] = {
   { 0 }
 };
 
-static const INIT_SCRIPT display_on_scr[] = {
+static const INIT_SCRIPT init_scr_midas[] =
+{
+  { 0x01, 0, { 0x00}, 150}, // Software reset
+  { 0x11, 0, { 0x00}, 500}, // Sleep out
+  { 0x20, 0, { 0x00}, 0}, // Display inversion off
+  { 0x36, 1, { 0xA8}, 0}, //exchange rotate and reverse order in each of 2 dim 
+  { 0x3A, 1, { 0x05}, 0}, // Interface pixel format (16 bit/pixel 65k RGB data)
+
+  { 0xE0, 16, { 0x07, 0x0e, 0x08, 0x07, 0x10, 0x07, 0x02, 0x07, 0x09, 0x0f, 0x25, 0x36, 0x00, 0x08, 0x04, 0x10 }, 0},  // 
+  { 0xE1, 16, { 0x0a, 0x0d, 0x08, 0x07, 0x0f, 0x07, 0x02, 0x07, 0x09, 0x0f, 0x25, 0x35, 0x00, 0x09, 0x04, 0x10 }, 0}, 
+
+  { 0xFC, 1, { 128+64}, 0},
+
+  { 0x13, 0, { 0x00}, 100}, // Normal Display Mode On
+  // { 0x21, 0, { 0x00 }, 10 }, // Display inversion on
+  // { 0x20, 0, { 0x00 }, 10 }, // Display inversion off
+  { 0x26, 1, {0x02} , 10}, // Set Gamma
+  { 0x29, 0, { 0x00}, 10}, // Display On
+
+
+  { 0x2A, 4, { MSB(XSHIFT), LSB(XSHIFT), MSB(LCD_FRAME_WIDTH_MIDAS + XSHIFT - 1), LSB(LCD_FRAME_WIDTH_MIDAS + XSHIFT - 1) } }, // Column address set
+  { 0x2B, 4, { MSB(YSHIFT), LSB(YSHIFT), MSB(LCD_FRAME_HEIGHT_MIDAS + YSHIFT -1), LSB(LCD_FRAME_HEIGHT_MIDAS + YSHIFT -1) } }, // Row address set
+
+  { 0 }
+};
+
+
+static const INIT_SCRIPT sleep_in_santek[] = {
+  { 0x10, 1, { 0x00 }, 5 },
+  { 0 }
+};
+
+static const INIT_SCRIPT sleep_in_midas[] = {
+  { 0x10, 1, { 0x00 }, 5 },
+  { 0 }
+};
+
+static const INIT_SCRIPT display_on_scr_santek[] = {
   { 0x11, 1, { 0x00 }, 120 }, // Sleep out
   { 0x29, 1, { 0x00 }, 120 }, // Display on
   {0}
 };
 
-static const INIT_SCRIPT sleep_in[] = {
-  { 0x10, 1, { 0x00 }, 5 },
+static const INIT_SCRIPT display_on_scr_midas[] = {
+  { 0x11, 1, { 0x00 }, 120 }, // Sleep out
+  { 0x29, 1, { 0x00 }, 120 }, // Display on
   {0}
 };
 
@@ -75,6 +122,10 @@ static const INIT_SCRIPT sleep_in[] = {
 
 
 static int lcd_fd;
+
+static int lcd_is_midas() {
+  return 0;
+}
 
 static int lcd_spi_init()
 {
@@ -173,7 +224,7 @@ static int lcd_fb_init(void)
 static void lcd_device_init()
 {
   // Init registers and put the display in sleep mode
-  lcd_run_script(init_scr);
+  lcd_run_script(lcd_is_midas() ? init_scr_midas : init_scr_santek);
 
   // Clear lcd memory before turning display on
   // as the contents of memory are set randomly on
@@ -181,7 +232,7 @@ static void lcd_device_init()
   lcd_clear_screen();
   
   // Turn display on
-  lcd_run_script(display_on_scr);
+  lcd_run_script(lcd_is_midas() ? display_on_scr_midas : display_on_scr_santek);
 }
 
 void lcd_clear_screen(void) {
@@ -200,15 +251,42 @@ void lcd_draw_frame(const LcdFrame* frame) {
    }
 }
 
-void lcd_draw_frame2(const uint16_t* frame, size_t size) {
+void lcd_draw_frame2_midas(const uint16_t* frame, size_t size) {
+   static uint16_t buffer[LCD_FRAME_WIDTH_MIDAS * LCD_FRAME_HEIGHT_MIDAS];
+
+   for(int i=0; i < LCD_FRAME_WIDTH_MIDAS * LCD_FRAME_HEIGHT_MIDAS ; i++) {
+     buffer[i] = __builtin_bswap16(frame[i]);
+   }
+  
+   if (0) { // Does this work?
+      lseek(lcd_fd, 0, SEEK_SET);
+      (void)write(lcd_fd, buffer, size);
+   } else {
+   
+      static const uint8_t WRITE_RAM = 0x2C;
+      lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
+      lcd_spi_transfer(FALSE, size, buffer);
+   }
+}
+
+void lcd_draw_frame2_santek(const uint16_t* frame, size_t size) {
    if (lcd_use_fb) {
       lseek(lcd_fd, 0, SEEK_SET);
       (void)write(lcd_fd, frame, size);
    } else {
+   
       static const uint8_t WRITE_RAM = 0x2C;
       lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
       lcd_spi_transfer(FALSE, size, frame);
    }
+}
+
+void lcd_draw_frame2(const uint16_t* frame, size_t size) {
+  if (lcd_is_midas()) {
+    lcd_draw_frame2_midas(frame, size);
+  } else {
+    lcd_draw_frame2_santek(frame, size);
+  }
 }
 
 
@@ -314,7 +392,7 @@ void lcd_shutdown(void) {
 
   if (lcd_fd) {
     if (DnC_PIN) {
-      lcd_run_script(sleep_in);
+      lcd_run_script( lcd_is_midas() ? sleep_in_midas : sleep_in_santek);
     }
     close(lcd_fd);
   }
