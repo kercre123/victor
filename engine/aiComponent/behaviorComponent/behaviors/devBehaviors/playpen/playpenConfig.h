@@ -156,10 +156,10 @@ static u32 kFocalLengthTolerance                      = 30;
 static u32 kCenterTolerance                           = 50;
 
 // Tolerance on the camera's radial distortion
-static f32 kRadialDistortionTolerance                 = 0.15f;
+static f32 kRadialDistortionTolerance                 = 0.6f;
 
 // Tolerance on the camera's tangential distortion
-static f32 kTangentialDistortionTolerance             = 0.05f;
+static f32 kTangentialDistortionTolerance             = 0.2f;
 
 // Head angle at which we can see the entire calibration target
 static f32 kHeadAngleToSeeTarget_rad                  = DEG_TO_RAD(42.f);

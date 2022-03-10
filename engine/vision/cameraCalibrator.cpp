@@ -399,7 +399,7 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
                                 0, 0, 1);
   
   cv::Mat_<f64> distCoeffs = (cv::Mat_<double>(1, NUM_RADIAL_DISTORTION_COEFFS) <<
-                              -0.1, -0.1, 0.00005, -0.0001, 0.05, 0, 0, 0);
+                              -0.03, 0.01, 0.003, -0.002, -0.157, 0.f, 0.f, 0.f);
 #endif
   
   std::vector<cv::Vec3d> rvecs, tvecs;
