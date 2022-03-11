@@ -660,7 +660,7 @@ FixPoint1616_t Adafruit_VL53L0X::getLimitCheckValue(uint16_t LimitCheckId) {
 
 /**************************************************************************/
 /*!
-    @brief  Setups the I2C interface and hardware
+    @brief  Calibrates the sensor and configures it for sensing if calibration succeeds
     @param  i2c_addr Optional I2C address the sensor can be found on. Default is
    0x29
     @param debug Optional debug flag. If true, debug information will print out
@@ -745,7 +745,15 @@ boolean Adafruit_VL53L0X::calibrate(uint8_t i2c_addr, boolean debug, TwoWire *i2
 
     // call off to the config function to do the last part of configuration.
     if (Status == VL53L0X_ERROR_NONE) {
+        if (debug) {
+            Serial.println(F("Configuring sensor"));
+        }
         configSensor(vl_config);
+    }
+
+    if (debug) {
+        Serial.print(F("Error Status: "));
+        Serial.println(Status);
     }
 
     return (Status == VL53L0X_ERROR_NONE);
