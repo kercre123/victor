@@ -123,7 +123,7 @@ boolean Adafruit_VL53L0X::begin(uint8_t i2c_addr, boolean debug, TwoWire *i2c,
         }
 
         Status = VL53L0X_PerformRefSpadManagement(
-            pMyDevice, &refSpadCount, &isApertureSpads);  // Device Initialization
+            pMyDevice, &pCalibData->spad_refSpadCount, &pCalibData->spad_isApertureSpads);  // Device Initialization
 
         if (debug) {
             Serial.print(F("refSpadCount = "));
@@ -138,8 +138,32 @@ boolean Adafruit_VL53L0X::begin(uint8_t i2c_addr, boolean debug, TwoWire *i2c,
             Serial.println(F("VL53L0X: PerformRefCalibration"));
         }
 
-        Status = VL53L0X_PerformRefCalibration(pMyDevice, &VhvSettings,
-                                               &PhaseCal);  // Device Initialization
+        Status = VL53L0X_PerformRefCalibration(pMyDevice, &pCalibData->temp_vhvSettings,
+                                               &pCalibData->temp_phaseCal);  // Device Initialization
+    }
+
+    if (Status == VL53L0X_ERROR_NONE) {
+        if (debug) {
+            Serial.println(F("VL53L0X: SetOffsetCalibrationDataMicroMeter"));
+        }
+
+        Status = VL53L0X_SetOffsetCalibrationDataMicroMeter(&MyDevice, CalibData.offset_microMeter);
+    }
+
+    if (Status == VL53L0X_ERROR_NONE) {
+        if (debug) {
+            Serial.println(F("VL53L0X: SetXTalkCompensationEnable"));
+        }
+
+        Status = VL53L0X_SetXTalkCompensationEnable(&MyDevice, 1);
+    }
+
+    if (Status == VL53L0X_ERROR_NONE) {
+        if (debug) {
+            Serial.println(F("VL53L0X: SetXTalkCompensationRateMegaCps"));
+        }
+
+        Status = VL53L0X_SetXTalkCompensationRateMegaCps(&MyDevice, CalibData.xtalk_compensationRateMegaCps);
     }
 
     if (Status == VL53L0X_ERROR_NONE) {
@@ -680,8 +704,6 @@ boolean Adafruit_VL53L0X::calibrate(uint8_t i2c_addr, boolean debug, TwoWire *i2
 
     pMyDevice->i2c->begin();  // VL53L0X_i2c_init();
 
-    tof_calibration_dat_t *cal;
-
     // Reset is necessary before performing calibration
     VL53L0X_ResetDevice(&MyDevice);
 
@@ -697,7 +719,7 @@ boolean Adafruit_VL53L0X::calibrate(uint8_t i2c_addr, boolean debug, TwoWire *i2
             Serial.println(F("Performing Ref-SPAD Calibration"));
         }
 
-        Status = VL53L0X_PerformRefSpadManagement(pMyDevice, &cal->spad_refSpadCount, &cal->spad_isApertureSpads);
+        Status = VL53L0X_PerformRefSpadManagement(pMyDevice, &pCalibData->spad_refSpadCount, &pCalibData->spad_isApertureSpads);
     }
 
     if (Status == VL53L0X_ERROR_NONE) {
@@ -705,7 +727,7 @@ boolean Adafruit_VL53L0X::calibrate(uint8_t i2c_addr, boolean debug, TwoWire *i2
             Serial.println(F("Performing Temp Calibration"));
         }
 
-        Status = VL53L0X_PerformRefCalibration(pMyDevice, &cal->temp_vhvSettings, &cal->temp_phaseCal);
+        Status = VL53L0X_PerformRefCalibration(pMyDevice, &pCalibData->temp_vhvSettings, &pCalibData->temp_phaseCal);
     }
 
     if (Status == VL53L0X_ERROR_NONE) {
@@ -713,7 +735,7 @@ boolean Adafruit_VL53L0X::calibrate(uint8_t i2c_addr, boolean debug, TwoWire *i2
             Serial.println(F("Performing Offset Calibration"));
         }
 
-        Status = VL53L0X_PerformOffsetCalibration(pMyDevice, kCalDistanceMilliMeter, &cal->offset_microMeter);
+        Status = VL53L0X_PerformOffsetCalibration(pMyDevice, kCalDistanceMilliMeter, &pCalibData->offset_microMeter);
     }
 
     if (Status == VL53L0X_ERROR_NONE) {
@@ -721,34 +743,7 @@ boolean Adafruit_VL53L0X::calibrate(uint8_t i2c_addr, boolean debug, TwoWire *i2
             Serial.println(F("Performing Cross-talk Calibration"));
         }
 
-        Status = VL53L0X_PerformXTalkCalibration(pMyDevice, kCalDistanceMilliMeter, &cal->xtalk_compensationRateMegaCps);
-    }
-
-    if (Status == VL53L0X_ERROR_NONE) {
-        if (debug) {
-            Serial.println(F("Setting Calibration Values"));
-        }
-
-        VL53L0X_SetOffsetCalibrationDataMicroMeter(&MyDevice, cal->offset_microMeter);
-        VL53L0X_SetXTalkCompensationRateMegaCps(&MyDevice, cal->xtalk_compensationRateMegaCps);
-    }
-
-    if (Status == VL53L0X_ERROR_NONE) {
-        if (debug) {
-            Serial.println(F("Setting device mode to single ranging mode"));
-        }
-
-        Status = VL53L0X_SetDeviceMode(
-            pMyDevice,
-            VL53L0X_DEVICEMODE_SINGLE_RANGING);  // Setup in single ranging mode
-    }
-
-    // call off to the config function to do the last part of configuration.
-    if (Status == VL53L0X_ERROR_NONE) {
-        if (debug) {
-            Serial.println(F("Configuring sensor"));
-        }
-        configSensor(vl_config);
+        Status = VL53L0X_PerformXTalkCalibration(pMyDevice, kCalDistanceMilliMeter, &pCalibData->xtalk_compensationRateMegaCps);
     }
 
     if (debug) {

@@ -46,6 +46,15 @@ class Adafruit_VL53L0X {
         VL53L0X_SENSE_HIGH_ACCURACY
     } VL53L0X_Sense_config_t;
 
+    typedef struct {
+        uint32_t spad_refSpadCount;
+        uint8_t spad_isApertureSpads;
+        uint8_t temp_vhvSettings;
+        uint8_t temp_phaseCal;
+        int32_t offset_microMeter;
+        uint32_t xtalk_compensationRateMegaCps;
+    } VL53L0X_CalibrationData_t;
+
     boolean begin(uint8_t i2c_addr = VL53L0X_I2C_ADDR, boolean debug = false,
                   TwoWire *i2c = &Wire,
                   VL53L0X_Sense_config_t vl_config = VL53L0X_SENSE_DEFAULT);
@@ -129,17 +138,10 @@ class Adafruit_VL53L0X {
     VL53L0X_Dev_t MyDevice;
     VL53L0X_Dev_t *pMyDevice = &MyDevice;
     VL53L0X_DeviceInfo_t DeviceInfo;
+    VL53L0X_CalibrationData_t CalibData;
+    VL53L0X_CalibrationData_t *pCalibData = &CalibData;
 
     uint8_t _rangeStatus;
-
-    typedef struct {
-        uint32_t spad_refSpadCount;
-        uint8_t spad_isApertureSpads;
-        uint8_t temp_vhvSettings;
-        uint8_t temp_phaseCal;
-        int32_t offset_microMeter;
-        uint32_t xtalk_compensationRateMegaCps;
-    } tof_calibration_dat_t;
 
     const uint32_t kTargetDistance = 30;
     const FixPoint1616_t kCalDistanceMilliMeter = kTargetDistance << 16;
