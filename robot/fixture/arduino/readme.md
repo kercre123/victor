@@ -21,5 +21,5 @@ The output of the calibration is shown using a [0.96" OLED SSD1306](https://www.
 Tools > Board > Arduino AVR Boards > Arduino Mega or Mega 2560
 Tools > Processor > ATMega2560 (Mega 2560)
 Tools > Port > Choose a USB Port
-Tools > Programmer > AVR ISP
+Tools > Programmer > Atmel STK500 development board
 ```
