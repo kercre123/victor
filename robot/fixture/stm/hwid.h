@@ -68,6 +68,11 @@ typedef struct {
 #define HEADID_HWREV_DEBUG      1 //debug use and DVT1-3
 #define HEADID_HWREV_DVT4       4
 #define HEADID_HWREV_PVT        5
+#define HEADID_HWREV_MP         6
+#define HEADID_HWREV_WHSK_DVT1  7 //Whiskey (Vector 2019)
+#define HEADID_HWREV_WHSK_MAX   19 //Whiskey (Old revisions end here)
+#define HEADID_HWREV_XRAY_EVT   20 //XRay (Vector 2.0)
+
 #define HEADID_HWREV_IS_VALID(r)  ((r) > 0 && (r) <= HEADID_HWREV_PVT)
 
 typedef struct {
