@@ -20,6 +20,8 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 #include "camera/vicos/camera_client/camera_client.h"
 
 #include <vector>
@@ -348,6 +350,10 @@ namespace Anki {
       camera_set_awb(_camera, r_gain, g_gain, b_gain);
     }
 
+    int megapixels() {
+      return IsXray() ? 2 : 1;
+    }
+    
     void CameraService::CameraSetCaptureFormat(Vision::ImageEncoding format)
     {
       if(!IsCameraReady()) {
@@ -358,13 +364,13 @@ namespace Anki {
       switch(format)
       {
         case Vision::ImageEncoding::YUV420sp:
-          cameraFormat = ANKI_CAM_FORMAT_YUV;
+          cameraFormat = megapixels() == 1 ? ANKI_CAM_FORMAT_YUV :  ANKI_CAM_FORMAT_YUV_2MP;
           break;
         case Vision::ImageEncoding::RawRGB:
-          cameraFormat = ANKI_CAM_FORMAT_RGB888;
+          cameraFormat =  megapixels() == 1 ? ANKI_CAM_FORMAT_RGB888 : ANKI_CAM_FORMAT_RGB888_2MP;
           break;
         case Vision::ImageEncoding::BAYER:
-          cameraFormat = ANKI_CAM_FORMAT_BAYER_MIPI_BGGR10;
+          cameraFormat =  megapixels() == 1 ? ANKI_CAM_FORMAT_BAYER_MIPI_BGGR10 :  ANKI_CAM_FORMAT_BAYER_MIPI_BGGR10_2MP;
           break;
         default:
           PRINT_NAMED_WARNING("CameraService.CameraSetCaptureFormat.UnsupportedFormat",
@@ -451,12 +457,15 @@ namespace Anki {
       switch(capture_frame->format)
       {
         case ANKI_CAM_FORMAT_BAYER_MIPI_BGGR10:
+        case ANKI_CAM_FORMAT_BAYER_MIPI_BGGR10_2MP:
           format = Vision::ImageEncoding::BAYER;
           break;
         case ANKI_CAM_FORMAT_RGB888:
+        case ANKI_CAM_FORMAT_RGB888_2MP:
           format = Vision::ImageEncoding::RawRGB;
           break;
         case ANKI_CAM_FORMAT_YUV:
+        case ANKI_CAM_FORMAT_YUV_2MP:
           format = Vision::ImageEncoding::YUV420sp;
           break;
         default:
