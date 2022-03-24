@@ -83,11 +83,11 @@ Result BehaviorPlaypenCameraCalibration::OnBehaviorActivatedInternal()
 
   // Set fake calibration if not already set so that we can actually run
   // calibration from images
-  // if (!robot.GetVisionComponent().IsCameraCalibrationSet())
-  // {
+  if (!robot.GetVisionComponent().IsCameraCalibrationSet())
+  {
     PRINT_NAMED_INFO("BehaviorPlaypenCameraCalibration.SettingFakeCalib", "");
     robot.GetVisionComponent().SetCameraCalibration(kApproxCalib);
-  // }
+  }
   
   robot.GetVisionComponent().ClearCalibrationImages();
   

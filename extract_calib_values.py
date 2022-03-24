@@ -4,7 +4,7 @@ import os
 LOG_DUMP_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_FILE_PATH = os.path.join(LOG_DUMP_DIR, "log.txt")
 CALIB_VALUES_FILE_PATH = os.path.join(LOG_DUMP_DIR, "calib_values.txt")
-CHECK_VARS = ["ComputeCalibrationFromSingleImage.D", "ComputeCalibrationFromSingleTarget.CalibValues"]
+CHECK_VARS = ["ComputeCalibrationFromSingleImage.D", "ComputeCalibrationFromSingleTarget.CalibValues", "CameraCalibrator.ComputeCalibrationFromSingleTarget.Marker"]
 CALIB_TEXT = "Calibration Values - Set %d:\n"
 
 if __name__ == "__main__":
@@ -31,6 +31,8 @@ if __name__ == "__main__":
                         calib_value_count += 1
                 elif CHECK_VARS[1] in line:
                         calib_values.append(" fx" + line.split("fx")[-1] + "\n")
+                elif CHECK_VARS[2] in line:
+                        calib_values.append(line.split("top left : ")[-1])
         # Write the extracted calibration values to a text file
         calib_file = open(CALIB_VALUES_FILE_PATH, "a+")
         calib_file.writelines(calib_values)
