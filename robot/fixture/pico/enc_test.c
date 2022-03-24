@@ -421,7 +421,7 @@ int main() {
     gpio_put(MOTOR_ENABLE_PIN, 1);
     sleep_ms(200);
 
-    set_led_color(MAGENTA);
+    set_led_color(BLUE);
     if(test_encoder() == SUCCESS) {
       set_led_color(GREEN);
     } else {
