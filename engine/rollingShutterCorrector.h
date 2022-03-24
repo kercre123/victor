@@ -101,7 +101,7 @@ namespace Anki {
       bool doVerticalCorrection = false;
       
       // The number of rows to divide the image into and calculate warps for
-      static constexpr f32 _rsNumDivisions = 180.f;
+      static constexpr f32 _rsNumDivisions = 300.f;
       
       // Proportionality constant that relates gyro rates to pixel shift
       static constexpr f32 rateToPixelProportionalityConst = 22.0;
