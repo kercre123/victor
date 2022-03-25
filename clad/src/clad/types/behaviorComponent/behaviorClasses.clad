@@ -109,19 +109,6 @@ enum uint_8 BehaviorClass {
   ReactToBody,
   ReactToGazeDirection,
 
-  // devBehaviors/playpen
-  PlaypenCameraCalibration,
-  PlaypenDistanceSensor,
-  PlaypenDriftCheck,
-  PlaypenDriveForwards,
-  PlaypenEndChecks,
-  PlaypenInitChecks,
-  PlaypenMotorCalibration,
-  PlaypenPickupCube,
-  PlaypenSoundCheck,
-  PlaypenTest,
-  PlaypenWaitToStart,
-
   // devBehaviors/selfTest
   SelfTest,
   SelfTestButton,
