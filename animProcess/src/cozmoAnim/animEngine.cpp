@@ -152,7 +152,7 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
     return result;
   }
   
-  OSState::getInstance()->Update();
+  OSState::getInstance()->Update(currTime_nanosec);
   _animationStreamer->Update();
   
 #if ENABLE_CE_RUN_TIME_DIAGNOSTICS

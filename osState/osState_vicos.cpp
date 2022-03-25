@@ -115,12 +115,11 @@ RobotID_t OSState::GetRobotID() const
   return DEFAULT_ROBOT_ID;
 }
 
-void OSState::Update()
+void OSState::Update(BaseStationTime_t currTime_nanosec)
 {
   if (_updatePeriod_ms != 0) {
-    const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+    const double now_ms = currTime_nanosec/1000000;
     if (now_ms - _lastUpdateTime_ms > _updatePeriod_ms) {
-
       // Update cpu freq
       _cpuFreq_kHz = UpdateCPUFreq_kHz();
 

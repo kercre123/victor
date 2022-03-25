@@ -391,7 +391,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
 
       // Update OSState
-      OSState::getInstance()->Update();
+      OSState::getInstance()->Update(currTime_nanosec);
 
       Result result = _context->GetRobotManager()->UpdateRobotConnection();
       if (RESULT_OK != result) {

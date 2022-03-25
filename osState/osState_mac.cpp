@@ -74,7 +74,7 @@ void OSState::SetSupervisor(webots::Supervisor *sup)
   _supervisorIsSet = true;
 }
 
-void OSState::Update()
+void OSState::Update(BaseStationTime_t currTime_nanosec)
 {
 }
 

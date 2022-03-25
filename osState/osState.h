@@ -43,8 +43,8 @@ public:
   static void SetSupervisor(webots::Supervisor *sup);
 #endif
 
-  void Update();
-  
+  void Update(BaseStationTime_t currTime_nanosec);
+    
   RobotID_t GetRobotID() const;
 
   // Set how often state should be updated.
