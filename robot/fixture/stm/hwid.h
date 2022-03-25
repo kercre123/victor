@@ -73,7 +73,7 @@ typedef struct {
 #define HEADID_HWREV_WHSK_MAX   19 //Whiskey (Old revisions end here)
 #define HEADID_HWREV_XRAY_EVT   20 //XRay (Vector 2.0)
 
-#define HEADID_HWREV_IS_VALID(r)  ((r) > 0 && (r) <= HEADID_HWREV_PVT)
+#define HEADID_HWREV_IS_VALID(r)  ( ((r) == HEADID_HWREV_XRAY_EVT) || ((r) > 0 && (r) <= HEADID_HWREV_PVT)
 
 typedef struct {
   uint32_t  esn;
