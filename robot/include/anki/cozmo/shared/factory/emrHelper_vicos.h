@@ -164,16 +164,16 @@ static inline bool IsWhiskey()
     #define HEADID_HWREV_PVT        5
     #define HEADID_HWREV_MP         6
     #define HEADID_HWREV_WHSK_DVT1  7 //Whiskey (Vector 2019)
-    #define HEADID_HWREV_WHSK_MAX   19 //Whiskey (Old revisions end here)
-    #define HEADID_HWREV_XRAY_EVT   20 //XRay (Vector 2.0)
+    #define HEADID_HWREV_WHSK_MAX   0x19 //Whiskey (Old revisions end here)
+    #define HEADID_HWREV_XRAY_EVT   0x20 //XRay (Vector 2.0)
   */
   const uint32_t hardware = Factory::GetEMR()->fields.HW_VER;
-  return (hardware >= 7 && hardware && hardware <= 19);
+  return (hardware >= 0x7 && hardware && hardware <= 0x19);
 }
 
 static inline const bool IsXray()
 {
-    return (Factory::GetEMR()->fields.HW_VER >= 20);
+    return (Factory::GetEMR()->fields.HW_VER >= 0x20);
 }
 
 }
