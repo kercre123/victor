@@ -42,15 +42,16 @@ extern "C" void core_common_on_exit(void)
   lcd_shutdown();
 }
 
+bool use_santek_sizes() {
+  return lcd_display_version() || lcd_use_midas_crop();
+}
+
 static void animate(void* frame)
 {
-  switch(lcd_display_version()) {
-  case SANTEK:
+  if (use_santek_sizes()) {
     lcd_draw_frame2((uint16_t*)frame, FRAME_WIDTH_SANTEK * FRAME_HEIGHT_SANTEK * sizeof(uint16_t));
-    break;
-  case MIDAS:
-    lcd_draw_frame2((uint16_t*)frame, FRAME_WIDTH_MIDAS * FRAME_HEIGHT_MIDAS * sizeof(uint16_t));
-    break;
+  } else {
+      lcd_draw_frame2((uint16_t*)frame, FRAME_WIDTH_MIDAS * FRAME_HEIGHT_MIDAS * sizeof(uint16_t));
   };
 }
 
@@ -78,7 +79,7 @@ int main(int argc, char** argv)
   }
 
   // Open animation file for reading
-  const char *anim_path = lcd_display_version() == SANTEK ? _animPathSantek : _animPathMidas;
+  const char *anim_path = use_santek_sizes() ? _animPathSantek : _animPathMidas;
   
   int fd = open(anim_path, O_RDONLY);
   if(fd < 0)
@@ -94,7 +95,7 @@ int main(int argc, char** argv)
     printf("lseek failed\n");
     return -1;
   }
-  static const uint32_t kTotalNumFrames = len / ( lcd_display_version() == SANTEK ? NUM_BYTES_PER_FRAME_SANTEK : NUM_BYTES_PER_FRAME_MIDAS);
+  static const uint32_t kTotalNumFrames = len / ( use_santek_sizes() ? NUM_BYTES_PER_FRAME_SANTEK : NUM_BYTES_PER_FRAME_MIDAS);
 
   // Memory map the anim file
   void* anim = mmap(nullptr, len, PROT_READ, MAP_PRIVATE, fd, 0);
@@ -129,7 +130,7 @@ int main(int argc, char** argv)
     // Time how long it takes to animate/draw this frame
     const auto startTime = std::chrono::steady_clock::now();
 
-    const uint32_t frame_offset = lcd_display_version() == SANTEK ? NUM_BYTES_PER_FRAME_SANTEK : NUM_BYTES_PER_FRAME_MIDAS;
+    const uint32_t frame_offset = use_santek_sizes() ? NUM_BYTES_PER_FRAME_SANTEK : NUM_BYTES_PER_FRAME_MIDAS;
     
     animate(((uint8_t*)anim) + (nextFrameToDraw * frame_offset));
     const auto endTime = std::chrono::steady_clock::now();

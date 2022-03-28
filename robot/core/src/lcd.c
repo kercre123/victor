@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <linux/spi/spidev.h>
@@ -128,6 +129,10 @@ lcd_display_t lcd_display_version() {
   return MIDAS;
 }
 
+bool lcd_use_midas_crop() {
+  return true;
+}
+
 static int lcd_spi_init()
 {
   // SPI setup
@@ -252,22 +257,45 @@ void lcd_draw_frame(const LcdFrame* frame) {
    }
 }
 
-void lcd_draw_frame2_midas(const uint16_t* frame, size_t size) {
-   static uint16_t buffer[LCD_FRAME_WIDTH_MIDAS * LCD_FRAME_HEIGHT_MIDAS];
+// Here we jsut crop the images cutting off top/bottom/and sides
+// Because rampost is running inside a ram filesystem we can't
+// load up a bunch of files for alternate images, and we don't
+// want to increase the size of this binary by creating files like
+// anki_dev_unit_v2 with the raw data stored as a struct.
+void lcd_draw_frame2_midas_crop(const uint16_t* frame, size_t size)
+{
+  static const uint8_t WRITE_RAM = 0x2C;
 
-   for(int i=0; i < LCD_FRAME_WIDTH_MIDAS * LCD_FRAME_HEIGHT_MIDAS ; i++) {
-     buffer[i] = __builtin_bswap16(frame[i]);
-   }
+  lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
+
+  uint16_t new_row[LCD_FRAME_WIDTH_MIDAS];
+
+  int i,j;
+  for(i=0;i<LCD_FRAME_HEIGHT_MIDAS;i++) {
+    const uint16_t* row = (uint16_t*)frame + ((i+12) * LCD_FRAME_WIDTH_SANTEK) + 8;
+    for(j=0;j<LCD_FRAME_WIDTH_MIDAS;j++) {
+      new_row[j] = __builtin_bswap16(row[j]);
+    }
+    lcd_spi_transfer(FALSE, (LCD_FRAME_WIDTH_MIDAS )* 2, new_row);
+  }
+}
+
+void lcd_draw_frame2_midas(const uint16_t* frame, size_t size) {
+  static uint16_t buffer[LCD_FRAME_WIDTH_MIDAS * LCD_FRAME_HEIGHT_MIDAS];
+
+  for(int i=0; i < LCD_FRAME_WIDTH_MIDAS * LCD_FRAME_HEIGHT_MIDAS ; i++) {
+    buffer[i] = __builtin_bswap16(frame[i]);
+  }
   
-   if (0) { // Does this work?
-      lseek(lcd_fd, 0, SEEK_SET);
-      (void)write(lcd_fd, buffer, size);
-   } else {
-   
-      static const uint8_t WRITE_RAM = 0x2C;
-      lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
-      lcd_spi_transfer(FALSE, size, buffer);
-   }
+  if (0) { // Does this work?
+    lseek(lcd_fd, 0, SEEK_SET);
+    (void)write(lcd_fd, buffer, size);
+  } else {
+ 
+    static const uint8_t WRITE_RAM = 0x2C;
+    lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
+    lcd_spi_transfer(FALSE, size, buffer);
+  }
 }
 
 void lcd_draw_frame2_santek(const uint16_t* frame, size_t size) {
@@ -284,7 +312,11 @@ void lcd_draw_frame2_santek(const uint16_t* frame, size_t size) {
 
 void lcd_draw_frame2(const uint16_t* frame, size_t size) {
   if (lcd_display_version() != SANTEK) {
-    lcd_draw_frame2_midas(frame, size);
+    if (lcd_use_midas_crop()) {
+      lcd_draw_frame2_midas_crop(frame, size);
+    } else {
+      lcd_draw_frame2_midas(frame, size);
+    }
   } else {
     lcd_draw_frame2_santek(frame, size);
   }
