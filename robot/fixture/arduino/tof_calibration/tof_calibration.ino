@@ -18,7 +18,7 @@
 // Button pins
 #define BUTTON 7
 // Uncomment line below to view debug statements
-// #define DEBUG
+//#define DEBUG
 
 // Function definitions
 void displayMessage(String msg, uint8_t startX, uint8_t textSize, bool invert = false, bool addDelay = false);
@@ -52,6 +52,7 @@ void setup() {
   display.clearDisplay();
   Serial.println("Calibrator started");
   displayMessage("TOF-CALIB", 10, 2, false, true);
+
 }
 
 /**************************************************************************/
@@ -76,10 +77,11 @@ void loop() {
   Serial.println("Starting ToF Calibration...");
   displayMessage("CALIBRATE", 5, 2);
   bool calibSuccess = false;
+  
 #ifdef DEBUG
   calibSuccess = lox.calibrate(0x29, true);
 #else
-  calibSuccess = lox.calibrate();
+  calibSuccess = lox.calibrate(0x29, false);
 #endif
 
   // For some reason, we have to re-initialize the display after calibration
@@ -113,12 +115,12 @@ void loop() {
 #ifdef DEBUG
     if (lox.begin(0x29, true))
 #else
-    if (lox.begin())
+    if (lox.begin(0x29, false))
 #endif
     {
       if (isAverageReadingOkay())
       {
-        Serial.println(F("Calibration SUCCECSS"));
+        Serial.println(F("Calibration SUCCESS"));
         displayMessage("OK!", 30, 4, true, true);
       }
       else
@@ -219,7 +221,7 @@ bool isAverageReadingOkay()
   uint16_t acc = 0;
   uint8_t cnt = 0;
   displayMessage("READING", 25, 2);
-  for (int i = 0; i < 20; i++)
+  for (int i = 0; i < 50; i++)
   {
     VL53L0X_RangingMeasurementData_t measure;
 #ifdef DEBUG
