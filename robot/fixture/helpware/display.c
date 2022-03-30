@@ -14,7 +14,6 @@
 
 #include "helpware/display.h"
 
-
 #ifdef EXTENDED_DISPLAY_DEBUGGING
 #define ddprintf printf
 #else
@@ -31,7 +30,6 @@ typedef struct Font_t
   int CharsPerLine;
   int BitHeight;
   int BitWidth;
-
 
   unsigned char CharStart;
   unsigned char CharEnd;
@@ -87,6 +85,7 @@ static const Font gSmallFont = {
   /* int CharsPerLine; */    DISPLAY_SCREEN_WIDTH/SMALL_FONT_WIDTH,
   /* int BitHeight; */       SMALL_FONT_HEIGHT,
   /* int BitWidth; */        SMALL_FONT_WIDTH,
+
   SMALL_FONT_CHAR_START,
   SMALL_FONT_CHAR_END,
   1, /* CenteredByDefault& */
@@ -267,7 +266,7 @@ void display_render_32bit_text(uint8_t* bitmap, int layer, const Font* font)
   // 32 bit text puts 1 line over 4 rows.
   // theoretically we could do 24 bit text...
   int line, col;
-  int mapline = 0;
+  int mapline = 3;
   for (line=0;line<font->LineCount;line++)
   {
     uint8_t* m1 = &bitmap[mapline*LCD_FRAME_WIDTH];
@@ -362,7 +361,14 @@ void display_render(uint8_t layermask) {
 void display_draw_text(int layer, int line , uint16_t fg, uint16_t bg, const char* text, int len, bool centered)
 {
   const Font* font =  gFont[layer];
-  assert(line < font->LineCount);
+  if (line >= font->LineCount) {
+    printf("Line %d for layer %d (max: %d. height: %d)  is unprintable! Won't show text! SKIPPING!\n", line, layer, font->LineCount, font->BitHeight);
+    char *extracted_text = (char*) malloc(len+1);
+    strcpy(extracted_text, text);
+    extracted_text[len] = 0; // null terminate
+    printf("TEXT WAS \"%s\"\n", extracted_text);
+    return;
+  }
   int nchars =  min(len, font->CharsPerLine);
   char* textline = gDisplay.text[layer]+(line*font->CharsPerLine);
   memset(textline, ' ', font->CharsPerLine);

@@ -18,7 +18,11 @@
 
 
 void helper_text_small(int line, const char *text, int len) {
-  display_draw_text(DISPLAY_LAYER_SMALL, line-1, HELPER_SMALL_TEXT_COLOR_FG, HELPER_SMALL_TEXT_COLOR_BG,  text, len, 0);
+  int adjusted_line = line - 1;
+    if (adjusted_line >= 4) {
+    adjusted_line += 1;
+  }
+  display_draw_text(DISPLAY_LAYER_SMALL-1, adjusted_line, HELPER_SMALL_TEXT_COLOR_FG, HELPER_SMALL_TEXT_COLOR_BG,  text, len, 0);
 }
 
 static int large_layer = DISPLAY_LAYER_LARGE;
@@ -26,7 +30,7 @@ void helper_text_large(uint16_t fg, uint16_t bg, const char *text, int len) {
   display_clear_layer(large_layer, fg, bg); //clear last-used center-text
   large_layer = len <= DISPLAY_LAYER_LARGE_MAX_CHARS ? DISPLAY_LAYER_LARGE : DISPLAY_LAYER_LARGE_SKINNY;
   display_clear_layer(large_layer, fg, bg); //clear last-used center-text
-  display_draw_text(large_layer, 1, fg, bg, text, len, 1);
+  display_draw_text(large_layer, 0, fg, bg, text, len, 1);
 }
 
 void helper_text_show(int largeSolo)

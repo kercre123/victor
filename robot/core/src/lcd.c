@@ -12,16 +12,6 @@
 #include "core/gpio.h"
 #include "core/anki_dev_unit.h"
 
-#undef LCD_FRAME
-#if 0   //list of frames that can be selected
-#define LCD_FRAME 77890    //ORIGIN
-#define LCD_FRAME 3022     //NV3022
-#define LCD_FRAME 7789     //ST7789
-#define LCD_FRAME 7735     //ST7735
-#define LCD_FRAME MIDAS    //hybrid kinda
-#endif
-#define LCD_FRAME MIDAS
-#undef INIT_PROG
 #include "core/lcd.h"
 
 #define FALSE 0
@@ -252,9 +242,7 @@ void lcd_clear_screen(void) {
 }
 
 void lcd_draw_frame(const LcdFrame* frame) {
-   static const uint8_t WRITE_RAM = 0x2C;
-   lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
-   lcd_spi_transfer(FALSE, sizeof(frame->data), frame->data);
+  lcd_draw_frame2(frame->data, sizeof(frame->data));
 }
 
 void lcd_draw_frame2(const uint16_t* frame, size_t size) {
@@ -264,7 +252,7 @@ void lcd_draw_frame2(const uint16_t* frame, size_t size) {
   for(int i=0; i < LCD_FRAME_WIDTH * LCD_FRAME_HEIGHT ; i++) {
     buffer[i] = __builtin_bswap16(frame[i]);
   }
-  
+
   lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
   lcd_spi_transfer(FALSE, size, buffer);
 }

@@ -461,7 +461,7 @@ int main(int argc, const char* argv[])
     "0 \n", //clear
     "1 helper compile date:\n",
     "2 " __DATE__ " " __TIME__ "\n",
-    "7 reset fixture       \n" };
+    "6 reset fixture       \n" };
   helper_lcdshow_command_parse(center, strlen(center));
   for(x=0; x<sizeof(lines)/sizeof(const char*); x++) {
     helper_lcdset_command_parse( lines[x], strlen(lines[x]) );
