@@ -394,12 +394,12 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
                               -0.07f, -0.2f, 0.001f, 0.001f, 0.1f, 0.f, 0.f, 0.f);
 #else
   cv::Mat_<f64> cameraMatrix = (cv::Mat_<double>(3,3) <<
-                                362, 0, 303,
-                                0, 364, 196,
+                                417, 0, 380,
+                                0, 416, 310,
                                 0, 0, 1);
   
   cv::Mat_<f64> distCoeffs = (cv::Mat_<double>(1, NUM_RADIAL_DISTORTION_COEFFS) <<
-                              -0.1, -0.1, 0.00005, -0.0001, 0.05, 0, 0, 0);
+                              -0.03, 0.01, 0.003, -0.002, -0.157, 0.f, 0.f, 0.f);
 #endif
   
   std::vector<cv::Vec3d> rvecs, tvecs;

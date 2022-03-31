@@ -156,13 +156,13 @@ static u32 kFocalLengthTolerance                      = 30;
 static u32 kCenterTolerance                           = 50;
 
 // Tolerance on the camera's radial distortion
-static f32 kRadialDistortionTolerance                 = 0.15f;
+static f32 kRadialDistortionTolerance                 = 0.6f;
 
 // Tolerance on the camera's tangential distortion
-static f32 kTangentialDistortionTolerance             = 0.05f;
+static f32 kTangentialDistortionTolerance             = 0.2f;
 
 // Head angle at which we can see the entire calibration target
-static f32 kHeadAngleToSeeTarget_rad                  = DEG_TO_RAD(42.f);
+static f32 kHeadAngleToSeeTarget_rad                  = DEG_TO_RAD(38.f);
 
 // How long we should wait to see the calibration target after looking up at it
 static u32 kTimeoutWaitingForTarget_ms                = 5000;
@@ -230,7 +230,7 @@ static f32       kToolCodeDistThreshY_pix = 40.f;
 
 // ----------Pickup Cube----------
 // Expected cube pose x relative to playpen starting pose
-static f32 kExpectedCubePoseX_mm                = 420;
+static f32 kExpectedCubePoseX_mm                = 520;
 
 // Expected cube pose y relative to playpen starting pose
 static f32 kExpectedCubePoseY_mm                = 0;
