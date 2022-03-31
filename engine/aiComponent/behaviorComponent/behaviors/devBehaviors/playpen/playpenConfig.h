@@ -230,7 +230,7 @@ static f32       kToolCodeDistThreshY_pix = 40.f;
 
 // ----------Pickup Cube----------
 // Expected cube pose x relative to playpen starting pose
-static f32 kExpectedCubePoseX_mm                = 450;
+static f32 kExpectedCubePoseX_mm                = 520;
 
 // Expected cube pose y relative to playpen starting pose
 static f32 kExpectedCubePoseY_mm                = 0;
