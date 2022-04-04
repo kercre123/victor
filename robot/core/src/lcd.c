@@ -130,7 +130,7 @@ lcd_display_t lcd_display_version() {
 }
 
 bool lcd_use_midas_crop() {
-  return true;
+  return false;
 }
 
 static int lcd_spi_init()
