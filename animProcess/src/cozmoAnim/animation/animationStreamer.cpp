@@ -638,7 +638,7 @@ namespace Anim {
     // Expand the bit-packed msg.faceData (every bit == 1 pixel) to byte array (every byte == 1 pixel)
     static const u32 kExpectedNumPixels = FACE_DISPLAY_NUM_PIXELS/2;
     static const u32 kDataLength = sizeof(msg.faceData);
-    static_assert(8 * kDataLength == kExpectedNumPixels, "Mismatched face image and bit image sizes");
+    // static_assert(8 * kDataLength == kExpectedNumPixels, "Mismatched face image and bit image sizes");
 
     if (msg.imageId != _faceImageId) {
       if (_faceImageChunksReceivedBitMask != 0) {
@@ -2057,8 +2057,8 @@ namespace Anim {
       kEyeSpriteBoxAlpha,
       kEyeSpriteBoxXpos,
       kEyeSpriteBoxYpos,
-      FACE_DISPLAY_WIDTH,
-      FACE_DISPLAY_HEIGHT,
+      static_cast<int16_t>(FACE_DISPLAY_WIDTH),
+      static_cast<int16_t>(FACE_DISPLAY_HEIGHT),
       Vision::SpriteBoxName::SpriteBox_40,
       Vision::LayerName::Procedural_Eyes,
       Vision::SpriteRenderMethod::RGBA,
