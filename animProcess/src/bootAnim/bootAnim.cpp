@@ -43,7 +43,7 @@ extern "C" void core_common_on_exit(void)
 }
 
 bool use_santek_sizes() {
-  return lcd_display_version() || lcd_use_midas_crop();
+  return lcd_display_version() == SANTEK;
 }
 
 static void animate(void* frame)
@@ -51,7 +51,7 @@ static void animate(void* frame)
   if (use_santek_sizes()) {
     lcd_draw_frame2((uint16_t*)frame, FRAME_WIDTH_SANTEK * FRAME_HEIGHT_SANTEK * sizeof(uint16_t));
   } else {
-      lcd_draw_frame2((uint16_t*)frame, FRAME_WIDTH_MIDAS * FRAME_HEIGHT_MIDAS * sizeof(uint16_t));
+    lcd_draw_frame2((uint16_t*)frame, FRAME_WIDTH_MIDAS * FRAME_HEIGHT_MIDAS * sizeof(uint16_t));
   };
 }
 

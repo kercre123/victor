@@ -28,7 +28,8 @@ static int MAX_TRANSFER = 0x1000;
 static int lcd_use_fb; // use /dev/fb0?
 
 #define GPIO_LCD_WRX   110
-#define GPIO_LCD_RESET 96
+#define GPIO_LCD_RESET_MIDAS 96
+#define GPIO_LCD_RESET_SANTEK 55
 
 static GPIO RESET_PIN;
 static GPIO DnC_PIN;
@@ -119,14 +120,43 @@ static const INIT_SCRIPT display_on_scr_midas[] = {
   {0}
 };
 
-/************* LCD SPI Interface ***************/
+static uint32_t get_vector_hw_version() {
+  int fd = -1;
+  uint32_t emr_data[8]; // The emr header
 
+  // This is early enough we don't have /dev/block/bootdevice/by-name/
+  // Things will break if we change partition numbering.
+  fd = open("/dev/mmcblk0p29",O_RDONLY);
+
+  if (fd == -1) {
+    error_return(app_DEVICE_OPEN_ERROR, "hw_version.get: Couldn't open EMR partition: %d\n", errno);
+    return 0;
+  } // ABORT!
+
+  int res = read(fd, &emr_data, sizeof(emr_data));
+  if (res == -1) {
+    error_return(app_DEVICE_OPEN_ERROR, "Couldn't read EMR partition: %d\n", errno);
+    close(fd);
+    return 0;
+  }
+  // See emr-cat.c to determine how we got the offset
+  uint32_t hw_ver = emr_data[1];
+
+  close(fd);
+  return hw_ver;
+} 
+
+static inline const bool IsXray()
+{
+  return get_vector_hw_version() >= 0x20;
+}
+
+/************* LCD SPI Interface ***************/
 
 static int lcd_fd;
 
 lcd_display_t lcd_display_version() {
-  //  return SANTEK;
-  return MIDAS;
+  return IsXray() ? MIDAS : SANTEK;
 }
 
 bool lcd_use_midas_crop() {
@@ -386,10 +416,11 @@ int lcd_init(void) {
     error_return(app_IO_ERROR, "Failed to create GPIO %d: %d\n", GPIO_LCD_WRX, res);
   }
 
-  res = gpio_create_open_drain_output(GPIO_LCD_RESET, gpio_HIGH, &RESET_PIN);
+  int gpio_lcd_reset = lcd_display_version() == SANTEK ? GPIO_LCD_RESET_SANTEK : GPIO_LCD_RESET_MIDAS;
+  res = gpio_create_open_drain_output(gpio_lcd_reset, gpio_HIGH, &RESET_PIN);
   if(res < 0)
   {
-    error_return(app_IO_ERROR, "Failed to create GPIO %d: %d\n", GPIO_LCD_RESET, res);
+    error_return(app_IO_ERROR, "Failed to create GPIO %d: %d\n", gpio_lcd_reset, res);
   }
 
   // SPI setup
