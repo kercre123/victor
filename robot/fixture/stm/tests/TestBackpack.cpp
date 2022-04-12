@@ -287,9 +287,9 @@ void TestButton(void)
 TestFunction* TestBackpack1GetTests(void)
 {
   static TestFunction m_tests[] = {
-    TestLeds,
+    //TestLeds,
     TestMics,
-    TestButton,
+    //TestButton,
     NULL,
   };
   return m_tests;
