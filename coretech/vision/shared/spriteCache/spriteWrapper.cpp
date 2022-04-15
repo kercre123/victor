@@ -274,7 +274,7 @@ void SpriteWrapper::LoadSprite(ImageRGBA* outImage, const HSImageHandle& hsImage
                 _fullSpritePath.c_str());
   }
   if(Vector::IsXray()) {
-    outImage->Resize(Vector::FACE_DISPLAY_HEIGHT, Vector::FACE_DISPLAY_WIDTH);
+    outImage->Resize(outImage->GetNumRows() * 80 / 96, outImage->GetNumCols() * 160 / 184);
   }
 }
 
