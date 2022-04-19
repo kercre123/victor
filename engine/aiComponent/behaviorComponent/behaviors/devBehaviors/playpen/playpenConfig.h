@@ -239,7 +239,7 @@ static f32 kExpectedCubePoseY_mm                = 0;
 static f32 kExpectedCubePoseDistThresh_mm       = 30;
 
 // Allowed difference between expected and observed cube pose height
-static f32 kExpectedCubePoseHeightThresh_mm     = 10;
+static f32 kExpectedCubePoseHeightThresh_mm     = 15;
 
 // Allowed difference between expected and observed cube pose angle
 static f32 kExpectedCubePoseAngleThresh_rad     = DEG_TO_RAD(10);
