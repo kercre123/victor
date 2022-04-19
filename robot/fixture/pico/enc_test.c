@@ -96,8 +96,8 @@ struct analyze_data analyze_capture(float low_voltage, float high_voltage) {
 
   for(int i=0;i<CAPTURE_SIZE;i+=CAPTURE_WIDTH) {
     int tick = i / CAPTURE_WIDTH;
-    float enc_a = capture_buf[i+1] * conversion_factor;
-    float enc_b = capture_buf[i] * conversion_factor;
+    float enc_a = capture_buf[i] * conversion_factor;
+    float enc_b = capture_buf[i+1] * conversion_factor;
 
     // Log Min/max voltages essentially so we can remotely
     // tell if the circuit is working or damaged.
