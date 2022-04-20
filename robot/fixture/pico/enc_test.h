@@ -18,6 +18,8 @@ const uint LED_RED_PIN = 11;
 const uint LED_GREEN_PIN = 12;
 const uint LED_BLUE_PIN = 13;
 
+const uint MODE_PIN = 3;
+
 const int DELTA_LOW = 40;
 const int DELTA_HIGH = 80;
 
@@ -62,7 +64,9 @@ typedef enum {
   ERROR_DELTA_TOO_LOW,
   ERROR_DELTA_TOO_HIGH,
   ERROR_LED_SHOULD_BE_OFF,
-  ERROR_WIRES_REVERSED
+  ERROR_WIRES_REVERSED,
+  ERROR_BAD_LED_ON,
+  ERROR_BAD_LED_OFF,
 } test_status_t;
 
 #endif

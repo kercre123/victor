@@ -82,17 +82,17 @@ void cleanup_dma_capture(uint dma_chan) {
   dma_channel_unclaim(dma_chan);
 }
 
-struct analyze_data analyze_capture(float low_voltage, float high_voltage) {
+void  analyze_capture(float low_voltage, float high_voltage, struct analyze_data* data) {
   analyze_state_t state = ANALYZE_NOT_INITIALIZED;
-  struct analyze_data data;
-  data.a_high_tick = -1;
-  data.b_high_tick = -1;
-  data.a_low_tick = CAPTURE_DEPTH + 1;
-  data.b_low_tick = CAPTURE_DEPTH + 1;
-  data.a_min_volt = 200;
-  data.b_min_volt = 200;
-  data.a_max_volt = -1;
-  data.b_max_volt = -1;
+
+  data->a_high_tick = -1;
+  data->b_high_tick = -1;
+  data->a_low_tick = CAPTURE_DEPTH + 1;
+  data->b_low_tick = CAPTURE_DEPTH + 1;
+  data->a_min_volt = 200;
+  data->b_min_volt = 200;
+  data->a_max_volt = -1;
+  data->b_max_volt = -1;
 
   for(int i=0;i<CAPTURE_SIZE;i+=CAPTURE_WIDTH) {
     int tick = i / CAPTURE_WIDTH;
@@ -101,10 +101,10 @@ struct analyze_data analyze_capture(float low_voltage, float high_voltage) {
 
     // Log Min/max voltages essentially so we can remotely
     // tell if the circuit is working or damaged.
-    if (enc_a > data.a_max_volt) data.a_max_volt = enc_a;
-    if (enc_b > data.b_max_volt) data.b_max_volt = enc_b;
-    if (enc_a < data.a_min_volt) data.a_min_volt = enc_a;
-    if (enc_b < data.b_min_volt) data.b_min_volt = enc_b;
+    if (enc_a > data->a_max_volt) data->a_max_volt = enc_a;
+    if (enc_b > data->b_max_volt) data->b_max_volt = enc_b;
+    if (enc_a < data->a_min_volt) data->a_min_volt = enc_a;
+    if (enc_b < data->b_min_volt) data->b_min_volt = enc_b;
     
     if (state == ANALYZE_NOT_INITIALIZED) {
       // Find an area where both encoders aren't seeing anything
@@ -117,15 +117,15 @@ struct analyze_data analyze_capture(float low_voltage, float high_voltage) {
       // Find the first time the tick exceeds the high voltage
       // for each encoder to catch the rising edge, then set a flag
       // to stop checking when both are seen
-      if (data.a_high_tick < 0 && enc_a > high_voltage) {
-        data.a_high_tick = tick;
+      if (data->a_high_tick < 0 && enc_a > high_voltage) {
+        data->a_high_tick = tick;
       }
-      if (data.b_high_tick < 0 && enc_b > high_voltage) {
-        data.b_high_tick = tick;
+      if (data->b_high_tick < 0 && enc_b > high_voltage) {
+        data->b_high_tick = tick;
       }
 
       // if we have both high ticks, move on to low
-      if (data.a_high_tick > 0 && data.b_high_tick > 0) {
+      if (data->a_high_tick > 0 && data->b_high_tick > 0) {
         state = ANALYZE_HIGH_DONE;
       }
     } else if (state == ANALYZE_HIGH_DONE) {
@@ -133,15 +133,15 @@ struct analyze_data analyze_capture(float low_voltage, float high_voltage) {
       // Find the first time the tick is smaller than the min voltage
       // for each encoder to catch the falling edge, then set a flag
       // to stop checking when both are seen
-      if (data.a_low_tick > CAPTURE_DEPTH && enc_a < low_voltage) {
-        data.a_low_tick = tick;
+      if (data->a_low_tick > CAPTURE_DEPTH && enc_a < low_voltage) {
+        data->a_low_tick = tick;
       }
-      if (data.b_low_tick > CAPTURE_DEPTH && enc_b < low_voltage) {
-        data.b_low_tick = tick;
+      if (data->b_low_tick > CAPTURE_DEPTH && enc_b < low_voltage) {
+        data->b_low_tick = tick;
       }
 
       // if we have both low edges, call it a day
-      if (data.a_low_tick < CAPTURE_DEPTH && data.b_low_tick < CAPTURE_DEPTH) {
+      if (data->a_low_tick < CAPTURE_DEPTH && data->b_low_tick < CAPTURE_DEPTH) {
         state = ANALYZE_LOW_DONE;
       }
     }
@@ -154,15 +154,22 @@ struct analyze_data analyze_capture(float low_voltage, float high_voltage) {
   const int usec_per_sample_session = 4; 
     
   // Calculate the deltas. B always trails.
-  data.high_delta_us = (data.a_high_tick - data.b_high_tick) *
+  data->high_delta_us = (data->a_high_tick - data->b_high_tick) *
     usec_per_sample_session;
-  data.low_delta_us = (data.a_low_tick - data.b_low_tick) *
+  data->low_delta_us = (data->a_low_tick - data->b_low_tick) *
     usec_per_sample_session;
-    
-  return data;
 }
 
-test_status_t single_test(float low_voltage, float high_voltage) {
+void print_capture_data(float low_voltage, float high_voltage, struct analyze_data* data) {
+  printf("[%f V - %f V]: HIGH DELTA %d uS | LOW_DELTA %d uS | Av (min: %1.2f, max: %1.2f), Bv (min: %1.2f, max: %1.2f)\n",
+         low_voltage, high_voltage,
+         data->high_delta_us, data->low_delta_us,
+	 data->a_min_volt, data->a_max_volt,
+	 data->b_min_volt, data->b_max_volt
+	 );
+}
+
+test_status_t single_test(float low_voltage, float high_voltage, struct analyze_data* data) {
   watchdog_update();
   
   uint dma_chan = init_dma_capture();
@@ -180,25 +187,19 @@ test_status_t single_test(float low_voltage, float high_voltage) {
     if (DEBUG_CSV) puts("=== END ===\n");
   }
 
-  struct analyze_data data = analyze_capture(low_voltage, high_voltage);
-
-  printf("[%f V - %f V]: HIGH DELTA %d uS | LOW_DELTA %d uS | Av (min: %1.2f, max: %1.2f), Bv (min: %1.2f, max: %1.2f)\n",
-         low_voltage, high_voltage,
-         data.high_delta_us, data.low_delta_us,
-	 data.a_min_volt, data.a_max_volt,
-	 data.b_min_volt, data.b_max_volt
-	 );
+  analyze_capture(low_voltage, high_voltage, data);
+  print_capture_data(low_voltage, high_voltage, data);
   
-  if (data.a_high_tick < 0 || data.b_high_tick < 0) {
+  if (data->a_high_tick < 0 || data->b_high_tick < 0) {
     return ERROR_NO_HIGH;
-  } else if (data.a_low_tick > CAPTURE_DEPTH ||
-             data.b_low_tick > CAPTURE_DEPTH) {
+  } else if (data->a_low_tick > CAPTURE_DEPTH ||
+             data->b_low_tick > CAPTURE_DEPTH) {
     return ERROR_NO_LOW;
-  } else if (data.high_delta_us < -1 || data.low_delta_us < -1) {
+  } else if (data->high_delta_us < -1 || data->low_delta_us < -1) {
     return ERROR_WIRES_REVERSED;
-  } else if (data.high_delta_us < DELTA_LOW || data.low_delta_us < DELTA_LOW) {
+  } else if (data->high_delta_us < DELTA_LOW || data->low_delta_us < DELTA_LOW) {
     return ERROR_DELTA_TOO_LOW;
-  } else if (data.high_delta_us > DELTA_HIGH || data.low_delta_us > DELTA_HIGH) {
+  } else if (data->high_delta_us > DELTA_HIGH || data->low_delta_us > DELTA_HIGH) {
     return ERROR_DELTA_TOO_HIGH;
   }
 
@@ -215,14 +216,50 @@ float tests[TEST_COUNT][2] = {
   {0.7,2.0},
 };
 
-test_status_t test_encoder() {
+test_status_t test_encoder_only() {
+  // Run adc capture
+  float *test_params;
+
+  float low_voltage = 1.1;
+  float high_voltage = 1.6;
+  
+  struct analyze_data data;
+
+  // Disable LED, make sure we don't get anything good
+  gpio_put(ENC_LED_PIN, 1);
+
+  single_test(low_voltage, high_voltage, &data);
+  print_capture_data(low_voltage, high_voltage, &data);
+
+  if (data.a_max_volt > 0.2 || data.b_max_volt > 0.2) {
+    printf("ENCODER ONLY: VOLTAGE TOO HIGH WHEN LED IS OFF");
+    return ERROR_BAD_LED_OFF;
+  }
+  
+  // Re-enable LED
+  gpio_put(ENC_LED_PIN, 0);
+
+  single_test(low_voltage, high_voltage, &data);
+  print_capture_data(low_voltage, high_voltage, &data);
+
+  if (data.a_min_volt < 3 || data.b_min_volt < 3) {
+    printf("ENCODER ONLY: VOLTAGE TOO LOW WHEN LED IS ON");
+    return ERROR_BAD_LED_ON;
+  }
+  
+  return SUCCESS;
+}
+test_status_t test_encoder_with_gearbox() {
   // Run adc capture
   float *test_params;
   test_status_t result;
 
+  struct analyze_data data;
+
   // Disable LED, make sure we don't get anything good
   gpio_put(ENC_LED_PIN, 1);
-  result = single_test(1.1,1.6);
+
+  result = single_test(1.1, 1.6, &data);
   if(result != ERROR_NO_HIGH) {
     puts("ERROR_LED_SHOULD_BE_OFF");
     return ERROR_LED_SHOULD_BE_OFF;
@@ -234,7 +271,7 @@ test_status_t test_encoder() {
   for(int i=0;i<TEST_COUNT;i++) {
     test_params = tests[i];
     
-    result = single_test(test_params[0], test_params[1]);
+    result = single_test(test_params[0], test_params[1], &data);
     if (result != SUCCESS) { break; }
   }
 
@@ -373,6 +410,13 @@ void setup_gpio() {
   gpio_init(LED_BLUE_PIN);
   gpio_set_dir(LED_BLUE_PIN, GPIO_OUT);
   gpio_put(LED_BLUE_PIN, 0);
+
+  // Currently GPIO 3 so that we can jump the
+  // middle two pins on either J1 or J6 to enable
+  // this mode
+  gpio_init(MODE_PIN);
+  gpio_set_dir(MODE_PIN, GPIO_IN);
+  gpio_set_pulls(MODE_PIN, false, true);
 }
 
 int main() {
@@ -422,7 +466,18 @@ int main() {
     sleep_ms(200);
 
     set_led_color(BLUE);
-    if(test_encoder() == SUCCESS) {
+
+    test_status_t result;
+
+    if (gpio_get(MODE_PIN)) {
+      printf("\n%s\n\n", "ENCODER ONLY TEST");
+      result = test_encoder_only();
+    } else {
+      printf("\n%s\n\n", "GEARBOX TEST");
+      result = test_encoder_with_gearbox();
+    }
+    
+    if(result == SUCCESS) {
       set_led_color(GREEN);
     } else {
       set_led_color(RED);
