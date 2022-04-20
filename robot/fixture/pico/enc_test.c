@@ -7,7 +7,7 @@
 #include "pico/binary_info.h"
 #include "enc_test.h"
 
-#define VERSION "1.0 2022-03-24"
+#define VERSION "1.1 2022-04-20"
 
 #define DEBUG_CSV 0
 
