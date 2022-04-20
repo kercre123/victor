@@ -15,7 +15,7 @@
 
 #include "engine/robot.h"
 #include "engine/vision/visionSystem.h"
-
+#include "anki/cozmo/shared/factory/emrHelper.h"
 
 namespace Anki {
   namespace Vector {
@@ -23,16 +23,24 @@ namespace Anki {
     namespace {
       const TimeStamp_t kMaxAllowedDelay_ms = 100; 
     }
+    
+    int RollingShutterCorrector::GetNumDivisions() {
+      if (IsXray()) {
+	return _rsNumDivisionsXray ;
+      } else {
+	return _rsNumDivisions;
+      }
+    }
  
     void RollingShutterCorrector::ComputePixelShifts(const VisionPoseData& poseData,
                                                      const VisionPoseData& prevPoseData,
                                                      const u32 numRows)
     {
       _pixelShifts.clear();
-      _pixelShifts.reserve(_rsNumDivisions);
+      _pixelShifts.reserve(GetNumDivisions());
 
       // Time difference between subdivided rows in the image
-      const f32 timeDif = timeBetweenFrames_ms/_rsNumDivisions;
+      const f32 timeDif = timeBetweenFrames_ms/GetNumDivisions();
       
       // Whether or not a call to computePixelShiftsWithImageIMU returned false meaning it
       // was unable to compute the pixelShifts from imageIMU data
@@ -42,9 +50,9 @@ namespace Anki {
       Vec2f shiftOffset = 0;
       
       // The fraction each subdivided row in the image will contribute to the total shifts for this image
-      const f32 frac = 1.f / _rsNumDivisions;
+      const f32 frac = 1.f / GetNumDivisions();
       
-      for(int i=1;i<=_rsNumDivisions;i++)
+      for(int i=1;i<=GetNumDivisions();i++)
       {
         Vec2f pixelShifts;
         const RobotTimeStamp_t time = poseData.timeStamp - Anki::Util::numeric_cast<TimeStamp_t>(std::round(i*timeDif));
@@ -87,9 +95,9 @@ namespace Anki {
       
       const int numRows = img.GetNumRows() - 1;
       
-      const f32 rowsPerDivision = ((f32)numRows)/_rsNumDivisions;
+      const f32 rowsPerDivision = ((f32)numRows)/GetNumDivisions();
       
-      for(int i=1;i<=_rsNumDivisions;i++)
+      for(int i=1;i<=GetNumDivisions();i++)
       {
         const Vec2f& pixelShifts = _pixelShifts[i-1];
         
