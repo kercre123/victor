@@ -939,8 +939,8 @@ void EmrUpdate(void)
     #define U32FLOAT(u)     ( *((float*)&(u)) )
     
     //manual adjustments for playpen touch sensor error thresholds
-    rcomSmr( EMR_FIELD_OFS(playpenTouchSensorMinValid), 500 ); //default 500
-    rcomSmr( EMR_FIELD_OFS(playpenTouchSensorMaxValid), 750 ); //default 750
+    rcomSmr( EMR_FIELD_OFS(playpenTouchSensorMinValid), 200 ); //default 500
+    rcomSmr( EMR_FIELD_OFS(playpenTouchSensorMaxValid), 1200 ); //default 750
     float rangeThres = 12.1f; //default 11.0
     rcomSmr( EMR_FIELD_OFS(playpenTouchSensorRangeThresh), FLOAT2U32(rangeThres) );
     float stdDevThres = 3.1f; //default 1.8
