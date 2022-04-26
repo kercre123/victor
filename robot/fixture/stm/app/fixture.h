@@ -60,6 +60,10 @@ extern "C" {
 #define FIXMODE_BLOCK1         56
 #define FIXMODE_BLOCK2         57
 
+#define FIXMODE_ROBOT_ESN      58
+  
+
+  
 //-----------------------------------------------------------------------------
 //                  Fixture Mode extended info
 //-----------------------------------------------------------------------------
@@ -162,7 +166,7 @@ const char*   fixtureTimeStr(time_t time); //short (20char) string representatio
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "BLOCK1"      , TestBlockDetect     , TestBlock1GetTests          , TestBlockCleanup            , FIXMODE_BLOCK1      },  /*56*/  \
   { "BLOCK2"      , TestBlockDetect     , TestBlock2GetTests          , TestBlockCleanup            , FIXMODE_BLOCK2      },  /*57*/  \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  {"ESN"          , TestRobotDetect     , TestRobotEsnGetTests        , TestRobotCleanup          , FIXMODE_ROBOT_ESN },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \

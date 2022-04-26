@@ -352,6 +352,11 @@ void TestRobotCleanup(void)
   rcomSetTarget(0); //reset rcom to charge contacts (de-init's spine layers)
 }
 
+void read_robot_esn_(void) {
+	uint32_t esnCmd = rcomEsn();
+	ConsolePrintf("ESN: %08x\n", esnCmd);
+}
+
 void read_robot_info_(void)
 {
   if( IS_FIXMODE_ROBOT1() ) {
@@ -449,6 +454,12 @@ static int robot_get_batt_mv(int *out_raw, bool sanity_check, int printlvl)
     throw ERROR_SENSOR_VBAT;
   
   return bat_mv;
+}
+
+void TestRobotEsn(void){
+	Board::powerOff(PWR_VEXT, 500); //turn power off to disable charging
+  Contacts::setModeRx();
+	read_robot_esn_();
 }
 
 //always run this first after detect, to get into comms mode
@@ -1860,3 +1871,11 @@ TestFunction* TestRobotGymGetTests(void)
   return m_tests;
 }
 
+TestFunction* TestRobotEsnGetTests(void)
+{
+	static TestFunction m_tests[] = {
+		TestRobotEsn,
+		NULL
+	};
+	return m_tests;
+}

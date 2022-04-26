@@ -64,7 +64,7 @@ TestFunction* TestRobotUnPackoutGetTests(void);
 TestFunction* TestRobotRechargeGetTests(void);
 TestFunction* TestRobotSoundGetTests(void);
 TestFunction* TestRobotLogDownloadTests(void);
-
+TestFunction* TestRobotEsnGetTests(void);
 //Motor
 bool          TestMotorDetect(void);
 void          TestMotorCleanup(void);
