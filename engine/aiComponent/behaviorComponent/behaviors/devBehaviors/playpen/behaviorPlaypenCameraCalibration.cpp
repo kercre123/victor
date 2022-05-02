@@ -83,11 +83,11 @@ Result BehaviorPlaypenCameraCalibration::OnBehaviorActivatedInternal()
 
   // Set fake calibration if not already set so that we can actually run
   // calibration from images
-  if (!robot.GetVisionComponent().IsCameraCalibrationSet())
-  {
+  // if (!robot.GetVisionComponent().IsCameraCalibrationSet())
+  // {
     PRINT_NAMED_INFO("BehaviorPlaypenCameraCalibration.SettingFakeCalib", "");
     robot.GetVisionComponent().SetCameraCalibration(kApproxCalib);
-  }
+  // }
   
   robot.GetVisionComponent().ClearCalibrationImages();
   
@@ -95,8 +95,8 @@ Result BehaviorPlaypenCameraCalibration::OnBehaviorActivatedInternal()
   CompoundActionParallel* action = new CompoundActionParallel({new MoveHeadToAngleAction(PlaypenConfig::kHeadAngleToSeeTarget_rad),
                                                                new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK)});
   
-  DelegateIfInControl(action, [this]() {
-    AddTimer(PlaypenConfig::kTimeoutWaitingForTarget_ms, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::NOT_SEEING_CALIB_TARGET_TIMEOUT); }, kWaitingForTargetTimer);
+  DelegateIfInControl(action, []() {
+    // AddTimer(PlaypenConfig::kTimeoutWaitingForTarget_ms, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::NOT_SEEING_CALIB_TARGET_TIMEOUT); }, kWaitingForTargetTimer);
   });
   
   return RESULT_OK;
@@ -220,6 +220,8 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(const CameraCalib
     calibMsg.center_x, calibMsg.center_y,
     calibMsg.skew,
     calibMsg.distCoeffs));
+
+  camCalib->SetRms(calibMsg.rms);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   

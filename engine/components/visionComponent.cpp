@@ -1370,7 +1370,8 @@ namespace Cozmo {
       msg.nrows = calib.GetNrows();
       msg.ncols = calib.GetNcols();
       msg.skew = calib.GetSkew();
-
+      msg.rms = calib.GetRms();
+      
       DEV_ASSERT_MSG(msg.distCoeffs.size() == calib.GetDistortionCoeffs().size(),
                      "VisionComponent.UpdateComputedCalibration.WrongNumDistCoeffs",
                      "Message expects %zu, got %zu", msg.distCoeffs.size(), calib.GetDistortionCoeffs().size());

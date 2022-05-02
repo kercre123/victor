@@ -58,10 +58,12 @@ namespace Anki {
       f32     GetCenter_x()      const;
       f32     GetCenter_y()      const;
       f32     GetSkew()          const;
+      f64     GetRms()           const;
       const Point2f& GetCenter() const;
       
       void    SetFocalLength(f32 fx, f32 fy);
       void    SetCenter(const Point2f& center);
+      void    SetRms(f64 rms);
       
       // Compute vertical/horizontal FOV angles.
       // (These are full field of view, not half field of view.)
@@ -93,7 +95,7 @@ namespace Anki {
       f32     _focalLength_x, _focalLength_y;
       Point2f _center;
       f32     _skew;
-      
+      f64     _rms;
       DistortionCoeffs _distortionCoeffs; // radial distortion coefficients
       
     }; // class CameraCalibration
@@ -124,6 +126,9 @@ namespace Anki {
     inline f32  CameraCalibration::GetSkew() const
     { return _skew; }
     
+    inline f64 CameraCalibration::GetRms() const 
+    { return _rms; }
+
     inline Radians CameraCalibration::ComputeVerticalFOV() const {
       return Radians(2.f*std::atan2f(0.5f*static_cast<f32>(GetNrows()),
                                      GetFocalLength_y()));
@@ -141,6 +146,10 @@ namespace Anki {
 
     inline void CameraCalibration::SetCenter(const Point2f& center) {
       _center = center;
+    }
+
+    inline void CameraCalibration::SetRms(f64 rms) {
+      _rms = rms;
     }
     
     inline const CameraCalibration::DistortionCoeffs& CameraCalibration::GetDistortionCoeffs() const {

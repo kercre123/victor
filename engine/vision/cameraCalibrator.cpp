@@ -448,7 +448,8 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
                                                   cameraMatrix(0,2), cameraMatrix(1,2),
                                                   0.f, // skew
                                                   distCoeffsVec));
-  
+  calibration->SetRms(rms);
+
   DEV_ASSERT_MSG(rvecs.size() == tvecs.size(),
                  "VisionSystem.ComputeCalibrationFromSingleTarget.BadCalibPoseData",
                  "Got %zu rotations and %zu translations",
