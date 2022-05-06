@@ -25,6 +25,7 @@
 #include "image.h"
 
 #include <fstream>
+#include "anki/cozmo/shared/factory/emrHelper.h"
 
 namespace {
 
@@ -1990,7 +1991,11 @@ namespace Vision {
   }
 
   void ImageRGB::ConvertToShowableFormat(cv::Mat& showImg) const {
-    cv::cvtColor(this->get_CvMat_(), showImg, cv::COLOR_RGB2BGR);
+    if (Vector::IsXray()) {
+      this->get_CvMat_().copyTo(showImg);
+    } else {
+      cv::cvtColor(this->get_CvMat_(), showImg, cv::COLOR_RGB2BGR);
+    }
   }
 
   void ImageRGB::SetFromShowableFormat(const cv::Mat& showImg) {
