@@ -1,1 +1,1 @@
-#define NOT_FOR_FACTORY 1
+#define NOT_FOR_FACTORY 0
