@@ -308,7 +308,7 @@ static void BodyLoadProductionFirmware(void)
   mcu_flash_program_(FLASH_ADDR_SYSCON,  g_Body,     g_BodyEnd,     1, "application");
   mcu_flash_verify_( FLASH_ADDR_SYSBOOT, bodyboot, bodyboot+bodybootSize );
   //mcu_flash_verify_( FLASH_ADDR_SYSCON,  g_Body,     g_BodyEnd     );
-  if( g_fixmode == FIXMODE_BODY1 && g_isReleaseBuild ) {
+  if( g_isReleaseBuild ) {
     ConsolePrintf("LOCKING JTAG. POINT OF NO RETURN!\n");
     mcu_jtag_lock_();
   }
