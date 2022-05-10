@@ -85,15 +85,11 @@ void SetFixtureText(bool reinit)
   char color = 'b';
   if( !g_isReleaseBuild )
     color = m_last_error == ERROR_OK ? 'g' : 'r';
-  if( g_isReleaseBuild && is_fixmode_packout && !fixtureTimeIsValid() ) //packout (release build) indicate if RTC is invalid
-    color = 'r';
   
   //for head programming fixtures, show last written ESN on the display
   //for packout fixtures, show current RTC time on the display
   if( is_fixmode_head )
     helperLcdSetLine(1, snformat(b,bz,"prev esn: 0x%08x", TestHeadGetPrevESN()) );
-  else if( is_fixmode_packout )
-    helperLcdSetLine(1, fixtureTimeStr(RtcDisplayTime) ); //e.g. "Sun Sep16 01:03 1973"
   else if( !inited && !g_isReleaseBuild )
     helperLcdSetLine(1, "DEV-NOT FOR FACTORY!");
   
