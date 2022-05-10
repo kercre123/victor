@@ -1446,12 +1446,6 @@ static time_t getRtc_(void)
   bool valid = fixtureTimeIsValid();
   ConsolePrintf("rtc,%i,%010u,%s\n", valid, now, fixtureTimeStr(now) );
   
-  if( !valid ) {
-    ConsolePrintf("---- ERROR_INVALID_RTC ----\n");
-    if( g_isReleaseBuild && /*IS_FIXMODE_PACKOUT() &&*/ !IS_FIXMODE_OFFLINE() )
-      throw ERROR_INVALID_RTC;
-  }
-  
   return now;
 }
 
