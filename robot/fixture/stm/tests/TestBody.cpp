@@ -278,7 +278,7 @@ static void BodyLoadProductionFirmware(void)
   
   if( !bodyid.esn || bodyid.esn == BODYID_ESN_EMPTY )
   {
-    if( g_fixmode == FIXMODE_BODY1 )
+    if( g_fixmode == FIXMODE_BODY1 || g_fixmode == FIXMODE_BODY3)
       bodyid.esn = fixtureGetSerial(); //get next 12.20 esn in the sequence
     else
       bodyid.esn = BODYID_ESN_EMPTY;
