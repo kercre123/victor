@@ -88,7 +88,7 @@ namespace Vector {
 // Default values for text rendering
 const Point2f FaceInfoScreenManager::kDefaultTextStartingLoc_pix = {0,10};
 const u32 FaceInfoScreenManager::kDefaultTextSpacing_pix = 11;
-const f32 FaceInfoScreenManager::kDefaultTextScale = 0.3f;
+const f32 FaceInfoScreenManager::kDefaultTextScale = 0.35f;
 
 namespace {
   // Number of tics that a wheel needs to be moving for before it registers
@@ -298,9 +298,9 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
 
   ADD_MENU_ITEM(Main, "EXIT", None);
 #if ENABLE_SELF_TEST
-  ADD_MENU_ITEM(Main, "RUN SELF TEST", SelfTest);
+  ADD_MENU_ITEM(Main, "TEST", SelfTest);
 #endif
-  ADD_MENU_ITEM(Main, "CLEAR USER DATA", ClearUserData);
+  ADD_MENU_ITEM(Main, "RESET", ClearUserData);
 
   // === Self test screen ===
   ADD_MENU_ITEM(SelfTest, "EXIT", Main);
@@ -1353,7 +1353,6 @@ void FaceInfoScreenManager::DrawNetwork()
                             // TODO: re-enable after security team has confirmed showing email is allowed
                             //  { {"EMAIL: "}, {"dummy...@a...com"} },
                              { {"IP: "}, {ip, (osstate->IsValidIPAddress(ip) ? NamedColors::GREEN : NamedColors::RED)} },
-                             { },
                              { {currTime} },
                              { {"NETWORK: "}, _testingNetwork ? ColoredText("") : getStatusString(_networkStatus) }
                            };
@@ -1432,8 +1431,16 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
   {
     DrawTextOnScreen({cliffs, touch, batt, charger, tempC});
   }
-  else
+  else if (IsXray())
   {
+    sprintf(temp,
+            "DIST: %3umm (%2.1f %2.1f %3.f)",
+            state.proxData.distance_mm,
+            state.proxData.signalIntensity,
+            state.proxData.ambientIntensity,
+            state.proxData.spadCount);
+    DrawTextOnScreen({syscon, cliffs, temp, touch, batt, charger, tempC});
+  } else {
     DrawTextOnScreen({syscon, cliffs, prox1, prox2, touch, batt, charger, tempC});
   }
 }
