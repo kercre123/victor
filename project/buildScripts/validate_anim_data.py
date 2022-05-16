@@ -44,12 +44,11 @@ import tarfile
 import json
 import xml.etree.ElementTree as ET
 import tempfile
-import zipfile
 
 
 def get_tar_files(root_dir):
     all_tar_files = []
-    for dir_name, subdir_list, file_list in os.walk(root_dir):
+    for dir_name, _, file_list in os.walk(root_dir):
         tar_files = [x for x in file_list if x.endswith(".tar")]
         all_tar_files.extend([os.path.join(dir_name, x) for x in tar_files])
     return all_tar_files
@@ -138,10 +137,8 @@ def get_audio_events_in_soundbanks_info_xml_file(xml_file, sound_banks_attr=SOUN
                 # The numerical event ID is what really matters for Wwise audio events,
                 # so the event name strings are NOT case sensitive. Therefore, we convert
                 # to lowercase here and compare to lowercase event names later.
-                event_name = event.get(audio_event_name_attr)
-                event_name = event_name.lower()
-                event_id = event.get(audio_event_id_attr)
-                event_id = long(event_id)
+                event_name = event.get(audio_event_name_attr).lower()
+                event_id = int(event.get(audio_event_id_attr))
                 all_audio_events.append((event_name, event_id))
 
     return all_audio_events
@@ -200,7 +197,7 @@ def get_audio_event_usage_in_anim(json_file, all_available_events):
 
 def _check_using_event_id(audio_ids, all_available_event_ids, available_events, unavailable_events):
     for audio_id in audio_ids:
-        audio_id = long(audio_id)
+        audio_id = int(audio_id)
         #print("Looking for audio ID = %s" % audio_id)
         if audio_id in all_available_event_ids:
             available_events.append((None, audio_id))
@@ -211,14 +208,14 @@ def _check_using_event_id(audio_ids, all_available_event_ids, available_events, 
 def _check_using_event_name(audio_events, audio_ids, all_available_events,
                             available_events, unavailable_events):
     if len(audio_events) != len(audio_ids):
-        raise ValueError("Bad audio keyframe in %s has mismatched number of audio "
-                         "event IDs and names: %s" % (json_file, keyframe))
+        raise ValueError("Bad audio keyframe has mismatched number of audio "
+                         "event IDs and names")
     for idx in range(len(audio_events)):
         # The numerical event ID is what really matters for Wwise audio events,
         # so the event name strings are NOT case sensitive. Therefore, we converted
         # to lowercase earlier and compare to lowercase event names here.
         audio_event = str(audio_events[idx]).lower()
-        audio_id = long(audio_ids[idx])
+        audio_id = int(audio_ids[idx])
         #print("Looking for audio event '%s' with ID = %s" % (audio_event, audio_id))
         if (audio_event, audio_id) in all_available_events:
             available_events.append((audio_event, audio_id))
@@ -242,7 +239,7 @@ def check_anims_all_anim_groups(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
         this_prob = "No tar files available in %s" % tar_files_dir
         raise ValueError(problem_msg % this_prob)
     tar_file_dict = fill_file_dict(tar_files)
-    for file_name, file_paths in tar_file_dict.items():
+    for _, file_paths in tar_file_dict.items():
         file_path = file_paths[0]
         unpacked_files = unpack_tarball(file_path)
         for json_file in unpacked_files:
@@ -250,7 +247,7 @@ def check_anims_all_anim_groups(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
         try:
             map(os.remove, unpacked_files)
             os.rmdir(os.path.dirname(unpacked_files[0]))
-        except OSError, e:
+        except OSError as e:
             print("WARNING: Failed to cleanup temp files or directory: %s" % e)
 
     # Check all animations in all animation groups and keep track of what unavailable
@@ -293,7 +290,7 @@ def check_audio_events_all_anims(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
     #print("Soundbanks XML file = %s" % soundbanks_xml_file)
     try:
         all_audio_events = get_audio_events_in_soundbanks_info_xml_file(soundbanks_xml_file)
-    except (IOError, OSError, ValueError, ET.ParseError), e:
+    except (IOError, OSError, ValueError, ET.ParseError) as e:
         raise ValueError(problem_msg % e)
 
     # Check all audio events in all animations and keep track of what unavailable
@@ -305,19 +302,19 @@ def check_audio_events_all_anims(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
         this_prob = "No tar files available in %s" % tar_files_dir
         raise ValueError(problem_msg % this_prob)
     tar_file_dict = fill_file_dict(tar_files)
-    for file_name, file_paths in tar_file_dict.items():
+    for _, file_paths in tar_file_dict.items():
         file_path = file_paths[0]
         unpacked_files = unpack_tarball(file_path)
         for json_file in unpacked_files:
             #print("Checking for audio event usage in: %s" % json_file)
-            available_events, unavailable_events = get_audio_event_usage_in_anim(json_file, all_audio_events)
+            _, unavailable_events = get_audio_event_usage_in_anim(json_file, all_audio_events)
             if unavailable_events:
                 anim_name = os.path.basename(json_file)
                 problems[anim_name] = unavailable_events
         try:
             map(os.remove, unpacked_files)
             os.rmdir(os.path.dirname(unpacked_files[0]))
-        except OSError, e:
+        except OSError as e:
             print("WARNING: Failed to cleanup temp files or directory: %s" % e)
 
     if problems:
@@ -330,7 +327,7 @@ def report_problems(problems, msg_title):
     for container, unavailable_contents in problems.items():
         formatted_contents = []
         for content in unavailable_contents:
-            if isinstance(content, basestring):
+            if isinstance(content, str):
                 formatted_contents.append(content)
             else:
                 content_name = content[0]

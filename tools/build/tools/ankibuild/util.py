@@ -1,5 +1,4 @@
 import collections
-import errno
 import hashlib
 import json
 import os
@@ -7,10 +6,7 @@ import re
 import shutil
 import sys
 import time
-try:
-    import subprocess32 as subprocess
-except ImportError:
-    import subprocess
+import subprocess
 
 class Module(object):
 
@@ -52,25 +48,23 @@ class Git(object):
     @classmethod
     def repo_root(cls):
         p = subprocess.Popen(['git', 'rev-parse', '--show-toplevel'], stdout=subprocess.PIPE, cwd=".")
-        out, err = p.communicate()
+        out, _ = p.communicate()
         retcode = p.poll()
-        if retcode != 0:
+        if retcode:
             env_repo_root = os.environ['ANKI_BUILD_REPO_ROOT']
             if env_repo_root != None:
-                out = env_repo_root
-            else:
-                out = ''
+                return env_repo_root.strip()
+            return ''
         return out.strip()
 
     @classmethod
     def find_submodule_path(cls, pattern):
         p = subprocess.Popen(['git', 'submodule', 'status'], stdout=subprocess.PIPE, cwd=".")
-        out, err = p.communicate()
+        out, _ = p.communicate()
         retcode = p.poll()
-        if retcode != 0:
+        if retcode:
             return None
 
-        submodule_path = None
         status_lines = out.strip().rsplit('\n')
         for line in status_lines:
             m = re.search('(.?)([0-9A-Fa-f]{40}) ([^\(]+) (.*)', line)
@@ -78,10 +72,9 @@ class Git(object):
 
             path_match = re.search(pattern, path)
             if path_match is not None:
-                submodule_path = path
-                break
+                return path
             
-        return submodule_path
+        return None
 
 ECHO_ALL = False
 
@@ -109,14 +102,12 @@ class File(object):
         if not isinstance(deps, collections.Iterable):
             deps = [deps]
 
-        up_to_date = True
         for dep in deps:
-            up_to_date = cls._is_file_up_to_date(target, dep)
-            if not up_to_date:
+            if not cls._is_file_up_to_date(target, dep):
                 print('Not up to date; "{0}" is newer than "{1}".'.format(dep, target))
-                break
+                return False
 
-        return up_to_date
+        return True
 
     @classmethod
     def md5sum(cls, filename):
@@ -283,7 +274,6 @@ class File(object):
     def write(cls, path, contents):
         "Writes the specified contents to the given path, if different."
         path = os.path.abspath(path)
-        contents = str(contents)
         if ECHO_ALL:
             print('writing {0} bytes to {1}'.format(len(contents), path))
         try:
@@ -394,7 +384,7 @@ class Profile(object):
 
 
     @staticmethod
-    def end(file, args):
+    def end(file):
         ANKI_PROFILE = os.environ.get('ANKI_PROFILE')
         if ANKI_PROFILE:
             basename = os.path.basename(file)
@@ -418,10 +408,8 @@ class Gyp(object):
     def getDefineString(defines, overrideDefines = None):
         if overrideDefines is not None:
             for entry in overrideDefines:
-                (k,v) = entry.split('=')
-                key = k.strip()
-                value = v.strip()
-                defines[key] = value
+                key, value = entry.split('=')
+                defines[key.strip()] = value.strip()
 
-        define_args = ["%s=%s" % (k, v) for k,v in defines.iteritems()]
+        define_args = ["%s=%s" % (k, v) for k, v in defines.items()]
         return "\n".join(define_args)

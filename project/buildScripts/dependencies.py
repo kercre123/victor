@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import os
 import os.path
@@ -24,10 +24,10 @@ import validate_anim_data
 
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 
-sys.path.insert(0, os.path.join(THIS_DIR, '..', '..', 'tools', 'build', 'tools'))
+sys.path.insert(0, os.path.join(THIS_DIR, '..', '..', 'tools', 'build', 'tools', 'ankibuild'))
 
-import ankibuild.util
-import ankibuild.deptool
+import util
+import deptool
 
 # configure unbuffered output
 # https://stackoverflow.com/a/107717/217431
@@ -77,13 +77,13 @@ ASSET_VALIDATION_TRIGGERS = ["victor-animation-assets", "victor-audio-assets"]
 
 def get_anki_deps_cache_directory():
    anki_deps_cache_dir = os.path.join(os.path.expanduser("~"), ".anki", "deps-cache")
-   ankibuild.util.File.mkdir_p(anki_deps_cache_dir)
+   util.File.mkdir_p(anki_deps_cache_dir)
    return anki_deps_cache_dir
 
 
 def get_anki_sha256_cache_directory():
    anki_sha256_cache_dir = os.path.join(get_anki_deps_cache_directory(), "sha256")
-   ankibuild.util.File.mkdir_p(anki_sha256_cache_dir)
+   util.File.mkdir_p(anki_sha256_cache_dir)
    return anki_sha256_cache_dir
 
 
@@ -92,7 +92,7 @@ def get_anki_svn_cache_directory(url = None):
    if url:
       url = url.replace('/', '-')
       anki_svn_cache_dir = os.path.join(anki_svn_cache_dir, url)
-   ankibuild.util.File.mkdir_p(anki_svn_cache_dir)
+   util.File.mkdir_p(anki_svn_cache_dir)
    return anki_svn_cache_dir
 
 def get_anki_file_cache_directory(url = None):
@@ -100,7 +100,7 @@ def get_anki_file_cache_directory(url = None):
    if url:
       url = url.replace('/', '-')
       anki_file_cache_dir = os.path.join(anki_file_cache_dir, url)
-   ankibuild.util.File.mkdir_p(anki_file_cache_dir)
+   util.File.mkdir_p(anki_file_cache_dir)
    return anki_file_cache_dir
 
 def get_anki_svn_cache_tarball(url, rev):
@@ -112,23 +112,23 @@ def extract_svn_cache_tarball_to_directory(url, rev, loc):
    tarball = get_anki_svn_cache_tarball(url, rev)
    if not os.path.isfile(tarball):
       return False
-   ankibuild.util.File.rm_rf(loc)
-   ankibuild.util.File.mkdir_p(loc)
+   util.File.rm_rf(loc)
+   util.File.mkdir_p(loc)
    ptool = "tar"
    ptool_options = ['-v', '-x', '-z', '-f']
    unpack = [ptool] + ptool_options + [tarball, '-C', loc]
    pipe = subprocess.Popen(unpack, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-   (stdout, stderr) = pipe.communicate()
+   pipe.communicate()
    status = pipe.poll()
    if status != 0:
-      ankibuild.util.File.rm_rf(loc)
+      util.File.rm_rf(loc)
    return status == 0
 
 def save_svn_cache_tarball_from_directory(url, rev, loc, cred):
    tarball = get_anki_svn_cache_tarball(url, rev)
    tmp_tarball = tarball + ".tmp"
-   ankibuild.util.File.rm_rf(tarball)
-   ankibuild.util.File.rm_rf(tmp_tarball)
+   util.File.rm_rf(tarball)
+   util.File.rm_rf(tmp_tarball)
    svn_ls_cmd = SVN_LS_CMD % (cred)
    pipe = subprocess.Popen(svn_ls_cmd.split(), stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE, close_fds=True, cwd=loc)
@@ -173,15 +173,15 @@ def is_up(url_string):
         response = urllib2.urlopen(url_string, None, 10)
         response.read()
         return True
-    except urllib2.HTTPError, e:
+    except urllib2.HTTPError as e:
         if e.code == 401:
             # Authentication error site is up and requires login.
             return True
         print(e.code)
         return False
-    except urllib2.URLError, e:
+    except urllib2.URLError as e:
         return False
-    except ConnectionResetError, e:
+    except ConnectionResetError as e:
         response.close()
         os.exit(e)
 
@@ -198,12 +198,10 @@ def sha256sum(filename):
 
 
 def read_int_from_file(filename):
-   val = None
    if filename and os.path.isfile(filename):
       with open(filename, 'r') as f:
-         data = f.read().strip()
-         val = int(data)
-   return val
+         return int(f.read().strip())
+   return None
 
 def write_int_to_file(filename, val):
    with open(filename, 'w') as f:
@@ -250,7 +248,7 @@ def extract_files_from_tar(extract_dir, file_types, put_in_subdir=False):
   """
   anim_name_length_mapping = {}
 
-  for (dir_path, dir_names, file_names) in os.walk(extract_dir):
+  for dir_path, _, file_names in os.walk(extract_dir):
     # Generate list of all .tar files in/under the directory provided by the caller (extract_dir)
     all_files = map(lambda x: os.path.join(dir_path, x), file_names)
     tar_files = [a_file for a_file in all_files if a_file.endswith('.tar')]
@@ -309,7 +307,7 @@ def delete_files_from_dir(file_types, dir_path, file_names):
 
 def get_file_stats(which_dir):
   file_stats = {}
-  for (dir_path, dir_names, file_names) in os.walk(which_dir):
+  for _, _, file_names in os.walk(which_dir):
     for file_name in file_names:
       file_ext = str(os.path.splitext(file_name)[1])
       if file_ext not in file_stats:
@@ -349,8 +347,8 @@ def convert_json_to_binary(json_files, bin_name, dest_dir, flatc_dir):
     bin_name = bin_name.lower()
     try:
         bin_file = binary_conversion.main(tmp_json_files, bin_name, flatc_dir)
-    except StandardError, e:
-        print("%s: %s" % (type(e).__name__, e.message))
+    except Exception as e:
+        print("%s: %s" % (type(e).__name__, e))
         # If binary conversion failed, use the json files...
         for json_file in tmp_json_files:
             json_dest = os.path.join(dest_dir, os.path.basename(json_file))
@@ -385,11 +383,9 @@ def unpack_tarball(tar_file, file_types=[], put_in_subdir=False, add_metadata=Fa
       # If the destination sub-directory already exists, get rid of it.
       shutil.rmtree(dest_dir)
 
-#  tar_file_rev = get_svn_file_rev(tar_file)
-
   try:
     tar = tarfile.open(tar_file)
-  except tarfile.ReadError, e:
+  except tarfile.ReadError as e:
     raise RuntimeError("%s: %s" % (e, tar_file))
 
   if file_types:
@@ -400,7 +396,7 @@ def unpack_tarball(tar_file, file_types=[], put_in_subdir=False, add_metadata=Fa
     sprite_sequence = os.path.basename(os.path.dirname(tar_file)) in UNPACK_INTO_SUBDIR
     if ".json" in file_types and not sprite_sequence:
       json_files = [tar_info.name for tar_info in tar_members if tar_info.name.endswith(".json")]
-      json_files = map(lambda x: os.path.join(dest_dir, x), json_files)
+      json_files = list(map(lambda x: os.path.join(dest_dir, x), json_files))
       if json_files:
         for json_file in json_files:
           anim_name_length_mapping.update(validate_anim_data.get_anim_name_and_length(json_file))
@@ -428,7 +424,7 @@ def get_svn_file_rev(file_from_svn, cred=''):
   #print("Running: %s" % svn_info_cmd)
   p = subprocess.Popen(svn_info_cmd.split(), stdout=subprocess.PIPE,
                        stderr=subprocess.PIPE, close_fds=True)
-  (stdout, stderr) = p.communicate()
+  stdout, _ = p.communicate()
   status = p.poll()
   if status != 0:
     return None
@@ -439,8 +435,7 @@ def get_svn_file_rev(file_from_svn, cred=''):
     except KeyError:
       pass
     else:
-      rev = int(rev)
-      return rev
+      return int(rev)
 
 
 def svn_checkout(url, r_rev, loc, cred, checkout, cleanup, unpack, package, allow_extra_files,
@@ -488,8 +483,7 @@ def svn_checkout(url, r_rev, loc, cred, checkout, cleanup, unpack, package, allo
             if verbose:
                 print(err)
         return ''
-    else:
-        return err
+    return err
 
 
 def svn_package(svn_dict):
@@ -501,18 +495,8 @@ def svn_package(svn_dict):
     """
     checked_out_repos = []
 
-    # tool = "svn"
-    # ptool = "tar"
-    # ptool_options = ['-v', '-x', '-z', '-f']
-    # assert is_tool(tool)
-    # assert is_tool(ptool)
-    # assert isinstance(svn_dict, dict)
-    # root_url = svn_dict.get("root_url", "undefined_url")
-    # password = svn_dict.get("pwd", "")
     repos = svn_dict.get("repo_names", "")
     bucket_name = svn_dict.get("bucket_name", "")
-    # user = svn_dict.get("default_usr", "undefined")
-    # cred = SVN_CRED % (user, password)
     stale_warning = "WARNING: If this build succeeds, it may contain stale external data"
 
     # Initialize S3 object
@@ -521,22 +505,12 @@ def svn_package(svn_dict):
 
     for repo in repos:
         version = repos[repo].get("version",None)
-        # r_rev = repos[repo].get("version", "head")
-        # pk_name = repos[repo].get("package_name", "STUB")
         branch = repos[repo].get("branch", "trunk")
         export_dirname = repos[repo].get("export_dirname", repo)
         loc = os.path.join(DEPENDENCY_LOCATION, export_dirname)
-        # url = os.path.join(root_url, repo, branch)
         sub_dirs = repos[repo].get("subdirs", [])
-        # subdirs = map(lambda x: os.path.join(loc,x), subdirs)
-        # allow_extra_files = bool(repos[repo].get("allow_extra_files", False))
         additional_files = repos[repo].get("additional_files", [])
         extract_types = repos[repo].get("extract_types_from_tar", [])
-        # package = os.path.join(loc, pk_name)
-        # checkout = [tool, 'checkout', '-r', '{0}'.format(r_rev)] + cred.split() + [url, loc]
-        # cleanup = [tool, 'status', '--no-ignore'] + cred.split() + [loc]
-        # unpack = [ptool] + ptool_options + [package, '-C', loc]
-        # l_rev = 'unknown'
 
         # Move on to next asset if the current one already exists
         if os.path.isdir(loc):
@@ -587,7 +561,7 @@ def svn_package(svn_dict):
                 put_in_sub_dir = os.path.basename(sub_dir) in UNPACK_INTO_SUBDIR
                 try:
                     anim_name_length_mapping = extract_files_from_tar(os.path.join(loc, sub_dir), extract_types, put_in_sub_dir)
-                except EnvironmentError, e:
+                except EnvironmentError as e:
                     anim_name_length_mapping = {}
                     print("Failed to unpack one or more tar files in [%s] because: %s" % (sub_dir, e))
                     print(stale_warning)
@@ -597,91 +571,13 @@ def svn_package(svn_dict):
                 print("After unpacking tar files, '%s' contains the following files: %s"
                       % (os.path.basename(sub_dir), file_stats))
 
-    # Old code below: Retrieves and extracts SVN assets using Anki servers
-    """
-       for subdir in subdirs:
-         if not os.path.isdir(subdir):
-           l_rev = 0
-           break
-       if l_rev != 0 and os.path.isdir(loc):
-           l_rev = get_svn_file_rev(loc, cred)
-           #print("The version of [%s] is [%s]" % (loc, l_rev))
-           if l_rev is None:
-               l_rev = 0
-               msg = "Clearing out [%s] directory before getting a fresh copy."
-               if subdirs:
-                   for subdir in subdirs:
-                       if os.path.exists(subdir):
-                           print(msg % subdir)
-                           shutil.rmtree(subdir)
-               elif os.path.exists(loc):
-                   print(msg % loc)
-                   shutil.rmtree(loc)
-       else:
-           l_rev = 0
-
-       try:
-           r_rev = int(r_rev)
-       except ValueError:
-           pass
-
-       no_update_msg  = "{0} does not need to be updated.  ".format(repo)
-       no_update_msg += "Current {0} revision at {1}".format(tool, l_rev)
-
-       # Do dependencies need to be checked out?
-       need_to_checkout = (r_rev == "head" or l_rev != r_rev)
-
-       # Check if manifest file exists
-       manifest_file_path = os.path.join(loc, MANIFEST_FILE_NAME)
-       manifest_file_exists = os.path.exists(manifest_file_path)
-
-       if need_to_checkout or not manifest_file_exists:
-           if need_to_checkout:
-               print("Checking out '{0}'".format(repo))
-               checked_out_repos.append(repo)
-               err = svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
-                                  unpack, package, allow_extra_files, stale_warning)
-               if err:
-                   print("Error in checking out {0}: {1}".format(repo, err.strip()))
-                   if DIFF_BRANCH_MSG in err:
-                       print("Clearing out [%s] directory to replace it with a fresh copy" % loc)
-                       shutil.rmtree(loc)
-                       print("Checking out '{0}' again".format(repo))
-                       err = svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
-                                          unpack, package, allow_extra_files, stale_warning)
-                       if err:
-                           print("Error in checking out {0}: {1}".format(repo, err.strip()))
-                           print(stale_warning)
-                   else:
-                       print(stale_warning)
-           else:
-               print(no_update_msg)
-           if extract_types:
-               for subdir in subdirs:
-                   put_in_subdir = os.path.basename(subdir) in UNPACK_INTO_SUBDIR
-                   try:
-                       anim_name_length_mapping = extract_files_from_tar(subdir, extract_types, put_in_subdir)
-                   except EnvironmentError, e:
-                       anim_name_length_mapping = {}
-                       print("Failed to unpack one or more tar files in [%s] because: %s" % (subdir, e))
-                       print(stale_warning)
-                   file_stats = get_file_stats(subdir)
-                   if anim_name_length_mapping:
-                       write_animation_manifest(loc, anim_name_length_mapping, additional_files)
-                   print("After unpacking tar files, '%s' contains the following files: %s"
-                         % (os.path.basename(subdir), file_stats))
-
-       else:
-           print(no_update_msg)
-    """
-
     return checked_out_repos
 
 
 def write_animation_manifest(dest_dir, anim_name_length_mapping, additional_files=None, output_json_file=MANIFEST_FILE_NAME):
     if additional_files:
-        additional_files = map(os.path.expandvars, additional_files)
-        additional_files = map(os.path.abspath, additional_files)
+        additional_files = list(map(os.path.expandvars, additional_files))
+        additional_files = list(map(os.path.abspath, additional_files))
         for additional_file in additional_files:
             if os.path.isfile(additional_file) and additional_file.endswith(".json"):
                 print("Using this additional file for the animation manifest: %s" % additional_file)
@@ -695,7 +591,7 @@ def write_animation_manifest(dest_dir, anim_name_length_mapping, additional_file
                 print("WARNING %s is an invalid path in 'additional_files'" % additional_file)
 
     all_anims = []
-    for name, length in anim_name_length_mapping.iteritems():
+    for name, length in anim_name_length_mapping.items():
         manifest_entry = {}
         manifest_entry[MANIFEST_NAME_KEY] = name
         manifest_entry[MANIFEST_LENGTH_KEY] = length
@@ -726,11 +622,11 @@ def files_package(files):
         cached_file = os.path.join(get_anki_file_cache_directory(url), file)
         outfile = os.path.join(DEPENDENCY_LOCATION, file)
         if os.path.isfile(cached_file) and sha256 == sha256sum(cached_file):
-           ankibuild.util.File.cp(cached_file, outfile)
+           util.File.cp(cached_file, outfile)
            continue
 
         if os.path.isfile(outfile) and sha256 == sha256sum(outfile):
-           ankibuild.util.File.cp(outfile, cached_file)
+           util.File.cp(outfile, cached_file)
            continue
 
         import urllib2
@@ -749,11 +645,11 @@ def files_package(files):
 
         download_hash = sha256sum(tmpfile)
         if sha256 != download_hash:
-           ankibuild.util.File.rm_rf(tmpfile)
+           util.File.rm_rf(tmpfile)
            raise RuntimeError("SHA256 Checksum mismatch.\nExpected: {0}\nActual:   {1}\nURL:      {2}".format(sha256, download_hash, url))
 
         os.rename(tmpfile, outfile)
-        ankibuild.util.File.cp(outfile, cached_file)
+        util.File.cp(outfile, cached_file)
 
     return pulled_files
 
@@ -770,13 +666,13 @@ def deptool_package(deptool_dict):
       if checksums:
          sha256_checksum = checksums.get("sha256", sha256_checksum)
       dst = os.path.join(DEPENDENCY_LOCATION, dep)
-      if ankibuild.deptool.is_valid_dep_dir_for_version_and_sha256(dst, required_version, sha256_checksum):
+      if deptool.is_valid_dep_dir_for_version_and_sha256(dst, required_version, sha256_checksum):
          continue
       if os.path.islink(dst):
          os.unlink(dst)
       else:
-         ankibuild.util.File.rm_rf(dst)
-      src = ankibuild.deptool.find_or_install_dep(project, dep, required_version, url_prefix, sha256_checksum)
+         util.File.rm_rf(dst)
+      src = deptool.find_or_install_dep(project, dep, required_version, url_prefix, sha256_checksum)
       if not src:
          raise RuntimeError('Could not find or install {0}/{1} (version = {2}, sha256 = {3}, url_prefix = {4})'
                             .format(project, dep, required_version, sha256_checksum, url_prefix))
@@ -815,8 +711,8 @@ def teamcity_package(tc_dict):
            continue
 
         # Clear out and re-create unpack destination
-        ankibuild.util.File.rm_rf(unpack_path)
-        ankibuild.util.File.mkdir_p(unpack_path)
+        util.File.rm_rf(unpack_path)
+        util.File.mkdir_p(unpack_path)
 
         build_type_id = builds[build].get("build_type_id", "undefined")
         package_name = builds[build].get("package_name", "undefined")
@@ -833,7 +729,7 @@ def teamcity_package(tc_dict):
            if os.path.isfile(dist) and sha != sha256sum(dist):
               os.remove(dist)
         else:
-           ankibuild.util.File.rm_rf(dist)
+           util.File.rm_rf(dist)
 
         # Unlike svn_package, we need to unpack inside 'unpack_path' because the package
         # may not have its own folder structure
@@ -867,7 +763,7 @@ def teamcity_package(tc_dict):
 
            for n in range(RETRIES):
               pipe = subprocess.Popen(pull_down, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-              curl_info, err = pipe.communicate()
+              _, err = pipe.communicate()
               status = pipe.poll()
               if status == 0:
                  if sha:
@@ -890,13 +786,13 @@ def teamcity_package(tc_dict):
 
         # Unpack package to destination
         pipe = subprocess.Popen(unpack, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        successful, err = pipe.communicate()
+        _, err = pipe.communicate()
         if not sha:
-           ankibuild.util.File.rm_rf(dist)
+           util.File.rm_rf(dist)
         if not os.path.isfile(version_file_path):
            write_int_to_file(version_file_path, required_version)
         if VERBOSE:
-           print err
+           print(err)
 
     return downloaded_builds
 
@@ -913,7 +809,7 @@ def extract_dependencies(version_file, location=EXTERNALS_DIR, validate_assets=T
     """
     global DEPENDENCY_LOCATION
     DEPENDENCY_LOCATION = location
-    ankibuild.util.File.mkdir_p(location)
+    util.File.mkdir_p(location)
     updated_deps = json_parser(version_file)
     updated_deps = map(str, updated_deps)
     if validate_assets and len(set(updated_deps) & set(ASSET_VALIDATION_TRIGGERS)) > 0:
@@ -1002,10 +898,8 @@ def parse_args(argv=[]):
   parser.add_argument('--externals-dir',
                       action='store',
                       default=EXTERNALS_DIR,
-                      help='path to EXTERNALS dir')                           
-                                                                                                    
-  (options, args) = parser.parse_known_args(argv)                                             
-  return options
+                      help='path to EXTERNALS dir')
+  return parser.parse_known_args(argv)[0]
 
 
 def main(argv):

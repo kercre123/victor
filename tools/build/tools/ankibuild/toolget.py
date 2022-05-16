@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 from __future__ import print_function
 
@@ -6,7 +6,6 @@ import hashlib
 import os
 import re
 import shutil
-import string
 import sys
 import urllib
 import tarfile

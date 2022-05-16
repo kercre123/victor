@@ -4,7 +4,6 @@ so it should NOT be used for the original Cozmo because, for example, this
 version strips out the Left and Right backpack light data.
 """
 
-import sys
 import os
 import tempfile
 import subprocess
@@ -110,14 +109,14 @@ def read_anim_file(anim_file):
     fh = open(anim_file, 'r')
     try:
         contents = json.load(fh)
-    except StandardError, e:
+    except Exception as e:
         print("Failed to read %s file because: %s" % (anim_file, e))
         raise
     finally:
         fh.close()
-    anim_clip, keyframes = contents.items()[0]
+    anim_clip, keyframes = list(contents.items())[0]
     #print("The '%s' animation has %s keyframes" % (anim_clip, len(keyframes)))
-    return (anim_clip, keyframes)
+    return anim_clip, keyframes
 
 
 def prep_json_for_binary_conversion(anim_name, keyframes):
@@ -156,11 +155,8 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
         keyframe.pop(KEYFRAME_TYPE_ATTR)
 
         # All keyframes are required to have a trigger time.
-        try:
-            trigger_time = keyframe[TRIGGER_TIME_ATTR]
-        except KeyError, e:
-            error_msg = "At least one '%s' in '%s' is missing '%s'" % (track, anim_name, TRIGGER_TIME_ATTR)
-            raise KeyError(error_msg)
+        if TRIGGER_TIME_ATTR not in keyframe:
+            raise KeyError("At least one '%s' in '%s' is missing '%s'" % (track, anim_name, TRIGGER_TIME_ATTR))
 
         # Remove old attributes that are no longer used but potentially lingering in old data.
         for old_attr in OLD_ANIM_TOOL_ATTRS:
@@ -194,7 +190,7 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
         # or "STRAIGHT", that attribute is always stored as a string for FlatBuffers. When the
         # engine is then loading that data, it will convert numerical values back to float
         if track == BODY_MOTION_TRACK:
-            if not isinstance(keyframe[BODY_RADIUS_ATTR], basestring):
+            if not isinstance(keyframe[BODY_RADIUS_ATTR], str):
                 keyframe[BODY_RADIUS_ATTR] = str(keyframe[BODY_RADIUS_ATTR])
 
         # Some attributes (including times in ms, speed in mm/s or deg/s, head angle in deg
@@ -321,8 +317,7 @@ def prep_audio_key_frame_json(keyframe, anim_name):
     if probCount != eventCount:
         if probCount != 0:
             # Event count miss match
-            msg = "Failed to migrate '%s' because the event and probability count do not match" % (anim_name)
-            print(msg)
+            print("Failed to migrate '%s' because the event and probability count do not match" % (anim_name))
         # Equal chance for each event
         val = 1.0 / eventCount
         probabilities = [val] * eventCount
@@ -351,9 +346,8 @@ def write_json_file(json_file, data):
     try:
         with open(json_file, 'w') as fh:
             json.dump(data, fh, indent=2, separators=(',', ': '))
-    except (OSError, IOError), e:
-        error_msg = "Failed to write '%s' file because: %s" % (json_file, e)
-        print(error_msg)
+    except (OSError, IOError) as e:
+        print("Failed to write '%s' file because: %s" % (json_file, e))
 
 
 def convert_json_to_binary(file_path, flatc_dir, schema_file, bin_file_ext):
@@ -376,7 +370,7 @@ def convert_json_to_binary(file_path, flatc_dir, schema_file, bin_file_ext):
     args = [flatc, "-o", output_dir, "-b", schema_file, file_path]
     #print("Running: %s" % " ".join(args))
     p = subprocess.Popen(args, close_fds=True)
-    stdout, stderr = p.communicate()
+    p.communicate()
     exit_status = p.poll()
     output_file = os.path.splitext(file_path)[0] + bin_file_ext
     if not os.path.isfile(output_file) or exit_status != 0:
