@@ -27,15 +27,14 @@ fi
 
 vlog "Check homebrew dependencies"
 ./tools/build/tools/ankibuild/installBuildDeps.py \
-    -d python2 \
-    ninja \
+    -d ninja \
     python3 \
     git-lfs \
     libsndfile \
     node \
     rsync \
     openssl \
-    curl-openssl
+    curl
 
 vlog "vicos sdk"
 ./tools/build/tools/ankibuild/vicos.py --install 1.1.0-r04
