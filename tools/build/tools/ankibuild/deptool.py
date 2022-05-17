@@ -27,16 +27,20 @@ def get_dep_dist_directory(project, name):
 def get_dep_dist_directory_for_version(project, name, version):
     return os.path.join(get_dep_dist_directory(project, name), version)
 
-def install_dep(project, name, version, url_prefix):
+def install_dep(project, name, version, url_prefix, sha256=None):
     base_name = "{0}-{1}".format(name, version)
-    archive_url = "{0}{1}.tar.bz2".format(url_prefix, base_name)
-    hash_url = "{0}{1}-SHA-256.txt".format(url_prefix, base_name)
+    if sha256:
+        archive_url = "{0}sha256/{1}".format(url_prefix, sha256)
+        download_hash = sha256
+    else:
+        archive_url = "{0}{1}.tar.bz2".format(url_prefix, base_name)
+        download_hash = "{0}{1}-SHA-256.txt".format(url_prefix, base_name)
     downloads_path = get_dep_downloads_directory(project, name)
     dist_path = get_dep_dist_directory(project, name)
     title = "deps/{0}/{1}".format(project, name)
 
     toolget.download_and_install(archive_url,
-                                 hash_url,
+                                 download_hash,
                                  downloads_path,
                                  dist_path,
                                  base_name,
@@ -44,36 +48,58 @@ def install_dep(project, name, version, url_prefix):
                                  version,
                                  title)
 
+    final_dist_path = os.path.join(dist_path, version)
+    if os.path.isdir(final_dist_path) and sha256:
+        sha256_file = os.path.join(final_dist_path, "SHA256")
+        with open(sha256_file, 'w') as f:
+            f.write(sha256 + "\n")
+
 def get_version_from_dir(dir):
+    if not dir:
+        return None
     version_file = os.path.join(dir, "VERSION")
     if os.path.isfile(version_file):
         with open(version_file, 'r') as f:
             return f.readline().strip()
     return None
 
-def find_dep_root_dir(project, name, required_ver, envname=None):
-    if envname:
-        env_value = os.environ.get(envname)
-        if env_value:
-            # check environment defined value
-            version = get_version_from_dir(env_value)
-            if version == required_ver:
-                return env_value
+def get_sha256_from_dir(dir):
+    if not dir:
+        return None
+    sha256_file = os.path.join(dir, "SHA256")
+    if os.path.isfile(sha256_file):
+        with open(sha256_file, 'r') as f:
+            return f.readline().strip()
+    return None
+
+
+def is_valid_dep_dir_for_version_and_sha256(dep_dir, required_version, required_sha256):
+    version = get_version_from_dir(dep_dir)
+    sha256 = get_sha256_from_dir(dep_dir)
+    return version == required_version and sha256 == required_sha256
+
+def find_dep_root_dir(project, name, required_ver, required_sha256=None, envname=None):
+    dep_dir = os.environ.get(envname)
+    if is_valid_dep_dir_for_version_and_sha256(dep_dir, required_ver, required_sha256):
+        return dep_dir
 
     # check for a version in .anki/deps
-    anki_dep_dir = get_dep_dist_directory_for_version(project, name, required_ver)
-    return anki_dep_dir if os.path.isdir(anki_dep_dir) else None
+    dep_dir = get_dep_dist_directory_for_version(project, name, required_ver)
+    if is_valid_dep_dir_for_version_and_sha256(dep_dir, required_ver, required_sha256):
+        return dep_dir
 
-def find_or_install_dep(project, name, required_ver, url_prefix, install=True, envname=None):
-    dep_root_dir = find_dep_root_dir(project, name, required_ver, envname)
+    return None
+
+def find_or_install_dep(project, name, required_ver, url_prefix, required_sha256=None, install=True, envname=None):
+    dep_root_dir = find_dep_root_dir(project, name, required_ver, required_sha256, envname)
 
     if dep_root_dir:
         return dep_root_dir
 
     if install:
-        install_dep(project, name, required_ver, url_prefix)
+        install_dep(project, name, required_ver, url_prefix, required_sha256)
 
-    return find_dep_root_dir(project, name, required_ver)
+    return find_dep_root_dir(project, name, required_ver, required_sha256)
 
 def parseArgs(scriptArgs):
     parser = argparse.ArgumentParser(description='finds or installs dependency for a project')
@@ -90,6 +116,10 @@ def parseArgs(scriptArgs):
     parser.add_argument('--url-prefix',
                         action='store',
                         dest='url_prefix',
+                        nargs='?')
+    parser.add_argument('--sha256',
+                        action='store',
+                        dest='sha256',
                         nargs='?')
     parser.add_argument('--envname',
                         action='store',
@@ -115,6 +145,7 @@ def main(argv):
                                    options.name,
                                    version,
                                    options.url_prefix,
+                                   options.sha256,
                                    bool(options.install_version),
                                    options.envname)
         if not path:
