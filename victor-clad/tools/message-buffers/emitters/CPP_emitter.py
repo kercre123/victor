@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # Copyright 2015-2016 Anki Inc.
 #
@@ -31,7 +31,6 @@ def _modify_path():
 _modify_path()
 
 from clad import ast
-from clad import clad
 from clad import emitterutil
 
 _type_translations = {
@@ -54,7 +53,7 @@ def cpp_value_type(type):
             raise ValueError('Error: {0} was expected to be a primitive type, but is not.'.format(type.name))
         return _type_translations[type.name]
     elif isinstance(type, ast.PascalStringType):
-        return "std::string";
+        return "std::string"
     elif isinstance(type, ast.VariableArrayType) or isinstance(type, ast.FixedArrayType):
         if (not isinstance(type.member_type, ast.PascalStringType) and
                 (isinstance(type.member_type, ast.VariableArrayType) or
@@ -81,7 +80,7 @@ def cpp_value_type_destructor(type):
             raise ValueError('Error: {0} was expected to be a primitive type, but is not.'.format(type.name))
         return _type_translations[type.name]
     elif isinstance(type, ast.PascalStringType):
-        return "basic_string";
+        return "basic_string"
     elif isinstance(type, ast.VariableArrayType) or isinstance(type, ast.FixedArrayType):
         if (not isinstance(type.member_type, ast.PascalStringType) and
                 (isinstance(type.member_type, ast.VariableArrayType) or
@@ -148,7 +147,7 @@ class HNamespaceEmitter(BaseEmitter):
 
     def visit_DeclList(self, node, *args, **kwargs):
         last_was_include = False
-        for c_name, c in node.children():
+        for _, c in node.children():
             if last_was_include and not isinstance(c, ast.IncludeDecl):
                 self.output.write('\n')
             self.visit(c, *args, **kwargs)
@@ -371,7 +370,7 @@ class CPPEnumEmitter(HEnumEmitter):
         with self.output.indent(2):
             for i, byte in enumerate(hex_data):
                 separator = ','
-                if i == (len(hex_data) - 1):
+                if i == len(hex_data) - 1:
                     separator = ''
                 self.output.write("{hex_byte}{separator} ".format(hex_byte=hex(byte),
                                                                   separator=separator))
@@ -611,7 +610,7 @@ class CPPStructEmitter(HStructEmitter):
                 member_dict = member.__dict__['type'].__dict__
                 if 'type_decl' in member_dict:
                     arg_list = self.__init_explicit_members(member_dict['type_decl'])
-                    if explicit_members is '':
+                    if explicit_members == '':
                         explicit_members += ': {member_name}{arg_list}'.format(member_name = member.name,
                                                                                arg_list = arg_list)
                     else:

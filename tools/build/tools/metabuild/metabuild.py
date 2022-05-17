@@ -23,7 +23,7 @@ import ankibuild.util
 # https://github.com/facebook/buck/blob/master/src/com/facebook/buck/json/buck_parser/glob_internal.py
 # Glob implementation in python.
 
-from pathlib import Path
+from pathlib import Path, PurePath
 
 def is_special(pat):
     """Whether the given pattern string contains match constructs."""

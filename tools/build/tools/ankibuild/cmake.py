@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 from __future__ import print_function
 
@@ -6,7 +6,6 @@ import argparse
 import os
 import platform
 import re
-import string
 import subprocess
 import sys
 
@@ -18,7 +17,7 @@ CMAKE = 'cmake'
 def get_cmake_version_from_command(cmake_exe):
     version = None
     if cmake_exe and os.path.exists(cmake_exe):
-        output = subprocess.check_output([cmake_exe, '--version'])
+        output = subprocess.check_output([cmake_exe, '--version']).decode('utf-8')
         if not output:
             return None
         m = re.match('^cmake version (\d+\.\d+\.\d+)', output)
@@ -32,7 +31,7 @@ def find_anki_cmake_exe(version):
     d = toolget.get_anki_tool_dist_directory(CMAKE)
     d_ver = os.path.join(d, version)
 
-    for root, dirs, files in os.walk(d_ver):
+    for root, _, files in os.walk(d_ver):
         if os.path.basename(root) == 'bin':
             if 'cmake' in files:
                 return os.path.join(d_ver, root, 'cmake') 
@@ -47,7 +46,7 @@ def install_cmake(version):
 
     platform_name = platform.system().lower()
 
-    (major, minor, patch) = version.split('.')
+    major, minor, _ = version.split('.')
     cmake_short_ver = "{}.{}".format(major, minor)
     cmake_url_prefix = "https://cmake.org/files/v{}".format(cmake_short_ver)
 
@@ -71,7 +70,7 @@ def install_cmake(version):
 def find_cmake(required_ver, cmake_exe=None):
     if not cmake_exe:
         try:
-            cmake_exe = subprocess.check_output(['which', 'cmake']).rstrip()
+            cmake_exe = subprocess.check_output(['which', 'cmake']).decode('utf-8').rstrip()
         except subprocess.CalledProcessError as e:
             pass
 
@@ -100,9 +99,8 @@ def setup_cmake(required_ver):
     return cmake_exe
 
 def parseArgs(scriptArgs):
-    version = '1.0'
     default_cmake_version = "3.9.6"
-    parser = argparse.ArgumentParser(description='finds or installs cmake', version=version)
+    parser = argparse.ArgumentParser(description='finds or installs cmake')
     parser.add_argument('--install-cmake',
                         nargs='?',
                         const=default_cmake_version,
@@ -111,8 +109,7 @@ def parseArgs(scriptArgs):
                         nargs='?',
                         const=default_cmake_version,
                         default=None)
-    (options, args) = parser.parse_known_args(scriptArgs)
-    return options
+    return parser.parse_known_args(scriptArgs)[0]
 
 
 def main(argv):

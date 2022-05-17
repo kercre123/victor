@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # Copyright 2015-2016 Anki Inc.
 #
@@ -502,7 +502,7 @@ class CLADParser(PLYParser):
 
     def _check_message_member_initializer(self, member_type_ref, initializer, member_coord):
         # Is this is a string type initializer we can't check it (could also be a use of the verbatim keyword)
-        if initializer.type is "str":
+        if initializer.type == "str":
             return
         if not member_type_ref.type.name in ast.builtin_types:
             self._parse_error("{0} is not a built in data type".format(member_type_ref.type.name),
@@ -516,15 +516,15 @@ class CLADParser(PLYParser):
             if not initializer.isFloat:
                 self._parse_error("{0} is a float type, but {1} is not".format(member_type_ref.type.name, initializer.value),
                                   member_coord)
-        if (member_type_ref.type.min is not None) and (member_type_ref.type.min > initializer.value):
+        if member_type_ref.type.min is not None and member_type_ref.type.min > initializer.value:
             self._parse_error("{0} is smaller than the minimum value ({1}) for type {2}".format(initializer.value, member_type_ref.type.min, member_type_ref.type.name),
                               member_coord)
-        if (member_type_ref.type.max is not None) and (member_type_ref.type.max < initializer.value):
+        if member_type_ref.type.max is not None and member_type_ref.type.max < initializer.value:
             self._parse_error("{0} is larger than the maximum value ({1}) for type {2}".format(initializer.value, member_type_ref.type.max, member_type_ref.type.name),
                               member_coord)
-        if (member_type_ref.type.name is 'bool'):
-            if (((member_type_ref.type.min is not None) and (initializer.value != member_type_ref.type.min)) and 
-                ((member_type_ref.type.max is not None) and (initializer.value != member_type_ref.type.max))):
+        if member_type_ref.type.name == 'bool':
+            if ((member_type_ref.type.min is not None and initializer.value != member_type_ref.type.min) and 
+                (member_type_ref.type.max is not None and initializer.value != member_type_ref.type.max)):
                 self._parse_error("bool initializer value must be 0 or 1".format(member_type_ref.type.name),
                                   member_coord)
 

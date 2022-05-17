@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import sys
 import io
@@ -7,7 +7,6 @@ import json
 from collections import OrderedDict
 import hashlib
 
-from os import listdir
 import os.path
 
 class XcodeProjectParser(object):
@@ -17,17 +16,17 @@ class XcodeProjectParser(object):
     self.index = 0
 
   def printLocalWords(self, index):
-      print " ".join(self.words[max(0,self.index - 5) : min(self.index + 5, len(self.words))])
+      print(" ".join(self.words[max(0,self.index - 5) : min(self.index + 5, len(self.words))]))
 
   def DeserializeProject(self):
     result = None
     # first line is // !$*UTF8*$!
-    self.index = 2;
+    self.index = 2
     try:
       result = self.Deserialize(XcodeProject)
     except:
       print("Exception Thrown Parsing around line:")
-      self.printLocalWords(self.index);
+      self.printLocalWords(self.index)
       raise
 
     #reset index
@@ -36,18 +35,18 @@ class XcodeProjectParser(object):
 
   def Deserialize(self, t):
     self.chompWhitespace()
-    result = None;
+    result = None
     if (t is XcodeProjectObjectsBody):
       result = self.DeserializeXcodeProjectObjectsBody()
     elif t is not None and issubclass(t, IXcodeObject):
       result = self.DeserializeXcodeObject(t)
-    elif t is not None and (issubclass(t,XcodeString) or (t is XcodeString)):
+    elif t is not None and (issubclass(t, XcodeString) or (t is XcodeString)):
       result = self.DeserializeXcodeString(t)
-    elif (t is float) or (t is int):
+    elif t is float or t is int:
       result = self.DeserializeNumber(t)
-    elif (t is list):
+    elif t is list:
       result = self.DeserializeList()
-    elif (t is OrderedDict):
+    elif t is OrderedDict:
       result = self.DeserializeDictionary()        
     else:
       result = self.TryParseObject()
@@ -214,8 +213,7 @@ class XcodeProjectParser(object):
       return self.DeserializeList()
     elif word.startswith('{'):
       return self.DeserializeDictionary()
-    else:
-      return self.DeserializeXcodeString(FileId)
+    return self.DeserializeXcodeString(FileId)
 
   def DeserializeList(self, elementType = None):
     l = []
@@ -230,7 +228,7 @@ class XcodeProjectParser(object):
     # the last char is )
     self.index += 1
 
-    return l;
+    return l
 
   def DeserializeDictionary(self, keyType = None, elementType = None):
     d = OrderedDict()
@@ -257,7 +255,7 @@ class XcodeProjectParser(object):
       # the last char is }
     self.index += 1
 
-    return d;
+    return d
 
   def DeserializeNamedVariable(self, keyType = None, elementType = None):
     obj = XcodeNamedVariable()    
@@ -281,7 +279,7 @@ class XcodeProjectParser(object):
 
 
   def DeserializeXcodeObject(self, t):
-    obj = t();
+    obj = t()
 
     #first char is {
     self.words[self.index] = self.words[self.index][1:]
@@ -322,21 +320,21 @@ class XcodeProjectSerializer(object):
 
   def Serialize(self, indent, obj, oneLine = False):
     t = type(obj)
-    if (t is XcodeProjectObjectsBody):
+    if t is XcodeProjectObjectsBody:
       self.SerializeXcodeProjectObjectsBody(indent, obj)
-    elif (t is XcodeNamedVariable):
+    elif t is XcodeNamedVariable:
       self.SerializeNamedVariable(indent, obj, oneLine)
     elif t is not None and issubclass(t, IXcodeObject):      
       self.SerializeXcodeObject(indent, obj, oneLine)
-    elif (t is XcodeNamedVariable):
+    elif t is XcodeNamedVariable:
       self.SerializeNamedVariable(indent, obj, oneLine)
-    elif t is not None and (issubclass(t,XcodeString) or (t is XcodeString)): 
-      self.stream.write(unicode(obj.ToString()))
-    elif (t is list):
+    elif t is not None and (issubclass(t, XcodeString) or (t is XcodeString)): 
+      self.stream.write(obj.ToString())
+    elif t is list:
       self.SerializeList(indent, obj, oneLine)
-    elif (t is OrderedDict):
+    elif t is OrderedDict:
       self.SerializeDictionary(indent, obj, oneLine)
-    elif (t is float) or (t is int):
+    elif t is float or t is int:
       self.stream.write(u'{0}'.format(obj))
 
 
@@ -351,7 +349,7 @@ class XcodeProjectSerializer(object):
 
       l = getattr(obj,field)
 
-      if (l and len(l) > 0):
+      if l and len(l) > 0:
         self.stream.write(u'\n')
         self.stream.write(u'/* Begin {0} section */\n'.format(sectionName))
         for item in l:
@@ -361,7 +359,7 @@ class XcodeProjectSerializer(object):
     self.stream.write(u'{0}{1}'.format(indent, '}'))
 
   def SerializeXcodeObject(self, indent, obj, oneLine):
-    if (hasattr(obj, "isOneLine")):
+    if hasattr(obj, "isOneLine"):
       oneLine = oneLine or obj.isOneLine()
 
     fields = obj.getFields()
@@ -383,7 +381,7 @@ class XcodeProjectSerializer(object):
       if not oneLine:
         self.stream.write(subIndent)
 
-      self.stream.write(unicode(field))
+      self.stream.write(field)
       self.stream.write(u" = ")
       self.Serialize(subIndent, value, oneLine)
       self.stream.write(u';')
@@ -446,7 +444,7 @@ class XcodeProjectSerializer(object):
 
   def SerializeNamedVariable(self, indent, obj, oneLine):
     self.stream.write(indent)
-    self.stream.write(unicode(obj.Name.ToString()))
+    self.stream.write(obj.Name.ToString())
     self.stream.write(u" = ")
     self.Serialize(indent, obj.Value, oneLine)
     self.stream.write(u";\n")
@@ -459,19 +457,19 @@ class XcodeString(object):
     self.SetComment(comment)
 
   def __eq__(self, other):
-    if(other is None):
-      return False;
-    if (type(other) is XcodeString or issubclass(type(other), XcodeString)):
-      return self.Value == other.Value;
+    if other is None:
+      return False
+    if type(other) is XcodeString or issubclass(type(other), XcodeString):
+      return self.Value == other.Value
     return False
 
   def __ne__(self, other):
     return not self.__eq__(other)
 
   def __lt__(self, other):
-    if(other is None):
-      return False;
-    if (type(other) is XcodeString or issubclass(type(other), XcodeString)):
+    if other is None:
+      return False
+    if type(other) is XcodeString or issubclass(type(other), XcodeString):
       return self.Value < other.Value;    
     return False
 
@@ -877,8 +875,7 @@ class XcodeProjectUtility(object):
   def XcodeStringOrNone(self, string):
     if string is None:
       return None
-    else:
-      return XcodeString('{0}'.format(string))
+    return XcodeString('{0}'.format(string))
 
   def EnsureFolderExists(self, project, groupId, folderPath, relativePath):
     groupPath = folderPath.split('/')
@@ -948,7 +945,7 @@ class XcodeProjectUtility(object):
       if os.path.isfile(f):
         self.AddFileToGroup(project, projectRootPath, folderGroup, f)
       else:
-        fileType, extension = self.GetFileType(f)
+        fileType, _ = self.GetFileType(f)
         if fileType is not None:
           self.AddFileToGroup(project, projectRootPath, folderGroup, f)
         else:
@@ -972,7 +969,7 @@ class XcodeProjectUtility(object):
     if name.startswith('.'):
       return
 
-    (fileType, extension) = self.GetFileType(name)
+    fileType, extension = self.GetFileType(name)
 
     if fileType is None:
       fileType = FileTypeDefinition(Category = self.XcodeCategoryResources, Extension = extension, LastKnownFileType="text")
@@ -1012,7 +1009,7 @@ class XcodeProjectUtility(object):
 
     frs = [x for x in project.objects.PBXFileReferenceSection if os.path.samefile(x.Value.path.Value, relativePath)]
 
-    if(len(frs) == 0):
+    if len(frs) == 0:
       print("Could not find file {0} in project".format(path))
       return
 
@@ -1043,13 +1040,13 @@ class XcodeProjectUtility(object):
 
   def RemoveFileOrFolder(self, project, group, fileId):
     if fileId is None:
-      return;
+      return
 
     group.children.remove(fileId)
 
     subFolder = self.GetNamedValue(project.objects.PBXGroupSection, fileId)
 
-    if (subFolder is not None):
+    if subFolder is not None:
 
       i = len(subFolder.Value.children) - 1
 
@@ -1059,16 +1056,16 @@ class XcodeProjectUtility(object):
         i -= 1
 
       project.objects.PBXGroupSection.remove(subFolder)
-      return;
+      return
 
     fileRef = self.GetNamedValue(project.objects.PBXFileReferenceSection, fileId)
 
-    if(fileRef is not None):
+    if fileRef is not None:
       project.objects.PBXFileReferenceSection.remove(fileRef)
     else:
       varGroup = self.GetNamedValue(project.objects.PBXVariantGroupSection, fileId)
 
-      if(varGroup is not None):
+      if varGroup is not None:
         project.objects.PBXVariantGroupSection.remove(vgs[0])
       else:
         print("Could not find any reference to file id {0}".format(fileId.ToString()))
@@ -1113,27 +1110,27 @@ class XcodeProjectUtility(object):
       extension = extension.lstrip('.')
 
       ft = [x for x in self.FileTypeList if x.Extension == extension]
-      if(len(ft) > 0):
-        return (ft[0], extension)
-    return (None, extension)
+      if len(ft) > 0:
+        return ft[0], extension
+    return None, extension
 
 
   def GetEntry(self, list, key):
     for item in list:
-      if(item.Name.Value == key or item.Name == key):
+      if item.Name.Value == key or item.Name == key:
         return item.Value
     return None
 
   def GetNamedValue(self, list, key):
     for item in list:
-      if(item.Name.Value == key or item.Name == key):
+      if item.Name.Value == key or item.Name == key:
         return item
     return None
 
   def AppendNamedValue(self, list, item):
-    i = 0;
+    i = 0
     count = len(list)
-    while(i < count and list[i].Name < item.Name): i += 1
+    while i < count and list[i].Name < item.Name: i += 1
     list.insert(i, item)
 
   def GetOnly(self, list):
@@ -1162,7 +1159,7 @@ class XcodeProjectUtility(object):
     projectName = os.path.basename(unityBuildPath)
     rootPath = os.path.dirname(os.path.dirname(xcodeProjectPath))
 
-    if(folderName is None):
+    if folderName is None:
       folderName = projectName
 
     print("Modifying {0} by updating {1} from {2}".format(xcodeProjectPath, folderName, unityBuildPath))
@@ -1188,7 +1185,7 @@ class XcodeProjectUtility(object):
 
     print( "Writing {0}".format(xcodeProjectPath))
     f = open(xcodeProjectPath, 'w')    
-    f.write(unicode(finalString))
+    f.write(finalString)
     f.close()
 
 if __name__ == "__main__":
@@ -1196,18 +1193,18 @@ if __name__ == "__main__":
   unityBuildPath = None
   folderName = None
 
-  if(len(sys.argv) == 1):
+  if len(sys.argv) == 1:
     print("Usage: ./xcodeProject.py path/to/xcode/project.pbxproj path/to/unity/build [folderName]")
     print("  deletes the unity folder from the given project file path,")
     print("  then readds it from the given unity project path")
 
-  if (len(sys.argv) > 1):
+  if len(sys.argv) > 1:
     xcodeProjectPath = sys.argv[1]
 
-  if(len(sys.argv) > 2):
+  if len(sys.argv) > 2:
     unityBuildPath = sys.argv[2]
 
-  if(len(sys.argv) > 3):
+  if len(sys.argv) > 3:
     folderName = sys.argv[3]
 
     utility = XcodeProjectUtility()

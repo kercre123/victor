@@ -1,7 +1,5 @@
 
 import getpass
-import shutil
-import subprocess
 import os
 import plistlib
 import util
@@ -32,12 +30,12 @@ class XcodeWorkspace(object):
         self.project_name = project_name
     
     def add_scheme_cmake(self, name, project_path):
-    	scheme = dict(template=SCHEME_TEMPLATE_CMAKE, name=name, project_path=project_path)
-    	self.schemes.append(scheme)
+      scheme = dict(template=SCHEME_TEMPLATE_CMAKE, name=name, project_path=project_path)
+      self.schemes.append(scheme)
     
     def add_scheme_gyp(self, name, project_path):
-    	scheme = dict(template=SCHEME_TEMPLATE_GYP, name=name, project_path=project_path)
-    	self.schemes.append(scheme)
+      scheme = dict(template=SCHEME_TEMPLATE_GYP, name=name, project_path=project_path)
+      self.schemes.append(scheme)
     
     def add_scheme_ios(self, scheme_name, project_path, mode='auto'):
         scheme = dict(template=SCHEME_TEMPLATE_IOS, name=scheme_name, mode=mode, project_path=project_path)
@@ -71,12 +69,12 @@ class XcodeWorkspace(object):
             self.generate_workspace_settings(path, derived_data_path)
         
         if self.schemes:
-        	scheme_dir = os.path.join(path, 'xcshareddata', 'xcschemes')
-        	util.File.mkdir_p(scheme_dir)
-        	for scheme in self.schemes:
-        		scheme_path = os.path.join(scheme_dir, '{0}.xcscheme'.format(scheme['name']))
-        		scheme_data = scheme['template'].format(**scheme)
-        		util.File.write(scheme_path, scheme_data)
+         scheme_dir = os.path.join(path, 'xcshareddata', 'xcschemes')
+         util.File.mkdir_p(scheme_dir)
+         for scheme in self.schemes:
+            scheme_path = os.path.join(scheme_dir, '{0}.xcscheme'.format(scheme['name']))
+            scheme_data = scheme['template'].format(**scheme)
+            util.File.write(scheme_path, scheme_data)
 	
     def generate_file_ref(self, path, tag='group'):
         location = "%s:%s" % (tag, path)

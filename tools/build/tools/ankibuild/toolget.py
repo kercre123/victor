@@ -7,7 +7,7 @@ import os
 import re
 import shutil
 import sys
-import urllib
+import urllib.request
 import tarfile
 
 # ankibuild
@@ -85,7 +85,7 @@ def download_and_install(archive_url,
         download_hash = hash_url
     else:
         # not a hash, assume url
-        handle = urllib.urlopen(hash_url)
+        handle = urllib.request.urlopen(hash_url)
         code = handle.getcode()
 
         archive_file = os.path.basename(archive_url)
@@ -93,7 +93,7 @@ def download_and_install(archive_url,
 
         if code >= 200 and code < 300:
             digests_path = os.path.join(downloads_path, os.path.basename(hash_url))
-            download_file = open(digests_path, 'w')
+            download_file = open(digests_path, 'wb')
             block_size = 1024 * 1024
             sys.stdout.write("\nDownloading {0} {1}:\n  url = {2}\n  dst = {3}\n"
                              .format(title, version, hash_url, digests_path))
@@ -107,10 +107,10 @@ def download_and_install(archive_url,
                         download_hash = line[0:64]
 
 
-    handle = urllib.urlopen(archive_url)
+    handle = urllib.request.urlopen(archive_url)
     code = handle.getcode()
     if code >= 200 and code < 300:
-        download_file = open(download_path, 'w')
+        download_file = open(download_path, 'wb')
         block_size = 1024 * 1024
         sys.stdout.write("\nDownloading {0} {1}:\n  url = {2}\n  dst = {3}\n"
                          .format(title, version, archive_url, final_path))

@@ -1,13 +1,10 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 from __future__ import print_function
 
 import argparse
 import os
 import platform
-import re
-import string
-import subprocess
 import sys
 
 # ankibuild
@@ -47,10 +44,7 @@ def install_vicos_sdk(version):
     downloads_path = toolget.get_anki_tool_downloads_directory('vicos-sdk')
     dist_path = toolget.get_anki_tool_dist_directory('vicos-sdk')
 
-    #vicos_basename = get_version_tag(version)
     vicos_basename = sdk_base_name
-    #downloads_path = get_anki_downloads_dir()
-    #dist_path = os.path.join(get_anki_dist_dir(), get_version_tag(version))
     toolget.download_and_install(anki_sdk_url,
                                  anki_hash_url,
                                  downloads_path,
@@ -71,8 +65,7 @@ def get_anki_sdk_dir(required_ver):
     # check for a version in .anki
     #vicos_sdk_tag = get_version_tag(required_ver)
     anki_vicos_base_dir = toolget.get_anki_tool_dist_directory('vicos-sdk')
-    anki_vicos_dir = os.path.join(anki_vicos_base_dir, required_ver)
-    return anki_vicos_dir
+    return os.path.join(anki_vicos_base_dir, required_ver)
 
 def find_sdk_root_dir(required_ver):
     env_value = os.environ.get('VICOS_SDK_HOME')
@@ -87,8 +80,7 @@ def find_sdk_root_dir(required_ver):
     
     if not os.path.exists(anki_vicos_dir):
         return None
-    else:
-        return anki_vicos_dir
+    return anki_vicos_dir
 
 def find_or_install_vicos_sdk(required_ver, install=True):
     sdk_root_dir = find_sdk_root_dir(required_ver)
@@ -103,8 +95,7 @@ def find_or_install_vicos_sdk(required_ver, install=True):
     return sdk_root_dir
 
 def parseArgs(scriptArgs):
-    version = '1.0'
-    parser = argparse.ArgumentParser(description='finds or installs vicos sdk', version=version)
+    parser = argparse.ArgumentParser(description='finds or installs vicos sdk')
     parser.add_argument('--install',
                         action='store',
                         dest='install_version',
@@ -113,8 +104,7 @@ def parseArgs(scriptArgs):
                         action='store',
                         dest='find_version',
                         nargs='?')
-    (options, args) = parser.parse_known_args(scriptArgs)
-    return options
+    return parser.parse_known_args(scriptArgs)[0]
 
 
 def main(argv):

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 from __future__ import print_function
 
@@ -6,7 +6,6 @@ import argparse
 import os
 import platform
 import re
-import string
 import subprocess
 import sys
 
@@ -19,7 +18,7 @@ DEFAULT_VERSION = '1.11'
 def get_go_version_from_command(go_exe):
     version = None
     if go_exe and os.path.exists(go_exe):
-        output = subprocess.check_output([go_exe, 'version'])
+        output = subprocess.check_output([go_exe, 'version']).decode('utf-8')
         if not output:
             return None
         m = re.match('^go version go(\d+\.\d+\.?\d*)', output)
@@ -33,7 +32,7 @@ def find_anki_go_exe(version):
     d = toolget.get_anki_tool_dist_directory(GO)
     d_ver = os.path.join(d, version)
 
-    for root, dirs, files in os.walk(d_ver):
+    for root, _, files in os.walk(d_ver):
         if os.path.basename(root) == 'bin':
             if 'go' in files:
                 return os.path.join(d_ver, root, 'go')
@@ -114,8 +113,7 @@ def setup_go(required_ver):
     return go_exe
 
 def parseArgs(scriptArgs):
-    version = '1.0'
-    parser = argparse.ArgumentParser(description='finds or installs go', version=version)
+    parser = argparse.ArgumentParser(description='finds or installs go')
     parser.add_argument('--install-go',
                         action='store',
                         dest='required_version',
@@ -125,8 +123,7 @@ def parseArgs(scriptArgs):
                         action='store',
                         dest='check_exe',
                         nargs=1)
-    (options, args) = parser.parse_known_args(scriptArgs)
-    return options
+    return parser.parse_known_args(scriptArgs)[0]
 
 
 def main(argv):
