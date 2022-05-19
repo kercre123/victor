@@ -2071,6 +2071,21 @@ namespace Vision {
     return *this;
   }
 
+  ImageRGB565& ImageRGB565::SetFromImageRGB2BGR(const ImageRGB& imageRGB, const std::array<u8, 256>& gammaLUT)
+  {
+    Allocate(imageRGB.GetNumRows(), imageRGB.GetNumCols());
+
+    std::function<PixelRGB565(const PixelRGB&)> convertFcn = [&gammaLUT](const PixelRGB& pixRGB)
+    {
+      PixelRGB565 pixRGB565(gammaLUT[pixRGB.b()], gammaLUT[pixRGB.g()], gammaLUT[pixRGB.r()]);
+      return pixRGB565;
+    };
+
+    imageRGB.ApplyScalarFunction(convertFcn, *this);
+
+    return *this;
+  }
+
   ImageRGB565& ImageRGB565::SetFromImageRGB565(const ImageRGB565& imageRGB565)
   {
     imageRGB565.CopyTo(*this);

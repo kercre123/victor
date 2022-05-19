@@ -373,6 +373,7 @@ public:
   ImageRGB565& SetFromImage(const Image& image);
   ImageRGB565& SetFromImageRGB(const ImageRGB& imageRGB);
   ImageRGB565& SetFromImageRGB(const ImageRGB& imageRGB, const std::array<u8, 256>& gammaLUT);
+  ImageRGB565& SetFromImageRGB2BGR(const ImageRGB& imageRGB, const std::array<u8, 256>& gammaLUT);
   ImageRGB565& SetFromImageRGB565(const ImageRGB565& imageRGB565);
   
   ImageRGB565& SetFromVector(const std::vector<u16>& pixels);
