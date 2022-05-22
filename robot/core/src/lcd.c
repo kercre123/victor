@@ -31,7 +31,8 @@ static int lcd_use_fb; // use /dev/fb0?
 #define GPIO_LCD_RESET_MIDAS 96
 #define GPIO_LCD_RESET_SANTEK 55
 
-static GPIO RESET_PIN;
+static GPIO RESET_PIN_1;
+static GPIO RESET_PIN_2;
 static GPIO DnC_PIN;
 
 
@@ -416,11 +417,17 @@ int lcd_init(void) {
     error_return(app_IO_ERROR, "Failed to create GPIO %d: %d\n", GPIO_LCD_WRX, res);
   }
 
-  int gpio_lcd_reset = lcd_display_version() == SANTEK ? GPIO_LCD_RESET_SANTEK : GPIO_LCD_RESET_MIDAS;
-  res = gpio_create_open_drain_output(gpio_lcd_reset, gpio_HIGH, &RESET_PIN);
+  res = gpio_create_open_drain_output(GPIO_LCD_RESET_MIDAS, gpio_HIGH, &RESET_PIN_1);
   if(res < 0)
   {
-    error_return(app_IO_ERROR, "Failed to create GPIO %d: %d\n", gpio_lcd_reset, res);
+    error_return(app_IO_ERROR, "Failed to create GPIO %d: %d\n", GPIO_LCD_RESET_MIDAS, res);
+  }
+
+  //  int gpio_lcd_reset_2 = lcd_display_version() != SANTEK ? GPIO_LCD_RESET_SANTEK : GPIO_LCD_RESET_MIDAS;
+  res = gpio_create(GPIO_LCD_RESET_SANTEK, gpio_DIR_OUTPUT, gpio_HIGH, &RESET_PIN_2);
+  if(res < 0)
+  {
+    error_return(app_IO_ERROR, "Failed to create GPIO %d: %d\n",  GPIO_LCD_RESET_SANTEK, res);
   }
 
   // SPI setup
@@ -434,9 +441,11 @@ int lcd_init(void) {
 
   // Send reset signal
   microwait(50);
-  gpio_set_value(RESET_PIN, 0);
+  gpio_set_value(RESET_PIN_1, 0);
+  gpio_set_value(RESET_PIN_2, 0);
   microwait(50);
-  gpio_set_value(RESET_PIN, 1);
+  gpio_set_value(RESET_PIN_1, 1);
+  gpio_set_value(RESET_PIN_2, 1);
   // Wait 120 milliseconds after releasing reset before sending commands
   milliwait(120);
 
@@ -463,8 +472,12 @@ void lcd_shutdown(void) {
   if (DnC_PIN) {
     gpio_close(DnC_PIN);
   }
-  if (RESET_PIN) {
-    gpio_close(RESET_PIN);
+  if (RESET_PIN_1) {
+    gpio_close(RESET_PIN_1);
+  }
+
+  if (RESET_PIN_2) {
+    gpio_close(RESET_PIN_2);
   }
 
 }
