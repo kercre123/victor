@@ -1271,6 +1271,9 @@ void FaceInfoScreenManager::DrawMain()
     esn =  serialNum;
   }
 
+  std::transform(esn.begin(), esn.end(), esn.begin(),
+    [](unsigned char c){ return std::tolower(c); });
+
   const std::string serialNo = "ESN: "  + esn;
 
   const std::string hwVer    = "HW: "   + std::to_string(Factory::GetEMR()->fields.HW_VER);
