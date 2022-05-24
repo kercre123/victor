@@ -9,8 +9,8 @@ display.
 ## Install Dependencies
 
 - Install the [Arduino IDE](https://www.arduino.cc/en/software) on your system.
-- There are 3 libraries used in the calibrator: `Adafruit_GFX_Library`, `Adafruit_SSD1306`, and
-  `Adafruit_VL53L0X`.
+- There are 4 libraries used in the calibrator: `Adafruit_GFX_Library`, `Adafruit_SSD1306`,
+  `Adafruit_VL53L0X`, and `ezButton`.
 - Compressed versions of the libraries are included in the repository in the `libraries` folder.
 - Delete any existing copies of these libraries from your system by navigating to the
   `Sketchbook Location` of the Arduino IDE.

@@ -4,6 +4,7 @@
 #include "Adafruit_SSD1306.h"
 #include "Adafruit_VL53L0X.h"
 #include "vl53l0x_api_calibration.h"
+#include "ezButton.h"
 
 // OLED display width and height, in pixels
 #define SCREEN_WIDTH 128
@@ -14,20 +15,24 @@
 #define OLED_RESET  9
 // TOF PINS
 #define TOF_POWER 22
+// Button pins
+#define BUTTON 7
 // Uncomment line below to view debug statements
 // #define DEBUG
 
 // Function definitions
 void displayMessage(String msg, uint8_t startX, uint8_t textSize, bool invert = false, bool addDelay = false);
 bool scanForTof(void);
-void waitToAddTof(void);
+void waitToAddTof(bool useButton = false);
 void waitToRemoveTof(void);
 bool isAverageReadingOkay(void);
+bool isButtonPressed(void);
 
 // Global variables
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,
   &SPI, OLED_DC, OLED_RESET, OLED_CS);
 Adafruit_VL53L0X lox = Adafruit_VL53L0X();
+ezButton button(BUTTON);
 
 // Boot up init things
 void setup() {
@@ -35,6 +40,9 @@ void setup() {
   Serial.begin(115200);
   pinMode(TOF_POWER, OUTPUT);
   digitalWrite(TOF_POWER, HIGH);
+
+  // Set debounce time to 50 milliseconds
+  button.setDebounceTime(50);
 
   // Initialize the display
   if(!display.begin(SSD1306_SWITCHCAPVCC)) {
@@ -44,6 +52,7 @@ void setup() {
   display.clearDisplay();
   Serial.println("Calibrator started");
   displayMessage("TOF-CALIB", 10, 2, false, true);
+
 }
 
 /**************************************************************************/
@@ -61,18 +70,18 @@ void setup() {
 void loop() {
   // Wait for sensor to be plugged-in
   displayMessage("READY", 30, 2);
-  waitToAddTof();
+  waitToAddTof(true);
   // Give time to the user to place the sensor in the correct position
-  delay(10000);
 
   // Try to calibrate the sensor
   Serial.println("Starting ToF Calibration...");
   displayMessage("CALIBRATE", 5, 2);
   bool calibSuccess = false;
+  
 #ifdef DEBUG
   calibSuccess = lox.calibrate(0x29, true);
 #else
-  calibSuccess = lox.calibrate();
+  calibSuccess = lox.calibrate(0x29, false);
 #endif
 
   // For some reason, we have to re-initialize the display after calibration
@@ -89,7 +98,7 @@ void loop() {
   else
   {
     Serial.println("Calibration Failed");
-    displayMessage("FAILED", 30, 2, true);
+    displayMessage("FAILED", 30, 2, true, true);
   }
 
   // Perform some ranging measurements
@@ -106,18 +115,18 @@ void loop() {
 #ifdef DEBUG
     if (lox.begin(0x29, true))
 #else
-    if (lox.begin())
+    if (lox.begin(0x29, false))
 #endif
     {
       if (isAverageReadingOkay())
       {
-        Serial.println(F("Calibration SUCCECSS"));
-        displayMessage("OK!", 30, 4, true);
+        Serial.println(F("Calibration SUCCESS"));
+        displayMessage("OK!", 30, 4, true, true);
       }
       else
       {
         Serial.println(F("Average readings out of range"));
-        displayMessage("FAILED", 30, 2, true);
+        displayMessage("FAILED", 30, 2, true, true);
       }
     }
     else
@@ -125,10 +134,6 @@ void loop() {
       Serial.println(F("Failed to boot VL53L0X"));
     }
   }
-
-  // Calibration finished
-  // Wait to remove sensor to start calibrating the next one
-  waitToRemoveTof();
 }
 
 void displayMessage(String msg, uint8_t startX, uint8_t textSize, bool invert, bool addDelay) {
@@ -185,8 +190,15 @@ bool scanForTof()
   return false;
 }
 
-void waitToAddTof()
+void waitToAddTof(bool useButton)
 {
+  if (useButton)
+  {
+    while (!isButtonPressed())
+    {
+      delay(1);
+    }
+  }
   while (!scanForTof())
   {
     delay(2000);
@@ -205,7 +217,7 @@ bool isAverageReadingOkay()
   uint16_t acc = 0;
   uint8_t cnt = 0;
   displayMessage("READING", 25, 2);
-  for (int i = 0; i < 20; i++)
+  for (int i = 0; i < 50; i++)
   {
     VL53L0X_RangingMeasurementData_t measure;
 #ifdef DEBUG
@@ -231,4 +243,10 @@ bool isAverageReadingOkay()
     return true;
   }
   return false;
+}
+
+bool isButtonPressed()
+{
+  button.loop();
+  return button.isReleased();
 }
