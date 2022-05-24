@@ -88,7 +88,7 @@ namespace Vector {
 // Default values for text rendering
 const Point2f FaceInfoScreenManager::kDefaultTextStartingLoc_pix = {0,10};
 const u32 FaceInfoScreenManager::kDefaultTextSpacing_pix = 11;
-const f32 FaceInfoScreenManager::kDefaultTextScale = 0.35f;
+const f32 FaceInfoScreenManager::kDefaultTextScale = 0.4f;
 
 namespace {
   // Number of tics that a wheel needs to be moving for before it registers
@@ -1699,6 +1699,8 @@ void FaceInfoScreenManager::DrawTextOnScreen(const std::vector<std::string>& tex
   f32 textLocY = loc.y();
   // TODO: Expose line and location(?) as arguments
   const u8  textLineThickness = 8;
+
+  textScale = IsXray() ? textScale - 0.05f : textScale;
 
   for(const auto& text : textVec)
   {
