@@ -89,6 +89,8 @@ private:
   Vision::ImageRGB565 _faceImageRGB565;
   u32                 _faceImageRGBId                    = 0;          // Used only for tracking chunks of the same image as they are received
   u32                 _faceImageRGBChunksReceivedBitMask = 0;
+  const u32           kAllFaceImageRGBChunksReceivedMaskFor30Chunks = 0x3fffffff; // 30 bits for 30 expected chunks (FACE_DISPLAY_NUM_PIXELS / 600 pixels_per_msg ~= 30)
+  const u32           kAllFaceImageRGBChunksReceivedMaskFor22Chunks = 0x3fffff; // For new screem 22 bits for 22 expected chunks (FACE_DISPLAY_NUM_PIXELS / 600 pixels_per_msg ~= 22)
 
 };
 
