@@ -14,7 +14,6 @@
 
 #include "helpware/display.h"
 
-
 #ifdef EXTENDED_DISPLAY_DEBUGGING
 #define ddprintf printf
 #else
@@ -31,7 +30,6 @@ typedef struct Font_t
   int CharsPerLine;
   int BitHeight;
   int BitWidth;
-
 
   unsigned char CharStart;
   unsigned char CharEnd;
@@ -75,8 +73,8 @@ static const uint8_t gSmallFontGlyph[] = {
 
 #define SMALL_FONT_WIDTH 5
 #define SMALL_FONT_HEIGHT 8
-#define SMALL_FONT_CHARS_PER_LINE (LCD_FRAME_WIDTH/(SMALL_FONT_WIDTH+1))
-#define SMALL_FONT_LINE_COUNT (LCD_FRAME_HEIGHT/SMALL_FONT_HEIGHT)
+#define SMALL_FONT_CHARS_PER_LINE (DISPLAY_SCREEN_WIDTH/(SMALL_FONT_WIDTH+1))
+#define SMALL_FONT_LINE_COUNT (DISPLAY_SCREEN_HEIGHT/SMALL_FONT_HEIGHT)
 
 #define SMALL_FONT_CHAR_START 32
 #define SMALL_FONT_CHAR_END  127
@@ -87,6 +85,7 @@ static const Font gSmallFont = {
   /* int CharsPerLine; */    DISPLAY_SCREEN_WIDTH/SMALL_FONT_WIDTH,
   /* int BitHeight; */       SMALL_FONT_HEIGHT,
   /* int BitWidth; */        SMALL_FONT_WIDTH,
+
   SMALL_FONT_CHAR_START,
   SMALL_FONT_CHAR_END,
   1, /* CenteredByDefault& */
@@ -111,7 +110,7 @@ static const Font* gFont[DISPLAY_NUM_LAYERS] = {
 
 //each screen_line is 8 bits high.
 //All fonts must be in units of half lines
-#define SCAN_LINE_COUNT (LCD_FRAME_HEIGHT/(CHAR_BIT/2))
+#define SCAN_LINE_COUNT (DISPLAY_SCREEN_HEIGHT/(CHAR_BIT/2))
 /****************/
 
 //each layer has N lines of text.
@@ -195,7 +194,7 @@ void display_render_8bit_text(uint8_t* bitmap, int layer, const Font* font)
   int mapline = 0;
   for (line=0;line<font->LineCount;line++)
   {
-    uint8_t* map = &bitmap[mapline*LCD_FRAME_WIDTH];
+    uint8_t* map = &bitmap[mapline*DISPLAY_SCREEN_WIDTH];
     const char* text = gDisplay.text[layer]+(line*font->CharsPerLine);
     if (*text)  {
       ddprintf(": %s\n", text);
@@ -230,8 +229,8 @@ void display_render_16bit_text(uint8_t* bitmap, int layer, const Font* font)
 
   for (line=0;line<font->LineCount;line++)
   {
-    uint8_t* m1 = &bitmap[mapline*LCD_FRAME_WIDTH];
-    uint8_t* m2 = &bitmap[(mapline+1)*LCD_FRAME_WIDTH];
+    uint8_t* m1 = &bitmap[mapline*DISPLAY_SCREEN_WIDTH];
+    uint8_t* m2 = &bitmap[(mapline+1)*DISPLAY_SCREEN_WIDTH];
     const char* text = gDisplay.text[layer]+(line*font->CharsPerLine);
     if (*text)  {
       ddprintf("< %s\n", text);
@@ -267,13 +266,13 @@ void display_render_32bit_text(uint8_t* bitmap, int layer, const Font* font)
   // 32 bit text puts 1 line over 4 rows.
   // theoretically we could do 24 bit text...
   int line, col;
-  int mapline = 0;
+  int mapline = 3;
   for (line=0;line<font->LineCount;line++)
   {
-    uint8_t* m1 = &bitmap[mapline*LCD_FRAME_WIDTH];
-    uint8_t* m2 = &bitmap[(mapline+1)*LCD_FRAME_WIDTH];
-    uint8_t* m3 = &bitmap[(mapline+2)*LCD_FRAME_WIDTH];
-    uint8_t* m4 = &bitmap[(mapline+3)*LCD_FRAME_WIDTH];
+    uint8_t* m1 = &bitmap[mapline*DISPLAY_SCREEN_WIDTH];
+    uint8_t* m2 = &bitmap[(mapline+1)*DISPLAY_SCREEN_WIDTH];
+    uint8_t* m3 = &bitmap[(mapline+2)*DISPLAY_SCREEN_WIDTH];
+    uint8_t* m4 = &bitmap[(mapline+3)*DISPLAY_SCREEN_WIDTH];
 
     const char* text = gDisplay.text[layer]+(line*font->CharsPerLine);
     if (*text)  {
@@ -327,13 +326,13 @@ void bitmap_render_text(uint8_t* bitmap, int layer, const Font* font)
 
 
 #define EXTRACT_BIT(map,x,y) \
-  (((map)[(x)+((y)/8)*LCD_FRAME_WIDTH]>>((y)%8))&1)
+  (((map)[(x)+((y)/8)*DISPLAY_SCREEN_WIDTH]>>((y)%8))&1)
 
 
 void display_render(uint8_t layermask) {
   //two stage process
   //first render the fonts into a bitmap.
-  uint8_t bitmap[LCD_FRAME_WIDTH * LCD_FRAME_HEIGHT/8]={0};
+  uint8_t bitmap[DISPLAY_SCREEN_WIDTH * DISPLAY_SCREEN_HEIGHT/8]={0};
   int i;
 
   for (i=0;i<DISPLAY_NUM_LAYERS;i++) {
@@ -344,13 +343,13 @@ void display_render(uint8_t layermask) {
   }
   //second, convert the bitmap to color using the textprop values.
   int x,y;
-  for (y=0;y<LCD_FRAME_HEIGHT;y++) {
+  for (y=0;y<DISPLAY_SCREEN_HEIGHT;y++) {
     const TextProperties* tp = &gDisplay.map_prop[y/4];
     ddprintf("%02d %04x/%04x: ",y, tp->fg, tp->bg);
-    for (x=0;x<LCD_FRAME_WIDTH;x++) {
+    for (x=0;x<DISPLAY_SCREEN_WIDTH;x++) {
       int isSet = EXTRACT_BIT(bitmap,x,y);
       uint16_t color = (isSet) ? tp->fg : tp->bg;
-      gDisplay.frame.data[y*LCD_FRAME_WIDTH+x] = color;
+      gDisplay.frame.data[y*DISPLAY_SCREEN_WIDTH+x] = color;
       ddprintf("%c", isSet?'X':'.');
     }
     ddprintf("\n");
@@ -362,7 +361,14 @@ void display_render(uint8_t layermask) {
 void display_draw_text(int layer, int line , uint16_t fg, uint16_t bg, const char* text, int len, bool centered)
 {
   const Font* font =  gFont[layer];
-  assert(line < font->LineCount);
+  if (line >= font->LineCount) {
+    printf("Line %d for layer %d (max: %d. height: %d)  is unprintable! Won't show text! SKIPPING!\n", line, layer, font->LineCount, font->BitHeight);
+    char *extracted_text = (char*) malloc(len+1);
+    strcpy(extracted_text, text);
+    extracted_text[len] = 0; // null terminate
+    printf("TEXT WAS \"%s\"\n", extracted_text);
+    return;
+  }
   int nchars =  min(len, font->CharsPerLine);
   char* textline = gDisplay.text[layer]+(line*font->CharsPerLine);
   memset(textline, ' ', font->CharsPerLine);

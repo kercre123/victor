@@ -134,7 +134,7 @@ int menu_get_index(void) {
 }
 
 void draw_menus(void) {
-  int i;
+    int i;
   if (gMenu.selection_count) {
     if (--gMenu.selection_count == 0)
       gMenu.changed = 1;
@@ -144,7 +144,7 @@ void draw_menus(void) {
     gMenu.changed = 0;
     display_clear_layer(DISPLAY_LAYER_SMALL,
                         MENU_TEXT_COLOR_FG, MENU_TEXT_COLOR_BG);
-    for (i=0;i< gMenu.current->nItems; i++) {
+        for (i=0;i< gMenu.current->nItems; i++) {
       char textbuffer[20];
       uint16_t inversion = 0;
       snprintf(textbuffer, sizeof(textbuffer), "%c %s",
@@ -152,10 +152,10 @@ void draw_menus(void) {
       if (gMenu.selection_count || gMenu.is_busy) {
         if (i==gMenu.index) { inversion = MENU_TEXT_COLOR_FG; }
       }
-      display_draw_text(DISPLAY_LAYER_SMALL, i,
+                  display_draw_text(DISPLAY_LAYER_SMALL, i,
                         MENU_TEXT_COLOR_FG^inversion, MENU_TEXT_COLOR_BG^inversion,
                         textbuffer, sizeof(textbuffer), false);
-    }
+      			}
     display_render(0xFF);  //1<<DISPLAY_LAYER_SMALL);
   }
 }
