@@ -152,7 +152,7 @@ void draw_menus(void) {
       if (gMenu.selection_count || gMenu.is_busy) {
         if (i==gMenu.index) { inversion = MENU_TEXT_COLOR_FG; }
       }
-                  display_draw_text(DISPLAY_LAYER_SMALL, i,
+                  display_draw_text(DISPLAY_LAYER_TINY, i,
                         MENU_TEXT_COLOR_FG^inversion, MENU_TEXT_COLOR_BG^inversion,
                         textbuffer, sizeof(textbuffer), false);
       			}
