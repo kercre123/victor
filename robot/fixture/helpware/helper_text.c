@@ -9,7 +9,7 @@
 #include "core/lcd.h"
 #include "helpware/display.h"
 
-#define DISPLAY_LAYER_LARGE_MAX_CHARS 7
+#define DISPLAY_LAYER_LARGE_MAX_CHARS 6
 
 #define SMALL_LINE_COUNT 8
 
