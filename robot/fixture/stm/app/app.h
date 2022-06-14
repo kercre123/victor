@@ -31,4 +31,6 @@ extern uint8_t app_global_buffer[APP_GLOBAL_BUF_SIZE];
 
 char* snformat(char *s, size_t n, const char *format, ...);
 
+void setTestTimerText(u32 countdown);
+
 #endif //APP_H

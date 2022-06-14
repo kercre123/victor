@@ -14,6 +14,7 @@
 #include "testcommon.h"
 #include "tests.h"
 #include "timer.h"
+#include "fixture.h"
 
 //-----------------------------------------------------------------------------
 //                  Debug
@@ -1715,6 +1716,68 @@ void SweatinToTheOldies(void)
 
 }
 
+void SweatinToTheOldiesTime(void)
+{
+  const int batt_mv_cutoff=3600;
+  int batt_mv=9999;
+	
+  int start_time = Timer::get();
+  int elapsed_seconds;
+	int last_counter_value = 9999;
+	
+	int total_time;
+	
+	switch(g_fixmode) {
+		case FIXMODE_ROBOT_G10:
+			total_time = 10 * 60;
+		  break;
+		case FIXMODE_ROBOT_G15:
+			total_time = 15 * 60;
+		  break;
+		case FIXMODE_ROBOT_G20:
+			total_time = 20 * 60;
+		  break;
+		default:
+			total_time = 1;
+	}
+	
+  while(1)
+  {
+    //feel the burn
+    try {
+      int8_t treadPwrL=100; int8_t treadPwrR=100; int8_t liftPwr=70; int8_t headPwr=70;
+      int printlvl = RCOM_PRINT_LEVEL_CMD; // | RCOM_PRINT_LEVEL_NFO; // RCOM_PRINT_LEVEL_DAT | RCOM_PRINT_LEVEL_RSP
+      rcomMot(120, RCOM_SENSOR_MOT_LEFT,   treadPwrL, -treadPwrR,  liftPwr, -headPwr, printlvl);
+      rcomMot(120, RCOM_SENSOR_MOT_RIGHT, -treadPwrL,  treadPwrR, -liftPwr,  headPwr, printlvl);
+    } catch(...) {
+    }
+    
+    //Check battery voltage
+    Contacts::setModeRx();
+    Timer::delayMs(50);
+
+
+		elapsed_seconds = Timer::elapsedUs(start_time) / 1000000;
+		
+		if (elapsed_seconds != last_counter_value) {
+			
+		  setTestTimerText(total_time - elapsed_seconds);
+			last_counter_value = elapsed_seconds;
+		}
+			
+		if (elapsed_seconds > total_time) break;
+		
+		// let battery voltage settle
+    batt_mv = robot_get_batt_mv(0, true, RCOM_PRINT_LEVEL_NONE);
+    if( batt_mv <= batt_mv_cutoff ) {
+			ConsolePrintf("ERR: Battery exhausted after %i seconds!\n", elapsed_seconds);
+      throw ERROR_ROBOT_OUT_OF_JUICE;
+		}  
+
+  }
+
+}
+
 //-----------------------------------------------------------------------------
 //                  Get Tests
 //-----------------------------------------------------------------------------
@@ -1859,11 +1922,42 @@ TestFunction* TestRobotGymGetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
-    SweatinToTheOldies,
+    SweatinToTheOldiesTime,
     NULL,
   };
   return m_tests;
 }
+
+TestFunction* TestRobotG10GetTests(void)
+{
+  static TestFunction m_tests[] = {
+    TestRobotInfo,
+    SweatinToTheOldiesTime,
+    NULL,
+  };
+  return m_tests;
+}
+
+TestFunction* TestRobotG15GetTests(void)
+{
+  static TestFunction m_tests[] = {
+    TestRobotInfo,
+    SweatinToTheOldiesTime,
+    NULL,
+  };
+  return m_tests;
+}
+
+TestFunction* TestRobotG20GetTests(void)
+{
+  static TestFunction m_tests[] = {
+    TestRobotInfo,
+    SweatinToTheOldiesTime,
+    NULL,
+  };
+  return m_tests;
+}
+
 
 TestFunction* TestRobotEsnGetTests(void)
 {

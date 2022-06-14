@@ -133,6 +133,12 @@ void SetTestCounterText(u32 current, u32 count)
   helperLcdShow(1,0,'b', snformat(b,bz,"%02d/%02d", current, count) );
 }
 
+void setTestTimerText(u32 countdown)
+{
+  char b[10]; int bz = sizeof(b);
+  helperLcdShow(1,0,'b', snformat(b,bz,"%04d", countdown) );
+}	
+
 void SetErrorText(u16 error)
 {
   char b[10]; int bz = sizeof(b);
