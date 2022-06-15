@@ -65,6 +65,8 @@ extern "C" {
 #define FIXMODE_ROBOT_G10      60
 #define FIXMODE_ROBOT_G15      61
 #define FIXMODE_ROBOT_G20      62
+#define FIXMODE_ROBOT_G1       63
+#define FIXMODE_ROBOT_G20S     64
   
 //-----------------------------------------------------------------------------
 //                  Fixture Mode extended info
@@ -140,7 +142,7 @@ const char*   fixtureTimeStr(time_t time); //short (20char) string representatio
   { "ROBOT2"      , TestRobotDetect     , TestRobot2GetTests          , TestRobotCleanup            , FIXMODE_ROBOT2      },  /*27*/  \
   { "ROBOT3"      , TestRobotDetect     , TestRobot3GetTests          , TestRobotCleanup            , FIXMODE_ROBOT3      },  /*28*/  \
   { "ROBOT3-OL"   , TestRobotDetect     , TestRobot3GetTests          , TestRobotCleanup            , FIXMODE_ROBOT3_OL   },  /*29*/  \
-  { "GYM-3.6V"    , TestRobotDetect     , TestRobotGymGetTests        , TestRobotCleanup            , FIXMODE_ROBOT_GYM   },  /*30*/  \
+  { "GYM-36V"     , TestRobotDetect     , TestRobotGymGetTests        , TestRobotCleanup            , FIXMODE_ROBOT_GYM   },  /*30*/  \
   { "ROBOTINFO"   , TestRobotDetect     , TestRobotInfoGetTests       , TestRobotCleanup            , FIXMODE_INFO        },  /*31*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "PACKOUT"     , TestRobotDetect     , TestRobotPackoutGetTests    , TestRobotCleanup            , FIXMODE_PACKOUT     },  /*33*/  \
@@ -170,9 +172,11 @@ const char*   fixtureTimeStr(time_t time); //short (20char) string representatio
   { "BLOCK2"      , TestBlockDetect     , TestBlock2GetTests          , TestBlockCleanup            , FIXMODE_BLOCK2      },  /*57*/  \
   {"ESN"          , TestRobotDetect     , TestRobotEsnGetTests        , TestRobotCleanup          , FIXMODE_ROBOT_ESN },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
-  { "GYM-10MN"   , TestRobotDetect     , TestRobotG10GetTests        , TestRobotCleanup            , FIXMODE_ROBOT_G10 },                           \
-  { "GYM-15MN"   , TestRobotDetect     , TestRobotG10GetTests        , TestRobotCleanup            , FIXMODE_ROBOT_G15 },                           \
-  { "GYM-20MN"   , TestRobotDetect     , TestRobotG10GetTests        , TestRobotCleanup            , FIXMODE_ROBOT_G20 },                           \
+  { "GYM-10M"     , TestRobotDetect     , TestRobotG10GetTests        , TestRobotCleanup            , FIXMODE_ROBOT_G10 },                           \
+  { "GYM-15M"     , TestRobotDetect     , TestRobotG10GetTests        , TestRobotCleanup            , FIXMODE_ROBOT_G15 },                           \
+  { "GYM-20M"     , TestRobotDetect     , TestRobotG10GetTests        , TestRobotCleanup            , FIXMODE_ROBOT_G20 },                           \
+  { "GYM-1M"      , TestRobotDetect     , TestRobotG10GetTests        , TestRobotCleanup            , FIXMODE_ROBOT_G1  },                           \
+  { "GYM-20S"     , TestRobotDetect     , TestRobotG10GetTests        , TestRobotCleanup            , FIXMODE_ROBOT_G20S },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
 /*FIXMODE_INFO_ARRAY_INIT*/

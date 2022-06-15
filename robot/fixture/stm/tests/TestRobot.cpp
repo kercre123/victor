@@ -1737,6 +1737,12 @@ void SweatinToTheOldiesTime(void)
 		case FIXMODE_ROBOT_G20:
 			total_time = 20 * 60;
 		  break;
+		case FIXMODE_ROBOT_G1:
+			total_time = 60;
+			break;
+		case FIXMODE_ROBOT_G20S:
+			total_time = 20;
+			break;		
 		default:
 			total_time = 1;
 	}
