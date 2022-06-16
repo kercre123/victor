@@ -50,7 +50,7 @@ chmod +x $bootscript
 
 #remove unused bins -- make space for cert files
 echo cleaning anki fs...
-find /anki ! -name 'certs.zip' -type f -exec rm -rfd {} +
+find /anki ! -name 'certs.zip' -type f -exec rm -rf {} +
 sync
 
 if [ $debug -gt 0 ]; then echo found $linecnt lines; fi
