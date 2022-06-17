@@ -116,12 +116,28 @@ void loop() {
     Serial.println("Starting ToF Calibration...");
     displayMessage("CALIBRATE", 5, 2);
     bool calibSuccess = false;
+
 #ifdef DEBUG
     calibSuccess = lox.calibrate(0x29, true);
 #else
     calibSuccess = lox.calibrate(0x29, false);
 #endif
-  
+
+    // Perform cross-talk calibration on the sensor if other
+    // calibrations succeeded
+    if (calibSuccess) {
+      displayMessage("LIGHT ON", 20, 2);
+      // Wait for user to tuen on the LED
+      Serial.println(F("Wait for 5 seconds for user to turn on lights for cross-talk calbration"));
+      delay(5000);
+      displayMessage("X-TALK", 30, 2);
+#ifdef DEBUG
+      calibSuccess = lox.performXTalkCalibration(true);
+#else
+      calibSuccess = lox.performXTalkCalibration(false);
+#endif
+    }
+
     // For some reason, we have to re-initialize the display after calibration
     if(!display.begin(SSD1306_SWITCHCAPVCC)) {
       Serial.println(F("Failed to init display"));
@@ -254,18 +270,22 @@ void waitToRemoveTof() {
 bool isAverageReadingOkay() {
   uint32_t acc = 0;
   uint8_t cnt = 0;
+  bool error = false;
   // Take average of max 50 readings
   for (int i = 0; i < 50; i++) {
     // Accumulate reading for average
     int range = getReadingFromTof();
-    if (range != -1) {
-      acc += range;
-      ++cnt;
-    }
+    // Exit if get an error while reading from the sensor
+    if (range == -1) {
+      error = true;
+      break;
+    } 
+    acc += range;
+    ++cnt;
     // Have a delay between consecutive readings
     delay(100);
   }
-  return lox.isAverageReadingOkay(acc/cnt);
+  return error ? false : lox.isReadingOkay(acc/cnt);
 }
 
 int getReadingFromTof() {
