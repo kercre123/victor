@@ -45,6 +45,8 @@ TestFunction* TestCubeFccGetTests(void);
 TestFunction* TestCube0GetTests(void);
 TestFunction* TestCube1GetTests(void);
 TestFunction* TestCube2GetTests(void);
+TestFunction* TestCube3GetTests(void);
+TestFunction* TestCube4GetTests(void);
 bool          TestBlockDetect(void);
 void          TestBlockCleanup(void);
 TestFunction* TestBlock1GetTests(void);

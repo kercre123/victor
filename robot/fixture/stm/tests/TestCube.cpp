@@ -89,6 +89,27 @@ uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
   return crc;
 }
 
+uint32_t cube_id_from_fixmode() {
+  
+  uint32_t cube_id = CUBEID_MODEL_INVALID;
+  switch(g_fixmode) {
+  case FIXMODE_CUBE1:
+   cube_id = CUBEID_MODEL_CUBE1;
+   break;
+  case FIXMODE_CUBE2:
+    cube_id = CUBEID_MODEL_CUBE2;
+    break;
+  case FIXMODE_CUBE3:
+    cube_id = CUBEID_MODEL_CUBE3;
+    break;
+  case FIXMODE_CUBE4:
+    cube_id = CUBEID_MODEL_CUBE4;
+    break;
+  }
+
+  return cube_id;
+}
+
 //-----------------------------------------------------------------------------
 //                  Dialog Load
 //-----------------------------------------------------------------------------
@@ -210,7 +231,8 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
           ConsolePrintf("Cube Addr : %s\n", bdaddr2str(bdaddr));
           
           uint32_t crc_current = cubebootSignature();
-          uint32_t expected_model = g_fixmode == FIXMODE_CUBE2 ? CUBEID_MODEL_CUBE2 : CUBEID_MODEL_CUBE1;
+          uint32_t expected_model = cube_id_from_fixmode();
+
           if( info.hwrev != CURRENT_CUBE_HW_REV || info.model != expected_model || info.crc != crc_current ) {
             if( info.crc != crc_current )
               ConsolePrintf("CRC mismatch != %08x\n", crc_current);
@@ -445,10 +467,12 @@ static void OTPbootloader(void)
   //prepare hwardware ids
   cubeid.esn = CUBEID_ESN_INVALID;
   cubeid.hwrev = CURRENT_CUBE_HW_REV;
-  cubeid.model = (g_fixmode == FIXMODE_CUBE1) ? CUBEID_MODEL_CUBE1 : ((g_fixmode == FIXMODE_CUBE2) ? CUBEID_MODEL_CUBE2 : CUBEID_MODEL_INVALID);
+  cubeid.model = cube_id_from_fixmode();
   
   //pull a new s/n for valid modes only (allow debug on all fixtures)
-  if( g_fixmode == FIXMODE_CUBE1 || g_fixmode == FIXMODE_CUBE2 )
+  if( g_fixmode == FIXMODE_CUBE1 || g_fixmode == FIXMODE_CUBE2 ||
+      g_fixmode == FIXMODE_CUBE3 || g_fixmode == FIXMODE_CUBE4
+      )
     cubeid.esn = fixtureGetSerial(); //get next 12.20 esn in the sequence
   
   uint32_t crc = cubebootSignature();
@@ -546,6 +570,16 @@ TestFunction* TestCube1GetTests(void) {
 
 TestFunction* TestCube2GetTests(void) {
   //CUBE2 needs to be same as CUBE1. cube id changes based on g_fixmode (1->2)
+  return TestCube1GetTests();
+}
+
+TestFunction* TestCube3GetTests(void) {
+  //CUBE4 needs to be same as CUBE1. cube id changes based on g_fixmode (1->2)
+  return TestCube1GetTests();
+}
+
+TestFunction* TestCube4GetTests(void) {
+  //CUBE4 needs to be same as CUBE1. cube id changes based on g_fixmode (1->2)
   return TestCube1GetTests();
 }
 

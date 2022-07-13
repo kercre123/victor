@@ -33,6 +33,7 @@ extern "C" {
 #define FIXMODE_CUBE0          20 /*DEBUG*/
 #define FIXMODE_CUBE1          21
 #define FIXMODE_CUBE2          22
+#define FIXMODE_CUBE3          23
 
 #define FIXMODE_ROBOT0         24
 #define FIXMODE_ROBOT1_OL      25
@@ -53,6 +54,8 @@ extern "C" {
 #define FIXMODE_SOUND2         41
 #define FIXMODE_LOG_DL         43
 
+#define FIXMODE_CUBE4          44
+  
 #define FIXMODE_MOTOR1         46
 #define FIXMODE_MOTOR2         47
 #define FIXMODE_MOTOR3         48
@@ -135,7 +138,7 @@ const char*   fixtureTimeStr(time_t time); //short (20char) string representatio
   { "CUBE0"       , TestCubeDetect      , TestCube0GetTests           , TestCubeCleanup             , FIXMODE_CUBE0       },  /*20*/  \
   { "CUBE1"       , TestCubeDetect      , TestCube1GetTests           , TestCubeCleanup             , FIXMODE_CUBE1       },  /*21*/  \
   { "CUBE2"       , TestCubeDetect      , TestCube2GetTests           , TestCubeCleanup             , FIXMODE_CUBE2       },  /*22*/  \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "CUBE3"       , TestCubeDetect      , TestCube3GetTests           , TestCubeCleanup             , FIXMODE_CUBE3       },  /*23*/  \
   { "ROBOT0"      , TestRobotDetect     , TestRobot0GetTests          , TestRobotCleanup            , FIXMODE_ROBOT0      },  /*24*/  \
   { "ROBOT1-OL"   , TestRobotDetect     , TestRobot1GetTests          , TestRobotCleanup            , FIXMODE_ROBOT1_OL   },  /*25*/  \
   { "ROBOT1"      , TestRobotDetect     , TestRobot1GetTests          , TestRobotCleanup            , FIXMODE_ROBOT1      },  /*26*/  \
@@ -156,7 +159,7 @@ const char*   fixtureTimeStr(time_t time); //short (20char) string representatio
   { "SOUND2"      , TestRobotDetect     , TestRobotSoundGetTests      , TestRobotCleanup            , FIXMODE_SOUND2      },  /*41*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "LOG-DL"      , TestRobotDetect     , TestRobotLogDownloadTests   , TestRobotCleanup            , FIXMODE_LOG_DL      },  /*43*/  \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "CUBE4"       , TestCubeDetect      , TestCube3GetTests           , TestCubeCleanup             , FIXMODE_CUBE4       },  /*44*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "MOTOR1"      , TestMotorDetect     , TestMotor1GetTests          , TestMotorCleanup            , FIXMODE_MOTOR1      },  /*46*/  \
   { "MOTOR2"      , TestMotorDetect     , TestMotor2GetTests          , TestMotorCleanup            , FIXMODE_MOTOR2      },  /*47*/  \

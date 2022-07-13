@@ -25,7 +25,8 @@
 #define CUBEID_MODEL_INVALID    0 //unprogrammed/empty OTP value
 #define CUBEID_MODEL_CUBE1      1
 #define CUBEID_MODEL_CUBE2      2
-
+#define CUBEID_MODEL_CUBE3      3
+#define CUBEID_MODEL_CUBE4      4
 typedef struct {
   uint32_t  esn;
   uint16_t  hwrev;
