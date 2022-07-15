@@ -484,7 +484,8 @@ static void OTPbootloader(void)
     char *cmd = snformat(b,bz,"otp write %s %08x %u %u %08x", bdaddr2str(&bdaddr), cubeid.esn, cubeid.hwrev, cubeid.model, crc);
     
     //only burn OTP for valid cube types
-    if( g_fixmode == FIXMODE_CUBE1 || g_fixmode == FIXMODE_CUBE2 ) {
+    if( g_fixmode == FIXMODE_CUBE1 || g_fixmode == FIXMODE_CUBE2 || 
+			  g_fixmode == FIXMODE_CUBE3 || g_fixmode == FIXMODE_CUBE4) {
       cmdSend(CMD_IO_DUT_UART, cmd, 60*1000, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
       write_result = cmdStatus();
     } else {
