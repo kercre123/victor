@@ -230,6 +230,35 @@ void FirstBoot(void) {
       }
     }
   }
+	
+	bdaddr_t bdaddr;
+  uint32_t info[4];
   
+  //read factory programmed info from OTP header
+  otp_read( OTP_ADDR_HEADER+OTP_HEADER_BDADDR_OFFSET, BDADDR_SIZE, bdaddr.addr );
+  otp_read( OTP_ADDR_HEADER+offsetof(da14580_otp_header_t,custom_field), sizeof(info), (uint8_t*)&info );
+	
+	int model = info[2];
+	int model_color = (model -1) % 3; // Pick R, G or B, zero indexed
+	int first_led = model_color*4; // offset in LEDs.
+	int model_leds = ((model - 1) % 4) + 1; // Light up 1, 2, 3, or 4 lights.
+	
+	// Blink Model
+  for( int frame=0; frame<480; frame++ ) {
+    for( int led=0; led<4; led++ ) {
+			// Follow code path for all LEDs, even ones we don't light,
+			// So that timing is the same on all cubes
+			if (led < model_leds) {
+				GPIO_SetInactive(LEDs[first_led+led].port, LEDs[first_led+led].pin);
+			}
+      for (volatile int i=0; i < 500; i++) __nop();
+			if (led < model_leds) {
+  				GPIO_SetActive(LEDs[first_led+led].port, LEDs[first_led+led].pin);
+			}
+      for (volatile int j=0; j < 500; j++) __nop();
+    }
+  }
+
+
 }
 
