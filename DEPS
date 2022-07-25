@@ -38,7 +38,7 @@
                     "sprites/independentSprites",
                     "sprites/spriteSequences"
                 ],
-                "version": "2"
+                "version": "3"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True"
