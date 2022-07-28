@@ -69,7 +69,7 @@
 #include <fcntl.h>
 
 // Immediately returns on write/erase commands as if they succeeded.
-CONSOLE_VAR(bool, kNoWriteToRobot, "NVStorageComponent", false);
+CONSOLE_VAR(bool, kNoWriteToRobot, "NVStorageComponent", true);
 
 // When enabled this does what kNoWriteToRobot does
 // as well as make all read commands fail with NV_NOT_FOUND.
