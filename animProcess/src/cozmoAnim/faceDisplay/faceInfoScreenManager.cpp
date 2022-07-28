@@ -400,10 +400,9 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
 
 void FaceInfoScreenManager::DrawFAC()
 {
-  DrawTextOnScreen({"FAC"},
+  DrawTextOnScreen({"CAL"},
                    NamedColors::BLACK,
-                   (Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG ? 
-		    NamedColors::GREEN : NamedColors::RED),
+                   (NamedColors::BLUE),
                    { 0, FACE_DISPLAY_HEIGHT-10 },
                    10,
                    FaceInfoScreenManager::kDefaultFACTextScale);
