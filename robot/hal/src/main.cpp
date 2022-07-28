@@ -65,7 +65,7 @@ int main(int argc, const char* argv[])
 
   auto start = std::chrono::steady_clock::now();
   auto timeOfPowerOn = start;
-  wasPackedOutAtBoot = Anki::Cozmo::Factory::GetEMR()->fields.PACKED_OUT_FLAG;
+  wasPackedOutAtBoot = !Anki::Cozmo::Factory::GetEMR()->fields.PACKED_OUT_FLAG;
 
   for (;;) {
     //HAL::Step should never return !OK, but if it does, best not to trust its data.

@@ -12,7 +12,7 @@ extern "C" {
     const uint8_t index_PACKED_OUT_FLAG = 6;
     const Anki::Cozmo::Factory::EMR* emr;
     emr = Anki::Cozmo::Factory::GetEMR();
-    return !emr || emr->data[index_PACKED_OUT_FLAG] > 0;
+    return !emr || emr->data[index_PACKED_OUT_FLAG] <= 0;
   }
   
   int emr_set(uint8_t index, uint32_t value) {

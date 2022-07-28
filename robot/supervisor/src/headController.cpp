@@ -157,7 +157,7 @@ namespace HeadController {
     {
       Enable();
       potentialBurnoutStartTime_ms_ = 0;
-      calState_ = (Factory::GetEMR()->fields.PACKED_OUT_FLAG ? HCS_LOWER_HEAD : HCS_RAISE_HEAD);
+      calState_ = (!Factory::GetEMR()->fields.PACKED_OUT_FLAG ? HCS_LOWER_HEAD : HCS_RAISE_HEAD);
       isCalibrated_ = false;
 
       // After we're done with calibration it shouldn't continue trying to reach 
@@ -287,7 +287,7 @@ namespace HeadController {
               AnkiWarn("HeadController.CalibrationUpdate.RestartingCalib", 
                         "Someone is probably messing with head (low: %fdeg, curr: %fdeg)",
                         RAD_TO_DEG(lowHeadAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
-              calState_ = (Factory::GetEMR()->fields.PACKED_OUT_FLAG ? HCS_LOWER_HEAD : HCS_RAISE_HEAD);
+              calState_ = (!Factory::GetEMR()->fields.PACKED_OUT_FLAG ? HCS_LOWER_HEAD : HCS_RAISE_HEAD);
             } else {
               AnkiInfo("HeadController.CalibrationUpdate.Abort", 
                         "Someone is probably messing with head (low: %fdeg, curr: %fdeg)",
