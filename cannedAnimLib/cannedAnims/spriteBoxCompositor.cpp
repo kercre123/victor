@@ -56,8 +56,8 @@ const Vision::SpriteBox kFullFaceSpriteBox {
   100.0f,
   0,
   0,
-  FACE_DISPLAY_WIDTH,
-  FACE_DISPLAY_HEIGHT,
+  static_cast<int16_t>(FACE_DISPLAY_WIDTH),
+  static_cast<int16_t>(FACE_DISPLAY_HEIGHT),
   Vision::SpriteBoxName::SpriteBox_40,
   Vision::LayerName::Layer_10,
   Vision::SpriteRenderMethod::RGBA,
@@ -139,6 +139,12 @@ Result SpriteBoxCompositor::AddKeyFrame(const Json::Value& json, const std::stri
   newKeyFrame.spriteBox.width = JsonTools::ParseInt32(json, kWidthKey, animName);
   newKeyFrame.spriteBox.height = JsonTools::ParseInt32(json, kHeightKey, animName);
 
+  if (IsXray()) {
+    newKeyFrame.spriteBox.width = newKeyFrame.spriteBox.width * 160 / 184;
+    newKeyFrame.spriteBox.height = newKeyFrame.spriteBox.height * 80 / 96;
+    newKeyFrame.spriteBox.xPos = newKeyFrame.spriteBox.xPos * 160 / 184;
+    newKeyFrame.spriteBox.yPos = newKeyFrame.spriteBox.yPos * 80 / 96;
+  }
   // Handle legacy "CustomHue" method as EyeColor
   std::string renderMethodString = JsonTools::ParseString(json, kRenderMethodKey, animName);
   renderMethodString = ("CustomHue" == renderMethodString) ? "EyeColor" : renderMethodString;

@@ -22,6 +22,11 @@
 namespace Anki {
 namespace Vector {
 
+const int ProceduralFace::WIDTH = FACE_DISPLAY_WIDTH;
+const int ProceduralFace::HEIGHT = FACE_DISPLAY_HEIGHT;
+const int ProceduralFace::NominalEyeHeight = IsXray() ? 50 : 57;
+const int ProceduralFace::NominalEyeWidth = IsXray() ? 40 : 43;
+
 ProceduralFace* ProceduralFace::_resetData = nullptr;
 ProceduralFace* ProceduralFace::_blankFaceData = nullptr;
 ProceduralFace::Value ProceduralFace::_hue = DefaultHue;
@@ -87,10 +92,10 @@ namespace {
 
   // NOTE: HotSpotCenters are marked as canBeUnset=true, but (a) -1 is a valid value, and (b) we aren't doing anything
   //       special when we combine/interpolate them later despite this setting (VIC-13592)
-  constexpr static const Util::FullEnumToValueArrayChecker::FullEnumToValueArray<ProceduralFace::Parameter, EyeParamInfo,
+  static const Util::FullEnumToValueArrayChecker::FullEnumToValueArray<ProceduralFace::Parameter, EyeParamInfo,
   ProceduralFace::Parameter::NumParameters> kEyeParamInfoLUT {
-    {ProceduralFace::Parameter::EyeCenterX,        { false, false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-FACE_DISPLAY_WIDTH/2, FACE_DISPLAY_WIDTH/2 }    }     },
-    {ProceduralFace::Parameter::EyeCenterY,        { false, false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-FACE_DISPLAY_HEIGHT/2,FACE_DISPLAY_HEIGHT/2}    }     },
+    {ProceduralFace::Parameter::EyeCenterX,        { false, false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-static_cast<ProceduralFace::Value>(FACE_DISPLAY_WIDTH)/2, static_cast<ProceduralFace::Value>(FACE_DISPLAY_WIDTH)/2 }    }     },
+    {ProceduralFace::Parameter::EyeCenterY,        { false, false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-static_cast<ProceduralFace::Value>(FACE_DISPLAY_HEIGHT)/2,static_cast<ProceduralFace::Value>(FACE_DISPLAY_HEIGHT)/2}    }     },
     {ProceduralFace::Parameter::EyeScaleX,         { false, false,  1.f,  0.f, EyeParamCombineMethod::Multiply, {0.f, 10.f}    }     },
     {ProceduralFace::Parameter::EyeScaleY,         { false, false,  1.f,  0.f, EyeParamCombineMethod::Multiply, {0.f, 10.f}    }     },
     {ProceduralFace::Parameter::EyeAngle,          { true,  false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-360, 360}    }     },
@@ -116,8 +121,8 @@ namespace {
     {ProceduralFace::Parameter::GlowLightness,     { false, true,   0.f, 0.f,  EyeParamCombineMethod::None,     {0.f, 1.f}   }     },
   };
 
-  static_assert( Util::FullEnumToValueArrayChecker::IsSequentialArray(kEyeParamInfoLUT),
-                "EyeParamInfoLUT array does not define each entry in order, once and only once!");
+  // static_assert( Util::FullEnumToValueArrayChecker::IsSequentialArray(kEyeParamInfoLUT),
+  //               "EyeParamInfoLUT array does not define each entry in order, once and only once!");
 
 }
 

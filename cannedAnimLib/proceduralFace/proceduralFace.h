@@ -62,8 +62,8 @@ class ProceduralFace
 {
 public:
 
-  static constexpr int WIDTH  = FACE_DISPLAY_WIDTH;
-  static constexpr int HEIGHT = FACE_DISPLAY_HEIGHT;
+  static const int WIDTH;
+  static const int HEIGHT;
 
   // Nominal positions/sizes for everything (these are things that aren't
   // parameterized at dynamically, but could be if we want)
@@ -71,8 +71,8 @@ public:
   // These values are based off of V1 parameters but scaled up by a ratio of V2 dimensions : V1 dimensions (roughly 1.43x)
   // V1 width: 128   New: 184  => 1.43x increase
   // V1 height: 64   New:  96  => 1.5x  increase
-  static constexpr s32   NominalEyeHeight       = 57;  // V1: 40;
-  static constexpr s32   NominalEyeWidth        = 43;  // V1: 30;
+  static const s32 NominalEyeHeight;   //    V2:  57;  V1: 40;
+  static const s32 NominalEyeWidth;    //    V2:  43;  V1: 30;
 
   static constexpr f32 DefaultHue = 0.45f;
   static constexpr f32 DefaultSaturation = 1.0f;

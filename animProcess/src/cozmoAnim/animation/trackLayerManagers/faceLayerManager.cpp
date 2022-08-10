@@ -35,7 +35,7 @@ namespace {
 
 #if REMOTE_CONSOLE_ENABLED
 // Only used for setting console var ranges below, so not used in shipping builds (thus ANKI_DEV_CHEATS)
-constexpr int kMaxDartDist = std::max(FACE_DISPLAY_WIDTH,FACE_DISPLAY_HEIGHT)/2;
+int kMaxDartDist = std::max(FACE_DISPLAY_WIDTH,FACE_DISPLAY_HEIGHT)/2;
 #endif
 
 // Global keep-alive eye dart params (spacing, distance, scaling)

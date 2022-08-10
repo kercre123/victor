@@ -88,6 +88,9 @@ void DrawShowPinScreen(Anim::AnimationStreamer* animStreamer, const Anim::AnimCo
   
   Vision::ImageRGB key;
   key.Load(context->GetDataLoader()->GetSpritePaths()->GetAssetPath(kShowPinScreenSpriteName));
+  if(IsXray()) {
+    key.Resize(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+  }
 
   auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
   img->FillWith(Vision::PixelRGBA(0, 0));

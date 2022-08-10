@@ -10,6 +10,7 @@
 #endif
 
 #include <math.h>
+#include "anki/cozmo/shared/factory/emrHelper.h"
 
 namespace Anki {
 namespace Vector {
@@ -128,8 +129,8 @@ namespace Vector {
   const f32 SCREEN_SIZE[2] = {26.f, 13.f};
   
   // Face display resolution, in pixels
-  const s32 FACE_DISPLAY_WIDTH = 184;
-  const s32 FACE_DISPLAY_HEIGHT = 96;
+  const s32 FACE_DISPLAY_WIDTH = IsXray() ? 160: 184;
+  const s32 FACE_DISPLAY_HEIGHT = IsXray() ? 80: 96;
   const s32 FACE_DISPLAY_NUM_PIXELS = FACE_DISPLAY_WIDTH * FACE_DISPLAY_HEIGHT;
 
   // Common conversion functionality for lift height
@@ -171,11 +172,11 @@ namespace Vector {
   
   const u8 NUM_RADIAL_DISTORTION_COEFFS = 8;
 
-  const u16 DEFAULT_CAMERA_RESOLUTION_WIDTH  = 640;
-  const u16 DEFAULT_CAMERA_RESOLUTION_HEIGHT = 360;
+  const u16 DEFAULT_CAMERA_RESOLUTION_WIDTH  =  IsXray() ? 800 : 640;
+  const u16 DEFAULT_CAMERA_RESOLUTION_HEIGHT =  IsXray() ? 600 : 360;
 
-  const u16 CAMERA_SENSOR_RESOLUTION_WIDTH  = 1280;
-  const u16 CAMERA_SENSOR_RESOLUTION_HEIGHT = 720;
+  const u16 CAMERA_SENSOR_RESOLUTION_WIDTH  = IsXray() ? 1600: 1280;
+  const u16 CAMERA_SENSOR_RESOLUTION_HEIGHT = IsXray() ?1200: 720;
   
   const f32 MIN_CAMERA_EXPOSURE_TIME_MS = 1;
   const f32 MAX_CAMERA_EXPOSURE_TIME_MS = 66;
