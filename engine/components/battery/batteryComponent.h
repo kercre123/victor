@@ -23,6 +23,7 @@
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
+#include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include <cmath>
 
@@ -105,7 +106,8 @@ public:
   //       has actually suspended charging but will resume when the battery has cooled down.
   bool IsCharging() const { return _isCharging; }
 
-  bool IsChargingStalledBecauseTooHot() const { return _isCharging && _battDisconnected; }
+  // HACK - Xray robots are showing too hot sprite even tho it should work.   
+  bool IsChargingStalledBecauseTooHot() const { return _isCharging && _battDisconnected && (IsXray() ? _battTemperature_C > 55 : 1); } 
   
   // Indicates that the robot is sensing voltage on its charge contacts
   bool IsOnChargerContacts() const { return _isOnChargerContacts; }
