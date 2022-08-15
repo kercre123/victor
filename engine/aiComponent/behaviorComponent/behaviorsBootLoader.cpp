@@ -53,7 +53,6 @@ namespace {
 BehaviorsBootLoader::BehaviorsBootLoader(const Json::Value& config)
   : IDependencyManagedComponent( this, BCComponentID::BehaviorsBootLoader )
 {
-  _behaviors.factoryBehavior = BEHAVIOR_ID(PlaypenTest);
   _behaviors.prDemoBehavior = BEHAVIOR_ID(InitPRDemo);
   _behaviors.selfTestBehavior = BEHAVIOR_ID(SelfTest);
   _behaviors.acousticTestBehavior = BEHAVIOR_ID(AcousticTestMode);

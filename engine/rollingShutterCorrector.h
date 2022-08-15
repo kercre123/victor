@@ -17,6 +17,7 @@
 #include "coretech/vision/engine/image.h"
 #include "coretech/common/shared/math/rotation.h"
 #include "coretech/common/engine/robotTimeStamp.h"
+
 #include <deque>
 #include <vector>
 
@@ -45,7 +46,7 @@ namespace Anki {
       Vision::Image WarpImage(const Vision::Image& img);
       
       const std::vector<Vec2f>& GetPixelShifts() const { return _pixelShifts; }
-      int GetNumDivisions() const { return _rsNumDivisions; }
+      int GetNumDivisions();
       
       static constexpr f32 timeBetweenFrames_ms = 65.0;
       
@@ -67,6 +68,7 @@ namespace Anki {
       
       // The number of rows to divide the image into and calculate warps for
       static constexpr f32 _rsNumDivisions = 180.f;
+      static constexpr f32 _rsNumDivisionsXray = 300.f;
       
       // Proportionality constant that relates gyro rates to pixel shift
       static constexpr f32 rateToPixelProportionalityConst = 22.0;

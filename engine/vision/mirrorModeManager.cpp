@@ -38,9 +38,9 @@ namespace {
   CONSOLE_VAR_RANGED(f32,  kMirrorModeFaceDebugFontScale,      "Vision.MirrorMode", 0.5f, 0.1f, 1.f);
   
   // TODO: Figure out the original image resolution? This just assumes "Default" for marker/face detection
-  constexpr f32 kXmax = (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
-  constexpr f32 kHeightScale = (f32)FACE_DISPLAY_HEIGHT / (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
-  constexpr f32 kWidthScale  = (f32)FACE_DISPLAY_WIDTH / (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
+  f32 kXmax = (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
+  f32 kHeightScale = (f32)FACE_DISPLAY_HEIGHT / (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+  f32 kWidthScale  = (f32)FACE_DISPLAY_WIDTH / (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -301,7 +301,12 @@ Result MirrorModeManager::CreateMirrorModeImage(const Vision::ImageRGB& cameraIm
     }
   }
   
-  visionProcResult.mirrorModeImg.SetFromImageRGB(_screenImg, _gammaLUT);
+  if (IsXray()) {
+    visionProcResult.mirrorModeImg.SetFromImageRGB2BGR(_screenImg, _gammaLUT);
+  } else {
+    visionProcResult.mirrorModeImg.SetFromImageRGB(_screenImg, _gammaLUT);
+  }
+  
 
   return RESULT_OK;
 }
