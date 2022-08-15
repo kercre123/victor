@@ -486,6 +486,18 @@ MENU_ITEMS(TX6) = {
 };
 MENU_CREATE(TX6);
 
+MENU_ITEMS(TX7) = {
+  MENU_BACK(Main),
+  MENU_SHELL("STOP", "STOP"),
+  MENU_SHELL("TX 11n  @ 2442MHz", "MCS_65_MBPS 6"),
+  MENU_SHELL("TX 11g  @ 2442MHz", "11A_54_MBPS 6"),
+  MENU_SHELL("TX 11b  @ 2442MHz", "11B_LONG_11_MBPS 6"),
+  MENU_SHELL("Carrier @ 2442MHz", "CW 6"),
+  MENU_SHELL("TX BLE  @ 2442MHz", "BLE 0x18"),  // ??
+  MENU_SHELL("RX      @ 2442MHz", "RX 0x18"),
+};
+MENU_CREATE(TX7);
+
 MENU_ITEMS(TX11) = {
   MENU_BACK(Main),
   MENU_SHELL("STOP", "STOP"),
@@ -515,7 +527,7 @@ MENU_ITEMS(LifeTest)= {
   MENU_ACTION("Run Motors", LifeTestMotors),
   MENU_ACTION("Cycle Screens", LifeTestScreen),
   MENU_ACTION("Play Square Wave", LifeTestSquareWave),
-  MENU_ACTION("ALL (no CPU/batt)", LifeTestMotorsScreenSpeaker),
+  MENU_ACTION("Motor Test", MainMotorTest ),
   MENU_ACTION("ALL", LifeTestAll),
 };
 MENU_CREATE(LifeTest);
@@ -523,11 +535,11 @@ MENU_CREATE(LifeTest);
 MENU_ITEMS(Main) = {
   MENU_SUBMENU("RF Lo", TX1),
   MENU_SUBMENU("RF Mid", TX6),
+  MENU_SUBMENU("RF 7", TX7),
   MENU_SUBMENU("RF Hi", TX11),
   MENU_SUBMENU("RF 13", TX13),
   MENU_ACTION("Burn CPU", MainBurn ),
   MENU_ACTION("Cube Test", MainCubeTest ),
-  MENU_ACTION("Motor Test", MainMotorTest ),
   MENU_SUBMENU("Life Testing", LifeTest),
 };
 MENU_CREATE(Main);
