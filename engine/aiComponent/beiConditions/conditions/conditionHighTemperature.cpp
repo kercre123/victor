@@ -32,7 +32,7 @@ namespace
   // from 60C that there's some margin for the battery to heat
   // up further while he's frantically searching for and
   // docking to the charger.
-  const int kBatteryOverheatingThreshold_degC = 50;
+  const int kBatteryOverheatingThreshold_degC = 55;
 }
 
 ConditionHighTemperature::ConditionHighTemperature(const Json::Value& config)
