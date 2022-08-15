@@ -1562,10 +1562,10 @@ void FaceInfoScreenManager::DrawAlexaFace()
 
   static const int        kScreenTop            = 0;
   static const int        kIconToTextSpacing    = 0;
-  static const float      kDefaultTextScale     = 0.4f;
   static const ColorRGBA& kTextColor            = NamedColors::WHITE;
   static const int        kTextSpacing          = 14;
   static const int        kTextLineThickness    = 1;
+  float      kDefaultTextScale     = IsXray() ? 0.3f : 0.4f;
 
   // draw the alexa icon ...
 
@@ -1604,16 +1604,21 @@ void FaceInfoScreenManager::DrawAlexaFace()
     {
       textVec.push_back( { "You're ready to use Alexa." } );
       textVec.push_back( { "Check out the Alexa App" } );
-      textVec.push_back( { "for things to try." } );
-
+      if (!IsXray()) {
+        textVec.push_back( { "for things to try." } );
+      }
       break;
     }
 
     case ScreenName::AlexaPairingExpired:
     {
       textVec.push_back( { "The code has expired." } );
-      textVec.push_back( { "Retry to generate" } );
-      textVec.push_back( { "a new code." } );
+      if (IsXray()) {
+        textVec.push_back( { "Try again" } );
+      } else {
+        textVec.push_back( { "Retry to generate" } );
+        textVec.push_back( { "a new code." } );
+      }
 
       break;
     }
