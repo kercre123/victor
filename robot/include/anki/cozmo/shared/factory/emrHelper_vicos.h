@@ -21,10 +21,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <string>
 
 #ifdef SIMULATOR
 #error SIMULATOR should NOT be defined by any target using emrHelper_vicos.h
 #endif
+
+#define NO_WARN_UNUSED    __attribute__((unused))
 
 namespace Anki {
 namespace Vector {
@@ -36,16 +39,25 @@ namespace Factory {
     static const char* kEMRFile = "/dev/block/bootdevice/by-name/emr";
 
     static Factory::EMR* _emr = nullptr;
-
+    static const int MAX_READ_RETRIES = 15;
+    static const int SLEEP_DURATION = 1;
     // Open the emr with the provided flags
     // Memory maps the EMR file and returns a pointer to it
     static Factory::EMR* OpenEMR(int openFlags, int protFlags)
     {
       int fd = open(kEMRFile, openFlags);
-      
-      if(fd == -1)
+      int retryCount = 0;
+
+      while(fd == -1 && retryCount < MAX_READ_RETRIES) {
+        sleep(SLEEP_DURATION);
+        retryCount++;
+
+        fd = open(kEMRFile, openFlags);
+      }
+
+      if(retryCount == MAX_READ_RETRIES)
       {
-        LOG_ERROR("Factory.CheckEMRForPackout.OpenFailed", "%d %s", errno, kEMRFile);
+        LOG_ERROR("Factory.CheckEMRForPackout.OpenFailed", "%d %s total time slept = %d seconds", errno, kEMRFile, retryCount * SLEEP_DURATION);
         return nullptr; // exit instead? will probably end up crashing in WriteEMR or GetEMR will return null
       }
 
@@ -98,7 +110,7 @@ namespace Factory {
   // Write data of size len into the EMR at offset
   // Ex: WriteEMR(offsetof(Factory::EMR, playpen)/sizeof(uint32_t), buf, sizeof(buf));
   //     to write buf in the playpen member of the EMR
-  static void WriteEMR(size_t offset, void* data, size_t len)
+  static void NO_WARN_UNUSED WriteEMR(size_t offset, void* data, size_t len)
   {
     // Attempt to read the EMR, will do nothing if it has already been read
     ReadEMR();
@@ -113,7 +125,7 @@ namespace Factory {
     }
   }
 
-  static void WriteEMR(size_t offset, uint32_t data)
+  static void NO_WARN_UNUSED WriteEMR(size_t offset, uint32_t data)
   {
     // Attempt to read the EMR, will do nothing if it has already been read
     ReadEMR();
@@ -152,9 +164,16 @@ static inline bool IsWhiskey()
     #define HEADID_HWREV_PVT        5
     #define HEADID_HWREV_MP         6
     #define HEADID_HWREV_WHSK_DVT1  7 //Whiskey (Vector 2019)
+    #define HEADID_HWREV_WHSK_MAX   0x19 //Whiskey (Old revisions end here)
+    #define HEADID_HWREV_XRAY_EVT   0x20 //XRay (Vector 2.0)
   */
-  
-  return (Factory::GetEMR()->fields.HW_VER >= 7);
+  const uint32_t hardware = Factory::GetEMR()->fields.HW_VER;
+  return (hardware >= 0x7 && hardware && hardware <= 0x19);
+}
+
+static inline const bool IsXray()
+{
+    return (Factory::GetEMR()->fields.HW_VER >= 0x20);
 }
 
 }

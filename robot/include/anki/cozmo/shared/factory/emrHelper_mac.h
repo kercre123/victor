@@ -133,8 +133,14 @@ static void CreateFakeEMR()
 
   static void SetWhiskey(bool whiskey)
   {
-    WriteEMR(offsetof(Factory::EMR::Fields, HW_VER)/sizeof(uint32_t), (whiskey ? 7 : 6));
+    WriteEMR(offsetof(Factory::EMR::Fields, HW_VER)/sizeof(uint32_t), (whiskey ? 0x7 : 0x6));
   }
+
+  static void SetXray(bool xray)
+  {
+    WriteEMR(offsetof(Factory::EMR::Fields, HW_VER)/sizeof(uint32_t), (xray ? 0x20 : 0x6));
+  }
+
 
   class ScopedWhiskey
   {
@@ -142,23 +148,39 @@ static void CreateFakeEMR()
     ScopedWhiskey() { SetWhiskey(true); }
     ~ScopedWhiskey() { SetWhiskey(false); }
   };
+
+  class ScopedXray
+  {
+  public:
+    ScopedXray() { SetXray(true); }
+    ~ScopedXray() { SetXray(false); }
+  };
+
 }
 
 #define UNIT_TEST_WHISKEY Factory::ScopedWhiskey whiskeyEMR;
+#define UNIT_TEST_WHISKEY Factory::ScopedXray xrayEMR;
 
 static inline bool IsWhiskey()
 {
-  /*
+  /* 
     From robot/fixture/stm/hwid.h
-    #define HEADID_HWREV_EMPTY      0 //unprogrammed/empty value
-    #define HEADID_HWREV_DEBUG      1 //debug use and DVT1-3
-    #define HEADID_HWREV_DVT4       4
-    #define HEADID_HWREV_PVT        5
-    #define HEADID_HWREV_MP         6
-    #define HEADID_HWREV_WHSK_DVT1  7 //Whiskey (Vector 2019)
+    #define HEADID_HWREV_EMPTY      0x0 //unprogrammed/empty value
+    #define HEADID_HWREV_DEBUG      0x1 //debug use and DVT1-3
+    #define HEADID_HWREV_DVT4       0x4
+    #define HEADID_HWREV_PVT        0x5
+    #define HEADID_HWREV_MP         0x6
+    #define HEADID_HWREV_WHSK_DVT1  0x7 //Whiskey (Vector 2019)
+    #define HEADID_HWREV_WHSK_MAX   0x19 //Whiskey (Old revisions end here)
+    #define HEADID_HWREV_XRAY_EVT   0x20 //XRay (Vector 2.0)
   */
+  const uint32_t hardware = Factory::GetEMR()->fields.HW_VER;
+  return (hardware >= 0x7 && hardware && hardware <= 0x19);
+}
 
-  return (Factory::GetEMR()->fields.HW_VER >= 7);
+static inline const bool IsXray()
+{
+    return (Factory::GetEMR()->fields.HW_VER >= 0x20);
 }
 
 }

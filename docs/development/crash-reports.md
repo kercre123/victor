@@ -1,5 +1,7 @@
 # Victor Crash Reports
 
+TLDR: Get name of dump file from `/data/data/com.anki.victor/cache/crashDumps/` then run `ANKI_ROBOT_HOST=1.2.3.4 ./project/victor/scripts/victor-show-minidump.py -d -c Release vic-dump-file-name.dmp"
+
 Victor has crash reporting functionality that uses Google Breakpad.  The Google Breakpad client is built for VICOS and is integrated into vic-engine, vic-anim, vic-robot, vic-switchboard and vic-webserver.  We have NOT yet implemented crash reporting for vic-cloud as this requires Go language support.  We also don't use this for kernel crashes.
 
 ## Where to find crash report files
@@ -31,17 +33,10 @@ Instructions below are for generating symbolicated call stacks for local builds.
 
 To generate call stacks from a developer build you will need to:
 
-1. Install noah
 1. Symbol files in breakpad format
 1. A crash dump file
 1. Execute `minidump_stackwalk`
 
-To install noah on OSX type:
-
-```
-brew install linux-noah/noah/noah
-```
-The first time noah runs, it'll need to prompt you as to whether or not you want to allow it to run as root, so run it manually before ever calling victor-show-minidump.py, or the minidump process will freeze silently.
 
 To generate symbol files, copy the crash dump file and execute `minidump_stackwalk` type:
 

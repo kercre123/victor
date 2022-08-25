@@ -11,6 +11,15 @@
     "defaultValue" : 0,
     "updateCloudOnChange" : false
   },
+  "custom_eye_color" :
+  {
+    "defaultValue" : {
+      "hue": 0,
+      "saturation": 0,
+      "enabled": false      
+    },
+    "updateCloudOnChange" : false
+  },
   "default_location" :
   {
     "defaultValue" : "San Francisco, California, United States",

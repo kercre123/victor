@@ -10056,21 +10056,6 @@
     },
     {
       "audioName": [
-        "Play__Robot_Vic_Sfx__Lift_High_Weather_Shiver_Loop"
-      ],
-      "Name": "RobotAudioKeyFrame",
-      "probability": [
-        1.0
-      ],
-      "hasAlts": true,
-      "volume": 1.0,
-      "audioEventId": [
-        3670008418
-      ],
-      "triggerTime_ms": 9372
-    },
-    {
-      "audioName": [
         "Stop__Robot_Vic_Sfx__Lift_High_Mood"
       ],
       "Name": "RobotAudioKeyFrame",

@@ -39,24 +39,6 @@ enum uint_16 BehaviorID {
   DockingTestSimple,
   FactoryCentroidExtractor,
   LiftLoadTest,
-
-  // devBehaviors/playpen
-  PlaypenCameraCalibration,
-  PlaypenDistanceSensor100mm,
-  PlaypenDistanceSensor300mm,
-  PlaypenDistanceSensor80mm,
-  PlaypenDistanceSensorCalib80mm,
-  PlaypenDriftCheck,
-  PlaypenDriveForwards,
-  PlaypenEndChecks,
-  PlaypenInitChecks,
-  PlaypenMotorCalibration,
-  PlaypenPickupCube,
-  PlaypenSoundCheck,
-  PlaypenTest,
-  PlaypenWaitToStart,
-
-  // devBehaviors
   PowerSaveStressTest,
   PowerSaveTest,
   PuzzleMaze,

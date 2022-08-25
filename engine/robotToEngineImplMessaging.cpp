@@ -593,6 +593,7 @@ void RobotToEngineImplMessaging::HandleDisplayedFaceImage(const AnkiEvent<RobotI
   // Not user why copy_n wasn't working here, but just going ahead and doing an extra copy to fix the issue
   auto unnecessaryCopy = msg.faceData;
   std::copy_n(unnecessaryCopy.begin(), numPixels, _faceImageRGB565.GetRawDataPointer() + (msg.chunkIndex * kMaxNumPixelsPerChunk));
+  u32 kAllFaceImageRGBChunksReceivedMask = IsXray() ? kAllFaceImageRGBChunksReceivedMaskFor22Chunks : kAllFaceImageRGBChunksReceivedMaskFor30Chunks;
 
   if (_faceImageRGBChunksReceivedBitMask == kAllFaceImageRGBChunksReceivedMask) {
     Vision::ImageRGB fullImage;

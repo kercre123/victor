@@ -86,7 +86,9 @@ public:
   
   // Draws the menu items and cursor onto the given image
   void DrawMenu(Vision::ImageRGB565& img) const;
-  
+  void DrawMenuVertical(Vision::ImageRGB565& img) const; // Stacked Menu
+  void DrawMenuHorizontal(Vision::ImageRGB565& img) const; // Menu in same row
+
   ScreenName GetButtonGotoScreen() const { return _buttonScreen;  }
   ScreenName GetTimeoutScreen()    const { return _timeoutScreen; }
   
