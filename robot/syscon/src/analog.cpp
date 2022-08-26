@@ -443,10 +443,10 @@ void Analog::tick(void) {
     if (!is_charging) {
       // Safe to update any time
       vmain_adc = EXACT_ADC(ADC_VMAIN);
-    } else if (total_ticks % (5 * 200) == 0) {
+    } else if (total_ticks % (30 * 200) == 0) {
       // We need to shut down the charger to get an accurate reading.
       // We don't do this every tick so that the charger has some stability.
-      // Currently every 5 seconds or 1000 ticks.
+      // Currently every 30 seconds or 6000 ticks.
       nCHG_PWR::set();
 
       for(volatile int i=0;i<1500;i++){} // Give time for circuit to power down.
