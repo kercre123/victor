@@ -20,7 +20,7 @@ static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL17
   ;
 
-static const uint16_t BATTERY_FULL_VOLTAGE = ADC_VOLTS(4.15); // 4.2 - 0.05 - Allow some slop for ADC inaccuracy, batteries that won't top off.
+static const uint16_t BATTERY_FULL_VOLTAGE = ADC_VOLTS(4.075); // 4.2 in a perfect world, but give some room for ADC variance, imperfect battery, etc.
 static const int      CHARGE_FULL_TIME = 200 * 60 * 5;           // 5 minutes
 
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
