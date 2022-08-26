@@ -20,7 +20,7 @@ static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL17
   ;
 
-static const uint16_t BATTERY_FULL_VOLTAGE = ADC_VOLTS(4.2);
+static const uint16_t BATTERY_FULL_VOLTAGE = ADC_VOLTS(4.2 - 0.5); // Allow some slop for ADC inaccuracy, batteries that won't top off.
 static const int      CHARGE_FULL_TIME = 200 * 60 * 5;           // 5 minutes
 
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
@@ -67,6 +67,11 @@ static bool button_pressed = false;
 
 static const int ADC_SCALE_BITS = 15;
 static uint32_t adc_compensate = 1 << ADC_SCALE_BITS;
+
+// Keep this as a static variable because we have a hack
+// to get accurate measurements while the battery is charging.
+// See code in tick() for details.
+static uint16_t vmain_adc;
 
 static inline uint32_t EXACT_ADC(ADC_CHANNEL ch) {
   return (adc_values[ch] * adc_compensate) >> ADC_SCALE_BITS;
@@ -166,7 +171,7 @@ void Analog::stop(void) {
 }
 
 void Analog::transmit(BodyToHead* data) {
-  data->battery.main_voltage = EXACT_ADC(ADC_VMAIN);
+  data->battery.main_voltage = vmain_adc;
   data->battery.charger = EXACT_ADC(ADC_VEXT);
   data->battery.temperature = (int16_t) temperature;
   data->battery.flags = 0
@@ -403,11 +408,15 @@ static void debounceVEXT() {
   last_vext = vext_now;
 }
 
+
+
 void Analog::tick(void) {
   static bool delay_disable = true;
   static int on_charger_time = 0;
   static int off_charger_time = 0;
   static int charging_time = 0;
+
+  static unsigned int total_ticks = 0;
 
   updateADCCompensate();
   debounceVEXT();
@@ -431,7 +440,24 @@ void Analog::tick(void) {
       charging_time = 0;
     }
 
-    uint16_t vmain_adc = EXACT_ADC(ADC_VMAIN);
+    if (!is_charging) {
+      // Safe to update any time
+      vmain_adc = EXACT_ADC(ADC_VMAIN);
+    } else if (total_ticks % (5 * 200) == 0) {
+      // We need to shut down the charger to get an accurate reading.
+      // We don't do this every tick so that the charger has some stability.
+      // Currently every 5 seconds or 1000 ticks.
+      nCHG_PWR::set();
+
+      for(volatile int i=0;i<1500;i++){} // Give time for circuit to power down.
+
+      vmain_adc = EXACT_ADC(ADC_VMAIN);
+      nCHG_PWR::reset();
+    }
+
+    // Adjust counter here so it's at 0 on the first run and we 
+    // get an initial reading.
+    total_ticks++;
 
     if (vmain_adc > BATTERY_FULL_VOLTAGE) {
       if (on_charger_time < 200) {
