@@ -295,11 +295,11 @@ static void handleTemperature() {
     filt_temp = 0;
   }
 
-	static int safe_temp = 47;
-	if (IS_XRAY) {
-		safe_temp += XRAY_TEMP_ALLOWANCE;
-	}
-	
+  static int safe_temp = 47;
+  if (IS_XRAY) {
+    safe_temp += XRAY_TEMP_ALLOWANCE;
+  }
+  
   // Our filtered temp is cool enough to reset the counter
   if (temperature < safe_temp) {
     temp_alarm = TEMP_ALARM_SAFE;
@@ -434,11 +434,11 @@ void Analog::tick(void) {
   handleLowBattery();
   handleTemperature();
 
-	int too_hot_temp = 41;
-	if (IS_XRAY) {
-		too_hot_temp += XRAY_TEMP_ALLOWANCE;
-	}
-	
+  int too_hot_temp = 41;
+  if (IS_XRAY) {
+    too_hot_temp += XRAY_TEMP_ALLOWANCE;
+  }
+  
   if (temperature > too_hot_temp && on_charger_time < TICKS_PER_SECOND) {
     too_hot = true;
   } else {
