@@ -295,7 +295,7 @@ static void handleTemperature() {
     filt_temp = 0;
   }
 
-  static int safe_temp = 47;
+  int safe_temp = 47;
   if (IS_XRAY) {
     safe_temp += XRAY_TEMP_ALLOWANCE;
   }
