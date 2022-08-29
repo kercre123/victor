@@ -45,6 +45,9 @@ static const int BOUNCE_LENGTH = 3;
 static const int MINIMUM_RELEASE_UNSTUCK = 20;
 static const int BUTTON_THRESHOLD = ADC_VOLTS(2.0) * 2;
 
+// Xrays run a little hotter. Give them a break when testing for overheating
+static const int XRAY_TEMP_ALLOWANCE = 5;
+
 static bool is_charging = false;
 bool Analog::on_charger = false;
 static bool charge_cutoff = false;
@@ -285,16 +288,21 @@ static void handleTemperature() {
     filt_temp = 0;
   }
 
+	static int safe_temp = 47;
+	if (IS_XRAY) {
+		safe_temp += XRAY_TEMP_ALLOWANCE;
+	}
+	
   // Our filtered temp is cool enough to reset the counter
-  if (temperature < 47) {
+  if (temperature < safe_temp) {
     temp_alarm = TEMP_ALARM_SAFE;
     if (heat_counter > 0) heat_counter--;
   } else {
     // Start processing our overheat alarms
     bool disable_vmain = false
       || alarmTimer<TEMP_ALARM_HOT, MAX_HEAT_COUNTDOWN>(temperature, 60) // Fire immediately
-      || alarmTimer<TEMP_ALARM_MID,                 10>(temperature, 50) // Fire in ~2H
-      || alarmTimer<TEMP_ALARM_LOW,                  5>(temperature, 47) // Fire in ~4H
+      || alarmTimer<TEMP_ALARM_MID,                 10>(temperature, safe_temp+3) // Fire in ~2H
+      || alarmTimer<TEMP_ALARM_LOW,                  5>(temperature, safe_temp) // Fire in ~4H
       ;
 
     if (overheated == 0 && disable_vmain) {
@@ -415,7 +423,12 @@ void Analog::tick(void) {
   handleLowBattery();
   handleTemperature();
 
-  if (temperature > 41 && on_charger_time < 200) {
+	int too_hot_temp = 41;
+	if (IS_XRAY) {
+		too_hot_temp += XRAY_TEMP_ALLOWANCE;
+	}
+	
+  if (temperature > too_hot_temp && on_charger_time < 200) {
     too_hot = true;
   } else {
     too_hot = false;
