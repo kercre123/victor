@@ -285,6 +285,8 @@ static void handleTemperature() {
     }
   }
 
+  // average every 32 ticks, 160 ms, to deal with an outlier reading.
+  // then stash that globally for later use.
   static int samples = 0;
   static int filt_temp = 0;
   filt_temp += temp_now;
@@ -295,9 +297,23 @@ static void handleTemperature() {
     filt_temp = 0;
   }
 
+  // Do a longer term temperature check here. A charging battery will
+  // give off some heat. This is okay, but we don't want it to happen
+  // for days or weeks.
+  //
+  // We create a counter that gets more aggressive as the temerature increases.
+  // we give it 4 hours at the initial alarm, 2 a few degress above that,
+  // and fire it immediately at the insanely hot 60 degrees.
+  //
+  // The status of either SAFE, LOW, MID, or HOT is also reported back
+  // to the head, so it can use more intelligent logic to decide if it
+  // wants to tell the robot to stop charging and/or shut down.
   const int safe_temp = 47;
   
   // Our filtered temp is cool enough to reset the counter
+  // but this is also done slowly. if we've been hot for 3.5 hours
+  // and then cool down for 0.1 hour before getting hot again,
+  // the count will start at 3.4 hours and not reset to 0 hours.
   if (temperature < safe_temp) {
     temp_alarm = TEMP_ALARM_SAFE;
     if (heat_counter > 0) heat_counter--;
@@ -431,6 +447,19 @@ void Analog::tick(void) {
   handleLowBattery();
   handleTemperature();
 
+  // Mostly charging state and circuitry code here.
+
+  // Here we check to see if the robot body is hot the first second
+  // it is on the charger. If so, charging is disabled. It is unclear
+  // where Anki got 41 degrees, where later they don't care until
+  // the temp hits 47 degrees for an extended period of time.
+  //
+  // It's possible this is a remnant of old battery discharging code
+  // per commits?
+  //
+  // Still for now we keep this in in case its a safety feature,
+  // but give XRAY robots a little more leeway since their bigger
+  // batteries run hot.
   int too_hot_temp = 41;
   if (IS_XRAY) {
     too_hot_temp += XRAY_TEMP_ALLOWANCE;
@@ -442,6 +471,8 @@ void Analog::tick(void) {
     too_hot = false;
   }
 
+  // Mostly test the change above or if we've explicitly received a
+  // disable command from the head or programming fixture.
   bool prevent_charge = too_hot
     || disable_charger;
 
@@ -452,6 +483,8 @@ void Analog::tick(void) {
       charging_time = 0;
     }
 
+    // Check the voltage, but we only do this periodically if we are
+    // on the charger.
     if (!is_charging) {
       // Safe to update any time
       vmain_adc = EXACT_ADC(ADC_VMAIN);
@@ -471,6 +504,11 @@ void Analog::tick(void) {
     // get an initial reading.
     total_ticks++;
 
+    // If we think the battery is full.
+    // 1. If we've just been placed on the charger we stop immediately
+    //    So we don't wear out the battery.
+    // 2. Else we track a counter and charge for an additional time period
+    //    to finish up the constant voltage phase of charging
     if (vmain_adc > BATTERY_FULL_VOLTAGE) {
       if (on_charger_time < TICKS_PER_SECOND) {
         charging_time = CHARGE_FULL_TIME;
@@ -483,12 +521,21 @@ void Analog::tick(void) {
       power_low = false;
     }
   } else if (++off_charger_time >= ON_CHARGER_RESET) {
+    // This debounces the charging circuitry so an intermittant
+    // disconnection is ignored. The current time setting is rather
+    // long so it also accounts for a user picking up a robot and
+    // setting it back down on the charger. Takes ON_CHARGER_RESET
+    // amount of time (currently 1 minute) before triggering.
+    //
+    // So when you're testing conditions keep this in mind.
     on_charger_time = 0;
     charging_time = 0;
   }
 
   // Charge saturation time after desired voltage
   const bool max_charge_time_expired = charging_time >= CHARGE_FULL_TIME;
+  // Cutoff if above has been hit, or if we have a safety condition due to heat,
+  // or if it has been explicitly requested by head or firmware.
   charge_cutoff = prevent_charge || max_charge_time_expired;
 
   // Charger / Battery logic
@@ -521,7 +568,7 @@ void Analog::tick(void) {
     delay_disable = true;
     is_charging = false;
   } else if (charge_cutoff) {
-    // Battery disconnected, on charger (timeout)
+    // Battery disconnected, on charger (timeout, or safety, or explicit request)
     nCHG_PWR::reset();
 
     if (!delay_disable) {
@@ -536,6 +583,9 @@ void Analog::tick(void) {
 
     // As long as the timer hasn't expired (and we're not manually disabling charging)
     // continue to report that we are charging.
+    //
+    // strangely we ignore the too_hot flag here, so we will see "DC" on
+    // the head diagnostics if that is the case, even though we are not charging.
     is_charging = !max_charge_time_expired && !disable_charger;
   } else {
     // Battery connected, on charger (charging)
