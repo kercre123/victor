@@ -20,8 +20,10 @@ static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL17
   ;
 
-static const uint16_t BATTERY_FULL_VOLTAGE = ADC_VOLTS(4.2);
-static const int      CHARGE_FULL_TIME = 200 * 60 * 5;           // 5 minutes
+static const int      TICKS_PER_SECOND = 200;
+
+static const uint16_t BATTERY_FULL_VOLTAGE = ADC_VOLTS(4.075); // 4.2 in a perfect world, but give some room for ADC variance, imperfect battery, etc.
+static const int      CHARGE_FULL_TIME = TICKS_PER_SECOND * 60 * 5;           // 5 minutes
 
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(3.50), ~0);
@@ -33,13 +35,13 @@ static const int32_t    TEMP_VOLT_ADJ   = (int32_t)(0x10000 * (2.8 / 3.3));
 static const int32_t    TEMP_SCALE_ADJ  = (int32_t)(0x10000 * (1.000 / 5.336));
 
 // We allow for 4 hours of over-heat time (variable)
-static const int MAX_HEAT_COUNTDOWN = 200 * 60 * 60 * 4 * 5;
-static const int OVERHEAT_SHUTDOWN = 200 * 30;
+static const int MAX_HEAT_COUNTDOWN = TICKS_PER_SECOND * 60 * 60 * 4 * 5;
+static const int OVERHEAT_SHUTDOWN = TICKS_PER_SECOND * 30;
 
-static const int POWER_DOWN_TIME = 200 * 5.5;               // Shutdown
-static const int POWER_WIPE_TIME = 200 * 12;                // Enter recovery mode
-static const int ON_CHARGER_RESET = 200 * 60;               // 1 Minute
-static const int TOP_OFF_TIME    = 200 * 60 * 60 * 24 * 90; // 90 Days
+static const int POWER_DOWN_TIME = TICKS_PER_SECOND * 5.5;               // Shutdown
+static const int POWER_WIPE_TIME = TICKS_PER_SECOND * 12;                // Enter recovery mode
+static const int ON_CHARGER_RESET = TICKS_PER_SECOND * 60;               // 1 Minute
+static const int TOP_OFF_TIME    = TICKS_PER_SECOND * 60 * 60 * 24 * 90; // 90 Days
 
 static const int BOUNCE_LENGTH = 3;
 static const int MINIMUM_RELEASE_UNSTUCK = 20;
@@ -70,6 +72,11 @@ static bool button_pressed = false;
 
 static const int ADC_SCALE_BITS = 15;
 static uint32_t adc_compensate = 1 << ADC_SCALE_BITS;
+
+// Keep this as a static variable because we have a hack
+// to get accurate measurements while the battery is charging.
+// See code in tick() for details.
+static uint16_t vmain_adc;
 
 static inline uint32_t EXACT_ADC(ADC_CHANNEL ch) {
   return (adc_values[ch] * adc_compensate) >> ADC_SCALE_BITS;
@@ -169,7 +176,7 @@ void Analog::stop(void) {
 }
 
 void Analog::transmit(BodyToHead* data) {
-  data->battery.main_voltage = EXACT_ADC(ADC_VMAIN);
+  data->battery.main_voltage = vmain_adc;
   data->battery.charger = EXACT_ADC(ADC_VEXT);
   data->battery.temperature = (int16_t) temperature;
   data->battery.flags = 0
@@ -317,11 +324,11 @@ static void handleLowBattery() {
   // Levels
   static const uint32_t EMERGENCY_POWER_DOWN_POINT = ADC_VOLTS(3.4);
   static const uint32_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.62);
-  static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 45*200; // 45 seconds
-  static const int      EARLY_POWER_COUNT_TIME = 200; // 1 second
+  static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 45*TICKS_PER_SECOND; // 45 seconds
+  static const int      EARLY_POWER_COUNT_TIME = TICKS_PER_SECOND; // 1 second
 
-  static const int      POWER_DOWN_BATTERY_TIME = 10*200; // 10 seconds
-  static const int      POWER_DOWN_WARNING_TIME = 4*60*200 + POWER_DOWN_BATTERY_TIME; // 4 minutes
+  static const int      POWER_DOWN_BATTERY_TIME = 10*TICKS_PER_SECOND; // 10 seconds
+  static const int      POWER_DOWN_WARNING_TIME = 4*60*TICKS_PER_SECOND + POWER_DOWN_BATTERY_TIME; // 4 minutes
 
   // Low voltage shutdown
   static int power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
@@ -408,11 +415,15 @@ static void debounceVEXT() {
   last_vext = vext_now;
 }
 
+
+
 void Analog::tick(void) {
   static bool delay_disable = true;
   static int on_charger_time = 0;
   static int off_charger_time = 0;
   static int charging_time = 0;
+
+  static unsigned int total_ticks = 0;
 
   updateADCCompensate();
   debounceVEXT();
@@ -425,7 +436,7 @@ void Analog::tick(void) {
     too_hot_temp += XRAY_TEMP_ALLOWANCE;
   }
   
-  if (temperature > too_hot_temp && on_charger_time < 200) {
+  if (temperature > too_hot_temp && on_charger_time < TICKS_PER_SECOND) {
     too_hot = true;
   } else {
     too_hot = false;
@@ -441,10 +452,27 @@ void Analog::tick(void) {
       charging_time = 0;
     }
 
-    uint16_t vmain_adc = EXACT_ADC(ADC_VMAIN);
+    if (!is_charging) {
+      // Safe to update any time
+      vmain_adc = EXACT_ADC(ADC_VMAIN);
+    } else if (total_ticks % (30 * TICKS_PER_SECOND) == 0) {
+      // We need to shut down the charger to get an accurate reading.
+      // We don't do this every tick so that the charger has some stability.
+      // Currently every 30 seconds or 6000 ticks.
+      nCHG_PWR::set();
+
+      for(volatile int i=0;i<1500;i++){} // Give time for circuit to power down.
+
+      vmain_adc = EXACT_ADC(ADC_VMAIN);
+      nCHG_PWR::reset();
+    }
+
+    // Adjust counter here so it's at 0 on the first run and we 
+    // get an initial reading.
+    total_ticks++;
 
     if (vmain_adc > BATTERY_FULL_VOLTAGE) {
-      if (on_charger_time < 200) {
+      if (on_charger_time < TICKS_PER_SECOND) {
         charging_time = CHARGE_FULL_TIME;
       } else {
         charging_time++;
