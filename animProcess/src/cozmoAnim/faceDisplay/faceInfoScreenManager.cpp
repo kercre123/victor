@@ -158,7 +158,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   // * Camera
   // JetWay wants this to make it easier to debug at factory.
   // DDL is fine with user seeing the screen.
-  const bool hideSpecialDebugScreens = true;
+  const bool hideSpecialDebugScreens = false;
 
   ADD_SCREEN_WITH_TEXT(Recovery, Recovery, {"RECOVERY MODE"});
   ADD_SCREEN(None, None);
