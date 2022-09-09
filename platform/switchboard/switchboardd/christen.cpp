@@ -18,7 +18,7 @@
 #include <cutils/properties.h>
 
 const std::string kProductNamePropertyKey = "ro.anki.product.name";
-const std::string kDefaultProductName = "Vector";
+const std::string kDefaultProductName = "Cozmo";
 
 namespace Anki {
 namespace Switchboard {
