@@ -29,7 +29,7 @@ namespace {
   constexpr const char * kVectorWillRestart = "Vector will restart";
 
   const f32 kRobotNameScale = 0.6f;
-  const std::string kAppURL = "ddl.io/v";
+  const std::string kAppURL = "ddl.io/c";
   const ColorRGBA kWhiteColor(0.9f, 0.9f, 0.9f, 1.f);
   const int kTextThickness = 1;
   const int kNormalFont = CV_FONT_NORMAL;
