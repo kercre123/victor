@@ -1,7 +1,7 @@
 {
     "files": {
         "chipper_key": {
-            "url": "https://assets.digitaldreamlabs.com/3B4TiDdjzj7WpSoH/victor-chipper-key"
+            "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-chipper-tmp-client-key/victor-chipper-key"
         }
     },
     "svn": {
