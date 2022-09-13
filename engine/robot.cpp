@@ -264,7 +264,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   GetProgressionUnlockComponent().Init();
   
   GetInventoryComponent().Init(GetContext()->GetDataLoader()->GetInventoryConfig());
-  
+  END_DONT_RUN_AFTER_PACKOUT
+
   // Setting camera pose according to current head angle.
   // (Not using SetHeadAngle() because _isHeadCalibrated is initially false making the function do nothing.)
   GetVisionComponent().GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
@@ -282,7 +283,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   // This will create the AndroidHAL instance if it doesn't yet exist
   CameraService::getInstance();
 
-  END_DONT_RUN_AFTER_PACKOUT
   
 } // Constructor: Robot
     
@@ -1281,10 +1281,10 @@ Result Robot::Update()
     _syncTimeSentTime_sec = 0.0f;
   }
 
-  BEGIN_DONT_RUN_AFTER_PACKOUT
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
 
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   UpdateStartupChecks();
   END_DONT_RUN_AFTER_PACKOUT
   
@@ -1312,7 +1312,7 @@ Result Robot::Update()
      lastUpdateTime = currentTime_sec;
   */
 
-  BEGIN_DONT_RUN_AFTER_PACKOUT
+  
 
   //////////// VisionScheduleMediator ////////////
   // Applies the scheduling consequences of the last frame's subscriptions before ticking VisionComponent
@@ -1337,7 +1337,7 @@ Result Robot::Update()
     SendAbsLocalizationUpdate();
     _needToSendLocalizationUpdate = false;
   }
-  
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   ///////// MemoryMap ///////////
       
   // update the memory map based on the current's robot pose
