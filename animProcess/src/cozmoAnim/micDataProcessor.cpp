@@ -419,8 +419,9 @@ void MicDataProcessor::ProcessLoop()
       }
       
       // Factory test doesn't need to do any mic processing, it just uses raw data
-      if(!FACTORY_TEST)
-      {
+      // Removed for testing after packout 
+      // if(!FACTORY_TEST) 
+      // {
         // Process the audio into a single channel, and collect it if desired
         bool audioBlockReady = ProcessRawAudio(
           nextData.timestamp,
@@ -456,7 +457,7 @@ void MicDataProcessor::ProcessLoop()
             }
           }
         }
-      }
+      // }
       
       // Check if each of the jobs are done, removing the ones that are
       auto jobIter = stolenJobs.begin();
