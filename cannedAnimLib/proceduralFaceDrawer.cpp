@@ -560,9 +560,9 @@ namespace Cozmo {
                                       Vision::ImageRGB565& output)
   {
     #if ANKI_DEV_CHEATS
-    // constexpr float kMaxExpectedFaceDrawTime_ms = 13.f;
+    constexpr float kMaxExpectedFaceDrawTime_ms = 13.f;
     #endif
-    // ANKI_CPU_TICK("ProceduralFaceDrawer", kMaxExpectedFaceDrawTime_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
+    ANKI_CPU_TICK("ProceduralFaceDrawer", kMaxExpectedFaceDrawTime_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
     // Replace the above line with the below line to see profiling info in the log
     // ANKI_CPU_TICK("ProceduralFaceDrawer", kMaxExpectedFaceDrawTime_ms, 61);
     ANKI_CPU_PROFILE("DrawFace");
