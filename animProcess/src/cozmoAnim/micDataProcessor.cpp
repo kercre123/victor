@@ -417,72 +417,69 @@ void MicDataProcessor::ProcessLoop()
       {
         job->CollectRawAudio(audioChunk, kRawAudioChunkSize);
       }
-      
-      // Factory test doesn't need to do any mic processing, it just uses raw data
-      // Removed for testing after packout 
-      // if(!FACTORY_TEST) 
-      // {
-        // Process the audio into a single channel, and collect it if desired
-        bool audioBlockReady = ProcessRawAudio(
-          nextData.timestamp,
-          audioChunk,
-          nextData.robotStatusFlags,
-          nextData.robotRotationAngle);
-        if (audioBlockReady)
+       
+    
+      // Process the audio into a single channel, and collect it if desired
+      bool audioBlockReady = ProcessRawAudio(
+        nextData.timestamp,
+        audioChunk,
+        nextData.robotStatusFlags,
+        nextData.robotRotationAngle);
+      if (audioBlockReady)
+      {
+        const auto& processedAudio = _immediateAudioBuffer.back().audioBlock;
+        for (auto& job : stolenJobs)
         {
-          const auto& processedAudio = _immediateAudioBuffer.back().audioBlock;
-          for (auto& job : stolenJobs)
-          {
-            job->CollectProcessedAudio(processedAudio.data(), processedAudio.size());
-          }
+          job->CollectProcessedAudio(processedAudio.data(), processedAudio.size());
+        }
 
-          kMicData_NextTriggerIndex = Util::Clamp(kMicData_NextTriggerIndex, 0, kTriggerDataListLen-1);
-          if (kMicData_NextTriggerIndex != _currentTriggerSearchIndex)
-          {
-            _currentTriggerSearchIndex = kMicData_NextTriggerIndex;
-            _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
-          }
-          // Run the trigger detection, which will use the callback defined above
-          if (_micImmediateDirection->GetLatestSample().activeState != 0)
-          {
-            ANKI_CPU_PROFILE("RecognizeTriggerWord");
-            bool streamingInProgress = false;
-            {
-              std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
-              streamingInProgress = (_currentStreamingJob != nullptr);
-            }
-            if (!streamingInProgress)
-            {
-              _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
-            }
-          }
-        }
-      // }
-      
-      // Check if each of the jobs are done, removing the ones that are
-      auto jobIter = stolenJobs.begin();
-      while (jobIter != stolenJobs.end())
-      {
-        (*jobIter)->UpdateForNextChunk();
-        bool jobDone = (*jobIter)->CheckDone();
-        if (jobDone)
+        kMicData_NextTriggerIndex = Util::Clamp(kMicData_NextTriggerIndex, 0, kTriggerDataListLen-1);
+        if (kMicData_NextTriggerIndex != _currentTriggerSearchIndex)
         {
-          jobIter = stolenJobs.erase(jobIter);
+          _currentTriggerSearchIndex = kMicData_NextTriggerIndex;
+          _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
         }
-        else
+        // Run the trigger detection, which will use the callback defined above
+        if (_micImmediateDirection->GetLatestSample().activeState != 0)
         {
-          ++jobIter;
+          ANKI_CPU_PROFILE("RecognizeTriggerWord");
+          bool streamingInProgress = false;
+          {
+            std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
+            streamingInProgress = (_currentStreamingJob != nullptr);
+          }
+          if (!streamingInProgress)
+          {
+            _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
+          }
         }
       }
-      
-      // Add back the remaining stolen jobs
+    // }
+    
+    // Check if each of the jobs are done, removing the ones that are
+    auto jobIter = stolenJobs.begin();
+    while (jobIter != stolenJobs.end())
+    {
+      (*jobIter)->UpdateForNextChunk();
+      bool jobDone = (*jobIter)->CheckDone();
+      if (jobDone)
       {
-        std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
-        _micProcessingJobs.insert(_micProcessingJobs.begin(), stolenJobs.begin(), stolenJobs.end());
+        jobIter = stolenJobs.erase(jobIter);
       }
-      
-      rawAudioToProcess.pop_front();
+      else
+      {
+        ++jobIter;
+      }
     }
+    
+    // Add back the remaining stolen jobs
+    {
+      std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
+      _micProcessingJobs.insert(_micProcessingJobs.begin(), stolenJobs.begin(), stolenJobs.end());
+    }
+    
+    rawAudioToProcess.pop_front();
+  
 
     const auto end = std::chrono::steady_clock::now();
     const auto elapsedTime = (end - start);
