@@ -454,7 +454,7 @@ void MicDataProcessor::ProcessLoop()
           }
         }
       }
-    // }
+
     
     // Check if each of the jobs are done, removing the ones that are
     auto jobIter = stolenJobs.begin();
@@ -479,7 +479,7 @@ void MicDataProcessor::ProcessLoop()
     }
     
     rawAudioToProcess.pop_front();
-  
+    }  
 
     const auto end = std::chrono::steady_clock::now();
     const auto elapsedTime = (end - start);
