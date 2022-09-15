@@ -19,7 +19,7 @@
 #include "stm32f2xx_rtc.h"
 
 //global fixture data
-int g_fixmode = FIXMODE_NONE;
+const int g_fixmode = FIXMODE_CUBE4;
 const fixmode_info_t g_fixmode_info[] = { FIXMODE_INFO_INIT_DATA };
 const int g_num_fixmodes = sizeof(g_fixmode_info) / sizeof(fixmode_info_t);
 bool g_allowOutdated = false;
@@ -33,12 +33,12 @@ void fixtureInit(void)
   //ConsolePrintf("fixtureInit()\n");
   
   //Try to restore saved mode
-  g_fixmode = FIXMODE_NONE;
+  /*g_fixmode = FIXMODE_NONE;
   if ( g_flashParams.fixtureTypeOverride > FIXMODE_NONE && g_flashParams.fixtureTypeOverride < g_num_fixmodes ) {
     if( g_fixmode_info[g_fixmode].name != NULL ) { //Prevent invalid modes
       g_fixmode = g_flashParams.fixtureTypeOverride;
     }
-  }
+  }*/
   
   rtc_init_();
 }

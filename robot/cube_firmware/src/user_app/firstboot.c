@@ -6,6 +6,8 @@
 //#include "reg_uart.h"   // uart register
 #include "uart.h"       // uart definitions
 
+#include "arch_wdg.h"
+
 typedef struct {
   GPIO_PORT port;
   GPIO_PIN pin;
@@ -258,6 +260,23 @@ void FirstBoot(void) {
       for (volatile int j=0; j < 500; j++) __nop();
     }
   }
+	
+	
+	// Shut off watchdog and let it kill battery if it wants.
+	
+	wdg_freeze();
+	// Then white lights forever for certification purposes.
+
+	while(1) {
+    for( int led=0; led<16; led++ ) {
+			// Cert board wants lights on all the time,
+			// but since we do software PWM in use we'll do that here too.
+			GPIO_SetInactive(LEDs[first_led+led].port, LEDs[first_led+led].pin);
+      for (volatile int i=0; i < 500; i++) __nop();
+  		GPIO_SetActive(LEDs[first_led+led].port, LEDs[first_led+led].pin);
+      for (volatile int j=0; j < 500; j++) __nop();
+    }
+	}
 
 
 }

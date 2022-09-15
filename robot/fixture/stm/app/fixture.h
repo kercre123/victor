@@ -88,7 +88,7 @@ typedef struct {
 } fixmode_info_t;
 
 //Global data
-extern int                  g_fixmode; //runtime fixture mode
+extern const int            g_fixmode; //runtime fixture mode
 extern const fixmode_info_t g_fixmode_info[]; //mode information (see array init dat below)
 extern const int            g_num_fixmodes; //number of modes
 extern bool                 g_allowOutdated;
@@ -159,7 +159,7 @@ const char*   fixtureTimeStr(time_t time); //short (20char) string representatio
   { "SOUND2"      , TestRobotDetect     , TestRobotSoundGetTests      , TestRobotCleanup            , FIXMODE_SOUND2      },  /*41*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "LOG-DL"      , TestRobotDetect     , TestRobotLogDownloadTests   , TestRobotCleanup            , FIXMODE_LOG_DL      },  /*43*/  \
-  { "CUBE4"       , TestCubeDetect      , TestCube3GetTests           , TestCubeCleanup             , FIXMODE_CUBE4       },  /*44*/  \
+  { "CUBEX"       , TestCubeDetect      , TestCube3GetTests           , TestCubeCleanup             , FIXMODE_CUBE4       },  /*44*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "MOTOR1"      , TestMotorDetect     , TestMotor1GetTests          , TestMotorCleanup            , FIXMODE_MOTOR1      },  /*46*/  \
   { "MOTOR2"      , TestMotorDetect     , TestMotor2GetTests          , TestMotorCleanup            , FIXMODE_MOTOR2      },  /*47*/  \

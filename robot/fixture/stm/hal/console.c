@@ -259,7 +259,7 @@ static void SetMode(void)
 {
   char* arg = GetArgument(1);
   
-  for (int i = 0; i < g_num_fixmodes; i++)
+/*  for (int i = 0; i < g_num_fixmodes; i++)
     if(g_fixmode_info[i].name && !strcasecmp(arg, g_fixmode_info[i].name))
     {
       g_flashParams.fixtureTypeOverride = i;
@@ -268,7 +268,7 @@ static void SetMode(void)
       SetFixtureText(1);
       return;
     }
-    
+  */  
   throw ERROR_UNKNOWN_MODE;
 }
 
