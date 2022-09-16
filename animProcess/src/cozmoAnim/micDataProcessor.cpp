@@ -417,71 +417,69 @@ void MicDataProcessor::ProcessLoop()
       {
         job->CollectRawAudio(audioChunk, kRawAudioChunkSize);
       }
-      
-      // Factory test doesn't need to do any mic processing, it just uses raw data
-      if(!FACTORY_TEST)
+       
+    
+      // Process the audio into a single channel, and collect it if desired
+      bool audioBlockReady = ProcessRawAudio(
+        nextData.timestamp,
+        audioChunk,
+        nextData.robotStatusFlags,
+        nextData.robotRotationAngle);
+      if (audioBlockReady)
       {
-        // Process the audio into a single channel, and collect it if desired
-        bool audioBlockReady = ProcessRawAudio(
-          nextData.timestamp,
-          audioChunk,
-          nextData.robotStatusFlags,
-          nextData.robotRotationAngle);
-        if (audioBlockReady)
+        const auto& processedAudio = _immediateAudioBuffer.back().audioBlock;
+        for (auto& job : stolenJobs)
         {
-          const auto& processedAudio = _immediateAudioBuffer.back().audioBlock;
-          for (auto& job : stolenJobs)
-          {
-            job->CollectProcessedAudio(processedAudio.data(), processedAudio.size());
-          }
+          job->CollectProcessedAudio(processedAudio.data(), processedAudio.size());
+        }
 
-          kMicData_NextTriggerIndex = Util::Clamp(kMicData_NextTriggerIndex, 0, kTriggerDataListLen-1);
-          if (kMicData_NextTriggerIndex != _currentTriggerSearchIndex)
-          {
-            _currentTriggerSearchIndex = kMicData_NextTriggerIndex;
-            _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
-          }
-          // Run the trigger detection, which will use the callback defined above
-          if (_micImmediateDirection->GetLatestSample().activeState != 0)
-          {
-            ANKI_CPU_PROFILE("RecognizeTriggerWord");
-            bool streamingInProgress = false;
-            {
-              std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
-              streamingInProgress = (_currentStreamingJob != nullptr);
-            }
-            if (!streamingInProgress)
-            {
-              _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
-            }
-          }
-        }
-      }
-      
-      // Check if each of the jobs are done, removing the ones that are
-      auto jobIter = stolenJobs.begin();
-      while (jobIter != stolenJobs.end())
-      {
-        (*jobIter)->UpdateForNextChunk();
-        bool jobDone = (*jobIter)->CheckDone();
-        if (jobDone)
+        kMicData_NextTriggerIndex = Util::Clamp(kMicData_NextTriggerIndex, 0, kTriggerDataListLen-1);
+        if (kMicData_NextTriggerIndex != _currentTriggerSearchIndex)
         {
-          jobIter = stolenJobs.erase(jobIter);
+          _currentTriggerSearchIndex = kMicData_NextTriggerIndex;
+          _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
         }
-        else
+        // Run the trigger detection, which will use the callback defined above
+        if (_micImmediateDirection->GetLatestSample().activeState != 0)
         {
-          ++jobIter;
+          ANKI_CPU_PROFILE("RecognizeTriggerWord");
+          bool streamingInProgress = false;
+          {
+            std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
+            streamingInProgress = (_currentStreamingJob != nullptr);
+          }
+          if (!streamingInProgress)
+          {
+            _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
+          }
         }
       }
-      
-      // Add back the remaining stolen jobs
+
+    
+    // Check if each of the jobs are done, removing the ones that are
+    auto jobIter = stolenJobs.begin();
+    while (jobIter != stolenJobs.end())
+    {
+      (*jobIter)->UpdateForNextChunk();
+      bool jobDone = (*jobIter)->CheckDone();
+      if (jobDone)
       {
-        std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
-        _micProcessingJobs.insert(_micProcessingJobs.begin(), stolenJobs.begin(), stolenJobs.end());
+        jobIter = stolenJobs.erase(jobIter);
       }
-      
-      rawAudioToProcess.pop_front();
+      else
+      {
+        ++jobIter;
+      }
     }
+    
+    // Add back the remaining stolen jobs
+    {
+      std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
+      _micProcessingJobs.insert(_micProcessingJobs.begin(), stolenJobs.begin(), stolenJobs.end());
+    }
+    
+    rawAudioToProcess.pop_front();
+    }  
 
     const auto end = std::chrono::steady_clock::now();
     const auto elapsedTime = (end - start);
@@ -564,7 +562,6 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
   static constexpr int kMaxReceiveBytes = 2000;
   char receiveArray[kMaxReceiveBytes];
 
-#if ANKI_DEV_CHEATS
   uint32_t recordingSecondsRemaining = 0;
   static std::shared_ptr<MicDataInfo> _saveJob;
   if (_saveJob != nullptr)
@@ -601,7 +598,6 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
       _saveJob = _micProcessingJobs.back();
     }
   }
-#endif
   
   const ssize_t bytesReceived = _udpServer->Recv(receiveArray, kMaxReceiveBytes);
   if (bytesReceived == 2)
@@ -617,7 +613,6 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
     receivedStopMessage = true;
   }
 
-  #if ANKI_DEV_CHEATS
     // Minimum length of time to display the "trigger heard" symbol on the mic data debug screen
     // (is extended by streaming)
     constexpr uint32_t kTriggerDisplayTime_ns = 1000 * 1000 * 2000; // 2 seconds
@@ -626,7 +621,6 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
     {
       endTriggerDispTime_ns = 0;
     }
-  #endif
 
   static size_t streamingAudioIndex = 0;
   // lock the job mutex
@@ -635,9 +629,7 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
     // check if the pointer to the currently streaming job is valid
     if (!_currentlyStreaming && _currentStreamingJob != nullptr)
     {
-      #if ANKI_DEV_CHEATS
         endTriggerDispTime_ns = currTime_nanosec + kTriggerDisplayTime_ns;
-      #endif
       if (_udpServer->HasClient())
       {
         _currentlyStreaming = true;
@@ -693,11 +685,9 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
     _msgsToEngine.clear();
   }
 
-  #if ANKI_DEV_CHEATS
     // Store off a copy of (one of) the micDirectionData from this update for debug drawing
     Anki::Cozmo::RobotInterface::MicDirection micDirectionData{};
     bool updatedMicDirection = false;
-  #endif
   for (const auto& msg : stolenMessages)
   {
     if (msg->tag == RobotInterface::RobotToEngine::Tag_triggerWordDetected)
@@ -706,10 +696,8 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
     }
     else if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
     {
-      #if ANKI_DEV_CHEATS
         micDirectionData = msg->micDirection;
         updatedMicDirection = true;
-      #endif
       RobotInterface::SendAnimToEngine(msg->micDirection);
     }
     else
@@ -720,7 +708,6 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
     }
   }
 
-  #if ANKI_DEV_CHEATS
     if (updatedMicDirection || recordingSecondsRemaining != 0)
     {
       FaceInfoScreenManager::getInstance()->DrawConfidenceClock(
@@ -729,7 +716,6 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
         recordingSecondsRemaining,
         endTriggerDispTime_ns != 0 || _currentlyStreaming);
     }
-  #endif
 }
 
 void MicDataProcessor::ClearCurrentStreamingJob()

@@ -60,9 +60,7 @@ public:
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
   void Update(BaseStationTime_t currTime_nanosec);
 
-#if ANKI_DEV_CHEATS
   void SetForceRecordClip(bool newValue) { _forceRecordClip = newValue; }
-#endif
 
 private:
   std::string _writeLocationDir = "";
@@ -85,9 +83,7 @@ private:
   std::unique_ptr<MicImmediateDirection> _micImmediateDirection;
   std::unique_ptr<SVadConfig_t> _sVadConfig;
   std::unique_ptr<SVadObject_t> _sVadObject;
-#if ANKI_DEV_CHEATS
   bool _forceRecordClip = false;
-#endif
 
   static constexpr uint32_t kRawAudioPerBuffer_ms = 2000;
   static constexpr uint32_t kRawAudioBufferSize = kRawAudioPerBuffer_ms / kTimePerChunk_ms;

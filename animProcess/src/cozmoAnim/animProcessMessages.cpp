@@ -411,7 +411,6 @@ static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
 {
   FaceInfoScreenManager::getInstance()->Update(robotState);
   
-#if ANKI_DEV_CHEATS
   auto * micDataProcessor = _context->GetMicDataProcessor();
   if (micDataProcessor != nullptr)
   {
@@ -421,7 +420,6 @@ static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
       micDataProcessor->SetForceRecordClip(true);
     }
   }
-#endif
 }
 
 void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToEngine& msg)
