@@ -25,9 +25,18 @@ static const uint32_t WATCHDOG_CLOCK  = 10000;
 static const uint32_t WATCHDOG_LIMIT  = WATCHDOG_CLOCK / 200 * 10; // 10 main execution frames
 
 static const uint32_t* HW_REVISION    = (uint32_t*)0x08000010;
+static const uint32_t* HW_MODEL       = (uint32_t*)0x08000014;
 static const uint32_t  WHISKEY_MIN_VERSION = 7;
+static const uint32_t  XRAY_MIN_VERSION = 1;
+static const uint32_t  XRAY_MAX_VERSION = 1;
+
+// had to pack a version in to existing field so we don't break
+// Whiskey's in the field. To do that we took over the MSB from
+// the model field. from model, MSB = REV2, LSB = MODEL. 
+// Currently Xray is the only robot with REV2 > 0
 
 #define IS_WHISKEY (*HW_REVISION >= WHISKEY_MIN_VERSION)
+#define IS_XRAY (((*HW_MODEL >> 8) >= XRAY_MIN_VERSION) && (((*HW_MODEL >> 8) <= XRAY_MAX_VERSION)))
 
 enum IRQ_Priority {
   PRIORITY_ADC = 0,

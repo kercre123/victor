@@ -20,8 +20,10 @@ static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL17
   ;
 
-static const uint16_t BATTERY_FULL_VOLTAGE = ADC_VOLTS(4.2);
-static const int      CHARGE_FULL_TIME = 200 * 60 * 5;           // 5 minutes
+static const int      TICKS_PER_SECOND = 200;
+
+static const uint16_t BATTERY_FULL_VOLTAGE = ADC_VOLTS(4.075); // 4.2 in a perfect world, but give some room for ADC variance, imperfect battery, etc.
+static const int      CHARGE_FULL_TIME = TICKS_PER_SECOND * 60 * 5;           // 5 minutes
 
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(3.50), ~0);
@@ -33,17 +35,20 @@ static const int32_t    TEMP_VOLT_ADJ   = (int32_t)(0x10000 * (2.8 / 3.3));
 static const int32_t    TEMP_SCALE_ADJ  = (int32_t)(0x10000 * (1.000 / 5.336));
 
 // We allow for 4 hours of over-heat time (variable)
-static const int MAX_HEAT_COUNTDOWN = 200 * 60 * 60 * 4 * 5;
-static const int OVERHEAT_SHUTDOWN = 200 * 30;
+static const int MAX_HEAT_COUNTDOWN = TICKS_PER_SECOND * 60 * 60 * 4 * 5;
+static const int OVERHEAT_SHUTDOWN = TICKS_PER_SECOND * 30;
 
-static const int POWER_DOWN_TIME = 200 * 5.5;               // Shutdown
-static const int POWER_WIPE_TIME = 200 * 12;                // Enter recovery mode
-static const int ON_CHARGER_RESET = 200 * 60;               // 1 Minute
-static const int TOP_OFF_TIME    = 200 * 60 * 60 * 24 * 90; // 90 Days
+static const int POWER_DOWN_TIME = TICKS_PER_SECOND * 5.5;               // Shutdown
+static const int POWER_WIPE_TIME = TICKS_PER_SECOND * 12;                // Enter recovery mode
+static const int ON_CHARGER_RESET = TICKS_PER_SECOND * 60;               // 1 Minute
+static const int TOP_OFF_TIME    = TICKS_PER_SECOND * 60 * 60 * 24 * 90; // 90 Days
 
 static const int BOUNCE_LENGTH = 3;
 static const int MINIMUM_RELEASE_UNSTUCK = 20;
 static const int BUTTON_THRESHOLD = ADC_VOLTS(2.0) * 2;
+
+// Xrays run a little hotter. Give them a break when testing for overheating
+static const int XRAY_TEMP_ALLOWANCE = 5;
 
 static bool is_charging = false;
 bool Analog::on_charger = false;
@@ -67,6 +72,11 @@ static bool button_pressed = false;
 
 static const int ADC_SCALE_BITS = 15;
 static uint32_t adc_compensate = 1 << ADC_SCALE_BITS;
+
+// Keep this as a static variable because we have a hack
+// to get accurate measurements while the battery is charging.
+// See code in tick() for details.
+static uint16_t vmain_adc;
 
 static inline uint32_t EXACT_ADC(ADC_CHANNEL ch) {
   return (adc_values[ch] * adc_compensate) >> ADC_SCALE_BITS;
@@ -166,7 +176,7 @@ void Analog::stop(void) {
 }
 
 void Analog::transmit(BodyToHead* data) {
-  data->battery.main_voltage = EXACT_ADC(ADC_VMAIN);
+  data->battery.main_voltage = vmain_adc;
   data->battery.charger = EXACT_ADC(ADC_VEXT);
   data->battery.temperature = (int16_t) temperature;
   data->battery.flags = 0
@@ -275,6 +285,8 @@ static void handleTemperature() {
     }
   }
 
+  // average every 32 ticks, 160 ms, to deal with an outlier reading.
+  // then stash that globally for later use.
   static int samples = 0;
   static int filt_temp = 0;
   filt_temp += temp_now;
@@ -285,16 +297,32 @@ static void handleTemperature() {
     filt_temp = 0;
   }
 
+  // Do a longer term temperature check here. A charging battery will
+  // give off some heat. This is okay, but we don't want it to happen
+  // for days or weeks.
+  //
+  // We create a counter that gets more aggressive as the temerature increases.
+  // we give it 4 hours at the initial alarm, 2 a few degress above that,
+  // and fire it immediately at the insanely hot 60 degrees.
+  //
+  // The status of either SAFE, LOW, MID, or HOT is also reported back
+  // to the head, so it can use more intelligent logic to decide if it
+  // wants to tell the robot to stop charging and/or shut down.
+  const int safe_temp = 47;
+  
   // Our filtered temp is cool enough to reset the counter
-  if (temperature < 47) {
+  // but this is also done slowly. if we've been hot for 3.5 hours
+  // and then cool down for 0.1 hour before getting hot again,
+  // the count will start at 3.4 hours and not reset to 0 hours.
+  if (temperature < safe_temp) {
     temp_alarm = TEMP_ALARM_SAFE;
     if (heat_counter > 0) heat_counter--;
   } else {
     // Start processing our overheat alarms
     bool disable_vmain = false
       || alarmTimer<TEMP_ALARM_HOT, MAX_HEAT_COUNTDOWN>(temperature, 60) // Fire immediately
-      || alarmTimer<TEMP_ALARM_MID,                 10>(temperature, 50) // Fire in ~2H
-      || alarmTimer<TEMP_ALARM_LOW,                  5>(temperature, 47) // Fire in ~4H
+      || alarmTimer<TEMP_ALARM_MID,                 10>(temperature, safe_temp+3) // Fire in ~2H
+      || alarmTimer<TEMP_ALARM_LOW,                  5>(temperature, safe_temp) // Fire in ~4H
       ;
 
     if (overheated == 0 && disable_vmain) {
@@ -312,11 +340,11 @@ static void handleLowBattery() {
   // Levels
   static const uint32_t EMERGENCY_POWER_DOWN_POINT = ADC_VOLTS(3.4);
   static const uint32_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.62);
-  static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 45*200; // 45 seconds
-  static const int      EARLY_POWER_COUNT_TIME = 200; // 1 second
+  static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 45*TICKS_PER_SECOND; // 45 seconds
+  static const int      EARLY_POWER_COUNT_TIME = TICKS_PER_SECOND; // 1 second
 
-  static const int      POWER_DOWN_BATTERY_TIME = 10*200; // 10 seconds
-  static const int      POWER_DOWN_WARNING_TIME = 4*60*200 + POWER_DOWN_BATTERY_TIME; // 4 minutes
+  static const int      POWER_DOWN_BATTERY_TIME = 10*TICKS_PER_SECOND; // 10 seconds
+  static const int      POWER_DOWN_WARNING_TIME = 4*60*TICKS_PER_SECOND + POWER_DOWN_BATTERY_TIME; // 4 minutes
 
   // Low voltage shutdown
   static int power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
@@ -403,11 +431,15 @@ static void debounceVEXT() {
   last_vext = vext_now;
 }
 
+
+
 void Analog::tick(void) {
   static bool delay_disable = true;
   static int on_charger_time = 0;
   static int off_charger_time = 0;
   static int charging_time = 0;
+
+  static unsigned int total_ticks = 0;
 
   updateADCCompensate();
   debounceVEXT();
@@ -415,12 +447,32 @@ void Analog::tick(void) {
   handleLowBattery();
   handleTemperature();
 
-  if (temperature > 41 && on_charger_time < 200) {
+  // Mostly charging state and circuitry code here.
+
+  // Here we check to see if the robot body is hot the first second
+  // it is on the charger. If so, charging is disabled. It is unclear
+  // where Anki got 41 degrees, where later they don't care until
+  // the temp hits 47 degrees for an extended period of time.
+  //
+  // It's possible this is a remnant of old battery discharging code
+  // per commits?
+  //
+  // Still for now we keep this in in case its a safety feature,
+  // but give XRAY robots a little more leeway since their bigger
+  // batteries run hot.
+  int too_hot_temp = 41;
+  if (IS_XRAY) {
+    too_hot_temp += XRAY_TEMP_ALLOWANCE;
+  }
+  
+  if (temperature > too_hot_temp && on_charger_time < TICKS_PER_SECOND) {
     too_hot = true;
   } else {
     too_hot = false;
   }
 
+  // Mostly test the change above or if we've explicitly received a
+  // disable command from the head or programming fixture.
   bool prevent_charge = too_hot
     || disable_charger;
 
@@ -431,10 +483,34 @@ void Analog::tick(void) {
       charging_time = 0;
     }
 
-    uint16_t vmain_adc = EXACT_ADC(ADC_VMAIN);
+    // Check the voltage, but we only do this periodically if we are
+    // on the charger.
+    if (!is_charging) {
+      // Safe to update any time
+      vmain_adc = EXACT_ADC(ADC_VMAIN);
+    } else if (total_ticks % (30 * TICKS_PER_SECOND) == 0) {
+      // We need to shut down the charger to get an accurate reading.
+      // We don't do this every tick so that the charger has some stability.
+      // Currently every 30 seconds or 6000 ticks.
+      nCHG_PWR::set();
 
+      for(volatile int i=0;i<1500;i++){} // Give time for circuit to power down.
+
+      vmain_adc = EXACT_ADC(ADC_VMAIN);
+      nCHG_PWR::reset();
+    }
+
+    // Adjust counter here so it's at 0 on the first run and we 
+    // get an initial reading.
+    total_ticks++;
+
+    // If we think the battery is full.
+    // 1. If we've just been placed on the charger we stop immediately
+    //    So we don't wear out the battery.
+    // 2. Else we track a counter and charge for an additional time period
+    //    to finish up the constant voltage phase of charging
     if (vmain_adc > BATTERY_FULL_VOLTAGE) {
-      if (on_charger_time < 200) {
+      if (on_charger_time < TICKS_PER_SECOND) {
         charging_time = CHARGE_FULL_TIME;
       } else {
         charging_time++;
@@ -445,12 +521,21 @@ void Analog::tick(void) {
       power_low = false;
     }
   } else if (++off_charger_time >= ON_CHARGER_RESET) {
+    // This debounces the charging circuitry so an intermittant
+    // disconnection is ignored. The current time setting is rather
+    // long so it also accounts for a user picking up a robot and
+    // setting it back down on the charger. Takes ON_CHARGER_RESET
+    // amount of time (currently 1 minute) before triggering.
+    //
+    // So when you're testing conditions keep this in mind.
     on_charger_time = 0;
     charging_time = 0;
   }
 
   // Charge saturation time after desired voltage
   const bool max_charge_time_expired = charging_time >= CHARGE_FULL_TIME;
+  // Cutoff if above has been hit, or if we have a safety condition due to heat,
+  // or if it has been explicitly requested by head or firmware.
   charge_cutoff = prevent_charge || max_charge_time_expired;
 
   // Charger / Battery logic
@@ -483,7 +568,7 @@ void Analog::tick(void) {
     delay_disable = true;
     is_charging = false;
   } else if (charge_cutoff) {
-    // Battery disconnected, on charger (timeout)
+    // Battery disconnected, on charger (timeout, or safety, or explicit request)
     nCHG_PWR::reset();
 
     if (!delay_disable) {
@@ -498,6 +583,9 @@ void Analog::tick(void) {
 
     // As long as the timer hasn't expired (and we're not manually disabling charging)
     // continue to report that we are charging.
+    //
+    // strangely we ignore the too_hot flag here, so we will see "DC" on
+    // the head diagnostics if that is the case, even though we are not charging.
     is_charging = !max_charge_time_expired && !disable_charger;
   } else {
     // Battery connected, on charger (charging)
