@@ -1,0 +1,192 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{BFA710CA-C27C-4885-A0E9-6E58523DC2FA}</ProjectGuid>
+    <RootNamespace>Vocoder</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\Source\VocoderFX;$(SolutionDir)..\Source\PitchTracking;$(SolutionDir)..\Source\KrotosDSP;$(SolutionDir)..\Source\PitchTracking\PitchTrackingAlgorithms;$(SolutionDir)..\Source\Vocoder;$(WWISESDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\Source\VocoderFX;$(SolutionDir)..\Source\PitchTracking;$(SolutionDir)..\Source\KrotosDSP;$(SolutionDir)..\Source\PitchTracking\PitchTrackingAlgorithms;$(SolutionDir)..\Source\Vocoder;$(WWISESDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Source\KrotosDSP\EnvelopeDetector.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\NoiseOscillator.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\RingBuffer.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\bandlimitedImpulseTable.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\bandlimitedImpulseTableForInterpolation.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\bandlimitedSawtoothTable.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\bandlimitedSawtoothTableForInterpolation.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\bandlimitedSquareTable.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\bandlimitedSquareTableForInterpolation.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\reverseSawtoothTable.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\reverseSawtoothTableForInterpolation.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\sawtoothTable.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\sawtoothTableForInterpolation.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\sincTable.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\sincTableForInterpolation.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\sinTable.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\sinTableForInterpolation.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\squareTable.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\squareTableForInterpolation.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\tangentTable.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\tangentTableForInterpolation.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\triangleTable.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\Tables\triangleTableForInterpolation.cpp" />
+    <ClCompile Include="..\Source\KrotosDSP\WavetableOscillator.cpp" />
+    <ClCompile Include="..\Source\PitchTracking\audio-analysis-framework\AudioAnalysisFramework.cpp" />
+    <ClCompile Include="..\Source\PitchTracking\audio-analysis-framework\FastFourierTransform.cpp" />
+    <ClCompile Include="..\Source\PitchTracking\audio-analysis-framework\libraries\kiss_fft\kiss_fft.c" />
+    <ClCompile Include="..\Source\PitchTracking\audio-analysis-framework\libraries\kiss_fft\kiss_fftr.c" />
+    <ClCompile Include="..\Source\PitchTracking\audio-analysis-framework\LowpassFilter.cpp" />
+    <ClCompile Include="..\Source\PitchTracking\audio-analysis-framework\MelFrequencySpectrum.cpp" />
+    <ClCompile Include="..\Source\PitchTracking\PitchTracker.cpp" />
+    <ClCompile Include="..\Source\PitchTracking\PitchTrackingAlgorithms\Autocorrelation.cpp" />
+    <ClCompile Include="..\Source\PitchTracking\PitchTrackingAlgorithms\Cepstrum.cpp" />
+    <ClCompile Include="..\Source\PitchTracking\PitchTrackingAlgorithms\McLeod.cpp" />
+    <ClCompile Include="..\Source\PitchTracking\PitchTrackingAlgorithms\SpectrumBased.cpp" />
+    <ClCompile Include="..\Source\PitchTracking\PitchTrackingAlgorithms\Yin.cpp" />
+    <ClCompile Include="..\Source\VocoderFX\KrotosVocoderFX.cpp" />
+    <ClCompile Include="..\Source\VocoderFX\KrotosVocoderFXDSP.cpp" />
+    <ClCompile Include="..\Source\VocoderFX\KrotosVocoderFXParams.cpp" />
+    <ClCompile Include="..\Source\Vocoder\Vocoder.cpp" />
+    <ClCompile Include="..\Source\Vocoder\VocoderRingBuffer.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Source\KrotosDSP\EnvelopeDetector.h" />
+    <ClInclude Include="..\Source\KrotosDSP\NoiseOscillator.h" />
+    <ClInclude Include="..\Source\KrotosDSP\RingBuffer.h" />
+    <ClInclude Include="..\Source\KrotosDSP\StereoSpread.h" />
+    <ClInclude Include="..\Source\KrotosDSP\WavetableOscillator.h" />
+    <ClInclude Include="..\Source\KrotosDSP\Wavetables.h" />
+    <ClInclude Include="..\Source\KrotosDSP\Window.h" />
+    <ClInclude Include="..\Source\PitchTracking\audio-analysis-framework\AudioAnalysisFramework.h" />
+    <ClInclude Include="..\Source\PitchTracking\audio-analysis-framework\FastFourierTransform.h" />
+    <ClInclude Include="..\Source\PitchTracking\audio-analysis-framework\libraries\kiss_fft\kiss_fft.h" />
+    <ClInclude Include="..\Source\PitchTracking\audio-analysis-framework\libraries\kiss_fft\kiss_fftr.h" />
+    <ClInclude Include="..\Source\PitchTracking\audio-analysis-framework\libraries\kiss_fft\_kiss_fft_guts.h" />
+    <ClInclude Include="..\Source\PitchTracking\audio-analysis-framework\LowpassFilter.h" />
+    <ClInclude Include="..\Source\PitchTracking\audio-analysis-framework\MelFrequencySpectrum.h" />
+    <ClInclude Include="..\Source\PitchTracking\audio-analysis-framework\Utilities.h" />
+    <ClInclude Include="..\Source\PitchTracking\PitchTracker.h" />
+    <ClInclude Include="..\Source\PitchTracking\PitchTrackerAbstractClass.h" />
+    <ClInclude Include="..\Source\PitchTracking\PitchTrackingAlgorithms\Autocorrelation.h" />
+    <ClInclude Include="..\Source\PitchTracking\PitchTrackingAlgorithms\Cepstrum.h" />
+    <ClInclude Include="..\Source\PitchTracking\PitchTrackingAlgorithms\McLeod.h" />
+    <ClInclude Include="..\Source\PitchTracking\PitchTrackingAlgorithms\PitchTrackerAbstractClass.h" />
+    <ClInclude Include="..\Source\PitchTracking\PitchTrackingAlgorithms\SpectrumBased.h" />
+    <ClInclude Include="..\Source\PitchTracking\PitchTrackingAlgorithms\Yin.h" />
+    <ClInclude Include="..\Source\VocoderFX\KrotosSmoothedValue.h" />
+    <ClInclude Include="..\Source\VocoderFX\KrotosVectorOperations.h" />
+    <ClInclude Include="..\Source\VocoderFX\KrotosVocoderFX.h" />
+    <ClInclude Include="..\Source\VocoderFX\KrotosVocoderFXDSP.h" />
+    <ClInclude Include="..\Source\VocoderFX\KrotosVocoderFXParams.h" />
+    <ClInclude Include="..\Source\Vocoder\Vocoder.h" />
+    <ClInclude Include="..\Source\Vocoder\VocoderRingBuffer.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

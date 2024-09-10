@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PluginModule>
+	<EffectPlugin Name="Krotos Vocoder" CompanyID="269" PluginID="42" SupportsIsSendModeEffect="true" >
+    <PluginInfo MenuPath="25-Krotos">
+	<PlatformSupport>
+		<Platform Name="Windows">
+			<CanBeInsertOnBusses>true</CanBeInsertOnBusses>
+			<CanBeInsertOnAudioObjects>true</CanBeInsertOnAudioObjects>
+			<CanBeRendered>true</CanBeRendered>
+		</Platform>
+        <Platform Name="PS4">
+          <CanBeInsertOnBusses>true</CanBeInsertOnBusses>
+          <CanBeInsertOnAudioObjects>true</CanBeInsertOnAudioObjects>
+          <CanBeRendered>true</CanBeRendered>
+        </Platform>
+        <Platform Name="XboxOne">
+          <CanBeInsertOnBusses>true</CanBeInsertOnBusses>
+          <CanBeInsertOnAudioObjects>true</CanBeInsertOnAudioObjects>
+          <CanBeRendered>true</CanBeRendered>
+        </Platform>
+        <Platform Name="Mac">
+          <CanBeInsertOnBusses>true</CanBeInsertOnBusses>
+          <CanBeInsertOnAudioObjects>true</CanBeInsertOnAudioObjects>
+          <CanBeRendered>true</CanBeRendered>
+        </Platform>
+        <Platform Name="Linux">
+          <CanBeInsertOnBusses>true</CanBeInsertOnBusses>
+          <CanBeInsertOnAudioObjects>true</CanBeInsertOnAudioObjects>
+          <CanBeRendered>true</CanBeRendered>
+        </Platform>
+      </PlatformSupport>
+		</PluginInfo>
+		<Properties>
+      <Property Name="Carrier" Type="int32" SupportRTPCType="Exclusive">
+        <UserInterface DisplayName="Carrier" />
+        <DefaultValue>2</DefaultValue>
+        <AudioEnginePropertyID>0</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Enumeration Type="int32">
+              <Value DisplayName="Pitch Tracker"    >1</Value>
+              <Value DisplayName="Set Pitch Manually">2</Value>
+              <Value DisplayName="Noise"          >3</Value>
+            </Enumeration>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="CarrierFrequency" Type="Real32" SupportRTPCType="Exclusive" DataMeaning="Frequency">
+        <UserInterface DisplayName="Carrier Frequency" Step="0.1" />
+        <DefaultValue>148</DefaultValue>
+        <AudioEnginePropertyID>1</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>0.1</Min>
+              <Max>1000</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="CarrierFrequencyMax" Type="Real32" SupportRTPCType="Exclusive" DataMeaning="Frequency">
+        <UserInterface DisplayName="Carrier Frequency Max" Step="1" />
+        <DefaultValue>876</DefaultValue>
+        <AudioEnginePropertyID>2</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>0.1</Min>
+              <Max>1000</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="CarrierFrequencyMin" Type="Real32" SupportRTPCType="Exclusive" DataMeaning="Frequency">
+        <UserInterface DisplayName="Carrier Frequency Min" Step="1" />
+        <DefaultValue>22</DefaultValue>
+        <AudioEnginePropertyID>3</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>0.1</Min>
+              <Max>1000</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="CarrierWaveform" Type="int32" SupportRTPCType="Exclusive">
+        <UserInterface DisplayName="Carrier Waveform" />
+        <DefaultValue>2</DefaultValue>
+        <AudioEnginePropertyID>4</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Enumeration Type="int32">
+              <Value DisplayName="Sinusoidal">0</Value>
+              <Value DisplayName="Triangle">1</Value>
+              <Value DisplayName="Sawtooth">2</Value>
+              <Value DisplayName="Reverse SawTooth">3</Value>
+              <Value DisplayName="Square">4</Value>
+              <Value DisplayName="Tangent">8</Value>
+              <Value DisplayName="Sinc">14</Value>
+              <Value DisplayName="Bandlimited Impulse Train">20</Value>
+              <Value DisplayName="Bandlimited Sawtooth">22</Value>
+              <Value DisplayName="Bandlimited Sqaure">24</Value>
+              </Enumeration>
+          </ValueRestriction>
+          </Restrictions>
+      </Property>
+      <Property Name="EnvelopeAttackTime" Type="Real32" SupportRTPCType="Exclusive">
+        <UserInterface DisplayName="Envelope Attack Time" />
+        <DefaultValue>1</DefaultValue>
+        <AudioEnginePropertyID>5</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>1</Min>
+              <Max>1000</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="EnvelopeReleaseTime" Type="Real32" SupportRTPCType="Exclusive">
+        <UserInterface DisplayName="Envelope Release Time" />
+        <DefaultValue>411</DefaultValue>
+        <AudioEnginePropertyID>6</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>1</Min>
+              <Max>3000</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="PitchTrackerAlgorithm" Type="int32" SupportRTPCType="Exclusive">
+        <UserInterface DisplayName="Pitch Tracker algorithm" />
+        <DefaultValue>3</DefaultValue>
+        <AudioEnginePropertyID>7</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="int32">
+              <Min>0</Min>
+              <Max>4</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="EQSlider1" Type="Real32" SupportRTPCType="Exclusive">
+        <UserInterface DisplayName="EQ Band 1" Decimals="3" Step="0.01" Fine="0.001" Mid="1" />
+        <DefaultValue>0.67</DefaultValue>
+        <AudioEnginePropertyID>8</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>0</Min>
+              <Max>2</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="EQSlider2" Type="Real32" SupportRTPCType="Exclusive">
+        <UserInterface DisplayName="EQ Band 2" Decimals="3" Step="0.01" Fine="0.001" Mid="1" />
+        <DefaultValue>0.65</DefaultValue>
+        <AudioEnginePropertyID>9</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>0</Min>
+              <Max>2</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="EQSlider3" Type="Real32" SupportRTPCType="Exclusive">
+        <UserInterface DisplayName="EQ Band 3" Decimals="3" Step="0.01" Fine="0.001" Mid="1" />
+        <DefaultValue>0.77</DefaultValue>
+        <AudioEnginePropertyID>10</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>0</Min>
+              <Max>2</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="EQSlider4" Type="Real32" SupportRTPCType="Exclusive">
+        <UserInterface DisplayName="EQ Band 4" Decimals="3" Step="0.01" Fine="0.001" Mid="1" />
+        <DefaultValue>1.6</DefaultValue>
+        <AudioEnginePropertyID>11</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>0</Min>
+              <Max>2</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="EQSlider5" Type="Real32" SupportRTPCType="Exclusive">
+        <UserInterface DisplayName="EQ Band 5" Decimals="3" Step="0.01" Fine="0.001" Mid="1" />
+        <DefaultValue>1.47</DefaultValue>
+        <AudioEnginePropertyID>12</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>0</Min>
+              <Max>2</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="EQSlider6" Type="Real32" SupportRTPCType="Exclusive">
+        <UserInterface DisplayName="EQ Band 6" Decimals="3" Step="0.01" Fine="0.001" Mid="1" />
+        <DefaultValue>1.7</DefaultValue>
+        <AudioEnginePropertyID>13</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>0</Min>
+              <Max>2</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="EQSlider7" Type="Real32" SupportRTPCType="Exclusive">
+        <UserInterface DisplayName="EQ Band 7" Decimals="3" Step="0.01" Fine="0.001" Mid="1" />
+        <DefaultValue>1.5</DefaultValue>
+        <AudioEnginePropertyID>14</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>0</Min>
+              <Max>2</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="EQSlider8" Type="Real32" SupportRTPCType="Exclusive">
+        <UserInterface DisplayName="EQ Band 8" Decimals="3" Step="0.01" Fine="0.001" Mid="1" />
+        <DefaultValue>1.59</DefaultValue>
+        <AudioEnginePropertyID>15</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>0</Min>
+              <Max>2</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="MasterLevel" Type="Real32" SupportRTPCType="Exclusive">
+        <UserInterface DisplayName="Master Wet Level" Step="0.1" Fine="0.01" Decimals="2" />
+        <DefaultValue>0</DefaultValue>
+        <AudioEnginePropertyID>16</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>-96.3</Min>
+              <Max>12</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="DryLevel" Type="Real32" SupportRTPCType="Exclusive">
+        <UserInterface DisplayName="Master Dry Level" Step="0.1" Fine="0.01" Decimals="2" />
+        <DefaultValue>-96.3</DefaultValue>
+        <AudioEnginePropertyID>17</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>-96.3</Min>
+              <Max>0</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+		</Properties>
+	</EffectPlugin>
+</PluginModule>

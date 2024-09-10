@@ -1,0 +1,12 @@
+
+cladJsonKeyFiles = "files"
+cladJsonKeyFileName = "fileName"
+cladJsonKeyHeaderComment = "headerComment"
+cladJsonKeyNamespaces = "namespaces"
+cladJsonKeyType = "type"
+cladJsonKeyEnum = "enum"
+cladJsonKeyTitle = "title"
+cladJsonKeyMembers = "members"
+cladJsonKeyMemberName = "name"
+cladJsonKeyMemberValue = "value"
+cladJsonKeyMemberComment = "comment"

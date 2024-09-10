@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (C) 2006 Audiokinetic Inc. -->
+<PluginModule>
+  <SourcePlugin Name="Anki Wave Portal" CompanyID="300" PluginID="100">
+		<PluginInfo>
+			<PlatformSupport>
+				<Platform Name="Windows"></Platform>
+				<Platform Name="Linux"></Platform>
+				<Platform Name="WindowsPhone"></Platform>
+				<Platform Name="XboxOne"></Platform>
+				<Platform Name="Xbox360"></Platform>
+				<Platform Name="PS3"></Platform>
+				<Platform Name="PS4"></Platform>
+				<Platform Name="Android"></Platform>
+				<Platform Name="Wii"></Platform>
+				<Platform Name="WiiUSW"></Platform>
+				<Platform Name="WiiUHW"></Platform>
+				<Platform Name="Mac"></Platform>
+				<Platform Name="VitaSW"></Platform>
+				<Platform Name="VitaHW"></Platform>
+				<Platform Name="3DS"></Platform>
+				<Platform Name="iOS"></Platform>
+			</PlatformSupport>
+		</PluginInfo>
+    <Properties>
+      <Property Name="PluginId" Type="int32">
+        <UserInterface DisplayName="Plugin ID" Step="1" Fine="1" />
+        <DefaultValue>0</DefaultValue>
+        <AudioEnginePropertyID>0</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="int32">
+              <Min>0</Min>
+              <Max>10</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+    </Properties>
+  </SourcePlugin>
+</PluginModule>

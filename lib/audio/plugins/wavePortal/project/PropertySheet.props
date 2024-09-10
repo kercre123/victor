@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <WavePortalBuild>..\build</WavePortalBuild>
+    <WwiseInclude>$(WWISESDK)\include</WwiseInclude>
+    <WwiseLib>$(WWISESDK)\$(Platform)_vc120\$(Configuration)\lib</WwiseLib>
+    <WavePortalLib>$(WavePortalBuild)\$(Platform)_vc120\$(Configuration)\lib</WavePortalLib>
+    <WavePortalInclude>..\pluginInclude</WavePortalInclude>
+    <WavePortalSource>.\pluginSource</WavePortalSource>
+  </PropertyGroup>
+  <PropertyGroup>
+    <_PropertySheetDisplayName>PropertySheet</_PropertySheetDisplayName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_DEBUG;WWISE_AUTHORING;HIJACK_PLUGIN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="WavePortalBuild">
+      <Value>$(WavePortalBuild)</Value>
+    </BuildMacro>
+    <BuildMacro Include="WwiseInclude">
+      <Value>$(WwiseInclude)</Value>
+    </BuildMacro>
+    <BuildMacro Include="WwiseLib">
+      <Value>$(WwiseLib)</Value>
+    </BuildMacro>
+    <BuildMacro Include="WavePortalLib">
+      <Value>$(WavePortalLib)</Value>
+    </BuildMacro>
+    <BuildMacro Include="WavePortalInclude">
+      <Value>$(WavePortalInclude)</Value>
+    </BuildMacro>
+    <BuildMacro Include="WavePortalSource">
+      <Value>$(WavePortalSource)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

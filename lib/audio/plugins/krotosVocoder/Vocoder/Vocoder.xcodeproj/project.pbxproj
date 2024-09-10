@@ -1,0 +1,563 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 48;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5D4A8DE420BFFDF600F02055 /* Vocoder.h in Headers */ = {isa = PBXBuildFile; fileRef = 5D4A8DE020BFFDF600F02055 /* Vocoder.h */; };
+		5D4A8DE520BFFDF600F02055 /* VocoderRingBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5D4A8DE120BFFDF600F02055 /* VocoderRingBuffer.h */; };
+		5D4A8DE620BFFDF600F02055 /* Vocoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8DE220BFFDF600F02055 /* Vocoder.cpp */; };
+		5D4A8DE720BFFDF600F02055 /* VocoderRingBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8DE320BFFDF600F02055 /* VocoderRingBuffer.cpp */; };
+		5D4A8DFC20C001AF00F02055 /* KrotosVocoderFX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8DEF20C001AF00F02055 /* KrotosVocoderFX.cpp */; };
+		5D4A8DFE20C001AF00F02055 /* KrotosVocoderFX.h in Headers */ = {isa = PBXBuildFile; fileRef = 5D4A8DF120C001AF00F02055 /* KrotosVocoderFX.h */; };
+		5D4A8DFF20C001AF00F02055 /* KrotosVocoderFXDSP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8DF220C001AF00F02055 /* KrotosVocoderFXDSP.cpp */; };
+		5D4A8E0020C001AF00F02055 /* KrotosVocoderFXParams.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8DF320C001AF00F02055 /* KrotosVocoderFXParams.cpp */; };
+		5D4A8E0120C001AF00F02055 /* KrotosVocoderFXDSP.h in Headers */ = {isa = PBXBuildFile; fileRef = 5D4A8DF420C001AF00F02055 /* KrotosVocoderFXDSP.h */; };
+		5D4A8E0220C001AF00F02055 /* KrotosVocoderFXParams.h in Headers */ = {isa = PBXBuildFile; fileRef = 5D4A8DF520C001AF00F02055 /* KrotosVocoderFXParams.h */; };
+		5D4A8E1020C0026700F02055 /* WavetableOscillator.h in Headers */ = {isa = PBXBuildFile; fileRef = 5D4A8E0420C0026600F02055 /* WavetableOscillator.h */; };
+		5D4A8E1120C0026700F02055 /* Wavetables.h in Headers */ = {isa = PBXBuildFile; fileRef = 5D4A8E0520C0026600F02055 /* Wavetables.h */; };
+		5D4A8E1220C0026700F02055 /* NoiseOscillator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E0620C0026600F02055 /* NoiseOscillator.cpp */; };
+		5D4A8E1320C0026700F02055 /* RingBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5D4A8E0720C0026600F02055 /* RingBuffer.h */; };
+		5D4A8E1420C0026700F02055 /* RingBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E0820C0026600F02055 /* RingBuffer.cpp */; };
+		5D4A8E1520C0026700F02055 /* EnvelopeDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E0920C0026600F02055 /* EnvelopeDetector.cpp */; };
+		5D4A8E1620C0026700F02055 /* EnvelopeDetector.h in Headers */ = {isa = PBXBuildFile; fileRef = 5D4A8E0B20C0026600F02055 /* EnvelopeDetector.h */; };
+		5D4A8E1720C0026700F02055 /* StereoSpread.h in Headers */ = {isa = PBXBuildFile; fileRef = 5D4A8E0C20C0026600F02055 /* StereoSpread.h */; };
+		5D4A8E1820C0026700F02055 /* NoiseOscillator.h in Headers */ = {isa = PBXBuildFile; fileRef = 5D4A8E0D20C0026600F02055 /* NoiseOscillator.h */; };
+		5D4A8E1920C0026700F02055 /* WavetableOscillator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E0E20C0026700F02055 /* WavetableOscillator.cpp */; };
+		5D4A8E1A20C0026700F02055 /* Window.h in Headers */ = {isa = PBXBuildFile; fileRef = 5D4A8E0F20C0026700F02055 /* Window.h */; };
+		5D4A8E2020C0038200F02055 /* PitchTracker.h in Headers */ = {isa = PBXBuildFile; fileRef = 5D4A8E1C20C0038200F02055 /* PitchTracker.h */; };
+		5D4A8E2120C0038200F02055 /* PitchTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E1F20C0038200F02055 /* PitchTracker.cpp */; };
+		5D4A8E5B20C01B5C00F02055 /* sincTableForInterpolation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E2920C01B5200F02055 /* sincTableForInterpolation.cpp */; };
+		5D4A8E5F20C01B5C00F02055 /* squareTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E2E20C01B5300F02055 /* squareTable.cpp */; };
+		5D4A8E6320C01B5C00F02055 /* sinTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E3220C01B5400F02055 /* sinTable.cpp */; };
+		5D4A8E6520C01B5C00F02055 /* tangentTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E3420C01B5400F02055 /* tangentTable.cpp */; };
+		5D4A8E6620C01B5C00F02055 /* bandlimitedSawtoothTableForInterpolation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E3520C01B5500F02055 /* bandlimitedSawtoothTableForInterpolation.cpp */; };
+		5D4A8E6720C01B5C00F02055 /* reverseSawtoothTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E3620C01B5500F02055 /* reverseSawtoothTable.cpp */; };
+		5D4A8E6B20C01B5C00F02055 /* bandlimitedImpulseTableForInterpolation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E3A20C01B5600F02055 /* bandlimitedImpulseTableForInterpolation.cpp */; };
+		5D4A8E6D20C01B5C00F02055 /* sincTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E3C20C01B5600F02055 /* sincTable.cpp */; };
+		5D4A8E6F20C01B5C00F02055 /* squareTableForInterpolation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E3E20C01B5600F02055 /* squareTableForInterpolation.cpp */; };
+		5D4A8E7020C01B5C00F02055 /* bandlimitedSquareTableForInterpolation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E3F20C01B5700F02055 /* bandlimitedSquareTableForInterpolation.cpp */; };
+		5D4A8E7220C01B5C00F02055 /* triangleTableForInterpolation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E4120C01B5700F02055 /* triangleTableForInterpolation.cpp */; };
+		5D4A8E7320C01B5C00F02055 /* bandlimitedSawtoothTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E4220C01B5700F02055 /* bandlimitedSawtoothTable.cpp */; };
+		5D4A8E7520C01B5C00F02055 /* bandlimitedSquareTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E4420C01B5800F02055 /* bandlimitedSquareTable.cpp */; };
+		5D4A8E7820C01B5C00F02055 /* bandlimitedImpulseTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E4720C01B5800F02055 /* bandlimitedImpulseTable.cpp */; };
+		5D4A8E7920C01B5C00F02055 /* sinTableForInterpolation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E4820C01B5800F02055 /* sinTableForInterpolation.cpp */; };
+		5D4A8E7D20C01B5C00F02055 /* triangleTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E4C20C01B5900F02055 /* triangleTable.cpp */; };
+		5D4A8E7F20C01B5C00F02055 /* sawtoothTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E4E20C01B5A00F02055 /* sawtoothTable.cpp */; };
+		5D4A8E8120C01B5C00F02055 /* tangentTableForInterpolation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E5020C01B5A00F02055 /* tangentTableForInterpolation.cpp */; };
+		5D4A8E8320C01B5C00F02055 /* sawtoothTableForInterpolation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E5220C01B5A00F02055 /* sawtoothTableForInterpolation.cpp */; };
+		5D4A8E8620C01B5C00F02055 /* hannTableForInterpolation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E5520C01B5B00F02055 /* hannTableForInterpolation.cpp */; };
+		5D4A8E8820C01B5C00F02055 /* reverseSawtoothTableForInterpolation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E5720C01B5B00F02055 /* reverseSawtoothTableForInterpolation.cpp */; };
+		5D4A8E9720C0307B00F02055 /* Cepstrum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E8C20C0307900F02055 /* Cepstrum.cpp */; };
+		5D4A8E9820C0307B00F02055 /* Yin.h in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E8D20C0307900F02055 /* Yin.h */; };
+		5D4A8E9920C0307B00F02055 /* Autocorrelation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E8E20C0307900F02055 /* Autocorrelation.cpp */; };
+		5D4A8E9A20C0307B00F02055 /* McLeod.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E8F20C0307900F02055 /* McLeod.cpp */; };
+		5D4A8E9B20C0307B00F02055 /* Autocorrelation.h in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E9020C0307900F02055 /* Autocorrelation.h */; };
+		5D4A8E9C20C0307B00F02055 /* Cepstrum.h in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E9120C0307A00F02055 /* Cepstrum.h */; };
+		5D4A8E9D20C0307B00F02055 /* SpectrumBased.h in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E9220C0307A00F02055 /* SpectrumBased.h */; };
+		5D4A8E9E20C0307B00F02055 /* McLeod.h in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E9320C0307A00F02055 /* McLeod.h */; };
+		5D4A8E9F20C0307B00F02055 /* PitchTrackerAbstractClass.h in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E9420C0307A00F02055 /* PitchTrackerAbstractClass.h */; };
+		5D4A8EA020C0307B00F02055 /* SpectrumBased.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E9520C0307A00F02055 /* SpectrumBased.cpp */; };
+		5D4A8EA120C0307B00F02055 /* Yin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D4A8E9620C0307B00F02055 /* Yin.cpp */; };
+		5DD29A0F20D7C16D00FD7782 /* FastFourierTransform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5DD29A0E20D7C16D00FD7782 /* FastFourierTransform.cpp */; };
+		5DD29A1220D7C24800FD7782 /* kiss_fft.c in Sources */ = {isa = PBXBuildFile; fileRef = 5DD29A1020D7C24700FD7782 /* kiss_fft.c */; };
+		5DD29A1320D7C24800FD7782 /* kiss_fftr.c in Sources */ = {isa = PBXBuildFile; fileRef = 5DD29A1120D7C24800FD7782 /* kiss_fftr.c */; };
+		5DD29A1520D7C82500FD7782 /* AudioAnalysisFramework.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5DD29A1420D7C82500FD7782 /* AudioAnalysisFramework.cpp */; };
+		5DD29A1820D7C88300FD7782 /* LowpassFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5DD29A1620D7C88300FD7782 /* LowpassFilter.cpp */; };
+		5DD29A1920D7C88300FD7782 /* MelFrequencySpectrum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5DD29A1720D7C88300FD7782 /* MelFrequencySpectrum.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		5D4A8DD120BFFDC500F02055 /* libVocoder.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libVocoder.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		5D4A8DE020BFFDF600F02055 /* Vocoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Vocoder.h; path = ../Source/Vocoder/Vocoder.h; sourceTree = "<group>"; };
+		5D4A8DE120BFFDF600F02055 /* VocoderRingBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VocoderRingBuffer.h; path = ../Source/Vocoder/VocoderRingBuffer.h; sourceTree = "<group>"; };
+		5D4A8DE220BFFDF600F02055 /* Vocoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Vocoder.cpp; path = ../Source/Vocoder/Vocoder.cpp; sourceTree = "<group>"; };
+		5D4A8DE320BFFDF600F02055 /* VocoderRingBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VocoderRingBuffer.cpp; path = ../Source/Vocoder/VocoderRingBuffer.cpp; sourceTree = "<group>"; };
+		5D4A8DEF20C001AF00F02055 /* KrotosVocoderFX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = KrotosVocoderFX.cpp; path = ../Source/VocoderFX/KrotosVocoderFX.cpp; sourceTree = "<group>"; };
+		5D4A8DF120C001AF00F02055 /* KrotosVocoderFX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = KrotosVocoderFX.h; path = ../Source/VocoderFX/KrotosVocoderFX.h; sourceTree = "<group>"; };
+		5D4A8DF220C001AF00F02055 /* KrotosVocoderFXDSP.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = KrotosVocoderFXDSP.cpp; path = ../Source/VocoderFX/KrotosVocoderFXDSP.cpp; sourceTree = "<group>"; };
+		5D4A8DF320C001AF00F02055 /* KrotosVocoderFXParams.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = KrotosVocoderFXParams.cpp; path = ../Source/VocoderFX/KrotosVocoderFXParams.cpp; sourceTree = "<group>"; };
+		5D4A8DF420C001AF00F02055 /* KrotosVocoderFXDSP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = KrotosVocoderFXDSP.h; path = ../Source/VocoderFX/KrotosVocoderFXDSP.h; sourceTree = "<group>"; };
+		5D4A8DF520C001AF00F02055 /* KrotosVocoderFXParams.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = KrotosVocoderFXParams.h; path = ../Source/VocoderFX/KrotosVocoderFXParams.h; sourceTree = "<group>"; };
+		5D4A8E0420C0026600F02055 /* WavetableOscillator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WavetableOscillator.h; path = ../Source/KrotosDSP/WavetableOscillator.h; sourceTree = "<group>"; };
+		5D4A8E0520C0026600F02055 /* Wavetables.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Wavetables.h; path = ../Source/KrotosDSP/Wavetables.h; sourceTree = "<group>"; };
+		5D4A8E0620C0026600F02055 /* NoiseOscillator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NoiseOscillator.cpp; path = ../Source/KrotosDSP/NoiseOscillator.cpp; sourceTree = "<group>"; };
+		5D4A8E0720C0026600F02055 /* RingBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RingBuffer.h; path = ../Source/KrotosDSP/RingBuffer.h; sourceTree = "<group>"; };
+		5D4A8E0820C0026600F02055 /* RingBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RingBuffer.cpp; path = ../Source/KrotosDSP/RingBuffer.cpp; sourceTree = "<group>"; };
+		5D4A8E0920C0026600F02055 /* EnvelopeDetector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EnvelopeDetector.cpp; path = ../Source/KrotosDSP/EnvelopeDetector.cpp; sourceTree = "<group>"; };
+		5D4A8E0A20C0026600F02055 /* Tables */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Tables; path = ../Source/KrotosDSP/Tables; sourceTree = "<group>"; };
+		5D4A8E0B20C0026600F02055 /* EnvelopeDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EnvelopeDetector.h; path = ../Source/KrotosDSP/EnvelopeDetector.h; sourceTree = "<group>"; };
+		5D4A8E0C20C0026600F02055 /* StereoSpread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StereoSpread.h; path = ../Source/KrotosDSP/StereoSpread.h; sourceTree = "<group>"; };
+		5D4A8E0D20C0026600F02055 /* NoiseOscillator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NoiseOscillator.h; path = ../Source/KrotosDSP/NoiseOscillator.h; sourceTree = "<group>"; };
+		5D4A8E0E20C0026700F02055 /* WavetableOscillator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WavetableOscillator.cpp; path = ../Source/KrotosDSP/WavetableOscillator.cpp; sourceTree = "<group>"; };
+		5D4A8E0F20C0026700F02055 /* Window.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Window.h; path = ../Source/KrotosDSP/Window.h; sourceTree = "<group>"; };
+		5D4A8E1C20C0038200F02055 /* PitchTracker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PitchTracker.h; path = ../Source/PitchTracking/PitchTracker.h; sourceTree = "<group>"; };
+		5D4A8E1E20C0038200F02055 /* audio-analysis-framework */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "audio-analysis-framework"; path = "../Source/PitchTracking/audio-analysis-framework"; sourceTree = "<group>"; };
+		5D4A8E1F20C0038200F02055 /* PitchTracker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PitchTracker.cpp; path = ../Source/PitchTracking/PitchTracker.cpp; sourceTree = "<group>"; };
+		5D4A8E2920C01B5200F02055 /* sincTableForInterpolation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = sincTableForInterpolation.cpp; path = ../Source/KrotosDSP/Tables/sincTableForInterpolation.cpp; sourceTree = "<group>"; };
+		5D4A8E2E20C01B5300F02055 /* squareTable.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = squareTable.cpp; path = ../Source/KrotosDSP/Tables/squareTable.cpp; sourceTree = "<group>"; };
+		5D4A8E3220C01B5400F02055 /* sinTable.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = sinTable.cpp; path = ../Source/KrotosDSP/Tables/sinTable.cpp; sourceTree = "<group>"; };
+		5D4A8E3420C01B5400F02055 /* tangentTable.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = tangentTable.cpp; path = ../Source/KrotosDSP/Tables/tangentTable.cpp; sourceTree = "<group>"; };
+		5D4A8E3520C01B5500F02055 /* bandlimitedSawtoothTableForInterpolation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = bandlimitedSawtoothTableForInterpolation.cpp; path = ../Source/KrotosDSP/Tables/bandlimitedSawtoothTableForInterpolation.cpp; sourceTree = "<group>"; };
+		5D4A8E3620C01B5500F02055 /* reverseSawtoothTable.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = reverseSawtoothTable.cpp; path = ../Source/KrotosDSP/Tables/reverseSawtoothTable.cpp; sourceTree = "<group>"; };
+		5D4A8E3A20C01B5600F02055 /* bandlimitedImpulseTableForInterpolation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = bandlimitedImpulseTableForInterpolation.cpp; path = ../Source/KrotosDSP/Tables/bandlimitedImpulseTableForInterpolation.cpp; sourceTree = "<group>"; };
+		5D4A8E3C20C01B5600F02055 /* sincTable.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = sincTable.cpp; path = ../Source/KrotosDSP/Tables/sincTable.cpp; sourceTree = "<group>"; };
+		5D4A8E3E20C01B5600F02055 /* squareTableForInterpolation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = squareTableForInterpolation.cpp; path = ../Source/KrotosDSP/Tables/squareTableForInterpolation.cpp; sourceTree = "<group>"; };
+		5D4A8E3F20C01B5700F02055 /* bandlimitedSquareTableForInterpolation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = bandlimitedSquareTableForInterpolation.cpp; path = ../Source/KrotosDSP/Tables/bandlimitedSquareTableForInterpolation.cpp; sourceTree = "<group>"; };
+		5D4A8E4120C01B5700F02055 /* triangleTableForInterpolation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = triangleTableForInterpolation.cpp; path = ../Source/KrotosDSP/Tables/triangleTableForInterpolation.cpp; sourceTree = "<group>"; };
+		5D4A8E4220C01B5700F02055 /* bandlimitedSawtoothTable.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = bandlimitedSawtoothTable.cpp; path = ../Source/KrotosDSP/Tables/bandlimitedSawtoothTable.cpp; sourceTree = "<group>"; };
+		5D4A8E4420C01B5800F02055 /* bandlimitedSquareTable.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = bandlimitedSquareTable.cpp; path = ../Source/KrotosDSP/Tables/bandlimitedSquareTable.cpp; sourceTree = "<group>"; };
+		5D4A8E4720C01B5800F02055 /* bandlimitedImpulseTable.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = bandlimitedImpulseTable.cpp; path = ../Source/KrotosDSP/Tables/bandlimitedImpulseTable.cpp; sourceTree = "<group>"; };
+		5D4A8E4820C01B5800F02055 /* sinTableForInterpolation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = sinTableForInterpolation.cpp; path = ../Source/KrotosDSP/Tables/sinTableForInterpolation.cpp; sourceTree = "<group>"; };
+		5D4A8E4C20C01B5900F02055 /* triangleTable.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = triangleTable.cpp; path = ../Source/KrotosDSP/Tables/triangleTable.cpp; sourceTree = "<group>"; };
+		5D4A8E4E20C01B5A00F02055 /* sawtoothTable.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = sawtoothTable.cpp; path = ../Source/KrotosDSP/Tables/sawtoothTable.cpp; sourceTree = "<group>"; };
+		5D4A8E5020C01B5A00F02055 /* tangentTableForInterpolation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = tangentTableForInterpolation.cpp; path = ../Source/KrotosDSP/Tables/tangentTableForInterpolation.cpp; sourceTree = "<group>"; };
+		5D4A8E5220C01B5A00F02055 /* sawtoothTableForInterpolation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = sawtoothTableForInterpolation.cpp; path = ../Source/KrotosDSP/Tables/sawtoothTableForInterpolation.cpp; sourceTree = "<group>"; };
+		5D4A8E5520C01B5B00F02055 /* hannTableForInterpolation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = hannTableForInterpolation.cpp; path = ../Source/KrotosDSP/Tables/hannTableForInterpolation.cpp; sourceTree = "<group>"; };
+		5D4A8E5720C01B5B00F02055 /* reverseSawtoothTableForInterpolation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = reverseSawtoothTableForInterpolation.cpp; path = ../Source/KrotosDSP/Tables/reverseSawtoothTableForInterpolation.cpp; sourceTree = "<group>"; };
+		5D4A8E8C20C0307900F02055 /* Cepstrum.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Cepstrum.cpp; path = ../Source/PitchTracking/PitchTrackingAlgorithms/Cepstrum.cpp; sourceTree = "<group>"; };
+		5D4A8E8D20C0307900F02055 /* Yin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Yin.h; path = ../Source/PitchTracking/PitchTrackingAlgorithms/Yin.h; sourceTree = "<group>"; };
+		5D4A8E8E20C0307900F02055 /* Autocorrelation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Autocorrelation.cpp; path = ../Source/PitchTracking/PitchTrackingAlgorithms/Autocorrelation.cpp; sourceTree = "<group>"; };
+		5D4A8E8F20C0307900F02055 /* McLeod.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = McLeod.cpp; path = ../Source/PitchTracking/PitchTrackingAlgorithms/McLeod.cpp; sourceTree = "<group>"; };
+		5D4A8E9020C0307900F02055 /* Autocorrelation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Autocorrelation.h; path = ../Source/PitchTracking/PitchTrackingAlgorithms/Autocorrelation.h; sourceTree = "<group>"; };
+		5D4A8E9120C0307A00F02055 /* Cepstrum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Cepstrum.h; path = ../Source/PitchTracking/PitchTrackingAlgorithms/Cepstrum.h; sourceTree = "<group>"; };
+		5D4A8E9220C0307A00F02055 /* SpectrumBased.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SpectrumBased.h; path = ../Source/PitchTracking/PitchTrackingAlgorithms/SpectrumBased.h; sourceTree = "<group>"; };
+		5D4A8E9320C0307A00F02055 /* McLeod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = McLeod.h; path = ../Source/PitchTracking/PitchTrackingAlgorithms/McLeod.h; sourceTree = "<group>"; };
+		5D4A8E9420C0307A00F02055 /* PitchTrackerAbstractClass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PitchTrackerAbstractClass.h; path = ../Source/PitchTracking/PitchTrackingAlgorithms/PitchTrackerAbstractClass.h; sourceTree = "<group>"; };
+		5D4A8E9520C0307A00F02055 /* SpectrumBased.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SpectrumBased.cpp; path = ../Source/PitchTracking/PitchTrackingAlgorithms/SpectrumBased.cpp; sourceTree = "<group>"; };
+		5D4A8E9620C0307B00F02055 /* Yin.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Yin.cpp; path = ../Source/PitchTracking/PitchTrackingAlgorithms/Yin.cpp; sourceTree = "<group>"; };
+		5DD29A0E20D7C16D00FD7782 /* FastFourierTransform.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = FastFourierTransform.cpp; path = "../Source/PitchTracking/audio-analysis-framework/FastFourierTransform.cpp"; sourceTree = "<group>"; };
+		5DD29A1020D7C24700FD7782 /* kiss_fft.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = kiss_fft.c; path = "../Source/PitchTracking/audio-analysis-framework/libraries/kiss_fft/kiss_fft.c"; sourceTree = "<group>"; };
+		5DD29A1120D7C24800FD7782 /* kiss_fftr.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = kiss_fftr.c; path = "../Source/PitchTracking/audio-analysis-framework/libraries/kiss_fft/kiss_fftr.c"; sourceTree = "<group>"; };
+		5DD29A1420D7C82500FD7782 /* AudioAnalysisFramework.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioAnalysisFramework.cpp; path = "../Source/PitchTracking/audio-analysis-framework/AudioAnalysisFramework.cpp"; sourceTree = "<group>"; };
+		5DD29A1620D7C88300FD7782 /* LowpassFilter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = LowpassFilter.cpp; path = "../Source/PitchTracking/audio-analysis-framework/LowpassFilter.cpp"; sourceTree = "<group>"; };
+		5DD29A1720D7C88300FD7782 /* MelFrequencySpectrum.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = MelFrequencySpectrum.cpp; path = "../Source/PitchTracking/audio-analysis-framework/MelFrequencySpectrum.cpp"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5D4A8DCE20BFFDC500F02055 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5D4A8DC820BFFDC500F02055 = {
+			isa = PBXGroup;
+			children = (
+				5DD29A1620D7C88300FD7782 /* LowpassFilter.cpp */,
+				5DD29A1720D7C88300FD7782 /* MelFrequencySpectrum.cpp */,
+				5DD29A1420D7C82500FD7782 /* AudioAnalysisFramework.cpp */,
+				5DD29A1020D7C24700FD7782 /* kiss_fft.c */,
+				5DD29A1120D7C24800FD7782 /* kiss_fftr.c */,
+				5DD29A0E20D7C16D00FD7782 /* FastFourierTransform.cpp */,
+				5D4A8E8E20C0307900F02055 /* Autocorrelation.cpp */,
+				5D4A8E9020C0307900F02055 /* Autocorrelation.h */,
+				5D4A8E8C20C0307900F02055 /* Cepstrum.cpp */,
+				5D4A8E9120C0307A00F02055 /* Cepstrum.h */,
+				5D4A8E8F20C0307900F02055 /* McLeod.cpp */,
+				5D4A8E9320C0307A00F02055 /* McLeod.h */,
+				5D4A8E9420C0307A00F02055 /* PitchTrackerAbstractClass.h */,
+				5D4A8E9520C0307A00F02055 /* SpectrumBased.cpp */,
+				5D4A8E9220C0307A00F02055 /* SpectrumBased.h */,
+				5D4A8E9620C0307B00F02055 /* Yin.cpp */,
+				5D4A8E8D20C0307900F02055 /* Yin.h */,
+				5D4A8E4720C01B5800F02055 /* bandlimitedImpulseTable.cpp */,
+				5D4A8E3A20C01B5600F02055 /* bandlimitedImpulseTableForInterpolation.cpp */,
+				5D4A8E4220C01B5700F02055 /* bandlimitedSawtoothTable.cpp */,
+				5D4A8E3520C01B5500F02055 /* bandlimitedSawtoothTableForInterpolation.cpp */,
+				5D4A8E4420C01B5800F02055 /* bandlimitedSquareTable.cpp */,
+				5D4A8E3F20C01B5700F02055 /* bandlimitedSquareTableForInterpolation.cpp */,
+				5D4A8E5520C01B5B00F02055 /* hannTableForInterpolation.cpp */,
+				5D4A8E3620C01B5500F02055 /* reverseSawtoothTable.cpp */,
+				5D4A8E5720C01B5B00F02055 /* reverseSawtoothTableForInterpolation.cpp */,
+				5D4A8E4E20C01B5A00F02055 /* sawtoothTable.cpp */,
+				5D4A8E5220C01B5A00F02055 /* sawtoothTableForInterpolation.cpp */,
+				5D4A8E3C20C01B5600F02055 /* sincTable.cpp */,
+				5D4A8E2920C01B5200F02055 /* sincTableForInterpolation.cpp */,
+				5D4A8E3220C01B5400F02055 /* sinTable.cpp */,
+				5D4A8E4820C01B5800F02055 /* sinTableForInterpolation.cpp */,
+				5D4A8E2E20C01B5300F02055 /* squareTable.cpp */,
+				5D4A8E3E20C01B5600F02055 /* squareTableForInterpolation.cpp */,
+				5D4A8E3420C01B5400F02055 /* tangentTable.cpp */,
+				5D4A8E5020C01B5A00F02055 /* tangentTableForInterpolation.cpp */,
+				5D4A8E4C20C01B5900F02055 /* triangleTable.cpp */,
+				5D4A8E4120C01B5700F02055 /* triangleTableForInterpolation.cpp */,
+				5D4A8E1B20C0036C00F02055 /* PitchTracking */,
+				5D4A8E0320C0024D00F02055 /* KrotosDSP */,
+				5D4A8DE820C0019300F02055 /* VocoderFX */,
+				5D4A8DDF20BFFDE000F02055 /* Vocoder */,
+				5D4A8DD220BFFDC500F02055 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5D4A8DD220BFFDC500F02055 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5D4A8DD120BFFDC500F02055 /* libVocoder.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5D4A8DDF20BFFDE000F02055 /* Vocoder */ = {
+			isa = PBXGroup;
+			children = (
+				5D4A8DE220BFFDF600F02055 /* Vocoder.cpp */,
+				5D4A8DE020BFFDF600F02055 /* Vocoder.h */,
+				5D4A8DE320BFFDF600F02055 /* VocoderRingBuffer.cpp */,
+				5D4A8DE120BFFDF600F02055 /* VocoderRingBuffer.h */,
+			);
+			name = Vocoder;
+			sourceTree = "<group>";
+		};
+		5D4A8DE820C0019300F02055 /* VocoderFX */ = {
+			isa = PBXGroup;
+			children = (
+				5D4A8DEF20C001AF00F02055 /* KrotosVocoderFX.cpp */,
+				5D4A8DF120C001AF00F02055 /* KrotosVocoderFX.h */,
+				5D4A8DF220C001AF00F02055 /* KrotosVocoderFXDSP.cpp */,
+				5D4A8DF420C001AF00F02055 /* KrotosVocoderFXDSP.h */,
+				5D4A8DF320C001AF00F02055 /* KrotosVocoderFXParams.cpp */,
+				5D4A8DF520C001AF00F02055 /* KrotosVocoderFXParams.h */,
+			);
+			name = VocoderFX;
+			sourceTree = "<group>";
+		};
+		5D4A8E0320C0024D00F02055 /* KrotosDSP */ = {
+			isa = PBXGroup;
+			children = (
+				5D4A8E0920C0026600F02055 /* EnvelopeDetector.cpp */,
+				5D4A8E0B20C0026600F02055 /* EnvelopeDetector.h */,
+				5D4A8E0620C0026600F02055 /* NoiseOscillator.cpp */,
+				5D4A8E0D20C0026600F02055 /* NoiseOscillator.h */,
+				5D4A8E0820C0026600F02055 /* RingBuffer.cpp */,
+				5D4A8E0720C0026600F02055 /* RingBuffer.h */,
+				5D4A8E0C20C0026600F02055 /* StereoSpread.h */,
+				5D4A8E0A20C0026600F02055 /* Tables */,
+				5D4A8E0E20C0026700F02055 /* WavetableOscillator.cpp */,
+				5D4A8E0420C0026600F02055 /* WavetableOscillator.h */,
+				5D4A8E0520C0026600F02055 /* Wavetables.h */,
+				5D4A8E0F20C0026700F02055 /* Window.h */,
+			);
+			name = KrotosDSP;
+			sourceTree = "<group>";
+		};
+		5D4A8E1B20C0036C00F02055 /* PitchTracking */ = {
+			isa = PBXGroup;
+			children = (
+				5D4A8E1E20C0038200F02055 /* audio-analysis-framework */,
+				5D4A8E1F20C0038200F02055 /* PitchTracker.cpp */,
+				5D4A8E1C20C0038200F02055 /* PitchTracker.h */,
+			);
+			name = PitchTracking;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		5D4A8DCF20BFFDC500F02055 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5D4A8E1620C0026700F02055 /* EnvelopeDetector.h in Headers */,
+				5D4A8DE420BFFDF600F02055 /* Vocoder.h in Headers */,
+				5D4A8E2020C0038200F02055 /* PitchTracker.h in Headers */,
+				5D4A8DE520BFFDF600F02055 /* VocoderRingBuffer.h in Headers */,
+				5D4A8E1720C0026700F02055 /* StereoSpread.h in Headers */,
+				5D4A8E1120C0026700F02055 /* Wavetables.h in Headers */,
+				5D4A8E1A20C0026700F02055 /* Window.h in Headers */,
+				5D4A8E1020C0026700F02055 /* WavetableOscillator.h in Headers */,
+				5D4A8E0220C001AF00F02055 /* KrotosVocoderFXParams.h in Headers */,
+				5D4A8E1320C0026700F02055 /* RingBuffer.h in Headers */,
+				5D4A8DFE20C001AF00F02055 /* KrotosVocoderFX.h in Headers */,
+				5D4A8E1820C0026700F02055 /* NoiseOscillator.h in Headers */,
+				5D4A8E0120C001AF00F02055 /* KrotosVocoderFXDSP.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		5D4A8DD020BFFDC500F02055 /* Vocoder */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5D4A8DDC20BFFDC500F02055 /* Build configuration list for PBXNativeTarget "Vocoder" */;
+			buildPhases = (
+				5D4A8DCD20BFFDC500F02055 /* Sources */,
+				5D4A8DCE20BFFDC500F02055 /* Frameworks */,
+				5D4A8DCF20BFFDC500F02055 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Vocoder;
+			productName = Vocoder;
+			productReference = 5D4A8DD120BFFDC500F02055 /* libVocoder.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5D4A8DC920BFFDC500F02055 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0920;
+				ORGANIZATIONNAME = "Dave Stevenson";
+				TargetAttributes = {
+					5D4A8DD020BFFDC500F02055 = {
+						CreatedOnToolsVersion = 9.2;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 5D4A8DCC20BFFDC500F02055 /* Build configuration list for PBXProject "Vocoder" */;
+			compatibilityVersion = "Xcode 8.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 5D4A8DC820BFFDC500F02055;
+			productRefGroup = 5D4A8DD220BFFDC500F02055 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5D4A8DD020BFFDC500F02055 /* Vocoder */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5D4A8DCD20BFFDC500F02055 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5DD29A1820D7C88300FD7782 /* LowpassFilter.cpp in Sources */,
+				5DD29A1920D7C88300FD7782 /* MelFrequencySpectrum.cpp in Sources */,
+				5DD29A1520D7C82500FD7782 /* AudioAnalysisFramework.cpp in Sources */,
+				5DD29A1220D7C24800FD7782 /* kiss_fft.c in Sources */,
+				5DD29A1320D7C24800FD7782 /* kiss_fftr.c in Sources */,
+				5DD29A0F20D7C16D00FD7782 /* FastFourierTransform.cpp in Sources */,
+				5D4A8E9720C0307B00F02055 /* Cepstrum.cpp in Sources */,
+				5D4A8E9820C0307B00F02055 /* Yin.h in Sources */,
+				5D4A8E9920C0307B00F02055 /* Autocorrelation.cpp in Sources */,
+				5D4A8E9A20C0307B00F02055 /* McLeod.cpp in Sources */,
+				5D4A8E9B20C0307B00F02055 /* Autocorrelation.h in Sources */,
+				5D4A8E9C20C0307B00F02055 /* Cepstrum.h in Sources */,
+				5D4A8E9D20C0307B00F02055 /* SpectrumBased.h in Sources */,
+				5D4A8E9E20C0307B00F02055 /* McLeod.h in Sources */,
+				5D4A8E9F20C0307B00F02055 /* PitchTrackerAbstractClass.h in Sources */,
+				5D4A8EA020C0307B00F02055 /* SpectrumBased.cpp in Sources */,
+				5D4A8EA120C0307B00F02055 /* Yin.cpp in Sources */,
+				5D4A8E5B20C01B5C00F02055 /* sincTableForInterpolation.cpp in Sources */,
+				5D4A8E5F20C01B5C00F02055 /* squareTable.cpp in Sources */,
+				5D4A8E6320C01B5C00F02055 /* sinTable.cpp in Sources */,
+				5D4A8E6520C01B5C00F02055 /* tangentTable.cpp in Sources */,
+				5D4A8E6620C01B5C00F02055 /* bandlimitedSawtoothTableForInterpolation.cpp in Sources */,
+				5D4A8E6720C01B5C00F02055 /* reverseSawtoothTable.cpp in Sources */,
+				5D4A8E6B20C01B5C00F02055 /* bandlimitedImpulseTableForInterpolation.cpp in Sources */,
+				5D4A8E6D20C01B5C00F02055 /* sincTable.cpp in Sources */,
+				5D4A8E6F20C01B5C00F02055 /* squareTableForInterpolation.cpp in Sources */,
+				5D4A8E7020C01B5C00F02055 /* bandlimitedSquareTableForInterpolation.cpp in Sources */,
+				5D4A8E7220C01B5C00F02055 /* triangleTableForInterpolation.cpp in Sources */,
+				5D4A8E7320C01B5C00F02055 /* bandlimitedSawtoothTable.cpp in Sources */,
+				5D4A8E7520C01B5C00F02055 /* bandlimitedSquareTable.cpp in Sources */,
+				5D4A8E7820C01B5C00F02055 /* bandlimitedImpulseTable.cpp in Sources */,
+				5D4A8E7920C01B5C00F02055 /* sinTableForInterpolation.cpp in Sources */,
+				5D4A8E7D20C01B5C00F02055 /* triangleTable.cpp in Sources */,
+				5D4A8E7F20C01B5C00F02055 /* sawtoothTable.cpp in Sources */,
+				5D4A8E8120C01B5C00F02055 /* tangentTableForInterpolation.cpp in Sources */,
+				5D4A8E8320C01B5C00F02055 /* sawtoothTableForInterpolation.cpp in Sources */,
+				5D4A8E8620C01B5C00F02055 /* hannTableForInterpolation.cpp in Sources */,
+				5D4A8E8820C01B5C00F02055 /* reverseSawtoothTableForInterpolation.cpp in Sources */,
+				5D4A8E2120C0038200F02055 /* PitchTracker.cpp in Sources */,
+				5D4A8DFF20C001AF00F02055 /* KrotosVocoderFXDSP.cpp in Sources */,
+				5D4A8E1420C0026700F02055 /* RingBuffer.cpp in Sources */,
+				5D4A8DE720BFFDF600F02055 /* VocoderRingBuffer.cpp in Sources */,
+				5D4A8E1220C0026700F02055 /* NoiseOscillator.cpp in Sources */,
+				5D4A8E0020C001AF00F02055 /* KrotosVocoderFXParams.cpp in Sources */,
+				5D4A8DE620BFFDF600F02055 /* Vocoder.cpp in Sources */,
+				5D4A8DFC20C001AF00F02055 /* KrotosVocoderFX.cpp in Sources */,
+				5D4A8E1920C0026700F02055 /* WavetableOscillator.cpp in Sources */,
+				5D4A8E1520C0026700F02055 /* EnvelopeDetector.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		5D4A8DDA20BFFDC500F02055 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = NO;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		5D4A8DDB20BFFDC500F02055 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		5D4A8DDD20BFFDC500F02055 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3HX6KKGDLH;
+				EXECUTABLE_PREFIX = lib;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				HEADER_SEARCH_PATHS = (
+					"\"/Applications/Audiokinetic/Wwise 2017.1.0.6302/SDK/include\"",
+					../Source/PitchTracking/PitchTrackingAlgorithms,
+					../Source/pitchTracking/,
+					../Source/VocoderFX/,
+				);
+				ONLY_ACTIVE_ARCH = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		5D4A8DDE20BFFDC500F02055 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3HX6KKGDLH;
+				EXECUTABLE_PREFIX = lib;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				HEADER_SEARCH_PATHS = (
+					"\"/Applications/Audiokinetic/Wwise 2017.1.0.6302/SDK/include\"",
+					../Source/PitchTracking/PitchTrackingAlgorithms,
+					../Source/pitchTracking/,
+					../Source/VocoderFX/,
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5D4A8DCC20BFFDC500F02055 /* Build configuration list for PBXProject "Vocoder" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5D4A8DDA20BFFDC500F02055 /* Debug */,
+				5D4A8DDB20BFFDC500F02055 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5D4A8DDC20BFFDC500F02055 /* Build configuration list for PBXNativeTarget "Vocoder" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5D4A8DDD20BFFDC500F02055 /* Debug */,
+				5D4A8DDE20BFFDC500F02055 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5D4A8DC920BFFDC500F02055 /* Project object */;
+}

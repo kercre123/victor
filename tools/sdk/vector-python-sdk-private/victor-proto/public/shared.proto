@@ -1,0 +1,320 @@
+// Copyright (c) 2018 Anki, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License in the file LICENSE.txt or at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// External interface for robot <-> app and robot <-> sdk communication
+
+syntax = "proto3";
+
+package Anki.Vector.external_interface;
+
+import "behavior.proto";
+import "cube.proto";
+import "alexa.proto"; // App only
+import "messages.proto";
+import "settings.proto";
+import "extensions.proto";
+import "response_status.proto";
+
+message ProtocolVersionRequest {
+  int64 client_version = 1;
+  int64 min_host_version = 2;
+}
+
+message ProtocolVersionResponse {
+  enum Result {
+    UNSUPPORTED = 0;
+    SUCCESS = 1;
+  }
+  Result result = 1;
+  int64 host_version = 2;
+}
+
+message ConnectionResponse {
+  ResponseStatus status = 1;
+  bool is_primary = 2;
+}
+
+// Messages originating from the engine
+message Event {
+  oneof event_type {
+    TimeStampedStatus                time_stamped_status                 = 1;
+    Onboarding                       onboarding                          = 2; // App only
+    WakeWord                         wake_word                           = 3;
+    AttentionTransfer                attention_transfer                  = 4; // App only
+    RobotObservedFace                robot_observed_face                 = 5;
+    RobotChangedObservedFaceID       robot_changed_observed_face_id      = 6;
+    ObjectEvent                      object_event                        = 7;
+    StimulationInfo                  stimulation_info                    = 8;
+    PhotoTaken                       photo_taken                         = 9;
+    RobotState                       robot_state                         = 10;
+    CubeBattery                      cube_battery                        = 11;
+    KeepAlivePing                    keep_alive                          = 12; // Used by Vector to verify the connection is still alive.
+    ConnectionResponse               connection_response                 = 13;
+    JdocsChanged                     jdocs_changed                       = 14; // App only
+    AlexaAuthEvent                   alexa_auth_event                    = 15; // App only
+    MirrorModeDisabled               mirror_mode_disabled                = 16;
+    VisionModesAutoDisabled          vision_modes_auto_disabled          = 17;
+    CheckUpdateStatusResponse        check_update_status_response        = 18; // App only
+    UserIntent                       user_intent                         = 19;
+    RobotObservedMotion              robot_observed_motion               = 20;
+    RobotErasedEnrolledFace          robot_erased_enrolled_face          = 21;
+    RobotRenamedEnrolledFace         robot_renamed_enrolled_face         = 22;
+    CameraSettingsUpdate             camera_settings_update              = 23;
+    UnexpectedMovement               unexpected_movement                 = 24;
+  }
+}
+
+message FilterList {
+  repeated string list = 1;
+}
+
+message EventRequest {
+  oneof list_type {
+    FilterList white_list = 1;
+    FilterList black_list = 2;
+  }
+  string connection_id = 3;
+}
+
+message EventResponse {
+  option (streamed) = true;
+  ResponseStatus status = 1;
+  Event event = 2;
+}
+
+message UserAuthenticationRequest {
+  bytes user_session_id = 1;
+  bytes client_name = 2;
+}
+
+message UserAuthenticationResponse {
+  ResponseStatus status = 1;
+  enum Code {
+    UNAUTHORIZED = 0;
+    AUTHORIZED = 1;
+  }
+  Code code = 2;
+  bytes client_token_guid = 3;
+}
+
+// *** App only proto below ***
+
+// Messages to pass to the engine
+
+// These are only used between engine and gateway, so the field indices may
+// be changed freely, unlike externally-facing proto definitions that where
+// changes could break backwards-compatibility.
+message GatewayWrapper {
+  // connection_id can be used to identify multiple messages going to/from 
+  // the same source
+  uint64 connection_id = 1;
+
+  oneof oneof_message_type {
+    // ------------ messages sent from robot to app ----------------------
+    Event event                                                      = 2;
+
+    // ------------ onboarding requests and responses --------------------
+    // 1p0 backward compatibility enum values vvv
+    OnboardingStateRequest        onboarding_state_request           = 3;
+    OnboardingState               onboarding_state                   = 4;
+    OnboardingSkipOnboarding      onboarding_skip_onboarding         = 5;
+    OnboardingRestart             onboarding_restart                 = 6;
+    OnboardingCompleteRequest     onboarding_complete_request        = 11;
+    OnboardingCompleteResponse    onboarding_complete_response       = 12;
+    OnboardingWakeUpRequest       onboarding_wake_up_request         = 13;
+    OnboardingWakeUpResponse      onboarding_wake_up_response        = 14;
+    OnboardingWakeUpStartedRequest  onboarding_wake_up_started_request = 15;
+    OnboardingWakeUpStartedResponse onboarding_wake_up_started_response = 16;
+    // 1p0 backward compatibility enum values ^^^
+    OnboardingSetPhaseRequest       onboarding_set_phase_request       = 17;
+    OnboardingSetPhaseResponse      onboarding_set_phase_response      = 18;
+    OnboardingPhaseProgressRequest  onboarding_phase_progress_request  = 19;
+    OnboardingPhaseProgressResponse onboarding_phase_progress_response = 20;
+    OnboardingChargeInfoRequest     onboarding_charge_info_request     = 21;
+    OnboardingChargeInfoResponse    onboarding_charge_info_response    = 22;
+    OnboardingMarkCompleteAndExit   onboarding_mark_complete_and_exit  = 23;
+
+    // ------------ Attention transfer -----------------------------------
+    LatestAttentionTransferRequest latest_attention_transfer_request = 100;
+    LatestAttentionTransfer        latest_attention_transfer         = 101;
+
+    // ------------ photos request/response pairs ------------------------
+    PhotosInfoRequest             photos_info_request                = 200;
+    PhotosInfoResponse            photos_info_response               = 201;
+    PhotoRequest                  photo_request                      = 202;
+    PhotoPathMessage              photo_path_message                 = 203;
+    ThumbnailRequest              thumbnail_request                  = 204;
+    ThumbnailPathMessage          thumbnail_path_message             = 205;
+    DeletePhotoRequest            delete_photo_request               = 206;
+    DeletePhotoResponse           delete_photo_response              = 207;
+
+    // ------------ settings pairs ---------------------------------------
+    PullJdocsRequest              pull_jdocs_request                 = 300;
+    PullJdocsResponse             pull_jdocs_response                = 301;
+    UpdateSettingsRequest         update_settings_request            = 302;
+    UpdateSettingsResponse        update_settings_response           = 303;
+    UpdateAccountSettingsRequest  update_account_settings_request    = 304;
+    UpdateAccountSettingsResponse update_account_settings_response   = 305;
+    UpdateUserEntitlementsRequest  update_user_entitlements_request  = 306;
+    UpdateUserEntitlementsResponse update_user_entitlements_response = 307;
+
+    // ------------ sdk behavior request/response pairs --------------------
+    DriveOffChargerRequest        drive_off_charger_request          = 400;
+    DriveOffChargerResponse       drive_off_charger_response         = 401;
+    DriveOnChargerRequest         drive_on_charger_request           = 402;
+    DriveOnChargerResponse        drive_on_charger_response          = 403;
+    FindFacesRequest              find_faces_request                 = 404;
+    FindFacesResponse             find_faces_response                = 405;
+    LookAroundInPlaceRequest      look_around_in_place_request       = 406;
+    LookAroundInPlaceResponse     look_around_in_place_response      = 407;
+    RollBlockRequest              roll_block_request                 = 408;
+    RollBlockResponse             roll_block_response                = 409;
+    EnrollFaceRequest             enroll_face_request                = 410;
+    EnrollFaceResponse            enroll_face_response               = 411;
+    SetFaceToEnrollRequest        set_face_to_enroll_request         = 412;
+    SetFaceToEnrollResponse       set_face_to_enroll_response        = 413;
+    CancelBehaviorRequest         cancel_behavior_request            = 414;
+    CancelBehaviorResponse        cancel_behavior_response           = 415;
+
+    // ------------ movement request/response pairs ----------------------
+    TurnInPlaceRequest              turn_in_place_request                = 500;
+    TurnInPlaceResponse             turn_in_place_response               = 501;
+    DriveStraightRequest            drive_straight_request               = 502;
+    DriveStraightResponse           drive_straight_response              = 503;
+    SetHeadAngleRequest             set_head_angle_request               = 504;
+    SetHeadAngleResponse            set_head_angle_response              = 505;
+    SetLiftHeightRequest            set_lift_height_request              = 506;
+    SetLiftHeightResponse           set_lift_height_response             = 507;
+    PlayAnimationRequest            play_animation_request               = 508;
+    PlayAnimationResponse           play_animation_response              = 509;
+    GoToPoseRequest                 go_to_pose_request                   = 510;
+    GoToPoseResponse                go_to_pose_response                  = 511;
+    DockWithCubeRequest             dock_with_cube_request               = 512;
+    DockWithCubeResponse            dock_with_cube_response              = 513;
+    DriveWheelsRequest              drive_wheels_request                 = 514;
+    DriveWheelsResponse             drive_wheels_response                = 515;
+    ListAnimationsRequest           list_animations_request              = 516;
+    ListAnimationsResponse          list_animations_response             = 517;
+    PlayAnimationTriggerRequest     play_animation_trigger_request       = 518;
+    ListAnimationTriggersRequest    list_animation_triggers_request      = 519;
+    ListAnimationTriggersResponse   list_animation_triggers_response     = 520;
+    CancelActionByIdTagRequest      cancel_action_by_id_tag_request      = 521;
+    CancelActionByIdTagResponse     cancel_action_by_id_tag_response     = 522;
+    TurnTowardsFaceRequest          turn_towards_face_request            = 523;
+    TurnTowardsFaceResponse         turn_towards_face_response           = 524;
+    GoToObjectRequest               go_to_object_request                 = 525;
+    GoToObjectResponse              go_to_object_response                = 526;
+    RollObjectRequest               roll_object_request                  = 527;
+    RollObjectResponse              roll_object_response                 = 528;
+    PopAWheelieRequest              pop_a_wheelie_request                = 529;
+    PopAWheelieResponse             pop_a_wheelie_response               = 530;
+    PickupObjectRequest             pickup_object_request                = 531;
+    PickupObjectResponse            pickup_object_response               = 532;
+    PlaceObjectOnGroundHereRequest  place_object_on_ground_here_request  = 533;
+    PlaceObjectOnGroundHereResponse place_object_on_ground_here_response = 534;
+    StopAllMotorsRequest            stop_all_motors_request              = 535;
+    StopAllMotorsResponse           stop_all_motors_response             = 536;
+
+
+    // ------------ status history --------------------
+    RobotHistoryRequest           robot_history_request              = 600;
+    RobotHistoryResponse          robot_history_response             = 601;
+
+    // ------------ cube connections --------------------
+    ConnectCubeRequest            connect_cube_request               = 700;
+    ConnectCubeResponse           connect_cube_response              = 701;
+    DisconnectCubeRequest         disconnect_cube_request            = 702;
+    FlashCubeLightsRequest        flash_cube_lights_request          = 703;
+    ForgetPreferredCubeRequest    forget_preferred_cube_request      = 704;
+    SetPreferredCubeRequest       set_preferred_cube_request         = 705;
+    SetCubeLightsRequest          set_cube_lights_request            = 706;
+    CubesAvailableRequest         cubes_available_request            = 707;
+    CubesAvailableResponse        cubes_available_response           = 708;
+
+    // ------------ robot stats --------------------
+    BatteryStateRequest             battery_state_request            = 800;
+    BatteryStateResponse            battery_state_response           = 801;
+    VersionStateRequest             version_state_request            = 802;
+    VersionStateResponse            version_state_response           = 803;
+
+    // ------------ text-to-speech pairs ------------
+    SayTextRequest                say_text_request                   = 900;
+    SayTextResponse               say_text_response                  = 901;
+
+    // ------------ behavior control pairs ----------
+    ControlRequest                control_request                    = 1000;
+    ControlRelease                control_release                    = 1001;
+    BehaviorControlResponse       behavior_control_response          = 1002;
+
+    // ------------ Image chunks sent from the vision component ------------
+    ImageChunk                    image_chunk                        = 1101;
+    EnableMarkerDetectionRequest  enable_marker_detection_request    = 1102;
+    EnableMarkerDetectionResponse enable_marker_detection_response   = 1103;
+    EnableFaceDetectionRequest    enable_face_detection_request      = 1104;
+    EnableFaceDetectionResponse   enable_face_detection_response     = 1105;
+    EnableMotionDetectionRequest  enable_motion_detection_request    = 1106;
+    EnableMotionDetectionResponse enable_motion_detection_response   = 1107;
+    EnableMirrorModeRequest       enable_mirror_mode_request         = 1108;
+    EnableMirrorModeResponse      enable_mirror_mode_response        = 1109;
+    EnableImageStreamingRequest   enable_image_streaming_request     = 1110;
+    EnableImageStreamingResponse  enable_image_streaming_response    = 1111;
+
+    IsImageStreamingEnabledRequest  is_image_streaming_enabled_request  = 1112;
+    IsImageStreamingEnabledResponse is_image_streaming_enabled_response = 1113;
+
+    // ------------ Message and response for cloud connectivity check ------------
+    CheckCloudRequest             check_cloud_request                = 1200;
+    CheckCloudResponse            check_cloud_response               = 1201;
+
+    // ------------ Audio chunks sent from the animProcess ------------
+    AudioSendModeRequest          audio_send_mode_request            = 1300;
+    AudioSendModeChanged          audio_send_mode_changed            = 1301;
+    AudioChunk                    audio_chunk                        = 1302;
+
+    // ------------ Feature flags ------------
+    FeatureFlagRequest            feature_flag_request               = 1400;
+    FeatureFlagResponse           feature_flag_response              = 1401;
+    FeatureFlagListRequest        feature_flag_list_request          = 1402;
+    FeatureFlagListResponse       feature_flag_list_response         = 1403;
+
+    // ------------ App/engine connectivity ------------
+    AppDisconnected               app_disconnected                   = 1500;
+
+    // ------------ Alexa ------------
+    AlexaAuthStateRequest         alexa_auth_state_request           = 1600;
+    AlexaAuthStateResponse        alexa_auth_state_response          = 1601;
+    AlexaOptInRequest             alexa_opt_in_request               = 1602;
+    AlexaOptInResponse            alexa_opt_in_response              = 1603;
+
+    // ------------ Individual Robot Settings (SDK only) ------------
+    SetEyeColorRequest            set_eye_color_request              = 1700;
+    SetEyeColorResponse           set_eye_color_response             = 1701;
+    MasterVolumeRequest           master_volume_request              = 1702;
+    MasterVolumeResponse          master_volume_response             = 1703;
+    SetCameraSettingsRequest      set_camera_settings_request        = 1704;
+    SetCameraSettingsResponse     set_camera_settings_response       = 1705;
+    CameraConfigRequest           camera_config_request              = 1706;
+    CameraConfigResponse          camera_config_response             = 1707;
+
+    // ------------ Streaming audio playback (SDK only) ------------
+    ExternalAudioStreamPrepare    external_audio_stream_prepare      = 1800;
+    ExternalAudioStreamChunk      external_audio_stream_chunk        = 1801;
+    ExternalAudioStreamCancel     external_audio_stream_cancel       = 1802;
+    ExternalAudioStreamComplete   external_audio_stream_complete     = 1803;
+    ExternalAudioStreamResponse   external_audio_stream_response     = 1804;
+  
+    // (when adding new categories, please create gaps between field numbers)
+    // ------------  -------------------------
+  }
+}

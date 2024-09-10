@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<VisualStudioPropertySheet 
+	ProjectType="Visual C++" 
+	Version="8.00" 
+	Name="Wwise Authoring Debug">
+	<Tool
+		Name="VCCLCompilerTool"
+		PreprocessorDefinitions="_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_DEBUG;WWISE_AUTHORING"
+	/>
+</VisualStudioPropertySheet>

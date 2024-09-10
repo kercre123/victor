@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <HijackBuild>..\build</HijackBuild>
+    <WwiseInclude>$(WWISESDK)\include</WwiseInclude>
+    <WwiseLib>$(WWISESDK)\$(Platform)_vc120\$(Configuration)\lib</WwiseLib>
+    <HijackLib>$(HijackBuild)\$(Platform)_vc120\$(Configuration)\lib</HijackLib>
+    <HijackInclude>..\pluginInclude</HijackInclude>
+	<HijackSource>..\pluginSource</HijackSource>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_DEBUG;WWISE_AUTHORING;HIJACK_PLUGIN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="HijackBuild">
+      <Value>$(HijackBuild)</Value>
+    </BuildMacro>
+    <BuildMacro Include="WwiseInclude">
+      <Value>$(WwiseInclude)</Value>
+    </BuildMacro>
+    <BuildMacro Include="WwiseLib">
+      <Value>$(WwiseLib)</Value>
+    </BuildMacro>
+    <BuildMacro Include="HijackLib">
+      <Value>$(HijackLib)</Value>
+    </BuildMacro>
+    <BuildMacro Include="HijackInclude">
+      <Value>$(HijackInclude)</Value>
+    </BuildMacro>
+	<BuildMacro Include="HijackSource">
+      <Value>$(HijackSource)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

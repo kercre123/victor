@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="XML">
+      <UniqueIdentifier>{3b511533-450a-4aee-9f75-bf479006c280}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources Files">
+      <UniqueIdentifier>{daa97e95-fe73-4a87-b308-5b5e7dcaa667}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources Files">
+      <UniqueIdentifier>{925337c8-cc01-4d62-a884-9f7f884edf83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{a2c4e03f-7d12-425f-916d-513103fc4291}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Help">
+      <UniqueIdentifier>{1e818463-fcd1-4885-99fe-ce03485493b7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Sources\WwisePlugin\stdafx.cpp" />
+    <ClCompile Include="Sources\WwisePlugin\wavePortal.cpp" />
+    <ClCompile Include="Sources\WwisePlugin\wavePortalPlugin.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Sources\WwisePlugin\Help\TopicAlias.h" />
+    <ClInclude Include="Sources\WwisePlugin\resource.h" />
+    <ClInclude Include="Sources\WwisePlugin\stdafx.h" />
+    <ClInclude Include="Sources\WwisePlugin\wavePortal.h" />
+    <ClInclude Include="Sources\WwisePlugin\wavePortalPlugin.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="Sources\WwisePlugin\res\WavePortal.xml">
+      <Filter>XML</Filter>
+    </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Sources\WwisePlugin\WavePortal.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Sources\WwisePlugin\WavePortal.rc" />
+  </ItemGroup>
+</Project>

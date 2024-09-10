@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (C) 2016 Audiokinetic Inc. -->
+<PluginModule>
+  <SinkPlugin Name="Alsa" CompanyID="0" PluginID="169">
+    <PluginInfo CanUnlink="true">
+      <PlatformSupport>
+        <Platform Name="Linux"></Platform>
+        <Platform Name="Android"></Platform>
+      </PlatformSupport>
+    </PluginInfo>
+    <Properties>
+      <Property Name="ChannelConfig" Type="int32">
+        <UserInterface DisplayName="Channel Configuration" />
+        <DefaultValue>0</DefaultValue>
+        <AudioEnginePropertyID>0</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Enumeration Type="int32">
+              <Value DisplayName="Auto detect">0</Value>
+              <Value DisplayName="Anonymous">1</Value>
+              <Value DisplayName="Custom">2</Value>
+              <Value DisplayName="Mono">3</Value>
+              <Value DisplayName="Stereo">4</Value>
+              <Value DisplayName="5.1">5</Value>
+              <Value DisplayName="7.1">6</Value>
+            </Enumeration>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="ChannelInfo" Type="int32">
+        <UserInterface DisplayName="Channel Mask/Number Channels" />
+        <DefaultValue>0</DefaultValue>
+        <AudioEnginePropertyID>1</AudioEnginePropertyID>
+      </Property>
+        <Property Name="NumBuffers" Type="int32">
+          <UserInterface DisplayName="Number Output Buffers" Step="1" Fine="1" Decimals="0" AutoUpdate="false"/>
+          <DefaultValue>2</DefaultValue>
+          <AudioEnginePropertyID>2</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="int32">
+              <Min>2</Min>
+              <Max>8</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+        </Property>
+      <Property Name="DeviceName" Type="string">
+        <UserInterface DisplayName="Device Name(s)" />
+        <DefaultValue>default</DefaultValue>
+        <AudioEnginePropertyID>3</AudioEnginePropertyID>
+      </Property>
+      <Property Name="MasterMode" Type="bool" IsVisible="false">
+        <UserInterface DisplayName="Master Mode" />
+        <DefaultValue>true</DefaultValue>
+        <AudioEnginePropertyID>4</AudioEnginePropertyID>
+      </Property>
+    </Properties>
+  </SinkPlugin>
+</PluginModule>

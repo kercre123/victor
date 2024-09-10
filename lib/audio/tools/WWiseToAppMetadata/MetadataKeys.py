@@ -1,0 +1,17 @@
+# CSV Header Keys
+headerKeyType = "Type"
+headerKeyAudioCategory = "AudioCategory"
+headerKeyIdKey = "WWiseIdKey"
+headerKeyIdValue = "WWiseIdValue"
+headerKeyGroupName = "GroupName"
+headerKeyAliasName = "AliasName"
+headerKeyComment = "Comment"
+
+dataTypeKeyEvent = "Event"
+dataTypeKeyStateGroup = "StateGroup"
+dataTypeKeyState = "State"
+dataTypeKeySwitchGroup = "SwitchGroup"
+dataTypeKeySwitch = "Switch"
+dataTypeKeyGameParameter = "GameParameter"
+dataTypeKeyBank = "Bank"
+dataTypeKeyBus = "Bus"

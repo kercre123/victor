@@ -1,0 +1,70 @@
+package,version,license,url,dependencies,dependent of
+,,,,,
+absl-py,0.7.0,Apache 2.0,https://github.com/abseil/abseil-py/blob/master/LICENSE,six,tensorflow tensorflow-estimator tensorboard
+aiogrpc,1.5,MIT License,https://github.com/hubo1016/aiogrpc/blob/master/LICENSE,grpcio,anki-vector
+alabaster,0.7.12,BSD License,https://github.com/bitprophet/alabaster/blob/master/LICENSE,,Sphinx
+anki-vector,0.5.2.dev0,Apache Software License,https://github.com/anki/vector-python-sdk/blob/master/LICENSE.txt,aiogrpc numpy Pillow cryptography requests flask googleapis-common-protos,
+asn1crypto,0.24.0,MIT License,https://github.com/wbond/asn1crypto/blob/62bf05b59800adcb2e5c2309799842ef2cf6c2c2/LICENSE,,cryptography
+astor,0.7.1,BSD-3,https://github.com/berkerpeksag/astor/blob/master/LICENSE,,tensorflow
+atomicwrites,1.3.0,MIT License,https://github.com/untitaker/python-atomicwrites/blob/master/LICENSE,,pytest
+attrs,18.2.0,MIT License,https://github.com/python-attrs/attrs/blob/master/LICENSE,,pytest
+Babel,2.6.0,BSD License,http://babel.pocoo.org/en/latest/license.html#babel-license,pytz,
+certifi,2018.11.29,Mozilla Public License 2.0 (MPL 2.0),https://certifi.io/en/latest/,,requests
+cffi,1.11.5,MIT,https://bitbucket.org/cffi/cffi/src/6d435908617d28b9a25cf1b83688e969dec72ab7/LICENSE,pycparser,cryptography
+chardet,3.0.4,GNU Library or Lesser General Public License (LGPL),https://github.com/chardet/chardet/blob/master/LICENSE,,requests
+Click,7,BSD License,https://github.com/pallets/click/blob/master/LICENSE.rst,,
+coverage,4.5.2,Apache Software License,https://bitbucket.org/ned/coveragepy/src/ed70a613bc4d9d586230814c0af948ace26286bd/LICENSE.txt,,pytest-cov
+cryptography,2.5,Apache Software License BSD License,https://github.com/pyca/cryptography/blob/master/LICENSE,six asn1crypto cffi,anki-vector
+docutils,0.14,Public Domain Python Software Foundation License BSD License GNU General Public License (GPL),http://docutils.sourceforge.net/licenses/BSD-2-Clause.txt,,Sphinx
+Flask,1.0.2,BSD License,https://github.com/pallets/flask/blob/master/LICENSE,click Werkzeug Jinja2 itsdangerous,
+gast,0.2.2,BSD-3,https://github.com/serge-sans-paille/gast/blob/master/LICENSE,,tensorflow
+googleapis-common-protos,1.5.6,Apache Software License,https://github.com/googleapis/googleapis/blob/master/LICENSE,protobuf,anki-vector
+grpcio,1.18.0,Apache Software License,https://github.com/grpc/grpc/blob/master/LICENSE,six,tensorflow tensorboard grpcio-tools aiogrpc
+grpcio-tools,1.9.1,Apache Software License,https://github.com/grpc/grpc/blob/master/LICENSE,grpcio protobuf,
+h5py,2.9.0,BSD,http://docs.h5py.org/en/stable/licenses.html,numpy six,Keras Keras-Applications
+idna,2.8,BSD License,https://github.com/kjd/idna/blob/master/LICENSE.rst,,requests
+imagesize,1.1.0,MIT License,https://github.com/shibukawa/imagesize_py/blob/master/LICENSE.rst,,Sphinx
+itsdangerous,1.1.0,BSD License,https://github.com/pallets/itsdangerous/blob/master/LICENSE.rst,,Flask
+Jinja2,2.1,BSD License,https://github.com/pallets/jinja/blob/master/LICENSE,MarkupSafe,Sphinx Flask
+Keras,2.2.4,MIT,https://github.com/keras-team/keras/blob/master/LICENSE,h5py keras-preprocessing keras-applications scipy six numpy pyyaml,
+Keras-Applications,1.0.7,MIT,https://github.com/keras-team/keras-applications/blob/master/LICENSE,h5py numpy,
+Keras-Preprocessing,1.0.9,MIT,https://github.com/keras-team/keras-preprocessing/blob/master/LICENSE,six numpy,
+Markdown,3.0.1,BSD,https://github.com/Python-Markdown/markdown/blob/master/LICENSE.md,,
+MarkupSafe,1.1.0,BSD License,https://github.com/pallets/markupsafe/blob/master/LICENSE.rst,,Jinja2
+mock,2.0.0,BSD,https://github.com/testing-cabal/mock/blob/master/LICENSE.txt,six pbr,tensorflow-estimator
+more-itertools,5.0.0,MIT License,https://github.com/erikrose/more-itertools/blob/master/LICENSE,,pytest
+numpy,1.16.1,OSI Approved,https://www.numpy.org/license.html,,tensorflow tensorflow-estimator tensorboard scipy scikit-learn Keras Keras-Preprocessing Keras-Applications h5py anki-vector
+packaging,19,Apache Software License BSD License,https://github.com/pypa/packaging/blob/master/LICENSE,pyparsing six,Sphinx
+pbr,5.1.3,Apache Software License,https://git.openstack.org/cgit/openstack-dev/pbr/tree/LICENSE,,mock
+Pillow,5.4.1,Other/Proprietary License,https://github.com/python-pillow/Pillow/blob/master/LICENSE,,anki-vector
+pip,18.1,MIT License,https://github.com/pypa/pip/blob/master/LICENSE.txt,,
+pluggy,0.8.1,MIT License,https://github.com/pytest-dev/pluggy/blob/master/LICENSE,,pytest
+protobuf,3.6.1,BSD-3,https://github.com/protocolbuffers/protobuf/blob/master/LICENSE,setuptools six,tensorflow tensorboard grpcio-tools googleapis-common-protos
+py,1.8.0,MIT license,https://github.com/pytest-dev/py/blob/master/LICENSE,,pytest
+pycparser,2.19,BSD License,https://github.com/eliben/pycparser/blob/master/LICENSE,,cffi
+Pygments,2.3.1,BSD License,https://bitbucket.org/birkenfeld/pygments-main/src/e7a5451c2c53fc1427c29ce647b5b732fa09b28b/LICENSE,,Sphinx
+PyOpenGL,3.1.0,BSD,http://pyopengl.sourceforge.net/,,
+pyparsing,2.3.1,MIT License,https://github.com/pyparsing/pyparsing/blob/master/LICENSE,,packaging
+pytest,4.2.0,MIT License,https://github.com/pytest-dev/pytest/blob/master/LICENSE,attrs six pluggy py atomicwrites more-itertools setuptools,pytest-cov
+pytest-cov,2.6.1,BSD License,https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE,pytest coverage,
+pytz,2018.9,MIT License,https://pythonhosted.org/pytz/,,Babel
+PyYAML,3.13,MIT,https://pyyaml.org/wiki/PyYAML,,
+requests,2.21.0,Apache Software License,http://docs.python-requests.org/en/master/user/intro/#apache2-license,idna certifi chardet urllib3,Sphinx requests-toolbelt anki-vector
+requests-toolbelt,0.9.1,Apache 2.0,https://toolbelt.readthedocs.org/,requests,
+scikit-learn,0.20.3,OSI Approved (new BSD),https://scikit-learn.org/stable/,scipy numpy,
+scipy,1.2.1,BSD License,https://www.scipy.org/scipylib/license.html,numpy,scikit-learn Keras
+setuptools,40.6.3,MIT License,https://github.com/pypa/setuptools/blob/master/LICENSE,,Sphinx pytest protobuf
+six,1.12.0,MIT License,https://github.com/benjaminp/six/blob/master/LICENSE,,tensorflow tensorflow-estimator tensorboard Sphinx pytest protobuf packaging mock Keras Keras-Preprocessing h5py grpcio cryptography absl-py
+snowballstemmer,1.2.1,BSD License,https://github.com/shibukawa/snowball_py/blob/master/LICENSE.rst,,Sphinx
+Sphinx,1.8.4,BSD License,http://www.sphinx-doc.org/en/master/,Jinja2 sphinxcontrib-websupport Pygments six requests imagesize snowballstemmer packaging alabaster setuptools babel docutils,sphinx-autodoc-typehints
+sphinx-autodoc-typehints,1.6.0,MIT License,https://github.com/agronholm/sphinx-autodoc-typehints/blob/master/LICENSE,Sphinx,
+sphinx-rtd-theme,0.4.2,MIT License,https://github.com/rtfd/sphinx_rtd_theme/blob/master/LICENSE,sphinx,
+sphinxcontrib-websupport,1.1.0,BSD License,http://www.sphinx-doc.org/en/master/,,Sphinx
+tensorboard,1.13.0,Apache 2.0,https://github.com/tensorflow/tensorboard/blob/master/LICENSE,grpcio absl-py markdown protobuf werkzeug six wheel numpy,tensorflow
+tensorflow,1.13.1,Apache 2.0,https://github.com/tensorflow/tensorflow/blob/master/LICENSE,tensorboard protobuf gast termcolor keras-preprocessing tensorflow-estimator wheel absl-py grpcio six astor numpy keras-applications,
+tensorflow-estimator,1.13.0,Apache 2.0,https://github.com/tensorflow/tensorflow/blob/master/LICENSE,numpy six absl-py mock,tensorflow
+termcolor,1.1.0,MIT License,http://pypi.python.org/pypi/termcolor,,tensorflow
+urllib3,1.24.1,MIT License,https://github.com/urllib3/urllib3/blob/master/LICENSE.txt,,requests
+virtualenv,16.3.0,MIT License,https://github.com/pypa/virtualenv/blob/master/LICENSE.txt,,
+Werkzeug,0.14.1,BSD License,https://pypi.org/project/Werkzeug/,,Flask
+wheel,0.32.3,MIT License,https://github.com/pypa/wheel/blob/master/LICENSE.txt,,tensorflow tensorboard

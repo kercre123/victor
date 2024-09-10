@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="XML">
+      <UniqueIdentifier>{20294c42-fa9e-43d1-8072-2688001d1c8c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Help">
+      <UniqueIdentifier>{c3e528fa-3f3e-450e-aadd-5e931bb55918}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="AkAlsaSinkPlugin.cpp" />
+    <ClCompile Include="AkAlsaSink.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="AkAlsaSink.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Help\TopicAlias.h">
+      <Filter>Help</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="AkAlsaSinkPlugin.h" />
+    <ClInclude Include="AkAlsaSink.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="res\AkAlsaSink.xml">
+      <Filter>XML</Filter>
+    </CustomBuild>
+  </ItemGroup>
+</Project>

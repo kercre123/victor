@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2006 Audiokinetic Inc. -->
+<PluginModule>
+  <SourcePlugin Name="Anki Streaming Wave Portal" CompanyID="300" PluginID="110">
+    <PluginInfo CanUnlink="true">
+      <PlatformSupport>
+        <Platform Name="Android"></Platform>
+        <Platform Name="Windows"></Platform>
+        <Platform Name="Linux"></Platform>
+        <Platform Name="Mac"></Platform>
+        <Platform Name="XboxOne"></Platform>
+        <Platform Name="PS4"></Platform>
+        <Platform Name="iOS"></Platform>
+		<Platform Name="Switch"></Platform>
+		<Platform Name="Lumin"></Platform>
+      </PlatformSupport>
+    </PluginInfo>
+    <Properties>
+      <Property Name="StreamingWavePortalPluginId" Type="int32" DisplayName="Plugin Id" DisplayGroup="--">
+        <DefaultValue>0</DefaultValue>
+        <AudioEnginePropertyID>0</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="int32">
+              <Min>0</Min>
+              <Max>255</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+    </Properties>
+  </SourcePlugin>
+</PluginModule>

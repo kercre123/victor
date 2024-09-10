@@ -1,0 +1,7 @@
+pytest
+pytest-cov
+googleapis-common-protos
+grpcio-tools==1.9.1
+virtualenv
+requests
+setuptools

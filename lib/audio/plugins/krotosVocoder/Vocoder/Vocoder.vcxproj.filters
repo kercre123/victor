@@ -1,0 +1,257 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\KrotosDSP">
+      <UniqueIdentifier>{70d8f4eb-2658-4d22-997c-e3af4449bd8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\KrotosDSP\Tables">
+      <UniqueIdentifier>{592bec82-991b-403e-b65d-821c28c14c51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\PitchTracking">
+      <UniqueIdentifier>{4d077960-1b6c-496f-a24f-8c240a77a1c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\PitchTracking\AudioAnalysisFramework">
+      <UniqueIdentifier>{67d3e80e-6a52-4a3b-b8c9-2325dc3d87e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\PitchTracking\AudioAnalysisFramework\libraries">
+      <UniqueIdentifier>{51aa4303-9a2c-4a6a-8672-e06e12e4b2fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Vocoder">
+      <UniqueIdentifier>{29929934-89c9-4314-a5af-8c7915a64589}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\VocoderFX">
+      <UniqueIdentifier>{d48fd5e3-a48f-4a4b-afe8-63c6b1a1eed8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\PitchTracking\PitchTrackingAlgorithms">
+      <UniqueIdentifier>{777d6bc8-34ef-4f7e-8378-b79d85bcf5ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\PitchTracking\AudioAnalysisFramework\libraries\kiss_FFT">
+      <UniqueIdentifier>{7dee5285-a8e0-437a-baa4-5b3e8204bf81}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Source\KrotosDSP\EnvelopeDetector.cpp">
+      <Filter>Source Files\KrotosDSP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\NoiseOscillator.cpp">
+      <Filter>Source Files\KrotosDSP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\RingBuffer.cpp">
+      <Filter>Source Files\KrotosDSP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\WavetableOscillator.cpp">
+      <Filter>Source Files\KrotosDSP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\bandlimitedSawtoothTable.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\bandlimitedSawtoothTableForInterpolation.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\bandlimitedSquareTable.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\bandlimitedSquareTableForInterpolation.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\reverseSawtoothTable.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\reverseSawtoothTableForInterpolation.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\sawtoothTable.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\sawtoothTableForInterpolation.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\sincTable.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\sincTableForInterpolation.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\sinTable.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\sinTableForInterpolation.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\squareTable.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\squareTableForInterpolation.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\tangentTable.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\tangentTableForInterpolation.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\triangleTable.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\triangleTableForInterpolation.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\PitchTracking\PitchTracker.cpp">
+      <Filter>Source Files\PitchTracking</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\PitchTracking\audio-analysis-framework\AudioAnalysisFramework.cpp">
+      <Filter>Source Files\PitchTracking\AudioAnalysisFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\PitchTracking\audio-analysis-framework\FastFourierTransform.cpp">
+      <Filter>Source Files\PitchTracking\AudioAnalysisFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\PitchTracking\audio-analysis-framework\LowpassFilter.cpp">
+      <Filter>Source Files\PitchTracking\AudioAnalysisFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\PitchTracking\audio-analysis-framework\MelFrequencySpectrum.cpp">
+      <Filter>Source Files\PitchTracking\AudioAnalysisFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Vocoder\Vocoder.cpp">
+      <Filter>Source Files\Vocoder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Vocoder\VocoderRingBuffer.cpp">
+      <Filter>Source Files\Vocoder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\VocoderFX\KrotosVocoderFX.cpp">
+      <Filter>Source Files\VocoderFX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\VocoderFX\KrotosVocoderFXDSP.cpp">
+      <Filter>Source Files\VocoderFX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\VocoderFX\KrotosVocoderFXParams.cpp">
+      <Filter>Source Files\VocoderFX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\PitchTracking\PitchTrackingAlgorithms\Autocorrelation.cpp">
+      <Filter>Source Files\PitchTracking\PitchTrackingAlgorithms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\PitchTracking\PitchTrackingAlgorithms\Cepstrum.cpp">
+      <Filter>Source Files\PitchTracking\PitchTrackingAlgorithms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\PitchTracking\PitchTrackingAlgorithms\McLeod.cpp">
+      <Filter>Source Files\PitchTracking\PitchTrackingAlgorithms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\PitchTracking\PitchTrackingAlgorithms\SpectrumBased.cpp">
+      <Filter>Source Files\PitchTracking\PitchTrackingAlgorithms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\PitchTracking\PitchTrackingAlgorithms\Yin.cpp">
+      <Filter>Source Files\PitchTracking\PitchTrackingAlgorithms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\bandlimitedImpulseTable.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KrotosDSP\Tables\bandlimitedImpulseTableForInterpolation.cpp">
+      <Filter>Source Files\KrotosDSP\Tables</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\PitchTracking\audio-analysis-framework\libraries\kiss_fft\kiss_fft.c">
+      <Filter>Source Files\PitchTracking\AudioAnalysisFramework\libraries\kiss_FFT</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\PitchTracking\audio-analysis-framework\libraries\kiss_fft\kiss_fftr.c">
+      <Filter>Source Files\PitchTracking\AudioAnalysisFramework\libraries\kiss_FFT</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Source\KrotosDSP\EnvelopeDetector.h">
+      <Filter>Source Files\KrotosDSP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\KrotosDSP\NoiseOscillator.h">
+      <Filter>Source Files\KrotosDSP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\KrotosDSP\RingBuffer.h">
+      <Filter>Source Files\KrotosDSP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\KrotosDSP\StereoSpread.h">
+      <Filter>Source Files\KrotosDSP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\KrotosDSP\WavetableOscillator.h">
+      <Filter>Source Files\KrotosDSP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\KrotosDSP\Wavetables.h">
+      <Filter>Source Files\KrotosDSP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\KrotosDSP\Window.h">
+      <Filter>Source Files\KrotosDSP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PitchTracking\PitchTracker.h">
+      <Filter>Source Files\PitchTracking</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PitchTracking\PitchTrackerAbstractClass.h">
+      <Filter>Source Files\PitchTracking</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PitchTracking\audio-analysis-framework\AudioAnalysisFramework.h">
+      <Filter>Source Files\PitchTracking\AudioAnalysisFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PitchTracking\audio-analysis-framework\FastFourierTransform.h">
+      <Filter>Source Files\PitchTracking\AudioAnalysisFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PitchTracking\audio-analysis-framework\LowpassFilter.h">
+      <Filter>Source Files\PitchTracking\AudioAnalysisFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PitchTracking\audio-analysis-framework\MelFrequencySpectrum.h">
+      <Filter>Source Files\PitchTracking\AudioAnalysisFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PitchTracking\audio-analysis-framework\Utilities.h">
+      <Filter>Source Files\PitchTracking\AudioAnalysisFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Vocoder\Vocoder.h">
+      <Filter>Source Files\Vocoder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Vocoder\VocoderRingBuffer.h">
+      <Filter>Source Files\Vocoder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\VocoderFX\KrotosVocoderFX.h">
+      <Filter>Source Files\VocoderFX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\VocoderFX\KrotosVocoderFXDSP.h">
+      <Filter>Source Files\VocoderFX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\VocoderFX\KrotosVocoderFXParams.h">
+      <Filter>Source Files\VocoderFX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PitchTracking\PitchTrackingAlgorithms\Autocorrelation.h">
+      <Filter>Source Files\PitchTracking\PitchTrackingAlgorithms</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PitchTracking\PitchTrackingAlgorithms\Cepstrum.h">
+      <Filter>Source Files\PitchTracking\PitchTrackingAlgorithms</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PitchTracking\PitchTrackingAlgorithms\McLeod.h">
+      <Filter>Source Files\PitchTracking\PitchTrackingAlgorithms</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PitchTracking\PitchTrackingAlgorithms\PitchTrackerAbstractClass.h">
+      <Filter>Source Files\PitchTracking\PitchTrackingAlgorithms</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PitchTracking\PitchTrackingAlgorithms\SpectrumBased.h">
+      <Filter>Source Files\PitchTracking\PitchTrackingAlgorithms</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PitchTracking\PitchTrackingAlgorithms\Yin.h">
+      <Filter>Source Files\PitchTracking\PitchTrackingAlgorithms</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\VocoderFX\KrotosSmoothedValue.h">
+      <Filter>Source Files\VocoderFX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\VocoderFX\KrotosVectorOperations.h">
+      <Filter>Source Files\VocoderFX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PitchTracking\audio-analysis-framework\libraries\kiss_fft\_kiss_fft_guts.h">
+      <Filter>Source Files\PitchTracking\AudioAnalysisFramework\libraries\kiss_FFT</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PitchTracking\audio-analysis-framework\libraries\kiss_fft\kiss_fft.h">
+      <Filter>Source Files\PitchTracking\AudioAnalysisFramework\libraries\kiss_FFT</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\PitchTracking\audio-analysis-framework\libraries\kiss_fft\kiss_fftr.h">
+      <Filter>Source Files\PitchTracking\AudioAnalysisFramework\libraries\kiss_FFT</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

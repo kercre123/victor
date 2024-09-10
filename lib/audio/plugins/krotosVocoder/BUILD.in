@@ -1,0 +1,5 @@
+cxx_project(
+    name = 'krotos_vocoder',
+    srcs = cxx_src_glob(['Source']),    
+    headers = cxx_header_glob(['Source'])
+)

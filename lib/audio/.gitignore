@@ -1,0 +1,40 @@
+#OS junk files
+[Tt]humbs.db
+*.DS_Store
+
+#Version control files
+.svn
+
+*~
+*.swp
+*.sdf
+*.opensdf
+*.aps
+*.vcxproj.user
+*.v12.suo
+.\#*
+\#*\#
+TAGS
+
+gunzip --keep ../wwise/libs/mac/debug/libAkSoundEngine.a.gz
+
+#wwise sdks files
+wwise/versions/*
+
+#generated gyp files
+generated
+build
+_build/
+plugins/cozmo/gyp/build
+plugins/hijackAudio/build
+plugins/hijackAudio/project/.vs
+plugins/wavePortal/build
+plugins/wavePortal/project/.vs
+gyp/build
+
+#python generated files
+*.pyc
+tools/WWiseToAppMetadata/.idea
+
+#Xcode
+gyp/audioengine.xcodeproj

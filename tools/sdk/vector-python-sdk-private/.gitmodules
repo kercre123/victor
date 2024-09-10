@@ -1,0 +1,3 @@
+[submodule "victor-proto"]
+	path = victor-proto
+	url = git@github.com:anki/victor-proto.git
