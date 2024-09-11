@@ -22,12 +22,14 @@ fi
 
 cd "${VICDIR}"
 
+git lfs update --force
+
 echo "Building victor..."
 
-./project/victor/scripts/victor_build_debugo2.sh
+./project/victor/scripts/victor_build_release.sh
 
 echo "Copying vic-cloud and vic-gateway..."
-cp bin/* _build/vicos/Debug/bin/
+cp bin/* _build/vicos/Release/bin/
 
 echo
 
