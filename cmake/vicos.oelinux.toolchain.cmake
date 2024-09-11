@@ -98,6 +98,7 @@ set(VICOS_LINKER_FLAGS_EXE)
 # Generic flags.
 list(APPEND VICOS_COMPILER_FLAGS
     -DVICOS
+    -Qunused-arguments
 	-ffunction-sections
 	-fdata-sections
 	-funwind-tables
@@ -107,6 +108,7 @@ list(APPEND VICOS_COMPILER_FLAGS
 #  -fsanitize=cfi
 	-no-canonical-prefixes)
 list(APPEND VICOS_COMPILER_FLAGS_CXX
+    -Qunused-arguments
 	-fno-exceptions
 	-fno-rtti)
 list(APPEND VICOS_COMPILER_FLAGS_RELEASE
@@ -118,12 +120,10 @@ list(APPEND VICOS_LINKER_FLAGS
 	-Wl,--gc-sections
     -Wl,-rpath-link,${VICOS_SDK}/sysroot/lib
     -Wl,-rpath-link,${VICOS_SDK}/sysroot/usr/lib
-    -Wl,-rpath-link,${VICOS_SDK}/../victor/_build/lib
 	-Wl,--fatal-warnings)
 list(APPEND VICOS_LINKER_FLAGS_EXE
     -Wl,-rpath-link,${VICOS_SDK}/sysroot/lib
     -Wl,-rpath-link,${VICOS_SDK}/sysroot/usr/lib
-    -Wl,-rpath-link,${VICOS_SDK}/../../../../victor/_build/vicos/Release/lib
 	-Wl,-z,nocopyreloc)
 
 # Debug and release flags.
@@ -134,11 +134,19 @@ list(APPEND VICOS_COMPILER_FLAGS_RELEASE
 	-Os
         -DNDEBUG)
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    list(APPEND VICOS_LINKER_FLAGS_EXE
+        -Wl,-rpath-link,${CMAKE_SOURCE_DIR}/_build/vicos/Debug/lib)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    list(APPEND VICOS_LINKER_FLAGS_EXE
+        -Wl,-rpath-link,${CMAKE_SOURCE_DIR}/_build/vicos/Release/lib)
+endif()
+
 # Toolchain and ABI specific flags.
 list(APPEND VICOS_COMPILER_FLAGS
 	-march=armv7-a
 	-mfloat-abi=softfp
-	-mfpu=vfpv3-d16)
+	-mfpu=neon-vfpv4)
 list(APPEND VICOS_LINKER_FLAGS
 	-Wl,--fix-cortex-a8)
 
@@ -305,13 +313,13 @@ if (USE_ANKIASAN)
                                # requires SDK support -shared-libasan
                                -ldl
                                -lrt
-                               -l${VICOS_SDK}/prebuilt/lib/clang/5.0.1/lib/linux/libclang_rt.asan-arm.a
+                               -l${VICOS_SDK}/prebuilt/lib/clang/5.0.0/lib/linux/libclang_rt.asan-arm.a
   )
 
   set(ASAN_EXE_LINKER_FLAGS    PUBLIC
                                -fsanitize=address
                                -ldl
                                -lrt
-                               -l${VICOS_SDK}/prebuilt/lib/clang/5.0.1/lib/linux/libclang_rt.asan-arm.a
+                               -l${VICOS_SDK}/prebuilt/lib/clang/5.0.0/lib/linux/libclang_rt.asan-arm.a
   )
 endif()

@@ -2,16 +2,33 @@
 
 set -e
 
+if [[ ! -f ./CPPLINT.cfg ]]; then
+    if [[ -f ../CPPLINT.cfg ]]; then
+        cd ..
+    else
+        echo "This script must be run in the victor repo. ./wire/build.sh"
+        exit 1
+    fi
+fi
+
+VICDIR="$(pwd)"
+
 cd ~
 if [[ ! -d .anki ]]; then
-    echo "Downloading ~/.anki folder contents
-    mkdir -p .anki
-    cd .anki
-    curl https://archive.org/anki-contents.tar.gz | tar -zx
+    echo "Downloading ~/.anki folder contents..."
+    git clone https://github.com/kercre123/anki-deps
+    mv anki-deps .anki
 fi
-cd ~/victor
 
-source project/victor/envsetup.sh
-source project/victor/scripts/usefulALiases.sh
+cd "${VICDIR}"
 
-victor_build_debugo2
+echo "Building victor..."
+
+./project/victor/scripts/victor_build_debugo2.sh
+
+echo "Copying vic-cloud and vic-gateway..."
+cp bin/* _build/vicos/Debug/bin/
+
+echo
+
+echo "Build was successful!"
