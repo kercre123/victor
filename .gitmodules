@@ -1,0 +1,3 @@
+[submodule "EXTERNALS"]
+	path = EXTERNALS
+	url = https://github.com/kercre123/EXTERNALS
