@@ -11,4 +11,4 @@ if [[ ! -f ./CPPLINT.cfg ]]; then
     fi
 fi
 
-./docker/run.sh
+./docker/build-v.sh
