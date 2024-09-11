@@ -4,7 +4,7 @@ Welcome to `victor`. This is the home of the Anki Vector robot's source code. Or
 
 ## Building
 
-0. Make sure you have docker and git-lfs installed.
+0. Make sure you have Docker and git-lfs installed.
 
 1. Clone the repo and cd into it:
 
@@ -15,7 +15,7 @@ cd victor
 git lfs pull
 ```
 
-2. Make sure you have docker installed and can run it as a normal user. This will probably involve:
+2. Make sure you can run Docker as a normal user. This will probably involve:
 
 ```
 sudo gpasswd -a $USER docker
