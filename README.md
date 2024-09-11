@@ -27,7 +27,7 @@ newgrp docker
 ./wire/build-d.sh
 ```
 
-3. It should just work! The output will be in `./_build/vicos/Debug/`
+3. It should just work! The output will be in `./_build/vicos/Release/`
 
 ## Deploying
 
