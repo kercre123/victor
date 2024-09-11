@@ -4,15 +4,22 @@ Welcome to `victor`. This is the home of the Anki Vector robot's source code. Or
 
 ## Building
 
-1. Clone the repo:
+1. Clone the repo and cd into it:
 
 ```
 cd ~
 git clone --recurse-submodules https://github.com/kercre123/victor
+cd victor
 ```
 
-2. Make sure you have docker installed and can access it as a normal user, then run:
+2. Make sure you have docker installed and can run it as a normal user. This will probably involve:
 
+```
+sudo gpasswd -a $USER docker
+newgrp docker
+```
+
+3. Run the build script:
 ```
 ./wire/build-d.sh
 ```
