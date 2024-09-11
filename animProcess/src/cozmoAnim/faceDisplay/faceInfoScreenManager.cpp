@@ -298,9 +298,9 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
 
   ADD_MENU_ITEM(Main, "EXIT", None);
 #if ENABLE_SELF_TEST
-  ADD_MENU_ITEM(Main, "TEST", SelfTest);
+  ADD_MENU_ITEM(Main, "SELF TEST", SelfTest);
 #endif
-  ADD_MENU_ITEM(Main, "RESET", ClearUserData);
+  ADD_MENU_ITEM(Main, "CLEAR USER DATA", ClearUserData);
 
   // === Self test screen ===
   ADD_MENU_ITEM(SelfTest, "EXIT", Main);
