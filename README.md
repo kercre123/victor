@@ -4,7 +4,7 @@ Welcome to `victor`. This is the home of the Anki Vector robot's source code. Or
 
 ## Building
 
-0. Make sure you have Docker and git-lfs installed.
+ - Prereqs: Make sure you have `docker` and `git-lfs` installed. You need a Linux machine. WSL should work. macOS may work???
 
 1. Clone the repo and cd into it:
 
@@ -37,18 +37,12 @@ newgrp docker
 echo 192.168.1.150 > robot_ip.txt
 ```
 
-2. `ssh-add` your bot's SSH key and make sure you have rsync installed
+2. Copy your bot's SSH key to a file called `robot_sshkey` in the root of this repo.
 
 3. Run:
 
 ```
-source project/victor/envsetup.sh
-source project/victor/scripts/usefulALiases.sh
-```
-
-4. Run:
-```
-victor_deploy_debug -ib
+./wire/deploy-d.sh
 ```
 
 ## Why is this not public?

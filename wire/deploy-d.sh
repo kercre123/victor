@@ -21,4 +21,6 @@ if [[ ! -f robot_sshkey ]]; then
     exit 1
 fi
 
+chmod 600 robot_sshkey
+
 ./docker/deploy-v.sh
