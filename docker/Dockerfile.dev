@@ -1,14 +1,15 @@
 FROM victor
 ARG USER
 ARG UID
+ARG VIC_DIR
 
 # Packages used during development
 RUN apt update && \
 apt -y install babeltrace python3-babeltrace
 
 # Actually use bash
-Run ln -sf /bin/bash /bin/sh
+RUN ln -sf /bin/bash /bin/sh
 
-WORKDIR /home/$USER
+WORKDIR ${VIC_DIR}
 RUN useradd -Ums /bin/bash -u ${UID} ${USER}
-ENTRYPOINT eval $(ssh-agent) && ssh-add; /bin/bash 
+ENTRYPOINT eval $(ssh-agent) && ssh-add; /bin/bash ./wire/build.sh

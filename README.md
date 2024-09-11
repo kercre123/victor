@@ -4,7 +4,42 @@ Welcome to `victor`. This is the home of the Anki Vector robot's source code. Or
 
 ## Building
 
-Still working on that.
+1. Clone the repo:
+
+```
+cd ~
+git clone --recurse-submodules https://github.com/kercre123/victor
+```
+
+2. Make sure you have docker installed and can access it as a normal user, then run:
+
+```
+./wire/build-d.sh
+```
+
+3. It should just work! The output will be in `./_build/vicos/Debug/`
+
+## Deploying
+
+1. Echo your robot's IP address to robot_ip.txt (in the root of the victor repo):
+
+```
+echo 192.168.1.150 > robot_ip.txt
+```
+
+2. `ssh-add` your bot's SSH key and make sure you have rsync installed
+
+3. Run:
+
+```
+source project/victor/envsetup.sh
+source project/victor/scripts/usefulALiases.sh
+```
+
+4. Run:
+```
+victor_deploy_debug -ib
+```
 
 ## Why is this not public?
 
