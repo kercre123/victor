@@ -4,12 +4,15 @@ Welcome to `victor`. This is the home of the Anki Vector robot's source code. Or
 
 ## Building
 
+0. Make sure you have docker and git-lfs installed.
+
 1. Clone the repo and cd into it:
 
 ```
 cd ~
 git clone --recurse-submodules https://github.com/kercre123/victor
 cd victor
+git lfs pull
 ```
 
 2. Make sure you have docker installed and can run it as a normal user. This will probably involve:
