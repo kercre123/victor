@@ -1,19 +1,4 @@
 {
-    "artifactory": {
-        "builds": {},
-        "root_url": "http://10.10.7.40:8081/artifactory"
-    },
-    "deptool": {
-        "deps": {},
-        "project": "victor",
-        "url_prefix": "https://sai-general.s3.amazonaws.com/build-assets/deps/victor/"
-    },
-    "files": {
-        "victor-blobstore-qalogs-key": {
-            "sha256": "579ee035e4aea9be4678fbc440375eba47608ce2e127deab0dd49efb148db39d",
-            "url": "http://assets.digitaldreamlabs.com/3B4TiDdjzj7WpSoH/victor-blobstore-qalogs-key"
-        }
-    },
     "svn": {
         "bucket_name": "ddl-private",
         "main_folder": "svn-export",
@@ -44,12 +29,6 @@
                 "allow_extra_files": "True"
             }
         },
-        "root_url": "https://svn.ankicore.com/svn"
-    },
-    "teamcity": {
-        "builds": {},
-        "default_usr": "puller_cozmo",
-        "pwd": "TQqNwp4ijqboGsjF3rCWDhUtwsvTKLpb",
-        "root_url": "https://build.ankicore.com/"
+        "root_url": "http://10.49.176.97:8000/"
     }
 }

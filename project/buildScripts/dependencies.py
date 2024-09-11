@@ -13,8 +13,6 @@ import json
 import tempfile
 import argparse
 import glob
-import boto3
-import botocore
 import zipfile
 import shutil
 
@@ -251,6 +249,7 @@ def extract_files_from_tar(extract_dir, file_types, put_in_subdir=False):
   anim_name_length_mapping = {}
 
   for (dir_path, dir_names, file_names) in os.walk(extract_dir):
+    print("here???")
     # Generate list of all .tar files in/under the directory provided by the caller (extract_dir)
     all_files = map(lambda x: os.path.join(dir_path, x), file_names)
     tar_files = [a_file for a_file in all_files if a_file.endswith('.tar')]
@@ -335,7 +334,7 @@ def get_flatc_dir():
     # default
     flatc_dir = os.path.join(THIRD_PARTY_DIR,
                              'flatbuffers', 'mac', 'Release')
- 
+  print(flatc_dir)
   return flatc_dir
   
 
@@ -348,7 +347,9 @@ def convert_json_to_binary(json_files, bin_name, dest_dir, flatc_dir):
         tmp_json_files.append(json_dest)
     bin_name = bin_name.lower()
     try:
+        print("i assume")
         bin_file = binary_conversion.main(tmp_json_files, bin_name, flatc_dir)
+        print("it's here")
     except StandardError, e:
         print("%s: %s" % (type(e).__name__, e.message))
         # If binary conversion failed, use the json files...
@@ -492,6 +493,8 @@ def svn_checkout(url, r_rev, loc, cred, checkout, cleanup, unpack, package, allo
         return err
 
 
+import urllib2  # Python 2, for Python 3 use 'import urllib.request as urllib2'
+
 def svn_package(svn_dict):
     """
     Args:
@@ -501,70 +504,55 @@ def svn_package(svn_dict):
     """
     checked_out_repos = []
 
-    # tool = "svn"
-    # ptool = "tar"
-    # ptool_options = ['-v', '-x', '-z', '-f']
-    # assert is_tool(tool)
-    # assert is_tool(ptool)
-    # assert isinstance(svn_dict, dict)
-    # root_url = svn_dict.get("root_url", "undefined_url")
-    # password = svn_dict.get("pwd", "")
+    # Repos and settings
     repos = svn_dict.get("repo_names", "")
-    bucket_name = svn_dict.get("bucket_name", "")
-    # user = svn_dict.get("default_usr", "undefined")
-    # cred = SVN_CRED % (user, password)
+    root_url = svn_dict.get("root_url", "")  # The base URL for your local HTTP server
     stale_warning = "WARNING: If this build succeeds, it may contain stale external data"
 
-    # Initialize S3 object
-    s3_resource = boto3.resource('s3')
-    bucket = s3_resource.Bucket(bucket_name)
-
     for repo in repos:
-        version = repos[repo].get("version",None)
-        # r_rev = repos[repo].get("version", "head")
-        # pk_name = repos[repo].get("package_name", "STUB")
+        version = repos[repo].get("version", None)
         branch = repos[repo].get("branch", "trunk")
         export_dirname = repos[repo].get("export_dirname", repo)
         loc = os.path.join(DEPENDENCY_LOCATION, export_dirname)
-        # url = os.path.join(root_url, repo, branch)
         sub_dirs = repos[repo].get("subdirs", [])
-        # subdirs = map(lambda x: os.path.join(loc,x), subdirs)
-        # allow_extra_files = bool(repos[repo].get("allow_extra_files", False))
         additional_files = repos[repo].get("additional_files", [])
         extract_types = repos[repo].get("extract_types_from_tar", [])
-        # package = os.path.join(loc, pk_name)
-        # checkout = [tool, 'checkout', '-r', '{0}'.format(r_rev)] + cred.split() + [url, loc]
-        # cleanup = [tool, 'status', '--no-ignore'] + cred.split() + [loc]
-        # unpack = [ptool] + ptool_options + [package, '-C', loc]
-        # l_rev = 'unknown'
 
-        # Move on to next asset if the current one already exists
+        # Move on if the directory already exists
         if os.path.isdir(loc):
-            print(export_dirname + " already exist!")
+            print(export_dirname + " already exists!")
             continue
-        # Download the SVN assets from S3
+
+        # Download from the local HTTP server
         print("Downloading " + export_dirname + "...")
         if version is not None:
-            remote_loc = svn_dict.get("main_folder", "") + "/" + repo + '-' + version + ".zip"
+            remote_loc = os.path.join(root_url, svn_dict.get("main_folder", ""), repo + '-' + version + ".zip")
         else:
-            remote_loc = svn_dict.get("main_folder", "") + "/" + repo + ".zip"
+            remote_loc = os.path.join(root_url, svn_dict.get("main_folder", ""), repo + ".zip")
         local_loc = loc + ".zip"
+
         try:
-            bucket.download_file(remote_loc, local_loc)
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] == "404":
+            # Fetch file from the HTTP server
+            print("Fetching file from HTTP server: " + remote_loc)
+            response = urllib2.urlopen(remote_loc)
+            with open(local_loc, 'wb') as local_file:
+                local_file.write(response.read())
+
+        except urllib2.HTTPError as e:
+            if e.code == 404:
                 print("The object does not exist on the server.")
             else:
                 raise
+
         # Extract the assets
         print("Extracting " + export_dirname + "...")
         with zipfile.ZipFile(local_loc, 'r') as zip_ref:
             zip_ref.extractall(DEPENDENCY_LOCATION)
-        zip_ref.close()
-        # Organize the assets into required directory structure
+        os.remove(local_loc)  # Remove the ZIP after extraction
+
+        # Organize the assets into the required directory structure
         os.rename(os.path.join(DEPENDENCY_LOCATION, repo), loc)
-        os.remove(local_loc)
-        
+
         for sub_dir in os.listdir(loc):
             if sub_dir != branch:
                 shutil.rmtree(os.path.join(loc, sub_dir))
@@ -580,22 +568,28 @@ def svn_package(svn_dict):
                 dst_loc = os.path.join(loc, sub_dir)
                 shutil.move(src_loc, dst_loc)
         shutil.rmtree(os.path.join(loc, branch))
-        # Extract the tar files
+
+        # Extract tar files if necessary
         if extract_types:
             print("Extracting tar files from SVN assets...")
             for sub_dir in sub_dirs:
+                print(sub_dir)
                 put_in_sub_dir = os.path.basename(sub_dir) in UNPACK_INTO_SUBDIR
                 try:
                     anim_name_length_mapping = extract_files_from_tar(os.path.join(loc, sub_dir), extract_types, put_in_sub_dir)
-                except EnvironmentError, e:
+                except EnvironmentError as e:
                     anim_name_length_mapping = {}
                     print("Failed to unpack one or more tar files in [%s] because: %s" % (sub_dir, e))
                     print(stale_warning)
+                print("possibly..")
                 file_stats = get_file_stats(sub_dir)
                 if anim_name_length_mapping:
                     write_animation_manifest(loc, anim_name_length_mapping, additional_files)
                 print("After unpacking tar files, '%s' contains the following files: %s"
                       % (os.path.basename(sub_dir), file_stats))
+
+    return checked_out_repos
+
 
     # Old code below: Retrieves and extracts SVN assets using Anki servers
     """
