@@ -18,6 +18,7 @@ git lfs pull
 2. Make sure you can run Docker as a normal user. This will probably involve:
 
 ```
+sudo groupadd docker
 sudo gpasswd -a $USER docker
 newgrp docker
 ```
@@ -28,6 +29,13 @@ newgrp docker
 ```
 
 3. It should just work! The output will be in `./_build/vicos/Release/`
+
+- If you get a permission denied error, try these commands, then run the build script again:
+```
+sudo chown root:docker /var/run/docker.sock
+sudo chmod 660 /var/run/docker.sock
+```
+
 
 ## Deploying
 
