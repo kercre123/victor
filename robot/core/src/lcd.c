@@ -35,6 +35,8 @@ static GPIO RESET_PIN_1;
 static GPIO RESET_PIN_2;
 static GPIO DnC_PIN;
 
+static lcd_display_t LCD_DISPLAY_MAN;
+
 
 #define RSHIFT 0x1C
 #define XSHIFT 0x0
@@ -270,6 +272,9 @@ static void lcd_device_init()
   
   // Turn display on
   lcd_run_script(lcd_display_version() == SANTEK ? display_on_scr_santek : display_on_scr_midas);
+
+  // define LCD manufacturer rather than read the EMR partition upon EVERY SINGLE LCD DRAW
+  LCD_DISPLAY_MAN = lcd_display_version();
 }
 
 void lcd_clear_screen(void) {
@@ -342,12 +347,8 @@ void lcd_draw_frame2_santek(const uint16_t* frame, size_t size) {
 }
 
 void lcd_draw_frame2(const uint16_t* frame, size_t size) {
-  if (lcd_display_version() != SANTEK) {
-    if (lcd_use_midas_crop()) {
-      lcd_draw_frame2_midas_crop(frame, size);
-    } else {
-      lcd_draw_frame2_midas(frame, size);
-    }
+  if (LCD_DISPLAY_MAN != SANTEK) {
+    lcd_draw_frame2_midas(frame, size);
   } else {
     lcd_draw_frame2_santek(frame, size);
   }

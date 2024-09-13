@@ -48,6 +48,7 @@ enum class ScreenName : uint8_t {
   AlexaPairingFailed,  // server error (has timeout)
   ToggleMute, // Quick animation to show change in microphone mute state
   ToF,
+  Kercre123,
   
   Count
 };

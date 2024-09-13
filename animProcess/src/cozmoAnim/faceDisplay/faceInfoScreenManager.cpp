@@ -240,8 +240,10 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
   }
   else
   {
-    ADD_SCREEN(Camera, Main);
+    ADD_SCREEN(Camera, Kercre123);
   }
+
+  ADD_SCREEN_WITH_TEXT(Kercre123, Main, {"Custom Screen Test"});
 
 
   // ========== Screen Customization ========= 
