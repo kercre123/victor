@@ -233,6 +233,7 @@ include(flatbuffers)
 include(sodium)
 include(aubio)
 include(sensory)
+include(vosk)
 include(signalessence)
 include(pryon_lite)
 

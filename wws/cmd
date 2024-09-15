@@ -1,0 +1,1 @@
+/home/kerigan/projects/vic-toolchain/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc -static -o test pv_porcupine_service.c -I/home/kerigan/victor/3rd/picovoice/vicos/usr/include -L/home/kerigan/victor/3rd/picovoice/vicos/usr/lib -lpv_porcupine -lm

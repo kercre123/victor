@@ -188,7 +188,7 @@ void AlexaPlaybackRecognizerComponent::ProcessAudioLoop()
       auto* playbackTrigger = _speechRecSys._alexaPlaybackTrigger.get();
       ASSERT_NAMED(playbackTrigger != nullptr,
                    "AlexaPlaybackRecognizerComponent.ProcessAudioLoop.playbackTrigger.IsNull");
-      _speechRecSys.ApplySpeechRecognizerLoacleUpdate( *playbackTrigger );
+      //_speechRecSys.ApplySpeechRecognizerLocaleUpdate( *playbackTrigger );
       _pendingLocaleUpdate = false;
     }
   }
