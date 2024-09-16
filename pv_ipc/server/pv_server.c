@@ -9,20 +9,20 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-static pv_porcupine_object_t *porcupine_obj = NULL;
+static pv_porcupine_t *porcupine_obj = NULL;
 
 pv_status_t handle_init(pv_init_request_t *req) {
     if (porcupine_obj != NULL) {
         return PV_STATUS_INVALID_ARGUMENT;
     }
-    return pv_porcupine_init(req->model_file_path, req->keyword_file_path, req->sensitivity, &porcupine_obj);
+    return pv_porcupine_init(req->access_key, req->model_path, req->num_keywords, req->keyword_path, req->sensitivities, &porcupine_obj);
 }
 
-pv_status_t handle_process(pv_process_request_t *req, bool *result) {
+pv_status_t handle_process(pv_process_request_t *req, int *keyword_index) {
     if (porcupine_obj == NULL) {
         return PV_STATUS_INVALID_ARGUMENT;
     }
-    return pv_porcupine_process(porcupine_obj, req->pcm, result);
+    return pv_porcupine_process(porcupine_obj, req->pcm, keyword_index);
 }
 
 void handle_delete() {
@@ -117,7 +117,7 @@ int main() {
                     perror("recv process request");
                     break;
                 }
-                response.status = handle_process(&proc_req, &response.data.result);
+                response.status = handle_process(&proc_req, &response.data.keyword_index);
                 break;
             }
             case PV_CMD_DELETE: {

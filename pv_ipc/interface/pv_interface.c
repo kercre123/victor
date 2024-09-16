@@ -78,11 +78,22 @@ static int recv_all_lib(int sockfd, void *buffer, size_t length) {
     return 0;
 }
 
+/*
+PV_API pv_status_t pv_porcupine_init(
+        const char *access_key,
+        const char *model_path,
+        int32_t num_keywords,
+        const char *const *keyword_paths,
+        const float *sensitivities,
+        pv_porcupine_t **object);*/
+
 pv_status_t pv_porcupine_init(
-        const char *model_file_path,
-        const char *keyword_file_path,
-        float sensitivity,
-        pv_porcupine_object_t **object) {
+        const char *access_key,
+        const char *model_path,
+        int32_t num_keywords,
+        const char *keyword_path,
+        const float *sensitivities,
+        pv_porcupine_t **object) {
     (void)object;
 
     pv_status_t status = connect_to_server();
@@ -99,9 +110,10 @@ pv_status_t pv_porcupine_init(
 
     pv_init_request_t init_req;
     memset(&init_req, 0, sizeof(init_req));
-    strncpy(init_req.model_file_path, model_file_path, sizeof(init_req.model_file_path) - 1);
-    strncpy(init_req.keyword_file_path, keyword_file_path, sizeof(init_req.keyword_file_path) - 1);
-    init_req.sensitivity = sensitivity;
+    strncpy(init_req.access_key, access_key, sizeof(init_req.access_key) - 1);
+    strncpy(init_req.model_path, model_path, sizeof(init_req.model_path) - 1);
+    strncpy(init_req.keyword_path, keyword_path, sizeof(init_req.keyword_path) - 1);
+    init_req.sensitivities = sensitivities;
 
     if (send_all_lib(client_fd, &init_req, sizeof(init_req)) == -1) {
         perror("send INIT request");
@@ -119,7 +131,7 @@ pv_status_t pv_porcupine_init(
     return response.status;
 }
 
-void pv_porcupine_delete(pv_porcupine_object_t *object) {
+void pv_porcupine_delete(pv_porcupine_t *object) {
     (void)object;
 
     if (!is_connected) {
@@ -140,7 +152,7 @@ void pv_porcupine_delete(pv_porcupine_object_t *object) {
     disconnect_from_server();
 }
 
-pv_status_t pv_porcupine_process(pv_porcupine_object_t *object, const int16_t *pcm, bool *result) {
+pv_status_t pv_porcupine_process(pv_porcupine_t *object, const int16_t *pcm, int *keyword_index) {
     (void)object;
 
     if (!is_connected) {
@@ -170,8 +182,8 @@ pv_status_t pv_porcupine_process(pv_porcupine_object_t *object, const int16_t *p
         return PV_STATUS_IO_ERROR;
     }
 
-    if (response.status == PV_STATUS_SUCCESS && result != NULL) {
-        *result = response.data.result;
+    if (response.status == PV_STATUS_SUCCESS && keyword_index != NULL) {
+        *keyword_index = response.data.keyword_index;
     }
 
     return response.status;
