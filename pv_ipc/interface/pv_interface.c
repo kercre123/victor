@@ -105,17 +105,13 @@ pv_status_t pv_porcupine_init(
     strncpy(init_req.access_key, access_key, sizeof(init_req.access_key) - 1);
     strncpy(init_req.model_path, model_path, sizeof(init_req.model_path) - 1);
 
-    // copy number of keywords
     init_req.num_keywords = num_keywords;
 
-    // copy the keyword paths
     for (int i = 0; i < num_keywords; i++) {
         if (keyword_path[i] != NULL) {
             strncpy(init_req.keyword_path[i], keyword_path[i], MAX_PATH_LENGTH - 1); // copy string
         }
     }
-
-    // copy the sensitivities
     for (int i = 0; i < num_keywords; i++) {
         init_req.sensitivities[i] = sensitivities[i];
     }

@@ -25,8 +25,8 @@ typedef struct {
     char access_key[256];
     char model_path[256];
     int32_t num_keywords;
-    char keyword_path[MAX_KEYWORDS][MAX_PATH_LENGTH]; // array of strings
-    float sensitivities[MAX_KEYWORDS]; // store sensitivities directly
+    char keyword_path[MAX_KEYWORDS][MAX_PATH_LENGTH];
+    float sensitivities[MAX_KEYWORDS];
 } pv_init_request_t;
 
 typedef struct {

@@ -8,9 +8,9 @@ Welcome to `victor`. This is the home of the Anki Vector robot's source code. Or
 
 So, before you deploy this onto your robot, SSH in and run `echo "picovoice_access_key" > /data/picoKey` (replacing `picovoice_access_key` with your actual key).**
 
-For a version that doesn't need an API key, check the `actual-picovoice` branch instead. It uses an older version of Picovoice which doesn't need an access key.
+For a version that doesn't need an API key, check the `actual-picovoice` branch instead. It uses an older version of Picovoice which doesn't need an access key, but the wakeword is "bumblebee" rather than "Hey Vector".
 
-To implement a custom wake word, generate one at the Picovoice console. Then copy the file to Vector's /anki/data/assets/cozmo_resources/assets/porcupineModels/Hey-Vector_v3.0.0.ppn and (on Vector) run `systemctl stop anki-robot.target`, wait a few seconds, then `systemctl start anki-robot.target`.
+To implement a custom wake word, generate one at the Picovoice Porcupine console. Then copy the file to Vector's /anki/data/assets/cozmo_resources/assets/porcupineModels/Hey-Vector_v3.0.0.ppn and (on Vector) run `systemctl stop anki-robot.target`, wait a few seconds, then `systemctl start anki-robot.target`.
 
 ## Building
 
