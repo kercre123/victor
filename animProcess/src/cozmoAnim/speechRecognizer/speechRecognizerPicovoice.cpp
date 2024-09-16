@@ -132,7 +132,6 @@ void SpeechRecognizerPicovoice::Update(const AudioUtil::AudioSample* audioData, 
             LOG_ERROR("SpeechRecognizerPicovoice.Update", "pv process error");
             return;
         }
-        LOG_INFO("SpeechRecognizerPicovoice.Update", "pv process success");
         if (result) {
             AudioUtil::SpeechRecognizerCallbackInfo info{
                 .result = "Wake word detected",
