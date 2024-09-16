@@ -1,9 +1,10 @@
-// originally had picovoice. that didn't work, so vosk instead!
+// picovoice porcupine
 
 #include "speechRecognizerPicovoice.h"
 
 #include "audioUtil/speechRecognizer.h"
-#include "vosk_api.h"
+#include "picovoice.h"
+#include "pv_porcupine.h"
 #include "util/logging/logging.h"
 
 #include <vector>
@@ -14,14 +15,12 @@ namespace Vector {
 
 #define LOG_CHANNEL "SpeechRecognizerPicovoice"
 
-const char* CustomWakeWord = "alexa";
-
 struct SpeechRecognizerPicovoice::SpeechRecognizerPicovoiceData
 {
-  VoskRecognizer* voskReg = nullptr;
-  VoskModel* voskModel = nullptr;
+  std::vector<AudioUtil::AudioSample> audioBuffer;
+  pv_porcupine_object_t* pvObj = nullptr;
   std::recursive_mutex recogMutex;
-  bool disabled = false;
+  bool disabled = true;
   bool reset = false;
 };
 
@@ -32,12 +31,10 @@ SpeechRecognizerPicovoice::SpeechRecognizerPicovoice()
 
 SpeechRecognizerPicovoice::~SpeechRecognizerPicovoice()
 {
-  if (_impl->voskReg)
+  if (_impl->pvObj)
   {
-    vosk_recognizer_free(_impl->voskReg);
-    vosk_model_free(_impl->voskModel);
-    _impl->voskReg = nullptr;
-    _impl->voskModel = nullptr;
+    pv_porcupine_delete(_impl->pvObj);
+    _impl->pvObj = nullptr;
   }
 }
 
@@ -58,66 +55,62 @@ bool SpeechRecognizerPicovoice::Init()
 {
   std::lock_guard<std::recursive_mutex> lock(_impl->recogMutex);
 
-  if (_impl->voskReg)
+  _impl->audioBuffer.reserve(512 * 2);
+
+  if (_impl->pvObj)
   {
-    vosk_recognizer_free(_impl->voskReg);
-    vosk_model_free(_impl->voskModel);
-    _impl->voskReg = nullptr;
-    _impl->voskModel = nullptr;
+    pv_porcupine_delete(_impl->pvObj);
+    _impl->pvObj = nullptr;
   }
-  _impl->voskModel = vosk_model_new("/data/model");
-  char GrmList[50];
-  sprintf(GrmList, "[\"%s\", \"clunk\"]", CustomWakeWord);
-  _impl->voskReg = vosk_recognizer_new_grm(_impl->voskModel, 16000.0, GrmList);
+  if (pv_porcupine_init("/data/pv/pv_params.pv", "/data/pv/keyword.ppn", 0.9f, &_impl->pvObj) != PV_STATUS_SUCCESS) {
+    LOG_ERROR("SpeechRecognizerPicovoice.Update", "error setting up recognizer");
+    return false;
+  }
+
+  LOG_ERROR("SpeechRecognizerPicovoice.Update", "Picovoice set up successfully!");
+  _impl->disabled = false;
 
   return true;
 }
 
-void SpeechRecognizerPicovoice::DoNew() {
-    LOG_INFO("SpeechRecognizerPicovoice.Update", "VOSK: resetting rec");
-    vosk_recognizer_free(_impl->voskReg);
-    char GrmList[50];
-    sprintf(GrmList, "[\"%s\", \"clunk\", \"beep\", \"hello\"]", CustomWakeWord);
-    _impl->voskReg = vosk_recognizer_new_grm(_impl->voskModel, 16000.0, GrmList);
-    LOG_INFO("SpeechRecognizerPicovoice.Update", "New rec created");
-}
-
 void SpeechRecognizerPicovoice::Update(const AudioUtil::AudioSample* audioData, unsigned int audioDataLen)
 {
-  std::lock_guard<std::recursive_mutex> lock(_impl->recogMutex);
+    std::lock_guard<std::recursive_mutex> lock(_impl->recogMutex);
 
-  if (!_impl->voskReg || _impl->disabled)
-  {
-    return;
-  }
-
-  int final;
-
-  // Porcupine expects audio frames of specific size
-
-    final = vosk_recognizer_accept_waveform(_impl->voskReg, (char*)audioData, audioDataLen);
-    if (final < 0) {
-      LOG_ERROR("SpeechRecognizerPicovoice.Update", "VOSK exception occurred :(");
-      return;
+    if (_impl->disabled)
+    {
+        return;
+    }
+    uint32_t frameLength = 512;
+    if (frameLength == 0) {
+        LOG_ERROR("SpeechRecognizerPicovoice.Update", "Invalid frame length from Picovoice");
+        return;
     }
 
-    if (final)
+    _impl->audioBuffer.insert(_impl->audioBuffer.end(), audioData, audioData + audioDataLen);
+
+    while (_impl->audioBuffer.size() >= frameLength)
     {
-      LOG_INFO("SpeechRecognizerPicovoice.Update", "%s", vosk_recognizer_result(_impl->voskReg));
-      LOG_INFO("SpeechRecognizerPicovoice.Update", "FINAL");
-      DoNew();
-    } else {
-      if (strstr(vosk_recognizer_partial_result(_impl->voskReg), CustomWakeWord) != nullptr) {
-        AudioUtil::SpeechRecognizerCallbackInfo info{
-          .result = "Wake word detected",
-          .startTime_ms = 0,
-          .endTime_ms = 0,
-          .score = 0.0f
-        };
-        DoCallback(info);
-        LOG_INFO("SpeechRecognizerPicovoice.Update", "Wake word detected");
-        DoNew();
-      }
+        std::vector<AudioUtil::AudioSample> frame(_impl->audioBuffer.begin(),
+                                                  _impl->audioBuffer.begin() + frameLength);
+
+        bool result = false;
+        if (pv_porcupine_process(_impl->pvObj, frame.data(), &result) != PV_STATUS_SUCCESS) {
+            LOG_ERROR("SpeechRecognizerPicovoice.Update", "pv process error");
+            return;
+        }
+        LOG_INFO("SpeechRecognizerPicovoice.Update", "pv process success");
+        if (result) {
+            AudioUtil::SpeechRecognizerCallbackInfo info{
+                .result = "Wake word detected",
+                .startTime_ms = 0,
+                .endTime_ms = 0,
+                .score = 0.0f
+            };
+            DoCallback(info);
+        }
+        _impl->audioBuffer.erase(_impl->audioBuffer.begin(),
+                                 _impl->audioBuffer.begin() + frameLength);
     }
 }
 

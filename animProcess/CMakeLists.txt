@@ -9,7 +9,7 @@ include(opencv)
 include(text2speech)
 include(pryon_lite)
 include(sensory)
-include(vosk)
+include(picovoice)
 include(robot_core)
 
 anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
@@ -70,7 +70,7 @@ target_link_libraries(victor_anim
   ${AVS_LIBS}
   ${PFFFT_LIBS}
   ${MPG123_LIBS}
-  ${VOSK_LIBS}
+  ${PICOVOICE_LIBS}
   PUBLIC
   victor_web_library
   robot_interface  # Needs to be public for cozmoConfig.h
@@ -116,7 +116,6 @@ if (VICOS)
     jsoncpp
     ${ANKITRACE}
     ${PLATFORM_LIBS}
-    ${VOSK_LIBS}
     ${ASAN_EXE_LINKER_FLAGS}
   )
 

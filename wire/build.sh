@@ -31,9 +31,6 @@ echo "Building victor..."
 echo "Copying vic-cloud and vic-gateway..."
 cp bin/* _build/vicos/Release/bin/
 
-echo "Patching vic-anim because VOSK is stupid"
-sed -i 's|\.\./\.\./\.\./3rd/vosk/vicos/lib|/anki/./././././././././lib|' _build/vicos/Release/bin/vic-anim
-
 echo
 
 echo "Build was successful!"

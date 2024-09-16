@@ -22,7 +22,6 @@ public:
   bool Init();
 
   virtual void Update(const AudioUtil::AudioSample* audioData, unsigned int audioDataLen) override;
-  virtual void DoNew();
 
   void Reset();
 
