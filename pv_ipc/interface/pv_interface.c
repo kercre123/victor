@@ -91,7 +91,7 @@ pv_status_t pv_porcupine_init(
         const char *access_key,
         const char *model_path,
         int32_t num_keywords,
-        const char *keyword_path,
+        const char *const *keyword_path,
         const float *sensitivities,
         pv_porcupine_t **object) {
     (void)object;

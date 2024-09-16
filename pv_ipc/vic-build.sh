@@ -1,10 +1,8 @@
 #!/bin/bash
 
-# for x86_64
-
 #$HOME/projects/vic-toolchain/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc -static -I$(pwd)/include -L$(pwd)/lib/pi -lpv_porcupine -lpthread -o build/pv_server server/pv_server.c
 
-$HOME/projects/vic-toolchain/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc -static -I$(pwd)/include -L$(pwd)/lib/pi -o build/pv_server server/pv_server.c -lpv_porcupine -lpthread -lm
+$HOME/projects/vic-toolchain/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc -I$(pwd)/include -L$(pwd)/lib/pi -o build/pv_server server/pv_server.c -lpthread -lm -lpv_porcupine
 
 #$HOME/.anki/vicos-sdk/dist/1.1.0-r04/prebuilt/bin/arm-oe-linux-gnueabi-clang -static -I$(pwd)/include -L$(pwd)/lib/pi -lpv_porcupine -lpthread -o build/pv_server server/pv_server.c
 
