@@ -376,7 +376,6 @@ void SpeechRecognizerSystem::ApplySpeechRecognizerLocaleUpdate(TriggerContext<Sp
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SpeechRecognizerSystem::UpdateRecognizerModel(TriggerContext<SpeechRecognizerPicovoice>& aTrigger)
 {
-  // For Picovoice, model updates are handled in InitVector; no action needed here
   return true;
 }
 

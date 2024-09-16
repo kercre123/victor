@@ -10,10 +10,15 @@
 #include <vector>
 #include <mutex>
 
+#include <chrono>
+#include <thread>
+#include <cstdlib>
+#include <unistd.h>
+
 namespace Anki {
 namespace Vector {
 
-#define LOG_CHANNEL "SpeechRecognizerPicovoice"
+#define LOG_CHANNEL "SpeechRecognizer"
 
 struct SpeechRecognizerPicovoice::SpeechRecognizerPicovoiceData
 {
@@ -55,6 +60,34 @@ bool SpeechRecognizerPicovoice::Init()
 {
   std::lock_guard<std::recursive_mutex> lock(_impl->recogMutex);
 
+  pid_t pid = fork();
+  if (pid < 0) {
+    LOG_ERROR("SpeechRecognizerPicovoice.Init", "Failed to fork process for pv_server");
+    return false;
+  } else if (pid == 0) {
+    execl("/anki/bin/pv_server", "pv_server", (char*)nullptr);
+    LOG_ERROR("SpeechRecognizerPicovoice.Init", "Failed to exec pv_server");
+    std::exit(EXIT_FAILURE);
+  } else {
+    const char* socketPath = "/dev/socket/_anim_pv_wakeword_";
+    int maxRetries = 100;
+    int retries = 0;
+    while (retries < maxRetries) {
+      if (access(socketPath, F_OK) == 0) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        break;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+      ++retries;
+    }
+
+    if (retries == maxRetries) {
+      LOG_ERROR("SpeechRecognizerPicovoice.Init", "Timeout waiting for pv_server to create socket");
+      return false;
+    }
+  }
+
+
   _impl->audioBuffer.reserve(512 * 2);
 
   if (_impl->pvObj)
@@ -62,12 +95,12 @@ bool SpeechRecognizerPicovoice::Init()
     pv_porcupine_delete(_impl->pvObj);
     _impl->pvObj = nullptr;
   }
-  if (pv_porcupine_init("/data/pv/pv_params.pv", "/data/pv/keyword.ppn", 0.9f, &_impl->pvObj) != PV_STATUS_SUCCESS) {
-    LOG_ERROR("SpeechRecognizerPicovoice.Update", "error setting up recognizer");
+  if (pv_porcupine_init("/anki/data/assets/cozmo_resources/assets/porcupineModels/porcupine_params.pv", "/anki/data/assets/cozmo_resources/assets/porcupineModels/bumblebee.ppn", 0.9f, &_impl->pvObj) != PV_STATUS_SUCCESS) {
+    LOG_ERROR("SpeechRecognizerPicovoice.Init", "error setting up recognizer");
     return false;
   }
 
-  LOG_ERROR("SpeechRecognizerPicovoice.Update", "Picovoice set up successfully!");
+  LOG_INFO("SpeechRecognizerPicovoice.Init", "Picovoice set up successfully!");
   _impl->disabled = false;
 
   return true;

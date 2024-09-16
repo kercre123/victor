@@ -31,6 +31,10 @@ echo "Building victor..."
 echo "Copying vic-cloud and vic-gateway..."
 cp bin/* _build/vicos/Release/bin/
 
+echo "Copying pv_server binary..."
+cp 3rd/picovoice/vicos/bin/pv_server _build/vicos/Release/bin/
+chmod +rwx _build/vicos/Release/bin/pv_server
+
 echo
 
 echo "Build was successful!"
