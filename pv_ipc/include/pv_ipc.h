@@ -10,6 +10,8 @@
 
 #define PV_PORCUPINE_VERSION "3.0.0"
 #define PV_PORCUPINE_FRAME_LENGTH 512
+#define MAX_KEYWORDS 256
+#define MAX_PATH_LENGTH 256
 
 typedef enum {
     PV_CMD_INIT = 1,
@@ -19,21 +21,12 @@ typedef enum {
     PV_CMD_FRAME_LENGTH = 5
 } pv_command_t;
 
-/*
-PV_API pv_status_t pv_porcupine_init(
-        const char *access_key,
-        const char *model_path,
-        int32_t num_keywords,
-        const char *const *keyword_paths,
-        const float *sensitivities,
-        pv_porcupine_t **object);*/
-
 typedef struct {
     char access_key[256];
     char model_path[256];
     int32_t num_keywords;
-    const char *const keyword_path[256];
-    const float *sensitivities;
+    char keyword_path[MAX_KEYWORDS][MAX_PATH_LENGTH]; // array of strings
+    float sensitivities[MAX_KEYWORDS]; // store sensitivities directly
 } pv_init_request_t;
 
 typedef struct {

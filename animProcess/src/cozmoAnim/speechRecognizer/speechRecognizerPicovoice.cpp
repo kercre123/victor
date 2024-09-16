@@ -14,16 +14,20 @@
 #include <thread>
 #include <cstdlib>
 #include <unistd.h>
+#include <fstream>
 
 namespace Anki {
 namespace Vector {
 
 #define LOG_CHANNEL "SpeechRecognizer"
 
+const char *keyword_path[] = {"/anki/data/assets/cozmo_resources/assets/porcupineModels/Hey-Vector_v3.0.0.ppn"};
+const float sensitivities[] = {0.9f};
+
 struct SpeechRecognizerPicovoice::SpeechRecognizerPicovoiceData
 {
   std::vector<AudioUtil::AudioSample> audioBuffer;
-  pv_porcupine_object_t* pvObj = nullptr;
+  pv_porcupine_t* pvObj = nullptr;
   std::recursive_mutex recogMutex;
   bool disabled = true;
   bool reset = false;
@@ -65,7 +69,7 @@ bool SpeechRecognizerPicovoice::Init()
     LOG_ERROR("SpeechRecognizerPicovoice.Init", "Failed to fork process for pv_server");
     return false;
   } else if (pid == 0) {
-    execl("/anki/bin/pv_server", "pv_server", (char*)nullptr);
+    execl("/anki/bin/launch_pv_server.sh", "launch_pv_server.sh", (char*)nullptr);
     LOG_ERROR("SpeechRecognizerPicovoice.Init", "Failed to exec pv_server");
     std::exit(EXIT_FAILURE);
   } else {
@@ -87,16 +91,37 @@ bool SpeechRecognizerPicovoice::Init()
     }
   }
 
-
   _impl->audioBuffer.reserve(512 * 2);
 
-  if (_impl->pvObj)
-  {
+  if (_impl->pvObj) {
     pv_porcupine_delete(_impl->pvObj);
     _impl->pvObj = nullptr;
   }
-  if (pv_porcupine_init("/anki/data/assets/cozmo_resources/assets/porcupineModels/porcupine_params.pv", "/anki/data/assets/cozmo_resources/assets/porcupineModels/bumblebee.ppn", 0.9f, &_impl->pvObj) != PV_STATUS_SUCCESS) {
-    LOG_ERROR("SpeechRecognizerPicovoice.Init", "error setting up recognizer");
+
+  std::string apiKey;
+  {
+    std::ifstream apiKeyFile("/data/picoKey");
+    if (!apiKeyFile.is_open()) {
+      LOG_ERROR("SpeechRecognizerPicovoice.Init", "Failed to open /data/picoKey");
+      return false;
+    }
+    std::getline(apiKeyFile, apiKey);
+    apiKeyFile.close();
+
+    if (apiKey.empty()) {
+      LOG_ERROR("SpeechRecognizerPicovoice.Init", "API key doesn't exist in /data/picoKey");
+      return false;
+    }
+  }
+  
+  if (pv_porcupine_init(apiKey.c_str(),
+        "/anki/data/assets/cozmo_resources/assets/porcupineModels/porcupine_params_v3.0.0.pv", 
+        1,
+        keyword_path, 
+        sensitivities, 
+        &_impl->pvObj
+      ) != PV_STATUS_SUCCESS) {
+    LOG_ERROR("SpeechRecognizerPicovoice.Init", "Error setting up recognizer");
     return false;
   }
 
@@ -105,6 +130,7 @@ bool SpeechRecognizerPicovoice::Init()
 
   return true;
 }
+
 
 void SpeechRecognizerPicovoice::Update(const AudioUtil::AudioSample* audioData, unsigned int audioDataLen)
 {
@@ -127,12 +153,13 @@ void SpeechRecognizerPicovoice::Update(const AudioUtil::AudioSample* audioData, 
         std::vector<AudioUtil::AudioSample> frame(_impl->audioBuffer.begin(),
                                                   _impl->audioBuffer.begin() + frameLength);
 
-        bool result = false;
+        // idk what i did, but process always gives a -1 result. when wakeword, it becomes 0
+        int result = -1;
         if (pv_porcupine_process(_impl->pvObj, frame.data(), &result) != PV_STATUS_SUCCESS) {
             LOG_ERROR("SpeechRecognizerPicovoice.Update", "pv process error");
             return;
         }
-        if (result) {
+        if (result == 0) {
             AudioUtil::SpeechRecognizerCallbackInfo info{
                 .result = "Wake word detected",
                 .startTime_ms = 0,

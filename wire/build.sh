@@ -32,8 +32,12 @@ echo "Copying vic-cloud and vic-gateway..."
 cp bin/* _build/vicos/Release/bin/
 
 echo "Copying pv_server binary..."
-cp 3rd/picovoice/vicos/bin/pv_server _build/vicos/Release/bin/
+cp 3rd/picovoice/vicos/bin/* _build/vicos/Release/bin/
 chmod +rwx _build/vicos/Release/bin/pv_server
+chmod +rwx _build/vicos/Release/bin/launch_pv_server.sh
+
+echo "Copying hf libs..."
+cp -r 3rd/picovoice/vicos/hf-fs _build/vicos/Release/lib/
 
 echo
 

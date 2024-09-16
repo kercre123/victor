@@ -12,11 +12,39 @@
 static pv_porcupine_t *porcupine_obj = NULL;
 
 pv_status_t handle_init(pv_init_request_t *req) {
+    printf("received init request:\n");
+    printf("  access_key: %s\n", req->access_key);
+    printf("  model_path: %s\n", req->model_path);
+    printf("  num_keywords: %d\n", req->num_keywords);
+
+    // Print paths and sensitivities for debugging
+    for (int i = 0; i < req->num_keywords; i++) {
+        printf("  keyword_path[%d]: %s\n", i, req->keyword_path[i]);
+        printf("  sensitivities[%d]: %f\n", i, req->sensitivities[i]);
+    }
+
     if (porcupine_obj != NULL) {
         return PV_STATUS_INVALID_ARGUMENT;
     }
-    return pv_porcupine_init(req->access_key, req->model_path, req->num_keywords, req->keyword_path, req->sensitivities, &porcupine_obj);
+
+    // Convert keyword_path to an array of pointers
+    const char *keyword_path_ptrs[MAX_KEYWORDS];
+    for (int i = 0; i < req->num_keywords; i++) {
+        keyword_path_ptrs[i] = req->keyword_path[i];
+    }
+
+    // Pass the converted pointers and sensitivities to pv_porcupine_init
+    return pv_porcupine_init(
+        req->access_key, 
+        req->model_path, 
+        req->num_keywords, 
+        keyword_path_ptrs, // Pass array of pointers
+        req->sensitivities, // Already an array, so pass directly
+        &porcupine_obj
+    );
 }
+
+
 
 pv_status_t handle_process(pv_process_request_t *req, int *keyword_index) {
     if (porcupine_obj == NULL) {

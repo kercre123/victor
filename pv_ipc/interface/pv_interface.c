@@ -78,22 +78,14 @@ static int recv_all_lib(int sockfd, void *buffer, size_t length) {
     return 0;
 }
 
-/*
-PV_API pv_status_t pv_porcupine_init(
-        const char *access_key,
-        const char *model_path,
-        int32_t num_keywords,
-        const char *const *keyword_paths,
-        const float *sensitivities,
-        pv_porcupine_t **object);*/
-
 pv_status_t pv_porcupine_init(
-        const char *access_key,
-        const char *model_path,
-        int32_t num_keywords,
-        const char *const *keyword_path,
-        const float *sensitivities,
-        pv_porcupine_t **object) {
+    const char *access_key,
+    const char *model_path,
+    int32_t num_keywords,
+    const char *const *keyword_path,
+    const float *sensitivities,
+    pv_porcupine_t **object) {
+
     (void)object;
 
     pv_status_t status = connect_to_server();
@@ -112,8 +104,21 @@ pv_status_t pv_porcupine_init(
     memset(&init_req, 0, sizeof(init_req));
     strncpy(init_req.access_key, access_key, sizeof(init_req.access_key) - 1);
     strncpy(init_req.model_path, model_path, sizeof(init_req.model_path) - 1);
-    strncpy(init_req.keyword_path, keyword_path, sizeof(init_req.keyword_path) - 1);
-    init_req.sensitivities = sensitivities;
+
+    // copy number of keywords
+    init_req.num_keywords = num_keywords;
+
+    // copy the keyword paths
+    for (int i = 0; i < num_keywords; i++) {
+        if (keyword_path[i] != NULL) {
+            strncpy(init_req.keyword_path[i], keyword_path[i], MAX_PATH_LENGTH - 1); // copy string
+        }
+    }
+
+    // copy the sensitivities
+    for (int i = 0; i < num_keywords; i++) {
+        init_req.sensitivities[i] = sensitivities[i];
+    }
 
     if (send_all_lib(client_fd, &init_req, sizeof(init_req)) == -1) {
         perror("send INIT request");
