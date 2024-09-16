@@ -2,6 +2,16 @@
 
 Welcome to `victor`. This is the home of the Anki Vector robot's source code. Original README: [README-orig.md](/README-orig.md)
 
+## Branch specifics
+
+**This branch uses Picovoice Porcupine 3.0.0 rather than TrulyHandsfree for wake-word recognition. It's a LOT more accurate and better at handling motor noise, but requires an "access key" from [console.picovoice.ai](https://console.picovoice.ai/) (it's free forever!). The actual processing is done locally, Picovoice just has usage limits. For Porcupine, you can use it forever among up to 3 devices on one account.
+
+So, before you deploy this onto your robot, SSH in and run `echo "picovoice_access_key" > /data/picoKey` (replacing `picovoice_access_key` with your actual key).**
+
+For a version that doesn't need an API key, check the `actual-picovoice` branch instead. It uses an older version of Picovoice which doesn't need an access key.
+
+To implement a custom wake word, generate one at the Picovoice console. Then copy the file to Vector's /anki/data/assets/cozmo_resources/assets/porcupineModels/Hey-Vector_v3.0.0.ppn and (on Vector) run `systemctl stop anki-robot.target`, wait a few seconds, then `systemctl start anki-robot.target`.
+
 ## Building
 
  - Prereqs: Make sure you have `docker` and `git-lfs` installed. You need a Linux machine. WSL should work. macOS may work???
