@@ -6,6 +6,8 @@ Welcome to `victor`. This is the home of the Anki Vector robot's source code. Or
 
 Branches where I am doing work:
 
+- `master` (this)
+  -  Little bug fixes and tests. No major enhancements.
 - `actual-picovoice`
   -  Implementation of Picovoice Porcupine v1.3.0 as a wake word engine. The wake word in this one, by default, is "bumblebee". You can't implement a custom one. It is free and doesn't need an access key.
 - `actual-picovoice-3.0`
