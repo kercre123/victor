@@ -4,9 +4,9 @@ Welcome to `victor`. This is the home of the Anki Vector robot's source code. Or
 
 ## Branch specifics
 
-**This branch uses Picovoice Porcupine 3.0.0 rather than TrulyHandsfree for wake-word recognition. It's a LOT more accurate and better at handling motor noise, but requires an "access key" from [console.picovoice.ai](https://console.picovoice.ai/) (it's free forever!). The actual processing is done locally, Picovoice just has usage limits. For Porcupine, you can use it forever among up to 3 devices on one account.
+This branch uses Picovoice Porcupine 3.0.0 rather than TrulyHandsfree for wake-word recognition. It's a LOT more accurate and better at handling motor noise, but requires an "access key" from [console.picovoice.ai](https://console.picovoice.ai/) (it's free forever!). The actual processing is done locally, Picovoice just has usage limits. For Porcupine, you can use it forever among up to 3 devices on one account.
 
-So, before you deploy this onto your robot, SSH in and run `echo "picovoice_access_key" > /data/picoKey` (replacing `picovoice_access_key` with your actual key).**
+**So, before you deploy this onto your robot, SSH in and run `echo "picovoice_access_key" > /data/picoKey` (replacing `picovoice_access_key` with your actual key).**
 
 For a version that doesn't need an API key, check the `actual-picovoice` branch instead. It uses an older version of Picovoice which doesn't need an access key, but the wakeword is "bumblebee" rather than "Hey Vector".
 
