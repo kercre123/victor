@@ -10,6 +10,8 @@ Branches where I am doing work:
   -  Little bug fixes and tests. No major enhancements.
 - `actual-picovoice`
   -  Implementation of Picovoice Porcupine v1.3.0 as a wake word engine. The wake word in this one, by default, is "bumblebee". You can't implement a custom one. It is free and doesn't need an access key.
+- `open-source`
+  -  An attempt to replace every confidential component with something that wouldn't get me in trouble if publicized. W.I.P.
 - `actual-picovoice-3.0`
   -  Picovoice Porcupine v3.0.0 (latest) as a wake word engine. The wake word is "Hey Vector" and you can implement any custom one, but it requires a Picovoice access key. More details are in that branch's README.
 - `vosk`
