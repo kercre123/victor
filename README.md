@@ -14,12 +14,12 @@ Branches where I am doing work:
   -  An attempt to replace every confidential component with something that wouldn't get me in trouble if publicized. W.I.P.
 - `actual-picovoice-3.0`
   -  Picovoice Porcupine v3.0.0 (latest) as a wake word engine. The wake word is "Hey Vector" and you can implement any custom one, but it requires a Picovoice access key. More details are in that branch's README.
-- `vosk`
+- `vosk-ww`
   - Vosk as a wake word engine. Uses a lot of RAM, but the wake word can be whatever word you want, and no access key is required as Vosk is open-source software.
 
 ## Building
 
- - Prereqs: Make sure you have `docker` and `git-lfs` installed. You need a Linux machine. WSL should work. macOS may work???
+ - Prereqs: Make sure you have `docker` and `git-lfs` installed. You need a Linux machine. macOS and WSL are untested.
 
 1. Clone the repo and cd into it:
 
