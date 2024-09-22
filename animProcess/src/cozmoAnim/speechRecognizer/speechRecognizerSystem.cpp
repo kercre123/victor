@@ -16,7 +16,7 @@
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/robotDataLoader.h"
-#include "speechRecognizerPicovoice.h"
+#include "speechRecognizerSnowboy.h"
 #include "cozmoAnim/speechRecognizer/speechRecognizerPryonLite.h"
 #include "cozmoAnim/micData/notchDetector.h"
 #include "util/console/consoleInterface.h"
@@ -122,21 +122,21 @@ void SpeechRecognizerSystem::InitVector(const Anim::RobotDataLoader& dataLoader,
   }
   
   const bool useVad = true;
-  _victorTrigger = std::make_unique<TriggerContextPicovoice>("Vector", useVad);
+  _victorTrigger = std::make_unique<TriggerContextSnowboy>("Vector", useVad);
   _victorTrigger->recognizer->SetCallback(callback);
   
   // Initialize the recognizer
   bool initSuccess = _victorTrigger->recognizer->Init();
   if (!initSuccess) {
-    LOG_ERROR("SpeechRecognizerSystem.InitVector", "Failed to initialize Picovoice recognizer");
+    LOG_ERROR("SpeechRecognizerSystem.InitVector", "Failed to initialize Snowboy recognizer");
     return;
   }
 
-  LOG_INFO("SpeechRecognizerSystem.InitVector", "Successfully initialized Picovoice Porcupine!");
+  LOG_INFO("SpeechRecognizerSystem.InitVector", "Successfully initialized Snowboy!");
   
   //_victorTrigger->recognizer->Start();
   
-  // Picovoice doesn't need locale-specific models, so we can skip updating the trigger for locale
+  // Snowboy doesn't need locale-specific models, so we can skip updating the trigger for locale
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -212,7 +212,7 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample* audioData, uns
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SpeechRecognizerSystem::UpdateTriggerForLocale(const Util::Locale& newLocale, RecognizerTypeFlag recognizerFlags)
 {
-  // Picovoice doesn't require locale updates, so this function can be left empty or return true
+  // Snowboy doesn't require locale updates, so this function can be left empty or return true
   return true;
 }
 
@@ -356,25 +356,25 @@ bool SpeechRecognizerSystem::UpdateTriggerForLocale(TriggerContext<SpeechRecogni
                                                     const MicData::MicTriggerConfig::ModelType modelType,
                                                     const int searchFileIndex)
 {
-  // For Picovoice, locale updates are not needed
+  // For Snowboy, locale updates are not needed
   return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpeechRecognizerSystem::ApplyLocaleUpdate()
 {
-  // No action needed for Picovoice
+  // No action needed for Snowboy
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template <class SpeechRecognizerType>
 void SpeechRecognizerSystem::ApplySpeechRecognizerLocaleUpdate(TriggerContext<SpeechRecognizerType>& aTrigger)
 {
-  // No action needed for Picovoice
+  // No action needed for Snowboy
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SpeechRecognizerSystem::UpdateRecognizerModel(TriggerContext<SpeechRecognizerPicovoice>& aTrigger)
+bool SpeechRecognizerSystem::UpdateRecognizerModel(TriggerContext<SpeechRecognizerSnowboy>& aTrigger)
 {
   return true;
 }

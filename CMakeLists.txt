@@ -232,7 +232,6 @@ include(okao)
 include(flatbuffers)
 include(sodium)
 include(aubio)
-include(picovoice)
 include(signalessence)
 include(pryon_lite)
 

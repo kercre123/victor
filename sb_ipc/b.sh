@@ -1,0 +1,1 @@
+/home/kerigan/projects/vic-toolchain/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ -o snowboy_server sb_serv.cpp -L /home/kerigan/projects/snowboy/lib/rpi -L openblas-static/lib -I /home/kerigan/projects/snowboy -lsnowboy-detect -lopenblas -lpthread -static -D_GLIBCXX_USE_CXX11_ABI=0

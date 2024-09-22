@@ -2,6 +2,12 @@
 
 Welcome to `victor`. This is the home of the Anki Vector robot's source code. Original README: [README-orig.md](/README-orig.md)
 
+## Branch Info
+
+This branch uses the Snowboy wake-word engine. It's reasonably fast and accurate, and you can technically create your own models though I haven't gotten it to successfully work.
+
+The wake-word is "snowboy" rather than "hey vector" at the moment.
+
 ## Building
 
  - Prereqs: Make sure you have `docker` and `git-lfs` installed. You need a Linux machine. WSL should work. macOS may work???
