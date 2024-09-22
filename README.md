@@ -6,7 +6,7 @@ Welcome to `victor`. This is the home of the Anki Vector robot's source code. Or
 
 This branch uses the Snowboy wake-word engine. It's reasonably fast and accurate, and you can technically create your own models though I haven't gotten it to successfully work.
 
-The wake-word is "snowboy" rather than "hey vector" at the moment.
+The wake-word is still "hey vector".
 
 ## Building
 
