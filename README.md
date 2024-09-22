@@ -16,6 +16,8 @@ Branches where I am doing work:
   -  Picovoice Porcupine v3.0.0 (latest) as a wake word engine. The wake word is "Hey Vector" and you can implement any custom one, but it requires a Picovoice access key. More details are in that branch's README.
 - `vosk-ww`
   - Vosk as a wake word engine. Uses a lot of RAM, but the wake word can be whatever word you want, and no access key is required as Vosk is open-source software.
+- `snowboy`
+  - Snowboy as a wake word engine. Free, mostly open, no cloud communication. Easy to generate your own model as long as you use [this branch](https://github.com/hanzala123/snowboy/tree/master) of Snowboy.
 
 ## Building
 
