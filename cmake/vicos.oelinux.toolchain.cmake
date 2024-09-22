@@ -146,7 +146,7 @@ endif()
 list(APPEND VICOS_COMPILER_FLAGS
 	-march=armv7-a
 	-mfloat-abi=softfp
-	-mfpu=neon-vfpv4)
+	-mfpu=vfpv3-d16)
 list(APPEND VICOS_LINKER_FLAGS
 	-Wl,--fix-cortex-a8)
 

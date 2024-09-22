@@ -19,9 +19,9 @@ int main(int argc, char* argv[]) {
     std::string model_filename = argv[2];
 
     snowboy::SnowboyDetect detector(resource_filename, model_filename);
-    detector.SetSensitivity("0.65");
+    detector.SetSensitivity("0.73");
     detector.SetAudioGain(1.0);
-    detector.ApplyFrontend(true);
+    detector.ApplyFrontend(false);
 
     int server_fd, new_socket;
     struct sockaddr_in address;

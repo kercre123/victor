@@ -1,5 +1,3 @@
-// Snowboy porcupine
-
 #include "speechRecognizerSnowboy.h"
 
 #include "audioUtil/speechRecognizer.h"
@@ -71,7 +69,7 @@ bool SpeechRecognizerSnowboy::Init()
   std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
 
-  _impl->audioBuffer.reserve(4096 * 2);
+  _impl->audioBuffer.reserve(2048 * 2);
 
   if (snowboy_init() != 0) {
     LOG_ERROR("SpeechRecognizerSnowboy.Init", "snowboy failed to init :(");
@@ -92,7 +90,7 @@ void SpeechRecognizerSnowboy::Update(const AudioUtil::AudioSample* audioData, un
     {
         return;
     }
-    uint32_t frameLength = 4096;
+    uint32_t frameLength = 2048;
     if (frameLength == 0) {
         LOG_ERROR("SpeechRecognizerSnowboy.Update", "Invalid frame length from Snowboy");
         return;
