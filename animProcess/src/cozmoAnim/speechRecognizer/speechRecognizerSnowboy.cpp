@@ -61,7 +61,7 @@ bool SpeechRecognizerSnowboy::Init()
     LOG_ERROR("SpeechRecognizerSnowboy.Init", "Failed to fork process for pv_server");
     return false;
   } else if (pid == 0) {
-    execl("/anki/bin/sb_server", "sb_server", "/anki/data/assets/cozmo_resources/assets/snowboyModels/common.res", "/anki/data/assets/cozmo_resources/assets/snowboyModels/snowboy.umdl", (char*)nullptr);
+    execl("/anki/bin/sb_server", "sb_server", "/anki/data/assets/cozmo_resources/assets/snowboyModels/common.res", "/anki/data/assets/cozmo_resources/assets/snowboyModels/hey_vector.pmdl", (char*)nullptr);
     LOG_ERROR("SpeechRecognizerSnowboy.Init", "Failed to exec sb_server");
     std::exit(EXIT_FAILURE);
   }
