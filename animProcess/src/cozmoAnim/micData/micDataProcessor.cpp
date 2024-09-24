@@ -51,7 +51,7 @@ namespace {
 #define CONSOLE_GROUP "MicData"
 
   CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
-  CONSOLE_VAR(bool, kMicData_SpeakerNoiseDisablesMics, CONSOLE_GROUP, true);
+  CONSOLE_VAR(bool, kMicData_SpeakerNoiseDisablesMics, CONSOLE_GROUP, false);
 
   // Time necessary for the VAD logic to wait when there's no activity, before we begin skipping processing for
   // performance. Note that this probably needs to at least be as long as the trigger, which is ~ 500-750ms.
@@ -62,10 +62,10 @@ namespace {
   CONSOLE_VAR(bool, kMicData_SaveRawFullIntent, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_SaveRawFullIntent_WakeWordless, CONSOLE_GROUP, false);
   
-  CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, true);
   CONSOLE_VAR(bool, kMicData_ForceDisableMicDataProc, CONSOLE_GROUP, false);
   
-  uint8_t _currentDevForcedProcesState = 0;
+  uint8_t _currentDevForcedProcesState = 4;
   CONSOLE_VAR_ENUM(uint8_t, kDevForceProcessState, CONSOLE_GROUP, _currentDevForcedProcesState,
                    "NormalOperation,None,NoProcessingSingleMic,SigEsBeamformingOff,SigEsBeamformingOn");
   

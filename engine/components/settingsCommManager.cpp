@@ -63,7 +63,7 @@ namespace
   CONSOLE_FUNC(DebugSetMasterVolume, kConsoleGroup);
 
   // NOTE: Need to keep kEyeColors in sync with enum EyeColor in settings.proto
-  constexpr const char* kEyeColors = "TIP_OVER_TEAL,OVERFIT_ORANGE,UNCANNY_YELLOW,NON_LINEAR_LIME,SINGULARITY_SAPPHIRE,FALSE_POSITIVE_PURPLE,CONFUSION_MATRIX_GREEN";
+  constexpr const char* kEyeColors = "TIP_OVER_TEAL,OVERFIT_ORANGE,UNCANNY_YELLOW,NON_LINEAR_LIME,SINGULARITY_SAPPHIRE,FALSE_POSITIVE_PURPLE,CONFUSION_MATRIX_GREEN,ROBOT_RED";
   CONSOLE_VAR_ENUM(u8, kEyeColor, kConsoleGroup, 0, kEyeColors);
   void DebugSetEyeColor(ConsoleFunctionContextRef context)
   {
