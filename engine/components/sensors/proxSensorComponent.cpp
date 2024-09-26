@@ -131,10 +131,10 @@ std::string ProxSensorComponent::GetDebugString(const std::string& delimeter)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ProxSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 {
-  if(IsWhiskey())
-  {
-    return;
-  }
+  //if(IsWhiskey())
+  //{
+  //  return;
+  //}
 
   // cache previous state for comparison later
   const Pose3d prevRobotPose   = _currentRobotPose;

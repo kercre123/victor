@@ -243,7 +243,7 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
     ADD_SCREEN(Camera, Kercre123);
   }
 
-  ADD_SCREEN_WITH_TEXT(Kercre123, Main, {"Custom Screen Test"});
+  ADD_SCREEN_WITH_TEXT(Kercre123, Main, {"BRANCH: snowboy"});
 
 
   // ========== Screen Customization ========= 
@@ -1384,8 +1384,8 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
 
 
   std::string prox1, prox2;
-  if(!IsWhiskey())
-  {
+  //if(!IsWhiskey())
+  //{
     sprintf(temp,
             "DIST:   %3umm",
             state.proxData.distance_mm);
@@ -1397,7 +1397,7 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
             state.proxData.ambientIntensity,
             state.proxData.spadCount);
     prox2 = temp;
-  }
+  //}
 
   sprintf(temp,
           "TOUCH: %u",

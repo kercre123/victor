@@ -1,3 +1,6 @@
 [submodule "EXTERNALS"]
 	path = EXTERNALS
 	url = https://github.com/kercre123/EXTERNALS
+[submodule "ota/wire-os"]
+	path = ota/wire-os
+	url = https://github.com/kercre123/wire-os
