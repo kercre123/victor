@@ -4,7 +4,7 @@ Welcome to `victor`. This is the home of the Anki Vector robot's source code. Or
 
 ## Branch Info
 
-This branch uses the Snowboy wake-word engine. It's reasonably fast and accurate, and you can technically create your own models though I haven't gotten it to successfully work.
+This branch uses the Snowboy wake-word engine. It's reasonably fast and accurate.
 
 The wake-word is still "hey vector".
 
@@ -16,7 +16,7 @@ The wake-word is still "hey vector".
 
 ```
 cd ~
-git clone --recurse-submodules https://github.com/kercre123/victor
+git clone --recurse-submodules https://github.com/kercre123/victor -b snowboy
 cd victor
 git lfs pull
 ```
@@ -27,6 +27,8 @@ git lfs pull
 sudo groupadd docker
 sudo gpasswd -a $USER docker
 newgrp docker
+sudo chown root:docker /var/run/docker.sock
+sudo chmod 660 /var/run/docker.sock
 ```
 
 3. Run the build script:
@@ -35,12 +37,6 @@ newgrp docker
 ```
 
 3. It should just work! The output will be in `./_build/vicos/Release/`
-
-- If you get a permission denied error, try these commands, then run the build script again:
-```
-sudo chown root:docker /var/run/docker.sock
-sudo chmod 660 /var/run/docker.sock
-```
 
 
 ## Deploying
