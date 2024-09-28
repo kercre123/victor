@@ -29,7 +29,9 @@ jobs:
             ~/.cache
             /var/lib/docker
             ~/.anki
-          key: ${{ runner.os }}-docker-${{ github.sha }}
+            $GITHUB_WORKSPACE/generated
+            $GITHUB_WORKSPACE/_build
+          key: ${{ runner.os }}-docker-${{ hashFiles('docker/**') }}
           restore-keys: |
             ${{ runner.os }}-docker-
 
@@ -37,7 +39,7 @@ jobs:
         run: |
           sudo apt-get remove containerd.io
           sudo apt-get update
-          sudo apt-get install -y docker.io git-lfs rsync ssh
+          sudo apt-get install -y docker.io git-lfs rsync ssh build-essential
           sudo systemctl start docker
           sudo gpasswd -a $USER docker
           newgrp docker
