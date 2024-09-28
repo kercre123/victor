@@ -14,6 +14,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: true
+          lfs: true
           token: ${{ secrets.GH_PAT }}
 
       - name: Clone anki-deps to ~/.anki
@@ -40,7 +41,6 @@ jobs:
           sudo systemctl start docker
           sudo gpasswd -a $USER docker
           newgrp docker
-          cd ~/victor && git lfs install && git lfs pull
 
       - name: Build inside Docker
         run: |
