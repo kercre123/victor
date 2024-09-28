@@ -1,0 +1,83 @@
+name: Build OTA on Tag
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Set up repository and submodules
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true  # Clone submodules
+
+      # 2. Set up caching (including Docker layers)
+      - name: Set up cache for Docker and build dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache
+            /var/lib/docker
+          key: ${{ runner.os }}-docker-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-docker-
+
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io git-lfs rsync ssh
+          sudo service docker start
+          git lfs install
+
+      # 4. Build the docker container and build the software inside
+      - name: Build inside Docker
+        run: |
+          cd $GITHUB_WORKSPACE
+          ./wire/build-d.sh
+
+      # 5. Get the tag version
+      - name: Get tag version
+        id: get_tag
+        run: echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      # 6. Build OTA for each target
+      - name: Build OTA files
+        run: |
+          tag_version=${{ env.tag_name }}
+          cd ota
+          ./make.sh $tag_version
+        env:
+          DOCKER_BUILDKIT: 1  # If you need buildkit enabled
+
+      # 7. Rename and move OTA files to temp directory for artifact upload
+      - name: Rename and organize OTA files
+        run: |
+          tag_version=${{ env.tag_name }}
+          mkdir -p /tmp/ota_artifacts
+          for target in dvt3 dev whiskey oskr; do
+            find ./out/$tag_version/$target/ -name "*.ota" -exec cp {} /tmp/ota_artifacts/${tag_version}-$target.ota \;
+          done
+
+      # 8. Upload artifacts for a release if present
+      - name: Upload OTA artifacts to release if tagged
+        if: github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: /tmp/ota_artifacts
+          asset_name: ${{ env.tag_name }}.ota
+          label: "OTA files"
+
+      # 9. Otherwise, upload as build artifacts
+      - name: Upload build artifacts
+        if: github.event_name != 'release'
+        uses: actions/upload-artifact@v3
+        with:
+          name: OTA-files-${{ env.tag_name }}
+          path: /tmp/ota_artifacts
