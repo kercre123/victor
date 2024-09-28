@@ -4,25 +4,58 @@ set -e
 
 # how are we going to do this...
 
+if [[ $1 == "" ]]; then
+    echo "provide a version pweaaaaseeee :3"
+    exit 1
+fi
+
 VIC_PATH="$(pwd)/.."
+OUT_PATH="$(pwd)/out/$1"
+mkdir -p "${OUT_PATH}"
+mkdir "${OUT_PATH}/dev"
+mkdir "${OUT_PATH}/oskr"
+mkdir "${OUT_PATH}/whiskey"
+mkdir "${OUT_PATH}/dvt3"
 
 # stage
+
+echo "Staging /anki files..."
 
 cd "${VIC_PATH}"
 ./project/victor/scripts/stage.sh -c Release
 
 cd ota/wire-os
-./main mount -ota="2.0.1.0d"
+
+if [[ ! -f store/2.0.1.0.ota ]]; then
+    sudo ./main download -url="http://ota.pvic.xyz/base/2.0.1.0.ota"
+fi
 
 OTA_PATH="$(pwd)/work"
 STAGING_PATH="${VIC_PATH}/_build/staging/Release"
 
-echo "Removing old anki folder..."
-rm -rf "${OTA_PATH}/anki"
+for target in 0 1 2 4; do
+    case $target in
+        0)
+            output_file="${OUT_PATH}/dev/$1.ota"
+            ;;
+        1)
+            output_file="${OUT_PATH}/oskr/$1.ota"
+            ;;
+        2)
+            output_file="${OUT_PATH}/whiskey/$1.ota"
+            ;;
+        4)
+            output_file="${OUT_PATH}/dvt3/$1.ota"
+            ;;
+    esac
 
-echo "Copying anki folder from staging..."
-cp -rp "${STAGING_PATH}/anki" "${OTA_PATH}/"
-
-./main patch -output="$1" -target=0
-
-./main pack
+    sudo ./main mount -ota="2.0.1.0"
+    echo "Removing old anki folder..."
+    sudo rm -rf "${OTA_PATH}/anki"
+    echo "Copying anki folder from staging..."
+    sudo rsync -avrp "${STAGING_PATH}/anki" "${OTA_PATH}/"
+    sudo ./main patch -output="$1" -target=$target
+    sudo ./main pack
+    sudo chmod +rwx out/$1.ota
+    mv out/$1.ota "$output_file"
+done
