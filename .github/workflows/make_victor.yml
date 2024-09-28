@@ -33,9 +33,12 @@ jobs:
       # 3. Install dependencies
       - name: Install dependencies
         run: |
+          sudo apt-get remove containerd.io
           sudo apt-get update
           sudo apt-get install -y docker.io git-lfs rsync ssh
-          sudo service docker start
+          sudo systemctl start docker
+          sudo gpasswd -a $USER docker
+          newgrp docker
           git lfs install
 
       # 4. Build the docker container and build the software inside
