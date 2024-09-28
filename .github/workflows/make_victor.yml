@@ -14,8 +14,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: true
-          submodules_recursive: true
           token: ${{ secrets.GH_PAT }}
+
+      - name: Clone anki-deps to ~/.anki
+        run: |
+          git clone https://kercre123:${{ secrets.GH_PAT }}@github.com/kercre123/anki-deps.git ~/.anki
+
 
       - name: Set up cache for Docker and build dependencies
         uses: actions/cache@v3
