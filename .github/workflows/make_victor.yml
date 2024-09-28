@@ -61,26 +61,43 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
 
-      - name: Rename and organize OTA files
+      # - name: Rename and organize OTA files
+      #   run: |
+      #     tag_version=${{ env.tag_name }}
+      #     mkdir -p /tmp/ota_artifacts
+      #     cd $GITHUB_WORKSPACE
+      #     for target in dvt3 dev whiskey oskr; do
+      #       find ./ota/out/$tag_version/$target/ -name "*.ota" -exec cp {} /tmp/ota_artifacts/${tag_version}-$target.ota \;
+      #     done
+
+      # - name: Upload OTA artifacts to release if tagged
+      #   if: github.event_name == 'release'
+      #   uses: actions/upload-release-asset@v1
+      #   with:
+      #     upload_url: ${{ github.event.release.upload_url }}
+      #     asset_path: /tmp/ota_artifacts
+      #     asset_name: ${{ env.tag_name }}.ota
+      #     label: "OTA files"
+
+      - name: Transfer OTA files to server
         run: |
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
           tag_version=${{ env.tag_name }}
-          mkdir -p /tmp/ota_artifacts
           for target in dvt3 dev whiskey oskr; do
-            find ./out/$tag_version/$target/ -name "*.ota" -exec cp {} /tmp/ota_artifacts/${tag_version}-$target.ota \;
+            local_path="ota/out/$tag_version/$target/$tag_version.ota"
+            remote_path="/wire/otas/full/$target/$tag_version.ota"
+            ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "mkdir -p /wire/otas/full/$target"
+            rsync -avz -e "ssh -o StrictHostKeyChecking=no" $local_path ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:$remote_path
           done
+        env:
+          tag_name: ${{ github.ref_name }}  # Ensures tag is available as env variable
 
-      - name: Upload OTA artifacts to release if tagged
-        if: github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: /tmp/ota_artifacts
-          asset_name: ${{ env.tag_name }}.ota
-          label: "OTA files"
-
-      - name: Upload build artifacts
-        if: github.event_name != 'release'
-        uses: actions/upload-artifact@v3
-        with:
-          name: OTA-files-${{ env.tag_name }}
-          path: /tmp/ota_artifacts
+      # - name: Upload build artifacts
+      #   if: github.event_name != 'release'
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: OTA-files-${{ env.tag_name }}
+      #     path: /tmp/ota_artifacts
