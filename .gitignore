@@ -414,3 +414,4 @@ log.txt
 
 robot_sshkey
 ota/out
+ota/ota-server/*.ota

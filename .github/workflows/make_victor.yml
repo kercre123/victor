@@ -22,6 +22,12 @@ jobs:
           git clone https://kercre123:${{ secrets.GH_PAT }}@github.com/kercre123/anki-deps.git ~/.anki
 
 
+      - name: Allow cache to apply itself to the FS
+        run: |
+          sudo rm -rf /var/lib/docker
+          sudo chmod +rwx /var/lib
+          sudo chown runner:runner /var/lib
+
       - name: Set up cache for Docker and build dependencies
         uses: actions/cache@v3
         with:
@@ -39,6 +45,7 @@ jobs:
         run: |
           sudo chmod -R +rwx /var/lib/docker
           sudo chown -R root:root /var/lib/docker
+          sudo chown root:root /var/lib
 
       - name: Install dependencies
         run: |
