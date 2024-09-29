@@ -78,7 +78,7 @@ project/build-scripts/webots/__GENERATED_ANIMATIONS_TEST__.cfg
 *.mexmaci64
 *.o
 *.obj
-*.so
+#*.so
 *.la
 *.a
 *.ko
