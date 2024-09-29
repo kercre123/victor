@@ -45,7 +45,7 @@ RUN apt-get update && apt-get install -y clang-7 \
     libc++-7-dev 
 RUN ln -sf /usr/bin/clang++-7 /usr/bin/clang++
 
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash - 
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - 
 RUN apt-get update && apt-get install -y nodejs
 
 RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
