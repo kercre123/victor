@@ -52,7 +52,7 @@ func GetLatestVersion() string {
 	if err != nil {
 		return ""
 	}
-	return string(out)
+	return strings.TrimSpace(string(out))
 }
 
 func FileOpen(path string) *[]byte {
@@ -85,7 +85,7 @@ func GetOTA(version string, target string, diff bool) (*[]byte, error) {
 				Verbose:            true,
 			}
 			otaData, err := dgen.CreateDeltaOTA(options)
-			if err != nil {
+			if err == nil {
 				return &otaData, nil
 			} else {
 				fmt.Println("error creating delta OTA: " + err.Error())
@@ -100,6 +100,7 @@ func GetOTA(version string, target string, diff bool) (*[]byte, error) {
 }
 
 func otaHTTPHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.URL.Path)
 	if strings.HasPrefix(r.URL.Path, "/vic/full") {
 		version := NormVer(r.FormValue("victorversion"))
 		target := r.FormValue("victortarget")
@@ -114,6 +115,7 @@ func otaHTTPHandler(w http.ResponseWriter, r *http.Request) {
 		target := r.FormValue("victortarget")
 		out, err := GetOTA(version, target, true)
 		if err != nil {
+			fmt.Println(err)
 			http.Error(w, err.Error(), 404)
 			return
 		}
@@ -122,7 +124,7 @@ func otaHTTPHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/vic", otaHTTPHandler)
+	http.HandleFunc("/vic/", otaHTTPHandler)
 	fmt.Println("listening on 5901")
 	http.ListenAndServe(":5901", nil)
 }
