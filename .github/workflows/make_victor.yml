@@ -35,6 +35,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-docker-
 
+      - name: Allow cache to work
+        run: |
+          sudo chmod -R +rwx /var/lib/docker
+          sudo chown -R root:root /var/lib/docker
+
       - name: Install dependencies
         run: |
           sudo apt-get remove containerd.io
@@ -96,6 +101,11 @@ jobs:
           done
         env:
           tag_name: ${{ github.ref_name }}  # Ensures tag is available as env variable
+      
+      - name: Allow cache to be uploaded
+        run: |
+          sudo chmod -R +rwx /var/lib/docker
+          sudo chown -R runner:runner /var/lib/docker
 
       # - name: Upload build artifacts
       #   if: github.event_name != 'release'
