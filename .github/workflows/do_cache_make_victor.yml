@@ -74,14 +74,11 @@ jobs:
             $GITHUB_WORKSPACE/_build
           key: ${{ runner.os }}-viccache-${{ hashFiles('docker/**') }}
 
-      - name: Remove old docker
+      - name: Clone anki-deps to ~/.anki
         run: |
-          sudo apt-get remove containerd.io docker docker.io
-
-      - if: steps.cache.outputs.cache-hit != 'true'
-        name: Clone anki-deps to ~/.anki
-        run: |
-          git clone https://kercre123:${{ secrets.GH_PAT }}@github.com/kercre123/anki-deps.git ~/.anki
+          if [[ ! -d ~/.anki ]]; then
+            git clone https://kercre123:${{ secrets.GH_PAT }}@github.com/kercre123/anki-deps.git ~/.anki
+          fi
 
       - name: Install dependencies
         run: |
