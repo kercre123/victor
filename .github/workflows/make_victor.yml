@@ -17,12 +17,16 @@ jobs:
           lfs: true
           token: ${{ secrets.GH_PAT }}
 
+      - name: Remove old docker
+        run: |
+          sudo apt-get remove containerd.io docker docker.io
 
       - name: Allow cache to apply itself to the FS
         run: |
           sudo rm -rf /var/lib/docker
           sudo chmod +rwx /var/lib
           sudo chown runner:runner /var/lib
+
 
       - name: Set up cache for Docker and build dependencies
         uses: actions/cache@v3
