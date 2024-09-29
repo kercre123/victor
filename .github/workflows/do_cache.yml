@@ -41,13 +41,6 @@ jobs:
           git clone https://kercre123:${{ secrets.GH_PAT }}@github.com/kercre123/anki-deps.git ~/.anki
 
       - if: steps.cache.outputs.cache-hit != 'true'
-        name: Allow cache to work
-        run: |
-          sudo chmod -R +rwx /var/lib/docker
-          sudo chown -R root:root /var/lib/docker
-          sudo chown root:root /var/lib
-
-      - if: steps.cache.outputs.cache-hit != 'true'
         name: Install dependencies
         run: |
           sudo apt-get remove containerd.io
