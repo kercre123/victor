@@ -38,9 +38,7 @@ jobs:
       - if: steps.cache.outputs.cache-hit != 'true'
         name: Clone anki-deps to ~/.anki
         run: |
-          if [[ ! -d ~/.anki ]]; then
-            git clone https://kercre123:${{ secrets.GH_PAT }}@github.com/kercre123/anki-deps.git ~/.anki \;
-          fi
+          git clone https://kercre123:${{ secrets.GH_PAT }}@github.com/kercre123/anki-deps.git ~/.anki
 
       - if: steps.cache.outputs.cache-hit != 'true'
         name: Allow cache to work
