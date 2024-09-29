@@ -122,11 +122,14 @@ func otaHTTPHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.Write(*out)
+	} else if strings.HasPrefix(r.URL.Path, "/base") {
+		w.Write(*FileOpen("/wire/otas/base/2.0.1.0.ota"))
 	}
 }
 
 func main() {
 	http.HandleFunc("/vic/", otaHTTPHandler)
+	http.HandleFunc("/base/", otaHTTPHandler)
 	fmt.Println("listening on 5901")
 	http.ListenAndServe(":5901", nil)
 }
