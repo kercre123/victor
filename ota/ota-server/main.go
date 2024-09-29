@@ -2,7 +2,7 @@ package main
 
 import (
 	"errors"
-	"log"
+	"fmt"
 	"net/http"
 	"os"
 	dgen "ota-server/pkg/d-gen"
@@ -16,6 +16,7 @@ var (
 	DoNotAcceptRequestFile = "/wire/otas/dnar"
 	DiffPath               = "/wire/otas/diff"
 	FullPath               = "/wire/otas/full"
+	PassPath               = "/wire/ota.pas"
 )
 
 func ShouldNotDoWork() bool {
@@ -70,50 +71,58 @@ func GetOTA(version string, target string, diff bool) (*[]byte, error) {
 	}
 	diffPath := GenDiffFilePath(version, latestVer, target)
 	fullPath := GetFullOTAPath(version, target)
-	if FileExists(diffPath) {
-		return FileOpen(diffPath), nil
-	} else if FileExists(fullPath) {
-		options := dgen.DeltaOTAOptions{
-			OldPath:            fullPath,
-			NewPath:            "/path/to/new.ota",
-			RebootAfterInstall: "1",
-			OTAPassPath:        "/path/to/ota.pass",
-			MaxDeltaSize:       80000000, // 80 MB
-			Verbose:            true,
+	latestFullPath := GetFullOTAPath(latestVer, target)
+	if diff {
+		if FileExists(diffPath) {
+			return FileOpen(diffPath), nil
+		} else if FileExists(fullPath) {
+			options := dgen.DeltaOTAOptions{
+				OldPath:            fullPath,
+				NewPath:            latestFullPath,
+				RebootAfterInstall: "1",
+				OTAPassPath:        PassPath,
+				MaxDeltaSize:       80000000, // 80 MB
+				Verbose:            true,
+			}
+			otaData, err := dgen.CreateDeltaOTA(options)
+			if err != nil {
+				return &otaData, nil
+			} else {
+				fmt.Println("error creating delta OTA: " + err.Error())
+			}
 		}
-		otaData, err := dgen.CreateDeltaOTA(options)
-		if err != nil {
-			log.Fatalf("Failed to create delta OTA: %v", err)
+	} else {
+		if FileExists(latestFullPath) {
+			return FileOpen(latestFullPath), nil
 		}
-		return FileOpen(fullPath), nil
 	}
-
+	return nil, errors.New("ota doesn't exist")
 }
 
-func otaHTTPHandler(r *http.Request, w http.ResponseWriter) {
-	if strings.HasPrefix(r.URL.Path, "/full") {
-
+func otaHTTPHandler(w http.ResponseWriter, r *http.Request) {
+	if strings.HasPrefix(r.URL.Path, "/vic/full") {
+		version := NormVer(r.FormValue("victorversion"))
+		target := r.FormValue("victortarget")
+		out, err := GetOTA(version, target, false)
+		if err != nil {
+			http.Error(w, err.Error(), 404)
+			return
+		}
+		w.Write(*out)
+	} else if strings.HasPrefix(r.URL.Path, "/vic/diff") {
+		version := NormVer(r.FormValue("victorversion"))
+		target := r.FormValue("victortarget")
+		out, err := GetOTA(version, target, true)
+		if err != nil {
+			http.Error(w, err.Error(), 404)
+			return
+		}
+		w.Write(*out)
 	}
 }
 
 func main() {
-	options := dgen.DeltaOTAOptions{
-		OldPath:            "/path/to/old.ota",
-		NewPath:            "/path/to/new.ota",
-		RebootAfterInstall: "1",
-		OTAPassPath:        "/path/to/ota.pass",
-		MaxDeltaSize:       80000000, // 80 MB
-		Verbose:            true,
-	}
-
-	otaData, err := dgen.CreateDeltaOTA(options)
-	if err != nil {
-		log.Fatalf("Failed to create delta OTA: %v", err)
-	}
-
-	// otaData now contains the OTA bytes, which you can write to a file or process further
-	err = os.WriteFile("delta.ota", otaData, 0644)
-	if err != nil {
-		log.Fatalf("Failed to write OTA data to file: %v", err)
-	}
+	http.HandleFunc("/vic", otaHTTPHandler)
+	fmt.Println("listening on 5901")
+	http.ListenAndServe(":5901", nil)
 }
