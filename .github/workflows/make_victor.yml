@@ -39,7 +39,7 @@ jobs:
             $GITHUB_WORKSPACE/_build
           key: ${{ runner.os }}-docker-${{ hashFiles('docker/**') }}
           restore-keys: |
-            ${{ runner.os }}-docker-
+            ${{ runner.os }}-docker-${{ hashFiles('docker/**') }}
 
       - name: Allow cache to work
         run: |
