@@ -86,6 +86,8 @@ func GetOTA(version string, target string, diff bool) (*[]byte, error) {
 			}
 			otaData, err := dgen.CreateDeltaOTA(options)
 			if err == nil {
+				os.MkdirAll(filepath.Dir(diffPath), 0777)
+				os.WriteFile(diffPath, otaData, 0777)
 				return &otaData, nil
 			} else {
 				fmt.Println("error creating delta OTA: " + err.Error())
