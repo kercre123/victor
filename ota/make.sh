@@ -27,7 +27,7 @@ cd "${VIC_PATH}"
 cd ota/wire-os
 
 if [[ ! -f store/2.0.1.0.ota ]]; then
-    sudo ./main download -url="http://ota.pvic.xyz/base/2.0.1.0.ota"
+    sudo ./main download -url="https://ota.pvic.xyz/base/2.0.1.0.ota"
 fi
 
 OTA_PATH="$(pwd)/work"
