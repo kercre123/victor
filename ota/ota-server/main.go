@@ -130,7 +130,7 @@ func otaHTTPHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/vic/", otaHTTPHandler)
 	http.HandleFunc("/base/", otaHTTPHandler)
-	http.Handle("/vicfs/", http.FileServer(http.Dir(FullPath)))
+	http.Handle("/vicfs/", http.FileServer(http.Dir(FullPath+"/")))
 	fmt.Println("listening on 5901")
 	http.ListenAndServe(":5901", nil)
 }
