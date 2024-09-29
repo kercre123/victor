@@ -60,6 +60,7 @@ jobs:
           for target in dvt3 dev whiskey oskr; do
             local_path="ota/out/$tag_version/$target/$tag_version.ota"
             remote_path="/wire/otas/full/$target/$tag_version.ota"
-            ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "mkdir -p /wire/otas/full/$target"
+            ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "mkdir -p /wire/otas/full/$target && touch /wire/otas/dnar"
             rsync -avz -e "ssh -o StrictHostKeyChecking=no" $local_path ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:$remote_path
           done
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "echo $tag_version" > /wire/otas/latest && rm /wire/otas/dnar"
