@@ -2,59 +2,11 @@ name: Build and Cache Workflow
 
 on:
   push:
-    branches:
-      - "snowboy"
     tags:
       - '*'
 
 jobs:
-  do_cache:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          submodules: true
-          token: ${{ secrets.GH_PAT }}
-
-      - name: Set up cache for Docker and build dependencies
-        id: cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache
-            ~/.anki
-            $GITHUB_WORKSPACE/generated
-            $GITHUB_WORKSPACE/_build
-          key: ${{ runner.os }}-viccache-${{ hashFiles('docker/**') }}
-
-      - if: steps.cache.outputs.cache-hit != 'true'
-        name: Clone anki-deps to ~/.anki
-        run: |
-          git clone https://kercre123:${{ secrets.GH_PAT }}@github.com/kercre123/anki-deps.git ~/.anki
-
-      - if: steps.cache.outputs.cache-hit != 'true'
-        name: Install dependencies
-        run: |
-          sudo apt-get remove containerd.io
-          sudo apt-get update
-          sudo apt-get install -y docker.io git-lfs rsync ssh build-essential
-          sudo systemctl start docker
-          sudo gpasswd -a $USER docker
-          newgrp docker
-          cd $GITHUB_WORKSPACE
-          git lfs install
-          git lfs pull
-
-      - if: steps.cache.outputs.cache-hit != 'true'
-        name: Build inside Docker
-        run: |
-          cd $GITHUB_WORKSPACE
-          ./wire/build-d.sh
-
   make_victor:
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: do_cache
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -63,16 +15,6 @@ jobs:
           submodules: true
           lfs: true
           token: ${{ secrets.GH_PAT }}
-
-      - name: Set up cache for Docker and build dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache
-            ~/.anki
-            $GITHUB_WORKSPACE/generated
-            $GITHUB_WORKSPACE/_build
-          key: ${{ runner.os }}-viccache-${{ hashFiles('docker/**') }}
 
       - name: Clone anki-deps to ~/.anki
         run: |
