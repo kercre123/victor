@@ -1,0 +1,72 @@
+name: Create cache on tag if need be
+
+on:
+  push:
+    branches:
+      - "snowboy"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+          lfs: true
+          token: ${{ secrets.GH_PAT }}
+
+
+      - name: Allow cache to apply itself to the FS
+        run: |
+          sudo rm -rf /var/lib/docker
+          sudo chmod +rwx /var/lib
+          sudo chown runner:runner /var/lib
+
+      - name: Set up cache for Docker and build dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache
+            /var/lib/docker
+            ~/.anki
+            $GITHUB_WORKSPACE/generated
+            $GITHUB_WORKSPACE/_build
+          key: ${{ runner.os }}-docker-${{ hashFiles('docker/**') }}
+      
+      - if: steps.cache.outputs.cache-hit != 'true'
+        name: Clone anki-deps to ~/.anki
+        run: |
+          if [[ ! -d ~/.anki ]]; then
+            git clone https://kercre123:${{ secrets.GH_PAT }}@github.com/kercre123/anki-deps.git ~/.anki \;
+          fi
+
+      - if: steps.cache.outputs.cache-hit != 'true'
+        name: Allow cache to work
+        run: |
+          sudo chmod -R +rwx /var/lib/docker
+          sudo chown -R root:root /var/lib/docker
+          sudo chown root:root /var/lib
+
+      - if: steps.cache.outputs.cache-hit != 'true'
+        name: Install dependencies
+        run: |
+          sudo apt-get remove containerd.io
+          sudo apt-get update
+          sudo apt-get install -y docker.io git-lfs rsync ssh build-essential
+          sudo systemctl start docker
+          sudo gpasswd -a $USER docker
+          newgrp docker
+
+      - if: steps.cache.outputs.cache-hit != 'true'
+        name: Build inside Docker
+        run: |
+          cd $GITHUB_WORKSPACE
+          ./wire/build-d.sh
+
+      - if: steps.cache.outputs.cache-hit != 'true'
+        name: Allow cache to be uploaded
+        run: |
+            sudo chmod -R +rwx /var/lib/docker
+            sudo chown -R runner:runner /var/lib/docker
