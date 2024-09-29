@@ -1,14 +1,58 @@
-name: Build OTA on Tag
+name: Build and Cache Workflow
 
 on:
   push:
+    branches:
+      - "snowboy"
     tags:
       - '*'
 
 jobs:
-  build:
+  do_cache:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+          token: ${{ secrets.GH_PAT }}
 
+      - name: Set up cache for Docker and build dependencies
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache
+            ~/.anki
+            $GITHUB_WORKSPACE/generated
+            $GITHUB_WORKSPACE/_build
+          key: ${{ runner.os }}-viccache-${{ hashFiles('docker/**') }}
+
+      - if: steps.cache.outputs.cache-hit != 'true'
+        name: Clone anki-deps to ~/.anki
+        run: |
+          git clone https://kercre123:${{ secrets.GH_PAT }}@github.com/kercre123/anki-deps.git ~/.anki
+
+      - if: steps.cache.outputs.cache-hit != 'true'
+        name: Install dependencies
+        run: |
+          sudo apt-get remove containerd.io
+          sudo apt-get update
+          sudo apt-get install -y docker.io git-lfs rsync ssh build-essential
+          sudo systemctl start docker
+          sudo gpasswd -a $USER docker
+          newgrp docker
+
+      - if: steps.cache.outputs.cache-hit != 'true'
+        name: Build inside Docker
+        run: |
+          cd $GITHUB_WORKSPACE
+          ./wire/build-d.sh
+
+  make_victor:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: do_cache
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -17,38 +61,24 @@ jobs:
           lfs: true
           token: ${{ secrets.GH_PAT }}
 
-      - name: Remove old docker
-        run: |
-          sudo apt-get remove containerd.io docker docker.io
-
-      - name: Allow cache to apply itself to the FS
-        run: |
-          sudo rm -rf /var/lib/docker
-          sudo chmod +rwx /var/lib
-          sudo chown runner:runner /var/lib
-
-
       - name: Set up cache for Docker and build dependencies
         uses: actions/cache@v3
         with:
           path: |
             ~/.cache
-            /var/lib/docker
             ~/.anki
             $GITHUB_WORKSPACE/generated
             $GITHUB_WORKSPACE/_build
-          key: ${{ runner.os }}-docker-${{ hashFiles('docker/**') }}
+          key: ${{ runner.os }}-viccache-${{ hashFiles('docker/**') }}
+
+      - name: Remove old docker
+        run: |
+          sudo apt-get remove containerd.io docker docker.io
 
       - if: steps.cache.outputs.cache-hit != 'true'
         name: Clone anki-deps to ~/.anki
         run: |
           git clone https://kercre123:${{ secrets.GH_PAT }}@github.com/kercre123/anki-deps.git ~/.anki
-
-      - name: Allow cache to work
-        run: |
-          sudo chmod -R +rwx /var/lib/docker
-          sudo chown -R root:root /var/lib/docker
-          sudo chown root:root /var/lib
 
       - name: Install dependencies
         run: |
@@ -76,24 +106,6 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
 
-      # - name: Rename and organize OTA files
-      #   run: |
-      #     tag_version=${{ env.tag_name }}
-      #     mkdir -p /tmp/ota_artifacts
-      #     cd $GITHUB_WORKSPACE
-      #     for target in dvt3 dev whiskey oskr; do
-      #       find ./ota/out/$tag_version/$target/ -name "*.ota" -exec cp {} /tmp/ota_artifacts/${tag_version}-$target.ota \;
-      #     done
-
-      # - name: Upload OTA artifacts to release if tagged
-      #   if: github.event_name == 'release'
-      #   uses: actions/upload-release-asset@v1
-      #   with:
-      #     upload_url: ${{ github.event.release.upload_url }}
-      #     asset_path: /tmp/ota_artifacts
-      #     asset_name: ${{ env.tag_name }}.ota
-      #     label: "OTA files"
-
       - name: Transfer OTA files to server
         continue-on-error: true
         run: |
@@ -109,17 +121,3 @@ jobs:
             ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "mkdir -p /wire/otas/full/$target"
             rsync -avz -e "ssh -o StrictHostKeyChecking=no" $local_path ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:$remote_path
           done
-        env:
-          tag_name: ${{ github.ref_name }}  # Ensures tag is available as env variable
-      
-      - name: Allow cache to be uploaded
-        run: |
-          sudo chmod -R +rwx /var/lib/docker
-          sudo chown -R runner:runner /var/lib/docker
-
-      # - name: Upload build artifacts
-      #   if: github.event_name != 'release'
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: OTA-files-${{ env.tag_name }}
-      #     path: /tmp/ota_artifacts
