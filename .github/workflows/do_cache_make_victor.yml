@@ -42,6 +42,9 @@ jobs:
           sudo systemctl start docker
           sudo gpasswd -a $USER docker
           newgrp docker
+          cd $GITHUB_WORKSPACE
+          git lfs install
+          git lfs pull
 
       - if: steps.cache.outputs.cache-hit != 'true'
         name: Build inside Docker
