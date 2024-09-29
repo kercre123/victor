@@ -80,7 +80,9 @@ jobs:
       #     label: "OTA files"
 
       - name: Transfer OTA files to server
+        continue-on-error: true
         run: |
+          mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           eval "$(ssh-agent -s)"
