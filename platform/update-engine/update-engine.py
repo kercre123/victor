@@ -460,8 +460,9 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
     "Apply a delta update to the boot and system partitions"
     current_version = get_prop("ro.anki.version")
     delta_base_version = manifest.get("DELTA", "base_version")
-    if current_version != delta_base_version:
-        die(211, "My version is {} not {}".format(current_version, delta_base_version))
+    # <nerd_emoji>
+    #if current_version != delta_base_version:
+    #    die(211, "My version is {} not {}".format(current_version, delta_base_version))
     delta_bytes = manifest.getint("DELTA", "bytes")
     download_progress_denominator = 10  # Download expected not to take more than 10% of the time
     write_status(EXPECTED_WRITE_SIZE_FILE, delta_bytes*download_progress_denominator)
