@@ -243,7 +243,7 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
     ADD_SCREEN(Camera, Kercre123);
   }
 
-  ADD_SCREEN_WITH_TEXT(Kercre123, Main, {"test 2"});
+  ADD_SCREEN_WITH_TEXT(Kercre123, Main, {"test 3"});
 
 
   // ========== Screen Customization ========= 
