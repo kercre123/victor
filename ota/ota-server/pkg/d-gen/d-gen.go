@@ -66,6 +66,8 @@ func encryptFile(plaintextPath, ciphertextPath, keyPath string) (bool, int, stri
 		"aes-256-ctr",
 		"-pass",
 		fmt.Sprintf("file:%s", keyPath),
+		"-md",
+		"md5",
 		"-in",
 		plaintextPath,
 		"-out",
