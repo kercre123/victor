@@ -13,6 +13,6 @@
     { "Hue" : 0.83, "Saturation" : 0.76 },
   "CONFUSION_MATRIX_GREEN" :
     { "Hue" : 0.30, "Saturation" : 1.00 },
-  "ROBOT_RED" :
+  "RAINBOW_EYES" :
     { "Hue" : 0.97, "Saturation" : 0.98 }
 }

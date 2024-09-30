@@ -26,6 +26,8 @@
 
 #include "json/json.h"
 #include <map>
+#include <thread>
+#include <atomic>
 
 namespace Anki {
 namespace Vector {
@@ -38,6 +40,10 @@ class SettingsManager : public IDependencyManagedComponent<RobotComponentID>,
 {
 public:
   SettingsManager();
+  ~SettingsManager(); // destruction
+  std::thread _rainbowEyeThread;
+  std::atomic<bool> _isRainbowEyesActive{false};
+  std::atomic<bool> _stopRainbowEyeThread{false};
 
   //////
   // IDependencyManagedComponent functions
