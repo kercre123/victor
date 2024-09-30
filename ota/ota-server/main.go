@@ -7,6 +7,7 @@ import (
 	"os"
 	dgen "ota-server/pkg/d-gen"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -101,11 +102,28 @@ func GetOTA(version string, target string, diff bool) (*[]byte, error) {
 	return nil, errors.New("ota doesn't exist")
 }
 
+var TargetMap []string = []string{"dev", "oskr", "whiskey", "orange", "dvt3"}
+
+func targetToString(target string) string {
+	targ, err := strconv.Atoi(target)
+	if err != nil {
+		return ""
+	} else {
+		return TargetMap[targ]
+	}
+}
+
 func otaHTTPHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.URL.Path)
 	if strings.HasPrefix(r.URL.Path, "/vic/full") {
 		version := NormVer(r.FormValue("victorversion"))
 		target := r.FormValue("victortarget")
+		if target == "" {
+			fmt.Println("no target :(")
+			http.Error(w, "no target", 404)
+			return
+		}
+		target = targetToString(target)
 		out, err := GetOTA(version, target, false)
 		if err != nil {
 			http.Error(w, err.Error(), 404)
@@ -115,6 +133,12 @@ func otaHTTPHandler(w http.ResponseWriter, r *http.Request) {
 	} else if strings.HasPrefix(r.URL.Path, "/vic/diff") {
 		version := NormVer(r.FormValue("victorversion"))
 		target := r.FormValue("victortarget")
+		if target == "" {
+			fmt.Println("no target :(")
+			http.Error(w, "no target", 404)
+			return
+		}
+		target = targetToString(target)
 		out, err := GetOTA(version, target, true)
 		if err != nil {
 			fmt.Println(err)

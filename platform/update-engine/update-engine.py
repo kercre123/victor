@@ -304,7 +304,7 @@ def open_url_stream(url):
                 url += '&'
         else:
             url += '?'
-        url += "emresn={0:s}&ankiversion={1:s}&victorversion={2:s}&victortarget{3:s}".format(
+        url += "emresn={0:s}&ankiversion={1:s}&victorversion={2:s}&victortarget={3:s}".format(
                 get_prop("ro.serialno"),
                 os_version,
                 victor_version,
