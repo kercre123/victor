@@ -129,6 +129,7 @@ func otaHTTPHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), 404)
 			return
 		}
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", len(*out)))
 		w.Write(*out)
 	} else if strings.HasPrefix(r.URL.Path, "/vic/diff") {
 		version := NormVer(r.FormValue("victorversion"))
@@ -145,9 +146,12 @@ func otaHTTPHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), 404)
 			return
 		}
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", len(*out)))
 		w.Write(*out)
 	} else if strings.HasPrefix(r.URL.Path, "/base") {
-		w.Write(*FileOpen("/wire/otas/base/2.0.1.0.ota"))
+		data := *FileOpen("/wire/otas/base/2.0.1.0.ota")
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", len(data)))
+		w.Write(data)
 	}
 }
 
