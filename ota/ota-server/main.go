@@ -144,7 +144,7 @@ func otaHTTPHandler(w http.ResponseWriter, r *http.Request) {
 	if ShouldNotDoWork() {
 		// we want the build server to be able to initiate a diff update
 		if r.FormValue("isBuildServer") != "true" {
-			http.Error(w, "an OTA is currently being uploaded, please wait", 500)
+			http.Error(w, "a release is currently being uploaded, please wait", 500)
 			return
 		}
 	}
@@ -182,6 +182,26 @@ func otaHTTPHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Set("Content-Length", fmt.Sprintf("%d", len(*out)))
 		w.Write(*out)
+	} else if strings.HasPrefix(r.URL.Path, "/vic/raw") {
+		splitURL := strings.Split(r.URL.Path, "/")
+		if len(splitURL) < 5 {
+			http.Error(w, "not found", 404)
+			return
+		}
+		target := splitURL[3]
+		ver := splitURL[4]
+		var filePath string
+		if ver == "latest.ota" {
+			filePath = GetFullOTAPath(GetLatestVersion()+".ota", target)
+		} else {
+			filePath = GetFullOTAPath(ver, target)
+		}
+		if FileExists(filePath) {
+			w.Write(*FileOpen(filePath))
+		} else {
+			http.Error(w, "not found", 404)
+			return
+		}
 	} else if strings.HasPrefix(r.URL.Path, "/base") {
 		data := *FileOpen("/wire/otas/base/2.0.1.0.ota")
 		w.Header().Set("Content-Length", fmt.Sprintf("%d", len(data)))

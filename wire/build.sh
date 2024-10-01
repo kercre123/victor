@@ -29,10 +29,10 @@ echo "Building victor..."
 ./project/victor/scripts/victor_build_release.sh
 
 echo "Copying vic-cloud and vic-gateway..."
-cp bin/* _build/vicos/Release/bin/
+cp -a bin/* _build/vicos/Release/bin/
 
 echo "Copying sb_server binary..."
-cp 3rd/snowboy/vicos/bin/sb_server _build/vicos/Release/bin/
+cp -a 3rd/snowboy/vicos/bin/sb_server _build/vicos/Release/bin/
 chmod +rwx _build/vicos/Release/bin/sb_server
 
 echo
