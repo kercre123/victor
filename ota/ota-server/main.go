@@ -192,9 +192,9 @@ func otaHTTPHandler(w http.ResponseWriter, r *http.Request) {
 		ver := splitURL[4]
 		var filePath string
 		if ver == "latest.ota" {
-			filePath = GetFullOTAPath(GetLatestVersion()+".ota", target)
+			filePath = GetFullOTAPath(GetLatestVersion(), target)
 		} else {
-			filePath = GetFullOTAPath(ver, target)
+			filePath = GetFullOTAPath(strings.Replace(ver, ".ota", "", -1), target)
 		}
 		if FileExists(filePath) {
 			w.Write(*FileOpen(filePath))
