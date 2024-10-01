@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode"
 )
 
@@ -18,6 +19,11 @@ var (
 	DiffPath               = "/wire/otas/diff"
 	FullPath               = "/wire/otas/full"
 	PassPath               = "/wire/ota.pas"
+)
+
+var (
+	inProgressOTAs      = make(map[string]chan struct{})
+	inProgressOTAsMutex sync.Mutex
 )
 
 func ShouldNotDoWork() bool {
@@ -77,21 +83,42 @@ func GetOTA(version string, target string, diff bool) (*[]byte, error) {
 		if FileExists(diffPath) {
 			return FileOpen(diffPath), nil
 		} else if FileExists(fullPath) {
-			options := dgen.DeltaOTAOptions{
-				OldPath:            fullPath,
-				NewPath:            latestFullPath,
-				RebootAfterInstall: "1",
-				OTAPassPath:        PassPath,
-				MaxDeltaSize:       80000000, // 80 MB
-				Verbose:            true,
-			}
-			otaData, err := dgen.CreateDeltaOTA(options)
-			if err == nil {
-				os.MkdirAll(filepath.Dir(diffPath), 0777)
-				os.WriteFile(diffPath, otaData, 0777)
-				return &otaData, nil
+			inProgressOTAsMutex.Lock()
+			if ch, exists := inProgressOTAs[diffPath]; exists {
+				// another generation in progress; wait for it to complete
+				inProgressOTAsMutex.Unlock()
+				<-ch
+				if FileExists(diffPath) {
+					return FileOpen(diffPath), nil
+				} else {
+					return nil, errors.New("ota generation failed after waiting")
+				}
 			} else {
-				fmt.Println("error creating delta OTA: " + err.Error())
+				ch := make(chan struct{})
+				inProgressOTAs[diffPath] = ch
+				inProgressOTAsMutex.Unlock()
+				options := dgen.DeltaOTAOptions{
+					OldPath:            fullPath,
+					NewPath:            latestFullPath,
+					RebootAfterInstall: "1",
+					OTAPassPath:        PassPath,
+					MaxDeltaSize:       80000000, // 80 MB
+					Verbose:            true,
+				}
+				otaData, err := dgen.CreateDeltaOTA(options)
+				inProgressOTAsMutex.Lock()
+				delete(inProgressOTAs, diffPath)
+				close(ch)
+				inProgressOTAsMutex.Unlock()
+
+				if err == nil {
+					os.MkdirAll(filepath.Dir(diffPath), 0777)
+					os.WriteFile(diffPath, otaData, 0777)
+					return &otaData, nil
+				} else {
+					fmt.Println("error creating delta OTA: " + err.Error())
+					return nil, err
+				}
 			}
 		}
 	} else {
@@ -114,6 +141,13 @@ func targetToString(target string) string {
 }
 
 func otaHTTPHandler(w http.ResponseWriter, r *http.Request) {
+	if ShouldNotDoWork() {
+		// we want the build server to be able to initiate a diff update
+		if r.FormValue("isBuildServer") != "true" {
+			http.Error(w, "an OTA is currently being uploaded, please wait", 500)
+			return
+		}
+	}
 	fmt.Println(r.URL.Path)
 	if strings.HasPrefix(r.URL.Path, "/vic/full") {
 		version := NormVer(r.FormValue("victorversion"))
