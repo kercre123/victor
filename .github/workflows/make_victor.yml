@@ -1,4 +1,4 @@
-name: Build and Cache Workflow
+name: Build Victor and upload OTAs
 
 on:
   push:
@@ -26,15 +26,30 @@ jobs:
         run: |
           sudo apt-get remove containerd.io
           sudo apt-get update
-          sudo apt-get install -y docker.io git-lfs rsync ssh build-essential
+          sudo apt-get install -y docker.io git-lfs rsync ssh build-essential docker-buildx
           sudo systemctl start docker
           sudo gpasswd -a $USER docker
           newgrp docker
 
-      - name: Build inside Docker
+      - name: Restore ccache and build-docker from server
+        continue-on-error: true
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
+          if ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "test -e /wire/gh-cache.tar.gz"; then
+            scp -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/wire/gh-cache.tar.gz .
+            tar --preserve-permissions --preserve-order -xzf gh-cache.tar.gz -C ~/
+          else
+            echo "No cache found."
+          fi
+
+      - name: Build victor
         run: |
           cd $GITHUB_WORKSPACE
-          ./wire/build-d.sh
+          ./docker-buildx/buildv.sh
 
       - name: Get tag version
         id: get_tag
@@ -64,3 +79,15 @@ jobs:
             rsync -avz -e "ssh -o StrictHostKeyChecking=no" $local_path ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:$remote_path
           done
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "echo $tag_version > /wire/otas/latest && rm /wire/otas/dnar"
+
+      - name: Compress and upload ccache and build-docker to server
+        if: success()
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
+          cd ~
+          tar --preserve-permissions --preserve-order -czf gh-cache.tar.gz .ccache .build-docker
+          scp -o StrictHostKeyChecking=no gh-cache.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/wire/gh-cache.tar.gz

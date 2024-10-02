@@ -53,7 +53,7 @@ for target in 0 1 2 4; do
     echo "Removing old anki folder..."
     sudo rm -rf "${OTA_PATH}/anki"
     echo "Copying anki folder from staging..."
-    sudo rsync -avrp "${STAGING_PATH}/anki" "${OTA_PATH}/"
+    sudo rsync -arp "${STAGING_PATH}/anki" "${OTA_PATH}/"
     sudo ./main patch -output="$1" -target=$target
     sudo ./main pack
     sudo chmod +rwx out/$1.ota

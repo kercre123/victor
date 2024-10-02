@@ -3,23 +3,29 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd $DIR
+cd "$DIR"
 
-# Ensure buildx builder exists
+CACHE_DIR="${HOME}/.build-docker"
+
+if [ ! -d "$CACHE_DIR" ]; then
+    mkdir -p "$CACHE_DIR"
+fi
+
 if ! docker buildx inspect vicbuilder > /dev/null 2>&1; then
     docker buildx create --name vicbuilder --use
 else
     docker buildx use vicbuilder
 fi
 
-# Build the combined image using buildx
-docker buildx build --load -t victor-${USER} \
-  --build-arg USER=${USER} \
-  --build-arg UID=$(id -u $USER) \
-  --build-arg VIC_DIR=${DIR}/../ .
+docker buildx build --load -t victor-"${USER}" \
+  --build-arg USER="${USER}" \
+  --build-arg UID="$(id -u "${USER}")" \
+  --build-arg VIC_DIR="${DIR}/../" \
+  --cache-from type=local,src="${CACHE_DIR}" \
+  --cache-to type=local,dest="${CACHE_DIR}" \
+  .
 
-# Run the container
 docker run \
-  -u ${USER} \
-  -v ~/:/home/${USER}/:delegated \
-  --privileged victor-${USER}
+  -u "${USER}" \
+  -v ~/:/home/"${USER}"/:delegated \
+  --privileged victor-"${USER}"
