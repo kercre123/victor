@@ -16,12 +16,6 @@ jobs:
           lfs: true
           token: ${{ secrets.GH_PAT }}
 
-      - name: Clone anki-deps to ~/.anki
-        run: |
-          if [[ ! -d ~/.anki ]]; then
-            git clone https://kercre123:${{ secrets.GH_PAT }}@github.com/kercre123/anki-deps.git ~/.anki
-          fi
-
       - name: Install dependencies
         run: |
           sudo apt-get remove containerd.io
@@ -44,6 +38,12 @@ jobs:
             tar --preserve-permissions -xf gh-cache.tar -C ~/
           else
             echo "No cache found."
+          fi
+      
+      - name: Clone anki-deps to ~/.anki
+        run: |
+          if [[ ! -d ~/.anki ]]; then
+            git clone https://kercre123:${{ secrets.GH_PAT }}@github.com/kercre123/anki-deps.git ~/.anki
           fi
 
       - name: Build inside Docker
@@ -89,5 +89,5 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
           cd ~
-          tar --preserve-permissions -cf gh-cache.tar .ccache .build-docker
+          tar --preserve-permissions --same-owner -cf gh-cache.tar .ccache .build-docker .anki
           scp -o StrictHostKeyChecking=no gh-cache.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/wire/gh-cache.tar
