@@ -39,9 +39,9 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
-          if ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "test -e /wire/gh-cache.tar.gz"; then
-            scp -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/wire/gh-cache.tar.gz .
-            tar --preserve-permissions -xzf gh-cache.tar.gz -C ~/
+          if ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "test -e /wire/gh-cache.tar"; then
+            scp -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/wire/gh-cache.tar .
+            tar --preserve-permissions -xf gh-cache.tar -C ~/
           else
             echo "No cache found."
           fi
@@ -89,5 +89,5 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
           cd ~
-          tar --preserve-permissions -czf gh-cache.tar.gz .ccache .build-docker
-          scp -o StrictHostKeyChecking=no gh-cache.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/wire/gh-cache.tar.gz
+          tar --preserve-permissions -cf gh-cache.tar .ccache .build-docker
+          scp -o StrictHostKeyChecking=no gh-cache.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/wire/gh-cache.tar
