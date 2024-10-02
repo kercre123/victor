@@ -34,8 +34,7 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
           if ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "test -e /wire/gh-cache.tar"; then
-            scp -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/wire/gh-cache.tar .
-            tar --preserve-permissions -xf gh-cache.tar -C ~/
+            ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'cat /wire/gh-cache.tar' | tar --preserve-permissions -xf - -C ~/
           else
             echo "No cache found."
           fi
@@ -89,5 +88,4 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
           cd ~
-          tar --preserve-permissions --same-owner -cf gh-cache.tar .ccache .build-docker .anki
-          scp -o StrictHostKeyChecking=no gh-cache.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/wire/gh-cache.tar
+          tar --preserve-permissions --same-owner -cf - .ccache .build-docker .anki | ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'cat > /wire/gh-cache.tar'
