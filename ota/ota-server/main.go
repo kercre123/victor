@@ -197,7 +197,9 @@ func otaHTTPHandler(w http.ResponseWriter, r *http.Request) {
 			filePath = GetFullOTAPath(strings.Replace(ver, ".ota", "", -1), target)
 		}
 		if FileExists(filePath) {
-			w.Write(*FileOpen(filePath))
+			data := FileOpen(filePath)
+			w.Header().Set("Content-Length", fmt.Sprintf("%d", len(*data)))
+			w.Write(*data)
 		} else {
 			http.Error(w, "not found", 404)
 			return
