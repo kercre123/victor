@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     android-tools-fsutils \
     bison \
     build-essential \
+    ccache \
     chrpath \
     curl \
     dos2unix \
