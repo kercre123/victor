@@ -1,4 +1,4 @@
-name: Build Victor and upload OTAs
+name: Build and Cache Workflow
 
 on:
   push:
@@ -41,12 +41,12 @@ jobs:
           ssh-add ~/.ssh/id_rsa
           if ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "test -e /wire/gh-cache.tar.gz"; then
             scp -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/wire/gh-cache.tar.gz .
-            tar --preserve-permissions --preserve-order -xzf gh-cache.tar.gz -C ~/
+            tar --preserve-permissions -xzf gh-cache.tar.gz -C ~/
           else
             echo "No cache found."
           fi
 
-      - name: Build victor
+      - name: Build inside Docker
         run: |
           cd $GITHUB_WORKSPACE
           ./docker-buildx/buildv.sh
@@ -89,5 +89,5 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
           cd ~
-          tar --preserve-permissions --preserve-order -czf gh-cache.tar.gz .ccache .build-docker
+          tar --preserve-permissions -czf gh-cache.tar.gz .ccache .build-docker
           scp -o StrictHostKeyChecking=no gh-cache.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/wire/gh-cache.tar.gz
