@@ -12,6 +12,12 @@ The wake-word is still "hey vector".
 
  - Prereqs: Make sure you have `docker` and `git-lfs` installed. You need a Linux machine. WSL should work. macOS may work???
 
+0. It would probably be smart to store your GitHub credentials. This makes it so next time you enter them, you never have to enter them again:
+
+```
+git config --global credential.helper store
+```
+
 1. Clone the repo and cd into it:
 
 ```
