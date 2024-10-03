@@ -32,16 +32,16 @@ fi
 OTA_PATH="$(pwd)/work"
 STAGING_PATH="${VIC_PATH}/_build/staging/Release"
 
-for target in 0 1 4; do
+for target in 0 2 4; do
     case $target in
         0)
             output_file="${OUT_PATH}/dev/$1.ota"
             ;;
         1)
-            output_file="${OUT_PATH}/oskr/$1.ota"
+            output_file="${OUT_PATH}/whiskey/$1.ota"
             ;;
         2)
-            output_file="${OUT_PATH}/whiskey/$1.ota"
+            output_file="${OUT_PATH}/oskr/$1.ota"
             ;;
         4)
             output_file="${OUT_PATH}/dvt3/$1.ota"
