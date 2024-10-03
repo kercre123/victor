@@ -33,8 +33,8 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
-          if ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "test -e /wire/gh-cache.tar"; then
-            ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'cat /wire/gh-cache.tar' | tar --preserve-permissions -xf - -C ~/
+          if ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "test -e /wire/gh-cache.tar.gz"; then
+            ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'cat /wire/gh-cache.tar.gz' | tar --preserve-permissions -xzf - -C ~/
           else
             echo "No cache found."
           fi
@@ -71,7 +71,7 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
           tag_version=${{ env.tag_name }}
-          for target in dvt3 dev whiskey oskr; do
+          for target in dvt3 dev oskr; do
             local_path="ota/out/$tag_version/$target/$tag_version.ota"
             remote_path="/wire/otas/full/$target/$tag_version.ota"
             ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "mkdir -p /wire/otas/full/$target && touch /wire/otas/dnar"
@@ -88,4 +88,4 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
           cd ~
-          tar --preserve-permissions --same-owner -cf - .ccache .build-docker .anki | ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'cat > /wire/gh-cache.tar'
+          tar --preserve-permissions --same-owner -czf - .ccache .build-docker .anki | ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'cat > /wire/gh-cache.tar.gz'

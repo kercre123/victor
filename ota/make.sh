@@ -14,7 +14,6 @@ OUT_PATH="$(pwd)/out/$1"
 mkdir -p "${OUT_PATH}"
 mkdir "${OUT_PATH}/dev"
 mkdir "${OUT_PATH}/oskr"
-mkdir "${OUT_PATH}/whiskey"
 mkdir "${OUT_PATH}/dvt3"
 
 # stage
@@ -33,7 +32,7 @@ fi
 OTA_PATH="$(pwd)/work"
 STAGING_PATH="${VIC_PATH}/_build/staging/Release"
 
-for target in 0 1 2 4; do
+for target in 0 1 4; do
     case $target in
         0)
             output_file="${OUT_PATH}/dev/$1.ota"
