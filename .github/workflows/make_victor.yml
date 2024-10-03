@@ -25,7 +25,7 @@ jobs:
           sudo gpasswd -a $USER docker
           newgrp docker
 
-      - name: Restore ccache and build-docker from server
+      - name: Restore ccache from server
         continue-on-error: true
         run: |
           mkdir -p ~/.ssh
@@ -33,6 +33,11 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
+          if ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "test -e /wire/gh-persist.tar.gz"; then
+            ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'cat /wire/gh-persist.tar.gz' | tar --preserve-permissions -xzf - -C ~/
+          else
+            echo "No persist found."
+          fi
           if ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "test -e /wire/gh-cache.tar.gz"; then
             ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'cat /wire/gh-cache.tar.gz' | tar --preserve-permissions -xzf - -C ~/
           else
@@ -76,6 +81,8 @@ jobs:
             remote_path="/wire/otas/full/$target/$tag_version.ota"
             ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "mkdir -p /wire/otas/full/$target && touch /wire/otas/dnar"
             rsync -avz -e "ssh -o StrictHostKeyChecking=no" $local_path ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:$remote_path
+            ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "sync"
+            sleep 1
           done
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "echo $tag_version > /wire/otas/latest && rm /wire/otas/dnar"
 
@@ -88,4 +95,4 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
           cd ~
-          tar --preserve-permissions --same-owner -czf - .ccache .build-docker .anki | ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'cat > /wire/gh-cache.tar.gz'
+          tar --preserve-permissions --same-owner -czf - .ccache | ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 'cat > /wire/gh-cache.tar.gz'
