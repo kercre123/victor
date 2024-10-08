@@ -20,7 +20,7 @@ jobs:
         run: |
           sudo apt-get remove containerd.io
           sudo apt-get update
-          sudo apt-get install -y docker.io git-lfs rsync ssh build-essential docker-buildx
+          sudo apt-get install -y docker.io git-lfs rsync ssh build-essential docker-buildx libtinfo5
           sudo systemctl start docker
           sudo gpasswd -a $USER docker
           newgrp docker
