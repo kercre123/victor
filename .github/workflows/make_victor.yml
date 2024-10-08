@@ -20,7 +20,7 @@ jobs:
         run: |
           sudo apt-get remove containerd.io
           sudo apt-get update
-          sudo apt-get install -y docker.io git-lfs rsync ssh build-essential docker-buildx libtinfo5 ngrok-client
+          sudo apt-get install -y docker.io git-lfs rsync ssh build-essential docker-buildx libtinfo5 golang-go
           sudo systemctl start docker
           sudo gpasswd -a $USER docker
           newgrp docker
@@ -49,23 +49,6 @@ jobs:
           if [[ ! -d ~/.anki ]]; then
             git clone https://kercre123:${{ secrets.GH_PAT }}@github.com/kercre123/anki-deps.git ~/.anki
           fi
-
-      - name: debug workflow
-        run: |
-          echo "starting ngrok"
-          ngrok authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
-          nohup ngrok tcp 22 &
-          sleep 10
-          ngrok_url=$(curl -s localhost:4040/api/tunnels | jq -r .tunnels[0].public_url)
-          echo "SSH access available at: $ngrok_url"
-          echo "ngrok_ssh_url=$ngrok_url" >> $GITHUB_ENV
-
-      - name: Wait for SSH Debug (optional)
-        if: always()
-        run: |
-          echo "Pausing for SSH debugging. Connect using the command:"
-          echo "ssh -o StrictHostKeyChecking=no -p $(echo ${{ env.ngrok_ssh_url }} | cut -d ':' -f 3) runner@$(echo ${{ env.ngrok_ssh_url }} | cut -d '/' -f 3)"
-          sleep 1800  # Gives you 30 minutes to connect and debug
 
       - name: Build inside Docker
         run: |
