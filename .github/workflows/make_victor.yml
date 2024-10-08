@@ -63,6 +63,7 @@ jobs:
         run: |
           tag_version=${{ env.tag_name }}
           cd ota
+          sudo ln -s /home/runner/.anki /root/.anki
           ./make.sh $tag_version
         env:
           DOCKER_BUILDKIT: 1
@@ -76,7 +77,6 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
           tag_version=${{ env.tag_name }}
-	  sudo ln -s /home/runner/.anki /root/.anki
           for target in dvt3 dev oskr; do
             local_path="ota/out/$tag_version/$target/$tag_version.ota"
             remote_path="/wire/otas/full/$target/$tag_version.ota"
