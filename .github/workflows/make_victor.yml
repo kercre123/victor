@@ -7,12 +7,12 @@ on:
 
 jobs:
   make_victor:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          submodules: true
+          submodules: recursive
           lfs: true
           token: ${{ secrets.GH_PAT }}
 
@@ -20,6 +20,7 @@ jobs:
         run: |
           sudo apt-get remove containerd.io
           sudo apt-get update
+          sudo add-apt-repository ppa:longsleep/golang-backports
           sudo apt-get install -y docker.io git-lfs rsync ssh build-essential docker-buildx libtinfo5 golang-go
           sudo systemctl start docker
           sudo gpasswd -a $USER docker
