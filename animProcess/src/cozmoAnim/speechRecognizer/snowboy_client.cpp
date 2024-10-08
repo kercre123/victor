@@ -18,18 +18,15 @@ static int sockfd = -1;
 int snowboy_init(void) {
     struct sockaddr_un serv_addr;
 
-    // Create a Unix domain socket
     if ((sockfd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
         perror("Socket creation failed");
         return -1;
     }
 
-    // Set up the address structure
     memset(&serv_addr, 0, sizeof(struct sockaddr_un));
     serv_addr.sun_family = AF_UNIX;
     strncpy(serv_addr.sun_path, SOCKET_PATH, sizeof(serv_addr.sun_path) - 1);
 
-    // Connect to the server
     if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(struct sockaddr_un)) == -1) {
         perror("Connection to Snowboy server failed");
         close(sockfd);
@@ -46,7 +43,7 @@ int snowboy_process(const char* data, uint32_t data_length) {
         return -1;
     }
 
-    // Send data length
+    // data length
     uint32_t data_length_net = htonl(data_length);
     ssize_t n = write(sockfd, &data_length_net, sizeof(data_length_net));
     if (n < 0) {
@@ -57,7 +54,7 @@ int snowboy_process(const char* data, uint32_t data_length) {
         return -1;
     }
 
-    // Send data
+    // data
     size_t bytes_sent = 0;
     while (bytes_sent < data_length) {
         n = write(sockfd, data + bytes_sent, data_length - bytes_sent);
@@ -68,7 +65,7 @@ int snowboy_process(const char* data, uint32_t data_length) {
         bytes_sent += n;
     }
 
-    // Read result code
+    // result code
     uint32_t result_net;
     n = read(sockfd, &result_net, sizeof(result_net));
     if (n <= 0) {
