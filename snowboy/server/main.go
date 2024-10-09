@@ -12,10 +12,10 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/upload", uploadHandler)
+	http.HandleFunc("/wakeword/upload", uploadHandler)
 
-	log.Println("Starting server on :8080...")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	log.Println("Starting server on :8012...")
+	if err := http.ListenAndServe(":8012", nil); err != nil {
 		log.Fatalf("Could not start server: %v", err)
 	}
 }
@@ -27,12 +27,14 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		http.Error(w, "Error parsing form data", http.StatusBadRequest)
+		fmt.Println("error parsing")
 		return
 	}
 
 	files := r.MultipartForm.File["wavfiles"]
 	if len(files) < 3 || len(files) > 20 {
 		http.Error(w, "You must upload between 3 and 20 .wav files", http.StatusBadRequest)
+		fmt.Println("file amount")
 		return
 	}
 
@@ -51,6 +53,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		http.Error(w, "Error generating hotword model: "+err.Error(), http.StatusInternalServerError)
+		fmt.Println(err)
 		return
 	}
 
@@ -58,6 +61,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	hotwordFile, err := os.Open(hotwordFilePath)
 	if err != nil {
 		http.Error(w, "Could not open generated hotword file", http.StatusInternalServerError)
+		fmt.Println(err)
 		return
 	}
 	defer hotwordFile.Close()
@@ -72,9 +76,9 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 func createTmpDir() string {
 	tmpDir, _ := os.MkdirTemp(os.TempDir(), "wakeword_*")
-	if err := os.Mkdir(tmpDir, 0755); err != nil {
-		log.Fatalf("Could not create temp dir: %v", err)
-	}
+	//if err := os.Mkdir(tmpDir, 0755); err != nil {
+	//	log.Fatalf("Could not create temp dir: %v", err)
+	//}
 	return tmpDir
 }
 
