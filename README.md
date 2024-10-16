@@ -8,9 +8,9 @@ This branch uses the Snowboy wake-word engine. It's reasonably fast and accurate
 
 The wake-word is still "hey vector".
 
-## Building
+## Building (Linux)
 
- - Prereqs: Make sure you have `docker` and `git-lfs` installed. You need a Linux machine. WSL should work. macOS may work???
+ - Prereqs: Make sure you have `docker` and `git-lfs` installed.
 
 0. It would probably be smart to store your GitHub credentials. This makes it so next time you enter them, you never have to enter them again:
 
@@ -24,6 +24,7 @@ git config --global credential.helper store
 cd ~
 git clone --recurse-submodules https://github.com/kercre123/victor -b snowboy
 cd victor
+git lfs install
 git lfs pull
 ```
 
@@ -39,11 +40,55 @@ sudo chmod 660 /var/run/docker.sock
 
 3. Run the build script:
 ```
+cd ~/victor
 ./wire/build-d.sh
 ```
 
 3. It should just work! The output will be in `./_build/vicos/Release/`
 
+## Building (macOS)
+
+ - Prereqs: Make sure you have [brew](https://brew.sh/) installed.
+
+0. It would probably be smart to store your GitHub credentials. This makes it so next time you enter them, you never have to enter them again:
+
+```
+git config --global credential.helper store
+```
+
+1. Clone the repo and cd into it:
+
+```
+cd ~
+git clone --recurse-submodules https://github.com/kercre123/victor -b snowboy
+cd victor
+git lfs install
+git lfs pull
+```
+
+2. Set up Python 2:
+
+```
+pyenv install 2.7.18
+pyenv init
+```
+
+- Add the following to both ~/.zshrc and ~/.zprofile:
+```
+export PYENV_ROOT="$HOME/.pyenv"
+[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+pyenv shell 2.7.18
+```
+
+
+3. Run the build script:
+```
+cd ~/victor
+./wire/build.sh
+```
+
+3. It should just work! The output will be in `./_build/vicos/Release/`
 
 ## Deploying
 
@@ -58,5 +103,9 @@ echo 192.168.1.150 > robot_ip.txt
 3. Run:
 
 ```
+# Linux
 ./wire/deploy-d.sh
+
+# macOS
+./wire/deploy.sh
 ```

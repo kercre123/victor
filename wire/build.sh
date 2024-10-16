@@ -2,6 +2,8 @@
 
 set -e
 
+UNAME=$(uname)
+
 if [[ ! -f ./CPPLINT.cfg ]]; then
     if [[ -f ../CPPLINT.cfg ]]; then
         cd ..
@@ -18,6 +20,17 @@ if [[ ! -d .anki ]]; then
     echo "Downloading ~/.anki folder contents..."
     git clone https://github.com/kercre123/anki-deps
     mv anki-deps .anki
+fi
+
+if [[ ${UNAME} == "Darwin" ]]; then
+    echo "Checking out macOS branch..."
+    cd .anki
+    git checkout macos
+    git lfs install
+    git lfs pull
+    echo "Disabling security..."
+    sudo spctl --master-disable
+    sudo spctl --global-disable
 fi
 
 cd "${VICDIR}"
