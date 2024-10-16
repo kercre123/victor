@@ -339,28 +339,28 @@ add_custom_command(
 # )
 
 # Install certs for mac build of vic-gateway
-if (MACOSX)
+#if (MACOSX)
 
-  set(GATEWAY_MAC_CERTS
-    "/tmp/anki/gateway/trust.cert"
-    "/tmp/anki/gateway/trust.key"
-  )
+#  set(GATEWAY_MAC_CERTS
+#    "/tmp/anki/gateway/trust.cert"
+#    "/tmp/anki/gateway/trust.key"
+#  )
 
-  add_custom_target(
-    GenerateGatewayMacCerts ALL
-    DEPENDS ${GATEWAY_MAC_CERTS}
-  )
+#  add_custom_target(
+#    GenerateGatewayMacCerts ALL
+#    DEPENDS ${GATEWAY_MAC_CERTS}
+#  )
 
-  add_custom_command(
-    OUTPUT ${GATEWAY_MAC_CERTS}
-    COMMAND ./mac_setup.sh
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/tools/sdk/scripts"
-    COMMENT "Creating mac certs for vic-gateway"
-  )
+#  add_custom_command(
+#    OUTPUT ${GATEWAY_MAC_CERTS}
+#    COMMAND ./mac_setup.sh
+#    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/tools/sdk/scripts"
+#    COMMENT "Creating mac certs for vic-gateway"
+#  )
 
-  if (WEBOTS_SETUP_FIREWALL)
-    webots_setup_exe(vic-gateway-firewall ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/vic-gateway)
-    add_dependencies(vic-gateway-firewall vic-gateway)
-  endif()
+  #if (WEBOTS_SETUP_FIREWALL)
+  #  webots_setup_exe(vic-gateway-firewall ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/vic-gateway)
+  #  add_dependencies(vic-gateway-firewall vic-gateway)
+  #endif()
 
-endif()
+#endif()
