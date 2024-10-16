@@ -49,6 +49,7 @@ cd ~/victor
 ## Building (macOS)
 
  - Prereqs: Make sure you have [brew](https://brew.sh/) installed.
+   -  Then: `brew install pyenv git-lfs ccache`
 
 0. It would probably be smart to store your GitHub credentials. This makes it so next time you enter them, you never have to enter them again:
 
