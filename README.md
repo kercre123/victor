@@ -40,7 +40,7 @@ cd ~/victor
 
 3. It should just work! The output will be in `./_build/vicos/Release/`
 
-## Building (macOS)
+## Building (Intel macOS)
 
  - Prereqs: Make sure you have [brew](https://brew.sh/) installed.
    -  Then: `brew install pyenv git-lfs ccache`
