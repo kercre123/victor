@@ -338,8 +338,8 @@ static void handleTemperature() {
 
 static void handleLowBattery() {
   // Levels
-  static const uint32_t EMERGENCY_POWER_DOWN_POINT = ADC_VOLTS(3.4);
-  static const uint32_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.62);
+  static const uint32_t EMERGENCY_POWER_DOWN_POINT = ADC_VOLTS(3.3);
+  static const uint32_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.4);
   static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 45*TICKS_PER_SECOND; // 45 seconds
   static const int      EARLY_POWER_COUNT_TIME = TICKS_PER_SECOND; // 1 second
 
