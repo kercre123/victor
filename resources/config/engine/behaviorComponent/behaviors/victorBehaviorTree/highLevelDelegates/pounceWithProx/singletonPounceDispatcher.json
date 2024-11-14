@@ -3,16 +3,60 @@
   "behaviorClass" : "DispatcherStrictPriority",
   "interruptActiveBehavior": true,
   
+  "linkScope": true,
+  "associatedActiveFeature": "PounceOnMotion",
+
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "and": [
+      {
+        "conditionType": "FeatureGate",
+        "feature": "PounceOnMotion",
+        "expected": true
+      },
+      {
+        "conditionType": "Emotion",
+        "emotion": "Stimulated",
+        "min": 0.5
+      },
+      {
+        "conditionType": "OffTreadsState",
+        "targetState": "OnTreads"
+      },
+      {
+        "conditionType": "BehaviorTimer",
+        "timerName": "PounceOnMotion",
+        "cooldown_s": 30.0
+      }
+    ]
+  },
+  
   "wantsToCancelSelfCondition": {
     "conditionType": "TimerInRange",
     "begin_s": 30.0
   },
 
   "behaviors": [
-    "SingletonPounceTurnLeft",        // Ground motion on the side causes a quick, inaccurate, pounce
-    "SingletonPounceTurnRight",       // Ground motion on the side causes a quick, inaccurate, pounce
-    "SingletonPounceWithProx",         // Use the prox sensor to approach/pounce on a verified object 
-    // "SingletonPounceApproachWithProx", // This is currently broken for the whiskey ToF sensor
-    "Wait"
+    "SingletonPounceWithProx",         // Use the prox sensor to approach/pounce on a verified object
+    "SingletonPounceApproachWithProx", // Use the prox sensor to drive the robot to within 35-55mm of a possible object
+    "SingletonPounceTurnLeft",         // Ground motion on the side causes a quick, inaccurate, pounce
+    "SingletonPounceTurnRight",        // Ground motion on the side causes a quick, inaccurate, pounce
+    
+    // There might be some delay in continously detecting motion when transitioning from one
+    // behavior to another, especially since the Turn behaviors rely on vision-based motion detection,
+    // so the dispatcher will wait for a few seconds in between behavior activations.
+    "WaitInternal"
+  ],
+  
+  "anonymousBehaviors": [
+    {
+      "behaviorName" : "WaitInternal",
+      "behaviorClass": "Wait",
+      
+      "wantsToCancelSelfCondition": {
+        "conditionType": "TimerInRange",
+        "begin_s": 4.0
+      }
+    }
   ]
 }

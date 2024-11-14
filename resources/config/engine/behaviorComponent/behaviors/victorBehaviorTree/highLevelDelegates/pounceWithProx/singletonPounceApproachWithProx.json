@@ -1,6 +1,7 @@
 {
   "behaviorClass": "ProxGetToDistance",
   "behaviorID": "SingletonPounceApproachWithProx",
+  "associatedActiveFeature": "PounceOnMotion",
   "goalDistance_mm" : 45,
   "tolerence_mm" : 10,
   "endWhenGoalReached" : true,

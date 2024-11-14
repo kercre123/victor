@@ -19,19 +19,29 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/behaviorComponent/behaviorTimerTypes.h"
+
+#include "util/console/consoleInterface.h"
+
+#define LOG_CHANNEL "Behaviors"
+#define CONSOLE_GROUP "Behaviors.PounceWithProx"
+
 
 namespace Anki {
 namespace Vector {
 
 namespace{
-static const Radians tiltRads(MIN_HEAD_ANGLE);
-
+  CONSOLE_VAR_RANGED(float, kLiftHeightForObjectCaughtThreshold_mm, CONSOLE_GROUP,
+                     35.5f, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
+  CONSOLE_VAR_RANGED(float, kBodyAngleDeltaForObjectCaughtThreshold_rad, CONSOLE_GROUP,
+                     0.02f, DEG_TO_RAD(1.f), DEG_TO_RAD(10.f));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -123,10 +133,11 @@ void BehaviorPounceWithProx::BehaviorUpdate()
         }
 
         const f32 currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-        if(_dVars.motionObserved ||
-           (_dVars.pounceAtTime_s < currentTimeInSeconds)){
+        if ( _dVars.motionObserved ||
+             (_dVars.pounceAtTime_s < currentTimeInSeconds)){
           _dVars.pounceState = PounceState::PounceOnMotion;
-        }else if(!IsControlDelegated()){
+          GetBEI().GetBehaviorTimerManager().GetTimer( BehaviorTimerTypes::PounceOnMotion ).Reset();
+        } else if(!IsControlDelegated()){
           DelegateIfInControl(
             new CompoundActionParallel({
               new MoveHeadToAngleAction(MoveHeadToAngleAction::Preset::GROUND_PLANE_VISIBLE),
@@ -175,11 +186,11 @@ void BehaviorPounceWithProx::TransitionToResultAnim()
   IActionRunner* newAction = nullptr;
   if( caught ) {
     newAction = new TriggerLiftSafeAnimationAction(AnimationTrigger::PounceSuccess);
-    PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult.Caught", "got it!");
+    LOG_INFO("BehaviorPounceOnMotion.CheckResult.Caught", "got it!");
   }
   else {
     newAction = new TriggerLiftSafeAnimationAction(AnimationTrigger::PounceFail);
-    PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult.Miss", "missed...");
+    LOG_INFO("BehaviorPounceOnMotion.CheckResult.Miss", "missed...");
   }
   
   DelegateIfInControl(newAction, [this](){
@@ -192,19 +203,17 @@ void BehaviorPounceWithProx::TransitionToResultAnim()
 bool BehaviorPounceWithProx::IsFingerCaught()
 {
   const auto& robotInfo = GetBEI().GetRobotInfo();
-  const float liftHeightThresh = 35.5f;
-  const float bodyAngleThresh = 0.02f;
-  
   float robotBodyAngleDelta = robotInfo.GetPitchAngle().ToFloat() - _dVars.prePouncePitch;
   
   // check the lift angle, after some time, transition state
-  PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%frad) (%f -> %f)",
+  LOG_INFO("BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%frad) (%f -> %f)",
                 robotInfo.GetLiftHeight(),
                 RAD_TO_DEG(robotBodyAngleDelta),
                 robotBodyAngleDelta,
                 RAD_TO_DEG(_dVars.prePouncePitch),
                 robotInfo.GetPitchAngle().getDegrees());
-  return robotInfo.GetLiftHeight() > liftHeightThresh || robotBodyAngleDelta > bodyAngleThresh;
+  return robotInfo.GetLiftHeight() > kLiftHeightForObjectCaughtThreshold_mm ||
+         robotBodyAngleDelta > kBodyAngleDeltaForObjectCaughtThreshold_rad;
 }
 
 
@@ -244,9 +253,8 @@ void BehaviorPounceWithProx::HandleWhileActivated(const EngineToGameEvent& event
         }
         else
         {
-          PRINT_CH_INFO("Behaviors", "BehaviorPounceWithProx.IgnorePose",
-                        "got pose, but dist of %f is too large, ignoring",
-                        dist);
+          LOG_INFO("BehaviorPounceWithProx.IgnorePose",
+                    "Got pose, but dist of %f is too large, ignoring", dist);
         }
       }
       break;

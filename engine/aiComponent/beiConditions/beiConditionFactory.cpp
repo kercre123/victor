@@ -38,6 +38,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionIsMaintenanceReboot.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionIsNightTime.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionMotionDetectedWithProx.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectKnown.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectMoved.h"
@@ -316,6 +317,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::MotionDetected:
     {
       condition = std::make_shared<ConditionMotionDetected>(config);
+      break;
+    }
+    case BEIConditionType::MotionDetectedWithProx:
+    {
+      condition = std::make_shared<ConditionMotionDetectedWithProx>(config);
       break;
     }
     case BEIConditionType::ObjectInitialDetection:

@@ -180,6 +180,11 @@ void ProxSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
                               (msg.proxData.rangeStatus == RangeStatus::RANGE_VALID) && // the sensor is working
                               (histState.GetPitch_rad() >= kMinPitch) &&                // we are not looking at the ground
                               (histState.GetPitch_rad() <= kMaxPitch);                  // we are not looking at the ceiling
+  
+  _latestData.objectPose = (!_latestData.foundObject) ? Pose2d() :
+      // TODO(GB): This is not exactly the newly sensed object pose since it doesn't account for
+      // the sensor's translation and rotation wrt the robot, but it's close enough for now.
+      static_cast<Pose2d>(_currentRobotPose) * Pose2d(0, {_latestData.distance_mm, 0});
 
   // check if the robot has moved or the sensor reading has changed significantly
   const bool measurementChanged      = FLT_GT(fabs(_latestData.distance_mm - prevMeasurement) / prevMeasurement, kMeasurementTolerance);
@@ -372,13 +377,15 @@ void ProxSensorComponent::UpdateNavMap(uint32_t timestamp)
   // If there is an object, we can clear up to that object
   if ( _latestData.unobstructed || _latestData.foundObject ) {
     const float measurement = _latestData.distance_mm;
-    const Pose2d objectPose = static_cast<Pose2d>(_currentRobotPose) * Pose2d(0, {measurement, 0});
+    const Pose2d& objectPose = _latestData.objectPose;
     const auto clearRegion  = GetClearRegion(_currentRobotPose, objectPose, measurement);
 
     _robot->GetMapComponent().ClearRegion(*clearRegion, timestamp );
 
     if ( _latestData.foundObject ) {
-      MemoryMapData_ProxObstacle proxData(MemoryMapData_ProxObstacle::NOT_EXPLORED, objectPose, timestamp);
+      MemoryMapData_ProxObstacle proxData(MemoryMapData_ProxObstacle::NOT_EXPLORED,
+                                          objectPose,
+                                          timestamp);
       _robot->GetMapComponent().AddProxData( GetObstacleRegion(objectPose, measurement), proxData );
     }
   }
