@@ -28,6 +28,10 @@ LIBS="${PROTOBUF_LOC}/lib"
 SRCS=`find . -type f -iname "*.cpp"`
 OUTPUT="${SCRIPT_PATH_ABSOLUTE}/protocCppPlugin"
 
+if [[ $(uname -a) == *"Darwin"* ]]; then
+	EXTRA_ARGS="--sysroot $(xcrun --show-sdk-path)"
+fi
+
 
 /usr/bin/g++                          \
     -no-pie			      \
@@ -38,6 +42,7 @@ OUTPUT="${SCRIPT_PATH_ABSOLUTE}/protocCppPlugin"
     -L${LIBS}                         \
     ${LIBS}/libprotoc.a               \
     ${LIBS}/libprotobuf.a             \
+    ${EXTRA_ARGS}		      \
     -lpthread
 
 popd >> /dev/null
