@@ -34,7 +34,7 @@ namespace { // "Private members"
   webots::Display* face_;
   
   // Face 'image' to send to webots each frame
-  u32 faceImg_[FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT] = {0};
+  u32 faceImg_[184*96] = {0};
   
 } // "private" namespace
 

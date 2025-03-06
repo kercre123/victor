@@ -21,7 +21,7 @@
 # build_tag = optional tag specifier for build
 
 # read base version from VERSION file
-file(READ ${CMAKE_SOURCE_DIR}/VERSION BASE_VERSION)
+file(READ ${CMAKE_SOURCE_DIR}/ANKI_VERSION BASE_VERSION)
 string(STRIP ${BASE_VERSION} BASE_VERSION)
 
 # ANKI_BUILD_VERSION  contains the build counter

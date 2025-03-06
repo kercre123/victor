@@ -35,17 +35,22 @@ def find_anki_cmake_exe(version):
     for root, dirs, files in os.walk(d_ver):
         if os.path.basename(root) == 'bin':
             if 'cmake' in files:
+		        #print(os.path.join(d_ver, root, 'cmake'))
                 return os.path.join(d_ver, root, 'cmake') 
 
     return None
 
 def install_cmake(version):
     platform_map = {
-        'darwin': 'Darwin-x86_64',
-        'linux': 'Linux-x86_64'
+        'darwin': 'macos-universal',
+        'linux': 'linux-x86_64',
+	    'linux-arm64': 'linux-aarch64',
     }
 
     platform_name = platform.system().lower()
+
+    if platform.system().lower() == 'linux' and platform.machine() in ['aarch64', 'arm64']:
+        platform_name = 'linux-arm64'
 
     (major, minor, patch) = version.split('.')
     cmake_short_ver = "{}.{}".format(major, minor)
@@ -101,7 +106,7 @@ def setup_cmake(required_ver):
 
 def parseArgs(scriptArgs):
     version = '1.0'
-    default_cmake_version = "3.9.6"
+    default_cmake_version = "3.20.6"
     parser = argparse.ArgumentParser(description='finds or installs cmake', version=version)
     parser.add_argument('--install-cmake',
                         nargs='?',

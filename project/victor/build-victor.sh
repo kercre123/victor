@@ -161,8 +161,9 @@ done
 
 if [ -z "${CMAKE_EXE+x}" ]; then
     echo "Attempting to install cmake"
-    ${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py --install-cmake 3.9.6
-    CMAKE_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py --find-cmake 3.9.6`
+    ${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py --install-cmake 3.20.6
+    CMAKE_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py --find-cmake 3.20.6`
+    echo ${CMAKE_EXE}
 fi
 
 if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
@@ -284,28 +285,12 @@ fi
 
 : ${CMAKE_MODULE_DIR:="${TOPLEVEL}/cmake"}
 
-if [ ! -f ${CMAKE_EXE} ]; then
+if [[ ! -f ${CMAKE_EXE} ]]; then
   echo "Missing CMake executable: ${CMAKE_EXE}"
   echo "Fetch the required CMake version by running ${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py"
   echo "Alternatively, specify a CMake executable using the -x flag."
   exit 1
 fi
-
-if [ -z "${GOROOT+x}" ]; then
-    GO_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/go.py`
-    export GOROOT=$(dirname $(dirname $GO_EXE))
-else
-    GO_EXE=$GOROOT/bin/go
-fi
-export GOPATH=${TOPLEVEL}/cloud/go:${TOPLEVEL}/generated/cladgo:${TOPLEVEL}/generated/go:${TOPLEVEL}/victor-clad/tools/message-buffers/support/go
-
-if [ ! -f ${GO_EXE} ]; then
-  echo "Missing Go executable: ${GO_EXE}"
-  echo "Fetch the required Go version by running ${TOPLEVEL}/tools/build/tools/ankibuild/go.py"
-  exit 1
-fi
-
-${TOPLEVEL}/tools/build/tools/ankibuild/go.py --check-version $GO_EXE
 
 #
 # Remove assets in build directory if requested. This will force the
@@ -335,14 +320,18 @@ if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ] || [ $CONFIGURE -eq 1 ] ; then
     # Scan for BUILD.in files
     METABUILD_INPUTS=`find . -name BUILD.in`
 
-    # Process BUILD.in files (creates list of Go projects to fetch)
-    PATH="$(dirname $GO_EXE):$PATH" ${BUILD_TOOLS}/metabuild/metabuild.py --go-output \
-      -o ${GEN_SRC_DIR} \
-      ${METABUILD_INPUTS}
+    # # Process BUILD.in files (creates list of Go projects to fetch)
+    # PATH="$(dirname $GO_EXE):$PATH" ${BUILD_TOOLS}/metabuild/metabuild.py --go-output \
+    #   -o ${GEN_SRC_DIR} \
+    #   ${METABUILD_INPUTS}
 fi
 
 # Set protobuf location
 HOST=`uname -a | awk '{print tolower($1);}' | sed -e 's/darwin/mac/'`
+if [[ `uname -a` == *"aarch64"* && $HOST == "linux" ]]; then
+	HOST+="-arm64"
+fi
+echo $HOST
 PROTOBUF_HOME=${TOPLEVEL}/3rd/protobuf/${HOST}
 
 # Build protocCppPlugin if needed
@@ -357,25 +346,21 @@ else
   done
 fi
 if [[ $BUILD_PROTOC_PLUGIN -eq 1 ]]; then
-    if [[ "$(uname -m)" == "arm64" ]]; then
-        ${TOPLEVEL}/tools/protobuf/plugin/make-arm-mac.sh
-    else
-        ${TOPLEVEL}/tools/protobuf/plugin/make.sh
-    fi
+    ${TOPLEVEL}/tools/protobuf/plugin/make.sh
 fi
 
 
 # Build/Install the protoc generators for go
-GOBIN="${TOPLEVEL}/cloud/go/bin"
-if [[ ! -x $GOBIN/protoc-gen-go ]] || [[ ! -x $GOBIN/protoc-gen-grpc-gateway ]]; then
-    echo "Building/Installing protoc-gen-go and protoc-gen-grpc-gateway"
-    GOBIN=$GOBIN \
-    CC=/usr/bin/cc \
-    CXX=/usr/bin/c++ \
-    "${GOROOT}/bin/go" install \
-    github.com/golang/protobuf/protoc-gen-go \
-    github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
-fi
+# GOBIN="${TOPLEVEL}/cloud/go/bin"
+# if [[ ! -x $GOBIN/protoc-gen-go ]] || [[ ! -x $GOBIN/protoc-gen-grpc-gateway ]]; then
+#     echo "Building/Installing protoc-gen-go and protoc-gen-grpc-gateway"
+#     GOBIN=$GOBIN \
+#     CC=/usr/bin/cc \
+#     CXX=/usr/bin/c++ \
+#     "${GOROOT}/bin/go" install \
+#     github.com/golang/protobuf/protoc-gen-go \
+#     github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
+# fi
 
 #
 # generate source file lists
@@ -391,7 +376,7 @@ if [ $CONFIGURE -eq 1 ]; then
     fi
 
     # Process BUILD.in files
-    PATH="$(dirname $GO_EXE):$PATH" ${BUILD_TOOLS}/metabuild/metabuild.py $METABUILD_VERBOSE \
+    ${BUILD_TOOLS}/metabuild/metabuild.py $METABUILD_VERBOSE \
         -o ${GEN_SRC_DIR} \
         ${METABUILD_INPUTS}
 
@@ -442,13 +427,12 @@ if [ $CONFIGURE -eq 1 ]; then
 
     # Append additional platrom args
     PLATFORM_ARGS+=(${ADDITIONAL_PLATFORM_ARGS[@]})
+    echo "PLATFORM ARGS $PLATFORM_ARGS"
     $CMAKE_EXE ${TOPLEVEL} \
         ${VERBOSE_ARG} \
         -G"${GENERATOR}" \
         -DCMAKE_BUILD_TYPE=${CONFIGURATION} \
         -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} \
-        -DGOPATH=${GOPATH} \
-        -DGOROOT=${GOROOT} \
         -DPROTOBUF_HOME=${PROTOBUF_HOME} \
         -DANKI_BUILD_SHA=${ANKI_BUILD_SHA} \
         ${EXPORT_FLAGS} \
