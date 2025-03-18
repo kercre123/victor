@@ -72,7 +72,6 @@ if (VICOS)
     libopencv_objdetect.so.3.4
     libopencv_video.so.3.4
     libopencv_videoio.so.3.4
-    libopus.so.0
     ${AVS_LIB_NAMES}
   )
   foreach (target ${STRIP_TARGETS})

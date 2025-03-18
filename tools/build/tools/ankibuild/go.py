@@ -14,7 +14,7 @@ import sys
 import toolget
 
 GO = 'go'
-DEFAULT_VERSION = '1.11'
+DEFAULT_VERSION = '1.16.4'
 
 def get_go_version_from_command(go_exe):
     version = None
@@ -43,8 +43,14 @@ def find_anki_go_exe(version):
 def install_go(version):
     platform_map = {
         'darwin': 'darwin-amd64',
-        'linux': 'linux-amd64'
+        'darwin-arm64': 'darwin-arm64',
+        'linux': 'linux-amd64',
+	    'linux-arm64': 'linux-arm64'
     }
+
+    platform_name = platform.system().lower()
+    if platform.machine() in ['aarch64', 'arm64']:
+        platform_name = "{}-arm64".format(platform_name)
 
     sha_map = {
         '1.9.4-darwin': '0e694bfa289453ecb056cc70456e42fa331408cfa6cc985a14edb01d8b4fec51',
@@ -56,10 +62,16 @@ def install_go(version):
         '1.10.4-darwin': '2ba324f01de2b2ece0376f6d696570a4c5c13db67d00aadfd612adc56feff587',
         '1.10.4-linux': 'fa04efdb17a275a0c6e137f969a1c4eb878939e91e1da16060ce42f02c2ec5ec',
         '1.11-darwin': '9749e6cb9c6d05cf10445a7c9899b58e72325c54fee9783ed1ac679be8e1e073',
-        '1.11-linux': 'b3fcf280ff86558e0559e185b601c9eade0fd24c900b4c63cd14d1d38613e499'
+        '1.11-linux': 'b3fcf280ff86558e0559e185b601c9eade0fd24c900b4c63cd14d1d38613e499',
+	    '1.11-linux-arm64': 'e4853168f41d0bea65e4d38f992a2d44b58552605f623640c5ead89d515c56c9',
+        '1.16.4-linux-arm64': '8df5750ffc0281017fb6070fba450f5d22b600a02081dceef47966ffaf36a3af',
+        '1.16.4-linux': 'cb2396bae64183cdccf81a9a6df0aea3bce9511fc21469fb89a0c00470088073',
+        '1.16.4-darwin-arm64': '295581b5619acc92f5106e5bcb05c51869337eb19742fdfa6c8346c18e78ff88',
+        '1.16.4-darwin': '58d529334561cff11087cd4ab18fe0b46d8d5aad88f45c02b9645f847e014512',
+
     }
 
-    platform_name = platform.system().lower()
+   # platform_name = platform.system().lower()
 
     go_platform = platform_map[platform_name]
     go_archive_url = "https://dl.google.com/go/go{}.{}.tar.gz".format(version, go_platform)
@@ -68,9 +80,9 @@ def install_go(version):
     go_dist_path = toolget.get_anki_tool_dist_directory(GO)
     go_hash = sha_map['{}-{}'.format(version, platform_name)]
 
-    if go_hash is None:
-        print("Error: Don't know hash for %s" % go_basename)
-        sys.exit(1)
+    #if go_hash is None:
+    #    print("Error: Don't know hash for %s" % go_basename)
+    #    sys.exit(1)
 
     toolget.download_and_install(go_archive_url,
                                  go_hash,

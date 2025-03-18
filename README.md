@@ -46,7 +46,7 @@ cd ~/victor
 ## Building (Intel or ARM64 macOS)
 
  - Prereqs: Make sure you have [brew](https://brew.sh/) installed.
-   -  Then: `brew install pyenv git-lfs ccache`
+   -  Then: `brew install pyenv git-lfs ccache wget`
 
 1. Clone the repo and cd into it:
 
@@ -65,7 +65,7 @@ pyenv install 2.7.18
 pyenv init
 ```
 
-- Add the following to both ~/.zshrc and ~/.zprofile:
+- Add the following to both ~/.zshrc and ~/.zprofile. After doing so, run the commands in your terminal session:
 ```
 export PYENV_ROOT="$HOME/.pyenv"
 [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"

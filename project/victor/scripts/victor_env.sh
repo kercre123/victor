@@ -29,7 +29,7 @@ robot_sh ()
         echo "ERROR: Unspecified robot host."
         return 1
     fi
-    ssh ${ANKI_ROBOT_USER}@${ANKI_ROBOT_HOST} $*
+    ssh -o "PubkeyAcceptedKeyTypes +ssh-rsa" ${ANKI_ROBOT_USER}@${ANKI_ROBOT_HOST} $*
     return $?
 }
 
@@ -48,7 +48,6 @@ robot_cp ()
     fi
 
     VERSION=$(ssh -V 2>&1 | awk '{print $1}' | sed 's/OpenSSH_//; s/p.*//')
- 
     if [[ $(echo -e "$VERSION\n9.8" | sort -V | tail -1) == "$VERSION" ]]; then
         ARGS+=" -O"
     fi
@@ -75,10 +74,11 @@ robot_cp_from ()
     fi
 
     VERSION=$(ssh -V 2>&1 | awk '{print $1}' | sed 's/OpenSSH_//; s/p.*//')
- 
     if [[ $(echo -e "$VERSION\n9.8" | sort -V | tail -1) == "$VERSION" ]]; then
         ARGS+=" -O"
     fi
+
+    ARGS+=' -o "PubkeyAcceptedKeyTypes +ssh-rsa'
 
     SRC=$ANKI_ROBOT_USER@$ANKI_ROBOT_HOST:"$1"
     DST="$2"

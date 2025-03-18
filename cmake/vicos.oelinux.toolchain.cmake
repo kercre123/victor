@@ -104,6 +104,7 @@ list(APPEND VICOS_COMPILER_FLAGS
 	-funwind-tables
 	-fstack-protector-strong
 	-Wno-nonportable-include-path
+	-Wno-delete-non-virtual-dtor
 #  -flto
 #  -fvisibility=hidden
 #  -fsanitize=cfi
@@ -112,6 +113,7 @@ list(APPEND VICOS_COMPILER_FLAGS_CXX
     -Qunused-arguments
 	-fno-exceptions
 	-Wno-nonportable-include-path
+	-Wno-delete-non-virtual-dtor
 	-fno-rtti)
 list(APPEND VICOS_COMPILER_FLAGS_RELEASE
   -D_FORTIFY_SOURCE=2)
@@ -221,7 +223,7 @@ list(APPEND VICOS_LINKER_FLAGS
 list(APPEND VICOS_LINKER_FLAGS
     -Wl,-z,relro -Wl,-z,now)
 list(APPEND VICOS_COMPILER_FLAGS
-    -Wformat -Werror=format-security)
+    -Wformat)
 
 # Convert these lists into strings.
 string(REPLACE ";" " " VICOS_COMPILER_FLAGS         "${VICOS_COMPILER_FLAGS}")

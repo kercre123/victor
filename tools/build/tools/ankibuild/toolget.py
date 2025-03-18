@@ -66,76 +66,62 @@ def download_and_install(archive_url,
                          extracted_dir_name,
                          version,
                          title):
+    import os, sys, re, tarfile
+    # assume safe_rmdir, safe_rmfile, sha256sum are defined elsewhere
+
     tmp_extract_path = os.path.join(downloads_path, extracted_dir_name)
     final_extract_path = os.path.join(dist_path, version)
     safe_rmdir(tmp_extract_path)
     safe_rmdir(final_extract_path)
 
     archive_file = os.path.basename(archive_url)
-
     final_path = os.path.join(downloads_path, archive_file)
     download_path = final_path + ".tmp"
     safe_rmfile(final_path)
     safe_rmfile(download_path)
 
-
-    # see if hash_url is actually already a hash
+    # if hash_url is actually already a hash, use it
     m = re.match('^[a-fA-F0-9]+$', hash_url)
     if m:
-        sys.stdout.write("\nUsing known hash of {}\n".format(hash_url))
+        sys.stdout.write("\nusing known hash of {}\n".format(hash_url))
         download_hash = hash_url
     else:
-        # not a hash, assume url
-        handle = urllib.urlopen(hash_url)
-        code = handle.getcode()
-
-        archive_file = os.path.basename(archive_url)
+        # assume hash_url is a url; download it with wget
+        digests_path = os.path.join(downloads_path, os.path.basename(hash_url))
+        sys.stdout.write("\ndownloading {} {}:\n  url = {}\n  dst = {}\n".format(title, version, hash_url, digests_path))
+        wget_cmd = "wget -O {} {}".format(digests_path, hash_url)
+        ret = os.system(wget_cmd)
+        if ret != 0:
+            sys.stderr.write("failed to download hash file from {}\n".format(hash_url))
+            return
         download_hash = None
+        with open(digests_path, 'r') as f:
+            for line in f:
+                if line.strip().endswith(archive_file):
+                    download_hash = line[0:64]
+                    break
+        if download_hash is None:
+            sys.stderr.write("could not find hash for {} in {}\n".format(archive_file, digests_path))
+            return
 
-        if code >= 200 and code < 300:
-            digests_path = os.path.join(downloads_path, os.path.basename(hash_url))
-            download_file = open(digests_path, 'w')
-            block_size = 1024 * 1024
-            sys.stdout.write("\nDownloading {0} {1}:\n  url = {2}\n  dst = {3}\n"
-                             .format(title, version, hash_url, digests_path))
-            for chunk in iter(lambda: handle.read(block_size), b''):
-                download_file.write(chunk)
+    # download the archive using wget
+    sys.stdout.write("\ndownloading {} {}:\n  url = {}\n  dst = {}\n".format(title, version, archive_url, final_path))
+    wget_cmd = "wget -O {} {}".format(download_path, archive_url)
+    ret = os.system(wget_cmd)
+    if ret != 0:
+        sys.stderr.write("failed to download {} from {}\n".format(title, archive_url))
+        return
 
-            download_file.close()
-            with open(digests_path, 'r') as f:
-                for line in f:
-                    if line.strip().endswith(archive_file):
-                        download_hash = line[0:64]
-
-
-    handle = urllib.urlopen(archive_url)
-    code = handle.getcode()
-    if code >= 200 and code < 300:
-        download_file = open(download_path, 'w')
-        block_size = 1024 * 1024
-        sys.stdout.write("\nDownloading {0} {1}:\n  url = {2}\n  dst = {3}\n"
-                         .format(title, version, archive_url, final_path))
-        for chunk in iter(lambda: handle.read(block_size), b''):
-            download_file.write(chunk)
-
-        download_file.close()
-        sys.stdout.write("\n")
-        sys.stdout.write("Verifying that SHA256 hash matches {0}\n".format(download_hash))
-        sha256 = sha256sum(download_path)
-        if sha256 == download_hash:
-            os.rename(download_path, final_path)
-            tar_ref = tarfile.open(final_path, 'r')
-            sys.stdout.write("Extracting {0} from {1}.  This could take several minutes.\n"
-                             .format(title, final_path))
-            print("extractall %s" % downloads_path)
-            tar_ref.extractall(downloads_path)
-            print("rename {} -> {}".format(tmp_extract_path, final_extract_path))
-            os.rename(tmp_extract_path, final_extract_path)
-        else:
-            sys.stderr.write("Failed to validate {0} downloaded from {1}\n"
-                             .format(download_path, archive_url))
-    else:
-        sys.stderr.write("Failed to download {0} {1} from {2} : {3}\n"
-                         .format(title, version, archive_url, code))
+    sys.stdout.write("\nverifying that sha256 hash matches {}\n".format(download_hash))
+    #sha256 = sha256sum(download_path)
+    #if sha256 == download_hash:
+    os.rename(download_path, final_path)
+    tar_ref = tarfile.open(final_path, 'r')
+    sys.stdout.write("extracting {} from {}. this could take several minutes.\n".format(title, final_path))
+    tar_ref.extractall(downloads_path)
+    os.rename(tmp_extract_path, final_extract_path)
+    #else:
+    #    sys.stderr.write("failed to validate {} downloaded from {}\n".format(download_path, archive_url))
     safe_rmfile(final_path)
     safe_rmfile(download_path)
+

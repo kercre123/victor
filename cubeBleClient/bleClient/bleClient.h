@@ -27,7 +27,7 @@ namespace Vector {
     // Constructor
     BleClient(struct ev_loop* loop);
     
-    ~BleClient();
+    virtual ~BleClient();
     
     // Attempts to connect to the server and starts the ev loop thread
     void Start();

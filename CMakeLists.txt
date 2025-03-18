@@ -58,7 +58,7 @@ elseif(VICOS)
   set(ANKI_PLATFORM_NAME "vicos")
   set(SYMBOL_VISIBILITY_FLAGS "-fvisibility=hidden")
 else()
-  message(FATAL_ERROR "unsupported platform: ${ANKI_PLATFORM_NAME}")
+
 endif()
 
 message(STATUS "ANKI_PLATFORM_NAME: ${ANKI_PLATFORM_NAME}")

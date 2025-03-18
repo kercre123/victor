@@ -25,6 +25,9 @@ class DependencyInstaller(object):
     # TODO: This check will work for executables, but checking whether something exists
     # is not enough. We need to ensure that the installed version has the required capabilities.
     # OR we need to check that brew has just installed it.  Since some things are just libs.
+    # macOS comes bundled with a bad version of rsync
+    if dep == "rsync":
+      return False
     if not path.exists(path.join(self.L_BIN, dep)):
       notFound = subprocess.call(['which', dep], stdout=subprocess.PIPE)
       if notFound:
