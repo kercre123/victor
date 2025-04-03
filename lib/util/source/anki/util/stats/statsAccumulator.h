@@ -14,8 +14,8 @@
 #ifndef BASESTATION_GENERAL_STATS_ACCUMULATOR_H_
 #define BASESTATION_GENERAL_STATS_ACCUMULATOR_H_
 
-#include <float.h>
 #include <math.h>
+#include <cfloat>
 
 namespace Anki {
 namespace Util {

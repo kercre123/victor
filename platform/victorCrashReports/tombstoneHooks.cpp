@@ -29,17 +29,17 @@ namespace {
 
 // Return OS thread ID.  Note this is not the same as POSIX thread ID or pthread_self()!
 // http://man7.org/linux/man-pages/man2/gettid.2.html
-static pid_t gettid()
-{
-  return (pid_t) syscall(SYS_gettid);
-}
+//static pid_t gettid(
+//{
+//  return (pid_t) syscall(SYS_gettid);
+//}
 
 // Deliver a signal to a specific thread
 // http://man7.org/linux/man-pages/man2/tgkill.2.html
-static int tgkill(pid_t tgid, pid_t tid, int signum)
-{
-  return syscall(SYS_tgkill, tgid, tid, signum);
-}
+//static int tgkill(pid_t tgid, pid_t tid, int signum)
+//{
+//  return syscall(SYS_tgkill, tgid, tid, signum);
+//}
 
 //
 // Ask debuggerd to create tombstone for this process,

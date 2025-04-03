@@ -5,7 +5,7 @@ ARG VIC_DIR
 
 # Packages used during development
 RUN apt update && \
-apt -y install babeltrace python3-babeltrace
+apt -y install babeltrace python3-babeltrace nano
 
 # Actually use bash
 RUN ln -sf /bin/bash /bin/sh

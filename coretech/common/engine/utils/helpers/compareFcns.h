@@ -12,7 +12,7 @@ namespace Anki {
   
   // Compare functions for pairs based on first or second element only
   template < class X , class Y >
-  struct CompareFirst  : public std::binary_function<std::pair<X,Y>, std::pair<X,Y>, bool>
+  struct CompareFirst
   {
     bool operator() (const std::pair<X,Y>& a, const std::pair<X,Y>& b) {
       return a.first < b.first;
@@ -20,7 +20,7 @@ namespace Anki {
   };
   
   template < class X , class Y >
-  struct CompareSecond  : public std::binary_function<std::pair<X,Y>, std::pair<X,Y>, bool>
+  struct CompareSecond
   {
     bool operator() (const std::pair<X,Y>& a, const std::pair<X,Y>& b) {
       return a.second < b.second;
