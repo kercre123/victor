@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 """
 Example implementation of Anki Victor Update engine.
 """
@@ -13,12 +13,12 @@ __author__ = "Daniel Casner <daniel@anki.com>"
 
 import sys
 import os
-import urllib.request, urllib.error, urllib.parse
+import urllib2
 import subprocess
 import tarfile
 import zlib
 import shutil
-import configparser
+import ConfigParser
 import socket
 import re
 from select import select
@@ -212,7 +212,7 @@ def get_qsn():
 
 def get_manifest(fileobj):
     "Returns config parsed from INI file in filelike object"
-    config = configparser.ConfigParser({'encryption': '0',
+    config = ConfigParser.ConfigParser({'encryption': '0',
                                         'qsn': None,
                                         'ankidev': '0',
                                         'reboot_after_install': '0'})
@@ -309,8 +309,8 @@ def open_url_stream(url):
                 os_version,
                 victor_version,
                 victor_target)
-        request = urllib.request.Request(url)
-        opener = urllib.request.build_opener()
+        request = urllib2.Request(url)
+        opener = urllib2.build_opener()
         opener.addheaders = [('User-Agent', 'Victor-OTA/{0:s}'.format(os_version))]
         return opener.open(request, timeout=HTTP_TIMEOUT)
     except Exception as e:
@@ -352,7 +352,7 @@ class ShaFile(object):
 
 def extract_ti(manifest, tar_stream, expected_name, section, dest_fh, progress_callback):
     "Extract an image from a tar_info object"
-    tar_info = next(tar_stream)
+    tar_info = tar_stream.next()
     if not tar_info.name.endswith(expected_name):
         die(200, "Expected \"{0}\" to be next in tar but found \"{1}\"".format(expected_name, tar_info.name))
     decompressor = StreamDecompressor(tar_stream.extractfile(tar_info),
@@ -547,7 +547,7 @@ def handle_ankiRCM(manifest, tar_stream):
     try:
         anki_path = "/"
         write_status(PROGRESS_FILE, 2)
-        anki_ti = next(tar_stream)
+        anki_ti = tar_stream.next()
         src_file = tar_stream.extractfile(anki_ti)
         sha_fh = ShaFile(src_file)
         anki_tar = make_tar_stream(sha_fh, "r|" + manifest.get("ANKI", "compression"))
@@ -665,7 +665,7 @@ def update_from_url(url):
         # Get the manifest
         if DEBUG:
             print("Manifest")
-        manifest_ti = next(tar_stream)
+        manifest_ti = tar_stream.next()
         if not manifest_ti.name.endswith('manifest.ini'):
             die(200, "Expected manifest.ini at beginning of download, found \"{0.name}\"".format(manifest_ti))
         with open(MANIFEST_FILE, "wb") as manifest:
@@ -710,7 +710,7 @@ def update_from_url(url):
 
         else:
             # Mark target unbootable
-            if not call(['/bin/bootctl-anki', current_slot, 'set_unbootable', target_slot]):
+            if not call(['/bin/bootctl', current_slot, 'set_unbootable', target_slot]):
                 die(202, "Could not mark target slot unbootable")
             zero_slot(target_slot)  # Make it doubly unbootable just in case
 
@@ -751,13 +751,13 @@ def update_from_url(url):
     if not is_factory_update:
         # RCM 2020-8-20 skip if we only updated a bit of the filesystem
         if not skip_bootctl:
-            if not call(["/bin/bootctl-anki", current_slot, "set_active", target_slot]):
+            if not call(["/bin/bootctl", current_slot, "set_active", target_slot]):
                 die(202, "Could not set target slot as active")
     else: # Is a factory update, mark both update slots unbootable and erase user data
         write_status(WIPE_DATA_COOKIE, 1)
-        if not call(["/bin/bootctl-anki", current_slot, "set_unbootable", 'a']):
+        if not call(["/bin/bootctl", current_slot, "set_unbootable", 'a']):
             die(202, "Could not set a slot as unbootable")
-        if not call(["/bin/bootctl-anki", current_slot, "set_unbootable", 'b']):
+        if not call(["/bin/bootctl", current_slot, "set_unbootable", 'b']):
             die(202, "Could not set b slot as unbootable")
     safe_delete(ERROR_FILE)
     write_status(DONE_FILE, 1)

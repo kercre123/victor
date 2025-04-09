@@ -6,7 +6,7 @@ if [ $# -eq 0 ]; then
 fi
 
 GIT_PROJ_ROOT=`git rev-parse --show-toplevel`
-VICOS_SDK=`${GIT_PROJ_ROOT}/tools/build/tools/ankibuild/vicos.py --find 1.1.0-r04`
+VICOS_SDK=`${GIT_PROJ_ROOT}/tools/build/tools/ankibuild/vicos.py --find 4.0.0-r05`
 
 if [ ! -d "$VICOS_SDK" ]; then
 	echo "Could not find vicos SDK"

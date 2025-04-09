@@ -7,6 +7,15 @@ Check the [wiki](https://github.com/kercre123/victor/wiki) for more information 
 > [!WARNING]
 > **You CANNOT currently deploy this to a regular, non-unlocked bot.**
 
+## Branch Notes
+
+- `kirkstone`
+	-	Modified to compile with a new compiler (Clang 18)
+	-	Designed to work with https://github.com/kercre123/vic-yocto-2
+		-	A project intended to upgrade Vector's underlying OS
+	-	Updated update-engine which should work with Python 3.12
+	-	Actually meant to work with scarthgap but I don't feel like changing the branch name
+
 ## Changes
 
 - The wiki includes a list of changes I made: [Changes I Made](https://github.com/kercre123/victor/wiki/Changes-I-Made)

@@ -60,6 +60,7 @@ echo "Copying vic-cloud and vic-gateway..."
 cp -a bin/* _build/vicos/Release/bin/
 echo "Copying libopus..."
 cp -a 3rd/opus/vicos/lib/libopus.so.0.7.0 _build/vicos/Release/lib/libopus.so.0
+cp -a patch-libs/* _build/vicos/Release/lib/
 echo "Copying sb_server binary..."
 cp -a 3rd/snowboy/vicos/bin/sb_server _build/vicos/Release/bin/
 chmod +rwx _build/vicos/Release/bin/sb_server
