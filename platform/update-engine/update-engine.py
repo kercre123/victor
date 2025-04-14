@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Example implementation of Anki Victor Update engine.
@@ -28,7 +28,7 @@ from fcntl import fcntl, F_GETFL, F_SETFL
 #from distutils.version import LooseVersion
 
 sys.path.append("/usr/bin")
-import update_payload
+#import update_payload
 
 BOOT_DEVICE = "/dev/block/bootdevice/by-name"
 STATUS_DIR = "/run/update-engine"
@@ -61,12 +61,17 @@ def make_blocking(pipe, blocking):
     else:
         fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~os.O_NONBLOCK)  # clear it
 
-def das_event(name, parameters = []):
+def das_event(name, parameters=[]):
     "Log a DAS event"
     args = ["/anki/bin/vic-log-event", "update-engine", name]
     for p in parameters:
-        args.append(p.rstrip().replace('\r', '\\r').replace('\n', '\\n'))
+        if isinstance(p, bytes):
+            p = p.decode()
+        if p is None:
+            p = ""
+        args.append(str(p).rstrip().replace('\r', '\\r').replace('\n', '\\n'))
     subprocess.call(args)
+
 
 def safe_delete(name):
     "Delete a filesystem path name without error"
@@ -213,10 +218,10 @@ def get_qsn():
 def get_manifest(fileobj):
     "Returns config parsed from INI file in filelike object"
     config = configparser.ConfigParser({'encryption': '0',
-                                        'qsn': None,
+                                        'qsn': '',
                                         'ankidev': '0',
                                         'reboot_after_install': '0'})
-    config.readfp(fileobj)
+    config.read_file(fileobj)
     return config
 
 
@@ -231,7 +236,7 @@ class StreamDecompressor(object):
         self.sum = sha256() if do_sha else None
         cmds = []
         if encryption == 1:
-            cmds.append("openssl enc -d -aes-256-ctr -pass file:{0}".format(OTA_ENC_PASSWORD))
+            cmds.append("openssl enc -d -aes-256-ctr -pass file:{0} -md md5".format(OTA_ENC_PASSWORD))
         elif encryption != 0:
             die(210, "Unsupported encryption scheme {}".format(encryption))
         if compression == 'gz':
@@ -305,13 +310,13 @@ def open_url_stream(url):
         else:
             url += '?'
         url += "emresn={0:s}&ankiversion={1:s}&victorversion={2:s}&victortarget={3:s}".format(
-                get_prop("ro.serialno"),
-                os_version,
-                victor_version,
-                victor_target)
+                get_prop("ro.serialno").decode(),
+                os_version.decode(),
+                victor_version.decode(),
+                victor_target.decode())
         request = urllib.request.Request(url)
         opener = urllib.request.build_opener()
-        opener.addheaders = [('User-Agent', 'Victor-OTA/{0:s}'.format(os_version))]
+        opener.addheaders = [('User-Agent', 'Victor-OTA/{0:s}'.format(os_version.decode()))]
         return opener.open(request, timeout=HTTP_TIMEOUT)
     except Exception as e:
         die(203, "Failed to open URL: " + str(e))
@@ -320,7 +325,7 @@ def open_url_stream(url):
 def make_tar_stream(fileobj, open_mode="r|"):
     "Converts a file like object into a streaming tar object"
     try:
-        return tarfile.open(mode=open_mode, fileobj=fileobj)
+        return tarfile.open(mode="r|*", fileobj=fileobj)
     except Exception as e:
         die(204, "Couldn't open contents as tar file " + str(e))
 
@@ -352,7 +357,7 @@ class ShaFile(object):
 
 def extract_ti(manifest, tar_stream, expected_name, section, dest_fh, progress_callback):
     "Extract an image from a tar_info object"
-    tar_info = next(tar_stream)
+    tar_info = tar_stream.next()
     if not tar_info.name.endswith(expected_name):
         die(200, "Expected \"{0}\" to be next in tar but found \"{1}\"".format(expected_name, tar_info.name))
     decompressor = StreamDecompressor(tar_stream.extractfile(tar_info),
@@ -547,7 +552,7 @@ def handle_ankiRCM(manifest, tar_stream):
     try:
         anki_path = "/"
         write_status(PROGRESS_FILE, 2)
-        anki_ti = next(tar_stream)
+        anki_ti = tar_stream.next()
         src_file = tar_stream.extractfile(anki_ti)
         sha_fh = ShaFile(src_file)
         anki_tar = make_tar_stream(sha_fh, "r|" + manifest.get("ANKI", "compression"))
@@ -653,7 +658,7 @@ def update_from_url(url):
         os.mkdir(STATUS_DIR)
     # Open URL as a tar stream
     stream = open_url_stream(url)
-    content_length = stream.info().getheaders("Content-Length")[0]
+    content_length = stream.getheader("Content-Length")
     write_status(EXPECTED_DOWNLOAD_SIZE_FILE, content_length)
     current_os_version = get_prop("ro.anki.version")
     next_boot_os_version = current_os_version
@@ -665,7 +670,7 @@ def update_from_url(url):
         # Get the manifest
         if DEBUG:
             print("Manifest")
-        manifest_ti = next(tar_stream)
+        manifest_ti = tar_stream.next()
         if not manifest_ti.name.endswith('manifest.ini'):
             die(200, "Expected manifest.ini at beginning of download, found \"{0.name}\"".format(manifest_ti))
         with open(MANIFEST_FILE, "wb") as manifest:
