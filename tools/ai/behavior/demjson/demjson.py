@@ -3292,7 +3292,7 @@ class json_options(object, metaclass=_behaviors_metaclass):
   def sort_keys(self, method):
     if not method:
       self._sort_keys = SORT_NONE
-    elif isinstance(method, collections.Callable):
+    elif isinstance(method, collections.abc.Callable):
       self._sort_keys = method
     elif method in sorting_methods:
       self._sort_keys = method
@@ -3753,7 +3753,7 @@ class JSON(object):
     if not hook_name or hook_name not in self.all_hook_names:
       return False
     hook = getattr(self, hook_name + '_hook')
-    return isinstance(hook, collections.Callable)
+    return isinstance(hook, collections.abc.Callable)
 
   def call_hook(self, hook_name, input_object, position=None, *args, **kwargs):
     """Wrapper function to invoke a user-supplied hook function.
