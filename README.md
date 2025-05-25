@@ -1,5 +1,8 @@
 # victor
 
+# WireOS victor has been moved to [os-vector/wire-os-victor](https://github.com/os-vector/wire-os).
+# This repo is still here for historical purposes, as it includes all of Anki's PRs and the commit history.
+
 Welcome to `victor`. This is the home of the Anki Vector robot's source code. Original README: [README-orig.md](/README-orig.md)
 
 Check the [wiki](https://github.com/kercre123/victor/wiki) for more information about the leak, what we can do with this, and general Vector info.
